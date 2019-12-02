@@ -10,7 +10,7 @@ XCOMM  Choose your build location (this should be set to the absolute
 XCOMM    path of the current directory, which is where QccPack will
 XCOMM    be built)
 XCOMM
-QCCPACK = /home/shaomeng/Syncthing/Vapor-Dev/QccPack/QccPack-cisl-vapor
+QCCPACK = /home/shaomeng/Git/SPECK2020/QccPack-0.61-1
 
 XCOMM
 XCOMM  Set the following to the desired final installation point for the 
@@ -18,7 +18,7 @@ XCOMM    libraries, header files, binaries, and man pages.  It is suggested
 XCOMM    that these reside in /usr/local, but you could change
 XCOMM    them to be elsewhere.  This needs to be an *absolute* pathname.
 XCOMM
-QCCPACK_INSTALL = /home/shaomeng/Syncthing/Vapor-Dev/QccPack/QccPack-cisl-vapor/install
+QCCPACK_INSTALL = /home/shaomeng/Git/SPECK2020/QccPack-0.61-1/install
 
 QCCPACK_INSTALL_LIB_PATH = $(QCCPACK_INSTALL)/lib
 QCCPACK_INSTALL_INCLUDE_PATH = $(QCCPACK_INSTALL)/include
