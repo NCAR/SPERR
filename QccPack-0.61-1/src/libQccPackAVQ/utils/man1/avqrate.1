@@ -1,0 +1,173 @@
+.TH AVQRATE 1 "QCCPACK" ""
+.SH NAME
+avqrate \- calculates rate for AVQ programs
+.SH SYNOPSIS
+.B avqrate
+.RB "[\|" \-vo "\|]"
+.RB "[\|" \-noent "\|]"
+.I codebook\_coder
+.I channelfile
+.I sideinfofile
+.SH OPTIONS
+.TP
+.B \-vo
+Output only the value of the rate (terse output).
+.TP
+.B \-noent
+Disable entropy-coding estimate in side information.
+.SH DESCRIPTION
+.LP
+.B avqrate
+reads a channel,
+.I channelfile
+(CHN format), and side information,
+.I sideinfofile
+(SID format), both produced by one of the following AVQ programs:
+.BR gtrencode "(1), " paulencode "(1), or " gyencode (1).
+It estimates the bit rate, in terms of number of bits per
+original source symbol, achieved by the algorithm.
+The calculation of the bit rate varies for each algorithm as described below.
+.B avqrate
+determines which specific calculation to use based on the
+.I program\_name 
+field specified in the header of
+.IR sideinfofile .
+.I codebook\_coder
+gives the scalar quantizer used to produce the side information.
+.SH THE GTR AND PAUL ALGORITHMS
+The bit rate is estimated as:
+.LP
+.I "    R"
+=
+.RI ( Nc
++
+.IR Ns )/ N / dim
+.LP
+where
+.I N
+is the total number of original source vectors,
+.I dim
+is the vector dimension,
+.I Nc
+is the number of bits used in the VQ channel, and
+.I Ns
+is the total number of bits of side information.
+.I Nc 
+is estimated from the first-order entropy of the VQ channel as
+.I Nc
+= 
+.IR Hc *( N " - " Nr ),
+where 
+.I Hc
+is the first-order entropy of the channel and
+.I Nr
+is the number of times the codebook was updated during
+encoding.
+.LP
+Unless
+.B \-noent
+is specified,
+.I Ns
+is estimated as the first-order entropy of the
+update flags used by the algorithm plus the first-order
+entropy of the components of the update vectors.
+If 
+.B \-noent
+is specified, entropy estimation of side information
+is disabled; that is, each update flag counted as one bit 
+and a fixed-length block code is assumed for the 
+update-vector components.
+.LP
+.B avqrate
+prints
+.IR R , 
+.IR Nc / N / dim ,
+and
+.IR Ns / N / dim
+to stdout,
+unless option
+.B \-vo
+is given, in which case only
+.I R
+is output.
+.SH THE GERSHO-YANO ALGORITHM
+The bit rate is estimated as
+.LP
+.I "    R"
+=
+.RI ( Rc
++
+.IR Rs )/ dim
+.LP
+where 
+.I dim
+is the vector dimension,
+.I Rc
+is the rate of the VQ channel, and
+.I Rs 
+is the rate of side information.
+.I Rc
+is simply the first-order entropy of the VQ channel.
+.I Rs
+is calculated as
+.I Rs
+=  
+.I Ns
+/
+.IR N ,
+where
+.I Ns
+is the number of bits of side information and
+.I N
+is the total number of original source vectors.
+.LP
+Unless
+.B \-noent
+is specified,
+.I Ns
+is estimated as the first-order entropy of the
+update addresses used by the algorithm plus the first-order
+entropy of the components of the update vectors.
+If 
+.B \-noent
+is specified, entropy estimation of side information
+is disabled; that is, a fixed-length block code is assumed for the 
+both the update addresses and the update-vector components.
+.LP
+.B avqrate
+prints
+.IR R , 
+.IR Rc / dim ,
+and
+.IR Rs / dim
+to stdout,
+unless option
+.B \-vo
+is given, in which case only
+.I R
+is output.
+.SH "SEE ALSO"
+.BR gtrencode (1),
+.BR gtrdecode (1),
+.BR paulencode (1),
+.BR pauldecode (1),
+.BR gyencode (1),
+.BR gydecode (1),
+.BR QccPackAVQ (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

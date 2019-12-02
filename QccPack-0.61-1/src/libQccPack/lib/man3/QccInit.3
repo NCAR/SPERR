@@ -1,0 +1,90 @@
+.TH QCCINIT 3 "QCCPACK" ""
+.SH NAME
+QccInit \- QccPack library initialization
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "void QccInit(int " argc ", char *" argv "[]);"
+.SH DESCRIPTION
+.B QccInit()
+initializes the QccPack library routines for use.  It should be called
+at the start of each program making use of the QccPack libraries.
+.I argc
+and
+.I argv
+contain the command-line parameters from
+.BR main() ;
+however, no command-line parsing is performed by
+.BR QccInit() 
+(for command-line parsing, use
+.BR QccParseParameters (3));
+rather, the name of the calling program is extracted from 
+.IR argv .
+A
+.B NULL
+pointer can optionally be passed for
+.IR argv ;
+in this case, QccPack will not know the name of the current program, and
+.BR QccGetProgramName (3)
+will return in error if called.
+.LP
+Calls to
+.BR QccInit()
+subsequent to the first call (e.g., from other threads in multithreaded
+applications)
+have no effect other than extracting the 
+program name again from 
+.IR argv .
+.SH EXAMPLE
+The typical use of 
+.B QccInit()
+is illustrated below.
+Note that
+.B QccInit()
+is called as the
+first statement of the 
+.B main()
+routine.
+.RS
+.nf
+
+#include "libQccPack.h"
+
+#define USG_STRING "%s:infile"
+
+QccString Filename;
+
+int main(int argc, char *argv[])
+{
+	QccInit(&argc, argv);
+
+	if (QccParseParameters(argc, argv, USG_STRING, Filename))
+	   QccErrorExit();
+
+	<user code goes here>
+
+	QccExit;
+}
+.fi
+.RE
+.SH "SEE ALSO"
+.BR QccParseParameters (3),
+.BR QccGetProgramName (3),
+.BR QccExit (3),
+.BR QccErrorExit (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

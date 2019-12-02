@@ -1,0 +1,98 @@
+.TH QCCVECTORINTSUBSAMPLE 3 "QCCPACK" ""
+.SH NAME
+QccVectorIntSubsample, QccVectorIntUpsample \- integer-vector down/up sampling
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccVectorIntSubsample(const QccVectorInt " input_signal ", int " input_length ", QccVectorInt " output_signal ", int " output_length ", int " sampling_flag );
+.br
+.BI "int QccVectorIntUpsample(const QccVectorInt " input_signal ", int " input_length ", QccVectorInt " output_signal ", int " output_length ", int " sampling_flag );
+.SH DESCRIPTION
+.B QccVectorIntSubsample()
+removes every other vector component from
+.IR input_signal ,
+returning the result in
+.IR output_signal .
+That is
+.I input_signal
+is downsampled, or subsampled, by a factor of 2.
+If
+.I sampling_flag
+is
+.BR QCCVECTORINT_EVEN ,
+every odd-indexed vector component is discarded;
+if
+.I sampling_flag
+is
+.BR QCCVECTORINT_ODD ,
+every even-indexed vector component is discarded.
+The vector components are assumed to be
+indexed such that the first component in the
+vector is index 0 (and even index).
+The subsampling operation is performed until either
+.IR output_signal
+is full, as determined from
+.IR output_length ,
+or until the end of 
+.IR input_signal
+is reached.
+Note that it is not necessary for
+.IR output_length
+to be exactly half of
+.IR input_length ;
+for example, it is permissible for 
+.IR input_length
+to be odd.
+.IR output_signal
+is assumed to be allocated with length at least
+.IR output_length .
+.LP
+.B QccVectorIntUpsample()
+inserts zeros between every other vector component of
+.IR input_signal ,
+returning the result as
+.IR output_signal ,
+which is assumed to be allocated to length
+.IR output_length
+before the function call.
+If 
+.I sampling_flag 
+is 
+.BR QCCVECTORINT_EVEN ,
+the odd-indexed vector components of
+.I output_signal
+are zeros; if
+.I sampling_flag
+is
+.BR QCCVECTORINT_ODD ,
+the even-indexed vector components of
+.I output_signal
+are zeros.
+The upsampling operation is performed until either
+.IR output_signal
+is completely filled with samples or zeros,
+or the end of
+.IR input_signal
+is reached.
+Note that it is not necessary for
+.IR output_length
+to be exactly twice
+.IR input_length .
+.SH "SEE ALSO"
+.BR QccVectorInt (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

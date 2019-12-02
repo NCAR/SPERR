@@ -1,0 +1,54 @@
+.TH QCCHYPIMAGECUBETOCOLOR 3 "QCCPACK" ""
+.SH NAME
+QccHYPImageCubeToColor
+\- make a color-image representation of image cube
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccHYPImageCubeToColor(const QccIMGImageCube *" image_cube ", QccIMGImage *" image ", int " red_band ", int " green_band ", int " blue_band );
+.SH DESCRIPTION
+.BR QccHYPImageCubeToColor()
+creates a color-image representation of
+.I image_cube
+by extracting three bands as the red, green, and blue components
+of the color image.
+The values of
+.IR red_band ,
+.IR green_band ,
+and
+.IR blue_band
+indicate which bands from
+.IR image_cube
+to extract.
+The image is output to
+.IR image
+which must be allocated prior to calling
+.BR QccHYPImageCubeToColor()
+to the same number of rows and columns as
+.IR image_cube ;
+.IR image
+must be a color image (i.e., have three components).
+.SH "RETURN VALUE"
+This routine
+returns 0 on success, 1 on error.
+.SH "SEE ALSO"
+.BR QccIMGImageComponent (3),
+.BR QccIMGImage (3),
+.BR QccPackHYP (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

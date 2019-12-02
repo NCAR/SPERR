@@ -1,0 +1,212 @@
+.TH QCCHYPRKLT 3 "QCCPACK" ""
+.SH NAME
+QccHYPrklt \- 
+data structure
+.B QccHYPrklt
+spectral reversible KLT transform
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccHYPrkltInitialize(QccHYPrklt *" rklt );
+.br
+.BI "int QccHYPrkltAlloc(QccHYPrklt *" rklt );
+.br
+.BI "void QccHYPrkltFree(QccHYPrklt *" rklt );
+.SH DESCRIPTION
+QccPack provides data structure
+.B QccHYPrklt
+for representing a reversible KLT transform.
+.LP
+The components of a
+.B QccHYPrklt
+structure are a vector representing the dataset mean and
+a matrix representing the transform itself, as determined
+by a singular value decomposition of the dataset's covariance
+matrix.
+.SH "DATA STRUCTURE"
+The
+.B QccHYPrklt
+data structure is defined as:
+.RS
+.nf
+
+typedef struct
+{
+  int num_bands;
+  QccVectorInt mean;
+  QccMatrix matrix;
+  QccMatrix P;
+  QccMatrix L;
+  QccMatrix U;
+  QccMatrix S;
+  int factored;
+} QccHYPrklt;
+.fi
+.RE
+.LP
+The fields of
+.B QccHYPrklt
+are as follows:
+.TP
+.IR num_bands
+The number of spectral bands the reversible KLT is designed for.
+.TP
+.IR mean
+The mean vector (length =
+.IR num_bands ).
+.TP
+.IR matrix
+The transform matrix (size = 
+.IR num_bands " x " num_bands ).
+This is the original KLT matrix as trained on the data
+.TP
+.IR P ", " L ", " U ", " S
+These matrices are the KLT matrix factored into
+reversible lifting steps.
+.TP
+.IR factored
+Indicates whether
+.I matrix
+has be factored into
+.IR P ", " L ", " U ", " S
+.SH "ROUTINES"
+.B QccHYPrkltInitialize()
+should be called before any use of a
+.B QccHYPrklt
+structure.
+.B QccHYPrkltInitialize()
+initializes the fields of
+.I rklt
+to the following values:
+.RS
+
+.IR num_bands :
+0
+.br
+.IR mean :
+.B NULL
+.br
+.IR matrix :
+.B NULL
+.br
+.IR P :
+.B NULL
+.br
+.IR L :
+.B NULL
+.br
+.IR U :
+.B NULL
+.br
+.IR S :
+.B NULL
+.br
+.RE
+.LP
+.B QccHYPrkltAlloc()
+allocates the
+.IR mean ,
+.IR matrix ,
+.IR P ,
+.IR L ,
+.IR U ,
+and
+.IR S
+fields of the reversible KLT.
+.IR num_bands
+must be set prior to calling
+.BR QccHYPrkltAlloc() .
+.LP
+.B QccHYPrkltFree()
+frees the 
+.IR mean ,
+.IR matrix ,
+.IR P ,
+.IR L ,
+.IR U ,
+and
+.IR S
+fields of
+.IR rklt .
+.SH "THEORY"
+The Karhunen-Loève transform (KLT) is a data-dependent linear
+transform that is optimal in the sense that it
+packs the most signal energy into a given number of
+transform coefficients.
+The usual KLT is an irreversible transform.
+A reversible KLT, on the other hand,
+maps integers to integers. Such a reversible integer
+KLT was proposed Hao and Shi (2003) based on reversible matrix
+factorizations originating with Hao and Shi (2001).
+.LP
+In Hao and Shi (2001), a square transform matrix
+.IR A
+with determinant equal to +1 or -1 is factored as
+.IR A " = " P * L * U * S
+where
+.IR L
+and
+.IR S
+are lower triangular,
+.IR U
+is upper triangular,
+and
+.IR P
+is a reversible permutation matrix. Implementing the
+.IR U
+transform using upper-triangular lifting steps and the
+.IR L
+and
+.IR S
+transforms using
+corresponding lower-triangular counterparts results in a
+reversible calculation of
+.IR A .
+Since the KLT is an orthonormal
+transform (i.e., its determinant is 1), this factorization was used
+in Hao and Shi (2003) to obtain a reversible
+integer transform that approximates
+the KLT. Here, we employ the variant using quasi-complete
+pivoting proposed by Galli and Salzo.
+.SH "RETURN VALUE"
+These routines return 0 on success, and 1 on failure.
+.SH "SEE ALSO"
+.BR QccHYPrkltTrain (3),
+.BR QccHYPrkltTransform (3),
+.BR QccHYPrkltInverseTransform (3),
+.BR QccIMGImageCube (3),
+.BR QccPackHYP (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+P. Hao and Q. Shi, "Matrix factorization for reversible integer mapping,"
+.IR "IEEE Transactions on Signal Processing" ,
+vol. 49, no. 10, pp. 2314-2324, October 2001.
+
+P. Hao and Q. Shi,
+"Reversible integer KLT for progressive-to-lossless compression
+of multiple component images," in
+.IR "Proceedings of the International Conference on Image Processing" ,
+vol. 1, Barcelona, Spain, September 2003, pp. 633-636.
+
+L. Galli and S. Salzo, "Lossless hyperspectral compression using KLT,"
+in
+.IR "Proceedings of the International Geoscience and Remote Sensing Symposium" ,
+vol. 1, Anchorage, AK, September 2004, pp. 313-316.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

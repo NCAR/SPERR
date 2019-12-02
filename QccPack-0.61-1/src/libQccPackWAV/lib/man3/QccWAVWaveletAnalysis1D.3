@@ -1,0 +1,112 @@
+.TH QCCWAVWAVELETANALYSIS1D 3 "QCCPACK" ""
+.SH NAME
+QccWAVWaveletAnalysis1D, QccWAVWaveletSynthesis1D \- 
+wavelet analysis/synthesis of a 1D signal
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVWaveletAnalysis1D(QccVector " signal ", int " signal_length ", int " phase ", const QccWAVWavelet *" wavelet );
+.br
+.BI "int QccWAVWaveletSynthesis1D(QccVector " signal ", int " signal_length ", int " phase ", const QccWAVWavelet *" wavelet );
+.SH DESCRIPTION
+.B QccWAVWaveletAnalysis1D()
+performs one level of a wavelet decomposition for a one-dimensional signal.
+Essentially,
+.BR QccWAVWaveletAnalysis1D()
+calls either
+.BR QccWAVFilterBankAnalysis (3)
+or
+.BR QccWAVLiftingAnalysis (3)
+depending on whether
+.I wavelet
+specifies a filter-bank or
+lifting implementation.
+.I phase
+indicates whether 
+.I signal
+is to start with an odd- or even-indexed sample;
+that is, whether odd- or even-phase subsampling
+is employed after filtering.
+.I phase
+can be either
+.B QCCWAVWAVELET_PHASE_EVEN
+or
+.BR QCCWAVWAVELET_PHASE_ODD .
+Additionally,
+.I signal_length
+can be even or odd.
+.LP
+.B QccWAVWaveletSynthesis1D()
+performs one level of wavelet synthesis.  The first half of
+.I signal
+is assumed to contain the lowpass subband while the second half contains
+the highpass subband.
+.B QccWAVWaveletSynthesis1D()
+calls either
+.BR QccWAVFilterBankSynthesis (3)
+or
+.BR QccWAVLiftingSynthesis (3)
+depending on whether
+.I wavelet
+specifies a filter-bank or
+lifting implementation.
+.I phase
+indicates whether 
+.I signal
+is to start with an odd- or even-indexed sample.
+.I signal_length
+can be even or odd.
+.LP
+Note:
+In general, you will probably want to use
+.BR QccWAVWaveletDWT1D (3)
+and
+.BR QccWAVWaveletInverseDWT1D (3)
+instead of these routines
+for implementing a discrete wavelet transform and its inverse since
+.BR QccWAVWaveletDWT1D (3)
+and
+.BR QccWAVWaveletInverseDWT1D (3)
+allow any number of scales, or levels, of decomposition to be
+performed.
+.SH "RETURN VALUES"
+These routines
+return 0 on success and 1 on error.
+.SH "SEE ALSO"
+.BR QccWAVFilterBank (3),
+.BR QccWAVFilterBankAnalysis (3),
+.BR QccWAVLiftingScheme (3),
+.BR QccWAVLiftingAnalysis (3),
+.BR QccWAVWavelet (3),
+.BR QccWAVWaveletDWT1D (3),
+.BR QccWAVWaveletInverseDWT1D (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.LP
+M. Antonini, M. Barlaud, P. Mathieu, and I. Daubechies,
+"Image Coding Using Wavelet Transform,"
+.IR "IEEE Transactions on Image Processing" ,
+vol. 1, pp. 205-220, April 1992.
+.LP
+I. Daubechies and W. Sweldens,
+"Factoring Wavelet Transforms Into Lifting Steps,"
+.IR "J. Fourier Anal. Appl." ,
+vol. 4, no. 3, pp. 245-267, 1998.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+

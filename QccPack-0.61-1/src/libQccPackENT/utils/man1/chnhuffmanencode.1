@@ -1,0 +1,123 @@
+.TH CHNHUFFMANENCODE 1 "QCCPACK" ""
+.SH NAME
+chnhuffmanencode \- Huffman encoding of a channel
+.SH SYNOPSIS
+.B chnhuffmanencode
+.RB "[\|" \-s "\|]"
+.RB "[\|" \-vo "\|]"
+.RB "[\|" \-d 
+.IR vector\_dimension "\|]"
+.I channel
+.I bitstream
+.I huffman_table
+.SH OPTIONS
+.TP
+.B \-s
+Silent mode (no printed output).
+.TP
+.B \-vo
+Print only the value of the rate to stdout (terse output).
+.TP
+.BI \-d " vector\_dimension"
+Print rate in terms of bits per vector component rather than
+bits per channel symbol.
+.SH DESCRIPTION
+.LP
+.B chnhuffmanencode
+implements Huffman coding of the channel sequence,
+.IR channel 
+(CHN format).
+.B chnhuffmanencode
+calls
+.BR QccENTHUffmanEncodeChannel (3),
+which designs the Huffman code table (based upon the observed probability
+of occurrence of symbols in the
+.IR channel ),
+encodes the channel symbols, and outputs binary
+Huffman codewords to the output
+.IR bitstream .
+.B chnhuffmanencode
+outputs the Huffman code designed for the
+.IR channel
+to
+.IR huffman_table .
+.LP
+.B chnhuffmanencode
+initially outputs a few bytes of header information
+(original number of symbols in 
+.IR channel ,
+symbol alphabet size, and
+huffman-coding order) to
+.IR bitstream .
+The byte-packed bitstream produced by the Huffman coding follows.
+.LP
+Normally,
+.B chnarithemticencode
+prints to 
+.B stdout 
+the rate achieved by the Huffman coding, expressed in terms
+of bits per channel symbol.  This output may be suppressed by the
+.B \-s
+option (silent mode).
+The
+.B \-vo
+option indicates that only the value of the rate is to be
+printed (terse output).  The
+.B \-s
+option overrides the
+.B \-vo
+option.
+If option 
+.B \-d 
+is given, the rate is printed as bits per vector component (i.e.,
+it is the bit rate of the Huffman coding
+divided by 
+.IR vector\_dimension ).  
+For example, the
+.B \-d 
+option gives a convenient way to calculate the bit rate, in bits per
+original source symbol, when the
+.IR channel
+corresponds to indices output
+from a vector quantizer (see 
+.BR vqencode (1)).
+Note: the specification of the
+.B \-d
+option in no way affects the operation of the Huffman encoder; it affects
+only the printed output of the rate.
+.SH "NOTES"
+.B chnhuffmanencode
+removes all null channel symbols from the
+.IR channel
+with a call to
+.BR QccChannelRemoveNullSymbols (3)
+prior to Huffman coding.
+.SH "SEE ALSO"
+.BR chnhuffmandecode (1),
+.BR QccENTHuffmanEncodeChannel (3),
+.BR QccENTHuffmanDecodeChannel (3),
+.BR QccChannelRemoveNullSymbols (3),
+.BR chnentropy (1),
+.BR vqencode (1),
+.BR QccENTHuffmanTable (3),
+.BR QccPackENT (3),
+.BR QccPack (3)
+.LP
+D. A. Huffman, "A Method for the Construction of Minimum-Redundancy Codes,"
+.IR "Proceedings of the IRE" ,
+vol. 40, pp. 1098-1101, September 1952.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

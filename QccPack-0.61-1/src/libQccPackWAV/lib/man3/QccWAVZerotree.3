@@ -1,0 +1,324 @@
+.TH QCCWAVZEROTREE 3 "QCCPACK" ""
+.SH NAME
+QccWAVZerotree \- 
+data structure 
+.B QccWAVZerotree
+and corresponding
+.B ZT
+file format for zerotree
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVZerotreeInitialize(QccWAVZerotree *" zerotree );
+.br
+.BI "int QccWAVZerotreeCalcSizes(QccWAVZerotree *" zerotree );
+.br
+.BI "int QccWAVZerotreeAlloc(QccWAVZerotree *" zerotree );
+.br
+.BI "void QccWAVZerotreeFree(QccWAVZerotree *" zerotree );
+.br
+.BI "int QccWAVZerotreePrint(const QccWAVZerotree *" zerotree );
+.SH DESCRIPTION
+QccPack provides data structure
+.B QccWAVZerotree
+for representing a zerotree map for a dyadic subband decomposition.
+This zerotree would identify tree-like regions of zeros in
+a corresponding subband pyramid (a separate
+.B QccWAVSubbandPyramid
+structure).
+The zerotree structure can be read from and written to 
+.BR ZT -format
+files, or a
+.B QccWAVZerotree
+structure can be used without file input or output.
+.LP
+The main component of a
+.B QccWAVZerotree
+structure is an array of symbols, where each symbol in the array
+corresponds to a wavelet coefficient in a subband pyramid.
+The value of the symbol indicates whether the coefficient
+in the subband pyramid is a significant coefficient, an
+insignificant coefficient, or a zerotree root.
+The zerotree structure is a popular method for the coding of two-dimensional
+images.
+.SH "DATA STRUCTURE"
+The
+.B QccWAVZerotree
+data structure is defined as:
+.RS
+.nf
+
+typedef struct
+{
+  QccString filename;
+  QccString magic_num;
+  int major_version;
+  int minor_version;
+  int image_num_cols;
+  int image_num_rows;
+  double image_mean;
+  int num_levels;
+  int num_subbands;
+  int alphabet_size;
+  int *num_cols;
+  int *num_rows;
+  char ***zerotree;
+} QccWAVZerotree;
+.fi
+.RE
+.LP
+The fields of
+.B QccWAVZerotree
+are as follows:
+.TP
+.I filename
+The name of the file.
+.TP
+.IR magic_num ", " major_version ", " minor_version
+The magic number and version of the file.
+.TP
+.IR image_num_cols ", " image_num_rows
+The size of the zerotree array (which is also the size of the original
+two-dimensional image).
+.TP
+.IR image_mean
+The mean of the original image.
+.TP
+.IR num_levels
+Number of levels (scales) of dyadic subband decomposition in the subband
+pyramid for which the zerotree is constructed.
+.TP
+.IR num_subbands
+The number of subbands in the dyadic subband decomposition (equal to
+.RI 3* num_levels " + 1)."
+.TP
+.IR alphabet_size
+Number of distinct, non-null symbols that can occur in the
+.I zerotree
+array (will be
+.BR QCCWAVZEROTREE_NUMSYMBOLS ).
+.TP
+.IR num_cols ", " num_rows
+The number of columns and rows, respectively, of each subband of the
+dyadic subband pyramid.  Both of these two arrays have
+.IR num_subbands
+entries.
+.TP
+.IR zerotree
+The array of symbols giving the zerotree map.
+.LP
+The 
+.I zerotree
+array contains a symbol for each coefficient in the corresponding
+subband pyramid.  The value of this symbol can be one of the following:
+.TP
+.B QCCWAVZEROTREE_SYMBOLSIGNIFICANT
+The corresponding coefficient is significant.
+.TP
+.B QCCWAVZEROTREE_SYMBOLINSIGNIFICANT
+The corresponding coefficient is insignificant.
+.TP
+.B QCCWAVZEROTREE_SYMBOLZTROOT
+The corresponding coefficient is a zerotree root.
+.LP
+Additionally, QccPack provides the symbol
+.B QCCWAVZEROTREE_SYMBOLTEMP
+for a temporary labeling of a zerotree symbol.
+Symbols can be marked as "null" symbols
+use the function
+.BR QccWAVZerotreeMakeNullSymbol (3)
+to do this, 
+.BR QccWAVZerotreeMakeSymbolNonnull (3)
+to reverse the "null" marking,
+and 
+.BR QccWAVZerotreeNullSymbol (3)
+to determine if a zerotree-array symbol is null or not.
+.SH "FILE FORMAT"
+For reading and writing structures
+of type
+.BR QccWAVZerotree ,
+QccPack provides the
+.B ZT
+file format.
+This file format starts with an ASCII header followed by
+binary data.
+The ASCII header consists of magic-number/revision
+information
+followed by any amount of white space
+(space, `\\t' (tab), `\\n' (newline), `\\r' (carriage return)) and/or
+comments lines (lines starting with `#').  Following this white space,
+additional ASCII
+header information is given, separated by blanks and newlines.
+binary data follows this ASCII header information.
+Note:  one (and only one) newline 
+.B must
+immediately follow the last component of ASCII header information before the
+start of the binary data.
+.LP
+The
+.B ZT
+file format consists of the following information:
+.RS
+.sp
+.BI ZT X.X
+.br
+.I "<white space>"
+.br
+.I image_num_cols
+.br
+.I image_num_rows
+.br
+.I image_mean
+.br
+.I num_levels
+.br
+.I alphabet_size
+.br
+.I "<zerotree array>"
+.br
+\|.
+.br
+\|.
+.br
+\|.
+.br
+.sp
+.RE
+where
+.B ZT
+is the magic number,
+.I X.X
+is the version number,
+.I "<white space>"
+is white space and/or 
+comment lines, 
+and
+.IR image_num_cols ", " image_num_rows ", " image_mean ", " num_levels ", "
+and
+.IR alphabet_size
+are ASCII representations of the corresponding fields of the
+.B QccWAVZerotree
+structure.
+Following the ASCII header information, the
+.I zerotree 
+array is stored in binary with each zerotree symbol is
+stored as a 8-bit binary character.
+.SH "ROUTINES"
+.B QccWAVZerotreeInitialize()
+should be called before any use of a
+.B QccWAVZerotree
+structure.
+.B QccWAVZerotreeInitialize()
+initializes the fields of
+.I zerotree
+to the following values:
+.RS
+
+.IR filename :
+.B NULL
+string
+.br
+.IR magic_num :
+.B QCCZEROTREE_MAGICNUM
+.br
+.IR major_version ", " minor_version :
+initialized to output of 
+.BR QccGetQccPackVersion (3)
+.br
+.IR image_num_cols :
+0
+.br
+.IR image_num_rows :
+0
+.br
+.IR image_mean :
+0
+.br
+.IR num_levels :
+0
+.br
+.IR alphabet_size :
+.B QCCWAVZEROTREE_NUMSYMBOLS
+.br
+.IR num_cols :
+.B NULL
+.br
+.IR num_rows :
+.B NULL
+.br
+.IR zerotree :
+.B NULL
+.RE
+.LP
+.B QccWAVZerotreeCalcSizes()
+calculates the size of each subband in the corresponding subband pyramid
+and fills in values for the
+.I zerotree->num_cols
+and
+.I zerotree->num_rows
+arrays.
+Both these arrays must be allocated with enough space for
+.I zerotree->num_subbands
+entries prior to calling
+.BR QccWAVZerotreeCalcSizes() .
+In addition, the original image size must be assigned to
+.I zerotree->image_num_cols
+and
+.IR zerotree->image_num_rows ,
+and the number of levels of subband decomposition to
+.IR zerotree->num_levels .
+.LP
+.B QccWAVZerotreeAlloc()
+allocates space for
+.IR zerotree->num_cols ,
+.IR zerotree->num_rows ,
+and
+.IR zerotree->zerotree .
+Prior to calling
+.BR QccWAVZerotreeAlloc() ,
+.IR zerotree->num_subbands ,
+.IR zerotree->num_levels ,
+.IR zerotree->image_num_rows ,
+and
+.IR zerotree->image_num_cols
+must contain valid values.
+Allocation of each of the arrays is performed only if the pointer for the
+array is 
+.BR NULL .
+.LP
+.B QccWAVZerotreeFree()
+frees the arrays allocated by
+.BR QccWAVZerotreeAlloc()
+.LP
+.B QccWAVZerotreePrint()
+prints the contents of
+.I zerotree
+to stdout.
+.SH "RETURN VALUE"
+These routines return 0 on success, and 1 on failure.
+.SH "SEE ALSO"
+.BR QccWAVZerotreeNullSymbol (3),
+.BR QccWAVSubbandPyramid (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.LP
+J. M. Shapiro,
+"Embedded Image Coding Using Zerotrees of Wavelet Coefficients,"
+.IR "IEEE Transactions on Signal Processing" ,
+vol. 41, no. 12, pp. 3445-3462, December 1993.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

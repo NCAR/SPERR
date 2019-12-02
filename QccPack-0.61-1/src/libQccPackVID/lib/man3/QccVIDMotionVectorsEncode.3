@@ -1,0 +1,197 @@
+.TH QCCVIDMOTIONVECTORSENCODE 1 "QCCPACK" ""
+.SH NAME
+QccVIDMotionVectorsEncode, QccVIDMotionVectorsDecode \-
+encode/decode motion vectors using the variable-length code specified
+in the H.261 standard
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccVIDMotionVectorsEncode(const QccIMGImageComponent *" motion_vector_horizontal ", const QccIMGImageComponent *" motion_vector_vertical ", const QccVIDMotionVectorsTable *" mvd_table ", int " subpixel_accuracy ", QccBitBuffer *" output_buffer );
+.sp
+.BI "int QccVIDMotionVectorsDecode(QccIMGImageComponent *" motion_vector_horizontal ", QccIMGImageComponent *" motion_vector_vertical ", const QccVIDMotionVectorsTable *" table ", int " subpixel_accuracy ", QccBitBuffer *" input_buffer );
+.sp
+.BI "int QccVIDMotionVectorsReadFile(QccIMGImageComponent *" motion_vectors_horizontal ", QccIMGImageComponent *" motion_vectors_vertical ", const QccString " filename ", int " frame_num );
+.sp
+.BI "int QccVIDMotionVectorsWriteFile(const QccIMGImageComponent *" motion_vectors_horizontal ", const QccIMGImageComponent *" motion_vectors_vertical ", const QccString " filename ", int " frame_num );
+.SH DESCRIPTION
+.BR QccVIDMotionVectorsEncode()
+encodes the motion-vector field represented by
+.I motion_vector_horizontal
+(the horizontal vector components)
+and
+.I motion_vector_vertical
+(the vertical vector components),
+outputing the resulting bitstream to
+.IR output_buffer .
+.LP
+.BR QccVIDMotionVectorsDecode()
+carries out the inverse process. Namely, the bitstream is read from
+.I input_buffer
+and the motion vectors are decoding and stored in
+.IR motion_vector_horizontal
+and
+.IR motion_vector_vertical .
+.LP
+.BR QccVIDMotionVectorsEncode()
+and
+.BR QccVIDMotionVectorsDecode()
+support two methods of motion-vector coding:
+exponential-Golomb coding as in H.264, and
+Huffman coding as in H.261.
+See "EXPONENTIAL-GOLOMB CODING" and
+"HUFFMAN CODING" below for details on these coding procedures.
+If
+.IR mvd_table
+is
+.BR NULL ,
+then exponential-Golomb coding is used.
+Otherwise,
+.IR mvd_table
+is assumed to point to a valid
+.BR QccVIDMotionVectorsTable (3)
+created via
+.BR QccVIDMotionVectorsTableCreate (3)
+which is then used for Huffman coding.
+.LP
+.BR QccVIDMotionVectorsReadFile()
+and
+.BR QccVIDMotionVectorsWriteFile()
+read and write, respectively, a motion vector field to/from a file.
+The motion vectors are stored in ASCII floating-point values,
+one vector per line.
+.I filename
+gives the filename of the file to read or write.
+.I frame_num
+is the frame number of the frame corresponding to the motion field
+to be read or written.
+.I filename
+should have a
+.BR printf (3)-style
+numerical descriptor which will then be filled in with
+.I frame_num
+(e.g., football.%03d.pgm will become
+football.032.pgm if
+.I frame_num
+is 32; see
+.BR QccPackIMG (3)).
+.SH "HUFFMAN CODING"
+Essentially, the H.261 standard specifies that motion vectors are
+coded by doing a row-wise raster scan through the motion-vector field,
+starting at the upper-left and proceeding to the lower-right.
+To code the current motion vector, a difference vector is created
+by subtracting the previously encountered motion vector from the
+current motion vector. This difference vector is then coded using the
+variable-length Huffman coding table specified in Table 3/H.261
+of the H.261 standard. The previous motion vector is considered
+to be the zero vector for the first vector of each row.
+Use
+.BR QccVIDMotionVectorsTableCreate (3)
+to generate
+.IR mvd_table .
+.LP
+Note that the range of the motion vectors supported by the H.261
+table is restricted. Specifically, each vector component can lie in
+the range -15 to +15 inclusive, thereby yielding difference values in
+the range -30 to +30.
+.LP
+Strictly speaking, the H.261 standard does not support subpixel-accurate
+motion vectors. However, the H.261 motion-vector coding strategy has been
+extended for
+.BR QccVIDMotionVectorsEncode()
+and
+.BR QccVIDMotionVectorsDecode()
+to support the situtation when
+.I subpixel_accuracy
+is not full-pixel accuracy. Essentially, for subpixel accuracy,
+encoding is carried out as described above for the motion vector
+cast to integer-valued components. Then, the fractional part of each
+motion-vector component is scaled up to be an integer which is then
+coding using the same
+.IR mvd_table .
+That is, if a motion vector is
+.RI ( u ,
+.IR v ),
+then the coding is
+.IR mvd_table ( integer_u " - " previous_integer_u ),
+.IR mvd_table ( integer_v " - " previous_integer_v ),
+.IR mvd_table (( u " - " integer_u ") * S" ),
+and
+.IR mvd_table (( v " - " integer_v ") * S" ),
+where
+.I integer_u
+and
+.I integer_v
+denote the integer part of
+.I u
+and
+.IR v ,
+respectively;
+.I previous_integer_u
+and
+.I previous_integer_v
+denote the integer part of the previous motion-vector components;
+.I S
+is a scaling constant suitably chosen so that all the fractional parts of
+the motion-vectors components are scaled to integer values (for example,
+.IR S " = 4"
+for quarter-pixel accuracy); and
+.IR mvd_table ()
+denotes table lookup into
+.IR mvd_table .
+.SH "EXPONENTIAL-GOLOMB CODING"
+In H.264, motion vectors are coded in the raster-scan differencing procedure
+as described above for H.261, except that an exponential-Golomb code, rather
+than Huffman coding is used to code the difference values.
+.LP
+In the implementation here, the difference values are created and,
+if
+.IR subpixel_accuracy
+does not indicate full-pixel accuracy,
+the differences are scaled
+by an appropriate constant so that fractional values become integer values.
+.BR QccENTExponentialGolombEncode (3)
+is then used to code each difference value with an exponential-Golomb code.
+The procedure is essentially the same as described in Sec. 9.1 of the
+H.264 standard, except the codewords may differ slightly (although the
+code lengths are the same).
+.LP
+Exponential-Golomb coding is advantageous for the coding of motion-vector
+differences since the range of values is not limited as is the case for
+the Huffman-based H.261 coding described above.
+.SH "RETURN VALUE"
+These routines return 0 on success, and 1 on failure.
+.SH "SEE ALSO"
+.BR QccVIDMotionVectorsTable (3),
+.BR QccENTHuffmanEncode (3),
+.BR QccENTHuffmanDecode (3),
+.BR QccENTExponentialGolombEncode (3),
+.BR QccENTExponentialGolombDecode (3),
+.BR QccPackVID (3),
+.BR QccPackENT (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+ITU-T,
+.IR "Video Coding for Audiovisual Services at p x 64 kbit/s" ,
+March 1993, ITU-T Recommendation H.261.
+.LP
+ITU-T,
+.IR "Advanced Video Coding for Generic Audiovisual Services" ,
+May 2003, ITU-T Recommendation H.264.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

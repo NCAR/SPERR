@@ -1,0 +1,225 @@
+.TH QCCWAVWAVELETREDUNDANTDWT1D 3 "QCCPACK" ""
+.SH NAME
+QccWAVWaveletRedundantDWT1D, QccWAVWaveletInverseRedundantDWT1D,
+QccWAVWaveletRedundantDWT1DSubsample \- 
+redundant discrete wavelet transform and inverse transform for a 1D signal
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVWaveletRedundantDWT1D(const QccVector " input_signal ", QccMatrix " output_signals ", int " signal_length ", int " num_scales ", const QccWAVWavelet *" wavelet );
+.br
+.BI "int QccWAVWaveletInverseRedundantDWT1D(const QccMatrix " input_signals ", QccVector " output_signal ", int " signal_length ", int " num_scales ", const QccWAVWavelet *" wavelet );
+.br
+.BI "int QccWAVWaveletRedundantDWT1DSubsample(const QccMatrix " input_signals ", QccVector " output_signal ", int " signal_length ", int " num_scales ", int " subsample_pattern ", const QccWAVWavelet *" wavelet );
+.SH DESCRIPTION
+.B QccWAVWaveletRedundantDWT1D()
+performs a redundant
+discrete wavelet transform (RDWT) of a one-dimensional signal.
+.I num_scales
+gives the number of scales, or levels, of the decomposition.
+.BR QccWAVWaveletRedundantDWT1D()
+implements a dyadic decomposition of
+.IR input_signal 
+with oversampling;
+that is, the lowpass subband is recursively decomposed into lowpass and
+highpass bands for each level of decomposition.
+Unlike the usual critically sampled DWT
+(as implemented by
+.BR QccWAVWaveletDWT1D (3)),
+each subband has the same length as the original
+.IR input_signal .
+.LP
+The RDWT produces 
+.I num_scales
+highpass subbands and one baseband subband,
+for a total of
+.I num_scales + 1
+subbands.
+These subbands are returned in
+.I output_signals
+which is a
+matrix with 
+.I "num_scales + 1"
+rows and 
+.I signal_length
+columns.
+The first row of
+.I output_signals
+contains the baseband signal;
+subsequent rows contain highpass bands of decreasing scale (increasing
+spatial resolution).
+Sufficient storage space for
+.IR output_signals 
+must be allocated prior to calling
+.BR QccWAVWaveletRedundantDWT1D() .
+.LP
+.I wavelet
+can be either a filter-bank or lifting-scheme
+implementation.
+.LP
+.BR QccWAVWaveletInverseRedundantDWT1D()
+performs the inverse RDWT of
+.IR input_signals .
+Sufficient space for
+.I output_signal
+must be allocated prior to calling
+.BR QccWAVWaveletInverseRedundantDWT1D() .
+.LP
+The RDWT produces an oversampled DWT transform; that is,
+an overcomplete expansion of the original signal.
+However,
+the coefficients of the usual critically sampled DWT
+are amongst the RDWT coefficients.
+More accurately, there exist
+.I 2 ^ num_scales
+sets of RDWT coefficients that are identical
+to a critically sampled, dyadic DWT.
+Each one of these
+.I 2 ^ num_scales
+DWTs differs from the others in the subsampling phase choice
+(even or odd) at each level of the transform.
+.BR QccWAVWaveletRedundantDWT1DSubsample()
+subsamples the coefficients output from
+.BR QccWAVWaveletRedundantDWT1D()
+to obtain the coefficients for a critically sampled DWT.
+.IR subsample_pattern ,
+a value from 0 to
+.RI ( "2 ^ num_scales" ) " - 1" ,
+indicates which of the
+.I 2 ^ num_scales
+DWT-coefficient sets to choose.
+.I num_scales
+gives the number of levels of decomposition that exist in
+.IR input_signals ,
+which is assumed to be a matrix of
+.I num_scales + 1
+rows and
+.I signal_length
+columns produced by
+.BR QccWAVWaveletRedundantDWT1D() .
+Sufficient space for
+.I output_signal
+must be allocated prior to calling
+.BR QccWAVWaveletRedundantDWT1DSubsample() .
+Calling
+.BR QccWAVWaveletRedundantDWT1DSubsample()
+with 
+.I subsample_pattern
+= 0
+will produce the same coefficients as would have been
+produced by
+.BR QccWAVWaveletDWT1D().
+.LP
+.BR QccWAVWaveletInverseRedundantDWT1D() 
+is the "proper" procedure for inverting the RDWT.
+That is,
+.BR QccWAVWaveletInverseRedundantDWT1D() 
+performs inverse filtering as well
+as weighted "averaging" of the transform redundancies 
+to properly reconstruct the original signal from the
+RDWT coefficients.
+A "quick and dirty" reconstruction is possible, however,
+by subsampling and then inverting using the
+critically sampled inverse DWT, i.e., by calling
+.BR QccWAVWaveletRedundantDWT1DSubsample()
+and then
+.BR QccWAVWaveletInverseDWT1D() .
+Both these approaches to inverting the RDWT will produce
+the same results on unaltered RDWT coefficients; however,
+should the RDWT coefficients be processed in some fashion, say,
+through quantization, then
+.BR QccWAVWaveletInverseRedundantDWT1D()
+should be used to invert the transform.
+Additionally, this subsampling approach to inverting the RDWT
+works only for 
+.I subsample_pattern
+= 0, which is the only subsampling pattern whose phase choices
+match those assumed by
+.BR QccWAVWaveletInverseDWT1D() .
+.SH NOTES
+The notion of an RDWT apparently dates back to the work of 
+Holschneider
+.IR "et al".
+and Dutilleux who devised a redundant transform implemented via the so-called
+.IR "algorithme a trous" .
+This filter-bank algorithm is similar to the usual Mallat algorithm
+for the critically sampled DWT in that it implements
+the wavelet transform with filter banks. The key difference between
+the two approaches is that
+the subsampling at the end of every scale of the transform as used in
+the Mallat algorithm is not performed in the
+.IR "algorithm a trous" ,
+and the filters, which are the same at every scale in the Mallat
+algorithm, change for every scale.
+Specifically, the
+.IR "algorithm a trous"
+calls for the insertion of "holes" ("trous" in French)
+between each filter tap; that is, the filters used in each
+scale of the
+.IR "algorithm a trous"
+decomposition
+are the filters of the previous scale upsampled by a factor of 2.
+.LP
+Shensa points out that the Mallat and 
+.I "a trous"
+implementations are very closely related; 
+in fact, it is possible to obtain the coefficients for the Mallat
+algorithm by subsampling, or decimating, the coefficients
+resulting from the
+.IR "algorithm a trous" ,
+except possibly at the signal boundaries when symmetric extension is used.
+This observation leads
+to an "alternative" implementation of the
+.IR "algorithm a trous" ,
+and it is this implementation that is used here in
+.BR QccWAVWaveletRedundantDWT1D() .
+This alternative implementation of the
+.IR "algorithm a trous" 
+eliminates the above-mentioned symmetric-boundary inconsistencies;
+in addition, the alternative implementation
+permits the direct use of lifting instead of filter banks for improved
+computation efficiency.
+.SH "RETURN VALUES"
+These routines
+return 0 on success and 1 on error.
+.SH "SEE ALSO"
+.BR QccWAVWaveletDWT1D (3),
+.BR QccWAVWaveletInverseDWT1D (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.LP
+M. Holschneider, R. Kronland-Martinet, J. Morlet, and
+P. Tchamitchian,
+"A Real-Time Algorithm for Signal Analysis with the Help
+of the Wavelet Transform," in
+.IR "Wavelets: Time-Frequency Methods and Phase Space",
+Berlin: Springer-Verlag, pp. 286-297, 1989.
+.LP
+P. Dutilleux,
+"An Implementation of the Algorithm A Trous to Compute the Wavelet Transform,"
+in
+.IR "Wavelets: Time-Frequency Methods and Phase Space",
+Berlin: Springer-Verlag, pp. 298-304, 1989.
+.LP
+M. J. Shensa,
+"The Discrete Wavelet Transform: Wedding the A Trous and Mallat Algorithms,"
+.IR "IEEE Trans. Signal Processing" ,
+vol. 40, no. 10, pp. 2464-2482, Oct. 1998.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+

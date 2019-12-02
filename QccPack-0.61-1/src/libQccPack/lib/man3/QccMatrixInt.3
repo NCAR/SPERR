@@ -1,0 +1,198 @@
+.TH QCCMATRIXINT 3 "QCCPACK" ""
+.SH NAME
+QccMatrixIntAlloc,
+QccMatrixIntFree,
+QccMatrixIntZero,
+QccMatrixIntResize,
+QccMatrixIntCopy,
+QccMatrixIntMaxValue,
+QccMatrixIntMinValue,
+QccMatrixIntPrint,
+QccMatrixIntTranpose,
+QccMatrixIntAdd,
+QccMatrixIntSubtract,
+QccMatrixIntMean,
+\- miscellaneous integer-matrix routines
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "QccMatrixInt QccMatrixIntAlloc(int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "void QccMatrixIntFree(QccMatrixInt " matrix ", int " num_rows );
+.br
+.sp
+.BI "int QccMatrixIntZero(QccMatrixInt " matrix ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "QccMatrixInt QccMatrixIntResize(QccMatrixInt " matrix ", int " num_rows ", int " num_cols ", int " new_num_rows ", int " new_num_cols );
+.br
+.sp
+.BI "int QccMatrixIntCopy(QccMatrixInt " matrix1 ", const QccMatrixInt " matrix2 ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "int QccMatrixIntMaxValue(const QccMatrixInt " matrix ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "int QccMatrixIntMinValue(const QccMatrixInt " matrix ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "int QccMatrixIntPrint(const QccMatrixInt " matrix ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "int QccMatrixIntTranspose(const QccMatrixInt " matrix1 ", QccMatrixInt " matrix2 ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "int QccMatrixIntAdd(QccMatrixInt " matrix1 ", const QccMatrixInt " matrix2 ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "int QccMatrixIntSubtract(QccMatrixInt " matrix1 ", const QccMatrixInt " matrix2 ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "double QccMatrixIntMean(const QccMatrixInt " matrix ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "double QccMatrixIntVariance(const QccMatrixInt " matrix ", int " num_rows ", int " num_cols );
+.SH DESCRIPTION
+QccPack library routines use two-dimensional matrices of type 
+.B QccMatrixInt
+which is defined as
+.RS
+.nf
+typedef QccVectorInt *QccMatrixInt;
+.fi
+.RE
+.LP
+.B QccMatrixIntAlloc()
+allocates a
+.B QccMatrixInt
+consisting of 
+.I num_rows
+vectors; each vector is of type
+.B QccVectorInt
+and has dimension
+.IR num_cols .
+.B QccMatrixIntAlloc()
+returns a
+.B NULL
+pointer if the allocation fails.
+.LP
+.B QccMatrixIntFree()
+frees a
+.B QccMatrixInt
+previously allocated by
+.BR QccMatrixIntAlloc() .
+.LP
+.B QccMatrixIntZero()
+makes each element of 
+.I matrix
+zero.
+.LP
+.B QccMatrixIntResize()
+changes the size of
+.I matrix
+from
+.IR num_rows " x " num_cols 
+to
+.IR new_num_rows " x " new_num_cols 
+by calling
+.BR realloc (3)
+and
+.BR QccVectorIntResize (3).
+Upon success, the new matrix is returned; a
+.B NULL
+pointer is returned if 
+.BR realloc (3)
+or
+.BR QccVectorIntResize (3)
+fails. If
+.I matrix
+is
+.BR NULL ,
+.BR QccMatrixIntAlloc()
+is called. In any case, all elements added to
+.I matrix
+are zero.
+.LP
+.BR QccMatrixIntCopy()
+copies
+.I matrix2
+to
+.IR matrix1 .
+.LP
+.B QccMatrixIntMaxValue()
+returns the largest element in
+.IR matrix .
+.LP
+.B QccMatrixIntMinValue()
+returns the smallest element in
+.IR matrix .
+.LP
+.B QccMatrixIntPrint()
+prints the elements of
+.I matrix
+to stdout.
+.LP
+.B QccMatrixIntTranspose()
+computes the transpose of
+.IR matrix1 ,
+storing the result as
+.IR matrix2 ,
+which must be previously allocated.
+It is assumed that 
+.I matrix2
+is of the proper size (i.e.,
+.I num_cols
+rows by
+.I num_rows
+columns).
+.LP
+.B QccMatrixIntAdd()
+adds each component of
+.I matrix1 
+to the corresponding component of
+.IR matrix2 ,
+returning the resulting integer matrix in
+.IR matrix1 .
+.I matrix1
+and
+.I matrix2
+must be the same size.
+.LP
+.B QccMatrixIntSubtract()
+subtracts each component of
+.I matrix2
+from the corresponding component of
+.IR matrix1 ,
+returning the resulting integer matrix in
+.IR matrix1 .
+.I matrix1
+and
+.I matrix2
+must be the same size.
+.LP
+.B QccMatrixIntMean()
+calculates the mean of the elements in
+.IR matrix .
+.LP
+.B QccMatrixIntVariance()
+calculates the variance of the elements in
+.IR matrix .
+.SH "SEE ALSO"
+.BR QccVectorInt (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

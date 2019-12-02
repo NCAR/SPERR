@@ -1,0 +1,133 @@
+.TH QCCWAVWAVELETLWT3D 3 "QCCPACK" ""
+.SH NAME
+QccWAVWaveletLWT3D, QccWAVWaveletInverseLWT3D \-
+forward and inverse separable 3D lazy wavelet transform
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVWaveletLWT3D(const QccVolume " input_volume ", QccVolume " output_volume ", int " num_frames ", int " num_rows ", int " num_cols ", int " origin_frame ", int " origin_row ", int " origin_col ", int " subsample_pattern_frame ", int " subsample_pattern_row ", int " subsample_pattern_col );
+.br
+.BI "int QccWAVInverseWaveletLWT3D(const QccVolume " input_volume ", QccVolume " output_volume ", int " num_frames ", int " num_rows ", int " num_cols ", int " origin_frame ", int " origin_row ", int " origin_col ", int " subsample_pattern_frame ", int " subsample_pattern_row ", int " subsample_pattern_col );
+.SH DESCRIPTION
+.B QccWAVWaveletLWT3D()
+implements a separable lazy wavelet transform (LWT).
+Essentially, the
+.I input_volume
+is partitioned into eight subsets:
+the even-frame-even-row-even-column samples,
+the even-frame-even-row-odd-column samples,
+the even-frame-odd-row-even-column samples,
+the even-frame-odd-row-odd-column samples,
+the odd-frame-even-row-even-column samples,
+the odd-frame-even-row-odd-column samples,
+the odd-frame-odd-row-even-column samples, and
+the odd-frame-odd-row-odd-column samples.
+These eight subsets lie in the eight octants of
+.IR output_volume .
+.LP
+.IR origin_frame ,
+.IR origin_row ,
+and
+.I origin_col
+give the frame, row, and column index numbers
+of the upper-corner sample of
+.IR input_volume 
+and are used to determine the phases of subsampling in each
+level of the signal decomposition.
+In most cases,
+.I input_volume
+starts at (0, 0, 0), so
+.IR origin_frame ,
+.IR origin_row ,
+and
+.I origin_col
+are all 0.
+.LP
+.IR subsample_pattern_frame ,
+.IR subsample_pattern_row ,
+and
+.I subsample_pattern_col
+may be either
+.B QCCWAVWAVELET_PHASE_EVEN
+or
+.BR QCCWAVWAVELET_PHASE_ODD ,
+indicating whether even- or odd-phase subsampling is desired
+along each frame, row, and column, respectively.
+In the usual case, even subsampling is normally used.
+.LP
+In the case that
+.I num_frames
+is even, all eight "subbands" of the LWT
+have the same number of frames.  On the other hand, if
+.I num_frames
+is odd, four of the eight subbands will be one frame longer
+than the others. Which subbands will be longer will depend on
+whether 
+.IR origin_frame 
+is odd or even.
+Likewise,
+.IR num_rows
+and
+.IR origin_rows ,
+and
+.I num_cols
+and
+.IR origin_col ,
+determine if the subbands have the same number of rows and columns,
+respectively, and
+which ones are wider if not.
+.LP
+.BR QccWAVWaveletLWT3D()
+is implemented as a separable decomposition using 1D LWTs via calls
+to
+.BR QccWAVWaveletLWT ()
+and 2D LWTs via calls to
+.BR QccWAVWaveletLWT2D ().
+.LP
+.BR QccWAVWaveletInverseLWT3D()
+performs the opposite operation as
+.BR QccWAVWaveletLWT3D() .
+That is, the subbands are extracted from
+.I input_volume
+and "interleaved" to produce
+.IR output_volume .
+.LP
+For both of these routines,
+.I output_volume
+must be allocated to sufficient size before calling the routine.
+.SH "RETURN VALUES"
+Both
+.BR QccWAVWaveletLWT3D()
+and
+.BR QccWAVWaveletInverseLWT3D()
+return 0 on success and 1 on error.
+.SH "SEE ALSO"
+.BR QccWAVWaveletLWT (3),
+.BR QccWAVWaveletInverseLWT (3),
+.BR QccWAVWaveletLWT2D (3),
+.BR QccWAVWaveletInverseLWT2D (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.LP
+I. Daubechies and W. Sweldens,
+"Factoring Wavelet Transforms Into Lifting Steps,"
+.IR "J. Fourier Anal. Appl." ,
+vol. 4, no. 3, pp. 245-267, 1998.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+

@@ -1,0 +1,347 @@
+.TH QCCSPECKENCODE 1 "QCCPACK" ""
+.SH NAME
+QccSPECKEncode, QccSPECKDecode \-
+encode/decode an image using the SPECK algorithm
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccSPECKEncode(const QccIMGImageComponent *" image ", const QccIMGImageComponent *" mask ", int " num_levels ", int " target_bit_cnt ", const QccWAVWavelet *" wavelet ", QccBitBuffer *" output_buffer );
+.sp
+.BI "int QccSPECKDecodeHeader(QccBitBuffer *" input_buffer ", int *" num_levels ", int *" num_rows ", int *" num_cols ", double *" image_mean ", int *" max_coefficient_bits );
+.sp
+.BI "int QccSPECKDecode(QccBitBuffer *" input_buffer ", QccIMGImageComponent *" image ", const QccIMGImageComponent *" mask ", int " num_levels ", const QccWAVWavelet *" wavelet ", double " image_mean ", int " max_coefficient_bits ", int " target_bit_cnt );
+.SH DESCRIPTION
+.SS Encoding
+.LP
+.B QccSPECKEncode()
+encodes an image component,
+.IR image ,
+using the Set-Partitioning Embedded Block (SPECK) algorithm by Pearlman
+.IR "et al."
+The SPECK algorithm involves a 2D DWT followed by 
+a progressive "bitplane" coding of the wavelet coefficients using a
+block-splitting quantization structure based on quadtrees.
+.LP
+.I image
+is the image component to be coded and
+.I output_buffer
+is the output bitstream.
+.I output_buffer
+must be of
+.B QCCBITBUFFER_OUTPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3).
+.LP
+.I num_levels
+gives the number of levels of dyadic wavelet decomposition to perform,
+and
+.I wavelet
+is the wavelet to use for decomposition.
+.LP
+The bitstream output from the SPECK encoder is embedded, meaning that
+any prefix of the bitstream can be decoded to give a valid 
+representation of the image.  The SPECK encoder essentially produces
+output bits until the number of bits output reaches
+.IR target_bit_cnt ,
+the desired (target) total length of the output bitstream in bits,
+and then it stops.
+Note that this is the bitstream length in bits, not the rate of the bitstream
+(which would be expressed in bits per pixel).
+.LP
+.BR QccSPECKEncode()
+optionally supports the use of a shape-adaptive DWT (SA-DWT) rather than
+the usual DWT. That is, 
+.BR QccSPECKEncode()
+can call
+.BR QccWAVSubbandPyramidShapeAdaptiveDWT (3)
+as the wavelet transform rather than the usual
+.BR QccWAVSubbandPyramidDWT (3).
+The use of a SA-DWT is indicated by a non-NULL
+.IR mask ;
+if 
+.I mask
+is NULL, then the usual DWT is used.
+In the case of a SA-DWT,
+.I mask 
+gives the transparency mask which indicates which pixels of the image
+are non-transparent and thus have data that is to be transformed.
+Refer to 
+.BR QccWAVSubbandPyramidShapeAdaptiveDWT (3)
+for more details on the calculation of this SA-DWT.
+See "Shape-Adaptive Coding" below for details on how the SPECK
+algorithm handles shape-adaptive coding.
+.SS Decoding
+.LP
+.B QccSPECKDecodeHeader()
+decodes the header information 
+in a bitstream previously produced by
+.BR QccSPECKEncode() .
+The input bitstream is
+.I input_buffer
+which must be of
+.B QCCBITBUFFER_INPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3).
+.LP
+The header information is returned in
+.I num_levels
+(number of levels of wavelet decomposition),
+.I num_rows
+(vertical size of image),
+.I num_cols
+(horizontal size of image),
+.I image_mean
+(the mean value of the original image),
+and
+.I max_coefficient_bits
+(indicates the precision, in number of bits, of the wavelet coefficient
+with the largest magnitude).
+.LP
+.B QccSPECKDecode()
+decodes the bitstream
+.IR input_buffer ,
+producing the reconstructed image component,
+.IR image .
+The bitstream must already have had its header read by a prior call
+to
+.B QccSPECKDecodeHeader()
+(i.e., you call
+.B QccSPECKDecodeHeader() 
+first and then
+.BR QccSPECKDecode() ).
+If
+.I target_bit_cnt
+is
+.BR QCCENT_ANYNUMBITS ,
+then decoding stops when the end of the input bitstream is reached;
+otherwise, decoding stops when
+.I target_num_bits
+from the input bitstream have been decoded.
+.LP
+If a SA-DWT was used in SPECK encoding, then the original transparency
+mask should be passed to 
+.BR QccSPECKDecode()
+as
+.IR mask .
+That is,
+.I mask
+should be the same transparency mask (in the spatial domain)
+that was passed to
+.BR QccSPECKEncode() .
+Note that
+.BR QccSPECKDecode()
+will transform this
+.I mask
+via a Lazy wavelet transform, and then pass the transformed mask
+to 
+.BR QccWAVSubbandPyramidInverseShapeAdaptiveDWT (3).
+If the usual DWT was used in encoding, then
+.I mask
+should be a NULL pointer.
+.SH ALGORITHM DETAILS
+The SPECK algorithm follows the popular bitplane-coding approach to
+successive approximation of wavelet coefficients. As such, the
+SPECK coder performs two passes
+through the set of
+wavelet coefficients: the significance pass and
+the refinement pass.
+The significance pass describes the significance state
+for each coefficient---whether or not
+the coefficient magnitude is greater than or less than the
+current significance threshold.
+Thus, for a given threshold,
+the significance pass
+amounts to the coding of a binary-valued significance map.
+On the other hand, the refinement pass produces a successive
+approximation to those coefficients that are already known to be significant
+by coding the current coefficient-magnitude bitplane
+for those significant coefficients.
+After each iteration of the significance and refinement passes, the 
+significance threshold is divided in half, and the process is repeated
+for the next bitplane.
+.LP
+For coding the binary significance map, the SPECK algorithm parititions
+sets of coefficients into smaller and smaller sets. Unlike zerotree
+set-partitioning algorithms such as SPIHT,
+SPECK eliminates the cross-scale aggregation of coefficients and 
+focuses the set-partitioning process instead on sets of contiguous
+coefficients from within a single subband.
+Specifically, SPECK codes the significance map with quadtrees,
+a well known method of spatial partitioning.
+In quadtree partitioning, the significance state of an entire
+block of coefficients is tested and coded, the block is subdivided into
+four subblocks of approximately equal size, and the significance-coding
+process is repeated recursively on each of the subblocks.
+.LP
+As with SPIHT, the SPECK algorithm stores sets in implicitly sorted lists.
+Insignificant sets are placed in a list of insigificant sets (LIS).
+During the sorting pass, each insignificant set in an LIS is tested for
+significance against the current threshold. If the set becomes
+significant, it is split into four subsets according to the quadtree
+decomposition structure described above. The four new sets are
+placed into an LIS, recursively tested for significance, and
+split again if needed.
+SPECK maintains multiple LIS lists in order to implicitly process
+sets according to their size.
+During the sorting pass, each time a set is split, the resulting
+subsets move to the next LIS.
+When a set is reduced in
+size to a single coefficient, and that coefficient becomes significant,
+then the singleton set is moved from its LIS to a list of significant pixels
+(LSP) for later processing in the refinement pass.
+.LP
+The SPECK implementation in QccPackSPECK follows the algorithm described
+in the paper by Pearlman, Islam, Nagaraj, and Said, except that,
+as described by Pearlman
+.IR "et al." ,
+the CodeS() procedure partitions a set into four subsets and then,
+for each subset, encodes the
+significance state of the subset and recursively calls
+CodeS() on the subset. On the other hand,
+in the QccPack implementation, once CodeS() partitions a set into 
+subsets, ProcessS() is called on each subset. ProcessS() then
+in turn codes the significance state of the subset as well as calls
+CodeS() for the subset. That is to say, as originally described by
+Pearlman() 
+.IR "et al." ,
+recursion in SPECK is limited to within CodeS(), whereas, in the 
+QccPack implementation of SPECK, ProcessS() and CodeS() recursively
+call one another. This latter recursion strategy is a bit simpler to
+code, while performance to the original algorithm is identical.
+.SH PERFORMANCE
+The QccPack implementation of the SPECK algorithm was coded "from scratch,"
+with no consultation of the original SPECK source code produced at
+RPI by Pearlman
+.IR "et al."
+The QccPack implementation follows the
+description of the SPECK algorithm
+given by Pearlman
+.IR "et al."
+in their ITCSVT paper
+as closely as can be extrapolated from that description, except
+as noted above.
+However, 
+since no algorithm of complexity can ever be described
+.I completely
+in a journal article,
+it is inevitable that certain subtle details
+were implemented in the QccPack SPECK coder 
+differently from in the coder used by
+Pearlman
+.IR "et al."
+for their results.
+As a consequence, the performance of the
+QccPack implementation differs slightly from that reported
+by Pearlman
+.IR "et al."
+in their ITCSVT paper.
+However, the difference has been observed to be rather small, with
+the QccPack implementation achieving PSNR typically 0.05 dB  below
+that reported by Pearlman
+.IR "et al."
+.LP
+A quantitative comparison follows using the three "standard" images
+(Lenna, Barbara, and Goldhill)
+provided with QccPack.  In all of the results, the wavelet transform employed
+is a 5-level dyadic decomposition using
+the 9/7 Cohen-Daubechies-Feauveau biorthogonal wavelet with
+symmetric extension at the image boundaries (this is the same transform
+used in the paper by Pearlman 
+.IR "et al." ).
+The RPI results refer to the results reported in the ITCSVT paper
+by Pearlman
+.IR "et al."
+
+.RS
+.nf
+                Lenna
+ -------------------------------------
+ | Rate   |          PSNR (db)       |
+ | (bpp)  |     RPI         QccPack  |
+ ------------------------------------
+ |  0.25  |    34.03    |    33.99   |
+ |  0.5   |    37.10    |    37.10   |
+ |  1.0   |    40.25    |    40.25   |
+ -------------------------------------
+
+
+               Barbara
+ -------------------------------------
+ | Rate   |          PSNR (db)       |
+ | (bpp)  |     RPI         QccPack  |
+ ------------------------------------
+ |  0.25  |    27.76    |    27.69   |
+ |  0.5   |    31.54    |    31.48   |
+ |  1.0   |    36.49    |    36.44   |
+ -------------------------------------
+
+
+               Goldhill
+ -------------------------------------
+ | Rate   |          PSNR (db)       |
+ | (bpp)  |     RPI         QccPack  |
+ ------------------------------------
+ |  0.25  |    30.50    |    30.43   |
+ |  0.5   |    33.03    |    32.95   |
+ |  1.0   |    36.36    |    36.32   |
+ -------------------------------------
+.fi
+.RE
+
+.SH "SHAPE-ADAPTIVE CODING"
+Lu and Pearlman developed a variant of the SPECK algorithm for
+coding arbitrarily shaped image objects.
+This object-based SPECK (OB-SPECK) algorithm
+follows the common methodology for
+shape-adaptive embedded coders, namely,
+transparent regions are considered to be permanently insignificant.
+During set partitioning in OB-SPECK,
+when a set contains no opaque coefficients, it is pruned from the
+quadtree decomposition.
+The QccPack implementation of SPECK handles shape-adaptive coding
+identically to OB-SPECK.
+.SH "SEE ALSO"
+.BR speckencode (1),
+.BR speckdecode (1),
+.BR QccBitBuffer (3),
+.BR QccWAVSubbandPyramid (3),
+.BR QccWAVSubbandPyramidDWT (3),
+.BR QccWAVSubbandPyramidShapeAdaptiveDWT (3),
+.BR QccPackWAV (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+W. A. Pearlman, A. Islam, N. Nagaraj, and A. Said,
+"Efficient, Low-Complexity Image Coding with a Set-Partitioning
+Embedded Block Coder,"
+.IR "IEEE Transactions on Circuits and Systems for Video Technology" ,
+to appear, 2003.
+
+A. Islam and W. A. Pearlman,
+"An Embedded and Efficient Low-Complexity Hierarchical Image Coder,"
+in
+.IR "Visual Communications and Image Processing" ,
+K. Aizawa, R. L. Stevenson, and Y.-Q. Zhang, Eds., San Jose, CA,
+January 1999, Proc. SPIE 3653, pp. 294-305.
+
+Z. Lu and W. A. Pearlman,
+"Wavelet Video Coding of Video Object by Object-Based SPECK Algorithm,"
+in
+.IR "Proceedings of the Picture Coding Symposium" ,
+Seoul, Korea, April 2001, pp. 413-416.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+
+.SH LICENSE
+The Set-Partitioning Embedded Block (SPECK) algorithm is protected by US
+Patent #6,671,413 (issued December 30, 2003) and by patents pending.
+An implementation of the SPECK algorithm is included herein (utility
+programs speckencode and speckdecode, and speck.c in the QccPack library)
+with the permission of Dr. William A. Pearlman, exclusive holder of patent
+rights. Dr. Pearlman has graciously granted a license with certain
+restrictions governing the terms and conditions for use, copying,
+distribution, and modification of the SPECK algorithm implementation
+contained herein. Specifically, only use in academic and non-commercial
+research is permitted, while all commercial use is prohibited. Refer to
+the file LICENSE-SPECK for more details.

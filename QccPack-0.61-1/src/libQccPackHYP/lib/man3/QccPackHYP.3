@@ -1,0 +1,151 @@
+.TH QCCPACKHYP 3 "QCCPACKHYP" ""
+.SH NAME
+QccPackHYP \- QccPack module for hyperspectral imagery
+.SH DESCRIPTION
+.B QccPackHYP
+provides a collection of library routines and utility programs for
+hyperspectral imagery.
+.SS "DATA TYPES AND FILE FORMATS"
+.TP
+.BR QccHYPRaw (3)
+Routines for reading and writing raw binary files
+typical of hyperspectral applications
+.TP
+.BR QccHYPklt (3)
+data structure
+.BR QccHYPkt
+and corresponding
+.BR KLT
+file format for spectral KLT transform
+.TP
+.BR QccHYPrklt (3)
+data structure for spectral reversible KLT transform
+.SS "LIBRARY ROUTINES"
+.SS "Raw-Format Files"
+.TP
+.BR QccHYPRawRead2D (3)
+Read a raw binary file into an image component
+.TP
+.BR QccHYPRawWrite2D (3)
+Write an image component into a raw binary file
+.TP
+.BR QccHYPRawDist2D (3)
+Calculate distortion between two raw binary files
+.TP
+.BR QccHYPRawRead3D (3)
+Read a raw binary file into an image cube
+.TP
+.BR QccHYPRawWrite3D (3)
+Write an image cube into a raw binary file
+.TP
+.BR QccHYPRawDist3D (3)
+Calculate distortion between two raw binary files
+.SS "Miscellaneous Hyperspectral Routines"
+.TP
+.BR QccHYPImageCubeMeanSAM (3)
+ calculate the mean SAM between two image cubes
+.TP
+.BR QccHYPImageCubeToColor (3)
+make a color-image representation of image cube
+.SS "KLT Spectral Transform"
+.TP
+.BR QccHYPkltInitialize (3)
+initialize a KLT
+.TP
+.BR QccHYPkltAlloc (3)
+allocate a KLT
+.TP
+.BR QccHYPkltFree (3)
+free a KLT
+.TP
+.BR QccHYPkltPrint (3)
+print a KLT
+.TP
+.BR QccHYPkltRead (3)
+read a KLT
+.TP
+.BR QccHYPkltWrite (3)
+write a KLT
+.TP
+.BR QccHYPkltTrain (3)
+create a KLT by training on image cube
+.TP
+.BR QccHYPkltTransform (3)
+spectrally transform image cube using KLT
+.TP
+.BR QccHYPkltInverseTransform (3)
+spectrally transform image cube using inverse KLT
+.SS "Reversible KLT Spectral Transform"
+.TP
+.BR QccHYPrkltInitialize (3)
+initialize a reversible KLT
+.TP
+.BR QccHYPrkltAlloc (3)
+allocate a reversible KLT
+.TP
+.BR QccHYPrkltFree (3)
+free a reversible KLT
+.TP
+.BR QccHYPrkltTrain (3)
+create a reversible KLT by training on image cube
+.TP
+.BR QccHYPrkltFactorization (3)
+factor a reversible KLT into its constituent lifting steps
+.TP
+.BR QccHYPrkltTransform (3)
+spectrally transform image cube using reversible KLT
+.TP
+.BR QccHYPrkltInverseTransform (3)
+spectrally transform image cube using inverse reversible KLT
+.SS "UTILITY PROGRAMS"
+.TP
+.BR rawtoicp (1)
+convert raw file to image component
+.TP
+.BR icptoraw (1)
+convert image component to raw file
+.TP
+.BR rawtoicb (1)
+convert raw file to image cube
+.TP
+.BR icbtoraw (1)
+convert image cube to raw file
+.TP
+.BR rawdist2d (1)
+distortion between two 2D raw files
+.TP
+.BR rawdist3d (1)
+distortion between two 3D raw files
+.TP
+.BR icbsam (1)
+mean SAM between two image cubes
+.TP
+.BR icbtocolor (1)
+image cube to color-image representation
+.TP
+.BR klt_train (1)
+KLT training on image cube
+.TP
+.BR icbklt (1)
+transform image cube with KLT
+.TP
+.BR icbiklt (1)
+transform image cube with inverse KLT
+.SH "SEE ALSO"
+.BR QccPackIMG (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

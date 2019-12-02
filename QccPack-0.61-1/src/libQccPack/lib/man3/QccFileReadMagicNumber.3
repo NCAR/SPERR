@@ -1,0 +1,114 @@
+.TH QCCFILEREADMAGICNUMBER 3 "QCCPACK" ""
+.SH NAME
+QccFileReadMagicNumber,
+QccFileWriteMagicNumber,
+QccFileWriteMagicNumberVersion,
+QccFileGetMagicNumber,
+QccFilePrintFileInfo
+\- read and write magic-number headers to files
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccFileReadMagicNumber(FILE *" infile ", QccString " magic_num ", int *" major_version_number ", int *" minor_version_number );
+.br
+.BI "int QccFileWriteMagicNumber(FILE *" outfile ", const QccString " magic_num );
+.br
+.BI "int QccFileGetMagicNumber(const QccString " filename ", QccString " magic_num );
+.br
+.BI "int QccFileWriteMagicNumberVersion(FILE *" outfile ", const QccString " magic_num ", int " major_version_number ", int " minor_version_number );
+.br
+.BI "int QccFilePrintFileInfo(const QccString " filename ", const QccString " magic_num ", int " major_version ", int " minor_version );
+.SH DESCRIPTION
+Each file written by QccPack includes identifying information that
+consists of 
+a magic number (in alphabetic characters),
+which indicates the type of data in the file,
+and a version number, which indicates which version (major and minor
+version) of QccPack created the file.
+This header information is stored at the start of each file.
+.LP
+.B QccFileReadMagicNumber()
+reads the magic number and version information from the header of
+.IR infile .
+The magic number,
+the major version number, and the minor version number are
+returned in locations pointed to by
+.IR magic_num ", " major_version_number ", and " minor_version_number ,
+respectively.
+Space in which to store the magic number and the two version numbers
+must be allocated prior to calling
+.BR QccFileReadMagicNumber() .
+Also,
+.I infile
+must already be positioned to the start of file (via a prior call to
+.BR QccFileOpen (3),
+for example), as the magic number and version information is stored at the
+start of the file.
+.LP
+.B QccFileWriteMagicNumber()
+writes the magic number, as given by
+.IR magic_num ,
+and the version information,
+as returned by
+.BR QccGetQccPackVersion (3),
+to the start of
+.IR outfile .
+It is assumed that 
+.I outfile
+is already open and positioned to the start of the file
+(via a prior call to
+.BR QccFileOpen (3)).
+.B QccFileWriteMagicNumberVersion()
+does the same as
+.B QccFileWriteMagicNumber()
+except that
+.IR major_version_number ", and " minor_version_number 
+allow the explicit specification of the version number to appear in the
+file header.
+.LP
+.B QccFileGetMagicNumber()
+is similar to
+.BR QccFileReadMagicNumber() ,
+except that the file whose name is
+.I filename
+is examined, and its magic number (magic number only, no version numbers)
+is returned in 
+.IR magic_num .
+.LP
+.B QccFilePrintFileInfo()
+accepts a
+.IR filename ", a " magic_num ", " 
+and two version numbers,
+.I major_version
+and
+.IR minor_version .
+This information, along with the the file size and modtime (from
+.BR QccFileGetSize (3)
+and
+.BR QccFileGetModTime (3), 
+respectively),
+is printed to stdout
+in a nice, attractive banner.
+.SH "RETURN VALUES"
+Each of these functions return 0 on success and 1 on failure.
+.SH "SEE ALSO"
+.BR QccFileOpen (3),
+.BR QccGetQccPackVersion (3),
+.BR QccFileGetSize (3),
+.BR QccFileGetModTime (3), 
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

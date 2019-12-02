@@ -1,0 +1,114 @@
+#!/bin/sh
+
+usage()
+{
+    echo 'usage: substr [-q] [-n name_pattern] [-e name_pattern] [-p path_pattern] orig dest path'
+    echo
+    echo '         orig = original string to replace'
+    echo '         dest = replacement string'
+    echo '         path = starting path to search for html files'
+    echo
+    echo '       Options:'
+    echo '         -q     quiet mode; suppress all messages'
+    echo '         -n     use name_pattern as the pattern for the -name'
+    echo '                option of the find(1) command used'
+    echo '         -e     use name_pattern as the pattern for the ! -name'
+    echo '                option of the find(1) command used'
+    echo '         -p     use path_pattern as the pattern for the -path'
+    echo '                option of the find(1) command used'
+    echo
+    echo '       Replaces every occurence of string orig by dest in every'
+    echo '       file matching the name_pattern in the directory tree'
+    echo '       specified by path.  Uses find(1) to get the list of files'
+    echo '       to edit.  If -n are -p are not given, all files are edited.'
+    echo '       The -e option gives names of files to exclude from editing'
+    echo
+    echo '       To replace strings containing characters with special'
+    echo '       meaning to the shell, double-escape them. For example,'
+    echo '       to replace every occurrence of "lenna.pgm" with'
+    echo '       "$filename" (which contains the special character $), do'
+    echo
+    echo '         substr lenna.pgm \\\$filename .'
+    echo
+}
+
+
+quiet=0
+NameOption="-name '*'"
+PathOption="-path '*'"
+ExcludeNameOption=""
+
+if [ $# -gt 8 -o $# -lt 3 ]; then
+    usage
+    exit 1
+fi
+
+while [ $# -gt 3 ];
+do
+    if [ $1 = '-q' ]; then
+	quiet=1
+	shift
+    elif [ $1 = '-n' ]; then
+	NameOption="-name '"$2"'"
+	shift 2
+    elif [ $1 = '-e' ]; then
+	ExcludeNameOption="! -name '"$2"'"
+	shift 2
+    elif [ $1 = '-p' ]; then
+	PathOption="-path '"$2"'"
+	shift 2
+    else
+	usage
+	exit 1
+    fi
+done
+
+Orig=$1
+Dest=$2
+Path=$3
+
+if [ ! -e $Path ]; then
+    if [ $quiet -eq 0 ]; then
+	echo $Path does not exist
+    fi
+    exit 1
+fi
+
+TmpFileEdit=`mktemp` || exit 1
+TmpFileFind=`mktemp` || exit 1
+
+echo '#!/bin/sh' > $TmpFileEdit
+echo >> $TmpFileEdit
+echo 'filename1=`mktemp` || exit 1' >> $TmpFileEdit 
+echo 'filename2=`mktemp` || exit 1' >> $TmpFileEdit 
+# Use 0x1 has the delimiter for sed -- should not conflict with any ASCII text
+echo 'cp -a "$1" $filename1 || exit 1' >> $TmpFileEdit
+echo 'cp -a "$1" $filename2 || exit 1' >> $TmpFileEdit
+echo '/bin/sed -e 's$Orig$Destg' $filename1 > $filename2 && {' >> $TmpFileEdit
+echo '  cp -a $filename2 "$1" || exit 1' >> $TmpFileEdit
+if [ $quiet -eq 0 ]; then
+    echo '  echo Editing $1' >> $TmpFileEdit
+fi
+echo '}' >> $TmpFileEdit
+echo 'rm -f $filename1 $filename2' >> $TmpFileEdit
+
+chmod +x $TmpFileEdit
+
+FindOptions="-type f -perm -600 $PathOption $NameOption $ExcludeNameOption"
+
+echo '#!/bin/sh' > $TmpFileFind
+echo >> $TmpFileFind
+echo find $Path $FindOptions -exec fgrep -q $Orig {} \\\; -exec $TmpFileEdit {} \\\; >> $TmpFileFind
+
+chmod +x $TmpFileFind
+
+if [ -d $Path -a $quiet -eq 0 ]; then
+    echo "Editing files in directory $Path"
+fi
+
+$TmpFileFind
+
+rm -f $TmpFileEdit
+rm -f $TmpFileFind
+
+exit 0

@@ -1,0 +1,48 @@
+.TH CHNARITHMETICDECODE 1 "QCCPACK" ""
+.SH NAME
+chnarithmeticdecode \- adaptive arithmetic decoding
+.SH SYNOPSIS
+.B chnarithmeticdecode
+.I infile
+.I channelfile
+.SH DESCRIPTION
+.LP
+.B chnarithmeticdecode
+decodes bitstreams produced by
+.BR chnarithmeticencode (1) 
+and outputs a 
+.I channelfile
+(CHN format).
+.B chnarithmeticdecode
+figures out the order of the adaptive model from header bytes in
+.IR infile .
+.SH "SEE ALSO"
+.BR chnarithmeticencode (1),
+.BR chnentropy (1),
+.BR QccPackENT (3),
+.BR QccPack (3)
+
+I. A. Witten, R. M. Neal, and J. G. Cleary,
+"Arithmetic Coding For Data Compression,"
+.IR "Communications of the ACM" ,
+vol. 30, no. 6, pp. 520-540, June 1987.
+
+T. M. Cover and J. T. Thomas, 
+.IR "Elements of Information Theory" .
+New York: John Wiley & Sons, Inc., 1991.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

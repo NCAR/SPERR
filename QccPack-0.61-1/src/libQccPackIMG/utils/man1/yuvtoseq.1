@@ -1,0 +1,66 @@
+.TH YUVTOSEQ 1 "QCCPACK" ""
+.SH NAME
+yuvtoseq \- converts YUV file to image sequence
+.SH SYNOPSIS
+.B yuvtoseq
+.RB "[\|" \-sf
+.IR  startframe "\|]"
+.I num_rows
+.I num_cols
+.I yuvfile
+.I seqfile
+.SH OPTIONS
+.TP
+.B \-sf
+Start frame for image sequence.
+Default is 0.
+.SH DESCRIPTION
+.LP
+.B yuvtoseq
+converts an image sequence stored in a headerless YUV-format file,
+.IR yuvfile ,
+to an image sequence,
+.IR seqfile .
+All frames of
+.IR seqfile
+are output as grayscale, PGM-format files;
+i.e., the chrominance information in
+.IR yuvfile
+is discarded.
+.LP
+The option
+.B \-sf
+specifies the starting frame number for
+.IR seqfile ,
+defaulting to 0.
+.LP
+.IR yuvfile
+is a simple headerless, raw, planar 4:2:0 YUV file which consists
+of a sequence of raw luminance/chrominance images
+stored one after another in a single file.
+.IR num_rows
+and
+.IR num_cols
+give the dimensions of each frame in
+.IR yuvfile .
+.SH "SEE ALSO"
+.BR seqtoyuv (1),
+.BR QccIMGImageSequence (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

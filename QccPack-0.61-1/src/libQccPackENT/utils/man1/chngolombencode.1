@@ -1,0 +1,104 @@
+.TH CHNGOLOMBENCODE 1 "QCCPACK" ""
+.SH NAME
+chngolombencode \- Golomb encoding of a binary channel
+.SH SYNOPSIS
+.B chngolombencode
+.RB "[\|" \-s "\|]"
+.RB "[\|" \-vo "\|]"
+.RB [ -p
+.IR probability ]
+.RB [ -m
+.IR m ]
+.I channel
+.I bitstream
+.SH OPTIONS
+.TP
+.B \-s
+Silent mode (no printed output).
+.TP
+.B \-vo
+Print only the value of the rate to stdout (terse output).
+.TP
+.BI \-p " probability "
+Probability of the favorable event (run symbol).
+.I p
+>= 1/2.
+.TP
+.BI \-m " m "
+The
+.I m
+that satisfies
+.IR p ^ m
+= 1/2.
+.I m
+>= 1.
+.SH DESCRIPTION
+.LP
+.B chngolombencode
+implements Golomb coding of the binary channel sequence,
+.IR channel " (CHN format)."
+.BR chngolombencode " calls"
+.BR QccENTGolombEncodeChannel (3),
+which encodes the channel symbols, and outputs codewords to the output
+.IR bitstream .
+.LP
+.BR chngolombencode " initially outputs a few bytes of header information "
+.RI "(original number of symbols in " channel ,
+.RI " symbol alphabet size, and " m ") to
+.IR bitstream .
+The byte-packed bitstream produced by the Golomb coding follows.
+.LP
+.RB "Normally, " chngolombencode " prints to " stdout 
+the rate achieved by the Golomb coding, expressed in terms
+of bits per channel symbol.  This output may be suppressed by the
+.B \-s
+option (silent mode).
+The
+.B \-vo
+option indicates that only the value of the rate is to be
+printed (terse output).  The
+.B \-s
+option overrides the
+.B \-vo
+option.
+.SH "NOTES"
+.RI "When neither " p " nor " m " is specified,
+the probability of the favorable event is estimated automatically.
+.LP
+.BR chngolombencode " removes all null channel symbols from the"
+.IR channel
+with a call to
+.BR QccChannelRemoveNullSymbols (3)
+prior to Golomb coding.
+.LP
+Golomb coding originated in the 1966 paper by Golomb, which is classic, short, and beautifully written
+with a sense of humour.
+.SH "SEE ALSO"
+.BR chngolombdecode (1),
+.BR QccENTGolombEncodeChannel (3),
+.BR QccENTGolombDecodeChannel (3),
+.BR QccChannelRemoveNullSymbols (3),
+.BR chnentropy (1),
+.BR QccPackENT (3),
+.BR QccPack (3)
+.LP
+S. W. Golomb, "Run-Length Encodings,"
+.IR "IEEE Transactions on Information Theory" ,
+vol. 12, pp. 399-401, July 1966.
+.SH AUTHOR
+Written by Yufei Yuan <yuanyufei@hotmail.com>
+
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

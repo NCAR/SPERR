@@ -1,0 +1,71 @@
+.TH QCCALPHA 3 "QCCPACK" ""
+.SH NAME
+QccAlphaOpaque, QccAlphaTransparent, QccAlphaTranslucent \-
+transparency values
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI QccAlphaOpaque( alpha )
+.br
+.BI QccAlphaTransparent( alpha )
+.br
+.BI QccAlphaTranslucent( alpha )
+.br
+.SH DESCRIPTION
+.BR QccAlphaOpaque() ,
+.BR QccAlphaTransparent() ,
+and
+.BR QccAlphaTranslucent()
+are macros for evaluting the transparency of the
+.I alpha
+argument.
+Values less than or equal to
+.BR QCCALPHA_TRANSPARENT
+are considered transparent, and
+.BR QccAlphaTransparent()
+will evaluate to 1 for such
+.I alpha
+values, and 0 otherwise.
+Values greater than or equal to
+.BR QCCALPHA_OPAQUE
+are considered to be opaque, and
+.BR QccAphaOpaque()
+will evaluate to 1 for such
+.I alpha
+values, and 0 otherwise.
+Values greater than
+.BR QCCALPHA_TRANSPARENT
+and less than
+.BR QCCALPHA_OPAQUE
+are considered to be partially transparent, or translucent, and
+.BR QccAlphaTranslucent()
+will evaluate to 1 for such
+.I alpha
+values, and 0 otherwise.
+.LP
+Often
+.I alpha
+is considered to represent a pixel from a grayscale image; in that
+case,
+.BR QCCALPHA_TRANSPARENT
+would be full black,
+.BR QCCALPHA_OPAQUE
+would be full white,
+and values between the two would be some shade of gray.
+.SH "SEE ALSO"
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

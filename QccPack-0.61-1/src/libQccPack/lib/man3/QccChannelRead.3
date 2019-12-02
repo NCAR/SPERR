@@ -1,0 +1,144 @@
+.TH QCCCHANNELREAD 3 "QCCPACK" ""
+.SH NAME
+QccChannelReadWholefile,
+QccChannelReadHeader,
+QccChannelStartRead,
+QccChannelEndRead,
+QccChannelReadBlock
+\- reading of QccChannel structures from CHN-format files
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccChannelReadWholefile(QccChannel *" channel );
+.br
+.BI "int QccChannelReadHeader(QccChannel *" channel );
+.br
+.BI "int QccChannelStartRead(QccChannel *" channel );
+.br
+.BI "int QccChannelEndRead(QccChannel *" channel );
+.br
+.BI "int QccChannelReadBlock(QccChannel *" channel );
+.SH DESCRIPTION
+These routines implement the reading of
+.B QccChannel
+channels from
+.BR CHN -format
+files.
+There are two distinct modes in which the channel-symbol data
+in channels may be read:
+the whole file may be read at once, or
+the file may be read in non-overlapping blocks.
+.LP
+.B QccChannelReadWholefile()
+reads the
+.BR CHN -format
+file whose filename is given by
+.IR channel -> filename .
+The entire file is read, including the header,
+and the symbols are returned in the 
+.IR channel -> channel_symbols .
+If 
+.IR channel -> channel_symbols
+is
+.BR NULL ,
+.IR channel -> channel_symbols
+is allocated via a call to
+.B QccChannelAlloc() 
+prior to reading;
+otherwise, it is assumed that sufficient space has already been allocated.
+.LP
+.B QccChannelReadHeader()
+reads the header information of the
+.BR CHN -format
+file pointed to by
+.IR channel -> fileptr ,
+which must be already open and positioned at the start of the file.
+Information read from the header is returned in the fields of
+.IR channel .
+.LP
+.B QccChannelStartRead()
+must be called before any block-based read of
+.IR channel .
+.B QccChannelStartRead()
+opens the file with 
+.BR QccFileOpen (3),
+reads the file's header with
+.BR QccChannelReadHeader (3),
+and allocates storage space, if needed, for the
+channel symbols by calling
+.BR QccChannelAlloc (3)
+(note that allocation is performed only if 
+.IR channel -> channel_symbols
+is 
+.BR NULL).
+Prior to calling
+.BR QccChannelStartRead() ,
+.IR channel -> filename
+must contain the name of the file and
+.IR channel -> access_block_size
+must give the block size desired for subsequent block-based reads.
+The remaining fields of
+.I channel
+are filled in from the file's header.
+After
+.B QccChannelStartRead()
+returns,
+.IR channel -> fileptr
+contains the
+.B FILE
+pointer to the open file, and the file
+is positioned at the start of the channel-symbol data, ready for reading the
+first block of symbols.
+.LP
+.B QccChannelEndRead()
+closes a channel file opened by a previous call to
+.BR QccChannelStartRead() ;
+additionally, the symbol array,
+.IR channel -> channel_symbols ,
+is freed with a call to 
+.BR QccChannelFree (3).
+.LP
+.B QccChannelReadBlock()
+reads the next block of symbols in the channel.
+.I channel
+must be prepared by a prior call to
+.BR QccChannelStartRead() ;
+that is, 
+.IR channel -> fileptr
+must point to an open file,
+.IR channel -> access_block_size
+must contain the size of the block of symbols to read,
+and
+.IR channel -> channel_symbols
+must be allocated with space sufficient for storing
+the block of symbols.
+.B QccChannelReadBlock()
+reads non-overlapping blocks of data from the file;
+after
+.B QccChannelReadBlock()
+returns, the file is positioned at the start of the subsequent block.
+.SH "RETURN VALUE"
+These routines return 0 on successful completion, 1 if an error occurs
+while reading the file.
+.SH "SEE ALSO"
+.BR QccChannelWrite (3),
+.BR QccChannel (3),
+.BR QccFileOpen (3),
+.BR QccChannel (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

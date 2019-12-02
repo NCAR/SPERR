@@ -1,0 +1,84 @@
+.TH QCCPOINT 3 "QCCPACK" ""
+.SH NAME
+QccPointPrint,
+QccPointCopy,
+QccPointAffineTransform,
+\- miscellaneous 2D point routines
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "void QccPointPrint(const QccPoint *" point );
+.br
+.sp
+.BI "void QccPointCopy(QccPoint *" point1 ", const QccPoint *" point2 );
+.br
+.sp
+.BI "void QccPointAffineTransform(const QccPoint *" point1 ", QccPoint *" point2 ", QccMatrix " affine_transform );
+.SH DESCRIPTION
+QccPack provides the
+.B QccPoint
+data structure to represent a point in the 2D plane.
+.SH "DATA STRUCTURE"
+.B QccPoint
+data structure is defined as:
+.RS
+.nf
+
+typedef struct
+{
+  double x;
+  double y;
+} QccPoint;
+.fi
+.RE
+.LP
+The fields of
+.B QccPoint
+are as follows:
+.TP
+.I x
+The horizontal coordinate of the point.
+.TP
+.I y
+The vertical coordinate of the point.
+.SH "ROUTINES"
+.BR QccPointPrint()
+prints
+.I point
+to
+.BR stdout .
+.LP
+.BR QccPointCopy()
+copies
+.IR point2
+to
+.IR point1 .
+.LP
+.BR QccPointAffineTransform()
+passes
+.IR point1
+through the
+affine transform given by
+.IR affine_transform ,
+returning the resulting, transform point as
+.IR point2 .
+.IR affine_transform
+is assumed to be a 3 x 3
+matrix representing the affine transform in homogeneous coordinates.
+.SH "SEE ALSO"
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

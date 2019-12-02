@@ -1,0 +1,63 @@
+.TH QCCCHANNELREMOVENULLSYMBOLS 3 "QCCPACK" ""
+.SH NAME
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccChannelGetNumNullSymbols(const QccChannel *" channel );
+.br
+.BI "int QccChannelRemoveNullSymbols(QccChannel *" channel );
+.SH DESCRIPTION
+The normal symbols in a
+.B QccChannel
+structure are nonnegative integers.
+However, QccPack allows a special symbol,
+.BR QCCCHANNEL_NULLSYMBOL ,
+defined as -1,
+to denote a null symbol.
+Such a null symbol would indicate the absence of a symbol at that
+particular location in the channel.
+.LP
+.B QccChannelGetNumNullSymbols()
+counts the number of null symbols occurring in the current block of
+symbols
+.IR channel -> channel_symbols .
+.LP
+.B QccChannelRemoveNullSymbols()
+removes null symbols from
+.IR channel .
+The channel symbols are scanned, and only the non-null symbols are
+retained.
+.IR channel -> channel_length
+is reduced by the number of null symbols originally in the
+channel, and
+.IR channel -> channel_symbols
+is reallocated to reflect this new channel length.
+Note: block-access channels are not allowed;
+.B QccChannelRemoveNullSymbols()
+requires that
+.IR channel -> access_block_size
+be
+.BR QCCCHANNEL_ACCESSWHOLEFILE .
+.SH "RETURN VALUE"
+These routines return 0 on successful completion, 1 if an error occurs
+while reading the file.
+.SH "SEE ALSO"
+.BR QccChannel (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+

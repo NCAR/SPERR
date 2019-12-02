@@ -1,0 +1,15 @@
+CURRENT_DIR = $(QCCPACK)/src/libQccPackVQ/utils
+
+EXECUTABLES = \@@\
+	    sqtocbk \@@\
+	    gla \@@\
+	    vqencode vqdecode \@@\
+	    ecvqtrain ecvqencode \@@\
+	    msvqtrain msvqencode msvqdecode \@@\
+	    msctocbk
+SHELL_SCRIPTS =
+MAN_SUFFIX = 1
+
+QccDir()
+
+QccUtils()

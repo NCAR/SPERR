@@ -1,0 +1,189 @@
+.TH QCCWAVWAVELETSHAPEADAPTIVEDYADICDWT3D 3 "QCCPACK" ""
+.SH NAME
+QccWAVWaveletShapeAdaptiveDyadicDWT3D,
+QccWAVWaveletInverseShapeAdaptiveDyadicDWT3D \- 
+separable dyadic 3D shape-adaptive discrete
+wavelet transform and inverse transform for a 3D signal
+.sp
+QccWAVWaveletShapeAdaptivePacketDWT3D,
+QccWAVWaveletInverseShapeAdaptivePacketDWT3D \- 
+separable wavelet-packet 3D shape-adaptive discrete
+wavelet transform and inverse transform for a 3D signal
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVWaveletShapeAdaptiveDyadicDWT3D(const QccVolume " signal ", QccVolume " mask ", QccVolume " signal ", QccVolume " mask ", int " num_frames ", int " num_rows ", int " num_cols ", int " spatial_num_scales ", const QccWAVWavelet *" wavelet );
+.sp
+.BI "int QccWAVWaveletInverseShapeAdaptiveDyadicDWT3D(const QccVolume " signal ", QccVolume " mask ", QccVolume " signal ", QccVolume " mask ", int " num_frames ", int " num_rows ", int " num_cols ", int " spatial_num_scales ", const QccWAVWavelet *" wavelet );
+.sp
+.BI "int QccWAVWaveletShapeAdaptivePacketDWT3D(const QccVolume " signal ", QccVolume " mask ", QccVolume " signal ", QccVolume " mask ", int " num_frames ", int " num_rows ", int " num_cols ", int " temporal_num_scales ", int " spatial_num_scales ", const QccWAVWavelet *" wavelet );
+.sp
+.BI "int QccWAVWaveletInverseShapeAdaptivePacketDWT3D(const QccVolume " signal ", QccVolume " mask ", QccVolume " signal ", QccVolume " mask ", int " num_frames ", int " num_rows ", int " num_cols ", int " temporal_num_scales ", int " spatial_num_scales ", const QccWAVWavelet *" wavelet );
+.SH DESCRIPTION
+.B QccWAVWaveletShapeAdaptiveDyadicDWT3D()
+and 
+.B QccWAVWaveletShapeAdaptivePacketDWT3D()
+both perform a separable 3D
+shape-adaptive discrete wavelet transform (SA-DWT) of a
+three-dimensional signal,
+.IR signal ,
+which is represented as a volume of
+.IR num_frames 
+frames,
+.IR num_rows
+rows, and
+.I num_cols
+columns.
+.LP
+.BR QccWAVWaveletShapeAdaptiveDyadicDWT3D()
+implements a dyadic decomposition of
+.IR signal ;
+that is, the low-low subband (baseband)
+is recursively decomposed into one lowpass band and
+seven highpass bands for each level of decomposition.
+.I spatial_num_scales
+gives the number of scales, or levels, of the decomposition.
+.LP
+.BR QccWAVWaveletShapeAdaptivePacketDWT3D()
+implements a wavelet-packet decomposition of
+.IR signal ;
+that is, 
+each temporal vector is decomposed with
+.I temporal_num_scales
+1D temporal decompositions,
+and then each frame of the volume is decomposed with
+.I spatial_num_scales
+2D spatial decompositions.
+.LP
+.I mask
+indicates where the original input
+.I signal
+exists. That is, 
+.I mask
+indicates the regions of support in the original input
+.IR signal .
+Where
+.I mask
+is less than or equal to
+.BR QCCALPHA_TRANSPARENT ,
+there is no signal, and where
+.I mask
+is greater than
+.BR QCCALPHA_TRANSPARENT ,
+signal exists and is transformed
+(see
+.BR QccAlpha (3)).
+.LP
+Essentially, the 3D SA-DWT is implemented by performing
+1D SA-DWTs in each direction;
+see 
+.BR QccWAVWaveletShapeAdaptiveDWT1D (3)
+for specific details on how this 1D SA-DWT is calculated.
+.LP
+The transparency mask is transformed (with a 3D Lazy wavelet transform)
+alongside the signal so that, upon completion of the transform,
+.IR mask
+indicates where valid coefficients, i.e., coefficients resulting from
+non-transparent regions in the original input signal,
+reside in the output
+.IR signal .
+The transformed mask is returned in
+.IR mask ,
+overwriting the original input mask.
+.LP
+Currently, 
+.BR QccWAVWaveletShapeAdaptiveDWT1D()
+supports only biorthogonal wavelets. These may be
+used with symmetric extension (lifting or filter-bank
+implementations) or boundary-wavelet extension
+(lifting implementations only).
+.LP
+.B QccWAVWaveletInverseShapeAdaptiveDyadicDWT3D()
+and
+.B QccWAVWaveletInverseShapeAdaptivePacketDWT3D()
+perform the corresponding separable 3D inverse SA-DWT of
+.IR signal
+which is assumed to have been produced
+by
+.BR QccWAVWaveletShapeAdaptiveDyadicDWT3D() 
+or
+.BR QccWAVWaveletShapeAdaptivePacketDWT3D() ,
+respectively.
+.IR mask
+should be the corresponding Lazy-wavelet transformed mask
+also produced by
+.BR QccWAVWaveletShapeAdaptiveDyadicDWT3D() 
+or
+.BR QccWAVWaveletShapeAdaptivePacketDWT3D() .
+.I spatial_num_scales
+and
+.I temporal_num_scales
+give the number of levels of decomposition that exist in
+.IR signal .
+.LP
+Use
+.BR QccWAVSubbandPyramid3DShapeAdaptiveDWT (3)
+and
+.BR QccWAVSubbandPyramid3DInverseShapeAdaptiveDWT (3)
+to perform a 3D separable SA-DWT or inverse SA-DWT on a
+.B QccWAVSubbandPyramid3D
+data structure (which is the recommended way to do it, since the
+.B QccWAVSubbandPyramid3D
+structure stores the number of levels of decomposition along with
+the transform coefficients).
+.SH "RETURN VALUES"
+These routines
+return 0 on success and 1 on error.
+.SH "NOTES"
+SA-DWTs have been recently included in Version 2 of the MPEG-4
+standard, wherein they are used for 
+texture coding of arbitrarily shaped still objects.
+Li and Li (see below) elaborate at length on the shape-adaptive DWT
+used in MPEG-4, and also consider some variants not included
+in the MPEG-4 standard.
+See 
+.BR QccWAVWaveletShapeAdaptiveDWT1D (3)
+for details on the differences between the QccPack SA-DWT implementation,
+the MPEG-4 specification, and Li and Li's descriptions.
+.SH "SEE ALSO"
+.BR QccWAVWaveletShapeAdaptiveDWT1D (3),
+.BR QccWAVWaveletInverseShapeAdaptiveDWT1D (3),
+.BR QccWAVSubbandPyramid3DShapeAdaptiveDWT (3),
+.BR QccWAVSubbandPyramid3DInverseShapeAdaptiveDWT (3),
+.BR QccWAVWavelet (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.LP
+S. Li and W. Li, "Shape-Adaptive Discrete Wavelet Transforms for
+Arbitrarily Shaped Visual Object Coding,"
+.IR "IEEE Transactions on Circuits and Systems for Video Coding" ,
+vol. 10, pp. 725-743, August 2000.
+.LP
+ISO/IEC 14496-2, "Information Technology -- Coding of audio-visual objects --
+Part 2: Visual," 
+.IR "MPEG-4 Standard" ,
+Amendment 1, July 2000.
+.LP
+B.-J. Kim, Z. Xiong, and W. A. Pearlman,
+"Low Bit-Rate Scalable Video Coding with 3-D Set Partitioning
+in Hierarchical Trees (3-D SPIHT),"
+.IR "IEEE Transactions on Circuits and Systems for Video Technology" ,
+vol. 10, no. 8, pp. 1374-1387, December 2000.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+

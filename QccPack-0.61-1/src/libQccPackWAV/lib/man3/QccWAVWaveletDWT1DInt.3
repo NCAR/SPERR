@@ -1,0 +1,179 @@
+.TH QCCWAVWAVELETDWT1DINT 3 "QCCPACK" ""
+.SH NAME
+QccWAVWaveletDWT1DInt, QccWAVWaveletInverseDWT1DInt \- 
+integer-valued discrete wavelet transform and inverse transform for a 1D signal
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVWaveletDWT1DInt(QccVectorInt " signal ", int " signal_length ", int " signal_origin ", int " subsample_pattern ", int " num_scales ", const QccWAVWavelet *" wavelet );
+.br
+.BI "int QccWAVWaveletInverseDWT1DInt(QccVectorInt " signal ", int " signal_length ", int " signal_origin ", int " subsample_pattern ", int " num_scales ", const QccWAVWavelet *" wavelet );
+.SH DESCRIPTION
+.B QccWAVWaveletDWT1DInt()
+performs an integer-valued
+discrete wavelet transform (DWT) of a one-dimensional signal.
+.I num_scales
+gives the number of scales, or levels, of the decomposition.
+.BR QccWAVWaveletDWT1DInt()
+implements a dyadic decomposition of
+.IR signal ;
+that is, the lowpass subband is recursively decomposed into lowpass and
+highpass bands for each level of decomposition.
+The transform is critically sampled; that is,
+each subband produced in each decomposition level
+has roughly half as many samples as the lowpass band of the preceding level.
+The subbands output from the DWT are returned in
+.IR signal ,
+overwriting the original input signal.
+The output subbands are nested in
+.I signal
+starting with the lowpass subband of the lowest (coarsest) level of
+decomposition (i.e., the baseband) with subsequent highpass subbands
+of increasing resolution following.
+.LP
+Essentially,
+.BR QccWAVWaveletDWT1DInt()
+calls
+.BR QccWAVWaveletAnalysis1DInt (3)
+for each level of decomposition;
+.BR QccWAVWaveletAnalysis1DInt (3)
+in turn calls
+.BR QccWAVLiftingAnalysisInt (3).
+.I signal_origin
+indicates the sample index at which 
+.I signal
+starts.
+.I wavelet
+must indicate an integer-valued lifting scheme (see
+.BR QccWAVLiftingSchemeInteger (3)).
+.LP
+.B QccWAVWaveletInverseDWT1DInt()
+performs the inverse DWT of
+.IR signal
+which is assumed to have been produced
+by
+.BR QccWAVWaveletDWT1DInt() .
+.I num_scales
+gives the number of levels of decomposition that exist in
+.IR signal .
+Essentially,
+.B QccWAVWaveletInverseDWT1DInt()
+calls
+.BR QccWAVWaveletSynthesis1DInt (3)
+for each level of synthesis;
+.BR QccWAVWaveletSynthesis1DInt (3)
+in turn calls
+.BR QccWAVFilterBankSynthesisInt (3).
+.I signal_origin
+indicates the sample index at which
+.I signal
+starts.
+.LP
+.I subsample_pattern
+indicates the even- or odd-phase subsampling to be used at each level
+of decomposition. In most applications, even subsampling at all
+levels is desired, in which case
+.I subsample_pattern
+should be set to zero.
+In more general settings, when some mixture of even- and odd-phase subsampling
+is desired, 
+.I subsample_pattern
+can be an integer between 0 and
+.RI "2^" num_levels " - 1."
+In this integer, the 
+.IR j th
+bit (where
+.I j
+= 1 is the least-significant bit) indicates whether the
+.IR j th
+level of decomposition employs
+even or odd subsampling (0 = even, 1 = odd).
+For example, if
+.I subsample_pattern
+is 5, then the first and third decompositions use odd-phase
+subsampling, while all others use even subsampling.
+.SH "INTEGER-TO-INTEGER WAVELET TRANSFORMS"
+Transforms generally provide perfect reconstruction in that the
+inverse transform will perfectly invert transform coefficients
+into an exact representation of the original signal.
+However, when implemented in floating-point arithmetic, the potential
+for loss arises due to the limits of finite precision in both the
+forward and inverse transforms.
+On the other hand,
+transforms that map integer-valued signals into integer-valued
+transforms coefficients can guarantee perfect reconstruction, provided
+an inverse transform can be found.
+For this reason, lifting schemes, in which inverse transforms are
+trivial, are favored for the
+implementation of integer-valued wavelet transforms. Typically,
+the general approach proposed by Calderbank
+.IR "et al" .
+is followed wherein rounding of floating-point values to integers is performed
+at each prediction and update step in a lifting scheme.
+Integer versions of several popular biorthogonal wavelets were
+created in this manner by Calderbank
+.IR "et al" .,
+as well as by Xiong
+.IR "et al" .
+.LP
+In traditional floating-point lifting, the prediction and update steps
+are generally followed by a single application of scaling by a constant
+in order to produce the usual unitary normalization.
+This scaling step is somewhat problematic for integer-valued lifting
+since the scaling constant is usually not an integer.
+In applications wherein unitary scaling is not required
+(e.g., in some applications that process each subband completely
+independently), the scaling step is simply dropped in order
+to implement an integer-valued version of the transform.
+Alternatively, one can append three additional lifting steps to 
+implement the scaling; these additional lifting steps can then be rendered
+integer-valued via appropriate rounding (e.g., Xiong
+.IR "et al" .)
+making the transforms approximately normalized.
+This latter approach of scaling via additional lifting steps
+is employed in the integer-valued
+lifting schemes implemented in QccPack.
+.SH "RETURN VALUES"
+These routines
+return 0 on success and 1 on error.
+.SH "SEE ALSO"
+.BR QccWAVWaveletAnalysis1DInt (3),
+.BR QccWAVWaveletSynthesis1DInt (3),
+.BR QccWAVLiftingAnalysisInt (3),
+.BR QccWAVLiftingSynthesisInt (3),
+.BR QccWAVWavelet (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.LP
+A. R. Calderbank, I. Daubechies, W. Sweldens, B.-L. Yeo, "Lossless
+Image Compression Using Integer to Integer Wavelet Transforms", in
+.IR "Proceedings of the International Conference on Image Processing" ,
+Lausanne, Switzerland, pp. 596-599, September 1997.
+
+Z. Xiong, X. Wu, S. Cheng, J. Hua, "Lossy-to-Lossless Compression of
+Medical Volumetric Data Using Three-Dimensional Integer Wavelet Transforms,"
+.IR "IEEE Transactions on Medical Imaging" ,
+vol. 22, pp. 459-470, March 2003.
+
+I. Daubechies and W. Sweldens,
+"Factoring Wavelet Transforms Into Lifting Steps,"
+.IR "J. Fourier Anal. Appl." ,
+vol. 4, no. 3, pp. 245-267, 1998.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+

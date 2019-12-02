@@ -1,0 +1,75 @@
+.TH QCCCHANNELENTROPY 3 "QCCPACK" ""
+.SH NAME
+QccChannelEntropy
+\- calculate entropy of symbols of channel
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "double QccChannelEntropy(const QccChannel *" channel ", int " order );
+.SH DESCRIPTION
+.B QccChannelEntropy()
+calculates the first- or second-order entropy of the
+current block of symbols,
+.IR channel -> channel_symbols .
+The order, 1 for first-order or 2 for second-order, is given by
+.IR order .
+.LP
+If order 1 is specified, the first-order entropy (sometimes called
+the zero-order entropy) is calculated as 
+.IR H(X(t)) ,
+where 
+.I X(t)
+is the random process represented by the channel symbols,
+.IR channel -> channel_symbols .
+If order 2 is specified, the second-order conditional entropy,
+.IR H(X(t) " | " X(t-1)) ,
+is calculated;
+this is the average entropy of the current symbol conditioned on the
+preceding symbol and is an estimate of the entropy rate
+of a first-order Markov source.
+Of course,
+.I X(t)
+is assumed to be stationary and ergodic.
+.LP
+For the first-order entropy calculation,
+.B QccChannelEntropy()
+calulates the probability of occurrence of each symbol in the
+current block of symbols.
+For the second-order entropy calculation,
+a probability matrix is calculated to give the probability of
+each symbol conditioned on the previous symbol.
+.B QccENTConditionalEntropy (3)
+is used to perform the entropy calculation in each case.
+.SH "RETURN VALUE"
+On successful completion, the value of the entropy (a nonnegative number)
+is returned.  On error, -1.0 is returned.
+.SH "SEE ALSO"
+.BR QccENTConditionalEntropy (3),
+.BR QccPackENT (3),
+.BR QccChannel (3),
+.BR QccPack (3)
+
+T. M. Cover and J. T. Thomas, 
+.IR "Elements of Information Theory" .
+New York: John Wiley & Sons, Inc., 1991.
+
+A. Gersho and R. Gray, 
+.IR "Vector Quantization and Signal Compression" .
+Norwell, MA: Kluwer Academic Publishers, 1992.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

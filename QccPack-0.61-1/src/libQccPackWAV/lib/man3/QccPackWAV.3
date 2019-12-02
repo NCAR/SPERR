@@ -1,0 +1,884 @@
+.TH QCCPACKWAV 3 "QCCPACKWAV" ""
+.SH NAME
+QccPackWAV \- QccPack module for wavelets
+.SH DESCRIPTION
+.B QccPackWAV
+provides a collection of library routines and utility programs for
+wavelet-based analysis and synthesis of signals.
+.SS "DATA TYPES AND FILE FORMATS"
+.TP
+.BR QccWAVFilterBank (3)
+data structure 
+.B QccWAVFilterBank
+and corresponding
+.B FBK
+file format for wavelet-based analysis/synthesis using a
+filter-bank implementation
+.TP
+.BR QccWAVLiftingScheme (3)
+data structure 
+.B QccWAVLiftingScheme
+and corresponding
+.B LFT
+file format for wavelet-based analysis/synthesis using lifting
+.TP
+.BR QccWAVWavelet (3)
+data structure
+.B QccWAVWavelet
+for storing a wavelet
+.TP
+.BR QccWAVSubbandPyramid (3)
+data structure
+.B QccWAVSubbandPyramid
+and corresponding
+.B SBP
+file format for a two-dimensional dyadic subband decomposition of an image
+.TP
+.BR QccWAVPerceptualWeights (3)
+data structure
+.B QccWAVPerceptualWeights
+and corresponding
+.B PCP
+file format for perceptual weighting of subbands
+.TP
+.BR QccWAVZerotree (3)
+data structure
+.B QccWAVZerotree
+and corresponding
+.B ZT
+file format for zerotrees
+.SS "PATH AND ENVIRONMENT VARIABLE"
+The
+.B QccPack
+library routines dealing with wavelets searches a number of
+directories for filter-bank,
+lifting-scheme, and perceptual-weight files.
+The order of the directories to be searched for these files is
+given by the colon-separated list of directories in the
+environment variable
+.BR QCCPACK_WAVELET_PATH .
+This environment variable is set to a default path by
+.BR QccInit (3);
+this default path is overridden if the user sets
+.B QCCPACK_WAVELET_PATH
+prior to invocation of any
+.B QccPack
+library routines or programs.
+The default path is
+.B .:$(QCCPACK_INSTALL_DATA_PATH)/Wavelets
+where
+.B $(QCCPACK_INSTALL_DATA_PATH)
+is the installation location of the
+.B QccPack
+data files (usually /usr/local/share/QccPack).
+Note that the current working directory is the first directory in the
+default path.
+.SS "LIBRARY ROUTINES"
+.SS "Discrete Wavelet Transform (DWT)"
+.TP
+.BR QccWAVWaveletDWT1D (3)
+discrete wavelet transform (DWT) of 1D signal
+.TP
+.BR QccWAVWaveletInverseDWT1D (3)
+inverse discrete wavelet transform (DWT) of 1D signal
+.TP
+.BR QccWAVWaveletDWTSubbandLength (3)
+length of a subband
+inverse discrete wavelet transform (DWT) of 1D signal
+.TP
+.BR QccWAVWaveletDWT2D (3)
+separable discrete wavelet transform (DWT) of 2D signal
+.TP
+.BR QccWAVWaveletInverseDWT2D (3)
+separable inverse discrete wavelet transform (DWT) of 2D signal
+.TP
+.BR QccWAVWaveletDyadicDWT3D (3)
+separable dyadic discrete wavelet transform (DWT) of 3D signal
+.TP
+.BR QccWAVWaveletInverseDyadicDWT3D (3)
+separable dyadic inverse discrete wavelet transform (DWT) of 3D signal
+.TP
+.BR QccWAVWaveletPacketDWT3D (3)
+separable wavelet-packet discrete wavelet transform (DWT) of 3D signal
+.TP
+.BR QccWAVWaveletInversePacketDWT3D (3)
+separable wavelet-packet inverse discrete wavelet transform (DWT) of 3D signal
+.SS "Integer-Valued Discrete Wavelet Transform (DWT)"
+.TP
+.BR QccWAVWaveletDWT1DInt (3)
+integer-valued discrete wavelet transform (DWT) of 1D signal
+.TP
+.BR QccWAVWaveletInverseDWT1DInt (3)
+integer-valued inverse discrete wavelet transform (DWT) of 1D signal
+.TP
+.BR QccWAVWaveletDWT2DInt (3)
+integer-valued separable discrete wavelet transform (DWT) of 2D signal
+.TP
+.BR QccWAVWaveletInverseDWT2DInt (3)
+integer-valued separable inverse discrete wavelet transform (DWT) of 2D signal
+.TP
+.BR QccWAVWaveletDyadicDWT3DInt (3)
+integer-valued separable dyadic discrete wavelet transform (DWT) of 3D signal
+.TP
+.BR QccWAVWaveletInverseDyadicDWT3DInt (3)
+integer-valued separable dyadic inverse
+discrete wavelet transform (DWT) of 3D signal
+.TP
+.BR QccWAVWaveletPacketDWT3DInt (3)
+integer-valued separable wavelet-packet discrete wavelet transform (DWT) of 3D signal
+.TP
+.BR QccWAVWaveletInversePacketDWT3DInt (3)
+integer-valued separable wavelet-packet inverse discrete wavelet transform (DWT) of 3D signal
+.SS "Redundant Discrete Wavelet Transform (RDWT)"
+.TP
+.BR QccWAVWaveletRedundantDWT1D (3)
+redundant discrete wavelet transform (RDWT) of 1D signal
+.TP
+.BR QccWAVWaveletRedundantDWT1DSubsample (3)
+subsample RDWT coefficients to produce DWT coefficients
+.TP
+.BR QccWAVWaveletInverseRedundantDWT1D (3)
+inverse redundant discrete wavelet transform (RDWT) of 1D signal
+.TP
+.BR QccWAVWaveletRedundantDWT2DAlloc (3)
+allocate subband matrices for 2D RDWT
+.TP
+.BR QccWAVWaveletRedundantDWT2DFree (3)
+free subband matrices for 2D RDWT
+.TP
+.BR QccWAVWaveletRedundantDWT2D (3)
+redundant discrete wavelet transform (RDWT) of 2D signal
+.TP
+.BR QccWAVWaveletRedundantDWT2DSubsample (3)
+subsample RDWT coefficients to produce DWT coefficients
+.TP
+.BR QccWAVWaveletInverseRedundantDWT2D (3)
+inverse redundant discrete wavelet transform (RDWT) of 2D signal
+.SS "Wavelet"
+.TP
+.BR QccWAVWaveletInitialize (3)
+initialize a wavelet
+.TP
+.BR QccWAVWaveletAlloc (3)
+allocate a wavelet
+.TP
+.BR QccWAVWaveletFree (3)
+free a wavelet
+.TP
+.BR QccWAVWaveletPrint (3)
+print a wavelet
+.TP
+.BR QccWAVWaveletCreate (3)
+create a wavelet
+.TP
+.BR QccWAVWaveletBiorthogonal (3)
+check if wavelet is biorthogonal
+.SS "Wavelet Analysis & Synthesis"
+.TP
+.BR QccWAVWaveletAnalysis1D (3)
+wavelet analysis of a 1D signal
+.TP
+.BR QccWAVWaveletSynthesis1D (3)
+wavelet synthesis of a 1D signal
+.TP
+.BR QccWAVWaveletAnalysis2D (3)
+separable wavelet analysis of a 2D signal
+.TP
+.BR QccWAVWaveletSynthesis2D (3)
+separable wavelet synthesis of a 2D signal
+.TP
+.BR QccWAVWaveletAnalysis3D (3)
+separable wavelet analysis of a 3D signal
+.TP
+.BR QccWAVWaveletSynthesis3D (3)
+separable wavelet synthesis of a 3D signal
+.SS "Integer-Valued Wavelet Analysis & Synthesis"
+.TP
+.BR QccWAVWaveletAnalysis1DInt (3)
+integer-valued wavelet analysis of a 1D signal
+.TP
+.BR QccWAVWaveletSynthesis1DInt (3)
+integer-valued wavelet synthesis of a 1D signal
+.TP
+.BR QccWAVWaveletAnalysis2DInt (3)
+integer-valued separable wavelet analysis of a 2D signal
+.TP
+.BR QccWAVWaveletSynthesis2DInt (3)
+integer-valued separable wavelet synthesis of a 2D signal
+.TP
+.BR QccWAVWaveletAnalysis3DInt (3)
+integer-valued separable wavelet analysis of a 3D signal
+.TP
+.BR QccWAVWaveletSynthesis3DInt (3)
+integer-valued separable wavelet synthesis of a 3D signal
+.SS "Filter Bank"
+.TP
+.BR QccWAVFilterBankInitialize (3)
+initialize filter bank
+.TP
+.BR QccWAVFilterBankAlloc (3)
+allocate filter bank
+.TP
+.BR QccWAVFilterBankFree (3)
+free filter bank
+.TP
+.BR QccWAVFilterBankPrint (3)
+print filter bank
+.TP
+.BR QccWAVFilterBankMakeOrthogonal (3)
+create orthogonal filter bank
+.TP
+.BR QccWAVFilterBankMakeBiorthogonal (3)
+create biorthogonal filter bank
+.TP
+.BR QccWAVFilterBankBiorthogonal (3)
+check if filter bank is biorthogonal
+.TP
+.BR QccWAVFilterBankRead (3)
+read filter bank from file
+.TP
+.BR QccWAVFilterBankWrite (3)
+write filter bank to file
+.TP
+.BR QccWAVFilterBankAnalysis (3)
+wavelet analysis using a filter bank
+.TP
+.BR QccWAVFilterBankSynthesis (3)
+wavelet synthesis using a filter bank
+.SS "Lazy Wavelet Transform (LWT)"
+.TP
+.BR QccWAVWaveletLWT (3)
+forward lazy wavelet transform
+.TP
+.BR QccWAVWaveletInverseLWT (3)
+inverse lazy wavelet transform
+.TP
+.BR QccWAVWaveletLWT2D (3)
+forward separable 2D lazy wavelet transform
+.TP
+.BR QccWAVWaveletInverseLWT2D (3)
+inverse separable 2D lazy wavelet transform
+.TP
+.BR QccWAVWaveletLWT3D (3)
+forward separable 3D lazy wavelet transform
+.TP
+.BR QccWAVWaveletInverseLWT3D (3)
+inverse separable 3D lazy wavelet transform
+.SS "Integer-Valued Lazy Wavelet Transform (LWT)"
+.TP
+.BR QccWAVWaveletLWTInt (3)
+forward integer-valued lazy wavelet transform
+.TP
+.BR QccWAVWaveletInverseLWTInt (3)
+inverse integer-valued lazy wavelet transform
+.TP
+.BR QccWAVWaveletLWT2DInt (3)
+forward separable 2D integer-valued lazy wavelet transform
+.TP
+.BR QccWAVWaveletInverseLWT2DInt (3)
+inverse separable 2D integer-valued lazy wavelet transform
+.TP
+.BR QccWAVWaveletLWT3DInt (3)
+forward separable 3D integer-valued lazy wavelet transform
+.TP
+.BR QccWAVWaveletInverseLWT3DInt (3)
+inverse separable 3D integer-valued lazy wavelet transform
+.SS "Lifting Scheme"
+.TP
+.BR QccWAVLiftingSchemeInitialize (3)
+initialize lifting scheme
+.TP
+.BR QccWAVLiftingSchemePrint (3)
+print lifting scheme
+.TP
+.BR QccWAVLiftingSchemeBiorthogonal (3)
+check if lifting scheme is biorthogonal
+.TP
+.BR QccWAVLiftingSchemeInteger (3)
+check if lifting scheme is integer-valued
+.SS "Lifting Analysis & Synthesis"
+.TP
+.BR QccWAVLiftingAnalysis (3)
+wavelet analysis using lifting
+.TP
+.BR QccWAVLiftingSynthesis (3)
+wavelet synthesis using lifting
+.SS "Integer-Valued Lifting Analysis & Synthesis"
+.TP
+.BR QccWAVLiftingAnalysisInt (3)
+integer-valued wavelet analysis using lifting
+.TP
+.BR QccWAVLiftingSynthesisInt (3)
+integer-valued wavelet synthesis using lifting
+.SS "Shape-Adaptive Discrete Wavelet Transform (SA-DWT)"
+.TP
+.BR QccWAVWaveletShapeAdaptiveDWT1D (3)
+shape-adaptive discrete wavelet transform (SA-DWT) for a 1D signal
+.TP
+.BR QccWAVWaveletInverseShapeAdaptiveDWT1D (3)
+inverse shape-adaptive discrete wavelet transform (SA-DWT) for a 1D signal
+.TP
+.BR QccWAVWaveletShapeAdaptiveDWT2D (3)
+separable shape-adaptive discrete wavelet transform (SA-DWT) for a 2D signal
+.TP
+.BR QccWAVWaveletInverseShapeAdaptiveDWT2D (3)
+separable inverse shape-adaptive discrete wavelet transform (SA-DWT)
+for a 2D signal
+.TP
+.BR QccWAVWaveletShapeAdaptiveDyadicDWT3D (3)
+separable shape-adaptive dyadic 
+discrete wavelet transform (SA-DWT) for a 3D signal
+.TP
+.BR QccWAVWaveletInverseShapeAdaptiveDyadicDWT3D (3)
+separable inverse shape-adaptive dyadic discrete wavelet transform (SA-DWT)
+for a 3D signal
+.TP
+.BR QccWAVWaveletShapeAdaptivePacketDWT3D (3)
+separable shape-adaptive wavelet-packet
+discrete wavelet transform (SA-DWT) for a 3D signal
+.TP
+.BR QccWAVWaveletInverseShapeAdaptivePacketDWT3D (3)
+separable inverse shape-adaptive wavelet-packet
+discrete wavelet transform (SA-DWT)
+for a 3D signal
+.SS "Integer-Valued Shape-Adaptive Discrete Wavelet Transform (SA-DWT)"
+.TP
+.BR QccWAVWaveletShapeAdaptiveDWT1DInt (3)
+integer-valued shape-adaptive
+discrete wavelet transform (SA-DWT) for a 1D signal
+.TP
+.BR QccWAVWaveletInverseShapeAdaptiveDWT1DInt (3)
+integer-valued inverse shape-adaptive
+discrete wavelet transform (SA-DWT) for a 1D signal
+.TP
+.BR QccWAVWaveletShapeAdaptiveDWT2DInt (3)
+integer-valued separable shape-adaptive
+discrete wavelet transform (SA-DWT) for a 2D signal
+.TP
+.BR QccWAVWaveletInverseShapeAdaptiveDWT2DInt (3)
+integer-valued separable inverse
+shape-adaptive discrete wavelet transform (SA-DWT)
+for a 2D signal
+.TP
+.BR QccWAVWaveletShapeAdaptiveDyadicDWT3DInt (3)
+integer-valued separable shape-adaptive dyadic 
+discrete wavelet transform (SA-DWT) for a 3D signal
+.TP
+.BR QccWAVWaveletInverseShapeAdaptiveDyadicDWT3DInt (3)
+integer-valued separable inverse
+shape-adaptive dyadic discrete wavelet transform (SA-DWT)
+for a 3D signal
+.TP
+.BR QccWAVWaveletShapeAdaptivePacketDWT3DInt (3)
+integer-valued separable shape-adaptive wavelet-packet
+discrete wavelet transform (SA-DWT) for a 3D signal
+.TP
+.BR QccWAVWaveletInverseShapeAdaptivePacketDWT3DInt (3)
+integer-valued separable inverse shape-adaptive wavelet-packet
+discrete wavelet transform (SA-DWT)
+for a 3D signal
+.SS "Shape-Adaptive Mask"
+.TP
+.BR QccWAVShapeAdaptiveMaskBAR (3)
+calculate the boundary-to-area ratio (BAR) for a transparency mask
+.SS "Subband Pyramid"
+.TP
+.BR QccWAVSubbandPyramidInitialize (3)
+initialize subband pyramid
+.TP
+.BR QccWAVSubbandPyramidAlloc (3)
+allocate subband pyramid
+.TP
+.BR QccWAVSubbandPyramidFree (3)
+free subband pyramid
+.TP
+.BR QccWAVSubbandPyramidNumLevelsToNumSubbands (3)
+calculate number of subbands from number of levels
+.TP
+.BR QccWAVSubbandPyramidNumSubbandsToNumLevels (3)
+calculate number of levels from number of subbands
+.TP
+.BR QccWAVSubbandPyramidCalcLevelFromSubband (3)
+calculate level of subband
+.TP
+.BR QccWAVSubbandPyramidSubbandSize (3)
+calculate size of subband
+.TP
+.BR QccWAVSubbandPyramidSubbandOffsets (3)
+calculate position of subband
+.TP
+.BR QccWAVSubbandPyramidSubbandToQccString (3)
+create name of subband
+.TP
+.BR QccWAVSubbandPyramidPrint (3)
+print subband pyramid
+.TP
+.BR QccWAVSubbandPyramidRead (3)
+read a subband pyramid from file
+.TP
+.BR QccWAVSubbandPyramidWrite (3)
+write a subband pyramid to file
+.TP
+.BR QccWAVSubbandPyramidCopy (3)
+copy a subband pyramid
+.TP
+.BR QccWAVSubbandPyramidZeroSubband (3)
+make subband zero in subband pyramid
+.TP
+.BR QccWAVSubbandPyramidSubtractMean (3)
+subtract mean from subband-pyramid data
+.TP
+.BR QccWAVSubbandPyramidAddMean (3)
+add mean to subband-pyramid data
+.TP
+.BR QccWAVSubbandPyramidCalcCoefficientRange (3)
+calculate range of coefficients in subband pyramid
+.TP
+.BR QccWAVSubbandPyramidAddNoiseSquare (3)
+add noise square to subband-pyramid data
+.TP
+.BR QccWAVSubbandPyramidRasterScan (3)
+raster scan subband pyramid
+.TP
+.BR QccWAVSubbandPyramidInverseRasterScan (3)
+inverse raster scan subband pyramid
+.TP
+.BR QccWAVSubbandPyramidDWT (3)
+separable discrete wavelet transform (DWT) of subband-pyramid data
+.TP
+.BR QccWAVSubbandPyramidInverseDWT (3)
+separable inverse discrete wavelet transform (DWT) of subband-pyramid data
+.TP
+.BR QccWAVSubbandPyramidShapeAdaptiveDWT (3)
+separable shape-adaptive discrete wavelet transform (SA-DWT)
+of subband-pyramid data
+.TP
+.BR QccWAVSubbandPyramidInverseShapeAdaptiveDWT (3)
+separable inverse shape-adaptive discrete wavelet transform (SA-DWT)
+of subband-pyramid data
+.TP
+.BR QccWAVSubbandPyramidRedundantDWTSubsample (3)
+subsample a redundant discrete wavelet transform (RDWT)
+into a subband-pyramid structure
+.SS "3D Subband Pyramid"
+.TP
+.BR QccWAVSubbandPyramid3DInitialize (3)
+initialize 3D subband pyramid
+.TP
+.BR QccWAVSubbandPyramid3DAlloc (3)
+allocate 3D subband pyramid
+.TP
+.BR QccWAVSubbandPyramid3DFree (3)
+free 3D subband pyramid
+.TP
+.BR QccWAVSubbandPyramid3DNumLevelsToNumSubbandsDyadic (3)
+calculate number of subbands from number of levels in a dyadic
+decomposition
+.TP
+.BR QccWAVSubbandPyramid3DNumLevelsToNumSubbandsPacket (3)
+calculate number of subbands from number of levels in a wavelet-packet
+decomposition
+.TP
+.BR QccWAVSubbandPyramid3DNumSubbandsToNumLevelsDyadic (3)
+calculate number of levels from number of subbands in a dyadic decomposition
+.TP
+.BR QccWAVSubbandPyramid3DCalcLevelFromSubbandDyadic (3)
+calculate level of subband in a dyadic decomposition
+.TP
+.BR QccWAVSubbandPyramid3DCalcLevelFromSubbandPacket (3)
+calculate level of subband in a wavelet-packet decomposition
+.TP
+.BR QccWAVSubbandPyramid3DSubbandSize (3)
+calculate size of subband
+.TP
+.BR QccWAVSubbandPyramid3DSubbandOffsets (3)
+calculate position of subband
+.TP
+.BR QccWAVSubbandPyramid3DPrint (3)
+print 3D subband pyramid
+.TP
+.BR QccWAVSubbandPyramid3DRead (3)
+read a 3D subband pyramid from file
+.TP
+.BR QccWAVSubbandPyramid3DWrite (3)
+write a 3D subband pyramid to file
+.TP
+.BR QccWAVSubbandPyramid3DCopy (3)
+copy a 3D subband pyramid
+.TP
+.BR QccWAVSubbandPyramid3DZeroSubband (3)
+make subband zero in 3D subband pyramid
+.TP
+.BR QccWAVSubbandPyramid3DSubtractMean (3)
+subtract mean from subband-pyramid data
+.TP
+.BR QccWAVSubbandPyramid3DAddMean (3)
+add mean to subband-pyramid data
+.TP
+.BR QccWAVSubbandPyramid3DDWT (3)
+separable 3D discrete wavelet transform (DWT) of subband-pyramid data
+.TP
+.BR QccWAVSubbandPyramid3DInverseDWT (3)
+separable inverse 3D discrete wavelet transform (DWT) of subband-pyramid data
+.TP
+.BR QccWAVSubbandPyramid3DShapeAdaptiveDWT (3)
+separable 3D shape-adaptive discrete wavelet transform (SA-DWT)
+of subband-pyramid data
+.TP
+.BR QccWAVSubbandPyramid3DInverseShapeAdaptiveDWT (3)
+separable inverse 3D shape-adaptive discrete wavelet transform (SA-DWT)
+of subband-pyramid data
+.TP
+.BR QccWAVSubbandPyramid3DPacketToDyadic (3)
+reorganize a 3D subband pyramid from wavelet-packet to dyadic decomposition
+.TP
+.BR QccWAVSubbandPyramid3DDyadicToPacket (3)
+reorganize a 3D subband pyramid from dyadic to wavelet-packet decomposition
+.SS "Perceptual Weights"
+.TP
+.BR QccWAVPerceptualWeightsInitialize (3)
+initialize perceptual weights
+.TP
+.BR QccWAVPerceptualWeightsAlloc (3)
+allocate perceptual weights
+.TP
+.BR QccWAVPerceptualWeightsFree (3)
+free perceptual weights
+.TP
+.BR QccWAVPerceptualWeightsRead (3)
+read perceptual weights
+.TP
+.BR QccWAVPerceptualWeightsWrite (3)
+write perceptual weights
+.TP
+.BR QccWAVPerceptualWeightsPrint (3)
+print perceptual weights
+.TP
+.BR QccWAVPerceptualWeightsApply (3)
+apply perceptual weights to 3D subband pyramid
+.TP
+.BR QccWAVPerceptualWeightsRemove (3)
+remove perceptual weights from 3D subband pyramid
+.TP
+.BR QccWAVPerceptualWeightsInitialize (3)
+.SS "Zerotree"
+.TP
+.BR QccWAVZerotreeInitialize (3)
+initialize zerotree
+.TP
+.BR QccWAVZerotreeCalcSizes (3)
+calculate subband sizes for zerotree
+.TP
+.BR QccWAVZerotreeAlloc (3)
+allocate zerotree
+.TP
+.BR QccWAVZerotreeFree (3)
+free zerotree
+.TP
+.BR QccWAVZerotreePrint (3)
+print zerotree
+.TP
+.BR QccWAVZerotreeNullSymbol (3)
+determine whether zerotree symbol is null or not
+.TP
+.BR QccWAVZerotreeMakeSymbolNull (3)
+mark symbol as null
+.TP
+.BR QccWAVZerotreeMakeSymbolNonnull (3)
+make symbol as non-null
+.TP
+.BR QccWAVZerotreeMakeFullTree (3)
+make full zerotree structure
+.TP
+.BR QccWAVZerotreeMakeEmptyTree (3)
+make empty zerotree structure
+.TP
+.BR QccWAVZerotreeRead (3)
+read zerotree file
+.TP
+.BR QccWAVZerotreeWrite (3)
+write zerotree file
+.TP
+.BR QccWAVZerotreeCarveOutZerotree (3)
+make null symbols in shadow of zerotree root
+.TP
+.BR QccWAVZerotreeUndoZerotree (3)
+make symbols non-null in shadow of zerotree root 
+.SS "Stack-Run (SR) Coding"
+.TP
+.BR QccWAVsrEncode (3)
+image encoding using the stack-run algorithm
+.TP
+.BR QccWAVsrDecodeHeader (3)
+decode header for stack-run image decoding
+.TP
+.BR QccWAVsrDecode (3)
+image decoding using the stack-run algorithm
+.SS "Wavelet-Difference-Reduction (WDR) Coding"
+.TP
+.BR QccWAVwdrEncode (3)
+image encoding using the WDR algorithm
+.TP
+.BR QccWAVwdrDecodeHeader (3)
+decode header for WDR image decoding
+.TP
+.BR QccWAVwdrDecode (3)
+image decoding using the WDR algorithm
+.TP
+.BR QccWAVwdr3DEncode (3)
+image-cube encoding using the 3D-WDR algorithm
+.TP
+.BR QccWAVwdr3DDecodeHeader (3)
+decode header for 3D-WDR image-cube decoding
+.TP
+.BR QccWAVwdr3DDecode (3)
+image-cube decoding using the 3D-WDR algorithm
+.SS "Tarp-filter Coding"
+.TP
+.BR QccWAVTarpEncode (3)
+image encoding using the tarp-filter algorithm
+.TP
+.BR QccWAVTarpDecodeHeader (3)
+decode header for tarp-filter image decoding
+.TP
+.BR QccWAVTarpDecode (3)
+image decoding using the tarp-filter algorithm
+.TP
+.BR QccWAVTarp3DEncode (3)
+image-cube encoding using the 3D tarp algorithm
+.TP
+.BR QccWAVTarp3DDecodeHeader (3)
+decode header for 3D tarp image-cube decoding
+.TP
+.BR QccWAVTarp3DDecode (3)
+image-cube decoding using the 3D tarp algorithm
+.LP
+.SS "Binary Set Splitting with k-d Trees (BISK) Coding"
+.TP
+.BR QccWAVbiskEncode (3)
+image encoding using the BISK algorithm
+.TP
+.BR QccWAVbiskEncode2 (3)
+image encoding using the BISK algorithm (alternative interface)
+.TP
+.BR QccWAVbiskDecodeHeader (3)
+decode header for BISK image decoding
+.TP
+.BR QccWAVbiskDecode (3)
+image decoding using the BISK algorithm
+.TP
+.BR QccWAVbiskDecode2 (3)
+image decoding using the BISK algorithm  (alternative interface)
+.TP
+.BR QccWAVbisk3DEncode (3)
+image encoding using the 3D-BISK algorithm
+.TP
+.BR QccWAVbisk3DEncode2 (3)
+image encoding using the 3D-BISK algorithm (alternative interface)
+.TP
+.BR QccWAVbisk3DDecodeHeader (3)
+decode header for 3D-BISK image decoding
+.TP
+.BR QccWAVbisk3DDecode (3)
+image decoding using the 3D-BISK algorithm
+.TP
+.BR QccWAVbisk3DDecode2 (3)
+image decoding using the 3D-BISK algorithm (alternative interface)
+.LP
+.SS "Tarp Coding with Classification for Embedding (TCE) Coding"
+.TP
+.BR QccWAVtceEncode (3)
+image encoding using the TCE algorithm
+.TP
+.BR QccWAVtceDecodeHeader (3)
+decode header for TCE image decoding
+.TP
+.BR QccWAVtceDecode (3)
+image decoding using the TCE algorithm
+.TP
+.BR QccWAVtce3DEncode (3)
+image encoding using the 3D-TCE algorithm
+.TP
+.BR QccWAVtce3DDecodeHeader (3)
+decode header for 3D-TCE image decoding
+.TP
+.BR QccWAVtce3DDecode (3)
+image decoding using the 3D-TCE algorithm
+.TP
+.BR QccWAVtce3DLosslessEncode (3)
+image encoding using the lossless 3D-TCE algorithm
+.TP
+.BR QccWAVtce3DLosslessDecodeHeader (3)
+decode header for lossless 3D-TCE image decoding
+.TP
+.BR QccWAVtce3DLosslessDecode (3)
+image decoding using the lossless 3D-TCE algorithm
+.SS "KLT+3D-TCE Coding"
+.TP
+.BR QccWAVklttce3DEncode (3)
+image coding using the KLT+3D-TCE algorithm
+.TP
+.BR QccWAVklttce3DDecodeHeader (3)
+decode header for KLT+3D-TCE image decoding
+.TP
+.BR QccWAVklttce3DDecode (3)
+image decoding using the KLT+3D-TCE algorithm
+.TP
+.BR QccWAVklttce3DLosslessEncode (3)
+image coding using the lossless KLT+3D-TCE algorithm
+.TP
+.BR QccWAVklttce3DLosslessDecodeHeader (3)
+decode header for lossless KLT+3D-TCE image decoding
+.TP
+.BR QccWAVklttce3DLosslessDecode (3)
+image decoding using the lossless KLT+3D-TCE algorithm
+.SS "TCE Coding with DCT-Based Lapped Biorthogonal Transform (DCT-TCE)"
+.TP
+.BR QccWAVdcttceEncode (3)
+image encoding using the DCT-TCE algorithm
+.TP
+.BR QccWAVdcttceDecodeHeader (3)
+decode header for DCT-TCE image decoding
+.TP
+.BR QccWAVdcttceDecode (3)
+image decoding using the DCT-TCE algorithm
+.SS "UTILITY PROGRAMS"
+.TP
+.BR sbpsplit (1)
+split a multi-level subband pyramid into separate files
+.TP
+.BR sbpassemble (1)
+assemble separate files into a multi-level subband pyramid
+.TP
+.BR sbptoicp (1)
+convert subband pyramid to image component
+.TP
+.BR icptosbp (1)
+convert image component to subband pyramid
+.TP
+.BR sbpzero (1)
+zero subbands of subband pyramid
+.TP
+.BR imgdwt (1)
+DWT and SA-DWT of an image
+.TP
+.BR imgidwt (1)
+inverse DWT and SA-DWT of an image
+.TP
+.BR mask_bar (1)
+boundary-to-area ratio (BAR) for a transparency mask
+.TP
+.BR imgrdwt (1)
+RDWT of an image
+.TP
+.BR imgirdwt (1)
+inverse RDWT of an image
+.TP
+.BR make_noise_image (1)
+make a noise image for perceptual testing
+.TP
+.BR sfqencode (1)
+code an image using the SFQ algorithm
+.TP
+.BR sfqdecode (1)
+decode an image using the SFQ algorithm
+.TP
+.BR srencode (1)
+code an image using the SR algorithm
+.TP
+.BR srdecode (1)
+decode an image using the SR algorithm
+.TP
+.BR wdrencode (1)
+code an image using the WDR algorithm
+.TP
+.BR wdrdecode (1)
+decode an image using the WDR algorithm
+.TP
+.BR wdrencode3d (1)
+code an image cube using the 3D-WDR algorithm
+.TP
+.BR wdrdecode3d (1)
+decode an image cube using the 3D-WDR algorithm
+.TP
+.BR tarpencode (1)
+code an image using the tarp-filter algorithm
+.TP
+.BR tarpdecode (1)
+decode an image using the tarp-filter algorithm
+.TP
+.BR tarpencode3d (1)
+code an image cube using the 3D tarp algorithm
+.TP
+.BR tarpdecode3d (1)
+decode an image cube using the 3D tarp algorithm
+.TP
+.BR biskencode (1)
+code an image using the BISK algorithm
+.TP
+.BR biskdecode (1)
+decode an image using the BISK algorithm
+.TP
+.BR biskencode3d (1)
+code an image cube using the 3D-BISK algorithm
+.TP
+.BR biskdecode3d (1)
+decode an image cube using the 3D-BISK algorithm
+.TP
+.BR tceencode (1)
+code an image using the TCE algorithm
+.TP
+.BR tcedecode (1)
+decode an image using the TCE algorithm
+.TP
+.BR tceencode3d (1)
+code an image using the 3D-TCE algorithm
+.TP
+.BR tcedecode3d (1)
+decode an image using the 3D-TCE algorithm
+.TP
+.BR tceencode3d_lossless (1)
+code an image using the lossless 3D-TCE algorithm
+.TP
+.BR tcedecode3d_lossless (1)
+decode an image using the lossless 3D-TCE algorithm
+.TP
+.BR klttceencode3d (1)
+code an image using the KLT+3D-TCE algorithm
+.TP
+.BR klttcedecode3d (1)
+decode an image using the KLT+3D-TCE algorithm
+.TP
+.BR klttceencode3d_lossless (1)
+code an image using the lossless KLT+3D-TCE algorithm
+.TP
+.BR klttcedecode3d_lossless (1)
+decode an image using the lossless KLT+3D-TCE algorithm
+.TP
+.BR dcttceencode (1)
+code an image using the DCT-TCE algorithm
+.TP
+.BR dcttcedecode (1)
+decode an image using the DCT-TCE algorithm
+.SH "SEE ALSO"
+.BR QccPackENT (3),
+.BR QccPackSQ (3),
+.BR QccPackVQ (3),
+.BR QccPackAVQ (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

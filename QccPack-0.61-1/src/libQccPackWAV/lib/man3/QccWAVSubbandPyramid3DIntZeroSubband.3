@@ -1,0 +1,91 @@
+.TH QCCWAVSUBBANDPYRAMID3DINTZEROSUBBAND 3 "QCCPACK" ""
+.SH NAME
+QccWAVSubbandPyramid3DIntZeroSubband,
+QccWAVSubbandPyramid3DIntSubtractMean,
+QccWAVSubbandPyramid3DIntAddMean \- 
+operations on integer-valued 3D subband pyramids
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVSubbandPyramid3DIntZeroSubband(QccWAVSubbandPyramid3DInt *" subband_pyramid ", int " subband );
+.br
+.BI "int QccWAVSubbandPyramid3DIntSubtractMean(QccWAVSubbandPyramid3DInt *" subband_pyramid ", int *" mean ", const QccSQScalarQuantizer *" quantizer );
+.br
+.BI "int QccWAVSubbandPyramid3DIntAddMean(QccWAVSubbandPyramid3DInt *" subband_pyramid ", int " mean );
+.SH DESCRIPTION
+.LP
+.BR QccWAVSubbandPyramid3DIntZeroSubband()
+sets the coefficients of the specified
+.I subband
+in
+.I subband_pyramid
+to zero.
+.I subband
+is the subband number of the desired subband.
+.LP
+.BR QccWAVSubbandPyramid3DIntSubtractMean()
+calculates the mean value of the coefficients of the baseband of
+.IR subband_pyramid ,
+rounds the mean to the nearest integer,
+and subtracts the result from the baseband coefficients.
+If
+.I mean
+is
+.RB non- NULL ,
+the value subtracted from the coefficients (the integer-valued mean)
+is returned as
+.IR mean .
+.LP
+.BR QccWAVSubbandPyramid3DIntAddMean()
+adds value
+.I mean
+to all baseband coefficients of
+.IR subband_pyramid .
+It is intended to implement the reverse 
+operation of
+.BR QccWAVSubbandPyramid3DIntSubtractMean() ,
+so
+.I mean
+would be returned from this latter routine in most cases.
+.SH "RETURN VALUE"
+These routines return 0 on success, and 1 on failure.
+.SH "SEE ALSO"
+.BR QccSQScalarQuantization (3),
+.BR QccSQScalarInverseQuantization (3),
+.BR QccWAVSubbandPyramid3DIntDWT (3),
+.BR QccWAVSubbandPyramid3DIntInverseDWT (3),
+.BR QccWAVSubbandPyramid3DInt (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.LP
+A. R. Calderbank, I. Daubechies, W. Sweldens, B.-L. Yeo, "Lossless
+Image Compression Using Integer to Integer Wavelet Transforms", in
+.IR "Proceedings of the International Conference on Image Processing" ,
+Lausanne, Switzerland, pp. 596-599, September 1997.
+
+Z. Xiong, X. Wu, S. Cheng, J. Hua, "Lossy-to-Lossless Compression of
+Medical Volumetric Data Using Three-Dimensional Integer Wavelet Transforms,"
+.IR "IEEE Transactions on Medical Imaging" ,
+vol. 22, pp. 459-470, March 2003.
+
+B.-J. Kim, Z. Xiong, and W. A. Pearlman,
+"Low Bit-Rate Scalable Video Coding with 3-D Set Partitioning
+in Hierarchical Trees (3-D SPIHT),"
+.IR "IEEE Transactions on Circuits and Systems for Video Technology" ,
+vol. 10, no. 8, pp. 1374-1387, December 2000.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

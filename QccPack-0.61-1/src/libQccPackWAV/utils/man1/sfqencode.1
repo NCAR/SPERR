@@ -1,0 +1,223 @@
+.TH SFQENCODE 1 "QCCPACK" ""
+.SH NAME
+sfqencode, sfqdecode \- encode/decode an image using the SFQ algorithm
+.SH SYNOPSIS
+.B sfqencode
+.RB "[\|" \-w
+.IR  wavelet "\|]"
+.RB "[\|" \-b
+.IR  boundary "\|]"
+.RB "[\|" \-l
+.IR  lambda "\|]"
+.RB "[\|" \-bbq
+.IR  baseband\_quantizer\_stepsize "\|]"
+.RB "[\|" \-hpq
+.IR  highpass\_quantizer\_stepsize "\|]"
+.RB "[\|" \-pw
+.IR  pcpfile "\|]"
+.RB "[\|" \-nl
+.IR  levels "\|]"
+.RB "[\|" \-vo "\|]"
+.I imgfile
+.I bitstream
+.LP
+.B sfqdecode
+.RB "[\|" \-w
+.IR  wavelet "\|]"
+.RB "[\|" \-b
+.IR  boundary "\|]"
+.RB "[\|" \-pw
+.IR  pcpfile "\|]"
+.I bitstream
+.I imgfile
+.SH OPTIONS
+.TP
+.BI \-w " wavelet"
+String. 
+Name of the wavelet file
+.RB ( FBK
+or
+.B LFT
+format); default = "CohenDaubechiesFeauveau.9-7.lft"
+.TP
+.BI \-b " boundary"
+String. Type of boundary extension; default = "symmetric".
+.TP
+.BI \-l " lambda"
+Float. Rate-distortion parameter.  Default is 1.0.
+.TP
+.BI \-bbq " baseband\_quantizer\_stepsize"
+Float.  Default is to search all allowable stepsizes.
+.TP
+.BI \-hpq " highpass\_quantizer\_stepsize"
+Float.  Default is to search all allowable stepsizes.
+.TP
+.BI \-pw " pcpfile
+String. Name of file containing perceptual weights.
+.TP 
+.BI \-nl " levels"
+Integer. Number of levels of dyadic decomposition.
+Default value is 3 levels.
+.TP
+.B \-vo
+Print only the value of the rate to stdout (terse output).
+Default is verbose output.
+.SH DESCRIPTION
+.LP
+.B sfqencode
+codes an image,
+.IR imgfile ,
+using the space-frequency-quantization (SFQ) algorithm of Xiong
+.IR "et al" .
+The SFQ algorithm involves a 2D DWT followed by the
+identification of zerotrees based on a rate-distortion criterion.
+The zerotree structure indicates which wavelet coefficients are 
+"insignificant."
+Coding these
+insignificant coefficients costs more in bit rate
+than the possible gain in distortion performance;
+consequently, these insignificant coefficients are set to zero.
+Uniform scalar quantization 
+followed by arithmetic entropy coding
+is used to code all remaining significant coefficients.
+.LP
+The DWT is performed as described for
+.BR imgdwt (1).
+Option
+.B \-w
+specifies the wavelet, 
+option
+.B \-b
+specifies the boundary extension, and option
+.B \-pw
+indicates whether perceptual weighting is to be used.
+See 
+.BR imgdwt (1)
+for more details.
+.LP
+The SFQ algorithm operates using a Lagrangian cost formulation
+of the form
+.I "J = D + lambda * R"
+where 
+.I D
+is distortion,
+.I R
+is rate,
+and
+.I lambda
+is the Lagrangian rate-distortion parameter given by
+the
+.B \-l
+option.
+.I lambda 
+determines the balance between rate and distortion in the
+algorithm:  large values of
+.I lambda
+emphasize reduction of bit rate over distortion; small values of
+.I lambda
+produce codings with lower distortion but at a consequently higher rate.
+Varying
+.I lambda
+from 0 to infinity will trace out the rate-distortion performance curve
+of the SFQ algorithm for a particular input image and for a
+particular scalar-quantizer stepsize; a single
+.I lambda
+thus specifies an operating point on this rate-distortion curve.
+.LP
+The performance of the SFQ algorithm depends not only on 
+.I lambda
+but also on the chosen scalar-quantizer stepsizes.
+The option
+.B \-hpq
+specifies the scalar-quantizer stepsize to be used in the coding
+of the highpass subbands; the baseband, coded independently from the
+highpass subbands, uses the stepsize given by the
+.B \-bbq
+option.
+If a highpass stepsize is not specified (i.e., no
+.B \-hpq
+option given), 
+.B sfqencode
+determines an "optimal" stepsize by searching in
+a set of 245 stepsizes between 7.6 and 32.
+The optimal stepsize is the one in the set found to
+minimize the rate-distortion cost criterion
+.I J
+(see above).
+Note: this search process essentially implies coding the highpass
+subbands 245 times and
+choosing the best coding; it is consequently quite slow.
+A similar search is performed for the baseband stepsize in the
+case that the
+.B \-bbq
+option is not given.
+.LP
+.B sfqencode
+normally prints to stdout a small amount of information
+concerning the encoding being performed, most notably the bit rate,
+expressed in bits per pixel,
+achieved by the program.  If the 
+.B \-vo
+(value-only) option is given, this printed output is suppressed except for
+the bit rate.
+.LP
+Note: the original presentation of SFQ given by Xiong 
+.IR "et al" .
+describes a method for predicting portions of the zerotree for
+high-frequency subbands based on the zerotree for
+lower-frequency subbands.
+.BR sfqencode ,
+as currently implemented, does not perform this zerotree prediction.
+.LP
+Note: the original presentation of SFQ given by Xiong
+.IR "et al" .
+does not include perceptual weighting as allowed by
+.B sfqencode
+(the 
+.B \-pw
+option).  Refer to
+.BR imgdwt (1)
+and
+.BR QccWAVPerceptualWeights (3)
+for details on the implementation of perceptual weighting.
+.LP
+Note:
+.BR sfqencode
+currently achieves rate-distortion performance slightly below that reported
+by Xiong
+.IR "et al" .
+For instance, when coding the "Barbara" 
+image at 0.5 bits/pixel, 
+.B sfqencode 
+achieves a PSNR about 1dB below the reported figure.
+The reasons for this performance gap are currently being investigated,
+although it is probably due in part to the lack of tree prediction
+as described above.
+.SH "SEE ALSO"
+.BR imgdwt (1),
+.BR QccWAVPerceptualWeights (3),
+.BR QccWAVSubbandPyramid (3),
+.BR QccPackWAV (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+Z. Xiong, K. Ramchandran, and M. T. Orchard,
+"Space-Frequency Quantization for Wavelet Image Coding,"
+.IR "IEEE Transactions on Image Processing" ,
+vol. 6, no. 5, pp. 677-693, May 1997.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

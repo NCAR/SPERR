@@ -1,0 +1,451 @@
+.TH QCCBITBUFFER 3 "QCCPACK" ""
+.SH NAME
+QccBitBuffer \- generic data structure for bitstream packing
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccBitBufferInitialize(QccBitBuffer *" bit_buffer );
+.br
+.BI "int QccBitBufferStart(QccBitBuffer *" bit_buffer );
+.br
+.BI "int QccBitBufferEnd(QccBitBuffer *" bit_buffer );
+.br
+.BI "int QccBitBufferFlush(QccBitBuffer *" bit_buffer );
+.br
+.BI "int QccBitBufferCopy(QccBitBuffer *" output_buffer ", QccBitBuffer *" input_buffer ", int " num_bits );
+.br
+.BI "int QccBitBufferPutBit(QccBitBuffer *" bit_buffer ", int " bit_value );
+.br
+.BI "int QccBitBufferGetBit(QccBitBuffer *" bit_buffer ", int *" bit_value );
+.br
+.BI "int QccBitBufferPutBits(QccBitBuffer *" bit_buffer ", int " val ", int " num_bits );
+.br
+.BI "int QccBitBufferGetBits(QccBitBuffer *" bit_buffer ", int *" val ", int " num_bits );
+.br
+.BI "int QccBitBufferPutChar(QccBitBuffer *" bit_buffer ", unsigned char " val );
+.br
+.BI "int QccBitBufferGetChar(QccBitBuffer *" bit_buffer ", unsigned char *" val );
+.br
+.BI "int QccBitBufferPutInt(QccBitBuffer *" bit_buffer ", int " val );
+.br
+.BI "int QccBitBufferGetInt(QccBitBuffer *" bit_buffer ", int *" val );
+.br
+.BI "int QccBitBufferPutDouble(QccBitBuffer *" bit_buffer ", double " val );
+.br
+.BI "int QccBitBufferGetDouble(QccBitBuffer *" bit_buffer ", double *" val );
+.SH DESCRIPTION
+When one writes a stream of bits to a file, it is necessary for the bits
+to be "packed" into byte-sized characters, as the byte is the smallest
+input/output unit supported by the operating system.
+Likewise, bit "unpacking" from byte-sized characters
+is necessary to read a bitstream from a file.
+QccPack provides the
+.B QccBitBuffer
+data structure to facilitate reading and writing bitstreams.
+For writing, 
+the
+.B QccBitBuffer
+structure and related routines automatically handle the packing of consecutive
+bits into a character and the writing of the resulting
+character, when full, to the file.
+For reading, bits are unpacked from the current character; when no more bits
+remain to be read from the character, the next character from the file
+is read automatically.
+Consequently, from the user's point of view, the
+.B QccBitBuffer
+structure and related routines provided bit-level access
+to files.
+Additional routines allow 
+.B int
+and
+.B double
+types to be read/written from/to the bitstream without regard to
+the byte alignment usually required by the operating system.
+.SH "DATA STRUCTURE"
+The
+.B QccBitBuffer
+data structure is defined as:
+.RS
+.nf
+
+typedef unsigned char QccBitBufferChar;
+typedef struct
+{
+  QccString          filename;
+  FILE               *fileptr;
+  int                type;
+  int                bit_cnt;
+  int                byte_cnt;
+  int                bits_to_go;
+  QccBitBufferChar   buffer;
+} QccBitBuffer;
+.fi
+.RE
+.LP
+The fields of
+.B QccBitBuffer
+are as follows:
+.TP
+.I filename
+The name of the file to which the bitstream is to be
+read/written.
+.TP
+.I fileptr
+The
+.B FILE
+pointer to the file.
+.TP
+.I type
+Indicates whether the buffer is output (bitstream is written to file) or
+input (bitstream is read from file).  Takes values
+.B QCCBITBUFFER_OUTPUT
+or
+.BR QCCBITBUFFER_INPUT ,
+respectively.
+.TP
+.I bit_cnt
+Number of bits read from or written to buffer so far.
+.TP
+.I byte_cnt
+Number of bytes read from or written to the file associated to the
+buffer.
+.TP
+.I bits_to_go
+Number of bits remaining to pack/unpack into/from current character.
+For internal use in QccPack routines only.
+.TP
+.I buffer
+The current character being packed/unpacked.
+.SH "FILE FORMAT"
+The file written or read by
+.BR QccBitBuffer
+routines
+is merely a sequence of the packed characters representing the bitstream.
+The order
+that the bits of the bitstream are packed into the characters
+is least-significant bit (LSB) to most-significant bit (MSB).
+There is no header information stored in the file.
+.SH "ROUTINES"
+.B QccBitBufferInitialize()
+should be called before any use of a
+.B QccBitBuffer
+structure.
+.B QccBitBufferInitialize()
+initializes the fields of
+.I bit_buffer
+to the following values:
+.RS
+
+.IR filename :
+.B NULL
+string
+.br
+.IR fileptr :
+.B NULL
+.br
+.IR type :
+.B QCCBITBUFFER_OUTPUT
+.br
+.IR bit_cnt :
+0
+.br
+.IR bits_to_go :
+8
+.br
+.IR buffer :
+0
+.RE
+.LP
+.B QccBitBufferStart()
+starts a read or write on
+.IR bit_buffer .
+.IR bit_buffer -> type
+must be set to indicate whether 
+.I bit_buffer
+will read a file
+.RB ( QCCBITBUFFER_INPUT )
+or write a file
+.RB ( QCCBITBUFFER_OUTPUT ).
+If 
+.IR bit_buffer -> fileptr 
+is
+.BR NULL ,
+the file indicated by
+.IR bit_buffer -> filename
+is opened and the resulting
+.B FILE
+pointer is returned in
+.IR bit_buffer -> fileptr .
+Otherwise, it is assumed that the file is already opened properly for
+reading or writing as appropriate, and is properly positioned to the
+start of binary data in the file (thus,
+.BR QccBitBufferStart()
+permits the reading of, say, an ASCII header by some external procedure
+before the reading of binary data commences).
+In either case, if
+.I bit_buffer
+is being started for reading, 
+.IR bit_buffer -> buffer
+is primed by reading the first character of the file.
+.LP
+.B QccBitBufferEnd()
+should be called after all accesses (read or write) to
+.I bit_buffer
+are complete.
+.B QccBitBufferEnd()
+closes 
+.IR bit_buffer -> fileptr .
+.LP
+.B QccBitBufferFlush()
+should be called at the end of writing a bitstream
+after all bits have been written
+but before 
+.BR QccBitBufferEnd() 
+is called.
+.B QccBitBufferFlush()
+ensures that the last byte being packed with bits, which may not be
+full, is output to the file.
+If any bits are output after a call to
+.BR QccBitBufferFlush() ,
+they will be written to the next byte of the file; i.e.,
+.B QccBitBufferFlush()
+can be used to align output to byte boundaries in the file.
+.B QccBitBufferFlush()
+is usually called only for buffers opened for output.
+In the case of an input buffer,
+.B QccBitBufferFlush()
+will cause the next bit read to come from the next
+byte of the file; i.e.,
+on input,
+.B QccBitBufferFlush()
+can be used to enforce alignment to byte boundaries
+during reading the file.
+On output,
+.BR QccBitBufferFlush()
+calls
+.BR QccFileFlush (3)
+to ensure that all stream buffers are flushed.
+.LP
+.BR QccBitBufferCopy()
+copies
+.I num_bits
+from
+.I input_buffer
+to
+.I output_buffer
+by calling
+.B QccBitBufferGetBit()
+on
+.I input_buffer
+and
+.B QccBitBufferPutBit()
+on
+.I output_buffer
+.I num_bits
+times.
+.LP
+.B QccBitBufferPutBit()
+outputs a bit,
+.IR bit_value ,
+to output buffer
+.IR bit_buffer .
+The bit is packed into the current byte, and, if this byte is full,
+it is written to the file.
+.I bit_value
+gives the value of the bit;
+.I bit_value 
+should be zero to denote a 0 bit and nonzero to denote a 1 bit.
+.LP
+.B QccBitBufferGetBit()
+inputs a bit,
+.IR bit_value ,
+from an input buffer
+.IR bit_buffer .
+If the current byte is empty, the next byte is read from the file.
+Then, a bit is unpacked from the byte.
+The bit is returned in
+.IR bit_value ;
+a 0 is returned for a 0 bit, a 1 is returned for a 1 bit.
+If the
+.IR bit_value
+pointer is
+.BR NULL ,
+then the bit is read from
+.I input_buffer
+but not returned.
+.LP
+.B QccBitBufferPutBits()
+outputs the least-significant
+.I num_bits
+bits of
+.I val
+to
+.I bit_buffer
+via
+.I num_bits
+consecutive calls to
+.BR QccBitBufferPutBit() .
+The bits are output starting with the least-significant bit of
+.IR val .
+.LP
+.BR QccBitBufferGetBits()
+inputs
+.I num_bits
+bits from
+.I bit_buffer
+to the least-significant bits of
+.IR val
+via
+.I num_bits
+consecutive calls to
+.BR QccBitBufferGetBit() .
+The bits are placed into
+.I val
+starting with the least-significant bit first.
+If the
+.IR val
+pointer is
+.BR NULL ,
+then the bits are read from
+.I input_buffer
+but not returned.
+.LP
+.B QccBitBufferPutChar()
+and
+.B QccBitBufferGetChar()
+write or read, respectively, an
+.B unsigned char
+to or from the file.  That is, these two routines effectuate 8 consecutive
+bit writes or reads via
+.B QccBitBufferPutBit()
+or
+.BR QccBitBufferGetBit() .
+If the
+.IR val
+pointer is
+.BR NULL ,
+then
+.BR QccBitBufferGetBit() 
+reads the character from
+.IR input_buffer ,
+but it is not returned.
+.LP
+.B QccBitBufferPutInt()
+and
+.B QccBitBufferGetInt()
+use
+.BR QccBinaryIntToChar (3)
+and
+.BR QccBinaryChartoInt (3)
+to convert between an
+.B int
+and four characters.  These four characters are read from or written to
+the file via four calls to
+.B QccBitBufferPutChar()
+or
+.BR QccBitBufferGetChar() .
+If the
+.IR val
+pointer is
+.BR NULL ,
+then
+.BR QccBitBufferGetInt() 
+reads the integer from
+.IR input_buffer ,
+but it is not returned.
+.LP
+.B QccBitBufferPutDouble()
+and
+.B QccBitBufferGetDouble()
+use
+.BR QccBinaryFloatToChar (3)
+and
+.BR QccBinaryChartoFloat (3)
+to convert between a
+.B double
+and four characters.  These four characters are read from or written to
+the file via four calls to
+.B QccBitBufferPutChar()
+or
+.BR QccBitBufferGetChar() .
+.B QccBitBufferPutDouble()
+and
+.B QccBitBufferGetDouble()
+actually read and write 
+.B double
+as
+.BR float ;
+consequently, these routines may incur a loss of precision.
+If the
+.IR val
+pointer is
+.BR NULL ,
+then
+.BR QccBitBufferGetDouble() 
+reads the value from
+.IR input_buffer ,
+but it is not returned.
+.SH "RETURN VALUE"
+Each of these routines return 0 upon successful completion, 1 on error.
+.SH "SEE ALSO"
+.BR QccBinaryIntToChar (3),
+.BR QccBinaryChartoInt (3),
+.BR QccBinaryFloatToChar (3),
+.BR QccBinaryChartoFloat (3),
+.BR QccPack (3)
+.SH NOTES
+Because bitstreams are stored in raw format files with no headers,
+the routines that read these files (e.g.,
+.BR QccBitBufferGetBit() )
+do not know a priori how long the bitstream is.
+Since a bitstream may end in the middle of a byte,
+the end of the file may not correspond to the end of the bitstream.
+It is the user's responsibility to ensure that data is not read from beyond
+the end of the bitstream.
+.LP
+On a related note,
+.IR bit_buffer -> bit_cnt
+stores the number of bits actually put into or got out of the buffer.
+On the other hand,
+.IR bit_buffer -> byte_cnt
+stores the number of bytes that have been read from or written to the
+file associated to the buffer.
+Calls to
+.B QccBitBufferFlush()
+may cause these two to appear to be "out of sync."
+For example, when the last byte of a file is written, if this last byte is not
+completely full,
+.IR bit_buffer -> bit_cnt
+is incremented by only the number of bits actually put into the buffer
+(something less than 8),
+while
+.IR bit_buffer -> byte_cnt
+is incremented once indicating that a byte (8 bits) was written to the
+file.  In this case,
+.IR bit_buffer -> bit_cnt
+will not be equal to 8 times
+.IR bit_buffer -> byte_cnt
+as might have been expected.
+This issue is important to keep in mind should
+.B QccBitBufferFlush()
+be called multiple times during reading or writing in order to
+align to byte boundaries; in this case, the bits in the file
+that are "skipped" to get to
+the start of the next byte are not included in the
+.IR bit_buffer -> bit_cnt
+count.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

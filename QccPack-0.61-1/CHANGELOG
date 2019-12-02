@@ -1,0 +1,1613 @@
+==============================================================================
+
+                                  Q C C P A C K
+
+                            Version 0.61, 01-apr-2016
+
+                    Copyright (C) 1997-2016  James E. Fowler
+
+------------------------------------------------------------------------------
+
+
+CHANGES:
+
+Version 0.61:
+  01-apr-2016:  BETA release version 0.61
+  30-mar-2016:  Updated Cygwin installation instructions
+  20-jan-2016:  Updated copyright year range for 2016
+  20-jan-2016:  Fixed zero-subband-size bug in tce3d.c
+
+Version 0.60:
+  25-nov-2015:  BETA release version 0.60
+  08-aug-2015:  Added QccFileReadLine()
+  07-aug-2015:  Added QccFileGetRealPath()
+  14-jul-2015:  Added QccFileWriteMagicNumberVersion()
+  
+Version 0.59:
+  18-jun-2015:  BETA release version 0.59
+  15-jun-2015:  Added QccFileRewind()
+  14-jun-2015:  Updated copyright year range for 2015
+  14-jun-2015:  Made QccENTExponentialGolombEncodeSymbol() and
+                  QccENTExponentialGolombDecodeSymbol() visible
+  09-jan-2014:  Updated copyright year range for 2014
+  20-jul-2013:  Added Data/Matlab to QCCPACK_DATA_DIRS in Imakefile
+  20-jul-2013:  Updated copyright year range for 2013
+  21-dec-2011:  Updated copyright year range for 2011
+  21-dec-2011:  Minor fixes for warning-free compilation with gcc-4.6
+  23-jun-2009:  Added better support for uniform quantizers to sqencode,
+                  sqdecode
+  11-mar-2009:  Added logo.sed
+
+Version 0.58:
+  13-feb-2009:  BETA release version 0.58
+  05-feb-2009:  Added klttcedecode3d.1, klttcedecode3d_lossless.1, 
+                  klttceencode3d.1, klttceencode3d_lossless.1, 
+                  tcedecode3d_lossless.1, tceencode3d_lossless.1
+  05-feb-2009:  Added QccWAVtce3DLosslessEncode.3,
+                  QccWAVtce3DLosslessDecodeHeader.3, 
+                  QccWAVtce3DLosslessDecode.3, 
+                  QccWAVklttce3DEncode.3, 
+                  QccWAVklttce3DDecodeHeader.3, 
+                  QccWAVklttce3DDecode.3, 
+                  QccWAVklttce3DLosslessEncode.3, 
+                  QccWAVklttce3DLosslessDecodeHeader.3, 
+                  QccWAVklttce3DLosslessDecode.3
+  05-feb-2009:  Added klttce3d.c, klttceencode3d.c, klttcedecode3d.c
+  04-feb-2009:  Changed QccHYPrkltTrain(), QccHYPrkltTransform(),
+                  QccHYPrkltInverseTransform() to use integer volumes
+  04-feb-2009:  Added klttce3d_lossless.c, klttceencode3d_lossless.c,
+                  klttcedecode3d_lossless.c
+  04-feb-2009:  Fixed zero temporal_num_scales problem in 3D packet transforms
+  02-feb-2009:  Added tce3d_lossless.c,
+                  tceencode3d_lossless, tcedecode3d_lossless
+  29-jan-2009:  QccHYPrkltTrain.3, QccHYPrkltFactorization.3,
+                  QccHYPrkltTransform.3, QccHYPrkltInverseTransform.3
+  29-jan-2009:  Added QccHYPrklt.3
+  29-jan-2009:  Added QccHYPrkltInitialize(), QccHYPrkltAlloc(),
+                  QccHYPrkltFree(), QccHYPrkltTrain(),
+                  QccHYPrkltFactorization()
+  28-jan-2009:  Added QccHYPrkltTransform(), QccHYPrkltInverseTransform()
+  28-jan-2009:  Added QccMatrixIdentity(), QccMatrixRowExchange(),
+                  QccMatrixColExchange(), QccMatrixIdentity.3,
+                  QccMatrixRowExchange.3, QccMatrixColExchange.3
+  16-jan-2009:  Updated copyright year range for 2009
+
+Version 0.57:
+  30-jun-2008:  BETA release version 0.57
+  09-may-2008:  Added QccTimeTic(), QccTimeToc(), QccTime.3
+  06-may-2008:  Fixed spatial_num_levels/temporal_num_levels bug in
+                  initialization in bisk3d.c, wdr3d.c
+  06-may-2008:  Fixed zero number of levels in
+                  QccWAVWaveletPacketDWT3D(),
+                  QccWAVWaveletInversePacketDWT3D()
+  26-apr-2008:  Added sam.c, icbsam.c, QccHYPImageCubeMeanSAM(),
+                QccVectorAngle()
+  17-apr-2008:  Added QccWAVtce3DEncode.3, tceencode3d.1
+  16-apr-2008:  Added tce3d.c, tceencode3d.c, tcedecode3d.c
+  16-apr-2008:  Added -bpv to rawtoicb.c, icbtoraw.c, rawdist3d.c
+  16-apr-2008:  Added -bpp to rawtoicp.c, icptoraw.c, rawdist2d.c
+  16-apr-2008:  Added bpv, bpp to QccHYPRaw(), QccHYPRawRead2D(),
+                  QccHYPRawWrite2D(), QccHYPRawDist2D(), QccHYPRawRead3D(),
+                  QccHYPRawWrite3D(), QccHYPRawDist3D(),
+
+Version 0.56:
+  14-mar-2008:  BETA release version 0.56
+  14-mar-2008:  Added QccIMGImageComponentLBT.3,
+                  QccIMGImageComponentInverseLBT.3
+  13-mar-2008:  Added QccFastDCT, QccFastDCTInitialize, QccFastDCTCreate,
+                  QccFastDCTFree, QccFastDCTForwardTransform1D,
+                  QccFastDCTInverseTransform1D, QccFastDCTForwardTransform2D,
+                  QccFastDCTInverseTransform2D
+  13-mar-2008:  Added fast_dct.c
+  13-mar-2008:  Added dcttceencode.1, dcttcedecode.1
+  13-mar-2008:  Added QccWAVdcttceEncode.3, QccWAVdcttceDecodeHeader.3,
+                  QccWAVdcttceDecode.3
+  13-mar-2008:  Renamed image_lapped_filter.c to image_lbt.c
+  24-feb-2008:  Fixed memory leaks in dcttce.c, image_lapped_filter.c
+  17-jan-2008:  Added Haar.fbk
+  09-jan-2008:  Added dcttce.c, dcttceencode.c, dcttcedecode.c
+  09-jan-2008:  Added image_lapped_filter.c
+  09-jan-2008:  Added QccMatrixInverse(), QccMatrixInverse.3
+  04-jan-2008:  Updated substr
+  04-jan-2008:  Updated copyright year range for 2008
+  11-dec-2007:  Fixed minor max_coefficients bug in QccWAVtceEncodeDWT()
+  24-oct-2007:  Changed spawn to be able to handle commands with arguments
+  09-oct-2007:  Added QCCMATHEPS
+  01-oct-2007:  Added QccMatrixIntMultiply(), QccMatrixIntMultiply.3
+  01-oct-2007:  Added QccMatrixMultiply(), QccMatrixMultiply.3
+  28-sep-2007:  Added QccMatrixNullspace(), QccMatrixNullspace.3
+  28-sep-2007:  Added QccMatrixOrthogonalize(), QccMatrixOrthogonalize.3
+  28-sep-2007:  Modified QccMatrixSVD() to work with matrics of any size
+
+Version 0.55:
+  29-aug-2007:  BETA release version 0.55
+  03-jul-2007:  Added limits.h include
+  17-may-2007:  Fixed num_symbols bug in QccENTHuffmanDesign()
+  16-may-2007:  Added check for invalid alphabet_size to
+                  QccENTHuffmanEncodeChannel()
+  10-may-2007:  Added num_pcs parameter to QccHYPkltTransform()
+  10-may-2007:  Added -p option to icbklt
+  10-may-2007:  Added QccIMGImageComponentReszie(), QccIMGImageCubeResize()
+  04-may-2007:  Added QccVolumeResize(), QccVolumeIntResize()
+  04-may-2007:  Added QccMatrixResize(), QccMatrixIntResize()
+  04-may-2007:  Changed QccVectorIntRealloc() to QccVectorIntResize()
+  04-may-2007:  Changed QccVectorRealloc() to QccVectorResize()
+  04-may-2007:  Added QccVolumeVariance(), QccVolumeIntVariance()
+  02-may-2007:  Added man pages for libQccPackHYP utils
+  02-may-2007:  Added man pages for klt.c
+  02-may-2007:  Added icbtocolor.c, hyperspectral.c
+  02-may-2007:  Added icbextractframe.c, icbextractframe.1
+  01-may-2007:  Added QccIMGImageCubeExtractFrame()
+  01-may-2007:  Added klt.c, icbklt.c, icbiklt.c
+  01-may-2007:  Added klt_train.c
+  01-may-2007:  Added QccMatrixSVD()
+  30-apr-2007:  Added GSL support
+  30-apr-2007:  Added libQccPackHYP standard module
+
+Version 0.54:
+  30-apr-2007:  BETA release version 0.54
+  28-jan-2007:  Fixed bug in yuvtoseq causing extra frame to be output
+  12-jan-2007:  Fixed bug in QccWAVbiskDistortionTraceInitialize()
+  12-jan-2007:  Updated copyright year range for 2007
+  24-aug-2006:  Fixed bug for reading QCCWAVFILTERBANK_GENERAL filters in
+                  QccWAVFilterBankReadData()
+  16-aug-2006:  Added QccENTArithmeticResetModel()
+  13-jul-2006:  Fixed bug in Cr calculation in QccIMGImageRGBtoYCbCr()
+
+Version 0.53:
+  15-jun-2006:  BETA release version 0.53
+  15-jun-2006:  Added lifting_int_cdf5_3.c, CohenDaubechiesFeauveau.5-3.int.lft
+  15-jun-2006:  Added man pages for subband_pyramid3D_int.c
+  15-jun-2006:  Added man pages for subband_pyramid_int.c
+  15-jun-2006:  Added subband_pyramid_int.c, subband_pyramid3D_int.c
+  14-jun-2006:  Added QccWAVWaveletShapeAdaptiveDWT1DInt.3,
+                  QccWAVWaveletShapeAdaptiveDWT2DInt.3,
+                  QccWAVWaveletShapeAdaptiveDyadicDWT3DInt.3
+  14-jun-2006:  Added QccWAVWaveletDWT1DInt.3, QccWAVWaveletDWT2DInt.3,
+                  QccWAVWaveletDyadicDWT3DInt.3, QccWAVWaveletPacketDWT3DInt.3
+  14-jun-2006:  Added QccWAVWaveletAnalysis1DInt.3,
+                  QccWAVWaveletAnalysis2DInt.3, QccWAVWaveletAnalysis3DInt.3
+  13-jun-2006:  Added QccWAVLiftingAnalysisInt.3
+  13-jun-2006:  Added man pages for lazy_wavelet_int.c
+  13-jun-2006:  Added QccWAVLiftingSchemeInteger.3
+  13-jun-2006:  Added LWT.int.lft
+  13-jun-2006:  Added sadwt_int.c
+  13-jun-2006:  Revised interfaces to DWT routines to reduce memory
+                  consumption (overwriting input data); updated man pages
+  12-jun-2006:  Added dwt_int.c
+  12-jun-2006:  Added wavelet_analysis_synthesis.c,
+                  wavelet_analysis_synthesis_int.c
+  12-jun-2006:  Renamed lifting_cdf9_7_int.c to lifting_int_cdf9_7.c
+  12-may-2006:  Added lifting_scheme.c, lazy_wavelet_int.c, lifting_int.c,
+                  lifting_cdf9_7_int.c
+  12-may-2006:  Added CohenDaubechiesFeauveau.9-7.int.lft
+  12-may-2006:  Added volume_int.c, QccVolumeInt.3
+  12-may-2006:  Added matrix_int.c, QccMatrixInt.3
+  11-may-2006:  Added vector_int.c, QccVectorInt.3
+
+Version 0.52:
+  05-may-2006:  BETA release version 0.52
+  05-may-2006:  Fixed mismatch between encoder and decoder alpha in
+                  tarp.c, tarp3d.c
+  05-apr-2006:  Added comments about inconsistent SNR definitions
+                  to icbdist.1
+  05-apr-2006:  Added comments about inconsistent SNR and PSNR definitions
+                  to imgdist.1
+  19-jan-2006:  Updated copyright year range for 2006
+  19-jan-2006:  Added coiflet.6.fbk
+  02-dec-2005:  Fixed misstatement in seqtoicb.1
+  04-nov-2005:  Fixed memory-free bug in icptoimg.c
+  04-nov-2005:  Added -nl option to imgrdwt, imgrdwt.1
+
+Version 0.51:
+  11-aug-2005:  BETA release version 0.51
+  11-aug-2005:  Updated imgdpcmencode.1, imgdpcmdecode.1, seqdeinterlace.1
+  11-aug-2005:  Added -mae to imgdist.1, seqdist.1
+  11-aug-2005:  Added icbdist.1
+  11-aug-2005:  Added yuvtoseq.1 and seqtoyuv.1
+  11-aug-2005:  Added seqtoicb.1 and icbtoseq.1
+  11-aug-2005:  Added -sf and -ef switches to seqtoicb
+  09-aug-2005:  Added ICB to QccFilePrintFileInfo()
+  22-jul-2005:  Added QccPack.config.darwin
+  19-jul-2005:  Added QccIMGImageSequenceToImageCube.3
+  19-jul-2005:  Added QccIMGImageComponentToDataset.3
+  19-jul-2005:  Added QccIMGImageSequence.3
+  19-jul-2005:  Added QccIMGImageCube.3, QccIMGImageCubeRead.3,
+                  QccIMGImageCubeClip.3, QccIMGImageCubeMean.3,
+                  QccIMGImageCubeMSE.3, QccIMGImageCubeExtractBlock.3,
+                  QccIMGImageCubeCopy.3
+  23-jun-2005:  Added QccIMGImageComponentDCT.3
+  23-jun-2005:  Renamed QccWAVZerotreeCalcResolutions() to
+                  QccWAVZerotreeCalcSizes()
+  22-jun-2005:  Added QccIMGImageComponentScalarQuantize.3
+  21-jun-2005:  Added QccIMGImageComponentDPCMEncode.3
+  21-jun-2005:  Added QccIMGImageComponentFilterSeparable.3
+  21-jun-2005:  Added QccIMGImageComponentDeinterlace.3,
+                  QccIMGImageDeinterlace.3
+  10-jun-2005:  Added QccIMGImageRGBtoYCbCr(), QccIMGImageYCbCrtoRGB(),
+                  QccIMGImageRGBtoYCbCr.3, QccIMGImageYCbCrtoRGB.3
+  10-jun-2005:  Cleaned up image_color_conversion.c, including correction of
+                  RGB to YUV conversion
+  09-jun-2005:  Added QccIMGImageRGBtoYUV.3
+  09-jun-2005:  Added QccIMGImageRead.3, QccIMGImageCopy.3,
+                  QccIMGImageColorSNR.3
+  09-jun-2005:  Added QccIMGImage.3
+  09-jun-2005:  Renamed QccIMGImageGetResolution() to QccIMGImageGetSize();
+                  QccIMGImageSetResolution() to QccIMGImageSetSize()
+  09-jun-2005:  Renamed QccIMGImageGetResolutionYUV() to
+                  QccIMGImageGetSizeYUV(); QccIMGImageSetResolutionYUV() to
+                  QccIMGImageSetSizeYUV()
+  07-jun-2005:  Added QccIMGImageComponentMSE.3,
+                  QccIMGImageComponentExtractBlock.3,
+                  QccIMGImageComponentCopy.3,
+                  QccIMGImageComponentExtractSubpixel.3,
+                  QccIMGImageComponentInterpolateBilinear.3
+  07-jun-2005:  Added QccIMGImageComponentMean.3
+  07-jun-2005:  Added QccIMGImageComponentRead.3, QccIMGImageComponentClip.3,
+                  QccIMGImageComponentAbsoluteValue.3
+  07-jun-2005:  Renamed QccIMGClipPixelValue() to QccIMGImageComponentClip()
+  07-jun-2005:  Added QccIMGImageComponent.3
+
+Version 0.50:
+  25-may-2005:  BETA release version 0.50
+  25-may-2005:  Added mesh_memc.1
+  25-may-2005:  Added QccVIDMeshMotionEstimationSearch.3
+  25-may-2005:  Added -mae option to imgdist.c, icbdist.c, seqdist.c
+  25-may-2005:  Added QccIMGImageComponentMAE(),
+                  QccIMGImageComponentShapeAdaptiveMAE(),
+                  QccIMGImageCubeMAE(), QccIMGImageCubeShapeAdaptiveMAE()
+  25-may-2005:  Renamed QccDatasetMse(), QccIMGImageComponentMse(),
+                  QccIMGImageComponentShapeAdaptiveMse(),
+                  QccIMGImageCubeMse(), QccIMGImageCubeShapeAdaptiveMse() to
+                  QccDatasetMSE(), QccIMGImageComponentMSE(),
+                  QccIMGImageComponentShapeAdaptiveMSE(),
+                  QccIMGImageCubeMSE(), QccIMGImageCubeShapeAdaptiveMSE()
+  24-may-2004:  Added constrained_boundary and exponential_kernel to
+                  mesh_motion_estimation.c and mesh_memc.c
+  24-may-2005:  Added QccPoint.3, QccTriangle.3, QccRegularMesh.3
+  23-may-2005:  Added ability to pass NULL pointers for values in
+                  get routines of bit_buffer.c
+  18-may-2005:  Fixed distortion-trace operation for shape-adaptive coding
+                  in bisk.c
+  18-may-2005:  Added -rd option to biskencode, biskencode.1
+  18-may-2005:  Added QccWAVbiskDistortionTrace to bisk.c,
+                  QccWAVbiskEncode.3
+  17-may-2005:  Added QccWAVwdr3DEncode.3, QccWAVwdr3DDecode.3,
+                  QccWAVwdr3DDecodeHeader.3
+  17-may-2005:  Added wdrencode3d.1, wdrdecode3d.1
+  17-may-2005:  Added icbread.m, icbwrite.m, icpread.m, icpwrite.m
+  17-may-2005:  Added ICB to printfile
+  16-may-2005:  Changed return values of QccECCReedSolomonDecode()
+  10-may-2005:  Added QccFifoRestart(), QccFifoRestart.3
+  05-may-2005:  Added seqtoyuv
+  05-may-2005:  Removed -qcif and -sif options from yuvtoseq
+  27-apr-2005:  Fixed failure to discard sets with zero size during set
+                  shrinkage when no mask used in bisk.c and bisk3d.c
+  11-apr-2005:  Added QccWAVbisk3DEncode2.3, QccWAVbisk3DDecode2.3
+  11-apr-2005:  Added QccWAVbisk3DEncode2(), QccWAVbisk3DDecode2()
+  21-mar-2005:  Added wdr3d.c, wdrencode3d.c, wdrdecode3d.c
+  15-mar-2005:  Added -r to memc, memc.1
+  09-mar-2005:  Added -r to mesh_memc
+  07-mar-2005:  Added -eb to mesh_memc
+  02-mar-2005:  Added QccVIDMotionEstimationMAE.3
+  02-mar-2005:  Added mesh_memc
+  02-mar-2005:  Added mesh_motion_estimation.c
+  02-mar-2005:  Added QccIMGImageComponentExtractSubpixel()
+  02-mar-2005:  Added point.c, triangle.c, regular_mesh.c
+
+Version 0.49:
+  18-feb-2005:  BETA release version 0.49
+  18-feb-2005:  Fixed make_dist so as to not modify itself when changing
+                  date and version
+  18-feb-2005:  Modified substr to permit excluding filenames
+  18-feb-2005:  Added spatialblockencode.1, spatialblockdecode.1
+  18-feb-2005:  Added QccVIDSpatialBlockEncode.3, QccVIDSpatialBlockDecode.3,
+                  QccVIDSpatialBlockDecodeHeader.3
+  17-feb-2004:  Fixed failure to set temporal_num_levels for dyadic
+                  decomposition in QccWAVbisk3DDecodeHeader()
+  10-feb-2005:  Removed use of Huffman MVD tables from rwmh.c, rdwtblock.c,
+                  spatialblock.c
+  10-feb-2005:  Removed refinement vectors from rwmh.c, rwmhencode.c
+  10-feb-2005:  Added block_size checks to rwmh.c, rdwtblock.c, spatialblock.c
+  09-feb-2005:  Added QccENTExponentialGolombEncode.3,
+                  QccENTExponentialGolombDecode.3
+  09-feb-2005:  Added exponential-Golomb coding to
+                  QccVIDMotionVectorsEncodeVector(),
+                  QccVIDMotionVectorsDecodevector()
+  09-feb-2005:  Added exponential_golomb.c
+  07-feb-2005:  Added spatialblock.c, spatialblockencode.c,
+                  spatialblockdecode.c
+
+Version 0.48:
+  02-feb-2005:  BETA release version 0.48
+  01-feb-2005:  Fixed minor inconsistencies between man pages
+  27-jan-2005:  Added QccFifo.3, QccFifoInitialize.3, QccFifoStart.3,
+                  QccFifoEnd.3, QccFifoFlush.3
+  27-jan-2005:  Made pipe in QccFifo nonblocking
+  25-jan-2005:  Added QccWAVSubbandPyramidRasterScan.3,
+                  QccWAVSubbandPyramidInverseRasterScan.3
+  23-jan-2005:  Added reading and writing of motion vectors,
+                  variable blocksize, and subpixel accuracy to
+                  rwmhencode.1
+  22-jan-2005:  Added reading and writing of motion vectors,
+                  variable blocksize, and subpixel accuracy to
+                  QccVIDrwmhEncode.3
+  19-jan-2005:  Removed motion_estimation_levels from rwmh.c,
+                  rwmhencode.c, QccVIDrwmhEncode.3, rwmhencode.1
+  19-jan-2005:  Added QccWAVbiskEncode2.3, QccWAVbiskDecode2.3
+  14-jan-2005:  Updated copyright year range for 2005
+  14-jan-2005:  Added reading and writing of motion vectors,
+                  variable blocksize, and subpixel accuracy to
+                  QccVIDRDWTBlockEncode.3, rdwtblockencode.1
+  14-jan-2005:  Added subpixel accuracy to QccVIDMotionVectorsEncode.3
+  14-jan-2005:  Added QccFilterRead.3, QccFilterWrite.3
+  14-jan-2005:  Added memc.1
+  13-jan-2005:  Added QccVIDMotionEstimationExtractBlock.3,
+                  QccVIDMotionEstimationInsertBlock.3,
+                  QccVIDMotionEstimationFullSearch.3,
+                  QccVIDMotionEstimationCalcReferenceFrameSize.3,
+                  QccVIDMotionEstimationCreateReferenceFrame.3,
+                  QccVIDMotionEstimationCreateCompensatedFrame.3
+  12-jan-2005:  Added QccWAVWaveletRedundantDWT2DAlloc.3,
+                  QccWAVWaveletRedundantDWT2DFree.3
+  12-jan-2005:  Added QccMathMedian.3
+  12-jan-2005:  Added QccVIDMotionVectorsReadFile.3,
+                  QccVIDMotionVectorsWriteFile.3
+  12-jan-2005:  Added QccMatrixVariance.3
+  12-jan-2005:  Added msctocbk.c, msctocbk.h
+  09-dec-2004:  Added QccWAVbiskEncode2(), QccWAVbiskDecode2()
+  02-dec-2004:  Added arbitrary image size to yuvtoseq
+  30-nov-2004:  Added QccFileDescriptorOpen(), QccFileDescriptorOpen.3
+  30-nov-2004:  Added QccBitBufferCopy(), QccBitBufferCopy.3
+  30-nov-2004:  Added fifo.c and QccFifo structure
+  23-nov-2004:  Added QccVQCodebookCopy()
+  19-nov-2004:  Minor acceleration of symmetric-extension
+                  calculation in filter.c
+  14-oct-2004:  Added Ungerboeck.3.tcd
+  14-oct-2004:  Added QccECCTrellisStateTablePrint()
+  13-oct-2004:  Fixed syndromes for trellis codes
+  08-oct-2004:  Added QccMathProbabilityDensity typedef to math.c and lloyd.c
+  08-oct-2004:  Added line buffering of stdout to QccInit()
+  27-sep-2004:  Added reading and writing of motion vectors to
+                  rdwtblock.c, rdwtblockencode, rdwtblockdecode
+  27-sep-2004:  Added variable blocksizes to rdwtblock.c,
+                  rdwtblockencode, rdwtblockdecode
+  27-sep-2004:  Split ME/MC in rdwtencode.c into
+                  QccVIDRDWTBlockMotionEstimation() and
+                  QccVIDRDWTBlockMotionCompensation()
+  27-sep-2004:  Added reading of motion vectors to rwmh.c,
+                  rwmhencode, rwmhdecode
+  27-sep-2004:  Added variable blocksize to rwmh.c, rwmhencode, rwmhdecode
+  15-sep-2004:  Added QCCPACK_CODES_PATH facilities to crc.c, trellis_code.c
+  15-sep-2004:  Added Ungerboeck.2.tcd, Ungerboeck.7.tcd, Baicheva16.crc,
+                  atm8.crc, c2.crc, ccitt16.crc, ccitt4.crc, crc10.crc,
+                  crc12.crc, crc32.crc, crc5.crc, crc6.crc, crc7.crc,
+                  darc14.crc
+  14-sep-2004:  Added QccWAVSubbandPyramidRasterScan(),
+                  QccWAVSubbandPyramidInverseRasterScan()
+  14-sep-2004:  Added crc.c, trellis.c, viterbi.c, trellis_code.c
+  10-sep-2004:  Added QccVQVectorQuantizeVector()
+  06-sep-2004:  Fixed minor bug in QccChannelEntropy()
+  11-aug-2004:  Added subpixel accuracy to rwmh.c,
+                  rwmhencode.c, rwmhdecode.c
+  10-aug-2004:  Added subpixel accuracy to rdwtblock.c,
+                  rdwtblockencode.c, rdwtblockdecode.c
+  10-aug-2004:  Added subpixel_accuracy to motion_vectors.c
+  10-aug-2004:  Added QccVIDMotionEstimationCalcReferenceFrameSize()
+  10-aug-2004:  Added QccWAVWaveletRedundantDWT2DAlloc(),
+                  QccWAVWaveletRedundantDWT2DFree()
+  09-aug-2004:  Added eighth-pixel accuracy to motion_estimation.c, memc
+  09-aug-2004:  Added QccVIDMotionVectorsReadFile()
+  09-aug-2004:  Added memc
+  09-aug-2004:  Added QccVIDMotionEstimationInsertBlock(),
+                  QccVIDMotionEstimationCreateCompensatedFrame()
+  04-aug-2004:  Added QccVIDMotionEstimationCreateReferenceFrame()
+  04-aug-2004:  Added QccIMGImageComponentInterpolateBilinear() and
+                  QccIMGImageComponentInterpolateFilter()
+  04-aug-2004:  Added half-sample symmetric filtering to filter.c
+  30-jul-2004:  Added motion_estimation.c
+  26-jul-2004:  Added QccMathMedian()
+  26-jul-2004:  Added QccVIDMotionVectorsWriteFile()
+  23-jul-2004:  Added QCCVID_INTRAFRAME and QCCVID_INTERFRAME definitions
+  23-jul-2004:  Changed QccIMGImageSequenceFree() to return void
+  15-jul-2004:  Added QccIMGImageComponentInterpolate()
+  07-jul-2004:  Added QccBitBufferPutBits.3, QccBitBufferGetBits.3
+  07-jul-2004:  Added QccBitBufferPutBits(), QccBitBufferGetBits()
+  11-jun-2004:  Added QccMatrixVariance()
+
+Version 0.47:
+  02-jun-2004:  BETA release version 0.47
+  02-jun-2004:  Added making of documentation tarfile to make_dist
+  02-jun-2004:  Added -f to gzip in make_dist
+  02-jun-2004:  Fixed minor filelist bug in make_dist
+  02-jun-2004:  Updated RELEASE-NOTES
+  02-jun-2004:  Added QccVIDrwmhEncode.3, QccVIDrwmhDecode.3,
+                  QccVIDrwmhDecodeHeader.3
+  02-jun-2004:  Added rwmhencode.1, rwmhdecode.1
+  02-jun-2004:  Fixed failure to take into account specified start and
+                  end frames in QccVIDRWMHEncode(), QccVIDRDWTBlockEncode()
+  02-jun-2004:  Fixed error messages in seqdist
+  01-jun-2004:  Added QccAlpha.3, QccAlphaOpaque.3, QccAlphaTransparent.3,
+                  QccAlphaTranslucent.3
+  01-jun-2004:  Added biskencode3d.1, biskdecode3d.1
+  01-jun-2004:  Added QccWAVbisk3DEncode.3, QccWAVbisk3DDecode.3,
+                  QccWAVbisk3DDecodeHeader.3
+  01-jun-2004:  Added target_bit_cnt to QccWAVbiskDecode(),
+                  QccWAVwdrDecode(), QccWAVTarpDecode()
+  01-jun-2004:  Added -r option to biskdecode, wdrdecode, tarpdecode
+  01-jun-2004:  Finished QccWAVtceEncode.3
+  31-may-2004:  Cleaned up rwmh.c
+  31-may-2004:  Fixed missing memory allocation in QccWAVtceEncode()
+  28-may-2004:  Added QccWAVtceEncode.3, QccWAVtceDecode.3,
+                  QccWAVtceDecodeHeader.3
+  28-may-2004:  Added QccFree.3
+  05-may-2004:  Fixed parent_phase bug in
+                  QccVIDRWMHPhaseOptimalVectorRefinement in rwmh.c
+  16-mar-2004:  Fixed memory-allocation bug in imgdwt, imgidwt, sbptoicp,
+                  icptosbp, make_noise_image
+  04-mar-2004:  Fixed sprintf() calls in parse.c that were posing a
+                  problem for some architectures
+  04-mar-2004:  Fixed failure to set number of levels for mask in
+                  QccWAVSubbandPyramid3DShapeAdaptiveDWT()
+  04-mar-2004:  Fixed failure to free mask_subband_pyramid in bisk3d.c
+  29-feb-2004:  Added rwmhencode.c, rwmhdecode.c
+  28-feb-2004:  Added rwmh.c
+  17-feb-2004:  Added bisk3d.c, biskencode3d.c, biskdecode3d.c
+  11-feb-2004:  Added set max/min to inverse DWT in tarp.c, tarp3d.c,
+                  wdr.c, tce.c
+  10-feb-2004:  Added chngolombencode.1, chngolombdecode.1
+  10-feb-2004:  Added chngolombencode.c, chngolombdecode.c
+  10-feb-2004:  Added QccENTGolombEncode.3, QccENTGolombDecode.3,
+                  QccENTGolombEncodeChannel.3, QccENTGolombDecodeChannel.3
+  10-feb-2004:  Added golomb.c, golomb_channel.c
+  04-feb-2004:  Fixed failure to check for zero-sized subbands in
+                  significance pass in tarp.c and tarp3d.c
+  02-feb-2004:  Added USE_MTRACE option in QccPack.config
+  02-feb-2004:  Added optional call to mtrace() in QccInit2()
+  02-feb-2004:  Fixed memory leak in bisk.c - failure to free LIS properly,
+                  various sets left uncontained in a list
+  31-jan-2004:  Added QccFree()
+  31-jan-2004:  Added frees to utilities
+  24-jan-2004:  Added tceencode.1, tcedecode.1
+  22-jan-2004:  Added tce.c, tceencode.c, tcedecode.c
+  19-jan-2004:  Refined algorithm description in QccWAVTarpEncode.3 and
+                  QccWAVTarp3DEncode.3
+
+Version 0.46:
+  13-jan-2004:  BETA release version 0.46
+  13-jan-2004:  Removed versioning from shared library
+  13-jan-2004:  Fixed Imakefile for install of RELEASE_NOTES
+  13-jan-2004:  Removed detection of QccSPIHT module from
+                  rdwtblockencode.c, rdwtblockdecode.c
+  13-jan-2004:  Added QccVIDMotionVectorsTable,
+                  QccVIDMotionVectorsTableCreate,
+                  QccVIDMotionVectorsTableFree,
+                  QccVIDMotionVectorsEncode, QccVIDMotionVectorsDecode
+  13-jan-2004:  Added QccPackVID.3
+  12-jan-2004:  Added rdwtblockencode.1, rdwtblockdecode.1
+  12-jan-2004:  Added detection of QccSPIHT module to rdwtblockencode.c,
+                  rdwtblockdecode.c, rdwtblock.c
+  12-jan-2004:  Added QccVIDRDWTBlockEncode.3, QccVIDRDWTBlockDecodeHeader.3,
+                  QccVIDRDWTBlockDecode.3
+  09-jan-2004:  Added rdwtblock.c, rdwtblockencode.c, rdwtblockdecode.c
+  09-jan-2004:  Added motion_vectors.c
+  09-jan-2004:  Added libQccPackVID standard module
+  08-jan-2004:  Modified arithmetic coding so that output stops at exactly
+                  the specified number of bits when not equal to
+                  QCCENT_ANYNUMBITS
+  08-jan-2004:  Added checks to wavelet-based image decoders to ensure
+                  that specified output file is grayscale
+  08-jan-2004:  Fixed bug in reading/writing PBM files (inversion of
+                  black and white) in image_pnm.c
+  07-jan-2004:  Added QccFileSeekable(), QccFileFlush()
+  07-jan-2004:  Updated seqdist.1
+  02-jan-2004:  Updated copyright year range for 2004
+  31-dec-2003:  Added -sf and -ef options to seqdist
+  18-dec-2003:  Added ICIP paper to bisk man pages
+  09-dec-2003:  Added QccVectorVariance()
+  02-dec-2003:  Added yuvtoseq
+  01-dec-2003:  Revised Imakefiles for installation of misc. documentation
+
+Version 0.45:
+  01-dec-2003:  BETA release version 0.45
+  26-nov-2003:  Added QccPackSPECK module
+  24-nov-2003:  Enabled shape-adaptive coding in tarp3d.c
+  24-nov-2003:  Fixed minor mask size-checking bug in tarpencode3d.c,
+                  tarpdecode3d.c
+  22-nov-2003:  Added tarpencode3d.1, tarpdecode3d.1
+  21-nov-2003:  Added QccWAVTarp3DEncode.3, QccWAVTarp3DDecodeHeader.3,
+                  QccWAVTarp3DDecode.3
+  21-nov-2003:  Added spatial_num_levels to
+                  QccWAVSubbandPyramid3DDyadicToPacket()
+  21-nov-2003:  Added num_levels to QccWAVSubbandPyramid3DPacketToDyadic()
+  21-nov-2003:  Changed max_coefficient_bits in header to integer in
+                  wdr.c, tarp.c, tarp3d.c, bisk.c
+  21-nov-2003:  Added maximum bitplanes check to encoders in wdr.c, tarp.c,
+                  tarp3d.c, bisk.c
+  30-oct-2003:  Added symbolic links to dynamic library during make.libs
+  30-oct-2003:  Replaced rindex() with strrchr() in file.c
+  29-oct-2003:  Added tarp3d.c, tarpencode3d.c, tarpdecode3d.c
+  30-sep-2003:  Fixed bug in QccVectorNormalize()
+
+Version 0.44:
+  10-sep-2003:  BETA release version 0.44
+  10-sep-2003:  QccWAVSubbandPyramid3DRead.3
+                  QccWAVSubbandPyramid3DCopy.3
+                  QccWAVSubbandPyramid3DZeroSubband.3
+                  QccWAVSubbandPyramid3DDWT.3
+                  QccWAVSubbandPyramid3DShapeAdaptiveDWT.3
+                  QccWAVSubbandPyramid3DPacketToDyadic.3
+  10-sep-2003:  Added QccWAVSubbandPyramid3D.3
+  09-sep-2003:  Added QccWAVWaveletShapeAdaptiveDyadicDWT3D.3,
+                  QccWAVWaveletInverseShapeAdaptiveDyadicDWT3D.3,
+                  QccWAVWaveletShapeAdaptivePacketDWT3D.3,
+                  QccWAVWaveletInverseShapeAdaptivePacketDWT3D.3
+  09-sep-2003:  Added QccWAVWaveletPacketDWT3D.3,
+                  QccWAVWaveletInversePacketDWT3D.3
+  09-sep-2003:  Added QccWAVWaveletDyadicDWT3D.3,
+                  QccWAVWaveletInverseDyadicDWT3D.3
+  09-sep-2003:  Added QccWAVWaveletAnalysis3D.3, QccWAVWaveletSynthesis3D.3
+  09-sep-2003:  Added QccWAVWaveletLWT3D.3, QccWAVWaveletInverseLWT3D.3
+  08-sep-2003:  Removed unnecessary temporary array allocations from
+                  subband_pyramid.c, subband_pyramid3d.c
+  05-sep-2003:  Added QccWAVSubbandPyramid3DPacketToDyadic(),
+                  QccWAVSubbandPyramid3DDyadicToPacket()
+  05-sep-2003:  Removed I sets from bisk.c
+  24-jul-2004:  Added icbdist.c
+  23-jul-2003:  Added seqicb.c, seqtoicb.c, icbtoseq.c
+  23-jul-2003:  Added image_cube.c
+  23-jul-2003:  Added QccWAVWaveletLWT3D(), QccWAVWaveletInverseLWT3D()
+  22-jul-2003:  Added QccWAVWaveletShapeAdaptiveDyadicDWT3D(),
+                  QccWAVWaveletInverseShapeAdaptiveDyadicDWT3D(),
+                  QccWAVWaveletShapeAdaptivePacketDWT3D(),
+                  QccWAVWaveletInverseShapeAdaptivePacketDWT3D(),
+                  QccWAVSubbandPyramid3DShapeAdaptiveDWT(),
+                  QccWAVSubbandPyramid3DInverseShapeAdaptiveDWT()
+  12-jul-2003:  Fixed reporting of glob() error for nonexistent directory
+                  in QccFilePathSearch()
+  08-jul-2003:  Added QccWAVSubbandPyramidRedundantDWTSubsample() and
+                  QccWAVSubbandPyramidRedundantDWTSubsample.3
+  08-jul-2003:  Added subband_pyramid3D.c
+  08-jul-2003:  Added subsample patterns to QccWAVWaveletDyadicDWT3D(),
+                  QccWAVWaveletInverseDyadicDWT3D(),
+                  QccWAVWaveletPacketDWT3D(), QccWAVWaveletInversePacketDWT3D()
+  08-jul-2003:  Added spatial_num_scales and temporal_num_scales to
+                  QccWAVWaveletPacketDWT3D(), QccWAVWaveletInversePacketDWT3D()
+  08-jul-2003:  Added copying of subsample patterns in
+                  QccWAVSubbandPyramidCopy()
+  07-jul-2003:  Fixed failure to account for origin and subsampling pattern
+                  in QccWAVSubbandPyramidSubbandOffsets()
+  03-jul-2003:  Fixed misspelling of QccWAVSubbandPyramidCalcCoefficientRange()
+  24-jun-2003:  Added QccWAVWaveletAnalysis3D(), QccWAVWaveletSynthesis3D(),
+                  QccWAVWaveletDyadicDWT3D(),
+                  QccWAVWaveletInverseDyadicDWT3D(),
+                  QccWAVWaveletPacketDWT3D(), QccWAVWaveletInversePacketDWT3D()
+  10-jun-2003:  Fixed node-deletion bug for decoding in QccWAVwdrSortingPass()
+  28-may-2003:  Added man pages for volume.c
+  28-may-2003:  Added volume.c
+  27-may-2003:  Made Imake.rules build libQccPack.so.major.minor instead
+                  of libQccPack.so
+  27-may-2003:  Added gzip compression for man_pages to make_dist 
+  27-may-2003:  Added note about Microsoft Visual C++ to README
+  22-may-2003:  Minor changes to eliminate warnings on IRIX
+
+Version 0.43:
+  09-may-2003:  BETA release version 0.43
+  09-may-2003:  Updated RELEASE_NOTES
+  09-may-2003:  Finished QccWAVbiskEncode.3, biskencode.1
+  09-may-2003:  Started QccWAVbiskEncode.3
+  09-may-2003:  Added bisk.c, biskencode.c, biskdecode.c,
+                  biskencode.h, biskdecode.h
+  07-may-2003:  Fixed QccMatrixCopy() bug in QccWAVSubbandPyramidCopy()
+  11-mar-2003:  Fixed checking of return value of QccWAVwdrOutputVirtualEnd()
+                  in QccWAVwdrEncode()
+  04-mar-2003:  Removed check on permissible transform-decomposition levels
+                  in wdrencode.c
+
+Version 0.42:
+  25-feb-2003:  BETA release version 0.42
+  25-feb-2003:  Added subsample_pattern to QccWAVWaveletLWT2D(),
+                  QccWAVWaveletInverseLWT2D(),
+                  QccWAVWaveletLWT2D.3, QccWAVWaveletInverseLWT2D.3
+  25-feb-2003:  Updated RELEASE_NOTES
+  25-feb-2003:  Added mask_bar.1
+  24-feb-2003:  Added QccWAVShapeAdaptiveMaskBAR.3
+  24-feb-2003:  Added subsample_pattern_row, subsample_pattern_col to
+                  QccWAVWaveletRedundantDWT2DSubsample.3
+  24-feb-2003:  Renamed QccWAVSubbandPyramidSubbandResolution() to
+                  QccWAVSubbandPyramidSubbandSize()
+  24-feb-2003:  Added subsample_pattern_row, subsample_pattern_col to
+                  QccWAVSubbandPyramid.3
+  24-feb-2003:  Added lenna.mask.pgm
+  24-feb-2003:  Added subsample_pattern_row, subsample_pattern_col to
+                  QccWAVWaveletDWT2D.3, QccWAVWaveletInverseDWT2D.3
+  24-feb-2003:  Added subsample_pattern to QccWAVWaveletLWT.3,
+                  QccWAVWaveletInverseLWT.3,
+  24-feb-2003:  Added subsample_pattern to QccWAVWaveletDWT1D.3,
+                  QccWAVWaveletInverseDWT1D.3, QccWAVWaveletDWTSubbandLength.3
+  18-feb-2003:  Added samask.c
+  18-feb-2003:  Renamed QccWAVCalcMaskBAR() to QccWAVShapeAdaptiveMaskBAR()
+  14-feb-2003:  Added EZW-Example.sbp
+  14-feb-2003:  Updated copyright year range for 2003
+  14-feb-2003:  Fixed num_levels bug in icptosbp
+  04-dec-2002:  Added fixed-point arithmetic to tarp.c for
+                  probability-of-significance calculation
+  16-nov-2002:  Fixed bug in checking number of permissible
+                  transform-decomposition levels in wdrencode.c
+  08-nov-2002:  Added subsample_pattern_row, subsample_pattern_col to
+                  QccWAVWaveletRedundantDWT2DSubsample()
+  08-nov-2002:  Added subsample_pattern_row, subsample_pattern_col to
+                  QccWAVSubbandPyramid
+  08-nov-2002:  Added subsample_pattern_row, subsample_pattern_col to
+                  QccWAVWaveletDWT2D(), QccWAVWaveletInverseDWT2D()
+  08-nov-2002:  Added subsample_pattern to QccWAVWaveletLWT(),
+                  QccWAVWaveletInverseLWT(),
+                  QccWAVWaveletDWTSubbandPhase(),
+                  QccWAVWaveletDWTSubbandLength(),
+                  QccWAVWaveletDWT1D(),
+                  QccWAVWaveletInverseDWT1D()
+  08-nov-2002:  Added mask_bar
+  11-oct-2002:  Added QccWAVCalcMaskBAR(), mask_bar
+  07-oct-2002:  Fixed man pages in QccWAVWaveletRedundantDWT1D.3 concerning
+                  removal of start_odd from rdwt.c
+  29-sep-2002:  Removed unsupported TsaiVillasenorChen.10-18.fbk
+  16-sep-2002:  Modified QccIMGImageRead() and QccIMGWrite() so as to
+                  attempt to automatically determine the input/output
+                  image filetype, including ICP-format images.
+  16-sep-2002:  Added QccIMGImageDetermineType()
+  16-sep-2002:  Added QccFileGetExtension(), QccFileGetExtension.3
+  11-sep-2002:  Cleaned up tarp.c
+  10-sep-2002:  Refined maximum-frequency values in
+                  QccENTArithmeticSetModelProbabilities()
+  06-sep-2002:  Fixed warnings in wdr.c
+
+Version 0.41:
+  06-sep-2002:  BETA release version 0.41
+  06-sep-2002:  Added QccWAVTarpEncode.3, QccWAVTarpDecodeHeader.3,
+                  QccWAVTarpDecode.3, tarpencode.1, tarpdecode.1
+  06-sep-2002:  Added QccENTArithmeticSetModelAdaption.3
+  06-sep-2002:  Added QccENTArithmeticSetModelAdaption()
+  06-sep-2002:  Added QccENTArithmeticSetModelProbabilities.3
+  06-sep-2002:  Added QccENTArithmeticSetModelProbabilities()
+  06-sep-2002:  Added QccENTArithmeticSetModelContext.3
+  06-sep-2002:  Added QccENTArithmeticSetModelContext()
+  02-sep-2002:  Added QccWAVSubbandPyramidCopy(), QccWAVSubbandPyramidCopy.3
+  27-aug-2002:  Added tarp.c, tarpencode.c, tarpdecode.c
+  21-aug-2002:  Replaced start_odd with phase in filter_bank.c,
+                  lifting.c, lifting_daubechies4.c,
+                  lifting_cdf9_7.c, lifting_cdf5_3.c, wavelet.c
+  21-aug-2002:  Replaced start_odd with origin in lazy_wavelet.c,
+                  dwt.c, subband_pyramid.c, sadwt.c
+  21-aug-2002:  Removed start_odd from rdwt.c
+  21-aug-2002:  Added QccWAVWaveletDWTSubbandPhase()
+  21-aug-2002:  Added QccWAVWaveletLWT2D.3, QccWAVWaveletInverseLWT2D.3
+  15-aug-2002:  Fixed serious bug in QccWAVWaveletDWTSubbandLength() affecting
+                  highpass-band lengths with start_odd = 1
+  11-aug-2002:  Fixed potential divide-by-zero in QccChannelEntropy()
+  23-jul-2002:  Added WDR to README
+  19-jul-2002:  Added mention of WDR routines in QccPackWAV.3
+
+Version 0.40:
+  19-jul-2002:  BETA release version 0.40
+  19-jul-2002:  Added warning about gziped output files under Cygwin to
+                  README
+  19-jul-2002:  Added mailing-list info to README
+  18-jul-2002:  Fixed SA-DWT coding for WDR coder
+  15-jul-2002:  Minor editing of QccWAVwdrEncode.3, wdrencode.1
+  14-jul-2002:  Changed default number of levels to 5 for srencode.c
+  14-jul-2002:  Added wdr.c, wdrencode.c, wdrdecode.c,
+                QccWAVwdrEncode.3, QccWAVwdrDecode.3, QccWAVwdrDecodeHeader.3,
+                wdrencode.1, wdrdecode.1
+  13-jul-2002:  Added scripts/remove_tabs
+  13-jul-2002:  Removed tabs from source code
+  11-jul-2002:  Added QccIMGImageComponentClip()
+  01-jul-2002:  Updated README
+  01-jul-2002:  Added QccENTAdaptiveGolombEncode.3,
+                  QccENTAdaptiveGolombDecode.3,
+                  QccENTAdaptiveGolombEncodeChannel.3,
+                  QccENTAdaptiveGolombDecodeChannel.3
+  30-jun-2002:  Modified KMAX in adaptive_golomb.c
+  28-jun-2002:  Added adaptive_golomb.c, adaptive_golomb_channel.c,
+                  chnagolombencode.c, chnagolombdecode.c,
+                  chnagolombencode.1, chnagolombdecode.1
+  28-jun-2002:  Updated RELEASE_NOTES
+  28-jun-2002:  Updated QccWAVWaveletRedundantDWT2D.3 for subsample_pattern
+  27-jun-2002:  Added QccList references to QccPack.3
+  27-jun-2002:  Added QccList.3
+  27-jun-2002:  Added scripts/rm_cygwin and fixed bug in make clean for
+                  Cygwin
+  27-jun-2002:  Added subsample_pattern to
+                  QccWAVWaveletRedundantDWT1DSubsample() and
+                  QccWAVWaveletRedundantDWT2DSubsample()
+  26-jun-2002:  Fixed Imake.rules for install.doc for Cygwin
+
+Version 0.39:
+  23-jun-2002:  BETA release version 0.39
+  21-jun-2002:  Updated README for cygwin installation
+  06-jun-2002:  Added checks for null models to arithmetic.c
+  03-jun-2002:  Removed unused imgdat.c
+
+Version 0.38:
+  06-may-2002:  BETA release version 0.38
+  14-feb-2002:  Fixed encode-table bug in QccENTHuffmanTableRead()
+  06-feb-2002:  Added allocation of dataset if needed to
+                  QccIMGImageComponentToDat() in icpdat.c
+
+Version 0.37:
+  25-jan-2002:  BETA release version 0.37
+  24-jan-2002:  Added default_path_list to QccFilePathSearchOpenRead()
+  24-jan-2002:  Added gcc compile support to QccPack.config.solaris
+
+Version 0.36:
+  21-jan-2002:  BETA release version 0.36
+  18-jan-2002:  Added subband label to USG_STRING in sbpzero.c
+  17-jan-2002:  Added QccIMGImageRGBtoHSV() and QccIMGImageHSVtoRGB() to
+                  image_color_conversion.c
+  17-jan-2002:  Added icc support to QccPack.config.linux
+  16-jan-2002:  Fixed invalid-symbol bug in QccENTArithmeticEncode()
+  15-jan-2002:  Added rsencode.c and rsencode.1
+  02-jan-2002:  Updated copyright year range for 2002
+  14-dec-2001:  Fixed bug in QccFileWriteString()
+
+Version 0.35:
+  13-nov-2001:  BETA release version 0.35
+  19-oct-2001:  Fixed bug in datcut
+  24-sep-2001:  Added SourceForge website to README
+  20-sep-2001:  Updated QccWAVWaveletRedundantDWT1D.3 and
+                  QccWAVWaveletRedundantDWT2D.3 for recent changes to
+                  the inverse RDWT
+  18-sep-2001:  Fixed memory leak in QccWAVWaveletInverseRedundantDWT2D()
+  17-sep-2001:  Added QccWAVRDWTSynthesis() and 
+                  QccWAVWaveletInverseRedundantDWT2DRecursion()
+  16-sep-2001:  Corrected QccWAVWaveletInverseRedundantDWT1D() 
+  13-sep-2001:  Added QccWAVLiftingRedundantSynthesis(),
+                  QccWAVFilterBankRedundantSynthesis()
+  29-aug-2001:  Added QccIMGImageComponentAbsoluteValue()
+  28-aug-2001:  Added normalization to [0, 1] to 
+                  QccWAVWaveletRedundantDWT2DCorrelationMask()
+  28-aug-2001:  Fixed bug in QccWAVWaveletRedundantDWT2DCorrelationMask()
+  22-aug-2001:  Fixed bug in QccMathRandNormal()
+  21-aug-2001:  Added QccMathRandNormal()
+  26-jul-2001:  Added QccWAVWaveletRedundantDWT2DCorrelationMask()
+  23-jul-2001:  Updated README for RDWT
+  18-jul-2001:  Added end-of-bitstream caveat to QccENTArithmeticEncode.3
+  18-jul-2001:  Added call to QccErrorClearMessages() in
+                  QccENTArithmeticDecodeGetBit()
+
+Version 0.34:
+  06-jul-2001:  BETA release version 0.34
+  05-jul-2001:  Added man pages for imgrdwt, imgirdwt
+  03-jul-2001:  Added imgrdwt, imgirdwt
+  02-jul-2001:  Added man pages for QccWAVWaveletRedundantDWT2D(),
+                  QccWAVWaveletRedundantDWT2DSubsample(),
+                  QccWAVWaveletInverseRedundantDWT2D()
+  02-jul-2001:  Added man pages for QccWAVWaveletRedundantDWT1D(),
+                  QccWAVWaveletRedundantDWT1DSubsample(),
+                  QccWAVWaveletInverseRedundantDWT1D()
+  02-jul-2001:  Added QccWAVFilterBankBiorthogonal(),
+                  QccWAVLiftingSchemeBiorthogonal(),
+                  QccWAVWaveletBiorthogonal()
+  02-jul-2001:  Added QccWAVLiftingRedundantAnalysis()
+  30-jun-2001:  Fixed rdwt.c for 2D RDWT
+  29-jun-2001:  Added QccWAVWaveletLWT2D(), QccWAVInverseWaveletLWT2D()
+  25-jun-2001:  Added QccWAVWaveletRedundantDWT2DSubsample(),
+                  QccWAVWaveletInverseRedundantDWT2D()
+  25-jun-2001:  Changed QccWAVWaveletRedundantDWT2D() to use QccMatrix for
+                  input and output
+  23-jun-2001:  Added start_odd_row and start_odd_col to
+                  QccWAVWaveletAnalysis2D(),
+                  QccWAVWaveletSynthesis2D(),
+                  QccWAVWaveletDWT2D(),
+                  QccWAVWaveletInverseDWT2D(), and
+                  QccWAVSubbandPyramid
+  19-jun-2001:  Added QccWAVWaveletRedundantDWT2D(),
+                  QccWAVWaveletRedundantAnalysis2D()
+  19-jun-2001:  Added QccIMGImageComponentSetMaxMin()
+  11-jun-2001:  Added max_scales restriction to rdwt.c
+  11-jun-2001:  Added QccMathLog2()
+  08-jun-2001:  Added QccWAVWaveletRedundantDWT1D(),
+                  QccWAVWaveletRedundantDWT1DSubsample(),
+                  QccWAVWaveletInverseRedundantDWT1D()
+  08-jun-2001:  Added QccWAVWaveletRedundantAnalysis1D(),
+                  QccWAVFilterBankRedundantAnalysis()
+  08-jun-2001:  Added rdwt.c
+
+Version 0.33:
+  04-jun-2001:  BETA release version 0.33
+  28-may-2001:  Removed erroneous call to QccChannelAddSymbolToChannel() from
+                  paul.c
+  16-may-2001:  Removed extraneous variable from lloyd.c
+  16-may-2001:  Fixed erroneous paths in QccPack.config.solaris
+  15-may-2001:  Put ifndef's around defines for MAXFLOAT, MAXDOUBLE, and
+                  MAXINT in libQccPack.h
+
+Version 0.32:
+  14-may-2001:  BETA release version 0.32
+  11-may-2001:  Fixed bug in QccInit()
+  11-may-2001:  Added setting bit_buffer->fileptr to NULL after close in
+                  QccBitBufferEnd()
+  07-may-2001:  QccInit() modified to be resilient to multiple calls; added
+                  QccInit2()
+  05-may-2001:  Added scripts/install_cygwin for handling .exe file
+                  extensions on executables for Cygwin
+  04-may-2001:  Fixed mutex bug in QccExtractProgramName()
+  03-may-2001:  Cleaned up code to remove some innocuous warnings
+  02-may-2001:  Removed include for values.h - added explicit
+                  defines for MAXFLOAT, MAXDOUBLE, and MAXINT
+  02-may-2001:  Cleaned up call to glob() in QccFilePathGlob()
+  02-may-2001:  Added QccPack.config.cygwin
+  01-may-2001:  Replaced call to fnmatch() with QccFilePathMatch()
+
+Version 0.31:
+  01-may-2001:  BETA release version 0.31
+  30-apr-2001:  Updated QccPack.3, QccMath.3 for thread support
+  29-apr-2001:  Made error.c thread-safe
+  29-apr-2001:  Made file.c thread-safe
+  27-apr-2001:  Made init.c, version.c thread-safe
+  27-apr-2001:  Modified QccMathRand() to be thread-safe
+  26-apr-2001:  Added QCC_USE_PTHREADS compilation option
+
+Version 0.30:
+  25-apr-2001:  BETA release version 0.30
+  25-apr-2001:  Removed globals QccParsePointer, QccParseType from parse.c
+  24-apr-2001:  Fixed erroneous checking for non-NULL context_function
+                  pointer in QccENTArithmeticCreateModel()
+  19-apr-2001:  Updated QccPackENT.3 for new arithmetic-coding routines
+  19-apr-2001:  Modified make_dist so as to delete QccPack.config before
+                  making archives
+
+Version 0.29:
+  18-apr-2001:  BETA release version 0.29
+  18-apr-2001:  Updated RELEASE_NOTES
+  18-apr-2001:  Added QccPack.config.linux, QccPack.config.solaris,
+                  QccPack.config.irix
+  16-apr-2001:  Changed sr.c and sfq.c to use current_context in
+                  QccENTArithmeticModel
+  16-apr-2001:  Added current_context to QccENTArithmeticModel
+  31-mar-2001:  Added QccENTArithmeticEncode.3
+  29-mar-2001:  Added QccENTArithmeticModel.3, QccENTArithmeticGetContext.3
+  26-mar-2001:  Fixed bug in QccChannelEntropy() - failure to correctly
+                  ignore null symbols in channel
+  21-mar-2001:  Added CohenDaubechiesFeauveau.9-3.fbk
+  21-mar-2001:  Changed copyright date to 1997-2016
+
+Version 0.28:
+  06-mar-2001:  BETA release version 0.28
+  06-mar-2001:  Modified make_dist so to build HTML man pages
+  05-mar-2001:  Updated imgdwt.1, imgidwt.1, and imgdist for
+                  shape-adaptive capability
+  05-mar-2001:  Removed power-of-two resolution constraint on imgdwt
+  04-mar-2001:  Added SA-DWT capability to imgdwt, imgidwt, imgdist
+  04-mar-2001:  Added QccIMGImageComponentShapeAdaptiveMean(),
+                  QccIMGImageComponentShapeAdaptiveVariance(),
+                  QccIMGImageComponentShapeAdaptiveMse()
+  27-feb-2001:  Added man page for QccWAVSubbandPyramidShapeAdaptiveDWT()
+  13-feb-2001:  Removed unneeded lines from parse.c
+  01-feb-2001:  Updated README for SA-DWT
+  01-feb-2001:  Added man pages for 
+                  QccWAVSubbandPyramidShapeAdaptiveDWT(),
+                  QccWAVWaveletShapeAdaptiveDWT2D(),
+                  QccWAVWaveletShapeAdaptiveDWT1D()
+  28-jan-2001:  Added int QccWAVSubbandPyramidShapeAdaptiveDWT2D(),
+                  QccWAVSubbandPyramidInverseShapeAdaptiveDWT2D()
+  27-jan-2001:  Added QccAlphaOpaque(), QccAlphaTransparent(), and
+                  QccAlphaTranslucent()
+  27-jan-2001:  Added sadwt.c
+  20-jan-2001:  Added start_odd to QccWAVFilterBankAnalysis() and
+                  QccWAVFilterBankSynthesis()
+  18-jan-2001:  Modified QccFilterMultiRateFilterVector(),
+                  QccWAVFilterBankAnalysis(), and
+                  QccWAVFilterBankSynthesis() to permit filter-bank
+                  analysis/synthesis on odd-length signals (symmetric
+                  extension only)
+  18-jan-2001:  Removed constraint in QccVectorSubsample() and
+                  QccVectorUpsample() that input and output lengths
+                  must be related by a factor of 2
+  18-jan-2001:  Added support for odd_start with periodic extension to
+                  lifting_cdf9_7.c and lifting_cdf5_3.c
+  16-jan-2001:  Modified lifting_cdf9_7.c to work with signals that start
+                  with an odd sample
+  16-jan-2001:  Modified lifting_cdf9_7.c to allow odd-length signals
+  09-jan-2001:  Added LWT.lft and support for taking LWT in
+                  QccWAVLiftingAnalysis(), QccWAVLiftingSynthesis()
+  15-nov-2000:  Removed extraneous definitions from Imake.rules; modified
+                  NamedTargetSubdirs() definition to work better under
+                  Solaris
+  01-nov-2000:  Added -l option to imgidwt
+
+Version 0.27:
+  31-oct-2000:  BETA release version 0.27
+  31-oct-2000:  Added check for bit_buffer->fileptr equal to NULL in
+                  QccBitBufferFlush()
+  29-oct-2000:  Bit order in QccBitBufferPutChar() and
+                  QccBitBufferGetChar() reversed
+  19-oct-2000:  Fixed bug in QccENTHuffmanEncode() - check for symbol past
+                  end of table before accessing table
+  19-oct-2000:  Added QccErrorClearMessages()
+
+Version 0.26:
+  15-oct-2000:  BETA release version 0.26
+  15-oct-2000:  Added chnhuffmanencode.1, chnhuffmandecode.1
+  15-oct-2000:  Added QccENTHuffmanEncodeChannel.3,
+                  QccENTHuffmanDecodeChannel.3
+  10-oct-2000:  Fixed bugs in chnarithmeticencode.c,
+                  QccENTHuffmanEncodeChannel()
+  10-oct-2000:  Corrected JPEG Annex D to F in man pages
+  06-oct-2000:  Added chnhuffmanencode and chnhuffmandecode
+  06-oct-2000:  Added huffman_channel.c
+  06-oct-2000:  Added HUF file format
+  06-oct-2000:  Added QccENTHuffmanTableRead(), QccENTHuffmanTableWrite()
+  06-oct-2000:  Moved num_codewords_list, num_codewords_list_length,
+                  symbol_list, symbol_list_length into
+                  QccENTHuffmanTable structure
+  06-oct-2000:  Added QccENTHuffmanTableCreateDecodeTable.3,
+                  QccENTHuffmanTableCreateEncodeTable.3,
+                  QccENTHuffmanEncode.3,
+                  QccENTHuffmanDecode.3,
+                  QccENTHuffmanDesign.3
+  06-oct-2000:  Changed QccENTHuffmanEncodeCreateTable() to
+                  QccENTHuffmanTableCreateEncodeTable() and added call
+                  to QccENTHuffmanTableCreateDecodeTable()
+  06-oct-2000:  Changed QccENTHuffmanTableCreate() to
+                  QccENTHuffmanTableCreateDecodeTable()
+  24-sep-2000:  Fixed bug in QccENTHuffmanDesignMergeNodes()
+  24-sep-2000:  Added typedefs for QccListCompareValuesFunction and
+                  QccListPrintValueFunction
+  10-sep-2000:  Added huffman_design.c
+  10-sep-2000:  Modified QccListSort() to use QccListSortedInsert()
+  10-sep-2000:  Added QccListSortedInsertNode(), QccListPrint()
+  10-sep-2000:  Removed QccListCompareNodes(), QccListFindNode()
+  07-sep-2000:  Added QccENTHuffmanEncode(), QccENTHuffmanDecode()
+  06-sep-2000:  Added huffman_codeword.c, huffman_table.c,
+                  huffman.c
+  02-sep-2000:  Removed read of first character from QccBitBufferStart()
+  01-sep-2000:  Fixed misspelling of Feauveau in CohenDaubechiesFeauveau
+                  filter banks
+  15-aug-2000:  Added installation note for Windows users
+
+Version 0.25:
+  25-jul-2000:  BETA release version 0.25
+  25-jul-2000:  Changes to arithmetic_channel.c, sr.c, sfq.c for
+                  changed interface to arithmetic coding
+  25-jul-2000:  Added check of target_num_bits to QccENTArithmeticEncode()
+  25-jul-2000:  Added QccENTArithmeticDecodeGetBit()
+  25-jul-2000:  Removed erroneous check of garbage_bits in
+                  QccENTArithmeticDecode()
+  25-jul-2000:  Added target_num_bits to QccENTArithmeticEncodeStart(),
+                  QccENTArithmeticDecodeStart(), and
+                  QccENTArithmeticDecodeRestart()
+  21-jul-2000:  byte_cnt added to QccBitBuffer
+  20-jul-2000:  Added target_num_bits to QccENTArithmeticModel
+  18-jul-2000:  Added QccENTArithmeticDecodeRestart(); added resetting of model
+                  parameters to QccENTArithmeticEncodeFlush()
+  18-jul-2000:  Added resetting of bit_buffer->bits_to_go and
+                  bit_buffer->buffer to QccBitBufferFlush();
+                  QccBitBufferFlush() support for input buffers added
+  27-jun-2000:  Renamed biorothogonal vfb files to reflect proper
+                  lengths of primary & dual filters
+  21-jun-2000:  Minor corrections to README
+  16-jun-2000:  Updated citation in ShenTanTham.2x2.4.vfb
+  15-jun-2000:  Updated citation in Selesnick.3Balanced.2x2.8.vfb
+
+Version 0.24:
+  03-jun-2000:  BETA release version 0.24
+  03-jun-2000:  Added QccWAVZerotreeRead.3, QccWAVZerotreeWrite.3,
+                  QccWAVZerotreeCarveOutZerotree.3,
+                  QccWAVZerotreeUndoZerotree.3
+  23-may-2000:  Added QccWAVZerotreeNullSymbol.3,
+                  QccWAVZerotreeMakeSymbolNull.3,
+                  QccWAVZerotreeMakeSymbolNonnull.3,
+                  QccWAVZerotreeMakeFullTree.3,
+                  QccWAVZerotreeMakeEmptyTree.3
+  23-may-2000:  Made QccWAVZerotreeMakeEmptyTree() call
+                  QccWAVZerotreeMakeFullTree() if zerotree is allocated
+  23-may-2000:  QccWAVZerotreeNullSymbol() made const-correct
+  12-may-2000:  Changed wording of README slightly
+  
+Version 0.23:
+  12-may-2000:  BETA release version 0.23
+  12-may-2000:  make_dist modified so as to produce file lists for
+                  subsequent RPM building
+
+Version 0.22:
+  11-may-2000:  BETA release version 0.22
+  11-may-2000:  Imake.tmpl and Imake.rules changed to define 
+                  QCCPACK_LIBRARY_NAME
+
+Version 0.21:
+  11-may-2000:  BETA release version 0.21
+  09-may-2000:  QccPackSPIHT separated out as an optional module
+  09-may-2000:  Increased QccString length to 1200
+
+Version 0.20:
+  05-may-2000:  BETA release version 0.20
+  05-may-2000:  scripts/make_dist changed to add a CVS-ready tarball of
+                  distribution
+  05-may-2000:  scripts/make_dist changed to remove CVS directories
+  05-may-2000:  libQccPackGEO removed
+  05-may-2000:  Made libQccPackWAV "const-correct"
+  26-apr-2000:  Fixed bug in QccFilePathSearchOpenRead() introduced by
+                  making filename const
+  22-apr-2000:  Made libQccPackIMG "const-correct"
+  22-apr-2000:  Made libQccPackAVQ "const-correct"
+  22-apr-2000:  Made libQccPackVQ "const-correct"
+  22-apr-2000:  Made libQccPackSQ "const-correct"
+  22-apr-2000:  Made libQccPackECC "const-correct"
+  22-apr-2000:  Made libQccPack "const-correct"
+  22-apr-2000:  First argument to QccInit() changed from pointer to int to
+                  int
+  22-apr-2000:  Made QccExtractProgramName() non-static
+  22-apr-2000:  Added QccParseParametersVA()
+  21-apr-2000:  Made libQccPackENT "const-correct"
+  20-apr-2000:  Changed "type" to "mode" in QccFileOpen() and only look at
+                  first character
+  20-apr-2000:  Changed QccBitBufferStart() to open file only when
+                  fileptr is NULL
+  18-apr-2000:  Added "b" mode to QccFileOpenRead() and QccFileOpenWrite()
+  18-apr-2000:  Added check for num_rows, num_cols <= 0 in QccMatrixAlloc()
+  16-apr-2000:  Added QccStringCopy.3, QccStringSprintf.3
+  16-apr-2000:  Made error.c, file.c, string.c, parse_parameters.c, env.c,
+                  version.c, binary_values.c, file_path.c, vector.c
+                  "const-correct"
+  11-apr-2000:  Added QccWAVSubbandPyramidZeroSubband.3,
+                  QccWAVSubbandPyramidSubtractMean.3,
+                  QccWAVSubbandPyramidAddMean.3
+  05-apr-2000:  Corrected bug in many Free() routines -- set pointers in
+                  structures to NULL after corresponding arrays are freed
+  05-apr-2000:  Updated QccInit.3, QccGetProgramName.3
+  05-apr-2000:  Added QccErrorAddMessageVA(), QccErrorWarningVA()
+  01-apr-2000:  Added QccWAVSubbandPyramidDWT.3,
+                  QccWAVSubbandPyramidInverseDWT.3,
+                  QccWAVSubbandPyramidRead.3,
+                  QccWAVSubbandPyramidWrite.3
+  30-mar-2000:  Changed QccWAVWaveletDWT2D() and QccWAVWaveletInverseDWT2D()
+                  so as to allow any size matrices (i.e., not restricted
+                  to be a multiple of a power of 2)
+  30-mar-2000:  Changed QccWAVWaveletSynthesis2D() so that synthesis is done
+                  first on columns then on rows to better invert 
+                  QccWAVWaveletAnalysis2D()
+  30-mar-2000:  Added QccWAVLiftingAnalysis.3, QccWAVLiftingSynthesis.3,
+                  QccWAVWaveletAnalysis1D.3, QccWAVWaveletSynthesis1D.3,
+                  QccWAVWaveletDWT1D.3, QccWAVWaveletInverseDWT.3,
+                  QccWAVWaveletDWTSubbandLength.3,
+                  QccWAVWaveletAnalysis2D.3, QccWAVWaveletSynthesis2D.3,
+                  QccWAVWaveletDWT2D.3, QccWAVWaveletInverseDWT2D.3
+  29-mar-2000:  Added QccWAVFilterBankAnalysis.3, QccWAVFilterBankSynthesis.3,
+                  QccWAVWaveletLWT.3, and QccWAVWaveletInverseLWT.3
+  23-mar-2000:  Added ability to pass NULL for argc and argv in QccInit()
+
+Version 0.19:
+  22-mar-2000:  BETA release version 0.19
+  13-mar-2000:  Added man page for QccWAVFilterBankRead() and
+                  QccWAVFilterBankWrite()
+  11-mar-2000:  Added man page for QccWAVFilterBankMakeOrthogonal() and
+                  QccWAVFilterBankMakeBiorthogonal()
+  07-mar-2000:  Added checks for NULL file pointers in routines in file.c
+  25-feb-2000:  Made small modifications to code so as to compile and not
+                  generate any warnings with gcc -Wall
+  25-feb-2000:  Changed QccExit() to macro QccExit
+  25-feb-2000:  Modified #endif statements in all header files to comment
+                 out name of corresponding #ifndef
+  11-feb-2000:  Slight modification to error messages of QccFileOpen()
+  02-feb-2000:  Updated man pages for QccDatasetCopy() and QccFilterCopy()
+                  to reflect allocate-space change
+  31-jan-2000:  Made copy functions allocate space if not already allocated
+                  instead of requiring prior allocation:
+                  QccIMGImageComponentCopy(), QccFilterCopy(),
+                  QccDatasetCopy(), QccWAVVectorFilterCopy()
+  29-jan-2000:  Added sbpzero and sbpzero.1
+  13-jan-2000:  Converted macro QccWAVZerotreeNullSymbol() into a function
+  22-dec-1999:  Added header to Daubechies.Diagonal.2x2.6.vfb
+  22-dec-1999:  Added header to Daubechies.Diagonal.2x2.4.vfb
+  22-dec-1999:  Added header to Selesnick.3Balanced.2x2.8.vfb
+  22-dec-1999:  Added header to ShenTanTham.2x2.4.vfb
+  22-dec-1999:  Added header to Strela.2x2.6-2.vfb
+  22-dec-1999:  Added header to Strela.Order2.2x2.5-3.vfb
+  22-dec-1999:  Added header to Strela.Order4.2x2.5-3.vfb
+  21-dec-1999:  Added header to LebrunVetterli.ComplexDaubechies.2x2.6.vfb
+  21-dec-1999:  Added LebrunVetterli.Balanced.2x2.3.vfb
+  21-dec-1999:  Added LebrunVetterli.Balanced.2x2.5.vfb
+  21-dec-1999:  Added header to LebrunVetterli.Balanced.2x2.7.vfb
+  21-dec-1999:  Added ChuiLian.2x2.4.vfb
+  21-dec-1999:  Added header to ChuiLian.2x2.3.vfb
+  21-dec-1999:  Added header to GeronimoHardinMassopust.2x2.4.vfb
+
+Version 0.18:
+  02-dec-1999:  BETA release version 0.18
+  02-dec-1999:  Fixed erroneous read of final newline in ASCII header of
+                  binary-data format files
+  01-dec-1999:  Fixed erroneous read of final white space in ASCII header of
+                  of raw pbm, pgm, ppm files in image_pnm.c
+  29-nov-1999:  Fixed image-component bug in QccIMGImageCopy()
+  23-nov-1999:  Added QccDatasetMeanVector(), QccDatasetCovarianceMatrix()
+  23-nov-1999:  Added QccMatrixZero()
+  23-nov-1999:  Fixed failure to check for < 0 return from QccDatasetMse() in
+                  datdist.c; fixed failure to initialize mse to 0.
+
+Version 0.17:
+  18-oct-1999:  BETA release version 0.17
+  17-oct-1999:  Added QccWAVFilterBank.3, QccWAVLiftingScheme.3,
+                  QccWAVWavelet.3, QccWAVZerotree.3
+  15-oct-1999:  Fixed missing QccInstallFiles() call for static-library
+                  install in Imake.rules
+  15-oct-1999:  Fixed NO_SNPRINTF errors in error.c and Imake.tmpl
+  09-oct-1999:  Added man pages for spihtencode, spihtdecode,
+                  QccWAVspihtEncode(), QccWAVspihtDecode(),
+                  QccWAVspihtDecodeHeader()
+  04-oct-1999:  Added man pages for QccWAVsrEncode(), QccWAVsrDecode(),
+                  QccWAVsrHeaderDecode()
+  04-oct-1999:  Fixed missing call to QccIMGClipPixelValue() in
+                  QccIMGImagePgmWriteData()
+  01-oct-1999:  Added biorthogonal multiwavelet support
+
+Version 0.16:
+  14-sep-1999:  BETA release version 0.16
+  14-sep-1999:  Added installation of README and LICENSE files to
+                  documentation in QCCPACK_INSTALL_DOC_PATH
+  14-sep-1999:  Added spihtencode, spihtdecode, spiht.c
+  09-sep-1999:  Added -d option to asciitodat
+  08-sep-1999:  Added QccMatrixPrint(), QccMatrixTranspose()
+
+Version 0.15:
+  04-aug-1999:  BETA release version 0.15
+  04-aug-1999:  Fixed bug in QccSetEnv(): some systems (e.g., Solaris)
+                  won't allow string to be freed after it's added to
+                  environment with putenv()
+  04-aug-1999:  Added NO_SNPRINTF define to QccPack.config, Imake.tmpl
+                  for systems with no snprintf() and vsnprintf()
+
+Version 0.14:
+  28-jul-1999:  BETA release version 0.14
+  27-jul-1999:  Added QccFileRemove()
+  23-jul-1999:  Added QccStringSprintf(); modified all references to sprintf()
+                  to QccstringSprintf()
+  23-jul-1999:  Added QccSetUserHeader(); modified QccPrintQccPackVersion() to
+                  print user header
+  23-jul-1999:  Add QccStringCopy(); changed all references to strcpy() and
+                  strncpy() to QccStringCopy()
+  22-jul-1999:  Modified lifting_cdf5_3.c to work with signals that start
+                  with an odd sample
+  22-jul-1999:  Added start_odd parameter to QccWAVWaveletLWT(),
+                  QccWAVWaveletInverseLWT(), QccWAVLiftingAnalysis(),
+                  QccWAVLiftingSynthesis(),
+                  QccWAVLiftingAnalysisDaubechies4(),
+                  QccWAVLiftingSynthesisDaubechies4(),
+                  QccWAVLiftingAnalysisCohenDaubechiesFeauveau9_7(),
+                  QccWAVLiftingSynthesisCohenDaubechiesFeauveau9_7(),
+                  QccWAVLiftingAnalysisCohenDaubechiesFeauveau5_3(),
+                  QccWAVLiftingSynthesisCohenDaubechiesFeauveau5_3(),
+                  QccWAVWaveletAnalysis1D(),
+                  QccWAVWaveletSynthesis1D(),
+                  QccWAVWaveletDWTSubbandLength(),
+                  QccWAVWaveletDWT1D(),
+                  QccWAVWaveletInverseDWT1D().  Only functional for lifted
+                  5/3 wavelet currently.
+  21-jul-1999:  Modified lifting_cdf5_3.c to allow odd-length signals
+  21-jul-1999:  Changed QccWAVSubbandPyramidSubbandResolution() and
+                  QccWAVSubbandPyramidSubbandOffsets() to use
+                  QccWAVWaveletDWTSubbandLength()
+  21-jul-1999:  Added QccWAVWaveletDWTSubbandLength()
+  16-jul-1999:  Added CohenDaubechiesFeauveau.5-3.fbk and
+                  CohenDaubechiesFeauveau.5-3.lft (linear lifting)
+  13-jul-1999:  Fixed a couple of bugs with new_codebook in
+                  QccVQEntropyConstrainedVQTraining()
+  09-jul-1999:  Added msvq.c, msvqtrain, msvqencode, msvqdecode
+  09-jul-1999:  Added QccVQMultiStageCodebook and multistage_codebook.c
+  09-jul-1999:  Added verbose flag to QccVQGeneralizedLloydTraining()
+  22-jun-1999:  Added centroid_calculation parameter to
+                  QccVQGeneralizedLloydTraining();  cleaned up some
+                  inefficiencies therein
+  11-jun-1999:  Added distortion_measure parameter to
+                  QccVQVectorQuantization() and QccVQEntropyConstrainedVQ()
+  11-jun-1999:  Added call to QccChannelNormalize() in QccAVQgtrCalcRate()
+                  (gtrencode still does use non-GENERAL codebook coders
+                   though)
+  08-jun-1999:  Fixed segmentation faults in QccAVQgtrCalcRate() and
+                  QccVAQpaulCalcRate()
+  02-jun-1999:  Added QccListFindNode()
+
+Version 0.13:
+  17-may-1999:  BETA release version 0.13
+  02-may-1999:  Changed QccInit() and QccPaseParameters() so that QccInit()
+                  is called first; modified all utility programs so that this
+                  is the case
+  01-may-1999:  Fixed missing return(0) at end of
+                  QccENTArithmeticOutputBitPlusFollowingOppositeBits()
+  30-apr-1999:  QccGetProgramName() moved to init.c.  QccProgramName defined
+                  and set via QccInit().
+  30-apr-1999:  Removed reliance on NetPBM libraries -- implemented "native"
+                  reading & writing routines for PBM, PGM, and PPM files
+  30-apr-1999:  Removed call to setenv() in QccSetEnv() (replaced with
+                  putenv()) since this routine is not universally available
+                  evidently (not in Solaris anyways)
+  30-apr-1999:  Fixed QccWAVSubbandPyramidSubbandResolution() error in
+                  sbpsplit.c
+  19-apr-1999:  Added feof() check to ferror() when reading in all routines
+                  using fscanf() (ASCII headers mainly)
+  19-apr-1999:  Minor change to QccBitBufferFlush() -- only output byte if
+                  buffer->bits_to_go < 8
+  16-apr-1999:  QccList type changed to structure containing both start
+                  and end pointers; related changes in linked_list.c
+  11-apr-1999:  Added libQccPackECC -- modified, systematic Reed Solomon
+                  error-correcting code and related field operations
+  29-mar-1999:  Added "*ERROR*" and "*WARNING*" prefixes to warning- and error-
+                  message output
+  29-mar-1999:  Added outdated-version check (< 0.12) to
+                  QccWAVSubbandPyramidReadHeader()
+  29-mar-1999:  Added QccErrorWarning()
+  29-mar-1999:  Added QccErrorPrint() and modified QccErrorPrintMessages() to
+                  use it
+  29-mar-1999:  Added QccCompareQccPackVersions()
+
+Version 0.12:
+  16-mar-1998:  BETA release version 0.12
+  16-mar-1999:  Major reworking of libQccPackWAV routines and utilities
+                  complete (documentation still incomplete)
+  22-feb-1999:  Added man pages for QccVectorSubsample(), QccVectorUpsample(),
+                  env.c, file_path.c, QccFileGetMagicNumber()
+  19-feb-1999:  Modified Imake.rules so that library object files are
+                  copied to QCCPACK_LIB_PATH before archiving
+  13-feb-1999:  Moved Data/Filters to Data/Wavelets
+  11-feb-1999:  Added file_path.c
+  11-feb-1999:  Fixed bug in QccParseFindPosition()
+  09-feb-1999:  Modified QccIMGImageComponentFilterSeparable() to use
+                  QccFilterMatrixSeparable()
+  06-feb-1999:  Added calls to QccIMGImageComponentSetMin(), 
+                  QccIMGImageComponentSetMax() to QccIMGImageComponentCopy()
+  05-feb-1999:  Renamed QccIMGImageComponentAddNoiseSquare() to
+                  QccMatrixAddNoiseToRegion()
+  04-feb-1999:  Revised QccIMGImageColorSNR() to calculate signal power as
+                  a variance in modified UCS space (subtract off mean color)
+  04-feb-1999:  Renamed QccIMGImageCIEColorSNR() to QccIMGImageColorSNR()
+  26-jan-1999:  Renamed QccVectorArray to QccMatrix; vector_array.c becomes
+                  matrix.c
+  26-jan-1999:  Changed QccIMGImageComponent to use QccMatrix
+  10-jan-1999:  Added QccMathModulus()
+  09-jan-1999:  Moved calls to QccChannelRemoveNullSymbols() from avqrate.c to
+                  gtr.c, paul.c, gy.c
+  14-dec-1998:  Added NSF-support acknowledgement to README
+
+Version 0.11:
+  26-nov-1998:  BETA release version 0.11
+  24-nov-1998:  Added call to QccChannelRemoveNullSymbols() before processing
+                  in avqrate
+  24-nov-1998:  Fixed zero-probability bug in entropy estimate in
+                  QccAVQgtrCalcUpdateCosts()
+  24-nov-1998:  Fixed memory-free bug in QccAVQSideInfoSymbolFree()
+  20-nov-1998:  Added printing of original error message in
+                  QccErrorAddMessage() when memory allocation fails
+  17-nov-1998:  Added check for invalid symbols in QccENTArithmeticEncode()
+  17-nov-1998:  Added check for unrecognized sideinfo-program name in
+                  avqrate
+
+Version 0.10:
+  24-aug-1998:  BETA release version 0.10
+  04-aug-1998:  Added QccChannelNormalize() call in
+                  QccIMGImageComponentDPCMEncode(),
+                  QccIMGImageComponentDPCMDecode()
+  04-aug-1998:  Added man pages for bit_buffer.c
+  04-aug-1998:  Simplified QccBitBuffer; memory-only buffers removed
+  03-aug-1998:  Added man pages for channel.c
+  03-aug-1998:  Modified QccChannelEntropy() to use QccENTConditionalEntropy()
+  03-aug-1998:  Added QccENTConditionalEntropy()
+  03-aug-1998:  Added QccVectorSumComponents()
+  02-aug-1998:  Added man pages for dataset.c
+  02-aug-1998:  Added block_size to QccDatasetSetMaxMinValues()
+  31-jul-1998:  Added man pages for error.c, binary_values.c, file.c,
+                  math.c, vector.c, vector_array.c
+  31-jul-1998:  Added check for pipes in QccFileGetSize() and
+                  QccFileGetModTime(), QccFileGetCurrentPosition()
+  29-jul-1998:        Significant change to QccError operation:
+                  changed QccErrorAddMessage() to accept format string and
+                  arguments; removed all sprintf()'s to
+                  QccError.current_message
+  29-jul-1998:  Added QccParseParameters.3
+  29-jul-1998:  Added truncation of strings of type %*s in
+                  QccParseParameters(); changed corresponding pointer type to
+                  (QccString **)
+  28-jul-1998:  Added truncated of strings to length QCCSTRINGLEN in
+                  QccParseReadParameter() (to prevent malicious buffer
+                  overruns with %s types)
+  25-jun-1998:  Modified Print() routines for data types; 
+                  added QccFilePrintFileInfo()
+  12-jun-1998:  Changed REVNUM of all files to QccPack revision
+  09-jun-1998:  Added QccString.3
+  09-jun-1998:  Moved man pages into their own subdirectories
+  09-jun-1998:  Fixed zero-length block_size bug in QccChannelEntropy()
+  09-jun-1998:  Fixed newcnt bug in QccAVQgtrEncode()
+  08-jun-1998:  Added sbptoicp and icptosbp
+  08-jun-1998:  Added sbpassemble
+  08-jun-1998:  Added QccWAVCalcNumLevels()
+  08-jun-1998:  Fixed bug in dattoicp.c
+  07-jun-1998:  Added QccInit.3, QccExit.3
+  07-jun-1998:  Added QccExit()
+  07-jun-1998:  Changed libqccpack1.c to init.c and version.c
+  27-may-1998:  Converted varargs.h use to stdarg.h
+
+Version 0.9:
+  24-may-1998:  Pre-release version 0.9
+  21-may-1998:  Added dynamic library libQccPack.so
+  21-may-1998:  Updated squniform.1 and QccPackSQ.3 for simple and
+                  dead-zone quantizers
+  20-may-1998:  Added srencode.1 and srdecode.1
+  20-may-1998:  Added sfqencode.1 and sfqdecode.1
+  20-may-1998:  Added perceptual_weights to sfq.c
+  19-may-1997:  Updated QccPackWAV.3, wavelet_analysis.1, and
+                   wavelet_synthesis.1 for perceptual weighting
+  18-may-1998:  Added percepual weights to wavelet_analysis and
+                  wavelet_synthesis
+  18-may-1998:  Added perceptual_weights.c
+  18-may-1998:  Added QccStringNull()
+  18-may-1998:  Renamed QccStringNull() to QccStringMakeNull()
+  25-apr-1998:  Fixed Imake.rules for Solaris
+  22-apr-1998:  Added QccVectorPrint()
+  21-apr-1998:  Added QccWAVWaveletCalcCoefficientRange()
+  21-apr-1998:  Added QccVectorSum()
+  21-apr-1998:  Added QccIMGImageSetMin(), QccIMGImageSetMax()
+  13-apr-1998:  Added QccChannelNormalize(), QccChannelDenormalize()
+  13-apr-1998:  Added stepsize, deadzone, & type to QccSQScalarQuantizer
+  13-apr-1998:  Added uniform, dead-zone quantizer capability to
+                  QccSQScalarQuantization(), QccSQInverseScalarQuantization()
+  11-apr-1998:  Changed normalization of QccWAVFilter to M_SQRT2 for
+                  all filters
+  11-apr-1998:  Added binary_values.c to libQccPack
+  11-apr-1998:  Modified QccBitBuffer: QccBitBufferStart() opens file,
+                  QccBitBufferEnd() closes file
+  11-apr-1998:  Added QccBitBufferGetChar(), QccBitBufferPutChar(),
+                  QccBitBufferGetInt(), QccBitBufferPutInt(),
+                  QccBitBufferGetDouble(), QccBitBufferPutDouble(),
+  10-apr-1998:  Added sr.c, srencode, srdecode
+  10-apr-1998:  Added QccWAVWaveletAnalysisQuantize(),
+                  QccWAVWaveletSynthesisInverseQuantize()
+  09-apr-1998:  Added QccWAVCalcSubbandResolution()
+
+Version 0.8:
+  16-mar-1998:  Pre-release version 0.8
+  15-mar-1998:  libQccPack.h now includes stdlib.h
+  15-mar-1998:  Created image_pnm.c and moved PNM code from image.c
+  14-mar-1998:  Added HTML man pages
+  14-mar-1998:  Updated avqrate.1
+  14-mar-1998:  Added entropy-coding estimation to paul.c and gy.c
+  12-mar-1998:  Reorganization to provide consistent initialization,
+                  allocation, and free routines for structure-based data types
+  28-feb-1998:  Added QccIMGImageComponentAdd() and 
+                  QccIMGImageComponentSubtract()
+  28-feb-1998:  Added QccIMGImageFilter2D()
+  28-feb-1998:  Change QccIMGImageFilter() to QccIMGImageFilterSeparable()
+  28-feb-1998:  Added QccIMGImageComponentFilter2D()
+  28-feb-1998:  Change QccIMGImageComponentFilter() to
+                  QccIMGImageComponentFilterSeparable()
+  14-feb-1998:  Added QccIMGImageDCT() and QccIMGImageInverseDCT()
+  14-feb-1998:  Added QccIMGImageComponentDCT()
+  14-feb-1998:  Added QccIMGImageComponentInverseDCT()
+  14-feb-1998:  Added QccVectorArrayDCT() and QccVectorArrayInverseDCT()
+  14-feb-1998:  Added QccVectorDCT() and QccVectorInverseDCT()
+  14-feb-1998:  Change QccVectorAllocFree() to QccVectorArrayFree()
+  14-feb-1998:  Change QccVectorAllocArray() to QccVectorArrayAlloc()
+  14-feb-1998:  Created vector_array.c
+  11-feb-1998:  Fixed error in Modified UCS Color Space conversions
+  06-feb-1998:  Fixed -n option of icptoimg
+  06-feb-1998:  Added QccIMGImageComponentNormalize()
+  01-feb-1998:  Added sqtocbk
+  21-jan-1998:  Added -cie to imgdist
+  21-jan-1998:  Added QccIMGImageCIEColorSNR(), image_color_conversion.c
+  21-jan-1998:  Added entropy coding of sideinfo to QccAVQgtrCalcRate()  
+  19-jan-1998:  Added winner to QccVectorMaxValue(), QccVectorMinValue()
+  15-jan-1998:  Added QccDatasetReadSlidingBlock()
+  20-dec-1997:  Added QccBitBufferFree()
+  19-dec-1997:  Add auxiliary_list to QccVectorSortComponents()
+  19-dec-1997:  Major changes to libQccPackWAV and libQccPackIMG:
+                  QccWAVCoefficientImage datatype removed,
+                  QccIMGImageComponent used instead;
+                  max_value, min_value added to QccIMGImageComponent
+  19-dec-1997:  Changed QccMatchRand() to use random() and srandom()
+  09-dec-1997:  Added imgsqencode, imgsqdecode
+  09-dec-1997:  Added image_sq.c to libQccPackIMG
+  04-dec-1997:  QccAVQgtrEncode() now accounts for codebook-coder 
+                  distortion in update decision
+  04-dec-1997:  Modified QccAVQGershoYanoEncode() to call 
+                  QccAVQSideInfoCodebookCoder()
+  04-dec-1997:  Modified QccAVQPaulEncode() to call
+                  QccAVQSideInfoCodebookCoder()
+  03-dec-1997:  Modified QccAVQgtrEncode() to call
+                  QccAVQSideInfoCodebookCoder()
+  03-dec-1997:  Added QccAVQSideInfoCodebookCoder()
+  03-dec-1997:  Added vector_indices to QccAVQSideInfoSymbol()
+
+Version 0.7:
+  21-nov-1997:  Pre-release version 0.7
+  21-nov-1997:  Added bit-rate output to chnarithmeticencode
+  20-nov-1997:  Added scalar quantizer for mean in 
+                  QccWAVCoefficientImageSubtractMean()
+  19-nov-1997:  Fixed block_size errors in QccChannelRemoveNullSymbols()
+                  and QccChannelGetNumNullSymbols()
+  18-nov-1997:  Added QccAVQSideInfoWriteSymbolVectorIndices()
+  17-nov-1997:  Added vector_component_alphabet_size to QccAVQSideInfo
+  17-nov-1997:  Added fileptr to QccBitBuffer
+  15-nov-1997:  Moved QccENTArithmeticEncodeStart(), 
+                  QccENTArithmeticEncodeEnd() out of QccENTArithmeticEncode()
+  15-nov-1997:  Moved QccENTArithmeticDecodeStart() 
+                  out of QccENTArithmeticDecode()
+  15-nov-1997:  Added chnarithmeticencode, chnaritheticdecode
+  15-nov-1997:  Added QccBitBufferFlush() to QccENTArithmeticEncodeFlush()
+  15-nov-1997:  Added QccFileGetSize(), QccFileGetCurrentPosition()
+  13-nov-1997:  Added entropy.c in libQccPackENT; moved QccVectorEntropy()
+                  there and renamed it
+  13-nov-1997:  Added libQccPackENT
+  13-nov-1997:  Added order to QccChannelEntropy()
+  11-nov-1997:  Added QccChannelGetNumNullSymbols()
+  11-nov-1997:  Added QccChannelRemoveNullSymbols()
+  11-nov-1997:  Added bit_buffer.c to libQccPack
+  21-oct-1997:  Added QccAVQSideInfoReadSymbolVectorIndices()
+  21-oct-1997:  Major modifications in libQccPackAVQ:
+                  All AVQ algorithms now use libQccPackSQ functions
+                    for side information.
+                  precision, offset, and shift fields removed from
+                  QccSQSideInfo struct in favor of a scalar quantizer
+  15-oct-1997:  Fixed parsing of switches in spawn
+  15-oct-1997:  Added imgdpcmencode, imgdpcmdecode, image_dpcm.o
+  14-oct-1997:  Added squniform, sqlloyd
+  14-oct-1997:  Moved all QccVQChannel stuff to libQccPack; renamed to
+                  QccChannel
+  13-oct-1997:  Added QccSQLloydMakeQuantizer()
+  13-oct-1997:  Modified Makefile tree (again)
+  13-oct-1997:  Added QccMathGaussianDensity(), QccMathLaplacianDensity()
+  12-oct-1997:  Added libQccPackSQ:
+                  QccSQScalarQuantizer datatype
+                  QccSQScalarQuantization(), QccSQInverseScalarQuantization()
+                  QccSQMakeUniformQuantizer(), QccSQMakeULawQuantizer(),
+                  QccSQMakeALawQuantizer()
+  12-oct-1997:  Moved all QccVQDataset stuff to libQccPack;  renamed to
+                  QccDataset
+  09-oct-1997:  Added seqdist
+  07-oct-1997:  Added QccAVQSideInfoReadNextFlagSymbol()
+  30-sep-1997:  Changed QccAVQgtrPrintRate() to QccAVQgtrCalcRate(),
+                  QccAVQPaulPrintRate() to QccAVQPaulCalcRate(), and
+                  QccAVQGershoYanoPrintRate() to QvvAVQGershoYanoCalcRate();
+                  added verbose flag and return of rate value
+  27-sep-1997:  Fixed QccVQCodewordReallocArray()
+  27-sep-1997:  Added ferror() calls to QccVQCodebookWriteHeader(),
+                  QccVQDatasetWriteHeader(), 
+                  QccWAVCoefficientImageWriteHeader(),
+                  QccAVQSideInfoWriteHeader()
+  27-sep-1997:  Fixed ferror() error in QccVQChannelWriteHeader()
+  26-sep-1997:  Added QccWAVSubbandPyramidSplitToDat()
+  19-sep-1997:  Modified gtrencode, gtrdecode, paulencode, and pauldecode
+                  to handle null channel symbols
+  19-sep-1997:  Added QCCVQCHANNEL_NULLSYMBOL; modified QccVQChannelEntropy()
+                  to handle null channel symbols
+  18-sep-1997:  Changed QccAVQgtrEncode() and QccAVQgtrDecode() to allow
+                  online initial codebook generation; added -ic switch to
+                  gtrencode and gtrdecode; added -cs switch to gtrencode
+  18-sep-1997:  Added max_codebook_size to QccAVQSideInfo        
+  18-sep-1997:  Added QccVectorRealloc(), QccVectorVQCodewordReallocArray(),
+                  QccVQCodebookAddCodeword()
+  17-sep-1997:  Added seqdeinterlace
+  17-sep-1997:  Added image_sequence.c to libQccPackIMG
+  14-sep-1997:  Major changes in libQccPackIMG:
+                  Introduction of QccIMGImage structure, library routines
+                  changed to handle handle both PPM as well as PGM images,
+  05-sep-1997:  Added arithmetic_sequence
+  05-sep-1997:  Removed start_of_data from QccVQDataset, QccVQChannel, 
+                  QccAVQSideInfo
+  05-sep-1997:  Removed ftell() calls from QccVQDatasetReadHeader(),
+                  QccVQChannelReadHeader(), QccAVQSideInfoReadHeader()
+  20-aug-1997:  Changed error detection with fscanf() to use ferror()
+  29-aug-1997:  Added QccFileReadInt(), QccFileWriteInt()
+  29-aug-1997:  Added ferror() calls to QccFileReadDouble(), 
+                  QccFileWriteDouble(), QccFileReadChar(), QccFileWriteChar(),
+                  QccFileReadString()
+  29-aug-1997:  Changed return value of QccFileReadDouble()
+
+Version 0.6:
+  23-jul-1997:  Pre-release version 0.6
+  23-jul-1997:  Added make_noise_image
+  22-jul-1997:  Renamed QccWAVCoefficientImageSplitPyramid() to
+                  QccWAVSubbandPyramidSplit()
+  22-jul-1997:  Renamed QccWAVCoefficientImageAssemblePyramid() to
+                  QccWAVSubbandPyramidAssemble()
+  22-jul-1997:  Added QccWAVCoefficientImageAddNoiseSquare()
+  22-jul-1997:  Added QccWAVSubbandPyramidAddNoiseSquare()
+  22-jul-1997:  Added QccWAVSubbandPyramidGetSubbandOffsets()
+  16-jul-1997:  Added QccVQCodebookReadData(), QccVQCodebookWriteData()
+
+Version 0.5:
+  15-jul-1997:  Pre-release version 0.5
+  15-jul-1997:  Modified Makefiles for proper directory installation
+  15-jul-1997:  Expanded README information
+  15-jul-1997:  Massive renaming and reorganization:
+                  VQPack was renamed QccPack
+                  Names of some subroutines were changed so to make the
+                    namings more uniform
+
+Version 0.4:
+  11-jul-1997:  Pre-release version 0.4
+  04-jul-1997:  Made speed improvements to QccVQGeneralizedLloydVQTraining() 
+                  and QccVQEntropyConstrainedVQTraining()
+  04-jul-1997:  Added QccVQCodebookSetProbsFromPartitions()
+  02-jul-1997:  Added ecvqtrain, ecvqencode
+  02-jul-1997:  Added codeword_codelengths field to QccVQCodebook struct
+  20-jun-1997:  Added QccVQEntropyConstrainedVQTraining()
+  11-jun-1997:  Implemented QccVectorSortComponents() with Quicksort
+  10-jun-1997:  Added QccWAVSubbandToString()
+  04-jun-1997:  Moved leftover columns/rows handling from dattocof.c to
+                  QccWAVDatToCof() and fixed error
+  04-jun-1997:  Renamed QccWAVWaveletAnalysisImageNested() to 
+                  QccWAVWaveletAnalysisSubbandPyramid()
+  04-jun-1997:  Renamed QccWAVWaveletSynthesisImageNested() to 
+                  QccWAVWaveletSynthesisSubbandPyramid()
+  04-jun-1997:  Added QccVQDatasetSetMaxMinValues()
+  04-jun-1997:  Added QccVQDatasetReadWholefile(), 
+                  QccVQDatasetWriteWholefile(),
+                  QccVQChannelReadWholefile(), QccVQChannelWriteWholefile()
+  04-jun-1997:  Fixed div-by-zero error in QccVQGeneralizedLloydVQTraining()
+  04-jun-1997:  Changed QccMathRand() to use drand48()
+  03-jun-1997:  Added linked_list.c to libQccPackVQ.a
+  30-may-1997:  Added QccVQDatasetCalcVectorPowers(), QccVectorPower()
+  30-may-1997:  Added multiple-argument support to QccParseParameters()
+  29-may-1997:  Added QccWAVCoefficientImageSplitPyramid(); chnaged cofsplit to
+                  use new function
+  28-may-1997:  Added QccFileWriteChar(), QccFileReadChar()
+  27-may-1997:  Added cofsplit
+  27-may-1997:  Modified wavelet_analysis and wavelet_synthesis to incorporate
+                  multi-level decomposition and reconstruction
+  27-may-1997:  Added num_levels to QccWAVCoefficientImage, 
+                  QCCWAVCOEFFICIENTIMAGE_REVNUM changed to 1.1
+  26-may-1997:  Allowed tile size not to mathc resolution in dattocof,
+                  coftodat, datopgm, and pgmtodat
+  23-may-1997:  Added datcut
+  23-may-1997:  Fixed error in spawn
+  22-may-1997:  Changed datmse to datdist, adding psnr calculation
+  21-may-1997:  Changed pgmmse to pgmdist, adding snr and psnr calculations
+  16-may-1997:  Added gyencode, gydecode, and associated man pages
+  16-may-1997:  gtrrate changed to avqrate; added QccAVQgtrPrintRate(),
+                  QccAVQPaulPrintRate()
+  16-may-1997:  Added alphabet_size to QccVQChannel struct; QCCVQCHANNEL_REVNUM
+                  changed to 1.1
+  16-may-1997:  Added QccExtractRevisionFromMagicNumber()
+  15-may-1997:  Added program_name to QccAVQSideInfo struct, named
+                  num_flag_entries to N, 
+                  QCCAVQSIDEINFO_REVNUM changed to 1.1
+  15-may-1997:  Changed VQVersion to QccPrintQccPackVersion; added
+                  QccGetProgramName()
+  15-may-1997:  Fixed error in error messages in printfile
+  14-may-1997:  Added QccVectorArrayMaxSignalPower() to math.c
+  07-may-1997:  Added flag/update vector information to side information
+                  display in gtrrate
+  10-apr-1997:  Fixed error in QccWAVCoefficientImageSetMin(),
+                  QccWAVCoefficientImageSetMax()
+
+Version 0.3:
+  04-apr-1997:  Pre-release version 0.3
+  04-apr-1997:  Added spawn, spawn_end
+  04-apr-1997:  Added QccVQDatasetMse(), datmse
+  04-apr-1997:  Added geometric_sequence
+  04-apr-1997:  Fixed error in gla (stopping distortion-threshold calc.)
+  03-apr-1997:  Changed asciitobin to asciitodat
+  03-apr-1997:  Added -vo switch to gtrrate, pgmmse, chnentropy
+
+Version 0.2:
+  19-mar-1997:  Pre-release version 0.2
+  19-mar-1997:  Added man pages:
+                  gtrencode.1, gtrdecode.1, gtrrate.1, coftodat.1, coftopgm.1,
+                  dattocof.1, pgmtocof.1, wavelet_analysis.1, 
+                  wavelet_synthesis.1, dattopgm.1, pgmmse.1, pgmtodat.1
+  19-mar-1997:  Added -fc option to gtrencode
+  18-mar-1997:  Changed name of libs.
+  18-mar-1997:  Added man pages:
+                  vqencode.1, gla.1, vqdecode.1, chnentropy.1, printfile.1,
+                  asciitobin.1, vqpack.1
+  18-mar-1997:  Moved printfile and asciitobin to new src/misc_utilities
+                  directory
+  17-mar-1997:  Changed name of lbg to gla
+  10-mar-1997:  Added round_flag to QccIMGClipGrayValue
+  05-mar-1997:  Added printing of sideinfo/channel rate to gtrrate
+  04-mar-1997:  Added -d option to chnentropy
+  24-feb-1997:  Changed name of vqquantize to vqencode
+  21-feb-1997:  Moved QccError definition to within libvq.a
+ 
+Version 0.1:
+  18-feb-1997:  Initial Pre-release
+
+
+==============================================================================

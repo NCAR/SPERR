@@ -1,0 +1,145 @@
+.TH CHNARITHMETICENCODE 1 "QCCPACK" ""
+.SH NAME
+chnarithmeticencode \- adaptive arithmetic encoding of a channel
+.SH SYNOPSIS
+.B chnarithmeticencode
+.RB "[\|" \-s "\|]"
+.RB "[\|" \-vo "\|]"
+.RB "[\|" \-d 
+.IR vector\_dimension "\|]"
+.RB "[\|" \-o
+.IR  order "\|]"
+.I channelfile
+.I outfile
+.SH OPTIONS
+.TP
+.B \-s
+Silent mode (no printed output).
+.TP
+.B \-vo
+Print only the value of the rate to stdout (terse output).
+.TP
+.BI \-d " vector\_dimension"
+Print rate in terms of bits per vector component rather than
+bits per channel symbol.
+.TP
+.BI \-o " order"
+Integer. Order of adaptive model. Possible value = 1 or 2; default = 1.
+.SH DESCRIPTION
+.LP
+.B chnarithmeticencode
+implements adaptive arithmetic coding of the channel sequence,
+.IR channelfile 
+(CHN format).
+.B chnarithmeticencode
+is based on the well known and frequently used
+implementation of arithmetic coding popularized by Witten 
+.IR "et al" .
+.B chnarithmeticencode
+includes their first-order adaptive model; additionally, it can use
+a second-order model for more complex modeling of data sources.
+.LP
+The
+.B \-o
+option specifies the order of the adaptive model.
+If
+.I order
+is 1, 
+.B chnarithmeticencode
+simply replicates the operation of
+the coder and adaptive model described by Witten 
+.IR "et al" .
+If 
+.I order
+is 2,
+the previous symbol in the channel
+serves as a context for the coding of the current symbol.
+This higher order model should provide greater coding efficiency
+(i.e., more compression) if the data source 
+.RI ( channelfile )
+possesses some degree of memory rather than being the memoryless
+source assumed by the first-order model.
+.LP
+.B chnarithmeticencode
+initially outputs a few bytes of header information
+(original number of symbols in 
+.IR channelfile ,
+symbol alphabet size, and
+arithmetic-coding order) to
+.IR outfile .
+The byte-packed bitstream produced by the arithmetic coding follows.
+As in the implementation by Witten
+.IR "et al" .,
+a special EOF symbol is output at the end of the bitstream to allow
+the decode,
+.BR chnarithmeticdecode (1),
+to detect the stopping point.
+.LP
+Normally,
+.B chnarithemticencode
+prints to 
+.B stdout 
+the rate achieved by the arithmetic coding, expressed in terms
+of bits per channel symbol.  This output may be suppressed by the
+.B \-s
+option (silent mode).
+The
+.B \-vo
+option indicates that only the value of the rate is to be
+printed (terse output).  The
+.B \-s
+option overrides the
+.B \-vo
+option.
+If option 
+.B \-d 
+is given, the rate is printed as bits per vector component (i.e.,
+it is the bit rate of the arithmetic coding
+divided by 
+.IR vector\_dimension ).  
+For example, the
+.B \-d 
+option gives a convenient way to calculate the bit rate, in bits per
+original source symbol, when the channel corresponds to indices output
+from a vector quantizer (see 
+.BR vqencode (1)).
+Note: the specification of the
+.B \-d
+option in no way affects the operation of the arithmetic encoder; it affects
+only the printed output of the rate.
+.SH "NOTES"
+.B chnarithmeticencode
+removes all null channel symbols from the channel with a call to
+.BR QccChannelRemoveNullSymbols (3)
+prior to arithmetic coding.
+.SH "SEE ALSO"
+.BR chnarithmeticdecode (1),
+.BR chnentropy (1),
+.BR vqencode (1),
+.BR QccPackENT (3),
+.BR QccPack (3)
+
+I. A. Witten, R. M. Neal, and J. G. Cleary,
+"Arithmetic Coding For Data Compression,"
+.IR "Communications of the ACM" ,
+vol. 30, no. 6, pp. 520-540, June 1987.
+
+T. M. Cover and J. T. Thomas, 
+.IR "Elements of Information Theory" .
+New York: John Wiley & Sons, Inc., 1991.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

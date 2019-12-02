@@ -1,0 +1,148 @@
+.TH QCCWAVSUBBANDPYRAMID3DINTDWT 3 "QCCPACK" ""
+.SH NAME
+QccWAVSubbandPyramid3DIntDWT, QccWAVSubbandPyramid3DIntInverseDWT \- 
+separable 3D discrete wavelet transform and inverse transform
+for integer-valued subband-pyramid data
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVSubbandPyramid3DIntDWT(QccWAVSubbandPyramid3DInt *" subband_pyramid ", int " transform_type ", int " temporal_num_levels ", int " spatial_num_levels ", const QccWAVWavelet *" wavelet );
+.br
+.BI "int QccWAVSubbandPyramid3DIntInverseDWT(QccWAVSubbandPyramid3DInt *" subband_pyramid ", const QccWAVWavelet *" wavelet );
+.SH DESCRIPTION
+.B QccWAVSubbandPyramid3DIntDWT()
+performs a separable 3D discrete wavelet transform (DWT) on the
+.I volume
+field of
+.IR subband_pyramid .
+.IR transform_type
+determines whether the transform is a dyadic or wavelet-packet
+decomposition. For a dyadic decomposition,
+.IR transform_type
+should be
+.BR QCCWAVSUBBANDPYRAMID3DINT_DYADIC ;
+for a wavelet-packet decomposition,
+.IR transform_type
+should be
+.BR QCCWAVSUBBANDPYRAMID3DINT_PACKET .
+.B QccWAVSubbandPyramid3DIntDWT()
+implements the wavelet transform with a call to
+.BR QccWAVWaveletDyadicDWT3DInt (3)
+or
+.BR QccWAVWaveletPacketDWT3DInt (3)
+as appropriate.
+.LP
+If a dyadic decomposition is chosen
+.RI ( transform_type
+equal to
+.BR QCCWAVSUBBANDPYRAMID3DINT_DYADIC ),
+.I spatial_num_levels
+and
+.I temporal_num_levels
+must be set to the same value which indicates
+the number of levels (scales) of dyadic decomposition to perform.
+In this case, both the 
+.I spatial_num_levels
+and
+.I temporal_num_levels
+fields of
+.I subband_pyramid
+are set to this value.
+Alternatively, if a wavelet-packet decomposition is chosen
+.RI ( transform_type
+equal to
+.BR QCCWAVSUBBANDPYRAMID3DINT_PACKET ),
+then
+.I spatial_num_levels
+and
+.I temporal_num_levels
+may be different and indicate the number of spatial decompositions and
+temporal decompositions, respectively, performed when
+calculating the wavelet-packet transform.
+.LP
+The
+.IR origin_frame ,
+.IR origin_row ,
+.IR origin_col ,
+.IR subsample_pattern_frame ,
+.IR subsample_pattern_row ,
+and
+.IR subsample_pattern_col
+parameters as needed for
+.BR QccWAVWaveletDyadicDWT3DInt (3)
+or
+.BR QccWAVWaveletPacketDWT3DInt (3)
+are extracted from the corresponding fields of
+.IR subband_pyramid .
+.LP
+.BR QccWAVSubbandPyramid3DIntInverseDWT()
+calls
+.BR QccWAVWaveletInverseDyadicDWT3DInt (3)
+or
+.BR QccWAVWaveletInversePacketDWT3DInt (3)
+to perform a separable 3D inverse DWT on the
+.I volume
+field of
+.IR subband_pyramid .
+The
+.IR transform_type
+field of
+.IR subband_pyramid 
+indicates the type (dyadic or wavelet-packet) of transform,
+while the numbers of levels of the inverse transform is retrieved from the
+.I spatial_num_levels
+and
+.I temporal_num_levels
+fields of
+.IR subband_pyramid .
+Both
+.I spatial_num_levels
+and
+.I temporal_num_levels
+are set to 0 upon return of
+.BR QccWAVSubbandPyramid3DIntInverseDWT().
+.SH "RETURN VALUES"
+These routines
+return 0 on success and 1 on error.
+.SH "SEE ALSO"
+.BR QccWAVWaveletDyadicDWT3DInt (3),
+.BR QccWAVWaveletInverseDyadicDWT3DInt (3),
+.BR QccWAVWaveletPacketDWT3DInt (3),
+.BR QccWAVWaveletInversePacketDWT3DInt (3),
+.BR QccWAVWavelet (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.LP
+A. R. Calderbank, I. Daubechies, W. Sweldens, B.-L. Yeo, "Lossless
+Image Compression Using Integer to Integer Wavelet Transforms", in
+.IR "Proceedings of the International Conference on Image Processing" ,
+Lausanne, Switzerland, pp. 596-599, September 1997.
+
+Z. Xiong, X. Wu, S. Cheng, J. Hua, "Lossy-to-Lossless Compression of
+Medical Volumetric Data Using Three-Dimensional Integer Wavelet Transforms,"
+.IR "IEEE Transactions on Medical Imaging" ,
+vol. 22, pp. 459-470, March 2003.
+
+B.-J. Kim, Z. Xiong, and W. A. Pearlman,
+"Low Bit-Rate Scalable Video Coding with 3-D Set Partitioning
+in Hierarchical Trees (3-D SPIHT),"
+.IR "IEEE Transactions on Circuits and Systems for Video Technology" ,
+vol. 10, no. 8, pp. 1374-1387, December 2000.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+

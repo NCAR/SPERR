@@ -1,0 +1,96 @@
+.TH QCCVIDMOTIONVECTORSTABLE 3 "QCCPACK" ""
+.SH NAME
+QccVIDMotionVectorsTable \- data structure
+for the Huffman coding of motion vectors as specified in the H.261
+standard
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccVIDMotionVectorsTableInitialize(QccVIDMotionVectorsTable *" table );
+.br
+.BI "int QccVIDMotionVectorsTableCreate(QccVIDMotionVectorsTable *" table );
+.br
+.BI "void QccVIDMotionVectorsTableFree(QccVIDMotionVectorsTable *" table );
+.SH DESCRIPTION
+QccPack provides data structure
+.B QccVIDMotionVectorsTable
+for representing the encoding and decoding tables used for
+the coding of motion-vector data (MVD) as specified in
+the H.261 video-coding standard. Specifically, the data
+placed in the tables corresponds to Table 3/H.261 in Sec. 4.2.3.4
+of the H.261 standard.
+.SH "DATA STRUCTURE"
+The
+.B QccVIDMotionVectorsTable
+data structure is defined as:
+.RS
+.nf
+
+typedef struct
+{
+  QccENTHuffmanTable encode_table;
+  QccENTHuffmanTable decode_table;
+} QccVIDMotionVectorsTable;
+.fi
+.RE
+.LP
+The fields of
+.B QccVIDMotionVectorsTable
+are as follows:
+.TP
+.I encode_table
+The Huffman table for encoding.
+.TP
+.IR decoding_table
+The Huffman table for decoding.
+.SH "ROUTINES"
+.B QccVIDMotionVectorsTableInitialize()
+should be called before any use of a
+.B QccVIDMotionVectorsTable
+structure.
+.B QccVIDMotionVectorsTableInitialize()
+initializes the fields of
+.I table
+with a call to
+.BR QccENTHuffmanTableInitialize (3).
+.LP
+.B QccVIDMotionVectorsTableCreate()
+calls
+.BR QccENTHuffmanTableCreateEncodeTable (3)
+and
+.BR QccENTHuffmanTableCreateDecodeTable (3)
+with the appropriate data to create the encoding
+and decoding tables.
+.LP
+.BR QccVIDMotioVectorsTableFree()
+free space allocated to the encoding and decoding tables.
+.LP
+.SH "RETURN VALUE"
+These routines return 0 on success, and 1 on failure.
+.SH "SEE ALSO"
+.BR QccVIDMotionVectorsEncode (3),
+.BR QccVIDMotionVectorsDecode (3),
+.BR QccENTHuffmanTable (3),
+.BR QccPackVID (3),
+.BR QccPackENT (3),
+.BR QccPack (3)
+.LP
+ITU-T,
+.IR "Video Coding for Audiovisual Services at p x 64 kbit/s" ,
+March 1993, ITU-T Recommendation H.261.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

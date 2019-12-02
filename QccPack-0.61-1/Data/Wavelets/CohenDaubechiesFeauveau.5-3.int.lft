@@ -1,0 +1,45 @@
+LFT0.14
+
+#
+#  CohenDaubechiesFeauveau.5-3.int.lft
+#
+#  An integer-valued lifting implementation of the
+#  biorthogonal spline wavelet filter bank.
+#  Original filter-bank coefficients published by Cohen et al.;
+#  lifted implementation described by Sweldens as linear lifting.
+#  Swelden's linear-lifting scheme did not employ unitary scaling;
+#  this implementation does in order to give output consistant with the
+#  corresponding filter-bank implementation.
+#  Integer-valued version described by Calderbank et al., as well as
+#  Xiong et al.
+#
+#  Permitted boundary methods:
+#    symmetric extension, periodic extension
+#
+#  Permitted signal length:
+#    any, start with even- or odd-indexed sample
+#
+#  References:
+#    Z. Xiong, X. Wu, S. Cheng, J. Hua, "Lossy-to-Lossless Compression of
+#      Medical Volumetric Data Using Three-Dimensional Integer Wavelet
+#      Transforms," IEEE Transactions on Medical Imaging, vol. 22,
+#      pp. 459-470, March 2003.
+#
+#    A. R. Calderbank, I. Daubechies, W. Sweldens, B.-L. Yeo, "Lossless
+#      Image Compression Using Integer to Integer Wavelet Transforms",
+#      in Proceedings of the International Conference on Image Processing,
+#      Lausanne, Switzerland, pp. 596-599, September 1997.
+#
+#    A. Cohen, I. Daubechies, J. C. Feauveau, "Biorthogonal Bases of
+#      Compactly Supported Wavelets," Communications on Pure and
+#      Applied Mathematics, vol. 45, no. 5, pp. 485-560, May 1992.
+#
+#    W. Sweldens, "The Lifting Scheme: A New Philosophy in Biorthogonal
+#      Wavelet Constructions," in Wavelet Applications in Signal
+#      Processing III, Proc. SPIE 2569, pp. 68-79, 1995.
+# 
+#    W. Sweldens, P. Schroder, "Building Your Own Wavelets At Home,"
+#      ACM SIGGRAPH Course Notes, pp. 15-87, 1996
+#
+
+6

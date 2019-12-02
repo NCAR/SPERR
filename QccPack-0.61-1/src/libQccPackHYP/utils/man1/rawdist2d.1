@@ -1,0 +1,151 @@
+.TH RAWDIST2D 1 "QCCPACK" ""
+.SH NAME
+rawdist2d \- calculate the distortion between two 2D raw images
+.SH SYNOPSIS
+.B rawdist2d
+.RB "[\|" \-vo "\|]"
+.RB "[\|" \-mse "\|]"
+.RB "[\|" \-snr "\|]"
+.RB "[\|" \-mae "\|]"
+.RB "[\|" \-s "\|]"
+.RB "[\|" \-bpp
+.IB bits_per_pixel "\|]"
+.RB "[\|" \-bend "\|]"
+.RB "[\|" \-lend "\|]"
+.I num_rows
+.I num_cols
+.I rawfile1
+.I rawfile2
+.SH OPTIONS
+.TP
+.B \-vo
+Output only the value of the distortion (terse output).
+.TP
+.B \-mse
+Express the distortion in terms of MSE.
+.TP
+.B \-snr
+Express the distortion in terms of SNR.
+.TP
+.B \-mae
+Express the distortion in terms of MAE.
+.TP
+.BI \-s
+Indicates raw file contains signed values.
+Default: raw file contains unsigned values.
+.TP
+.BI \-bpp
+Indicates the number of bits per each pixel (sample) value.
+Default is 16.
+.TP
+.BI \-bend
+Indicates raw file contains integers stored in
+big-endian format. This is the default.
+.TP
+.BI \-lend
+Indicates raw file contains integers stored in
+little-endian format.
+.SH DESCRIPTION
+.LP
+.B rawdist2d
+prints
+the mean square error (MSE), signal-to-noise ratio (SNR),
+and maximum absolute error (MAE),
+between two 2D raw image files,
+.I rawfile1
+and
+.IR rawfile2 ,
+to stdout.
+.LP
+The options
+.BR \-mse ,
+.BR \-snr ,
+and
+.BR \-mae ,
+indicate in which form the distortion should be expressed.
+If none of these
+options are specified, 
+.B rawdist2d
+prints the distortion in all forms.
+.LP
+If the option
+.B \-vo
+is specified,
+then 
+.B rawdist2d
+prints a terse output, consisting of only the value of the distortion,
+to stdout.  One of the options
+.BR \-mse ,
+.BR \-snr ,
+or
+.BR \-mae 
+must be specified in this case.
+.LP
+For the calculation of SNR,
+.B rawfile1
+is considered to be the original signal; 
+.B rawdist2d
+thus finds the variance of
+.B rawfile1
+for use in the SNR calculation.
+.LP
+The option
+.BR \-bpp
+specifies the number of bits that each pixel value contains.
+.IR bits_per_pixel
+must be between 1 and 32. If
+.IR bits_per_pixel
+is <= 8, then each sample is stored in
+.IR rawfile
+as the least significant
+bits in a single byte; otherwise, if
+.IR bits_per_pixel
+is <= 16, then each sample is stored in
+.IR rawfile
+as the least significant bits of two consecutive bytes (the default);
+otherwise, if
+.IR bits_per_pixel
+is <= 32, then each sample is stored in
+.IR rawfile
+as the least significant bits of four consecutive bytes.
+The option
+.BR \-s
+indicates that the raw file contains signed values;
+unsigned is assumed if the
+.BR \-s
+option is absent.
+The options
+.BR \-bend
+and
+.BR \-lend
+indicate whether the raw file is in
+big-endian or little-endian
+format, respectively.
+If neither is specified,
+big-endian is assumed.
+.LP
+Both
+.I rawfile1
+and
+.I rawfile2
+must be stored in row-major order and must be the same size
+.RI ( num_rows " x " num_cols ).
+.SH "SEE ALSO"
+.BR QccHYPRaw (3),
+.BR QccPackHYP (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

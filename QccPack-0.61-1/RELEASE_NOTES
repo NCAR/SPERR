@@ -1,0 +1,614 @@
+==============================================================================
+
+                                  Q C C P A C K
+
+                            Version 0.61, 01-apr-2016
+
+                    Copyright (C) 1997-2016  James E. Fowler
+
+------------------------------------------------------------------------------
+
+Version 0.61
+
+  Minor changes.
+
+------------------------------------------------------------------------------
+
+Version 0.60
+
+  Minor changes.
+
+------------------------------------------------------------------------------
+
+Version 0.59
+
+  Minor changes.
+
+------------------------------------------------------------------------------
+
+Version 0.58
+
+  Added reversible KLT, KLT+3D-TCE coder for three-dimensional data,
+  lossless 3D-TCE coder for three-dimensional data, and lossless
+  KLT+3D-TCE coder for three-dimensional data. 
+
+------------------------------------------------------------------------------
+
+Version 0.57
+
+  Added timer routines, vector angle measures.
+
+------------------------------------------------------------------------------
+
+Version 0.56
+
+  Add the DCT-TCE image coder.
+
+------------------------------------------------------------------------------
+
+Version 0.55:
+
+  Added libQccPackHYP standard module, including spectral PCA for
+  hyperspectral imagery.
+
+------------------------------------------------------------------------------
+
+Version 0.54:
+
+  Several minor bugs have been fixed.
+
+------------------------------------------------------------------------------
+
+Version 0.53:
+
+  Added integer-valued wavelet transforms.
+
+------------------------------------------------------------------------------
+
+Version 0.52:
+
+  Several minor bugs have been fixed.
+
+------------------------------------------------------------------------------
+
+Version 0.51:
+
+  Man-page documentation has been completed for the image processing and
+  manipulation routines in QccPackIMG.
+
+  RGB to YUV color-space conversion has been corrected; previously
+  U and V chrominance values were not scaled in accordance with the
+  official PAL specification.
+
+------------------------------------------------------------------------------
+
+Version 0.50:
+
+  Added motion estimation and compensation using regular triangle meshes.
+
+  Added the 3D-WDR coder for three-dimensional data.
+
+  Several minor bugs have been fixed.
+
+------------------------------------------------------------------------------
+
+Version 0.49:
+
+  Added the spatial-block video coder and exponential-Golomb entropy coding.
+
+------------------------------------------------------------------------------
+
+Version 0.48:
+
+  An extensive body of code has been added to the QccPackVID module to
+  provide routines for motion estimation and motion compensation. These
+  routines provide subpixel-accurate motion-estimation accuracy down to
+  one-eighth pixel, while both bilinear interpolation and arbitrary
+  interpolation filtering are supported for the creation of subpixel-accurate
+  reference frames.
+
+  Support for the calculation and checking of CRC codes has been added to
+  the QccPackECC module. Additionally, routines for trellis codes and
+  Viterbi decoding have been added to this module as well. All of these
+  additions are undocumented at this point in time, but hopefully will have
+  man pages in the near future.
+
+  The QccFifo structure has been added to provide memory-based fifo
+  capabilities.
+
+------------------------------------------------------------------------------
+
+Version 0.47:
+
+  The TCE algorithm (Tian and Hemami 2004) for image coding has been added.
+
+  Golomb coding, a lossless entropy coder, has been added.
+
+  The 3D-BISK coder (Rucker and Fowler 2004) for three-dimensional data
+  with arbitrary shape has been added.
+
+  The RWMH video-coding algorithm (Cui, Wang, Fowler 2003) has been added.
+
+  Several minor bugs have been fixed.
+
+------------------------------------------------------------------------------
+
+Version 0.46:
+
+  The standard module QccPackVID has been added to the main distribution. The
+  intention is that this module will contain some recent video-coding
+  algorithms, focusing specifically on wavelet-based techniques. At this
+  time, though, the RDWT-block algorithm (Park and Kim 2000) is the only
+  method currently implemented.
+
+------------------------------------------------------------------------------
+
+Version 0.45:
+
+  The 3D tarp coder (Wang, Rucker, Fowler 2003) for three-dimensional data
+  has been added, and a few minor bugs have been fixed.
+
+------------------------------------------------------------------------------
+
+Version 0.44:
+
+  A number of new routines and data structures have been added for handling
+  compression of three-dimensional data. Specifically, a QccVolume data
+  type generalizes QccMatrix to 3D, and QccIMGImageCube generalizes
+  QccIMGImageComponent to 3D volumetric images. Additionally, 3D wavelet
+  transforms for both dyadic and wavelet-packet decompositions have been
+  added, as well as a QccWAVSubbandPyramid3D subband-pyramid structure.
+
+------------------------------------------------------------------------------
+
+Version 0.43:
+
+  The BISK (Fowler 2003) image coder has been added, and a few minor bugs
+  have been fixed.
+
+------------------------------------------------------------------------------
+
+Version 0.42:
+
+  A substantial change has been made to the interface of all DWT routines
+  (QccWAVWaveletLWT(), QccWAVWaveletInverseLWT(),
+  QccWAVWaveletLWT2D(), QccWAVWaveletInverseLWT2D(),
+  QccWAVWaveletDWTSubbandLength(), QccWAVWaveletDWT1D(),
+  QccWAVWaveletInverseDWT1D(), QccWAVWaveletDWT2D(), and
+  QccWAVWaveletInverseDWT2D()). These routines implement critically sampled
+  DWTs which can be performed using either even- or odd-phase subsampling at
+  each scale of decomposition. The usual method, and the approach previously
+  taken in QccPack, is to assume even-phase subsampling for each decomposition.
+  The interfaces for these routines have been augmented with a
+  subsample_pattern parameter (or, in the case of 2D transforms,
+  subsample_pattern_row and subsample_pattern_col parameters) that allow the
+  selection of even- or odd-phase subsampling at each scale of decomposition;
+  see QccWAVWaveletDWT1D(3) for how the subsampling-pattern value is specified.
+  Using subsample_pattern = 0 specifies that even-phase subsampling is to be
+  used for all decompositions, corresponding to the previous operation.
+  Unfortunately, the addition of the subsample_pattern parameter to the
+  interface to these routines breaks all existing code using these routines ---
+  the fix is to add the appropriate subsample_pattern parameter with value 0 to
+  existing calls to these routines. The advantages of the addition of this
+  parameter is that now the critically sampled DWTs have enhanced
+  interoperability with the overcomplete RDWT. Specifically, an RDWT can be
+  decomposed via QccWAVWaveletRedundantDWT1DSubsample(3) into its constituent
+  critically sampled DWTs which may then be independently inverted using
+  QccWAVWaveletInverseDWT1D(3).
+
+  In another change that is not backward-compatible,
+  QccWAVSubbandPyramidSubbandResolution() has been renamed
+  QccWAVSubbandPyramidSubbandSize(), which should more accurately reflect
+  the true operation of the function, since resolution is somewhat of
+  an ambiguous term when it comes to wavelet decompositions.
+
+  Fixed-point arithmetic has replaced floating-point arithmetic in tarp.c,
+  permitting much improved execution speed without any noticeable loss
+  of rate-distortion performance.
+
+  QccIMGImageRead() and QccIMGWrite() have been modified to attempt to
+  automatically determine the input/output image filetype, including
+  ICP-format images.
+
+------------------------------------------------------------------------------
+
+Version 0.41:
+
+  The tarp-filter (Simard, Steinkraus, & Malvar, 2002) image coder
+  has been added.
+
+  QccENTArithmeticModel has been modified to support both adaptive as well
+  as nonadaptive arithmetic coding, whereas, previously, only adaptive models
+  were supported. With a nonadaptive coder, one can explicitly change the
+  symbol probabilities with a call to the new
+  QccENTArithmeticSetModelProbabilities(3) function. By default, a model is
+  created as an adaptive model, so existing code will be unaffected by this
+  change.
+
+  In the wavelet-transform routines, the parameter start_odd has been  
+  replaced by the more general parameter, signal_origin. This change has to 
+  do with the phase of the the DWT. In a single-scale decomposition, there 
+  are two phases, even and odd; these refer to the phase of the subsampling 
+  with respect to the zero index of the signal. If the signal is assumed to 
+  start at some other index (as is often the case when considering 
+  shape-adaptive transforms), then the phase of the origin must be taken 
+  into account to determine the proper subsampling pattern. For each 
+  additional scale of decomposition increases the number of possible 
+  subsampling patterns by a factor of two (i.e., even or odd at each scale). 
+  The old parameter, start_odd, allowed one to select between only two of the 
+  possible subsampling patterns. By specifying the origin of the signal, the 
+  phase of the origin can be determined, permitting all possible subsampling 
+  patterns to be achieved. In most cases, the origin is zero, and this is 
+  backward compatible with the start_odd = 0 specification used before. 
+  Consequently, most existing code should be unaffected by this change.
+
+------------------------------------------------------------------------------
+
+Version 0.40:
+
+  Subsampling of redundant DWTs can now produce any one of the multitude
+  of sets of coefficients that are equivalent to some critically sampled
+  DWT. That is, a subsample_pattern parameter has been added to both
+  QccWAVWaveletRedundantDWT1DSubsample() (1D subsampling) and
+  QccWAVWaveletRedundantDWT2DSubsample() (2D subsampling). In both of
+  these routines, subsample_pattern = 0 will reproduce the prior
+  functionality of the routine.
+
+  A number of bug fixes relevant to Cygwin support have been made.
+
+  Adaptive Golomb coding, a simple entropy-coding technique, has been
+  added.
+
+  The Wavelet Difference Reduction (WDR) (Tian & Wells, 1998) image coder
+  has been added.
+
+------------------------------------------------------------------------------
+
+Version 0.39:
+
+  QccPack now officially supports installation on Microsoft Windows
+  platforms through use of the Cygwin UNIX emulation environment. The README
+  file now has detailed information pertaining to Cygwin-based installation.
+
+------------------------------------------------------------------------------
+
+Version 0.38:
+
+  Minor bug fixes.
+
+------------------------------------------------------------------------------
+
+Version 0.37:
+
+  Minor changes to Solaris build configuration (allows using gcc).
+
+------------------------------------------------------------------------------
+
+Version 0.36:
+
+  Added hue, saturation, value (HSV) color conversion, an example
+  Reed-Solomon encoding program, and a variety of bug fixes.
+
+------------------------------------------------------------------------------
+
+Version 0.35:
+
+  Corrected several bugs, most notably in QccWAVWaveletInverseRedundantDWT2D().
+  The previous version of this routine did not have a correct
+  implementation. Additionally, several memory leaks and other various
+  bugs have been corrected.
+
+------------------------------------------------------------------------------
+
+Version 0.34:
+
+  1D and 2D redundant discrete wavelet transforms (RDWTs) have been added.
+  The RDWT is an implementation of a overcomplete, or over-sampled, wavelet
+  expansion, as opposed to the usual critically sampled DWT. Commonly
+  implemented via the "algorithme a trous" as described by Dutilleux,
+  we use the "alternative" implementation due to Shensa. Although it is
+  unlikely that a RDWT could be useful directly in compression applications
+  due to its oversampled representation, the RDWT is commonly used
+  in feature detection and similar operations that could be useful
+  in guiding compression tasks.
+
+  Arguments start_odd_row and start_odd_col have been added to 
+  QccWAVWaveletAnalysis2D(), QccWAVWaveletSynthesis2D(), QccWAVWaveletDWT2D(),
+  QccWAVWaveletInverseDWT2D(), and similar fields have been added also to
+  the QccWAVSubbandPyramid structure. These values generalize the start_odd
+  values passed to QccWAVWaveletDWT1D() and like functions. In order to
+  achieve functionality identical to that of previous versions of QccPack,
+  simply set start_odd_row and start_odd_col to zero.
+
+------------------------------------------------------------------------------
+
+Version 0.33:
+
+  Mostly minor bug fixes.
+
+------------------------------------------------------------------------------
+
+Version 0.32:
+
+  Mostly minor bug fixes.
+
+------------------------------------------------------------------------------
+
+Version 0.31:
+
+  QccPack now optionally supports use in multithreaded applications.
+  Currently, QccPack does not make use of threads internally; however,
+  if thread support is enabled when compiling the library, an
+  application program can invoke QccPack functions within multiple
+  threads simultaneously. In order to use QccPack in a multithreaded
+  application, it is necessary to compile QccPack with thread support
+  enabled and link against the pthreads library. If the multithreaded
+  capability is not desired, then there is no dependence on pthreads.
+
+------------------------------------------------------------------------------
+
+Version 0.30:
+
+  Mostly minor bug fixes.
+
+------------------------------------------------------------------------------
+
+Version 0.29:
+
+  Man-page documentation has been completed for the arithmetic-coding
+  routines in QccPackENT. Additionally, several QccPack.config files
+  tailored specifically to various operating systems have been added.
+  Hopefully, these system-specific configuration files will facilitate
+  the building of QccPack on the more popular operating systems by
+  setting up various compiler settings in a most likely correct
+  manner. This should enable building with shared libraries on these
+  systems, the most common difficulty faced by many users.
+
+------------------------------------------------------------------------------
+
+Version 0.28:
+
+  A shape-adaptive DWT (SA-DWT) has been added. In short, SA-DWT capability
+  permits the transformation of arbitrarily shaped regions in images.
+  In QccPack, these regions are indicated by a transparency mask; SA-DWT
+  transforms only non-transparent regions in the image, applying
+  appropriate extension at the boundaries of the regions. In related
+  changes, the lifting code for the CohenDaubechiesFeauveau.9-7.lft
+  wavelet has been modified to allow starting on odd-indexed samples and
+  odd-length sequences. Additionally, the filter-bank implementation code
+  was similarly modified. The net result is that the
+  CohenDaubechiesFeauveau.9-7.lft wavelet, as well as any biorthogonal
+  filter-bank wavelet, can be used in the SA-DWT (in previous versions,
+  only the CohenDaubechiesFeauveau.5-3.lft would have worked). A final
+  implication of the addition of the SA-DWT is that, for any
+  biorthogonal wavelet, the size of the image is no longer required
+  to be an integer multiple of a power of two, even for the usual
+  (i.e., rectangularly shaped) dyadic DWT. We note that SA-DWTs have been
+  recently included in Version 2 of the MPEG-4 standard, wherein they are
+  used for texture coding of arbitrarily shaped still objects. The SA-DWT
+  implementation differs slightly from that of the MPEG-4 standard;
+  see QccWAVWaveletShapeAdaptiveDWT1D(3) for details.
+
+------------------------------------------------------------------------------
+
+Version 0.27:
+
+  When inputting and outputting binary data using the QccBitBuffer
+  structure, the order of the bits stored for a byte of data has
+  been reversed. That is, QccBitBufferPutChar() and QccBitBufferGetChar()
+  now output/input bits in the same order as would be done if one
+  were to write/read whole byte-aligned characters via fputc() or fgetc().
+  In this sense, if a QccBitBuffer structure is used to output
+  byte-aligned data bit-by-bit, you'd get the same thing as if you
+  output the data byte-by-byte using fputc(). The unfortunate consequence
+  of this change is that bitstreams are not backward compatible. That is,
+  bitstreams generated via Version 0.27 of QccPack will not be readable
+  by earlier versions, *nor* will bitstreams generated by earlier versions
+  be readable by QccPack Version 0.27. This will affect mainly code
+  using arithmetic coding or Huffman coding, such as srencode, sfqencode,
+  and the routines of the QccPackSPIHT module. We are sorry for any
+  inconvenience resulting from this change, but it appeared to be in the
+  best long-term interest of the QccPack project to make the
+  QccBitBuffer bit ordering more sane.
+
+------------------------------------------------------------------------------
+
+Version 0.26:
+
+  With this release, Huffman coding makes its debut in QccPack.  Huffman
+  coding routines, complete with encoding, decoding, and Huffman code table
+  design have been added, based upon the implementations suggested in
+  the Annexes of the JPEG standard.
+
+------------------------------------------------------------------------------
+
+Version 0.25:
+
+  The interfaces to QccENTArithmeticEncodeStart() and
+  QccENTArithmeticDecodeStart() have been changed.  Now, one can specify a
+  target number of bits to be output/input by the arithmetic coder/decoder.
+  That is, QccENTArithmeticEncode() will now return a value of 2 when the
+  number of bits output meets (or exceeds) the value of target_num_bits
+  set when QccENTArithmeticEncodeStart() was first called. To disable this
+  check, pass QCCENT_ANYNUMBITS as target_num_bits to
+  QccENTArithmeticEncodeStart().  A similar effect is available for decoding,
+  with QccENTArithmeticDecode() returning an error code if the end of
+  the file is reached, or the number of bits read meets (or exceeds)
+  the value of target_num_bits set during the call to
+  QccENTArithmeticDecodeStart().  These changes necessitate a small change
+  to existing code -- add a value for target_num_bits to all calls to
+  QccENTArithmeticEncodeStart() and QccENTArithmeticDecodeStart(), using the
+  value QCCENT_ANYNUMBITS to preserve previous functionality.
+  
+  A related change adds QccENTArithmeticEncodeFlush(), which forces the
+  arithmetic coder to flush its state and output subsequent bits on the
+  next byte boundary, and QccENTArithmeticDecodeRestart(), which forces
+  the arithmetic decoder restart its state and read the next bits from
+  the next byte boundary.  Using these functions, multiple independent
+  arithmetic codings can be written to and read from the same bitstream;
+  i.e., using just one QccBitBufferStart() and QccBitBufferEnd() pair.
+  More detailed documentation of this behavior will be available once
+  man pages for the libQccPackENT section of the code get written
+  (hopefully soon!).
+
+------------------------------------------------------------------------------
+
+Version 0.24:
+
+  Documentation has been added for the QccWAVZerotree data structure and the
+  ZT file format.
+
+------------------------------------------------------------------------------
+
+Version 0.23:
+
+  Minor build changes which should be transparent to users and developers.
+
+------------------------------------------------------------------------------
+
+Version 0.22:
+
+  Minor build changes which should be transparent to users and developers.
+
+------------------------------------------------------------------------------
+
+Version 0.21:
+
+  The only change made in this version is that the SPIHT code has been
+  removed from the "main" QccPack distribution and placed in a separate,
+  optional module that must be downloaded separately.  This change arose 
+  from concerns that QccPack was not "purely" GPL/LGPL, in its entirety,
+  due to the special non-GPL licensing accompanying the SPIHT code.
+  With SPIHT now in the QccPackSPIHT module, the main QccPack distribution
+  is now completely GPL/LGPL with the module being covered by the special
+  SPIHT license as before.  We hope that the downloading a separate
+  module-distribution file and the corresponding minor additional
+  configuration step needed to build QccPack with SPIHT support will not
+  unduly burden users of the QccPack SPIHT implementation.  We hope
+  that other algorithms which may similarly require non-GPL licensing, or
+  otherwise best be kept separated from the main QccPack distribution, may
+  be accommodated as additional modules in the future.
+
+------------------------------------------------------------------------------
+
+Version 0.20:
+
+  The first argument to QccInit() has been changed from a pointer-to-int to
+  int.  That is, the prototype of QccInit is now
+      void QccInit(int argc, char *argv[]);
+  This reflects the current situation that argc is not changed by QccInit()
+  (in the past argc could have been changed during a call to an initialization
+  routine of the NetPBM libraries.  However, QccPack does not currently use
+  NetPBM, so argc will not be changed).
+
+------------------------------------------------------------------------------
+
+Version 0.19:
+
+  Small changes to the QccPack code have been made so that compilation with
+  'gcc -Wall' produces no warning messages.  These changes have been, in the
+  most part, very minor.  The only exception is that the function QccExit()
+  has now been made into a macro (this is so that gcc would see an explicit
+  'exit' from the main() routine and not complain about its absence).  Thus,
+  in non-QccPack programs invoking QccExit, a change from "QccExit();" to
+  "QccExit;" will be most likely be necessary.  Note that the -Wall switch
+  has now been added to the CFLAGS declaration in QccPack.config and we
+  recommend using this declaration to build QccPack.
+
+  The behavior of several "copy" routines has been changed, namely,
+  QccIMGImageComponentCopy(), QccFilterCopy(),
+  QccDatasetCopy(), and QccWAVVectorFilterCopy().  This routines will now
+  automatically allocate space if the data structure has a NULL pointer
+  for its data array.  If non-NULL, the space of sufficient size is assumed
+  to be allocated prior to calling the routine (this was the previous
+  behavior).
+
+------------------------------------------------------------------------------
+
+Version 0.18:
+
+  Fixes a couple of bugs; no new features added
+  
+------------------------------------------------------------------------------
+
+Version 0.17:
+
+  The first "official" release of the SPIHT algorithm for wavelet-based image
+  coding has been added.  The SPIHT algorithm has been made available by
+  the gracious permission of PrimaComp, Inc., the exclusive holders of patent
+  rights to the SPIHT algorithm.  The SPIHT implementation here is licensed
+  only for academic or non-commercial research activities and thus covered
+  under licensing terms different from the rest of QccPack, which is
+  covered under GPL/LGPL.  See the file LICENSE-SPIHT for details on the
+  SPIHT license.
+
+------------------------------------------------------------------------------
+
+Version 0.16:
+
+  A preliminary implementation of the SPIHT algorithm for wavelet-based image
+  coding has been added.  Documentation to follow in a subsequent release.
+
+------------------------------------------------------------------------------
+
+Version 0.15:
+
+  Fixes a couple of bugs; no new features added
+
+------------------------------------------------------------------------------
+
+Version 0.14:
+
+  QccVQVectorQuantization() and QccVQEntropyConstrained() now have a
+  distortion_measure function as an optional argument to allow users to use
+  distortion measures other than squared error (which is now the default for
+  these routines).  Of course, VQ training via the Lloyd algorithm must make
+  use of an appropriate "centroid" calculation routine (the centroid being
+  theoretically valid only for the squared-error distortion measure).
+  QccVQGeneralizedLloydTraining() now has an optional centroid_calculation
+  function argument for such user-defined centroid calculations.
+  
+  Multistage VQ (MSVQ, also known as residual VQ or RVQ) has been added,
+  along with an associated QccVQMultiStageCodebook data type.
+  
+  Some changes have been made to the lifting wavelet code. The biorthogonal
+  CohenDaubechiesFeauveau.5-3.lft lifting scheme (i.e., linear lifting), and
+  its associated filter-bank implementation, have been added.
+  In addition, DWT via lifting adds support for odd-length sequences and
+  sequences that start with an odd, rather than even, sample.  Currently,
+  this odd-length and/or odd-start operation is supported only for the
+  CohenDaubechiesFeauveau.5-3.lft lifting scheme, but may be extended to
+  other lifting wavelets in the future.
+
+------------------------------------------------------------------------------
+
+Version 0.13:
+
+  QccPack no longer relies on NetPBM libraries to read/write PBM/PGM/PPM
+  files.  Since compiling the NetPBM package was often a pain (at best),
+  removing dependence on these libraries makes installing QccPack much easier
+  on systems that don't already have NetPBM installed.  PBM/PGM/PPM 
+  reading/writing routines are now built-in to QccPack.
+
+  QccInit() is now to be called as the *first* command in main() of all
+  programs that use the QccPack library routines.  This is different from
+  past versions of QccPack in which QccInit() was called after
+  QccParseParameters().
+
+------------------------------------------------------------------------------
+
+Version 0.12:
+
+  The libQccPackWAV library routines and utilities, at long last, have been
+  completely overhauled.  Before, only filter-bank implementations of
+  biorthogonal wavelets were allowed.  With this latest release,
+  orthonormal wavelets are now permitted.  In addition, lifting
+  implementations (which are quite a bit faster than their filter-bank
+  counterparts) have been hardcoded into the library for a couple of the
+  more popular wavelets.  The FIL file format no longer exists, having
+  been replaced by the FBK format.  Unfortunately, very little of the
+  update code retains backward compatibility with previous versions -- alas,
+  such is the price of progress.
+
+==============================================================================
+

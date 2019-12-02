@@ -1,0 +1,165 @@
+.TH SQUNIFORM 1 "QCCPACK" ""
+.SH NAME
+squniform \- make uniform scalar quantizer
+.SH SYNOPSIS
+.B squniform
+.RB "[\|" \-max
+.IR  max\_value "\|]"
+.RB "[\|" \-min
+.IR min\_value "\|]"
+.RB "[\|" \-u 
+.IR u "\|]"
+.RB "[\|" \-A
+.IR A "\|]"
+.RB "[\|" \-nl
+.IR num\_levels "\|]"
+.RB "[\|" \-q
+.IR stepsize "\|]"
+.RB "[\|" \-d
+.IR deadzone "\|]"
+.I quantizer\_file
+.SH OPTIONS
+.TP
+.BI \-max " max\_value"
+Float. Maximum value of the range of the quantizer.  Default value = 255.
+.TP
+.BI \-min " min\_value"
+Float. Minimum value of the range of the quantizer.  Default value = 0.
+.TP
+.BI \-u " u"
+Float.  Apply a u-law compander to the uniform quantizer.
+.TP
+.BI \-A " A"
+Float.  Apply a A-law compander to the uniform quantizer.
+.TP
+.BI \-nl " num\_levels"
+Integer.  Number of quantizer intervals. Default = 255.
+.TP
+.BI \-q " stepsize"
+Float. Stepsize of uniform quantizer.
+.TP
+.BI \-d " deadzone"
+Float. Deadzone of quantizer.
+.SH DESCRIPTION
+.LP
+.B squniform
+designs scalar quantizers based on the uniform scalar quantizer.
+.B squniform
+supports simple uniform scalar quantization, uniform scalar quantization
+with a dead zone about zero, and u-law and A-law companding.
+.LP
+A uniform scalar quantizer can be created in two ways.
+The first way is to specify the scalar quantizer stepsize with
+the 
+.B \-q
+option; this type of quantizer will be called hereafter the "simple"
+uniform scalar quantizer.
+Encoding using this simple quantizer (i.e., with
+.BR sqencode (1))
+is merely a division by the stepsize; i.e.,
+.IR index =
+.BR rint (
+.IR value / stepsize ).
+.LP
+The second form of uniform quantizer supported by
+.B squniform
+is a "general" uniform scalar quantizer.
+In this type of quantizer, the reproduction levels and boundaries
+are explicitly given in the output file.
+The range of the general quantizer is 
+.I min\_value 
+through
+.I max\_value 
+and the number of quantization levels is
+.IR num\_levels .
+.B squniform
+constructs
+.I num\_levels
+equally-sized quantizer bins between
+.I min\_value
+and
+.IR max\_value .
+Note: the key difference between the simple and general uniform
+scalar quantizers is
+that the range of the simple quantizer is implied to
+be infinite while the range of the general scalar quantizer is finite.
+However, the first and last quantizer bins of the general quantizer are
+considered to be "overload" regions.
+Note: quantizing with the general uniform scalar quantizer (via, for
+example,
+.BR sqencode (1))
+requires a nearest-neighbor search and is thus slower than using a
+simple quantizer.
+.LP
+A dead-zone quantizer can be constructed by giving both the
+.I stepsize
+of the quantizer (via the
+.B \-q
+option) and the
+.I deadzone
+bin size (via the
+.B \-d
+option).
+For a dead-zone quantizer, 
+.I deadzone
+is the size of the quantizer bin centered at zero; that is, all values
+between
+.I -deadzone
+and 
+.I deadzone
+are quantized to zero.
+Beyond this dead zone about zero, the rest of the quantizer is uniform, with
+bins of size
+.IR stepsize .
+Note: the simple uniform scalar quantizer can be considered to be a
+deadzone quantizer with
+.IR deadzone = stepsize .
+.LP
+Companding may be applied to the general uniform scalar quantizer to produce
+u-law and A-law scalar quantizers.
+With the
+.B \-u
+or
+.B \-A
+options, logarithmic companders with u-law or A-law
+characteristics, respectively, are applied to the general
+quantizer before it is output (in effect making the quantizer nonuniform).
+One of u-law or A-law, but not both, may be specified.
+The value
+.I u
+must be nonnegative;
+.I A
+must be 1.0 or greater.
+Options
+.B \-u
+and
+.B \-A
+may not be used in conjunction with
+the
+.B \-q
+option.
+.SH "SEE ALSO"
+.BR sqlloyd (1),
+.BR sqencode (1),
+.BR QccPackSQ (3),
+.BR QccPack (3)
+
+A. Gersho and R. Gray, 
+.IR "Vector Quantization and Signal Compression" .
+Norwell, MA: Kluwer Academic Publishers, 1992, pp. 151-161.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

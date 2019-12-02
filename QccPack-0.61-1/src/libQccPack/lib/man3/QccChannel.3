@@ -1,0 +1,306 @@
+.TH QCCCHANNEL 3 "QCCPACK" ""
+.SH NAME
+QccChannel \- generic data structure for channel of indices
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccChannelInitialize(QccChannel *" channel );
+.br
+.BI "int QccChannelAlloc(QccChannel *" channel );
+.br
+.BI "void QccChannelFree(QccChannel *" channel );
+.br
+.BI "int QccChannelGetBlockSize(const QccChannel *" channel );
+.br
+.BI "int QccChannelPrint(const QccChannel *" channel );
+.SH DESCRIPTION
+QccPack provides data structure
+.B QccChannel
+for representing a generic channel of channel symbols.
+These channel symbols,
+which are inherently nonnegative integers, are typically
+the output of a quantizer (see 
+.BR QccPackSQ (3),
+.BR QccPackVQ (3)).
+The 
+.B QccChannel
+channel structure can be read from and written to 
+.BR CHN -format
+files, or a
+.B QccChannel
+structure can be used without file input or output.
+.LP
+The main component of a
+.B QccChannel
+structure is a list of channel symbols.
+For file input and output,
+this symbol list is the current block of symbols
+being written to or read from
+the file.
+That is,
+access to
+.BR CHN -format
+files is block-based, with a block of symbols being written or read
+at once.
+Optionally, the block size can be set to be the same as the file size,
+so that all symbols in the channel
+are accessed simultaneously.
+.B QccChannel
+channels that do not involve file access typically hold all symbols of
+the channel in the symbol list.
+.LP
+Channel symbols are nonnegative integers drawn from a
+channel-symbol alphabet.
+The
+.B QccChannel
+structure
+possesses a field (see below) that gives the size of this
+alphabet; the channel-symbol alphabet is then 
+the integers 0 through
+.I alphabet_size
+- 1, although not all of these symbols necessary appear in any given channel.
+Additionally to this alphabet of symbols, there exists a special null symbol,
+.BR QCCCHANNEL_NULLSYMBOL ,
+defined as -1,
+that indicates the absence of a symbol in the channel.
+.SH "DATA STRUCTURE"
+The
+.B QccChannel
+data structure is defined as:
+.RS
+.nf
+
+typedef struct
+{
+  QccString    filename;
+  FILE         *fileptr;
+  QccString    magic_num;
+  int          major_version;
+  int          minor_version;
+  int          channel_length;
+  int          access_block_size;
+  int          num_blocks_accessed;
+  int          alphabet_size;
+  int          *channel_symbols;
+} QccChannel;
+.fi
+.RE
+.LP
+The fields of
+.B QccChannel
+are as follows:
+.TP
+.I filename
+For channels associated with a file, this is the name of the file.
+.TP
+.I fileptr
+For channels associated with an open file, this is the
+.B FILE
+pointer.
+.TP
+.IR magic_num ", " major_version ", " minor_version
+For channels associated with a file, these are
+the magic number and version of the file.
+.TP
+.IR channel_length
+The total number of symbols contained in the channel.
+.TP
+.I access_block_size
+For channels associated with a file, this is the number of symbols that
+will be read or written at a time; i.e., the block size for
+block-based reading and writing.
+.TP
+.I num_blocks_accessed
+For channels associated with a file, this is the number of blocks of symbols
+that have already been read or written.
+.TP
+.I alphabet_size
+the number of possible channel symbols
+(not including the special null symbol).  It is assumed that the alphabet
+of possible channel symbols is the integers 0 through
+.I alphabet_size
+- 1.
+.TP
+.I channel_symbols
+The current block of symbols from the channel; this array contains
+.I access_block_size 
+symbols.
+.SH "FILE FORMAT"
+For reading and writing structures
+of type
+.BR QccChannel ,
+QccPack provides the
+.B CHN
+file format.
+This file format starts with an ASCII header followed by
+ASCII data.
+The ASCII header consists of magic-number/revision
+information
+followed by any amount of white space
+(space, `\\t' (tab), `\\n' (newline), `\\r' (return)) and/or
+comments lines (lines starting with `#').  Following this white space,
+additional ASCII
+header information is given, separated by blanks and newlines.
+ASCII data follows the header information.
+.LP
+The
+.B CHN
+file format consists of the following information:
+.RS
+.sp
+.BI CHN X.X
+.br
+.I "<white space>"
+.br
+.I "N"
+.br
+.I "A"
+.br
+.I C1
+.br
+.I C2
+.br
+\|.
+.br
+\|.
+.br
+\|.
+.br
+.sp
+.RE
+where
+.B CHN
+is the magic number,
+.I X.X
+is the version number,
+.I "<white space>"
+is white space and/or 
+comment lines, 
+.I N 
+is the length of the channel,
+.I A 
+is size of the channel alphabet,
+and 
+.I Ci
+is the ith channel symbol. 
+.IR N ", " A ", " and
+.I Ci
+are integers and are stored as ASCII.
+.SH "ROUTINES"
+.B QccChannelInitialize()
+should be called before any use of a
+.B QccChannel
+structure.
+.B QccChannelInitialize()
+initializes the fields of
+.I channel
+to the following values:
+.RS
+
+.IR filename :
+.B NULL
+string
+.br
+.IR magic_num :
+.B QCCCHANNEL_MAGICNUM
+.br
+.IR major_version ", " minor_version :
+initialized to output of 
+.BR QccGetQccPackVersion (3)
+.br
+.IR channel_length :
+0
+.br
+.IR access_block_size :
+.B QCCCHANNEL_ACCESSWHOLEFILE
+.br
+.IR num_blocks_accessed :
+0
+.br
+.IR alphabet_size :
+0
+.br
+.IR channel_symbols :
+.B NULL
+.RE
+.LP
+.B QccChannelAlloc()
+allocates storage space for the
+.I channel_symbols 
+array of
+.IR channel .
+If 
+.I channel_symbols
+is not
+.BR NULL ,
+.B QccChannelAlloc()
+returns immediately without changing the state of any memory allocation.
+Otherwise,
+the 
+.I channel_symbols
+array is allocated.
+The fields
+.I access_block_size
+and
+.I channel_length
+must be defined prior to calling
+.BR QccChannelAlloc() .
+If
+.I access_block_size
+equals
+.BR QCCCHANNEL_ACCESSWHOLEFILE ,
+then space for
+.I channel_length
+symbols is allocated;
+otherwise, space for
+.I access_block_size
+symbols is allocated.
+.LP
+.B QccChannelFree()
+frees the
+.I channel_symbols
+array previously allocated by
+.B QccChannelAlloc() .
+.LP
+.B QccChannelGetBlockSize()
+returns the block size of the
+.I channel_symbols
+array of
+.IR channel .
+If
+.I access_block_size
+is
+.BR QCCCHANNEL_ACCESSWHOLEFILE ,
+.I channel_length
+is returned; otherwise,
+.I access_block_size
+is returned.
+.LP
+.B QccChannelPrint()
+prints the contents of
+.I channel
+to stdout.
+.SH "RETURN VALUE"
+Except for
+.BR QccChannelGetBlockSize() ,
+each of these routines return 0 upon successful completion, 1 on error.
+.SH "SEE ALSO"
+.BR QccGetQccPackVersion (3),
+.BR QccChannelRead (3),
+.BR QccChannelWrite (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

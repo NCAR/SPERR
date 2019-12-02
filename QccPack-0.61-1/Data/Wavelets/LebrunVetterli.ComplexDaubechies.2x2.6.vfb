@@ -1,0 +1,52 @@
+VFB0.17
+#
+#  LebrunVetterli.ComplexDaubechies.2x2.6.vfb
+#
+#  The 2x2 vector-filter-bank coefficient matrices for the orthonormal
+#  multiwavelet system developed by Lebrun and Vetterli.  These coefficient
+#  matrices correspond to a "direct" construction of multiwavelets from
+#  the scalar, length-6 complex Daubechies filters derived by Lawton.
+#
+#
+#  References:
+#    J. Lebrun and M. Vetterli, "Balanced Multiwavelets - Theory and Design,"
+#      IEEE Transactions on Signal Processing, vol. 46, no. 4, pp. 1109-1125,
+#      April 1998.
+#
+#    W. Lawton, "Applications of Complex Valued Wavelet Transforms to
+#      Subband Decomposition," IEEE Transactions on Signal Processing,
+#      vol. 41, no. 12, pp. 3566-3568, December 1993.
+#
+
+0
+2
+6
+0
+   8.5581000e-02  -6.6291000e-02
+  -6.6291000e-02  -8.5581000e-02
+   8.5558000e-02   1.1048500e-01
+   1.1048500e-01  -8.5558000e-02
+  -1.7116300e-01   6.6291200e-01
+   6.6291200e-01   1.7116300e-01
+  -1.7116300e-01   6.6291200e-01
+   6.6291200e-01   1.7116300e-01
+   8.5558000e-02   1.1048500e-01
+   1.1048500e-01  -8.5558000e-02
+   8.5581000e-02  -6.6291000e-02
+  -6.6291000e-02  -8.5581000e-02
+
+2
+6
+0
+   8.5581000e-02  -6.6291000e-02
+  -6.6291000e-02  -8.5581000e-02
+  -8.5558000e-02  -1.1048500e-01
+  -1.1048500e-01   8.5558000e-02
+  -1.7116300e-01   6.6291200e-01
+   6.6291200e-01   1.7116300e-01
+   1.7116300e-01  -6.6291200e-01
+  -6.6291200e-01  -1.7116300e-01
+   8.5558000e-02   1.1048500e-01
+   1.1048500e-01  -8.5558000e-02
+  -8.5581000e-02   6.6291000e-02
+   6.6291000e-02   8.5581000e-02

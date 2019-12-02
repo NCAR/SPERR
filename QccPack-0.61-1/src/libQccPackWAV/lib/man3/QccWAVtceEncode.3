@@ -1,0 +1,185 @@
+.TH QCCTCEENCODE 3 "QCCPACK" ""
+.SH NAME
+QccWAVtceEncode, QccWAVtceDecode \-
+encode/decode an image using the TCE algorithm
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVtceEncode(const QccIMGImageComponent *" image ", int " num_levels ", int " target_bit_cnt ", double " stepsize ", const QccWAVWavelet *" wavelet ", QccBitBuffer *" output_buffer );
+.br
+.BI "int QccWAVtceDecodeHeader(QccBitBuffer *" input_buffer ", int *" num_levels ", int *" num_rows ", int *" num_cols ", double *" image_mean ", double *" stepsize ", int *" max_coefficient_bits );
+.br
+.BI "int QccWAVtceDecode(QccBitBuffer *" input_buffer ", QccIMGImageComponent *" image ", int " num_levels ", const QccWAVWavelet *" wavelet ", double " image_mean ", double " stepsize ", int " max_coefficient_bits ", int " target_bit_cnt );
+.SH DESCRIPTION
+.SS Encoding
+.LP
+.B QccWAVtceEncode()
+encodes an image component,
+.IR image ,
+using the TCE algorithm by Tian and Hemami.
+The TCE (tarp coding using classification to achieve embedding) algorithm
+is based on the tarp algorithm (see 
+.BR QccWAVTarpEncode (3)),
+but is designed to provide better rate-distortion performance
+when used in an embedded fashion; i.e., when decoding is performed
+at a rate less than that at which the bitstream was produced.
+See "ALGORITHM" below for more detail.
+.LP
+.I image
+is the image component to be coded and
+.I output_buffer
+is the output bitstream.
+.I output_buffer
+must be of
+.B QCCBITBUFFER_OUTPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3).
+.LP
+.I num_levels
+gives the number of levels of dyadic wavelet decomposition to perform,
+and
+.I wavelet
+is the wavelet to use for decomposition.
+.LP
+Two encoding modes are supported.
+Mode 1 consists of first applying a scalar quantizer to all
+DWT coefficients and then encoding the coefficients,
+bitplane by bitplane, until all bitplanes are encoded.
+Mode 2 consists of direct bitplane encoding without any
+scalar quantization of coefficients; in this mode, encoding
+stops when the target bitrate is reached.
+Mode 1 is selected by specifying a quantization
+.I stepsize
+that is greater than zero.
+If
+.I stepsize
+is less than or equal to zero, then
+Mode 2 is selected. In this case, a target encoding bit count,
+.I target_bit_cnt
+must be specified.
+.SS Decoding
+.LP
+.B QccWAVtceDecodeHeader()
+decodes the header information in the bitstream in the input
+.I input_buffer
+(which must be of
+.B QCCBITBUFFER_INPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3)).
+The header information is returned in
+.I num_levels
+(number of levels of wavelet decomposition),
+.I num_rows
+(vertical size of image),
+.I num_cols
+(horizontal size of image),
+.I image_mean
+(the mean value of the original image),
+.I stepsize
+(quantization stepsize), and
+.I max_coefficient_bits
+(the number of bits used to represent the magnitude of the coefficient with largest absolute value).
+.LP
+.B QccWAVtceDecode()
+decodes the bitstream
+.IR input_buffer ,
+producing the reconstructed image component,
+.IR image .
+The bitstream must already have had its header read by a prior call
+to
+.B QccWAVtceDecodeHeader()
+(i.e., you call
+.B QccWAVtceDecodeHeader() 
+first and then
+.BR QccWAVtceDecode() ).
+.SH "ALGORITHM"
+It is widely believed that, in the wavelet domain, coefficients 
+in a local neighborhood
+capture essential context information, such as edges and patterns, and that
+this information can facilitate compression.
+Many image coders exploit such local information in the form of 
+adaptive entropy coding.
+Alternatively, tarp filtering (see
+.BR QccWAVtarpEncode (3))
+produces probability estimates through an IIR filtering technique
+on the bitplanes of  the wavelet coefficients. 
+While providing very good 
+performance when used in a nonembedded manner, the original 
+tarp coder performs less competitively when used in an 
+embedded manner, in spite of its operation on bitplanes.
+The reason is that 
+the underlying tarp filter is designed to follow
+a raster-scan encoding order;
+however, the use of fractional bitplanes (see Ordentlich
+.IR "et al" .)
+provides better rate-distortion performance for embedding. Such fractional
+bitplanes require an encoding 
+order more flexible than a simple raster scan.  In the TCE algorithm,
+coefficients are classified according to statistical properties, and
+the tarp filter is run on only the single class on which it tends to generate 
+accurate probability estimates.
+.LP
+In the TCE algorithm,
+.I nonzero-parent
+coefficients and
+.I run
+coefficients from the fractional-bitplane approach of Ordentlich
+.IR "et al" .
+are combined to form a single class, the
+.I zero-run
+coefficients. For each bitplane, the TCE system then performs
+three passes:  1) adaptive arithmetic 
+coding of bits of
+.I nonzero-neighbor
+coefficients; 2) tarp 
+filtering and non-adaptive 
+arithmetic coding of
+.I zero-run
+coefficients; and 3) encoding of refinement 
+bits with an adaptive arithmetic coder.
+The sign bits of coefficients are coded when needed with a probability 
+of 0.5. The encoding/decoding ends when the target rate is reached. 
+Tian and Hemami describe several approaches to improving the probability
+estimate of the tarp filtering of the second pass.
+.SH "SEE ALSO"
+.BR tceencode (1),
+.BR tcedecode (1),
+.BR imgdwt (1),
+.BR imgdist (1),
+.BR QccBitBuffer (3),
+.BR QccENTArithmeticEncode (3),
+.BR QccENTArithmeticDecode (3),
+.BR QccWAVSubbandPyramid (3),
+.BR QccPackWAV (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+.LP
+C. Tian and S. S. Hemami, "An Embedded Image Coding System
+Based on Tarp Filter with Classification," in
+.IR "Proceedings of the International Conference on Acoustics, Speech, and Signal Processing" ,
+Montreal, Quebec, Canada, May 2004, vol. 3, pp. 49-52.
+
+E. Ordentlich, M. Weinberger, and G. Seroussi,
+"A Low-Complexity Modeling Approach for Embedded Coding of
+Wavelet Coefficients," in
+.IR "Proceedings of the IEEE Data Compression Conference" ,
+Snowbird, UT, March 2002, pp. 23-32.
+
+.SH AUTHOR
+Written by Chao Tian, Cornell University
+
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

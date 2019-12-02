@@ -1,0 +1,199 @@
+.TH QCCDCTTCEENCODE 3 "QCCPACK" ""
+.SH NAME
+QccWAVdcttceEncode, QccWAVdcttceDecode \-
+encode/decode an image using the DCT-TCE algorithm
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVdcttceEncode(const QccIMGImageComponent *" image ", int " num_levels ", int " target_bit_cnt ", double " stepsize ", int " overlap_sample ", double " smooth_factor ", QccBitBuffer *" output_buffer );
+.br
+.BI "int QccWAVdcttceDecodeHeader(QccBitBuffer *" input_buffer ", int *" num_levels ", int *" num_rows ", int *" num_cols ", double *" image_mean ", double *" stepsize ", int *" max_coefficient_bits ", int *" overlap_sample ", double *" smooth_factor );
+.br
+.BI "int QccWAVdcttceDecode(QccBitBuffer *" input_buffer ", QccIMGImageComponent *" image ", int " num_levels ", double " image_mean ", double " stepsize ", int " max_coefficient_bits ", int " target_bit_cnt ", int " overlap_sample ", double " smooth_factor );
+.SH DESCRIPTION
+.SS Encoding
+.LP
+.B QccWAVdcttceEncode()
+encodes an image component,
+.IR image ,
+using the DCT-TCE algorithm by Shah
+.IR "et al" .
+The DCT-TCE algorithm combines a block-based lapped biorthogonal 
+transform (LBT) based on the DCT with the embedded TCE coder.
+See "ALGORITHM" below for more detail.
+.LP
+.I image
+is the image component to be coded and
+.I output_buffer
+is the output bitstream.
+.I output_buffer
+must be of
+.B QCCBITBUFFER_OUTPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3).
+.LP
+The LBT is controlled by the parameters
+.IR num_levels ", " overlap_sample ", and " smooth_factor .
+.IR overlap_sample
+and
+.IR smooth_factor
+are parameters to the LBT's prefilter that is applied
+before its block-based DCT. Specifically,
+.IR overlap_sample
+is the number of samples of overlap between DCT blocks;
+.IR smooth_factor
+is the smoothing constant for the prefilter.
+.I num_levels
+specifies the block size of the block-based DCT that underlies the
+LBT.
+Specifically, the block size is
+.RI "2^" num_levels " x 2^" num_levels .
+After the LBT coefficients are reorganized into the dyadic structure,
+the dyadic decomposition has 
+.IR num_levels
+resolution levels.
+See "ALGORITHM" below for more detail.
+.LP
+Two encoding modes are supported.
+Mode 1 consists of first applying a scalar quantizer to all
+transform coefficients and then encoding the coefficients,
+bitplane by bitplane, until all bitplanes are encoded.
+Mode 2 consists of direct bitplane encoding without any
+scalar quantization of coefficients; in this mode, encoding
+stops when the target bitrate is reached.
+Mode 1 is selected by specifying a quantization
+.I stepsize
+that is greater than zero.
+If
+.I stepsize
+is less than or equal to zero, then
+Mode 2 is selected. In this case, a target encoding bit count,
+.I target_bit_cnt
+must be specified.
+.LP
+Since the input image is partitioned into blocks for the DCT that
+underlies the LBT,
+.IR image
+must have size that is an integer multiple of the DCT block size in
+both directions.
+.BR QccWAVdcttceEncode()
+returns in error if this is not the case.
+.SS Decoding
+.LP
+.B QccWAVdcttceDecodeHeader()
+decodes the header information in the bitstream in the input
+.I input_buffer
+(which must be of
+.B QCCBITBUFFER_INPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3)).
+The header information is returned in
+.I num_levels
+(number of levels of wavelet decomposition),
+.I num_rows
+(vertical size of image),
+.I num_cols
+(horizontal size of image),
+.I image_mean
+(the mean value of the original image),
+.I stepsize
+(quantization stepsize),
+.I max_coefficient_bits
+(the number of bits used to represent the magnitude of the coefficient with largest absolute value),
+.I overlap_sample
+(the number of samples of overlap between DCT blocks), and
+.I smooth_factor
+(the smoothing factor to the pre/postfiler).
+.LP
+.B QccWAVdcttceDecode()
+decodes the bitstream
+.IR input_buffer ,
+producing the reconstructed image component,
+.IR image .
+The bitstream must already have had its header read by a prior call
+to
+.B QccWAVdcttceDecodeHeader()
+(i.e., you call
+.B QccWAVdcttceDecodeHeader() 
+first and then
+.BR QccWAVdcttceDecode() ).
+.SH "ALGORITHM"
+The DCT-TCE algorithm couples
+the TCE image coder (Tian and Hemami, 2004)
+with the lapped biorthogonal transform (LBT) due to Tran
+.IR "et al" .
+The forward LBT is implemented using
+a block-based discrete cosine transform (DCT) equipped
+with prefiltering that overlaps the DCT blocks.
+The prefilter reduces intra-block and
+inter-block correlation of the block-based coefficients, resulting in
+coefficients that are less correlated and thereby more suitable to
+the tarp filtering that underlies TCE.
+For the DCT-TCE algorithm, the forward and inverse
+LBT are accomplished via calls to
+.BR QccIMGImageComponentLBT (3)
+and
+.BR QccIMGImageComponentInverseLBT (3),
+respectively.
+.LP
+During encoding, after the LBT is performed,
+the LBT coefficients are rearranged into a
+pyramid structure similar to that of a dyadic DWT pyramid;
+this dyadic pyramid has
+.IR num_levels
+resolution levels, where the block size of the DCT blocks is
+.RI "2^" num_levels " x 2^" num_levels .
+At this point, the TCE image coder is applied to the
+resulting "subbands" in a manner identical to that of the
+original wavelet-based TCE coder.
+In decoding, after the TCE decoder assmebles the dyadic pyramid from
+the bitstream, the reconstructed LBT coefficients are rearranged into
+their original block-based organization before the inverse LBT is
+performed.
+.SH "SEE ALSO"
+.BR dcttceencode (1),
+.BR dcttcedecode (1),
+.BR QccIMGImageComponentLBT (3),
+.BR QccIMGImageComponentInverseLBT (3),
+.BR QccPackWAV (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+.LP
+V. P. Shah, J. E. Fowler, and N. H. Younan, "Tarp Filtering of
+Block-Transform Coefficients for Embedded Image Coding," in
+.IR "Proceedings of the IEEE International Conference on Acoustics, Speech, and Signal Processing" ,
+Toulouse, France, May 2006, vol. 2, pp. 21-24.
+
+C. Tian and S. S. Hemami, "An Embedded Image Coding System
+Based on Tarp Filter with Classification," in
+.IR "Proceedings of the International Conference on Acoustics, Speech, and Signal Processing" ,
+Montreal, Quebec, Canada, May 2004, vol. 3, pp. 49-52.
+
+T. D. Tran, J. Liang, and C. Tu, "Lapped transform via time-domain
+pre- and post-filtering,"
+.IR "IEEE Transactions on Signal Processing" ,
+vol. 51, no. 6, pp. 1557-1571, June 2003.
+
+C. Tu and T. D. Tran, "Context-based entropy coding of
+block transform coefficients for image compression,"
+.IR "IEEE Transactions on Image Processing" ,
+vol. 11, no. 11, pp. 1271-1283, November 2002.
+
+.SH AUTHOR
+Written by Vijay Shah, Mississippi State University
+
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

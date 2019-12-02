@@ -1,0 +1,179 @@
+.TH GYENCODE 1 "QCCPACK" ""
+.SH NAME
+gyencode \- encode using Gersho and Yano's AVQ algorithm
+.SH SYNOPSIS
+.B gyencode
+.RB "[\|" \-i
+.IR  adaption\_interval "\|]"
+.RB "[\|" \-fc
+.IR final\_codebook "\|]"
+.I datfile
+.I codebook
+.I codebook\_coder
+.I channelfile
+.I sideinfofile
+.SH OPTIONS
+.TP
+.BI \-i " adaption\_interval"
+Integer.  Number of vectors in an adaption interval.  Default value = 1000.
+.TP
+.BI \-fc " final\_codebook"
+String. Output the final state of the codebook after encoding to
+.IR final\_codebook .
+.SH DESCRIPTION
+.LP
+.B gyencode
+implements the simple version of Gersho and Yano's algorithm.
+The vectors of
+.I datfile
+(DAT format)
+are encoded using the Gersho-Yano algorithm, with
+.I codebook
+(CBK format)
+being the initial codebook.
+.B gyencode
+outputs a channel of VQ indices,
+.I channelfile
+(CHN format), and side information,
+.I sideinfofile
+(SID format).
+.I codebook\_coder
+(SQ format) gives the scalar quantizer used to produce the
+side information (see below).
+.LP
+The Gersho-Yano algorithm operates as follows.
+Over the vectors of each adaption interval (the length of which is
+given by
+.IR adaption\_interval),
+the partition with
+the greatest partial distortion is split. 
+An iteration of the generalized Lloyd algorithm is run to
+refine the locations of the two new codewords.  One codeword replaces
+the split codeword; the other replaces the codeword with the smallest
+partial distortion.
+.LP
+.B gydecode
+is used for the corresponding decoding of 
+.I channelfile 
+and
+.IR sideinfofile ;
+.B avqrate
+calculates the bit rate for the Gersho-Yano algorithm as represented by
+this channel and the side information.
+See
+.BR gydecode (1)
+and
+.BR avqrate (1)
+for more details.
+.LP
+Note: If the number of the vectors in
+.I datfile
+is not a multiple of 
+.IR adaption\_interval ,
+then 
+the final adaption interval will contain fewer than
+.I adaption\_interval 
+vectors.
+.LP
+If option
+.B \-fc
+is specified, 
+.B gyencode
+outputs the final state of the codebook, taking into account all codebook
+updates performed during coding, to
+.IR final\_codebook .
+.SH "SIDE INFORMATION"
+.LP
+The side information output by
+.B gyencode
+consists of a series of 
+addresses and vectors.
+.B gyencode
+updates two vectors per adaption interval.
+Thus, for each adaption interval,
+.I sideinfofile
+contains two vectors, which update the codebook,
+as well as their corresponding addresses in the codebook.
+.LP
+The side-information file,
+.IR sideinfofile ,
+consists of a sequence of symbols of the following form:
+.nf
+
+.I "    <symbol type>" <symbol value>
+
+.fi
+where
+.I <symbol type>
+is 2 for an address, and 3 for an update vector.
+The symbols are stored in pairs:  first an address which is then followed by
+its correspomding update vector.
+For an address,
+.I <symbol type>
+= 2, and
+.I <symbol value>
+is an integer (0 through codebook size - 1) denoting the address
+in the codebook to which the following vector is assigned.
+If
+.I <symbol type>
+= 3, then the current symbol is a vector.
+In this case,
+.I <symbol value>
+= 
+.IR "v[1] v[2] " \|.\|.\|. " v[dim]".
+The scalar quantizer 
+.I codebook\_coder 
+(SQ format) is used to
+quantize each component of the vector that updates the
+codebook.
+Thus, each
+.I v[i]
+is an index output from this scalar quantizer.
+Note:
+.I dim
+is the vector dimension specified in the header of 
+.I sideinfofile
+(see
+.BR QccPack (1)).
+Note: in all instances,
+.I <symbol value>
+and 
+.I <symbol type>
+are stored in ASCII characters.
+.LP
+Note:
+The value of
+.I adaption\_interval
+is stored in the header of
+.I sideinfofile
+as
+.I N
+(see
+.BR QccPack (1)).
+.IR sideinfofile .
+.SH "SEE ALSO"
+.BR gydecode (1),
+.BR avqrate (1),
+.BR QccPackAVQ (3),
+.BR QccPack (3)
+
+A. Gersho and M. Yano, "Adaptive Vector Quantization by Progressive
+Codevector Replacement," Proc. ICASSP, pp. 133-136, 1985.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+A. Gersho and M. Yano, "Adaptive Vector Quantization by Progressive
+Codevector Replacement," Proc. ICASSP, pp. 133-136, 1985.

@@ -1,0 +1,330 @@
+.TH QCCWAVBISK3DENCODE 1 "QCCPACK" ""
+.SH NAME
+QccWAVbisk3DEncode, QccWAVbisk3DDecode \-
+encode/decode an image cube using the 3D-BISK algorithm
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVbisk3DEncode(const QccIMGImageCube *" image_cube ", const QccIMGImageCube *" mask ", int " transform_type ", int " temporal_num_levels ", int " spatial_num_levels ", const QccWAVWavelet *" wavelet ", QccBitBuffer *" output_buffer ", int " target_bit_cnt );
+.sp
+.BI "int QccWAVbisk3DEncode2(QccWAVSubbandPyramid3D *" image_subband_pyramid ", QccWAVSubbandPyramid3D *" mask_subband_pyramid ", double " image_mean ", QccBitBuffer *" output_buffer ", int " target_bit_cnt );
+.sp
+.BI "int QccWAVbisk3DDecodeHeader(QccBitBuffer *" input_buffer ", int *" transform_type ", int *" temporal_num_levels ", int *" spatial_num_levels ", int *" num_frames ", int *" num_rows ", int *" num_cols ", double *" image_mean ", int *" max_coefficient_bits );
+.sp
+.BI "int QccWAVbisk3DDecode(QccBitBuffer *" input_buffer ", QccIMGImageCube *" image_cube ", const QccIMGImageCube *" mask ", int " transform_type ", int " temporal_num_levels ", int " spatial_num_levels ", const QccWAVWavelet *" wavelet ", double " image_mean ", int " max_coefficient_bits ", int " target_bit_bit );
+.sp
+.BI "int QccWAVbisk3DDecode2(QccBitBuffer *" input_buffer ", QccWAVSubbandPyramid3D *" image_subband_pyramid ", QccWAVSubbandPyramid3D *" mask_subband_pyramid ", int " max_coefficient_bits ", int " target_bit_cnt );
+.SH DESCRIPTION
+.SS Encoding
+.LP
+.B QccWAVbisk3DEncode()
+encodes an image cube,
+.IR image_cube ,
+using a 3D generalization of the BISK algorithm.
+The original BISK algorithm was developed for 2D images by
+Fowler; it was latter extended to 3D by Rucker and Fowler.
+In essence, the 3D-BISK algorithm involves a 3D DWT followed by 
+a progressive "bitplane" coding of the wavelet coefficients using a
+cube-splitting quantization structure based on
+.IR k -d
+trees. See "ALGORITHM" below for more detail.
+.LP
+.I image_cube
+is the image cube to be coded and
+.I output_buffer
+is the output bitstream.
+.I output_buffer
+must be of
+.B QCCBITBUFFER_OUTPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3).
+.LP
+.BR QccWAVbisk3DEncode ()
+supports the use of both wavelet-packet and dyadic wavelet-transform
+decompositions.
+If
+.IR transform_type
+is
+.BR QCCWAVSUBBANDPYRAMID3D_DYADIC ,
+a dyadic DWT is used; if
+.IR transform_type
+is
+.BR QCCWAVSUBBANDPYRAMID3D_PACKET ,
+a wavelet-packet DWT is used.
+.IR temporal_num_levels 
+and
+.IR spatial_num_levels
+give the number of levels of wavelet decomposition to perform
+for both transform types; for a dyadic transform,
+.IR temporal_num_levels 
+should equal
+.IR spatial_num_levels .
+.I wavelet
+is the wavelet to use for decomposition.
+.LP
+The bitstream output from the 3D-BISK encoder is embedded, meaning that
+any prefix of the bitstream can be decoded to give a valid 
+representation of the image.  The 3D-BISK encoder essentially produces
+output bits until the number of bits output reaches
+.IR target_bit_cnt ,
+the desired (target) total length of the output bitstream in bits,
+and then it stops.
+Note that this is the bitstream length in bits, not the rate of the bitstream
+(which would be expressed in bits per voxel).
+.LP
+.BR QccWAVbisk3DEncode()
+optionally supports the use of a shape-adaptive DWT (SA-DWT) rather than
+the usual DWT. That is, 
+.BR QccWAVbisk3DEncode()
+can call
+.BR QccWAVSubbandPyramid3DShapeAdaptiveDWT (3)
+as the wavelet transform rather than the usual
+.BR QccWAVSubbandPyramid3DDWT (3).
+The use of a SA-DWT is indicated by a non-NULL
+.IR mask ;
+if 
+.I mask
+is NULL, then the usual DWT is used.
+In the case of a SA-DWT,
+.I mask 
+gives the transparency mask which indicates which voxels of the image
+are non-transparent and thus have data that is to be transformed.
+Refer to 
+.BR QccWAVSubbandPyramid3DShapeAdaptiveDWT (3)
+for more details on the calculation of this SA-DWT.
+See "ALGORITHM" below for details on how the 3D-BISK
+algorithm handles shape-adaptive coding.
+.LP
+The routine
+.BR QccWAVbisk3DEncode2()
+provides an alternative interface to 3D-BISK encoding.
+Specifically,
+.BR QccWAVbisk3DEncode2()
+functions indentically to
+.BR QccWAVbisk3DEncode()
+described above, except that both the image cube and optional mask are
+assumed to have had a 3D DWT applied to them prior to calling
+.BR QccWAVbisk3DEncode2() .
+As a consequence, the image cube and mask are passed to
+.BR QccWAVbisk3DEncode2()
+in the wavelet domain as
+.IR image_subband_pyramid
+and
+.IR mask_subband_pyramid .
+We note that most applications should opt for
+.BR QccWAVbisk3DEncode()
+rather than
+.BR QccWAVbisk3DEncode2() ;
+however,
+.BR QccWAVbisk3DEncode()
+is implemented essentially as a call to an appropriate 3D DWT
+followed by a call to
+.BR QccWAVbisk3DEncode2() .
+If 
+.BR QccWAVbisk3DEncode2()
+is used, it is the responsibility of the calling routine
+to perform the appropriate 3D DWT prior to calling
+.BR QccWAVbisk3DEncode2() .
+.SS Decoding
+.LP
+.B QccWAVbisk3DDecodeHeader()
+decodes the header information 
+in a bitstream previously produced by
+.BR QccWAVbisk3DEncode() .
+The input bitstream is
+.I input_buffer
+which must be of
+.B QCCBITBUFFER_INPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3).
+.LP
+The header information is returned in
+.I transform_type
+(either
+.BR QCCWAVSUBBANDPYRAMID3D_DYADIC 
+or
+.BR QCCWAVSUBBANDPYRAMID3D_PACKET 
+to indicate a dyadic or wavelet-packet transform decomposition, respectively),
+.I temporal_num_levels
+(number of levels of wavelet decomposition in the temporal direction),
+.I spatial_num_levels
+(number of levels of wavelet decomposition in the spatial directions),
+.I num_frames
+(size of the image cube in the temporal direction),
+.I num_rows
+(vertical size of image cube),
+.I num_cols
+(horizontal size of image cube),
+.I image_mean
+(the mean value of the original image cube), and
+.I max_coefficient_bits
+(indicates the precision, in number of bits, of the wavelet coefficient
+with the largest magnitude).
+.LP
+.B QccWAVbisk3DDecode()
+decodes the bitstream
+.IR input_buffer ,
+producing the reconstructed image cube,
+.IR image_cube .
+The bitstream must already have had its header read by a prior call
+to
+.B QccWAVbisk3DDecodeHeader()
+(i.e., you call
+.B QccWAVbisk3DDecodeHeader() 
+first and then
+.BR QccWAVbisk3DDecode() ).
+If
+.I target_bit_cnt
+is
+.BR QCCENT_ANYNUMBITS ,
+then decoding stops when the end of the input bitstream is reached;
+otherwise, decoding stops when
+.I target_num_bits
+from the input bitstream have been decoded.
+.LP
+If a SA-DWT was used in 3D-BISK encoding, then the original transparency
+mask should be passed to 
+.BR QccWAVbisk3DDecode()
+as
+.IR mask .
+That is,
+.I mask
+should be the same transparency mask (untransformed) 
+that was passed to
+.BR QccWAVbisk3DEncode() .
+Note that
+.BR QccWAVbisk3DDecode()
+will transform this
+.I mask
+via a Lazy wavelet transform, and then pass the transformed mask
+to 
+.BR QccWAVSubbandPyramid3DInverseShapeAdaptiveDWT (3).
+If the usual, full-volume DWT was used in encoding, then
+.I mask
+should be a NULL pointer.
+.LP
+.BR QccWAVbisk3DDecode2()
+provides the appropriate alternative interface to 3D-BISK decoding
+required if encoding was done via
+.BR QccWAVbisk3DEncode2() .
+Essentially, 
+.BR QccWAVbisk3DDecode()
+is implemented by a call to
+.BR QccWAVbisk3DDecode2()
+followed by an appropriate inverse 3D DWT.
+If
+.BR QccWAVbisk3DDecode2()
+is used, it is the responsibility of the calling to routine
+to perform the appropriate inverse 3D DWT subsequent to the call
+to
+.BR QccWAVbisk3DDecode2() .
+As noted above, most applications should use
+.BR QccWAVbisk3DDecode()
+rather than
+.BR QccWAVbisk3DDecode2() .
+.SH "ALGORITHM"
+The 3D-BISK algorithm involves a 3D DWT followed by a progressive encoding
+of the bitplanes of wavelet coefficients.
+As is common with bitplane-based embedded coders,
+the encoder of the 3D-BISK algorithm
+codes significance information in a significance pass
+followed by refinement-bit information in a refinement pass.
+The significance pass determines the significance of a wavelet coefficient
+against a given threshold, while the refinement pass codes the bits of
+those coefficients previously determined to be significant.
+.LP
+The unique aspect of the 3D-BISK algorithm is in the significance
+pass. In many ways, the 3D-BISK algorithm can be considered to be
+a variant of 3D-SPECK (Tang
+.IR "et al" .
+2003)
+designed specifically for improved shape-adaptive coding, and it is
+a generalization to 3D of the original 2D BISK algorithm developed
+by Fowler.
+The 3D-BISK coder employs two tactics
+to improve shape-adaptive coding---aggressive
+discarding of transparent regions from sets after partitioning,
+and a spatial-partitioning structure more flexible than the
+octtrees used by 3D-SPECK.
+In octtree partitioning, the significance state of an entire
+cube of coefficients is tested and coded, the cube is subdivided into
+eight subcubes of approximately equal size, and the significance-coding
+process is repeated recursively on each of the subcubes.
+On the other hand, when processing a given set, the 3D-BISK coder
+employs a different partitioning scheme,
+.IR k -d
+trees (Bentley 1975)
+rather than octtrees, to recursively code the significance
+map.
+Like octtrees,
+.IR k -d
+trees are a recursive
+spatial partitioning data structure. Unlike octtrees, which subdivide
+a cube into eight equally sized subcubes,
+.IR k -d
+trees effectuate
+a binary partitioning; that is, cubes are divided in two.
+Although there are several approaches for selecting
+the location and orientation of the split, the 3D-BISK
+algorithm uses a simple approach in
+which cubes are divided into approximately equally sized halves, and
+we alternate between splitting horizontally, vertically, and temporally.
+.LP
+Additionally, to improve shape-adaptive coding, the 3D-BISK
+coder "shrinks" each set to the bounding box surrounding the
+opaque coefficients before subdividing the set into smaller blocks.
+.SH "SEE ALSO"
+.BR biskencode3d (1),
+.BR biskdecode3d (1),
+.BR QccBitBuffer (3),
+.BR QccWAVSubbandPyramid3D (3),
+.BR QccWAVSubbandPyramid3DDWT (3),
+.BR QccWAVSubbandPyramid3DShapeAdaptiveDWT (3),
+.BR QccWAVbiskEncode (3),
+.BR QccPackWAV (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+J. T. Rucker and J. E. Fowler,
+"Coding of Ocean-Temperature Volumes Using Binary Set Splitting with
+.IR k -d
+Trees,"
+in
+.IR "Proceedings of the International Geoscience and Remote Sensing Symposium" ,
+Anchorage, AK, September 2004, to appear.
+
+J. E. Fowler,
+"Shape-Adaptive Coding Using Binary Set Splitting with
+.IR k -d
+Trees,"
+in
+.IR "Proceedings of the International Conference on Image Processing" ,
+Singapore, October 2004, to appear.
+
+X. Tang, W. A. Pearlman, and J. W. Modestino,
+"Hyperspectral Image Compression Using Three-Dimensional
+Wavelet Coding,"
+in
+.IR "Image and Video Communications and Processing" ,
+Santa Clara, CA, January 2003, Proc. SPIE 5022, pp. 1037-1047.
+
+J. L. Bentley, "Multidimensional Binary Search Trees Used for
+Associative Searching,"
+.IR "Communications of the ACM" ,
+vol. 18, no. 9, pp. 509-517, September 1975.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

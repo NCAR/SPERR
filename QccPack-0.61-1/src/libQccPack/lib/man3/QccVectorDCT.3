@@ -1,0 +1,76 @@
+.TH QCCVECTORDCT 3 "QCCPACK" ""
+.SH NAME
+QccVectorDCT, QccVectorInverseDCT
+\- one-dimensional discrete cosine transform (DCT) and inverse tranform 
+of a signal vector
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccVectorDCT(const QccVector " input_signal ", QccVector " output_signal ", int " signal_length );
+.br
+.BI "int QccVectorInverseDCT(const QccVector " input_signal ", QccVector " output_signal ", int " signal_length );
+.SH DESCRIPTION
+.B QccVectorDCT()
+calculates the one-dimensional discrete cosine transform (DCT) of
+.IR input_signal .
+The result is returned in
+.IR output_signal ,
+which must be allocated prior to calling
+.BR QccVectorDCT() .
+Both 
+.I input_signal
+and
+.I output_signal
+have the same length,
+.IR signal_length .
+.LP
+.B QccVectorInverseDCT()
+calculates the inverse DCT of
+.IR input_signal ,
+returning its results in
+.IR output_signal .
+.SH "RETURN VALUE"
+Both
+.B QccVectorDCT()
+and
+.B QccVectorInverseDCT()
+return 0 on success, 1 on error.
+.SH IMPLEMENTATION
+These routines implement the type-II DCT; the implementation is slow,
+and uses calls directly to
+.BR cos (3).
+Most applications should probably use
+.BR QccFastDCTForwardTransform1D (3)
+and
+.BR QccFastDCTInverseTransform1D (3)
+which are based on a faster FFT-based implementation, but
+rely on the GNU Scientific Library (GSL) for the FFT.
+.BR QccVectorDCT()
+and
+.BR QccVectorInverseDCT()
+are provided for use when GSL is not available.
+.SH "SEE ALSO"
+.BR QccFastDCTForwardTransform1D (3),
+.BR QccFastDCTInverseTransform1D (3),
+.BR QccVector (3),
+.BR QccPack (3)
+
+A. K. Jain,
+.IR "Fundamentals of Digital Image Processing" .
+Englewood Cliffs, NJ: Prentice Hall, 1989.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

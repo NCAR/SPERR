@@ -1,0 +1,271 @@
+.TH QCCVIDMESHMOTIONESTIMATIONSEARCH 3 "QCCPACK" ""
+.SH NAME
+QccVIDMeshMotionEstimationWarpMesh,
+QccVIDMeshMotionEstimationSearch,
+QccVIDMeshMotionEstimationCreateCompensatedFrame
+\- routines for motion estimation and compensation
+using regular triangle meshes
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccVIDMeshMotionEstimationWarpMesh(const QccRegularMesh *" reference_mesh ", QccRegularMesh *" current_mesh ", const QccIMGImageComponent *" motion_vectors_horizontal ", const QccIMGImageComponent *" motion_vectors_vertical );
+.br
+.sp
+.BI "int QccVIDMeshMotionEstimationSearch(const QccIMGImageComponent *" current_frame ", QccRegularMesh *" current_mesh ", const QccIMGImageComponent *" reference_frame ", const QccRegularMesh *" reference_mesh ", QccIMGImageComponent *" motion_vectors_horizontal ", QccIMGImageComponent *" motion_vectors_vertical ", int " block_size ", int " window_size ", int " subpixel_accuracy ", int " constrained_boundary ", int " exponential_kernel );
+.br
+.sp
+.BI "int QccVIDMeshMotionEstimationCreateCompensatedFrame(QccIMGImageComponent *" motion_compensated_frame ", const QccRegularMesh *" current_mesh ", const QccIMGImageComponent *" reference_frame ", const QccRegularMesh *" reference_mesh ", int " subpixel_accuracy );
+.SH DESCRIPTION
+.BR QccVIDMeshMotionEstimationSearch()
+and
+.BR QccVIDMeshMotionEstimationCreateCompensatedFrame()
+perform motion estimation and compensation, respectively,
+between two video frames using a regular triangle mesh
+rather than square blocks as in the ubiquitous block-based
+motion estimation/compensation (i.e., see
+.BR QccVIDMotionEstimationFullSearch (3)).
+This regular triangle mesh is created by dividing the reference
+frame into square blocks and then splitting each block along its diagonal.
+.LP
+For motion estimation via
+.BR QccVIDMeshMotionEstimationSearch() ,
+the triangle vertices, or "control points," of the regular mesh are
+tracked from the reference frame to the current frame via a
+simple, block-based motion-estimation strategy due to Eckert
+.IR "et al" .
+In this approach, motion into the current frame is estimated by
+centering a small block at each vertex in the
+reference-frame mesh and finding the best-matching block
+in the current frame.
+.LP
+Once motion is estimated in this manner
+and a field of motion vectors determined,
+.BR QccVIDMeshMotionEstimationWarpMesh()
+can be used to create a motion-compensated version of the
+mesh in the current frame from the mesh
+in the reference frame. In essence,
+.BR QccVIDMeshMotionEstimationWarpMesh()
+"warps" the reference-frame mesh into the current frame
+by adding to each vertex of the mesh
+its corresponding motion vector.
+.LP
+Once the motion-compensated mesh is available in the current frame,
+.BR QccVIDMeshMotionEstimationCreateCompensatedFrame()
+can be used to perform motion compensation between the frames.
+That is,
+.BR QccVIDMeshMotionEstimationCreateCompensatedFrame()
+uses affine transforms between the two meshes
+to construct a motion-compensated prediction of the current frame from the
+reference frame. This motion-compensated frame is constructed by
+creating, for each triangle in the reference-frame mesh,
+an affine transform that maps the triangle into the current-frame mesh.
+This affine transform is then used to map
+the pixels corresponding to the triangle
+in the reference frame into the current frame,
+with bilinear interpolation between
+the surrounding four integer-pixel locations used to resolve
+subpixel positions produced by the affine mapping.
+.SS "Motion Estimation"
+.BR QccVIDMeshMotionEstimationSearch()
+performs a motion-estimation search to produce a motion-vector field
+between
+.I reference_frame
+and
+.IR current_frame .
+.IR reference_mesh
+is the regular mesh in the reference frame, and
+.BR QccVIDMeshMotionEstimationSearch()
+estimates the motion of the
+vertices of this mesh, producing a motion-vector field
+which is returned in
+.I motion_vectors_horizontal
+and
+.IR motion_vectors_vertical .
+.BR QccVIDMeshMotionEstimationSearch()
+calls
+.BR QccVIDMeshMotionEstimationWarpMesh()
+(see below)
+to produce the corresponding motion-compensated mesh in the current frame,
+which is returned as
+.IR current_mesh .
+.LP
+.IR block_size
+gives the the size of the square block that is centered at each
+mesh vertex in order to determine the vertex motion, following
+the block-based vertex-motion estimation procedure outlined by Eckert
+.IR "et al" .
+.LP
+.IR window_size
+gives the size of the motion-estimation search window about the current
+vertex location.
+.LP
+.I subpixel_accuracy
+is one of
+.BR QCCVID_ME_FULLPIXEL ,
+.BR QCCVID_ME_HALFPIXEL ,
+.BR QCCVID_ME_QUARTERPIXEL ,
+or 
+.BR QCCVID_ME_EIGHTHPIXEL ,
+indicating full-, half-, quarter-, or eighth-pixel accuracy.
+If anything other than integer-pixel accuracy is used,
+.BR QccVIDMotionEstimationCreateReferenceFrame (3)
+must be called on both
+.IR current_frame
+and
+.IR reference_frame
+to interpolate them to the appropriate subpixel accuracy
+prior to calling
+.BR QccVIDMeshMotionEstimationSearch() .
+.LP
+If
+.IR constrained_boundary
+is 1, 
+.BR QccVIDMeshMotionEstimationSearch() 
+constrains all vertices that lie on the boundary of the reference frame
+to have zero-valued motion vectors. In doing so, the resulting
+.IR current_mesh
+is guaranteed to cover the entire
+.IR current_frame
+with no "gaps."
+If
+.IR constrained_boundary
+is 0, no such guarantee is in place, and motion vectors for the image-boundary
+vertices can take on any value, perhaps moving into the interior of
+the image or beyond the
+bounds of the image.
+This latter, unconstrained approach
+may permit better motion estimation at the
+expense of some "gaps" possibly arising in the
+corresponding motion-compensated frame.
+.LP
+If
+.IR exponential_kernel
+is 1,
+a exponential function is used to create a kernel for the block-based
+search process that estimates the motion of the mesh vertices. This
+exponential kernel provides greater weight to the pixels in the
+center of the block (i.e., corresponding to the vertex of interest itself) and
+exponentially decreasing weight to pixels distant from the center.
+If
+.IR exponential_kernel
+is 0, all pixels in the block are weighted the same in the motion-estimation
+search. See Eckert
+.IR "et al" .
+and Schroder and Mech.
+.SS "Motion Compensation"
+.BR QccVIDMeshMotionEstimationCreateCompensatedFrame()
+constructs the motion-compensated prediction of
+the current frame from
+.I reference_frame
+using affine transforms between the reference-frame mesh,
+.IR reference_mesh ,
+and the current-frame mesh,
+.IR current_mesh .
+The motion-compensated frame is returned in
+.IR motion_compensated_frame ,
+which must be allocated prior to calling
+.BR QccVIDMeshMotionEstimationCreateCompensatedFrame() .
+.LP
+.IR subpixel_accuracy
+is one of
+.BR QCCVID_ME_FULLPIXEL ,
+.BR QCCVID_ME_HALFPIXEL ,
+.BR QCCVID_ME_QUARTERPIXEL ,
+or 
+.BR QCCVID_ME_EIGHTHPIXEL ,
+indicating full-, half-, quarter-, or eighth-pixel accuracy.
+If anything other than integer-pixel accuracy is used,
+.BR QccVIDMotionEstimationCreateReferenceFrame (3)
+must be called on
+.IR reference_frame
+to interpolate it to the appropriate subpixel accuracy
+prior to calling
+.BR QccVIDMeshMotionEstimationCreateCompensatedFrame() .
+On the other hand,
+.IR motion_compensated_frame 
+must be the same size as the original current and reference frames
+in all cases (i.e., it is not interpolated to subpixel accuracy).
+.LP
+.BR QccVIDMeshMotionEstimationCreateCompensatedFrame() 
+uses
+.BR QccTriangleCreateAffineTransform (3)
+to construct an affine transform between each pair of
+reference-frame and current-frame triangles, and
+.BR QccPointAffineTransform (3)
+to map a pixel from the reference frame to the current frame.
+.SS "Mesh Warping"
+.BR QccVIDMeshMotionEstimationWarpMesh()
+constructs a mesh in the current frame,
+.IR current_mesh ,
+from a mesh in the reference frame,
+.IR reference_mesh ,
+by adding motion vectors to each vertex of
+.IR reference_mesh .
+The motion vectors are specified by
+.IR motion_vectors_horizontal
+and
+.IR motion_vectors_vertical
+and are usually obtained via
+.BR QccVIDMeshMotionEstimationSearch() .
+.IR current_mesh
+must be allocated to the same size as
+.IR reference_mesh
+prior to calling
+.BR QccVIDMeshMotionEstimationWarpMesh() .
+.SH "RETURN VALUE"
+These routines return 0 on success, and 1 on failure.
+.SH "SEE ALSO"
+.BR QccVIDMotionVectorsEncode (3),
+.BR QccVIDMotionVectorsDecode (3),
+.BR QccRegularMesh (3),
+.BR mesh_memc (1),
+.BR QccPackVID (3),
+.BR QccPackENT (3),
+.BR QccPack (3)
+
+Y. Altunbasak, A. M. Tekalp, and G. Bozdagi,
+"Two-Dimensional Object-based Coding Using a Content-based Mesh
+and Affine Motion Parameterization," in
+.IR "Proceedings of the International Conference on Image Processing" ,
+Washington, DC, October 1995, vol. 2, pp. 394-397.
+
+M. Eckert, D. Ruiz, J. I. Ronda, and N. Garcia,
+"Evaluation of DWT and DCT for Irregular Mesh-based
+Motion Compensation in Predictive Video Coding,"  in
+.IR "Visual Communications and Image Processing" ,
+K. N. Ngan, T. Sikora, and M.-T. Sun, Eds., Proc. SPIE 4067,
+June 2000, pp. 447-456.
+
+K. Schroder and R. Mech,
+"Combined Description of Shape and Motion in an Object
+Based Coding Scheme Using Curved Triangles," in
+.IR "Proceedings of the International Conference on Image Processing" ,
+Washington, DC, October 1995, vol. 2, pp. 390-393.
+
+Y. Wang, S. Cui, and J. E. Fowler,
+"3D Video Coding Using Redundant-Wavelet Multihypothesis and
+Motion-Compensated Temporal Filtering," in
+.IR "Proceedings of the International Conference on Image Processing" ,
+Barcelona, Spain, September 2003, vol. 2, pp. 755-758.
+
+Y. Wang, S. Cui, and J. E. Fowler,
+"3D Video Coding with Redundant-Wavelet Multihypothesis,"
+.IR "IEEE Transactions on Circuits and Systems for Video Technology" ,
+submitted July 2003. Revised April 2004, March 2005.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

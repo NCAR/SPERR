@@ -1,0 +1,82 @@
+.TH QCCIMGIMAGECOMPONENTCLIPPIXEL 3 "QCCPACK" ""
+.SH NAME
+QccIMGImageComponentClipPixel,
+QccIMGImageComponentClip,
+QccIMGImageComponentNormalize \- 
+clip and normalize image component
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "double QccIMGImageComponentClipPixel(double " pixel_value );
+.br
+.BI "int QccIMGImageComponentClip(QccIMGImageComponent *" image_component );
+.br
+.BI "int QccIMGImageComponentNormalize(QccIMGImageComponent *" image_component );
+.SH DESCRIPTION
+These routines assume that the range of permissible pixel values in
+.I image_component
+is be 0 to 255, which is the common range for 8-bit images.
+.LP
+.BR QccIMGImageComponentClipPixel()
+clips a single pixel value to the 0-255 range, returning 0 for values
+less than 0, 255 for values greater than 255, and
+.I pixel_value
+itself, unchanged, for values
+greater than or equal to 0 and less than or equal to 255.
+.LP
+.BR QccIMGImageComponentClip()
+calls
+.BR QccIMGImageComponentClipPixel()
+for each pixel in
+.IR image_component ,
+effectively ensuring that each pixel in
+.IR image_component
+is clipped to the 0-255 range.
+.LP
+.BR QccIMGImageComponentNormalize()
+expands or contracts the dynamic range of the pixel values in
+.IR image_component
+to the 0-255 range.
+.BR QccIMGImageComponentNormalize()
+maps the range
+.IR image_component->min_val
+to
+.IR image_component->max_val
+to the range 0-255 in a linear fashion.
+.IR image_component->min_val
+and
+.IR image_component->max_val
+must be set correctly via a call to
+.BR QccIMGImageComponentSetMaxMin (3)
+prior to calling
+.BR QccIMGImageComponentNormalize() .
+.SH "RETURN VALUES"
+.BR QccIMGImageComponentClip()
+and
+.BR QccIMGImageComponentNormalize()
+return 0 on success and 1 on error;
+.BR QccIMGImageComponentClipPixel()
+returns the value of the clipped pixel.
+.SH "SEE ALSO"
+.BR QccIMGImageComponent (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+

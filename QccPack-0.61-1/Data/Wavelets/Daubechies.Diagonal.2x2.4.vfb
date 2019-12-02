@@ -1,0 +1,41 @@
+VFB0.17
+#
+#  Daubechies.Diagonal.2x2.4.vfb
+#
+#  Vector filter bank constructed by placing scalar Daubechies orthonormal
+#  wavelet coefficients on the diagonal of the vector-filter-bank
+#  coefficient matrices, causing an identical scalar wavelet transform to be
+#  performed on each vector component individually.  Use the length-4
+#  Daubechies filters.
+#
+#  Reference:
+#    I. Daubechies, "Orthonormal Bases of Compactly Supported Wavelets,"
+#      Communications on Pure and Applied Mathematics, vol. 41,
+#      pp. 909-996, 1988.
+#
+
+0
+2
+4
+0
+   4.8296291e-01   0.0000000e+00
+   0.0000000e+00   4.8296291e-01
+   8.3651630e-01   0.0000000e+00
+   0.0000000e+00   8.3651630e-01
+   2.2414387e-01   0.0000000e+00
+   0.0000000e+00   2.2414387e-01
+  -1.2940952e-01  -0.0000000e+00
+  -0.0000000e+00  -1.2940952e-01
+
+2
+4
+0
+
+   1.2940952e-01   0.0000000e+00
+   0.0000000e+00   1.2940952e-01
+   2.2414387e-01   0.0000000e+00
+   0.0000000e+00   2.2414387e-01
+  -8.3651630e-01  -0.0000000e+00
+  -0.0000000e+00  -8.3651630e-01
+   4.8296291e-01   0.0000000e+00
+   0.0000000e+00   4.8296291e-01

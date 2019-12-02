@@ -1,0 +1,30 @@
+FBK0.12
+
+#
+#  Daubechies.10.fbk
+#
+#  The length-10 Daubechies orthonormal wavelet with compact support.
+#
+#  Permitted boundary methods:
+#    periodic extension
+#
+#  Reference:
+#    I. Daubechies, "Orthonormal Bases of Compactly Supported Wavelets,"
+#      Communications on Pure and Applied Mathematics, vol. 41,
+#      pp. 909-996, 1988.
+#
+
+0
+0
+10
+ 0.16010239797419
+ 0.60382926979719
+ 0.72430852843777
+ 0.13842814590132
+-0.24229488706638
+-0.03224486958464
+ 0.07757149384005
+-0.00624149021280
+-0.01258075199908
+ 0.00333572528547
+

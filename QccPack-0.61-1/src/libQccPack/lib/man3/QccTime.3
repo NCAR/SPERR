@@ -1,0 +1,60 @@
+.TH QCCTIME 3 "QCCPACK" ""
+.SH NAME
+QccTime \- timer routines
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccTimeTic();"
+.br
+.BI "int QccTimeToc(double *" time );
+.SH DESCRIPTION
+.BR QccTimeTic()
+and
+.BR QccTimeToc()
+implement a method of measuring execution time.
+.BR QccTimeTic()
+starts the timer;
+.BR QccTimeToc()
+returns the amount of time elapsed since the previous
+call to
+.BR QccTimeTic() .
+The elapsed time is returned in
+.IR time
+which represents the time in seconds as a floating-point value.
+.LP
+Each call to
+.BR QccTimeToc()
+returns the elapsed time since the last call to
+.BR QccTimeTic() .
+If
+.BR QccTimeTic()
+has not been called previously,
+.BR QccTimeToc()
+returns the time since the program started running.
+.LP
+.BR QccTimeTic()
+and
+.BR QccTimeToc()
+rely on
+.BR gettimeofday (2)
+to return the current time.
+.SH "RETURN VALUE"
+These routines return 0 on success and 1 on failure.
+.SH "SEE ALSO"
+.BR gettimeofday (2),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

@@ -1,0 +1,70 @@
+.TH QCCWAVSUBBANDPYRAMIDREDUNDANTDWTSUBSAMPLE 3 "QCCPACK" ""
+.SH NAME
+QccWAVSubbandPyramidRedundantDWTSubsample \- 
+subsample a redundant discrete wavelet transform
+into a subband-pyramid structure
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVSubbandPyramidRedundantDWTSubsample(const QccMatrix *" input_matrices ", QccWAVSubbandPyramid *" subband_pyramid ", const QccWAVWavelet *" wavelet );
+.SH DESCRIPTION
+.B QccWAVSubbandPyramidRedundantDWTSubsample()
+calls
+.BR QccWAVWaveletRedundantDWT2DSubsample (3)
+to subsample a 2D redundant discrete wavelet transform (RDWT) whose
+coefficients are stored in
+.IR input_matrices ,
+returning the resulting critically sampled DWT coefficients in
+.IR subband_pyramid .
+It is assumed that the
+.IR num_rows ,
+.IR num_cols ,
+and
+.IR num_levels
+fields of
+.IR subband_pyramid
+have been set to correctly reflect the size and number of scales of
+decomposition represented by
+.IR input_matrices 
+prior to calling
+.BR QccWAVSubbandPyramidRedundantDWTSubsample() .
+Additionally, it is assumed that the
+.IR subsample_pattern_row
+and
+.IR subsample_pattern_col
+fields of
+.IR subband_pyramid
+have been set to reflect the desired subsampling patterns.
+Finally, it is assumed that 
+.IR subband_pyramid
+has been allocated
+via a call to
+.BR QccWAVSubbandPyramidAlloc (3)
+prior to calling
+.BR QccWAVSubbandPyramidRedundantDWTSubsample() .
+.SH "RETURN VALUES"
+This routine
+returns 0 on success and 1 on error.
+.SH "SEE ALSO"
+.BR QccWAVWaveletRedundantDWT2DSubsample (3),
+.BR QccWAVSubbandPyramid (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+

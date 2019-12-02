@@ -1,0 +1,124 @@
+.TH QCCPACKVQ 3 "QCCPACKVQ" ""
+.SH NAME
+QccPackVQ \- QccPack module for vector quantization
+.SH DESCRIPTION
+.B QccPackVQ
+provides a collection of library routines and utility programs for
+vector quantization.
+.SS "LIBRARY ROUTINES"
+- no documentation at this time -
+.SS "UTILITY PROGRAMS"
+.TP
+.BR sqtocbk (1)
+convert from scalar quantizer to VQ codebook format
+.TP
+.BR gla (1)
+train codebooks for vector quantization using the generalized Lloyd algorithm
+.TP
+.BR vqencode (1)
+encoding using vector quantization
+.TP
+.BR vqdecode (1)
+vector-quantization decoding
+.TP
+.BR ecvqtrain (1)
+train codebooks for entropy-constrained
+.TP
+.BR ecvqencode (1)
+encoding using entropy-constrained vector quantization (ECVQ
+.SS "FILE FORMATS"
+In general, each file format starts with an ASCII header followed by
+ASCII or binary data.  The ASCII header starts with a magic number, and can be
+followed with any amount of white space (blanks, `\\t' (tab),
+`\\n' (newline), `\\r' (carriage return)) and/or
+comments lines (lines starting with "#").  Following this white space,
+each format has a varying amount of header information in ASCII.
+This ASCII header information is separated by blanks and newlines.
+The data follows this ASCII header information.  Note: if the data is
+in binary, one (and only one) newline
+.B must
+follow the last component of ASCII header information.
+If the data is ASCII, components of the data are separated with
+blanks and/or newlines.
+.TP
+.BR CBK " - VQ codebook format"
+.br
+CBKX.X                                                          
+.br
+.I "<white space>"                                                   
+.br
+.I "N dim"
+.br
+.IR "w11 w12 w13" \|.\|.\|.
+.br
+.IR "w21 w22 w23" \|.\|.\|.
+.br
+\|.
+.br
+\|.
+.br
+\|.
+.br
+.IR "p1 p2 p3" \|.\|.\|.
+
+where CBK is the magic number, X.X is the revision number,
+.I "<white space>" 
+is white space and/or 
+comment lines, 
+.I N 
+is the number of codewords the file contains,     
+.I dim 
+is the number of components each codeword contains (vector     
+dimension), 
+.I wij 
+is the jth component of the ith codeword, and 
+.I pi 
+is
+the probability of the ith codeword.
+.I N 
+and 
+.I dim 
+are integers. 
+.I wij 
+and 
+.I pi 
+are floats.
+.I N 
+and 
+.I dim 
+are stored in ASCII, 
+.I wij 
+and 
+.I pi 
+as binary (4 bytes, MSB first).
+No white space may exist between the 
+.IR wij "'s" 
+or the 
+.IR pi "'s."
+.SH "SEE ALSO"
+.BR gla (1),
+.BR vqencode (1),
+.BR vqdecode (1),
+.BR ecvqtrain (1),
+.BR ecvqencode (1),
+.BR QccPackENT (3),
+.BR QccPackSQ (3),
+.BR QccPackAVQ (3),
+.BR QccPackIMG (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

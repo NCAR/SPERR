@@ -1,0 +1,15 @@
+CURRENT_DIR = $(QCCPACK)/src/libQccPackECC
+
+SUBDIRS = lib utils
+
+DOCS =
+
+CLEAN_FILES = *~
+COMPRESS_FILES = 
+
+QccDir()
+
+QccLibSubdir(lib)
+QccUtilsSubdir(utils)
+
+QccInstallDoc($(DOCS))

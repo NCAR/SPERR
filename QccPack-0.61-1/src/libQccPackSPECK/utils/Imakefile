@@ -1,0 +1,12 @@
+CURRENT_DIR = $(QCCPACK)/src/libQccPackSPECK/utils
+
+EXECUTABLES = \@@\
+	speckencode speckdecode \@@\
+	speckencode3d speckdecode3d
+
+SHELL_SCRIPTS = 
+MAN_SUFFIX = 1
+
+QccDir()
+
+QccUtils()

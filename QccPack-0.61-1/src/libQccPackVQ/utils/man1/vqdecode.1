@@ -1,0 +1,54 @@
+.TH VQDECODE 1 "QCCPACK" ""
+.SH NAME
+vqdecode \- vector-quantization decoding
+.SH SYNOPSIS
+.B vqdecode
+.I channelfile
+.I codebookfile
+.I datfile
+.SH DESCRIPTION
+.LP
+.B vqdecode
+decodes the input channel,
+.IR channelfile ,
+(CHN format) by looking up each channel index
+in the input codebook,
+.IR codebookfile,
+(CBK format) and outputting the corresponding
+codeword to the output
+.I datfile 
+(DAT format).
+The channel is produced with
+.BR vqencode (1),
+and the channel symbols are assumed to range from 0 to N-1, where N is the
+number of codewords in 
+.IR codebookfile .
+The VQ codebook,
+.IR codebookfile ,
+can be trained using
+.BR gla (1).
+.SH "SEE ALSO"
+.BR vqencode (1),
+.BR gla (1),
+.BR QccPackVQ (3),
+.BR QccPack (3)
+
+A. Gersho and R. Gray, 
+.IR "Vector Quantization and Signal Compression" .
+Norwell, MA: Kluwer Academic Publishers, 1992.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

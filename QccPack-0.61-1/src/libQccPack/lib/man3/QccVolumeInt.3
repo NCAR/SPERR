@@ -1,0 +1,192 @@
+.TH QCCVOLUMEINT 3 "QCCPACK" ""
+.SH NAME
+QccVolumeIntAlloc,
+QccVolumeIntFree,
+QccVolumeIntZero,
+QccVolumeIntResize,
+QccVolumeIntCopy,
+QccVolumeIntMaxValue,
+QccVolumeIntMinValue,
+QccVolumeIntPrint,
+QccVolumeIntAdd,
+QccVolumeIntSubtract,
+QccVolumeIntMean
+QccVolumeIntVariance
+\- miscellaneous integer-volume routines
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "QccVolumeInt QccVolumeIntAlloc(int " num_frames ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "void QccVolumeIntFree(QccVolumeInt " volume ", int " num_frames ", int " num_rows );
+.br
+.sp
+.BI "int QccVolumeIntZero(QccVolumeInt " volume ", int " num_frames ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "QccVolumeInt QccVolumeIntResize(QccVolumeInt " volume ", int " num_frames ", int " num_rows ", int " num_cols ", int " new_num_frames ", int " new_num_rows ", int " new_num_cols );
+.br
+.sp
+.BI "int QccVolumeIntCopy(QccVolumeInt " volume1 ", const QccVolumeInt " volume2 ", int " num_frames ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "double QccVolumeIntMaxValue(const QccVolumeInt " volume ", int " num_frames ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "double QccVolumeIntMinValue(const QccVolumeInt " volume ", int " num_frames ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "int QccVolumeIntPrint(const QccVolumeInt " volume ", int " num_frames ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "int QccVolumeIntAdd(QccVolumeInt " volume1 ", const QccVolumeInt " volume2 ", int " num_frames ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "int QccVolumeIntSubtract(QccVolumeInt " volume1 ", const QccVolumeInt " volume2 ", int " num_frames ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "double QccVolumeIntMean(const QccVolumeInt " volume ", int " num_frames ", int " num_rows ", int " num_cols );
+.br
+.sp
+.BI "double QccVolumeIntVariance(const QccVolumeInt " volume ", int " num_frames ", int " num_rows ", int " num_cols );
+.SH DESCRIPTION
+QccPack library routines use three-dimensional arrays of type 
+.B QccVolumeInt
+which is defined as
+.RS
+.nf
+typedef QccMatrixInt *QccVolumeInt;
+.fi
+.RE
+.LP
+Although integer volumes
+can represent data from various applications, throughout
+QccPack, the following terminology, which arises in the video-coding
+application, is adopted. Integer volumes
+are described as consisting of a collection
+of 2D "frames" distributed in the temporal direction. Each frame describes
+a 2D spatial region, and is indexed by row and column in the two spatial
+directions.
+.LP
+.B QccVolumeIntAlloc()
+allocates a
+.B QccVolumeInt
+consisting of 
+.I num_frames
+integer matrices; each integer matrix is a two-dimensional array of type
+.B QccMatrixInt
+and has dimensions
+.IR num_rows
+by
+.IR num_cols .
+.B QccVolumeIntAlloc()
+returns a
+.B NULL
+pointer if the allocation fails.
+.LP
+.B QccVolumeIntFree()
+frees a
+.B QccVolumeInt
+previously allocated by
+.BR QccVolumeIntAlloc() .
+.LP
+.B QccVolumeIntZero()
+makes each element of 
+.I volume
+zero.
+.LP
+.B QccVolumeIntResize()
+changes the size of
+.I volume
+from
+.IR num_frames " x " num_rows " x " num_cols 
+to
+.IR new_num_frames " x " new_num_rows " x " new_num_cols 
+by calling
+.BR realloc (3)
+and
+.BR QccMatrixResize (3).
+Upon success, the new volume is returned; a
+.B NULL
+pointer is returned if 
+.BR realloc (3)
+or
+.BR QccMatrixResize (3)
+fails. If
+.I volume
+is
+.BR NULL ,
+.BR QccVolumeIntAlloc()
+is called. In any case, all elements added to
+.I volume
+are zero.
+.LP
+.BR QccVolumeIntCopy()
+copies
+.I volume2
+to
+.IR volume1 .
+.LP
+.B QccVolumeIntMaxValue()
+returns the largest element in
+.IR volume .
+.LP
+.B QccVolumeIntMinValue()
+returns the smallest element in
+.IR volume .
+.LP
+.B QccVolumeIntPrint()
+prints the elements of
+.I volume
+to stdout.
+.LP
+.B QccVolumeIntAdd()
+adds each component of
+.I volume1 
+to the corresponding component of
+.IR volume2 ,
+returning the resulting volume in
+.IR volume1 .
+.I volume1
+and
+.I volume2
+must be the same size.
+.LP
+.B QccVolumeIntSubtract()
+subtracts each component of
+.I volume2
+from the corresponding component of
+.IR volume1 ,
+returning the resulting volume in
+.IR volume1 .
+.I volume1
+and
+.I volume2
+must be the same size.
+.LP
+.B QccVolumeIntMean()
+calculates the mean of the elements in
+.LP
+.B QccVolumeIntVariance()
+calculates the variance of the elements in
+.IR volume .
+.SH "SEE ALSO"
+.BR QccVectorInt (3),
+.BR QccMatrixInt (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

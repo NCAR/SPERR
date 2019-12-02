@@ -1,0 +1,96 @@
+.TH QCCHYPRAWDIST2D 3 "QCCPACK" ""
+.SH NAME
+QccHYPRawDist2D,
+QccHYPRawDist3D
+\- distortion between two raw-format files
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccHYPRawDist2D(QccString " filename1 ", QccString " filename2 ", double *" mse ", double *" mae ", double *" snr ", int " num_rows ", int " num_cols ", int " bpp ", int " signed_data ", int " endian );
+.br
+.BI "int QccHYPRawDist3D(QccString " filename1 ", QccString " filename2 ", double *" mse ", double *" mae ", double *" snr ", int " num_frames ", int " num_rows ", int " num_cols ", int " bpv ", int " signed_data ", int " format ", int " endian );
+.SH DESCRIPTION
+.BR QccHYPRawDist2D()
+and
+.BR QccHYPRawDist3D()
+calculate the distortion between two raw binary files;
+.BR QccHYPRawDist2D()
+is for 2D files while
+.BR QccHYPRawDist3D()
+is for 3D files.
+The mean squared error (MSE), the maximum absolute error (MAE), and
+the signal-to-noise ratio (SNR) are calculated and returned in
+.IR mse ,
+.IR mae ,
+and
+.IR snr ,
+respectively. SNR is calculated with respect to the variance of
+.IR filename1 .
+If any of
+.IR mse ,
+.IR mae ,
+and
+.IR snr 
+are
+.BR NULL ,
+the respective value is calculated but not returned.
+.LP
+In all of these routines,
+the parameters
+.IR bpp
+(2D files) or
+.IR bpv
+(3D files)
+specify the number of bits that each pixel or voxel value contains,
+respectively; these values 
+must be between 1 and 32. If
+.IR bpp " or " bpv
+is <= 8, then each sample is stored 
+as the least significant
+bits in a single byte; otherwise, if
+.IR bpp " or " bpv
+is <= 16, then each sample is stored
+as the least significant bits of two consecutive bytes;
+otherwise, if
+.IR bpp " or " bpv
+is <= 32, then each sample is stored
+as the least significant bits of four consecutive bytes.
+.IR signed_data
+indicates whether the sample values are signed or not;
+likewise,
+.IR endian ,
+which is one of
+.BR QCCHYP_RAWENDIAN_BIG
+or
+.BR QCCHYP_RAWENDIAN_LITTLE ,
+indicates the endianness of the values.
+For 3D reading and writing,
+.IR format
+must be one of
+.BR QCCHYP_RAWFORMAT_BSQ ,
+.BR QCCHYP_RAWFORMAT_BIL ,
+or
+.BR QCCHYP_RAWFORMAT_BIP
+to indicate the scan order of the 3D file.
+.SH "RETURN VALUE"
+Both routines
+return 0 on success, 1 on error.
+.SH "SEE ALSO"
+.BR QccHYPRaw (3),
+.BR QccPackHYP (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

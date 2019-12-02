@@ -1,0 +1,143 @@
+.TH QCCWAVSRENCODE 1 "QCCPACK" ""
+.SH NAME
+QccWAVsrEncode, QccWAVsrDecode \-
+encode/decode an image using the SR algorithm
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVsrEncode(QccIMGImageComponent *" image ", QccBitBuffer *" buffer ", QccSQScalarQuantizer *" quantizer ", int " num_levels ", QccWAVWavelet *" wavelet ", QccWAVPerceptualWeights *" perceptual_weights );
+.sp
+.BI "int QccWAVsrDecodeHeader(QccBitBuffer *" buffer ", int *" num_levels ", int *" num_rows ", int *" num_cols ", QccSQScalarQuantizer *" quantizer ", double *" image_mean );
+.sp
+.BI "int QccWAVsrDecode(QccBitBuffer *" buffer ", QccIMGImageComponent *" image ", QccSQScalarQuantizer *" quantizer ", int " num_levels ", QccWAVWavelet *" wavelet ", QccWAVPerceptualWeights *" perceptual_weights ", double " image_mean );
+.SH DESCRIPTION
+.LP
+.B QccWAVsrEncode()
+encodes an image component,
+.IR image ,
+using the stack-run (SR) algorithm by Tsai 
+.IR "et al" .
+The SR algorithm involves a 2D DWT followed by 
+uniform scalar quantization of the wavelet coefficients.
+Runs of the zero index are identified and are run-length encoded.
+The SR algorithm then uses a 4-symbol alphabet to code the binary digits
+of the runs and the quantizer indices of the nonzero coefficients
+(the "stacks").  The stream of symbols from this 4-symbol alphabet
+is then coded with arithmetic entropy coding.
+.LP
+.I image
+is the image component to be coded,
+.I buffer
+is the output bitstream following arithmetic coding (must be of
+.B QCCBITBUFFER_OUTPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3)),
+.I quantizer
+is the scalar quantizer (see below),
+.I num_levels
+gives the number of levels of dyadic wavelet decomposition to perform,
+.I wavelet
+is the wavelet to use for decomposition,
+and
+.I perceptual_weights
+is the optional perceptual weights to employ (use
+.B NULL
+for no perceptual weighting).
+.LP
+The rate-distortion performance of the SR algorithm is determined by the
+stepsize of the uniform scalar quantizer, 
+.IR quantizer .
+.I quantizer
+may be of either
+.B QCCSQSCALARQUANTZIER_UNIFORM
+or
+.B QCCSQSCALARQUANTIZER_DEADZONE
+type.  That is,
+.I quantizer
+may be either uniform or uniform with a
+dead zone (see
+.BR squniform (1)
+for more details).
+Using a dead zone may allow longer runs of zeros and may increase
+compression performance in some cases.
+.LP
+Note:
+.BR QccWAVsrEncode()
+currently achieves rate-distortion performance slightly below that reported
+by Tsai 
+.IR "et al" .
+For instance, when coding the "Barbara" 
+image at 0.5 bits/pixel, 
+.B srencode 
+achieves a PSNR about 0.5dB below the reported figure.
+The reasons for this performance gap are currently being investigated.
+.LP
+.B QccWAVsrDecodeHeader()
+decodes the header information in the bitstream in the input
+.I buffer
+(which must be of
+.B QCCBITBUFFER_INPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3)).
+The header information is returned in
+.I num_levels
+(number of levels of wavelet decomposition),
+.I num_rows
+(vertical size of image),
+.I num_cols
+(horizontal size of image),
+.I quantizer
+(scalar quantizer, including stepsize and any deadzone stored in header),
+and
+.I image_mean
+(the mean value of the original image).
+.LP
+.B QccWAVsrDecode()
+decodes the bitstream
+.IR buffer ,
+producing the reconstructed image component,
+.IR image .
+The bitstream must already have had its header read by a prior call
+to
+.B QccWAVsrDecodeHeader()
+(i.e., you call
+.B QccWAVsrDecodeHeader() 
+first and then
+.BR QccWAVsrDecode() ).
+.SH "SEE ALSO"
+.BR srencode (1),
+.BR srdecode (1),
+.BR imgdwt (1),
+.BR squniform (1),
+.BR QccBitBuffer (3),
+.BR QccWAVPerceptualWeights (3),
+.BR QccWAVSubbandPyramid (3),
+.BR QccPackWAV (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+M.-J. Tsai, J. D. Villasenor, and F. Chen,
+"Stack-Run Image Coding,"
+.IR "IEEE Transactions on Circuits and Systems for Video Technology" ,
+vol. 6, no. 5, pp. 519-521, October 1996.
+
+M.-J. Tsai, J. D. Villasenor, and F. Chen,
+"Stack-Run Coding for Low Bit Rate Image Communication,"
+.IR "Proceedings IEEE International Conference on Image Processing" ,
+pp. 681-684, September 1996.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

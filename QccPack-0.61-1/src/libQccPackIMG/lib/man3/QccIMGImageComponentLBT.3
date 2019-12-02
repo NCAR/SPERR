@@ -1,0 +1,100 @@
+.TH QCCIMGIMAGECOMPONENTLBT 3 "QCCPACK" ""
+.SH NAME
+QccIMGImageComponentLBT, QccIMGImageComponentInverseLBT
+\- lapped biorthogonal transform and inverse for an image component
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccIMGImageComponentLBT(const QccIMGImageComponent *" image1 ", QccIMGImageComponent *" image2 ", int " overlap_sample ", int " block_size ", double " smooth_factor );
+.br
+.BI "int QccIMGImageComponentInverseLBT(const QccIMGImageComponent *" image1 ", QccIMGImageComponent *" image2 ", int " overlap_sample ", int " block_size ", double " smooth_factor );
+.SH DESCRIPTION
+.B QccIMGImageComponentLBT()
+calculates the lapped biorthogonal transform (LBT) of
+.IR input1 .
+The result is returned in
+.IR image2 ,
+which must be allocated prior to calling
+.BR QccIMGImageComponentLBT() .
+Both 
+.I image1
+and
+.I image2
+have the same number of rows and columns.
+.LP
+.B QccIMGImageComponentInverseLBT()
+calculates the inverse LBT of
+.IR image1 ,
+returning its results in
+.IR image2 .
+.LP
+For both
+.BR QccIMGImageComponentLBT() 
+and
+.BR QccIMGImageComponentInverseLBT() ,
+.IR overlap_sample
+and
+.IR smooth_factor
+are parameters to the prefilter and postfilter of the LBT
+(see "ALGORITHM" below), while
+.IR block_size
+is the size of the blocks used for the DCT.
+.SH "RETURN VALUE"
+Both
+.B QccIMGImageComponentLBT()
+and
+.B QccIMGImageComponentInverseLBT()
+return 0 on success, 1 on error.
+.SH ALGORITHM
+The lapped biorthogonal transform (LBT) implemented by these routines
+was proposed by Tran
+.IR "et al".
+In essence, the forward transform consists of a smoothing prefilter followed
+by a block-based DCT.
+The inverse is then a block-based inverse DCT followed by a corresponding
+postfilter.
+The prefilter is intended to reduce intra-block and
+inter-block correlation of the block-based DCT coefficients.
+.LP
+The parameters to the prefilter and postfilter operations are
+.IR overlap_sample ,
+which is the number of samples of overlap between DCT blocks in the
+prefilter and postfiler, and
+.IR smooth_factor ,
+which is the smoothing constant for the prefilter and postfilter.
+Although performance can varying for these parameters, sugegsted values
+are
+.IR overlap_sample " = " block_size "/2"
+and
+.IR smooth_factor " = 1.333333.
+.SH "SEE ALSO"
+.BR QccIMGImageComponentDCT (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+T. D. Tran, J. Liang, and C. Tu, "Lapped transform via time-domain
+pre- and post-filtering,"
+.IR "IEEE Transactions on Signal Processing" ,
+vol. 51, no. 6, pp. 1557-1571, June 2003.
+
+C. Tu and T. D. Tran, "Context-based entropy coding of
+block transform coefficients for image compression,"
+.IR "IEEE Transactions on Image Processing" ,
+vol. 11, no. 11, pp. 1271-1283, November 2002.
+
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

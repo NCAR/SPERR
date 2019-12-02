@@ -1,0 +1,229 @@
+.TH QCCWAVWAVELETSHAPEADAPTIVEDWT1DINT 3 "QCCPACK" ""
+.SH NAME
+QccWAVWaveletShapeAdaptiveDWT1DInt, QccWAVWaveletInverseShapeAdaptiveDWT1DInt \- 
+integer-valued shape-adaptive discrete wavelet transform and inverse transform for a 1D signal
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVWaveletShapeAdaptiveDWT1DInt(QccVectorInt " signal ", QccVectorInt " mask ", int " signal_length ", int " num_scales ", const QccWAVWavelet *" wavelet );
+.br
+.BI "int QccWAVWaveletInverseShapeAdaptiveDWT1DInt(QccVectorInt " signal ", QccVectorInt " mask ", int " signal_length ", int " num_scales ", const QccWAVWavelet *" wavelet );
+.SH DESCRIPTION
+.B QccWAVWaveletShapeAdaptiveDWT1DInt()
+performs an integer-valued shape-adaptive discrete
+wavelet transform (SA-DWT) of a one-dimensional signal.
+.I num_scales
+gives the number of scales, or levels, of the decomposition.
+.BR QccWAVWaveletShapeAdaptiveDWT1DInt()
+implements a dyadic decomposition of
+.IR signal ;
+that is, the lowpass subband is recursively decomposed into lowpass and
+highpass bands for each level of decomposition.
+The output of the SA-DWT is returned in
+.IR signal ,
+overwriting the original input signal.
+The output subbands reside in 
+.I signal
+starting with the lowpass subband of the lowest (coarsest) level of
+decomposition (i.e., the baseband) with subsequent highpass subbands
+of increasing resolution following.
+.I wavelet
+must indicate an integer-valued lifting scheme (see
+.BR QccWAVLiftingSchemeInteger (3)).
+.LP
+.I mask
+indicates where the original input
+.I signal
+exists. That is, 
+.I mask
+indicates the intervals of support in the original input
+.IR signal .
+Where
+.I mask
+is less than or equal to
+.BR QCCALPHA_TRANSPARENT ,
+there is no signal, and where
+.I mask
+is greater than
+.BR QCCALPHA_TRANSPARENT ,
+the signal exists and is transformed
+(see
+.BR QccAlpha (3)).
+Essentially this shape-adaptive transform is performed by identifying
+contiguous non-transparent segments of the input signal, and transforming
+these segments individually with a usual 1D DWT 
+(via a call to
+.BR QccWAVWaveletDWT1DInt (3))
+with appropriate
+extension at the ends of each segment.
+Each segment is transformed so that the global subsampling scheme for
+the signal is respected; that is, the starting index for each segment is
+determined to be either odd or even based upon its location relative
+to the start of
+.IR signal ,
+and this determines whether odd or even subsampling is used in the
+DWT of the segment.
+.LP
+The transparency mask is transformed (with a Lazy wavelet transform)
+alongside the signal so that, at completion of the transform,
+.IR mask
+indicates where valid coefficients, i.e., coefficients resulting from
+non-transparent segments in the input signal,
+reside in the output
+.IR signal .
+The transformed mask is returned in
+.IR mask ,
+overwriting the original input mask.
+.LP
+Currently, 
+.BR QccWAVWaveletShapeAdaptiveDWT1DInt()
+supports only integer-valued biorthogonal wavelets. These may be
+used with symmetric extension only.
+.LP
+Segments within
+.I signal
+may be of any length, odd or even.
+In the case of odd segment length, either the lowpass or highpass
+subband at the next coarser scale
+will be one sample longer than
+the other; which one is longer depends on whether the segment
+starts with an even- or odd-indexed sample relative to the
+start of
+.IR signal .
+A segment of length one, i.e., an isolated signal sample,
+is somewhat of a degenerate case.
+.BR QccWAVWaveletShapeAdaptiveDWT1DInt()
+handles a length-1 segment as follows.
+If the isolated  sample is even-indexed relative to the start of
+.IR signal ,
+then the sample value is placed unchanged in the
+lowpass band. If the isolated sample is odd-index, it is
+placed unchanged in the highpass band.
+.LP
+.B QccWAVWaveletInverseShapeAdaptiveDWT1DInt()
+performs the inverse SA-DWT of
+.IR signal
+which is assumed to have been produced
+by
+.BR QccWAVWaveletShapeAdaptiveDWT1DInt() .
+.IR mask
+should be the corresponding Lazy-wavelet transformed mask
+also produced by
+.BR QccWAVWaveletShapeAdaptiveDWT1DInt() .
+.I num_scales
+gives the number of levels of decomposition that exist in
+.IR signal .
+.SH "SHAPE-ADAPTIVE DWTS"
+SA-DWTs have been recently included in Version 2 of the MPEG-4
+standard, wherein they are used for 
+texture coding of arbitrarily shaped still objects.
+Li and Li (see below) elaborate at length on the shape-adaptive DWT
+used in MPEG-4, and also consider some variants not included
+in the MPEG-4 standard.
+.LP
+The SA-DWT implemented in QccPack differs slightly
+from the transform specified by MPEG-4.
+The most significant difference is in the handling of isolated samples 
+(i.e., segments with length one). In MPEG-4, isolated samples are always
+placed in the lowpass band regardless of the
+parity of the index of the sample. Another difference
+is that the QccPack SA-DWT
+can handle boundary-wavelet extension in addition to symmetric extension
+for lifting implementations of wavelets; MPEG-4 uses only symmetric extension.
+Finally, Li and Li describe several SA-DWT variants that
+are currently not implemented in QccPack, namely, SA-DWTs
+using orthonormal wavelets or biorthogonal wavelets with even-length symmetric
+filters.
+.SH "INTEGER-TO-INTEGER WAVELET TRANSFORMS"
+Transforms generally provide perfect reconstruction in that the
+inverse transform will perfectly invert transform coefficients
+into an exact representation of the original signal.
+However, when implemented in floating-point arithmetic, the potential
+for loss arises due to the limits of finite precision in both the
+forward and inverse transforms.
+On the other hand,
+transforms that map integer-valued signals into integer-valued
+transforms coefficients can guarantee perfect reconstruction, provided
+an inverse transform can be found.
+For this reason, lifting schemes, in which inverse transforms are
+trivial, are favored for the
+implementation of integer-valued wavelet transforms. Typically,
+the general approach proposed by Calderbank
+.IR "et al" .
+is followed wherein rounding of floating-point values to integers is performed
+at each prediction and update step in a lifting scheme.
+Integer versions of several popular biorthogonal wavelets were
+created in this manner by Calderbank
+.IR "et al" .,
+as well as by Xiong
+.IR "et al" .
+.LP
+In traditional floating-point lifting, the prediction and update steps
+are generally followed by a single application of scaling by a constant
+in order to produce the usual unitary normalization.
+This scaling step is somewhat problematic for integer-valued lifting
+since the scaling constant is usually not an integer.
+In applications wherein unitary scaling is not required
+(e.g., in some applications that process each subband completely
+independently), the scaling step is simply dropped in order
+to implement an integer-valued version of the transform.
+Alternatively, one can append three additional lifting steps to 
+implement the scaling; these additional lifting steps can then be rendered
+integer-valued via appropriate rounding (e.g., Xiong
+.IR "et al" .)
+making the transforms approximately normalized.
+This latter approach of scaling via additional lifting steps
+is employed in the integer-valued
+lifting schemes implemented in QccPack.
+.SH "RETURN VALUES"
+These routines
+return 0 on success and 1 on error.
+.SH "SEE ALSO"
+.BR QccWAVWaveletDWT1DInt (3),
+.BR QccWAVWaveletInverseDWT1DInt (3),
+.BR QccWAVWavelet (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.LP
+S. Li and W. Li, "Shape-Adaptive Discrete Wavelet Transforms for
+Arbitrarily Shaped Visual Object Coding,"
+.IR "IEEE Transactions on Circuits and Systems for Video Coding" ,
+vol. 10, pp. 725-743, August 2000.
+
+ISO/IEC 14496-2, "Information Technology -- Coding of audio-visual objects --
+Part 2: Visual," 
+.IR "MPEG-4 Standard" ,
+Amendment 1, July 2000.
+
+A. R. Calderbank, I. Daubechies, W. Sweldens, B.-L. Yeo, "Lossless
+Image Compression Using Integer to Integer Wavelet Transforms", in
+.IR "Proceedings of the International Conference on Image Processing" ,
+Lausanne, Switzerland, pp. 596-599, September 1997.
+
+Z. Xiong, X. Wu, S. Cheng, J. Hua, "Lossy-to-Lossless Compression of
+Medical Volumetric Data Using Three-Dimensional Integer Wavelet Transforms,"
+.IR "IEEE Transactions on Medical Imaging" ,
+vol. 22, pp. 459-470, March 2003.
+
+I. Daubechies and W. Sweldens,
+"Factoring Wavelet Transforms Into Lifting Steps,"
+.IR "J. Fourier Anal. Appl." ,
+vol. 4, no. 3, pp. 245-267, 1998.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+

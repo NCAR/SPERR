@@ -1,0 +1,180 @@
+.TH TCEENCODE 1 "QCCPACK" ""
+.SH NAME
+tceencode, tcedecode \-
+encode/decode an image using the TCE algorithm
+.SH SYNOPSIS
+.sp
+.B tceencode
+.RB "[\|" \-w
+.IR  wavelet "\|]"
+.RB "[\|" \-b
+.IR  boundary "\|]"
+.RB "[\|" \-nl
+.IR  levels "\|]"
+.RB "[\|" \-ss
+.IR  stepsize "\|]"
+.RB "[\|" \-r
+.IR  rate "\|]"
+.RB "[\|" \-vo "\|]"
+.I imgfile
+.I bitstream
+.LP
+.B tcedecode
+.RB "[\|" \-w
+.IR  wavelet "\|]"
+.RB "[\|" \-b
+.IR  boundary "\|]"
+.RB "[\|" \-r
+.IR  rate "\|]"
+.I bitstream
+.I imgfile
+.SH OPTIONS
+.TP
+.BI \-w " wavelet"
+String. 
+Name of the wavelet file
+.RB ( FBK
+or
+.B LFT
+format); default = "CohenDaubechiesFeauveau.9-7.lft"
+.TP
+.BI \-b " boundary"
+String. Type of boundary extension; default = "symmetric".
+.TP 
+.BI \-nl " levels"
+Integer. Number of levels of dyadic decomposition; default value is 5 levels.
+.TP
+.BI \-ss " stepsize"
+Float. The initial quantization stepsize;
+if this option is specified, the coder will encode until all bitplanes
+of the quantized coefficients are encoded.
+.TP
+.BI \-r " rate"
+Float. The target encode/decode bit rate.
+.TP
+.B \-vo
+Print only the value of the rate to stdout (terse output);
+default is verbose output.
+.SH DESCRIPTION
+.LP
+.B tceencode
+codes an image,
+.IR imgfile ,
+using the TCE algorithm by Tian and Hemami.
+The TCE (tarp coding using classification to achieve embedding) algorithm
+is based on the tarp algorithm (see 
+.BR QccWAVTarpEncode (3)),
+but is designed to provide better rate-distortion performance
+when used in an embedded fashion; i.e., when decoding is performed
+at a rate less than that at which the bitstream was produced.
+See 
+.BR QccWAVtceEncode (3)
+for more detail on the TCE algorithm.
+.LP
+The transform is the usual discrete wavelet transform (DWT),
+with the
+.B \-w
+option specifying the wavelet, and the
+.B \-b
+option specifying the boundary extension.
+.LP
+.B tceencode
+supports two encoding modes.
+Mode 1 consists of first applying a scalar quantizer to all
+DWT coefficients and then encoding the coefficients,
+bitplane by bitplane, until all bitplanes are encoded.
+Mode 2 consists of direct bitplane encoding without any
+scalar quantization of coefficients; in this mode, encoding
+stops when the target bitrate is reached.
+Mode 1 is selected by specifying a quantization
+.I stepsize
+with the
+.B \-ss
+option. Mode 2 is selected by specifying a target encoding
+.I rate
+with the 
+.B \-r
+option.
+Note that one, and only one, of
+.B \-ss
+and
+.B \-r
+must be specified.
+.LP
+.B tceencode
+prints to stdout a small amount of information concerning 
+the target bitrate and the actual bitrate achieved, as well as some
+run time information. Usually these rates are identical, but may
+differ slightly. If the
+.B \-vo
+(value-only) option is given, all printed output is suppressed except for
+the actual bitrate.
+.LP
+.B tcedecode
+performs the corresponding decoding using the TCE algorithm,
+decoding the
+.I bitstream
+made by
+.B tceencode
+and producing a reconstructed image,
+.IR imgfile .
+For sane results,
+.I wavelet
+and
+.I boundary
+should be the same as they were for
+.BR tceencode . 
+The
+.B \-r
+option for
+.B tcedecode
+specifies the
+.I rate
+at which to stop decoding, which may be any rate less than that at which
+.I bitstream
+was originally produced.
+.LP
+.B tceencode
+and
+.B tcedecode
+call
+.BR QccWAVtceEncode (3)
+and
+.BR QccWAVtceDecode (3),
+respectively, to perform TCE encoding and decoding.
+Refer to the man pages for these functions for more information
+on the details of the QccPack implementation of the TCE algorithm. 
+.SH "SEE ALSO"
+.BR QccWAVtceEncode (3),
+.BR QccWAVtceDecode (3),
+.BR QccWAVTarpEncode (3),
+.BR QccWAVTarpDecode (3),
+.BR imgdwt (1),
+.BR QccWAVSubbandPyramid (3),
+.BR QccPackWAV (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+.LP
+C. Tian and S. S. Hemami, "An Embedded Image Coding System
+Based on Tarp Filter with Classification," in
+.IR "Proceedings of the International Conference on Acoustics, Speech, and Signal Processing" ,
+Montreal, Quebec, Canada, May 2004, vol. 3, pp. 49-52.
+
+.SH AUTHOR
+Written by Chao Tian, Cornell University
+
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

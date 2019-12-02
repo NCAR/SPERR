@@ -1,0 +1,181 @@
+.TH QCCWDRENCODE 3 "QCCPACK" ""
+.SH NAME
+QccWAVwdrEncode, QccWAVwdrDecode \-
+encode/decode an image using the wavelet-difference-reduction (WDR) algorithm
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVwdrEncode(const QccIMGImageComponent *" image ", const QccIMGImageComponent *" mask ", QccBitBuffer *" buffer ", int " num_levels ", const QccWAVWavelet *" wavelet ", const QccWAVPerceptualWeights *" perceptual_weights ", int " target_bit_cnt );
+.br
+.BI "int QccWAVwdrDecodeHeader(QccBitBuffer *" buffer ", int *" num_levels ", int *" num_rows ", int *" num_cols ", double *" image_mean ", int *" max_coefficient_bits );
+.br
+.BI "int QccWAVwdrDecode(QccBitBuffer *" buffer ", QccIMGImageComponent *" image ", const QccIMGImageComponent *" mask ", int " num_levels ", const QccWAVWavelet *" wavelet ", const QccWAVPerceptualWeights *" perceptual_weights ", double " image_mean ", int " max_coefficient_bits ", int " target_bit_cnt );
+.SH DESCRIPTION
+.SS Encoding
+.LP
+.B QccWAVwdrEncode()
+encodes an image component,
+.IR image ,
+using the WDR algorithm by Tian and Wells. The WDR algorithm involves a 2D-DWT followed by a progressive encoding of the bitplanes of wavelet coefficients. The encoding of each bitplane involves significance-map coding and refinement-bits coding. Significance-map coding encodes the significance of a wavelet coefficient against a given threshold. In WDR, the two-dimensional wavelet pyramid is first mapped into a one-dimensional array according to a scanning order. Each entry in the array is assigned an index. The difference between the indices of two significant coefficients is encoded using index coding. The sign of the significant coefficient is also encoded in significance-map coding. The output symbol stream of significance-map coding is entropy-encoded using arithmetic coding with a 4-symbol context, i.e.
+.BR "0", " 1", " +", " -".
+.LP
+Refinement-bits coding encodes the refining bits of significant coefficients detected before the current bitplane. The output symbol stream is entropy-encoded using arithmetic coding with a 2-symbol context, i.e.
+.BR "0 " and " 1".
+.LP
+.I image
+is the image component to be coded,
+.I mask
+is the mask for the image object (see below),
+.I buffer
+is the output bitstream following arithmetic coding (must be of
+.B QCCBITBUFFER_OUTPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3)),
+.I num_levels
+gives the number of levels of dyadic wavelet decomposition to perform,
+.I wavelet
+is the wavelet to use for decomposition,
+.I perceptual_weights
+is the optional perceptual weights to employ (see
+.BR QccWAVPerceptualWeights (3);
+use
+.B NULL
+for no perceptual weighting).
+.I target_bit_cnt
+is the bit budget as an integer.
+.LP
+.BR QccWAVwdrEncode()
+optionally supports the use of a shape-adaptive DWT (SA-DWT) rather than
+the usual DWT. That is, 
+.BR QccWAVwdrEncode()
+can call
+.BR QccWAVSubbandPyramidShapeAdaptiveDWT (3)
+as the wavelet transform rather than the usual
+.BR QccWAVSubbandPyramidDWT (3).
+The use of a SA-DWT is indicated by a non-NULL
+.IR mask ;
+if 
+.I mask
+is NULL, then the usual DWT is used.
+In the case of a SA-DWT,
+.I mask 
+gives the transparency mask which indicates which pixels of the image
+are non-transparent and thus have data that is to be transformed.
+Refer to 
+.BR QccWAVSubbandPyramidShapeAdaptiveDWT (3)
+for more details on the calculation of this SA-DWT.
+The wavelet transform is essentially
+the only component of the WDR algorithm
+that is affected by the shape-adaptive nature of the processing.
+That is, transparent regions in the image are effectively
+skipped over when the WDR algorithm is initialized;
+i.e., transparent coefficients are not added to the lists
+of coefficients when the lists are created.
+Thus, the transparent coefficients are not
+counted in the calculation of runlengths.
+Note that the concept of
+shape-adaptive coding arose in the recent MPEG-4 standard and was
+not considered in the original work by Tian and Wells.
+.SS Decoding
+.LP
+.B QccWAVwdrDecodeHeader()
+decodes the header information in the bitstream in the input
+.I buffer
+(which must be of
+.B QCCBITBUFFER_INPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3)).
+The header information is returned in
+.I num_levels
+(number of levels of wavelet decomposition),
+.I num_rows
+(vertical size of image),
+.I num_cols
+(horizontal size of image),
+.I image_mean
+(the mean value of the original image), and
+.I max_coefficient_bits
+(the number of bits used to represent the magnitude of the coefficient with largest absolute value).
+.LP
+.B QccWAVwdrDecode()
+decodes the bitstream
+.IR buffer ,
+producing the reconstructed image component,
+.IR image .
+The bitstream must already have had its header read by a prior call
+to
+.B QccWAVwdrDecodeHeader()
+(i.e., you call
+.B QccWAVwdrDecodeHeader() 
+first and then
+.BR QccWAVwdrDecode() ).
+If
+.I target_bit_cnt
+is
+.BR QCCENT_ANYNUMBITS ,
+then decoding stops when the end of the input bitstream is reached;
+otherwise, decoding stops when
+.I target_num_bits
+from the input bitstream have been decoded.
+.LP
+If a SA-DWT was used in WDR encoding, then the original transparency
+mask should be passed to 
+.BR QccWAVwdrDecode()
+as
+.IR mask .
+That is,
+.I mask
+should be the same transparency mask (in the spatial domain)
+that was passed to
+.BR QccWAVwdrEncode() .
+Note that
+.BR QccWAVwdrDecode()
+will transform this
+.I mask
+via a Lazy wavelet transform, and then pass the transformed mask
+to 
+.BR QccWAVSubbandPyramidInverseShapeAdaptiveDWT (3).
+If the usual DWT was used in encoding, then
+.I mask
+should be a NULL pointer.
+.SH "NOTES"
+The WDR algorithm as described originally by Tian and
+Wells does not employ perceptual weighting or
+shape-adaptive coding.
+.SH "SEE ALSO"
+.BR wdrencode (1),
+.BR wdrdecode (1),
+.BR imgdwt (1),
+.BR imgdist (1),
+.BR QccBitBuffer (3),
+.BR QccENTArithmeticEncode (3),
+.BR QccENTArithmeticDecode (3),
+.BR QccWAVPerceptualWeights (3),
+.BR QccWAVSubbandPyramid (3),
+.BR QccPackWAV (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+J. Tian and R. O. Wells, Jr.,
+"Embedded Image Coding Using Wavelet Difference Reduction", in
+.IR "Wavelet Image and Video Compression" , 
+P. N. Topiwala, Ed., pp. 289-302,
+Kluwer Academic Publishers, Norwell, MA, 1998.
+
+.SH AUTHOR
+Written by Yufei Yuan <yuanyufei@hotmail.com>
+
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

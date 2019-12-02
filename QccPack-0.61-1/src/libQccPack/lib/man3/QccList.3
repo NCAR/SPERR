@@ -1,0 +1,374 @@
+.TH QCCLIST 3 "QCCPACK" ""
+.SH NAME
+QccListInitialize,
+QccListFreeNode,
+QccListFree,
+QccListCreateNode,
+QccListCopyNode,
+QccListCompareNodes,
+QccListFindNode,
+QccListLength,
+QccListAppendNode,
+QccListInsertNode,
+QccListSortedInsertNode,
+QccListRemoveNode,
+QccListDeleteNode,
+QccListMoveNode,
+QccListSort,
+QccListConcatenate,
+QccListPrint
+\- linked-list routines
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "void QccListInitialize(QccList *" list );
+.br
+.sp
+.BI "void QccListFreeNode(QccListNode *" node );
+.br
+.sp
+.BI "void QccListFree(QccList *" list );
+.br
+.sp
+.BI "QccListNode *QccListCreateNode(int " value_size ", const void *" value );
+.br
+.sp
+.BI "QccListNode *QccListCopyNode(const QccListNode *" node );
+.br
+.sp
+.BI "int QccListCompareNodes(const QccListNode *" node1 ", const QccListNode *" node2 );
+.br
+.sp
+.BI "QccListNode *QccListFindNode(const QccList *" list ", void *" value );
+.br
+.sp
+.BI "int QccListLength(const QccList *" list );
+.br
+.sp
+.BI "int QccListAppendNode(QccList *" list ", QccListNode *" node );
+.br
+.sp
+.BI "int QccListInsertNode(QccList *" list ", QccListNode *" insertion_point ", QccListNode *" node );
+.br
+.sp
+.BI "int QccListSortedInsertNode(QccList *" list ", QccListNode *" node ", int " sort_direction ", int (*compare_values)(const void *" value1 ", const void *" value2 ));
+.br
+.sp
+.BI "int QccListRemoveNode(QccList *" list ", QccListNode *" node );
+.br
+.sp
+.BI "int QccListDeleteNode(QccList *" list ", QccListNode *" node );
+.br
+.sp
+.BI "int QccListMoveNode(QccList *" list1 ", QccList *" list2 ", QccListNode *" node );
+.br
+.sp
+.BI "int QccListSort(QccList *" list ", int " sort_direction ", int (*compare_values)(const void *" value1 ", const void *" value2 ));
+.br
+.sp
+.BI "int QccListConcatenate(QccList *" list1 ", QccList *" list2 );
+.br
+.sp
+.BI "int QccListPrint(QccList *" list ", void (*print_value)(const void *" value ));
+.SH DESCRIPTION
+The QccPack library routines provide data structures
+.BR QccListNode " and " QccList
+to represent a bi-directional linked list.
+.SH "DATA STRUCTURE"
+The
+.B QccList
+data structure is defined as:
+.RS
+.nf
+
+typedef struct
+{
+  QccListNode *start;
+  QccListNode *end;
+} QccList;
+
+.fi
+.RE
+The
+.B QccListNode
+data structure is defined as:
+.RS
+.nf
+
+typedef struct QccListNodeStruct
+{
+  int value_size;
+  void *value;
+  struct QccListNodeStruct *previous;
+  struct QccListNodeStruct *next;
+} QccListNode;
+
+.fi
+.RE
+.LP
+.SH ROUTINES
+.B QccListInitialize()
+should be called before any use of a
+.B QccList
+structure.
+.B QccListInitialize()
+initializes the pointers in
+.I list
+to
+.BR NULL .
+.LP
+.B QccListFreeNode()
+frees the space previously allocated via
+.BR "QccListCreateNode() "or " QccListCopyNode()".
+.LP
+.B QccListFree()
+frees
+.I list
+by calling
+.B QccListFreeNode()
+to free each of its nodes.
+.LP
+.B QccListCreateNode()
+creates a new node by allocating memory of size
+.IR "value_size " bytes.
+Starting from the address pointed by
+.IR value ,
+.IR "value_size " bytes
+are copied into the newly allocated memory space.
+.B QccListCreateNode()
+returns a pointer to the created node on success and
+.B NULL
+on failure. After the creation, the content of the new node is:
+.RS
+
+.IR value_size ": the size of the allocated memory space"
+.br
+.IR value ": pointer to the allocated memory space"
+.br
+.IR previous :
+.B NULL
+.br
+.IR next :
+.B NULL
+
+.RE
+.LP
+.B QccListCopyNode()
+creates a new node by calling
+.BR QccListCreateNode() ,
+and copies the content of
+.I node
+to the new node.
+.B QccListCopyNode()
+returns a pointer to the new node on success and
+.B NULL
+on failure. 
+.LP
+.B QccListCompareNodes()
+calls the ANSI C library function
+.BR memcmp (3)
+to compare the 
+.IR value -field
+contents of
+.I node1
+and
+.IR node2 .
+If the contents are identical, 0 is returned. Otherwise, a non-zero
+integer is returned.
+.LP
+.B QccListFindNode()
+calls
+.B QccListCompareNodes()
+to compare the content of the value pointed to by
+.I value
+with the 
+.I value
+field of each node in
+.IR list .
+If an identical node is found, the pointer to that node is returned; otherwise,
+.B NULL
+is returned.
+.B QccListFindNode()
+assumes that 
+.IR value 
+points to a range of memory consistent with the
+.I value
+field of a  
+.BR QccListNode
+structure.
+.LP
+.B QccListLength()
+returns the number of nodes contained in
+.IR list .
+.LP
+.B QccListAppendNode()
+appends
+.I node
+to the end of
+.IR list .
+If
+.I node
+is the first node in
+.IR list ,
+the
+.IR start " and " end
+pointers of
+.I list
+will be set to
+.IR node .
+0 is always returned.
+.LP
+.B QccListInsertNode()
+inserts
+.I node
+into
+.I list
+just before
+.IR insertion_point .
+The calling function must ensure that node
+.I insertion_point
+does indeed exist in
+.IR list .
+If
+.I insertion_point
+is the first node in
+.IR list ,
+the
+.I start
+pointer of
+.I list
+will be updated accordingly. 0 is always returned.
+.LP
+.B QccListSortedInsertNode()
+inserts
+.I node
+into
+.I list
+after a sorting operation;
+.I sort_direction
+can be
+.BR QCCLIST_SORTASCENDING " or " QCCLIST_SORTDECENDING .
+The sorting operation ensures that all nodes before
+.I node
+will be smaller (greater) than
+.IR node .
+The result is both determined by the sorting direction and the
+comparison function
+.IR compare_values .
+0 is returned on success; otherwise, 1 is returned.
+.LP
+.B QccListRemoveNode()
+removes
+.I node
+from
+.IR list .
+If
+.I node
+is the first (last) node in
+.IR list ,
+the
+.IR start " (" end ")"
+pointer will be updated. If
+.I node
+is the only node in
+.IR list ,
+both the
+.I start
+and
+.I end
+pointers of
+.I list
+will be reset to
+.BR NULL .
+0 is always returned.
+.LP
+.B QccListDeleteNode()
+deletes
+.I node
+from
+.I list
+by calling
+.B QccListRemoveNode()
+to remove the node and
+.B QccListFreeNode()
+to free the allocated memory space. 0 is returned on success; otherwise, 1 is
+returned.
+.LP
+.B QccListMoveNode()
+moves
+.I node
+from
+.I list1 
+to
+.IR list2 . 
+.I node
+is first removed from
+.I list1
+by a call to
+.BR QccListRemoveNode() ,
+then it is appended to the end of
+.I list2
+by a call to
+.BR QccListAppendNode() .
+0 is returned on success; otherwise, 1 is returned.
+.LP
+.B QccListSort()
+recursively removes a node from
+.IR list 
+by calling
+.BR QccListRemoveNode() 
+and inserts it back to the list by calling
+.BR QccListSortedInsertNode() .
+0 is returned on success; otherwise, 1 is returned.
+.LP
+.B QccListConcatenate()
+appends
+.I list2 
+to the end of
+.IR list1 .
+Both the
+.I start
+and
+.I end
+pointers of
+.I list2
+are then reset to
+.BR NULL .
+0 is always returned.
+.LP
+.B QccListPrint()
+prints the content of each node in
+.I list
+to
+.IR stdout
+by calling function
+.IR print_value .
+0 is always returned.
+.SH "SEE ALSO"
+.BR QccPack (3),
+.BR memcmp (3)
+.SH NOTES
+Except as noted above,
+these linked lists routines accept 
+.B NULL
+list or node pointers,
+in which case
+these routines return immediately without generating an error or performing
+any operations.
+.SH AUTHOR
+This man page was written by Yufei Yuan <yuanyufei@hotmail.com>.
+
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

@@ -1,0 +1,215 @@
+.TH QCCWAVLIFTINGSCHEME 3 "QCCPACK" ""
+.SH NAME
+QccWAVLiftingScheme \- 
+data structure 
+.B QccWAVLiftingScheme
+and corresponding
+.B LFT
+file format for wavelet-based analysis/synthesis using a
+lifting implementation
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVLiftingSchemeInitialize(QccWAVLiftingScheme *" lifting_scheme );
+.br
+.BI "int QccWAVLiftingSchemePrint(const QccWAVLiftingScheme *" lifting_scheme );
+.br
+.BI "int QccWAVLiftingSchemeBiorthogonal(const QccWAVLiftingScheme *" lifting_scheme );
+.br
+.BI "int QccWAVLiftingSchemeInteger(const QccWAVLiftingScheme *" lifting_scheme );
+.SH DESCRIPTION
+QccPack provides data structure
+.B QccWAVLiftingScheme
+for representing a lifting scheme for a two-band wavelet-based
+analysis and synthesis using lifting (as opposed to filtering; see
+.BR QccWAVFilterBank (3) ).
+This lifting-scheme structure can be read from and written to 
+.BR LFT -format
+files, or a
+.B QccWAVLiftingScheme
+structure can be used without file input or output.
+.LP
+The only component of the lifting-scheme structure is an integer
+code indicating which lifting scheme to employ.
+This is due to the fact that the lifting implementations of
+wavelet analysis and synthesis are "hard-coded" into the QccPack library
+for purposes of execution speed and ease of implementation
+(this is opposed to the situation for filter-based analysis and synthesis
+which employ generic filter routines and read coefficients from files).
+As a consequence, only a limited number (see below) of wavelets
+are current supported, and this list cannot be extended by the user
+(without modifying the QccPack source code, or course).
+.SH "DATA STRUCTURE"
+The
+.B QccWAVLiftingScheme
+data structure is defined as:
+.RS
+.nf
+
+typedef struct
+{
+  QccString filename;
+  QccString magic_num;
+  int major_version;
+  int minor_version;
+  int scheme;
+} QccWAVLiftingScheme;
+.fi
+.RE
+.LP
+The fields of
+.B QccWAVLiftingScheme
+are as follows:
+.TP
+.I filename
+The name of the file.
+.TP
+.IR magic_num ", " major_version ", " minor_version
+The magic number and version of the file.
+.TP
+.IR scheme
+The integer code denoting which lifting scheme to employ.
+The current possibilities are limited to
+.BR QCCWAVLIFTINGSCHEME_LWT
+(Lazy Wavelet transform),
+.BR QCCWAVLIFTINGSCHEME_Daubechies4
+(Daubechies length-4 orthonormal wavelet),
+.BR QCCWAVLIFTINGSCHEME_CohenDaubechiesFeauveau9_7
+(Cohen-Daubechies-Feauveau length 9-7 biorothogonal wavelet),
+.BR QCCWAVLIFTINGSCHEME_CohenDaubechiesFeauveau5_3
+(Cohen-Daubechies-Feauveau length 5-3 biorthogonal wavelet,
+which is also known as "linear lifting"), 
+.BR QCCWAVLIFTINGSCHEME_IntLWT
+(integer-valued Lazy Wavelet transform),
+.BR QCCWAVLIFTINGSCHEME_IntCohenDaubechiesFeauveau9_7
+(integer-valued Cohen-Daubechies-Feauveau length 9-7 biorothogonal wavelet),
+and
+.BR QCCWAVLIFTINGSCHEME_IntCohenDaubechiesFeauveau5_3
+(integer-valued Cohen-Daubechies-Feauveau length 5-3 biorothogonal wavelet).
+.SH "FILE FORMAT"
+For reading and writing structures
+of type
+.BR QccWAVLiftingScheme ,
+QccPack provides the
+.B LFT
+file format.
+This file format starts with an ASCII header followed by
+binary data.
+The ASCII header consists of magic-number/revision
+information
+followed by any amount of white space
+(space, `\\t' (tab), `\\n' (newline), `\\r' (return)) and/or
+comments lines (lines starting with `#').  
+The ASCII integer corresponding to
+.I scheme is given following the header.
+.LP
+The
+.B LFT
+file format consists of the following information:
+.RS
+.sp
+.BI LFT X.X
+.br
+.I "<white space>"
+.br
+.I scheme
+.br
+.sp
+.RE
+where
+.B LFT
+is the magic number,
+.I X.X
+is the version number,
+.I "<white space>"
+is white space and/or 
+comment lines, 
+and
+.I scheme
+is the lifting scheme.
+.SH "ROUTINES"
+.B QccWAVLiftingSchemeInitialize()
+should be called before any use of a
+.B QccWAVLiftingScheme
+structure.
+.B QccWAVLiftingSchemeInitialize()
+initializes the fields of
+.I lifting_scheme
+to the following values:
+.RS
+
+.IR filename :
+.B NULL
+string
+.br
+.IR magic_num :
+.B QCCLIFTINGSCHEME_MAGICNUM
+.br
+.IR major_version ", " minor_version :
+initialized to output of 
+.BR QccGetQccPackVersion (3)
+.br
+.IR scheme :
+-1 (undefined)
+.RE
+.LP
+.B QccWAVLiftingSchemePrint()
+prints the contents of
+.I lifting_scheme
+to stdout.
+.LP
+.BR QccWAVLiftingSchemeBiorthogonal()
+returns 1 if
+.I lifting_scheme 
+is biorthogonal, 0 otherwise.
+.LP
+.BR QccWAVLiftingSchemeInteger()
+returns 1 if
+.I lifting_scheme 
+is integer-valued, 0 otherwise.
+.SH "FILES"
+QccPack comes with the following
+.BR LFT-
+format files for specifying certain lifting wavelets.
+The
+.BR LFT
+files and their corresponding wavelets are
+.RS
+
+LWT.lft - Lazy Wavelet transform
+.br
+CohenDaubechiesFeauveau.5-3.lft - length 9/5 biorthogonal wavelet
+.br
+CohenDaubechiesFeauveau.9-7.lft - length 9/7 biorthogonal wavelet
+.br
+Daubechies.4.lft - length 4 orthogonal wavelet
+.br
+LWT.int.lft - integer-valued Lazy Wavelet transform
+.br
+CohenDaubechiesFeauveau.9-7.int.lft - integer-valued length 9/7
+biorthogonal wavelet
+.br
+CohenDaubechiesFeauveau.5-3.int.lft - integer-valued length 5/3
+biorthogonal wavelet
+.RE
+.SH "RETURN VALUE"
+These routines return 0 on success, and 1 on failure.
+.SH "SEE ALSO"
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

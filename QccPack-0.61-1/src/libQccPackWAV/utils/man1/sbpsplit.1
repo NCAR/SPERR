@@ -1,0 +1,49 @@
+.TH SBPSPLIT 1 "QCCPACK" ""
+.SH NAME
+sbpsplit \- split a multi-level subband pyramid into separate files
+.SH SYNOPSIS
+.B sbpsplit
+.I subband\_pyramid
+.IR icpfiles "..."
+.SH DESCRIPTION
+.LP
+.B sbpsplit
+reads the multi-level subband pyramid
+.I subband\_pyramid
+.RB ( SBP 
+format with
+.I L
+>= 1 in the header).
+Each band contained in 
+.I subband\_pyramid
+is then output to a series of output
+.BR ICP -format
+files.
+The low-resolution baseband image is output first;
+the subsequent high-resolution subbands are output in order
+horizontal, vertical, and diagonal, starting at level 
+.I L
+of the pyramid (low resolution, low frequency)
+and ending with level 1 (high resolution, high frequency).
+.SH "SEE ALSO"
+.BR sbpassemble (1),
+.BR imgdwt (1),
+.BR imgidwt (1),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

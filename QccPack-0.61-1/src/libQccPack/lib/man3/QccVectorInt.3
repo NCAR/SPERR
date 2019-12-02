@@ -1,0 +1,329 @@
+.TH QCCVECTORINT 3 "QCCPACK" ""
+.SH NAME
+QccVectorIntAlloc,
+QccVectorIntFree,
+QccVectorIntZero,
+QccVectorIntResize,
+QccVectorIntMean,
+QccVectorIntVariance,
+QccVectorIntAdd,
+QccVectorIntSubtract,
+QccVectorIntScalarMult,
+QccVectorIntCopy,
+QccVectorIntNorm,
+QccVectorIntDotProduct,
+QccVectorIntSquareDistance,
+QccVectorIntSumComponents,
+QccVectorIntMaxValue,
+QccVectorIntMinValue,
+QccVectorIntPrint
+\- miscellaneous integer-vector routines
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "QccVectorInt QccVectorIntAlloc(int " vector_dimension );
+.br
+.sp
+.BI "void QccVectorIntFree(QccVectorInt " vector );
+.br
+.sp
+.BI "int QccVectorIntZero(QccVectorInt " vector ", int " vector_dimension );
+.br
+.sp
+.BI "QccVectorInt QccVectorIntResize(QccVectorInt " vector ", int " vector_dimension ", int " new_vector_dimension );
+.br
+.sp
+.BI "double QccVectorIntMean(const QccVectorInt " vector ", int " vector_dimension );
+.br
+.sp
+.BI "double QccVectorIntVariance(const QccVectorInt " vector ", int " vector_dimension );
+.br
+.sp
+.BI "int QccVectorIntAdd(QccVectorInt " vector1 ", const QccVectorInt " vector2 ", int " vector_dimension );
+.br
+.sp
+.BI "int QccVectorIntSubtract(QccVectorInt " vector1 ", const QccVectorInt " vector2 ", int " vector_dimension );
+.br
+.sp
+.BI "int QccVectorIntScalarMult(QccVectorInt " vector ", int " s ", int " vector_dimension );
+.br
+.sp
+.BI "int QccVectorIntCopy(QccVectorInt " vector1 ", const QccVectorInt " vector2 ", int " vector_dimension );
+.br
+.sp
+.BI "double QccVectorIntNorm(const QccVectorInt " vector ", int " vector_dimension );
+.br
+.sp
+.BI "int QccVectorIntDotProduct(const QccVectorInt " vector1 ", const QccVectorInt " vector2 ", int "vector_dimension );
+.br
+.sp
+.BI "int QccVectorIntSquareDistance(const QccVectorInt " vector1 ", const QccVectorInt " vector2 ", int " vector_dimension );
+.br
+.sp
+.BI "int QccVectorIntSumComponents(const QccVectorInt " vector ", int " vector_dimension );
+.br
+.sp
+.BI "int QccVectorIntMaxValue(const QccVectorInt " vector ", int " vector_dimension ", int *" winner );
+.br
+.sp
+.BI "int QccVectorIntMinValue(const QccVectorInt " vector ", int " vector_dimension ", int *" winner );
+.br
+.sp
+.BI "int QccVectorIntPrint(const QccVectorInt " vector ", int " vector_dimension );
+.SH DESCRIPTION
+The QccPack library routines use a one-dimensional
+integer-vector type defined as follows:
+.RS
+.nf
+
+typedef int *QccVectorInt;
+.fi
+.RE
+.LP
+.B QccVectorIntAlloc()
+allocates space for a 
+.B QccVectorInt
+of dimension
+.IR vector_dimension .
+.B QccVectorIntAlloc()
+returns a
+.B NULL
+pointer if the allocation fails.
+.LP
+.B QccVectorIntFree()
+frees the space previously allocated via
+.B QccVectorIntAlloc()
+.LP
+.B QccVectorIntZero()
+makes each component of
+.IR vector
+zero.
+.B QccVectorIntZero()
+returns 0 on success, 1 on failure.
+.LP
+.B QccVectorIntResize()
+changes the dimension of
+.I vector
+from
+.I vector_dimension 
+to
+.I new_vector_dimension 
+by calling
+.BR realloc (3).
+Upon success, the new vector is returned; a
+.B NULL
+pointer is returned if 
+.BR realloc (3)
+fails. If
+.I vector
+is
+.BR NULL ,
+.BR QccVectorIntAlloc()
+is called. In any case, all elements added to
+.I vector
+are zero.
+.LP
+.B QccVectorIntMean()
+returns the mean value of all the components
+of
+.IR vector .
+In the case that
+.I vector
+is
+.BR NULL ,
+.B QccVectorIntMean()
+returns 0.0.
+.LP
+.B QccVectorIntVariance()
+returns the variance of the components
+of
+.IR vector .
+In the case that
+.I vector
+is
+.BR NULL ,
+.B QccVectorIntVariance()
+returns 0.0.
+.LP
+.B QccVectorIntSum()
+returns the sum of all the components of
+.IR vector .
+In the case that
+.I vector
+is
+.BR NULL ,
+.B QccVectorIntSum()
+returns 0.
+.LP
+.B QccVectorIntAdd()
+adds each component of
+.I vector1
+to the corresponding component of
+.I vector2
+(vector addition).
+The resulting integer vector is returned in
+.IR vector1 .
+Both
+.I vector1
+and
+.I vector2
+must have the same vector dimension,
+.IR vector_dimension .
+.B QccVectorIntAdd()
+returns 0 on success, 1 on failure.
+.LP
+.B QccVectorIntSubtract()
+subtracts each component of 
+.I vector2
+from the corresponding component of
+.IR vector1 .
+The resulting integer vector is returned in
+.IR vector1 .
+Both
+.I vector1
+and
+.I vector2
+must have the same vector dimension,
+.IR vector_dimension .
+.B QccVectorIntSubtract()
+returns 0 on success, 1 on failure.
+.LP
+.B QccVectorIntScalarMult()
+multiplies
+.I vector
+by the scalar
+.IR s ;
+that is, each component of
+.I vector 
+is multiplied by the
+.B int
+.IR s ,
+and the resulting integer vector is returned in
+.IR vector .
+.B QccVectorIntScalarMult()
+returns 0 on success,
+1 on failure.
+.LP
+.B QccVectorIntCopy()
+copies
+.I vector2
+to
+.IR vector1 .
+.B QccVectorIntCopy()
+returns 0 on success,
+1 on failure.
+.LP
+.B QccVectorIntNorm()
+calculates the norm (square root of dot product) of
+.IR vector .
+If 
+.I vector
+is
+.BR NULL ,
+0.0 is returned.
+.LP
+.B QccVectorIntDotProduct()
+calculates and returns the dot product of integer vectors
+.I vector1
+and
+.IR vector2 .
+Both
+.I vector1
+and
+.I vector2
+must have the same vector dimension,
+.IR vector_dimension .
+If either
+.I vector1
+or
+.I vector2
+is
+.BR NULL ,
+0 is returned.
+.LP
+.B QccVectorIntSquareDistance()
+calculates the squared Euclidean distance between integer vectors
+.I vector1
+and
+.IR vector2 .
+That is, 
+.I vector2
+is subtracted from
+.I vector1
+and the dot product of the difference vector is returned.
+Both
+.I vector1
+and
+.I vector2
+must have the same vector dimension,
+.IR vector_dimension .
+If either
+.I vector1
+or
+.I vector2
+is
+.BR NULL ,
+0 is returned.
+.LP
+.B QccVectorIntSumComponents()
+adds all the components of 
+.I vector
+together and returns the sum.
+.LP
+.B QccVectorIntMaxValue()
+returns the value of the largest component of
+.IR vector .
+If
+.I winner
+is not a 
+.B NULL
+pointer, the index (0 through
+.I vector_dimension
+- 1) of the maximum component is returned in the
+.B int
+pointed to by 
+.IR winner .
+.LP
+.B QccVectorIntMinValue()
+returns the value of the smallest component of
+.IR vector .
+If
+.I winner
+is not a 
+.B NULL
+pointer, the index (0 through
+.I vector_dimension
+- 1) of the minimum component is returned in the
+.B int
+pointed to by 
+.IR winner .
+.LP
+.B QccVectorIntPrint()
+prints the components of
+.I vector
+to stdout.
+.SH "SEE ALSO"
+.BR QccPack (3)
+.SH NOTES
+Except as noted above,
+these integer-vector routines accept 
+.B NULL
+integer-vector pointers,
+in which case
+these routines return immediately without generating an error or performing
+any operations.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

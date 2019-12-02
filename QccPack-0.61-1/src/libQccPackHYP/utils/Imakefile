@@ -1,0 +1,17 @@
+CURRENT_DIR = $(QCCPACK)/src/libQccPackHYP/utils
+
+EXECUTABLES = \@@\
+	rawtoicp icptoraw \@@\
+	rawtoicb icbtoraw \@@\
+	rawdist2d rawdist3d \@@\
+	icbsam \@@\
+	icbtocolor \@@\
+	klt_train \@@\
+	icbklt icbiklt
+
+SHELL_SCRIPTS = 
+MAN_SUFFIX = 1
+
+QccDir()
+
+QccUtils()

@@ -1,0 +1,83 @@
+.TH ICPTORAW 1 "QCCPACK" ""
+.SH NAME
+icptoraw \- converts image component to raw file
+.SH SYNOPSIS
+.B icptoraw
+.RB "[\|" \-bpp
+.IB bits_per_pixel "\|]"
+.RB "[\|" \-bend "\|]"
+.RB "[\|" \-lend "\|]"
+.I icpfile
+.I rawfile
+.SH OPTIONS
+.TP
+.BI \-bpp
+Indicates the number of bits per each pixel (sample) value.
+Default is 16.
+.TP
+.BI \-bend
+Indicates raw file contains integers stored in
+big-endian format. This is the default.
+.TP
+.BI \-lend
+Indicates raw file contains integers stored in
+little-endian format.
+.SH DESCRIPTION
+.LP
+.B icptoraw
+converts an image component
+.RB ( ICP -format)
+into a raw-format file consisting of
+a 2D array of integer pixels.
+.LP
+The option
+.BR \-bpp
+specifies the number of bits that each pixel value contains.
+.IR bits_per_pixel
+must be between 1 and 32. If
+.IR bits_per_pixel
+is <= 8, then each sample is stored in
+.IR rawfile
+as the least significant
+bits in a single byte; otherwise, if
+.IR bits_per_pixel
+is <= 16, then each sample is stored in
+.IR rawfile
+as the least significant bits of two consecutive bytes (the default);
+otherwise, if
+.IR bits_per_pixel
+is <= 32, then each sample is stored in
+.IR rawfile
+as the least significant bits of four consecutive bytes.
+.BR \-bend
+and
+.BR \-lend
+indicate whether the raw file is to be written in
+big-endian or little-endian
+format, respectively.
+If neither is specified,
+big-endian is assumed.
+.LP
+.I rawfile
+is stored in row-major order.
+.SH "SEE ALSO"
+.BR rawtoicp (1),
+.BR QccHYPRaw (3),
+.BR QccPackHYP (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

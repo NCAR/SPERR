@@ -1,0 +1,67 @@
+.TH ASCIITODAT 1 "QCCPACK" ""
+.SH NAME
+asciitodat \- convert file from ASCII to DAT format
+.SH SYNOPSIS
+.B asciitodat
+.RB "[\|" \-d
+.IR vector_dimension "\|]"
+.I asciifile
+.I datfile
+.SH OPTIONS
+.TP
+.BI "\-d " vector_dimension
+Integer.  Vector dimension of output DAT file. Default = 1.
+.SH DESCRIPTION
+.LP
+.B asciitodat
+reads floating-point numbers in ASCII from
+.IR asciifile ,
+converts them to binary form,
+and then writes them to
+.IR datfile .
+The binary numbers in 
+.I datfile
+are stored as 4 bytes with the most-significant byte
+stored first.
+A header is added to
+.I datfile
+so that
+.I datfile
+is a
+.BR DAT -format
+file specifying 
+.I N
+vectors,
+each of which have
+.I vector_dimension
+components.
+Here,
+.I N
+is 
+.IR "N " =
+.BI floor( M
+/
+.IB vector_dimension )
+where
+.I M
+is the total number of floating-point values in 
+.IR asciifile .
+.SH "SEE ALSO"
+.BR dattoascii (3),
+.BR QccDataset (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

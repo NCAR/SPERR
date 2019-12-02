@@ -1,0 +1,153 @@
+.TH ICBDIST 1 "QCCPACK" ""
+.SH NAME
+icbdist \- calculate the distortion between two image cubes
+.SH SYNOPSIS
+.B icbdist
+.RB "[\|" \-vo "\|]"
+.RB "[\|" \-mse "\|]"
+.RB "[\|" \-snr "\|]"
+.RB "[\|" \-mae "\|]"
+.RB "[\|" \-m
+.IR  mask "\|]"
+.I icbfile1
+.I icbfile2
+.SH OPTIONS
+.TP
+.B \-vo
+Output only the value of the distortion (terse output).
+.TP
+.B \-mse
+Express the distortion in terms of MSE.
+.TP
+.B \-snr
+Express the distortion in terms of SNR.
+.TP
+.B \-mae
+Express the distortion in terms of MAE.
+.TP
+.BI \-m " mask"
+String. Name of file containing the transparency mask for
+shape-adaptive distortion.
+.SH DESCRIPTION
+.LP
+.B icbdist
+prints
+the mean square error (MSE), signal-to-noise ratio (SNR),
+or maximum absolute error (MAE)
+between two image-cube files,
+.I icbfile1
+and
+.IR icbfile2 ,
+to stdout.
+.IR icbfile1
+and
+.IR icbfile2
+are both ICB-format files.
+.LP
+The options
+.BR \-mse ,
+.BR \-snr ,
+and
+.BR \-mae
+indicate in which form the distortion should be expressed.
+If none of these
+options are specified, 
+.B icbdist
+prints the distortion in all forms.
+.LP
+If the option
+.B \-vo
+is specified,
+then 
+.B icbdist
+prints a terse output, consisting of only the value of the distortion,
+to stdout.  One of the options
+.BR \-mse ,
+.BR \-snr ,
+or
+.BR \-mae
+must be specified in this case.
+.LP
+For the calculation of SNR,
+.B icbfile1
+is considered to be the original signal; 
+.B icbdist
+thus finds the variance of
+.B icbfile1
+for use in the SNR calculation.
+.LP
+The distortion calculation can be made "shape-adaptive"
+by specification of the
+.B \-m 
+option, in which case
+.I mask
+gives the name of an image-cube file (ICB format) that indicates the
+transparency mask for the image.
+Withing
+.IR mask ,
+values less than or equal to
+.BR QCCALPHA_TRANSPARENT
+indicate transparency (see
+.BR QccAlpha (3)).
+This transparency mask indicates which regions in
+.I icbfile1
+and 
+.I icbfile2
+are to be taken into consideration in the distortion calculation---voxels
+that are marked as transparent by
+.I mask
+are ignored and are not included in either the
+calculation of voxel differences or in the total count of voxels as used
+in the averaging of the differences.
+.I mask
+must be the same size as both
+.I icbfile1
+and
+.IR icbfile2 .
+.SH "NOTES"
+For 2D images,
+Jain defines the SNR in terms of the
+log of the ratio of the signal variance to the MSE. However, Clarke
+indicates that, historically, the SNR has not been defined consistently,
+and describes slightly different variants, including the
+variance-based definition used by Jain, as well as the log of the ratio of
+the mean squared signal to the MSE, a definition popular with some
+other authors. Clarke cautions that one must be sure of the definition
+of the measure when comparing SNRs
+as the various definitions yield different values.
+
+.B icbdist
+is an obvious extension of
+Jain's definition of a variance-based SNR from 2D images to
+3D image cubes.
+
+.SH "SEE ALSO"
+.BR QccIMGImageCubeMSE (3),
+.BR QccIMGImageCubeMAE (3),
+.BR QccIMGImageCubeShapeAdaptiveMSE (3),
+.BR QccIMGImageCubeShapeAdaptiveMAE (3),
+.BR QccIMGImageCube (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+Anil K. Jain, "Fundamentals of Digital Image Processing."
+Englewood Cliffs, NJ: Prentice Hall, 1989.  (See Chapter 3).
+
+Roger J. Clarke, "Digital Compression of Still Images and Video."
+London: Academic Press Ltd., 1995.  (see Section 1.2.7).
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

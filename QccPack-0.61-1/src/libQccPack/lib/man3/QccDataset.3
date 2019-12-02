@@ -1,0 +1,358 @@
+.TH QCCDATASET 3 "QCCPACK" ""
+.SH NAME
+QccDataset \- generic vector data structure
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccDatasetInitialize(QccDataset *" dataset );
+.br
+.BI "int QccDatasetAlloc(QccDataset *" dataset );
+.br
+.BI "void QccDatasetFree(QccDataset *" dataset );
+.br
+.BI "int QccDatasetGetBlockSize(const QccDataset *" dataset );
+.br
+.BI "int QccDatasetPrint(const QccDataset *" dataset );
+.br
+.BI "int QccDatasetCopy(QccDataset *" dataset1 ", const QccDataset *" dataset2 );
+.SH DESCRIPTION
+QccPack provides data structure
+.B QccDataset
+for representing a generic two-dimensional dataset composed of a list of
+vectors of the same vector dimension.
+This dataset structure can be read from and written to 
+.BR DAT -format
+files, or a
+.B QccDataset
+structure can be used without file input or output.
+.LP
+The main component of a
+.B QccDataset
+structure is an array of vectors.
+For file input and output,
+this array of vectors is the current block of vectors
+being written to or read from
+the file.
+That is,
+access to
+.BR DAT -format
+files is block-based, with a block of vectors being written or read
+at once.
+Optionally, the block size can be set to be the same as the file size,
+so that all vectors in the dataset
+are accessed simultaneously.
+.B QccDataset
+datasets that do not involve file access typically hold all vectors of
+the dataset in the vector array.
+.SH "DATA STRUCTURE"
+The
+.B QccDataset
+data structure is defined as:
+.RS
+.nf
+
+typedef struct
+{
+  QccString       filename;
+  FILE            *fileptr;
+  QccString       magic_num;
+  int             major_version;
+  int             minor_version;
+  int             num_vectors;
+  int             vector_dimension;
+  int             access_block_size;
+  int             num_blocks_accessed;
+  double          min_val;
+  double          max_val;
+  QccMatrix  vectors;
+} QccDataset;
+.fi
+.RE
+.LP
+The fields of
+.B QccDataset
+are as follows:
+.TP
+.I filename
+For datasets associated with a file, this is the name of the file.
+.TP
+.I fileptr
+For datasets associated with an open file, this is the
+.B FILE
+pointer.
+.TP
+.IR magic_num ", " major_version ", " minor_version
+For datasets associated with a file, these are
+the magic number and version of the file.
+.TP
+.IR num_vectors
+The total number of vectors contained in the dataset.
+.TP
+.IR vector_dimension
+The vector dimension of the vectors in the dataset.
+.TP
+.I access_block_size
+For datasets associated with a file, this is the number of vectors that
+will be read or written at a time; i.e., the block size for
+block-based reading and writing.
+.TP
+.I num_blocks_accessed
+For datasets associated with a file, this is the number of blocks of vectors
+that have already been read or written.
+.TP
+.IR min_val ", " max_val
+These two values give the smallest and largest vector components, respectively,
+contained in the dataset.
+.TP
+.I vectors
+The current block of vectors from the dataset.  The array contains
+.I access_block_size 
+vectors each having dimension
+.IR vector_dimension .
+.SH "FILE FORMAT"
+For reading and writing structures
+of type
+.BR QccDataset ,
+QccPack provides the
+.B DAT
+file format.
+This file format starts with an ASCII header followed by
+binary data.
+The ASCII header consists of magic-number/revision
+information
+followed by any amount of white space
+(space, `\\t' (tab), `\\n' (newline), `\\r' (carriage return)) and/or
+comments lines (lines starting with `#').  Following this white space,
+additional ASCII
+header information is given, separated by blanks and newlines.
+Binary data follows this ASCII header information.
+Note:  one (and only one) newline 
+.B must
+immediately follow the last component of ASCII header information before the
+start of the binary data.
+.LP
+The
+.B DAT
+file format consists of the following information:
+.RS
+.sp
+.BI DAT X.X
+.br
+.I "<white space>"
+.br
+.I "N dim"
+.br
+.I "min max"
+.br
+.IR "v11 v12 v13" \|.\|.\|.
+.br
+.IR "v21 v22 v23" \|.\|.\|.
+.br
+\|.
+.br
+\|.
+.br
+\|.
+.br
+.sp
+.RE
+where
+.B DAT
+is the magic number,
+.I X.X
+is the version number,
+.I "<white space>"
+is white space and/or 
+comment lines, 
+.I N 
+is the number of vectors the file contains,     
+.I dim 
+is the number of components each vector contains (vector     
+dimension), 
+.I min 
+and 
+.I max 
+give the smallest and largest vector components, respectively,
+in the file,
+and 
+.I vij 
+is the jth component of the ith vector.
+.I N 
+and 
+.I dim 
+are integers. 
+.IR vij ", " min ", and " max 
+are doubles.
+.IR N ", " dim ", " min ", and " 
+.I max
+are stored in ASCII, 
+.I vij 
+as binary (4 bytes, MSB first,
+see 
+.BR QccFileWriteDouble (3)).
+No white space may exist between the 
+.IR vij "'s."
+.SH "ROUTINES"
+.B QccDatasetInitialize()
+should be called before any use of a
+.B QccDataset
+structure.
+.B QccDatasetInitialize()
+initializes the fields of
+.I dataset
+to the following values:
+.RS
+
+.IR filename :
+.B NULL
+string
+.br
+.IR magic_num :
+.B QCCDATASET_MAGICNUM
+.br
+.IR major_version ", " minor_version :
+initialized to output of 
+.BR QccGetQccPackVersion (3)
+.br
+.IR num_vectors :
+0
+.br
+.IR vector_dimension :
+0
+.br
+.IR access_block_size :
+.B QCCDATASET_ACCESSWHOLEFILE
+.br
+.IR num_blocks_accessed :
+0
+.br
+.IR min_val ", " max_val :
+0
+.br
+.IR vectors :
+.B NULL
+.RE
+.LP
+.B QccDatasetAlloc()
+allocates storage space for the
+.I vectors 
+array of
+.IR dataset .
+If 
+.I vectors
+is not
+.BR NULL ,
+.B QccDatasetAlloc()
+returns immediately without changing the state of any memory allocation.
+Otherwise,
+the 
+.I vectors
+array is allocated.
+The fields
+.IR access_block_size ,
+.IR num_vectors ,
+and
+.I vector_dimension
+must be defined prior to calling
+.BR QccDatasetAlloc() .
+If
+.I access_block_size
+equals
+.BR QCCDATASET_ACCESSWHOLEFILE ,
+then space for
+.I num_vectors
+vectors is allocated;
+otherwise, space for
+.I access_block_size
+vectors is allocated.
+.LP
+.B QccDatasetFree()
+frees the
+.I vectors
+array previously allocated by
+.B QccDatasetAlloc() .
+.LP
+.B QccDatasetGetBlockSize()
+returns the block size of the
+.I vectors
+array of
+.IR dataset .
+If
+.I access_block_size
+is
+.BR QCCDATASET_ACCESSWHOLEFILE ,
+.I num_vectors
+is returned; otherwise,
+.I access_block_size
+is returned.
+.LP
+.B QccDatasetPrint()
+prints the contents of
+.I dataset
+to stdout.
+.LP
+.B QccDatasetCopy()
+copies
+.I dataset2
+to
+.IR dataset1 .
+If
+.I dataset1
+has not been allocated prior to calling
+.B QccDatasetCopy() 
+(as is evidenced by a
+.B NULL
+.IR dataset1 -> vectors
+pointer), then
+.B QccDatasetAlloc()
+is called to allocate space for
+.I dataset1
+with the same 
+.I block\_size
+and
+.I vector\_dimension
+as
+.IR dataset2 .
+Otherwise
+.RB (non- NULL
+.IR dataset1 -> vectors
+pointer), it is assumed that sufficient space as already been
+allocated to
+.IR dataset1 .
+In either case,
+.B QccDatasetCopy()
+copies the
+.I vectors
+array of 
+.I dataset2
+to the 
+.I vectors
+array of 
+.IR dataset1 
+via
+.BR QccMatrixCopy (3).
+.SH "RETURN VALUE"
+Except for
+.BR QccDatasetGetBlockSize() ,
+each of these routines return 0 upon successful completion, 1 on error.
+.SH "SEE ALSO"
+.BR QccGetQccPackVersion (3),
+.BR QccDatasetRead (3),
+.BR QccDatasetWrite (3),
+.BR QccMatrixCopy (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

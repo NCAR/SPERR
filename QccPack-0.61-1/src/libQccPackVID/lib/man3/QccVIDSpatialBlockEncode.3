@@ -1,0 +1,282 @@
+.TH QCCVIDSpatialBLOCKENCODE 1 "QCCPACK" ""
+.SH NAME
+QccVIDSpatialBlockEncode, QccVIDSpatialBlockDecode \-
+encode/decode an image sequence using the spatial-block algorithm
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccVIDSpatialBlockEncode(QccIMGImageSequence *" image_sequence ", const QccFilter *" filter1 ", const QccFilter *" filter2 ", const QccFilter *" filter3 ", int " subpixel_accuracy ", QccBitBuffer *" output_buffer ", int " blocksize ", int " num_levels ", int " target_bit_cnt ", const QccWAVWavelet *" wavelet ", const QccString " mv_filename ", int " read_motion_vectors ", int " quiet );
+.sp
+.BI "int QccVIDSpatialBlockDecodeHeader(QccBitBuffer *" input_buffer ", int *" num_rows ", int *" num_cols ", int *" start_frame_num ", int *" end_frame_num ", int *" blocksize ", int *" num_levels ", int *" target_bit_cnt );
+.sp
+.BI "int QccVIDSpatialBlockDecode(QccIMGImageSequence *" image_sequence ", const QccFilter *" filter1 ", const QccFilter *" filter2 ", const QccFilter *" filter3 ", int " subpixel_accuracy ", QccBitBuffer *" input_buffer ", int " target_bit_cnt ", int " blocksize ", int " num_levels ", const QccWAVWavelet *" wavelet ", const QccString " mv_filename ", int " quiet );
+.SH DESCRIPTION
+.SS Encoding
+.LP
+.B QccVIDSpatialBlockEncode()
+encodes an
+.I image_sequence
+using the spatial-block video-coding algorithm.
+Essentially, the spatial-block algorithm involves traditional
+block-based motion estimation and motion compensation in the spatial-domain
+followed by a wavelet-based embedded coding of the motion-compensation
+resdiual; see "ALGORITHM" below for greater detail.
+.LP
+.I image_sequence
+is the image sequence to be coded and
+should indicate a collection of grayscale images of the same size stored
+as separate, numbered files; the
+filename indicated by
+.I image_sequence
+must contain one 
+.BR printf (3)-style
+numerical descriptor which will then be filled in the current
+frame number (e.g., football.%03d.pgm will become
+football.000.pgm, football.001.pgm, etc.; see
+.BR QccPackIMG (3)).
+Each frame of
+.I image_sequence
+must have a size which is an integer multiple of
+.I blocksize
+both horizontally and vertically.
+Both the
+.I start_frame_num
+and
+.I end_frame_num
+fields of
+.I image_sequence
+should indicate the desired starting and stopping frames, respectively,
+for the encoding;
+these should either be set manually or via a call to
+.BR QccIMGImageSequenceFindFrameNums (3)
+prior to calling
+.BR QccVIDSpatialBlockEncode() .
+.LP
+.IR filter1 ,
+.IR filter2 ,
+and
+.IR filter3 
+are interpolation filters for supporting the subpixel accuracy specified by
+.IR subpixel_accuracy
+which can be one of
+.BR QCCVID_ME_FULLPIXEL ,
+.BR QCCVID_ME_HALFPIXEL ,
+.BR QCCVID_ME_QUARTERPIXEL ,
+or 
+.BR QCCVID_ME_EIGHTHPIXEL ,
+indicating full-, half-, quarter-, or eighth-pixel accuracy, respectively.
+.LP
+.I output_buffer
+is the output bitstream
+which must be of
+.B QCCBITBUFFER_OUTPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3).
+.LP
+.I num_levels
+gives the number of levels of dyadic wavelet decomposition to perform,
+and
+.I wavelet
+is the wavelet to use for decomposition.
+.LP
+When encoding the current frame,
+.BR QccVIDSpatialBlockEncode()
+will first output to
+.IR output_buffer
+all the motion vectors for the frame, and then
+an embedded intraframe encoding of the motion-compensated residual.
+.I target_bit_cnt
+is the desired number of bits to output for each frame,
+including motion vectors and motion-compensated residual.
+After
+.I target_num_bits
+have been produced for the current frame,
+.BR QccVIDSpatialBlockEncode()
+will call
+.BR QccBitBufferFlush (3)
+to flush the bit-buffer contents to the output bitstream.
+Encoding of the next frame starts on the next byte boundary
+of the output bitstream.
+.LP
+.I mv_filename
+gives the filename for files of motion vectors.
+If
+.I read_motion_vectors
+is
+.BR FALSE ,
+then the motion-vectors are written to
+.I mv_filename
+via
+.BR QccVIDMotionVectorsWriteFile (3).
+.I mv_filename
+should have a
+.BR printf (3)-style
+numerical descriptor which will then be filled in with
+the current frame number before writing, so that motion vectors
+are separated into multiple files, one file per frame.
+On the other hand, if
+.I read_motion_vectors
+is
+.BR TRUE ,
+then motion vectors are read from
+.IR mv_filename
+via
+.BR QccVIDMotionVectorsReadFile (3),
+in which case
+.BR QccVIDSpatialBlockEncode()
+performs no motion estimation itself, using simply the
+motion vectors read from the files for coding.
+.LP
+If
+.IR quiet 
+= 0,
+.BR QccVIDSpatialBlockEncode()
+will print to stdout a number of statistics concerning each frame as it
+is encoding.
+If
+.I quiet
+= 1,
+this verbose output is suppressed.
+.SS Decoding
+.BR QccVIDSpatialBlockDecodeHeader()
+decodes the header information in a bitstream produced by
+.BR QccVIDSpatialBlockEncode() .
+The input bitstream is
+.I input_buffer
+which must be of
+.I QCCBITBUFFER_INPUT
+type and open via a prior call to
+.BR QccBitBufferStart (3).
+The header information is returned in
+.I num_rows
+(vertical size of image-sequence frames),
+.I num_cols
+(horizontal size of image-sequence frames),
+.I start_frame_num
+(number of the first frame of the sequence),
+.I end_frame_num
+(number of the last frame of the sequence),
+.I num_levels
+(number of wavelet-transform levels),
+and
+.I target_bit_cnt
+(number of bits encoded for each frame).
+.LP
+.B QccVIDSpatialBlockDecode()
+decodes the bitstream
+.IR input_buffer ,
+reconstructing each image of the output image sequence and writing it
+to a separate, numbered grayscale-image file.
+The filename denoted by
+.IR image_sequence
+must contain one
+.BR printf (3)-style
+numerical descriptor which is filled in with the number of the current
+frame being decoded.
+The bitstream must already have had its header read by a prior call to
+.BR QccVIDSpatialBlockDecodeHeader()
+(i.e., you call
+.BR QccVIDSpatialBlockDecodeHeader()
+first and then
+.BR QccVIDSpatialBlockDecode() ).
+If
+.IR quiet
+= 0, then
+.BR QccVIDSpatialBlockDecode()
+prints a brief message to stdout after decoding each frame; if
+.IR quiet
+= 1, then this message is suppressed.
+.LP
+.IR filter1 ,
+.IR filter2 ,
+and
+.IR filter3 
+are interpolation filters for supporting the subpixel accuracy specified by
+.IR subpixel_accuracy
+which can be one of
+.BR QCCVID_ME_FULLPIXEL ,
+.BR QCCVID_ME_HALFPIXEL ,
+.BR QCCVID_ME_QUARTERPIXEL ,
+or 
+.BR QCCVID_ME_EIGHTHPIXEL ,
+indicating full-, half-, quarter-, or eighth-pixel accuracy, respectively.
+.LP
+.I mv_filename
+gives the name of files of motion vectors.
+If
+.I mv_filename
+is
+.BR NULL ,
+then
+.BR QccVIDSpatialBlockDecode()
+simply decodes the motion vectors to use in decoding from the bitstream
+(the usual state of affairs).
+On the other hand, if
+.IR mv_filename
+is not
+.BR NULL ,
+then the motion vectors stored in the bitstream are ignored and, rather,
+the motion vectors are read from
+.I mv_filename
+instead.
+.I mv_filename
+should have a
+.BR printf (3)-style
+numerical descriptor which will then be filled in with
+the current frame number before reading via
+.BR QccVIDMotionVectorsReadFile (3).
+.SH "ALGORITHM"
+The spatial-block video-coding algorithm here is
+a generic implementation of the simple process of
+spatial-domain motion estimation and motion compensation
+followed by an embedded wavelet-based coding of the
+residual frames.
+Motion estimation is carried out via a call to
+.BR QccVIDMotionEstimationFullSearch (3),
+while motion compensation uses the reference frame created by
+a call to
+.BR QccVIDMotionEstimationCreateReferenceFrame (3),
+with subpixel accuracy supported as described for this
+latter routine.
+Finally, the motion-compensation residual is coded
+via a call to
+.BR QccSPIHTEncode (3)
+using the specified
+.I wavelet
+and
+.IR num_levels .
+.SH "SEE ALSO"
+.BR spatialblockencode (1),
+.BR spatialblockdecode (1),
+.BR QccVIDMotionVectorsReadFile (3),
+.BR QccVIDMotionVectorsWriteFile (3),
+.BR QccVIDMotionEstimationFullSearch (3),
+.BR QccVIDMotionEstimationCreateReferenceFrame (3),
+.BR QccSPIHTEncode (3),
+.BR QccPackVID (3),
+.BR QccPackSPIHT (3),
+.BR QccPackWAV (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+S. Cui, Y. Wang, and J. E. Fowler,
+"Motion Compensation Via Redundant-Wavelet Multihypothesis,"
+.IR "IEEE Transactions on Image Processing" ,
+submitted March 2004. Revised February 2005.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

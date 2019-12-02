@@ -1,0 +1,532 @@
+.TH QCCPARSEPARAMETERS 3 "QCCPACK" ""
+.SH NAME
+QccParseParameters \- parsing of command-line parameters
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccParseParameters(int " argc ", char *" argv "[], const char *" format ", ...);"
+.br
+.BI "int QccParseParametersVA(int " argc ", char *" argv "[], const char *" format ", va_list " ap );
+.SH DESCRIPTION
+.B QccParseParameters()
+parses the command-line parameters
+passed to it via
+.I argc
+and 
+.I argv
+according to a
+.I format
+string.
+Pointers, which follow 
+.I format 
+and are accessed via the variable-length argument
+facilities of
+.BR stdarg (3),
+point to the storage locations for values of the parsed parameters;
+the composition of
+.I format
+describes the type and sizes of these parameter values.
+.LP
+.BR QccParseParametersVA()
+functions indentically to
+.BR QccParseParameters() ,
+except that
+.BR QccParseParametersVA()
+can be called from a function whose own argument list contains
+a variable number of arguments implemented via
+the variable-length argument facilities of
+.BR stdarg (3).
+.SH "FORMAT STRING"
+.I format
+is a null-terminated string that specifies the sequence
+of expected command-line parameters.
+The
+.I format
+string consists of the specification of zero or more optional parameters
+followed by the specification of zero or more mandatory parameters.
+.SS "OPTIONAL PARAMETERS"
+The normal usage of an optional-parameter specification in
+.I format
+is to denote that a switch may appear on the
+command line followed by a value
+(e.g., 
+.B \-num_levels 32
+or
+.BR "\-filename foo.bar" ).
+An optional parameter is specified in the
+.I format
+string by giving the switch expected on the command-line 
+.RB "(e.g., " \-num_levels ", " \-filename "),
+and indicating the type 
+.RB "(" float ", " int ", etc.)
+of the value associated with the switch.
+It is assumed that the corresponding pointer
+(in the variable-length argument list that follows
+.IR format)
+points memory that is already allocated in the size needed
+to accommodate the storage
+of a value of the specified type.
+.LP
+Optional parameters can be given in any order on the command line.
+.B QccParseParameters()
+will search through all optional-parameter specifications in
+.I format
+and store the value given on the command line in the location
+pointed to by the appropriate pointer.
+Note: if an optional parameter is not found on the command line,
+.B QccParseParameters()
+leaves the value pointed to by the pointer unchanged.
+.LP
+An optional parameter is specified in 
+.I format 
+in the following form:
+.BI [\- switch " " flag : name ]
+.LP
+.I switch
+is the option that appears on the command line (preceded by a `-')
+to indicate the presence of the optional parameter.
+.LP
+.I name
+is an optional label for the value of the parameter;
+In the case of an error,
+.I name
+will be used to denote the value of the parameter
+in a usage statement.
+.LP
+.I switch
+and
+.I name
+can contain any sequence of characters, except
+`-', `%', `*', `[', `]', `:', `.', tabs, newlines, carriage returns,
+single quotes, double quotes, or spaces.
+.LP
+.I flag
+indicates the type of the parameter value. Possible
+.I flag
+values are given below.
+.SS "MANDATORY PARAMETERS"
+Whereas optional parameters may or may not appear on the command line,
+the presence of mandatory parameters is required.
+The specification of
+all mandatory parameters must follow that of all optional parameters
+in
+.IR format .
+The mandatory parameters must appear on the command line in exactly the
+order that they are specified in 
+.I format
+or an error will be generated.
+.LP
+A mandatory parameter is specified in
+.I format
+in the following form:
+.IB flag : name
+.LP
+.LP
+.I name
+is an optional label for the value of the parameter;
+In the case of an error,
+.I name
+will be used to denote the value of the parameter
+in a usage statement.
+.I name
+can contain any sequence of characters, except
+`-', `%', `*', `[', `]', `:', `.', tabs, newlines, carriage returns,
+single quotes, double quotes, or spaces.
+.LP
+.I flag
+indicates the type of the parameter value. Possible
+.I flag
+values are given below.
+.SS "FLAGS"
+Possible
+.I flag
+values for both optional and mandatory parameters are as follows:
+.TP
+.B %d
+optionally signed integer.
+The corresponding pointer must be a pointer to
+.BR int .
+.TP
+.B %u
+unsigned integer.
+The corresponding pointer must be a pointer to
+.BR "unsigned int" .
+.TP
+.BR %f ", " %e ", " %g
+optionally signed floating-point number.
+The corresponding pointer must be a pointer to
+.BR float .
+.TP
+.B %s
+a sequence of non-white-space characters.
+The corresponding pointer must of type
+.B QccString
+(i.e., a pointer to
+.BR char )
+and the array must be large enough to accept the whole
+sequence plus the terminating
+.B NULL
+character
+(i.e., 
+.B QCCSTRING + 1
+characters long).
+Strings appearing on the command line (i.e., in 
+.IR argv ) 
+are truncated by
+.B QccParseParameters
+to a maximum length of 
+.B QCCSTRINGLEN
+characters; consequently, it is safe to pass a variable of type
+.B QccString
+(see
+.BR QccConvertToQccString (3))
+to
+.B QccParseParameters()
+without fear of a buffer overrun.
+.TP
+.B %
+presence indicator.
+The presence indicator, 
+a single
+.B %
+as
+.IR flag ,
+is valid only for optional parameters and
+indicates merely whether the optional parameter was found on the command line;
+there is no value associated with the parameter.
+Instead, a pointer to 
+.B int
+must be given in the variable-length argument list.
+Upon return of
+.BR QccParseParameters() ,
+this integer value will be set to 1 if the optional parameter
+appears on the command-line; otherwise, it is left unchanged.
+.I name
+is normally not specified for presence-indicator arguments.
+.LP
+Once the command-line parameters given in
+.I argv
+are matched to the optional and mandatory parameters specified
+in 
+.I format,
+.B QccParseParameters()
+uses
+.BR sscanf (3)
+in conjunction with the flags above
+to convert the strings in
+.I argv
+to the appropriate types and to store the resulting values in the appropriate
+locations.
+.SS "MULTIPLE PARAMETER"
+The last mandatory parameter may be a multiple parameter.
+A multiple parameter allows the user to specify one or more parameters of
+the same type at the end of the command line.
+.B QccParseParameters()
+will figure out how many parameters are specified; the number of
+parameters, as well as an array of the parameter values, is returned
+to the calling routine via the variable-length argument list.
+For example, a multiple-parameter designation is useful for allowing the
+user to specify a list of files without restricting the number
+of these files.
+.LP
+A multiple parameter is specified by using one of any of the
+.I flag
+values above with a `*' immediately after the `%' in the last mandatory
+parameter.  For example, a 
+.B %*d
+indicates that there may be one or more
+integer parameters given at the end of the command line.
+.LP
+For normal optional and mandatory parameters,
+.B QccParseParameters() 
+expects a pointer to the
+appropriate type and that memory has already been allocated.
+On the other hand, for a multiple parameter,
+.B QccParseParameters()
+expects a pointer to
+.B int
+followed by 
+a pointer to a pointer to the appropriate type.
+The number of multiple parameters found on the command line is stored
+in the integer;
+.B QccParseParameters()
+will automatically allocate an array of the appropriate size
+consisting of the appropriate number of entries of the appropriate type.
+For example, for a 
+.B %*d
+multiple parameter will require a pointer of type
+.B (int *)
+followed by a pointer of type
+.B (int **)
+passed to
+.B QccParseParameters()
+in the variable-length argument list.
+.B QccParseParameters()
+will store the number of values found on the command line in the location
+pointed to by the first pointer and the values themselves in the array
+pointed to by the second pointer.
+.LP
+As described above, strings appearing on the command line are truncated to
+.B QCCSTRINGLEN
+characters; consequently, for the 
+.B %*s
+multiple parameter, one passes a pointer of type
+.B (QccString **)
+to
+.BR QccParseParameters() .
+.LP
+See the examples below for some ideas as to how to use a multiple parameter.
+.SH "RETURN VALUE"
+For a successful parsing of the command line,
+.B QccParseParameters()
+returns a value of 0; all parameter values are returned in the locations 
+indicated by the corresponding pointers.
+.LP
+If an error occurs during parsing, 
+.B QccParseParameters()
+prints a usage statement (which is generated from the
+.I format
+string passed to
+.BR QccParseParameters() ),
+in addition to an message identifying the QccPack
+library (as produced by
+.BR QccPrintQccPackVersion (3))
+and an optional user header (if so set by a call to
+.BR QccSetUserHeader (3)),
+and returns a value of 1.  The following conditions will generate a 
+parsing error:
+.TP
+(1)
+A mandatory parameter is specified in
+.I format
+but is not found on the command line.
+.TP
+(2)
+An optional parameter is given on the command line but its
+.I switch
+is not found in
+.IR format .
+.TP
+(3)
+An optional parameter requires a value to follow the
+.I switch
+(such as 
+.B %d
+or
+.BR %s )
+but no value is present on the command line.
+.SH EXAMPLES
+Assume that each of the following code segments is in the file
+.B prog.c
+which produces executable
+.BR prog .
+.SS "TYPICAL USE"
+The typical use of
+.B QccParseParameters()
+is illustrated below.
+.RS
+.nf
+
+
+#define USG_STRING "[-V %:] [-nl %d:num_levels] [-l %f:lambda] %s:filename"
+
+int NumLevels = 10;
+QccString Filename;
+int Verbose = 0;
+float Lambda = 4.5;
+
+int main(int argc, char *argv[])
+{
+  QccInit(&argc, argv);
+
+  if (QccParseParameters(argc, argv,
+			 USG_STRING,
+			 &Verbose,
+			 &NumLevels,
+			 &Lambda,
+			 Filename))
+    QccErrorExit();
+
+  printf("Verbose: %d, NumLevels: %d\\n",
+	 Verbose, NumLevels);
+  printf("Lambda: %f, Filename: %s\\n",
+	 Lambda, Filename);
+
+  QccExit;
+}
+
+.fi
+.RE
+Examples of various command lines and the corresponding
+program output are illustrated below.
+Note that the last two command-line examples generate error messages.
+The first of these error messages occurs because the mandatory
+parameter 
+.RI ( filename )
+is missing.
+The second error message occurs because 
+.B \-h
+is not a valid option for the program.
+.RS
+.nf
+
+% prog file1.txt
+Verbose: 0, NumLevels: 10
+Lambda: 4.500000, Filename: file1.txt
+
+% prog -V file1.txt
+Verbose: 1, NumLevels: 10
+Lambda: 4.500000, Filename: file1.txt
+
+% prog -nl 123 file1.txt
+Verbose: 0, NumLevels: 123
+Lambda: 4.500000, Filename: file1.txt
+
+% prog -l 11.5 -nl 123 file1.txt
+Verbose: 0, NumLevels: 123
+Lambda: 11.500000, Filename: file1.txt
+
+% prog -l 11.5 -nl 123 -V file1.txt
+Verbose: 1, NumLevels: 123
+Lambda: 11.500000, Filename: file1.txt
+
+% prog 
+QccPack Version X.X xx-xxx-xxxx,
+Copyright (C) 1997, 1998 James E. Fowler,
+
+*ERROR* Usage: prog [-V ] [-nl num_levels] [-l lambda] filename
+
+% prog -h 45 file1.txt
+QccPack Version X.X xx-xxx-xxxx,
+Copyright (C) 1997, 1998 James E. Fowler,
+
+*ERROR* Usage: prog [-V ] [-nl num_levels] [-l lambda] filename
+
+.fi
+.RE
+.SS "MULTIPLE-PARAMETER EXAMPLE"
+The following code shows how to use the multiple-parameter capability of
+.B QccParseParameters()
+to parse a list of files where the number of files can vary.
+.B QccParseParameters()
+automatically handles the allocation of the array of strings of type
+.BR QccString ,
+where each string in the array is allocated to size
+.B (QCCSTRINGLEN + 1)
+characters.
+.RS
+.nf
+
+#include "libQccPack.h"
+
+#define USG_STRING "[-nl %d:num_levels] %*s:filenames..."
+
+int NumLevels = 10;
+int NumFiles;
+QccString *Filenames;
+
+int main(int argc, char *argv[])
+{
+  int i;
+
+  QccInit(&argc, argv);
+
+  if (QccParseParameters(argc, argv,
+			 USG_STRING,
+			 &NumLevels,
+			 &NumFiles,
+			 &Filenames))
+    QccErrorExit();
+
+  printf("NumLevels: %d, NumFiles: %d\\nFiles:\\n",
+	 NumLevels, NumFiles);
+  for (i = 0; i < NumFiles; i++)
+    printf("%s\\n", Filenames[i]);
+
+  QccExit;
+}
+
+.fi
+.RE
+Example output is
+.RS
+.nf
+
+% prog -nl 123 file1.txt file2.txt file3.txt
+NumLevels: 123, NumFiles: 3
+Files:
+file1.txt
+file2.txt
+file3.txt
+
+.nf
+.RE
+
+.SH NOTES
+.LP
+Optional parameters can appear in any order in the
+.I format
+string;
+however, all optional parameters must appear before the first
+mandatory parameter.
+.LP
+.B QccParseParameters()
+does not do any type checking; that is, parameter values given in
+.I argv
+are not checked to see if they are "compatible" with
+the type definitions as implied by
+.IR format .
+.LP
+When using presence indicators (a single 
+.B %
+for
+.IR flag ),
+it is the responsibility of the calling routine to initialize the
+corresponding integer value to 0 before calling
+.BR QccParseParameters() ;
+that is, 
+.B QccParseParameters()
+leaves the integer value unchanged if the optional parameter does not
+appear on the command line.
+.LP
+Any string of non-white-space characters in 
+.I format
+that is not preceded by a `[' or a `%' is ignored.
+.LP
+.BR QccInit (3)
+should be called as the first statement in the
+.B main()
+routine in all application programs using the QccPack
+library routines; in particular, 
+.BR QccInit (3)
+should be called before
+.BR QccParseParameters() .
+See
+.BR QccInit (3)
+for more details.
+In addition, if a user header is to be defined in the program,
+.BR QccSetUserHeader (3)
+must be called before
+.BR QccParseParameters() .
+.SH "SEE ALSO"
+.BR QccConvertToQccString (3),
+.BR QccInit (3),
+.BR QccPrintQccPackVersion (3),
+.BR QccSetUserHeader (3),
+.BR sscanf (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

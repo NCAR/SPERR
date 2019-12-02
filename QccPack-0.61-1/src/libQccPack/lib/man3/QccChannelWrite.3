@@ -1,0 +1,146 @@
+.TH QCCCHANNELWRITE 3 "QCCPACK" ""
+.SH NAME
+QccChannelWriteWholefile,
+QccChannelWriteHeader,
+QccChannelStartWrite,
+QccChannelEndWrite,
+QccChannelWriteBlock
+\- writing of QccChannel structures to CHN-format files
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccChannelWriteWholefile(QccChannel *" channel );
+.br
+.BI "int QccChannelWriteHeader(QccChannel *" channel );
+.br
+.BI "int QccChannelStartWrite(QccChannel *" channel );
+.br
+.BI "int QccChannelEndWrite(QccChannel *" channel );
+.br
+.BI "int QccChannelWriteBlock(QccChannel *" channel );
+.SH DESCRIPTION
+These routines implement the writing of
+.B QccChannel
+channels to
+.BR CHN -format
+files.
+There are two distinct modes in which the channel-symbol data
+in channels may be written:
+the whole file may be written at once, or
+the file may be written in non-overlapping blocks.
+For each of these routines,
+appropriate values must be supplied in
+.IR channel -> channel_length 
+and
+.IR channel -> alphabet_size
+prior to calling the routines.
+.LP
+.B QccChannelWriteWholefile()
+writes the
+.BR CHN -format
+file whose filename is given by
+.IR channel -> filename .
+The whole file, including the header and all symbols of the channel,
+is written at once.
+.IR channel -> channel_symbols
+is assumed to be allocated and to contain all
+.I channel -> channel_length
+symbols of the channel.
+.LP
+.B QccChannelWriteHeader()
+writes header information to the
+.BR CHN -format
+file pointed to by
+.IR channel -> fileptr ,
+which must be already open for writing
+and positioned at the start of the file.
+The magic number and version information is supplied
+automatically by
+.BR QccFileWriteMagicNumber (3).
+.LP
+.B QccChannelStartWrite()
+must be called before any block-based write to
+.IR channel .
+.B QccChannelStartWrite()
+opens the file with 
+.BR QccFileOpen (3)
+and writes the file's header with
+.BR QccChannelWriteHeader (3).
+If the symbol array is not already allocated
+(i.e., if
+.IR channel -> channel_symbols
+is
+.BR NULL )
+the symbol array is allocated by calling
+.BR QccChannelAlloc (3).
+Prior to calling
+.BR QccChannelStartWrite() ,
+.IR channel -> filename
+must contain the name of the file,
+.IR channel -> alphabet_size 
+must contain the channel alphabet size,
+.IR channel -> channel_length
+must contain the total length of the channel,
+and
+.IR channel -> access_block_size
+must give the block size desired for subsequent block-based writes.
+After
+.B QccChannelStartWrite()
+returns,
+.IR channel -> fileptr
+contains the
+.B FILE
+pointer to the open file, and the file
+is positioned immediately after the header, ready for writing the
+first block of symbols.
+.LP
+.B QccChannelEndWrite()
+closes a channel file opened by a previous call to
+.BR QccChannelStartWrite() ;
+additionally, the symbol array,
+.IR channel -> channel_symbols ,
+is freed with a call to 
+.BR QccChannelFree (3).
+.LP
+.B QccChannelWriteBlock()
+writes the next block of symbols in the channel.
+.I channel
+must be prepared by a prior call to
+.BR QccChannelStartWrite() ;
+that is, 
+.IR channel -> fileptr
+must point to an open file
+and
+.IR channel -> access_block_size
+must contain the size of the block of symbols to write.
+Additionally,
+.IR channel -> channel_symbols
+must contain the block of symbols to be written.
+.B QccChannelWriteBlock()
+writes non-overlapping blocks of data to the file;
+after
+.B QccChannelWriteBlock()
+returns, the file is positioned to write the subsequent block.
+.SH "RETURN VALUE"
+These routines return 0 on successful completion, 1 if an error occurs
+while writing the file.
+.SH "SEE ALSO"
+.BR QccChannelRead (3),
+.BR QccFileWriteMagicNumber (3),
+.BR QccChannel (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

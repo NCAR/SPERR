@@ -1,0 +1,65 @@
+.TH QCCVECTORSORTCOMPONENTS 3 "QCCPACK" ""
+.SH NAME
+QccVectorSortComponents \- quicksort of vector components
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccVectorSortComponents(const QccVector " vector ", QccVector " sorted_vector ", int " vector_dimension ", int " sort_direction ", int *" auxiliary_list );
+.SH DESCRIPTION
+.B QccVectorSortComponents()
+performs a quicksort of the components of
+.I vector
+with the resulting sorted vector being returned in
+.IR sorted_vector ,
+which must be allocated prior to calling
+.BR QccVectorSortComponents() .
+The type of sort,
+ascending or descending,
+is specified by giving
+.I sort_direction
+the values
+.B QCCVECTOR_SORTASCENDING
+or
+.BR QCCVECTOR_SORTDESCENDING ,
+respectively.
+.LP
+.B QccVectorSortComponents()
+can permute an
+.I auxiliary_list
+of integers in the same order as the
+.IR sorted_vector .
+.I auxiliary_list
+must contain
+.I vector_dimension
+integers.  If no
+.I auxiliary_list
+permutation is desired, 
+.I auxiliary_list
+should be a
+.B NULL
+pointer.
+.SH "SEE ALSO"
+.BR QccPack (3)
+.SH NOTES
+.B QccVectorSortComponents()
+is based on the QS2I1D routine of the SLATEC Common
+Mathematical library, a freely redistributable package
+developed and maintained by
+a consortium of Department of Energy and Department of Defense
+national laboratories.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

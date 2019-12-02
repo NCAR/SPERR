@@ -1,0 +1,182 @@
+.TH QCCWAVWAVELETDWT1D 3 "QCCPACK" ""
+.SH NAME
+QccWAVWaveletDWT1D, QccWAVWaveletInverseDWT1D \- 
+discrete wavelet transform and inverse transform for a 1D signal
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVWaveletDWT1D(QccVector " signal ", int " signal_length ", int " signal_origin ", int " subsample_pattern ", int " num_scales ", const QccWAVWavelet *" wavelet );
+.br
+.BI "int QccWAVWaveletInverseDWT1D(QccVector " signal ", int " signal_length ", int " signal_origin ", int " subsample_pattern ", int " num_scales ", const QccWAVWavelet *" wavelet );
+.br
+.BI "int QccWAVWaveletDWTSubbandLength(int " original_length ", int " level ", int " highband ", int " signal_origin ", int " subsample_pattern );
+.SH DESCRIPTION
+.B QccWAVWaveletDWT1D()
+performs a discrete wavelet transform (DWT) of a one-dimensional signal.
+.I num_scales
+gives the number of scales, or levels, of the decomposition.
+.BR QccWAVWaveletDWT1D()
+implements a dyadic decomposition of
+.IR signal ;
+that is, the lowpass subband is recursively decomposed into lowpass and
+highpass bands for each level of decomposition.
+The transform is critically sampled; that is,
+each subband produced in each decomposition level
+has roughly half as many samples as the lowpass band of the preceding level.
+The subbands output from the DWT are returned in
+.IR signal ,
+overwriting the original input signal.
+The output subbands are nested in
+.I signal
+starting with the lowpass subband of the lowest (coarsest) level of
+decomposition (i.e., the baseband) with subsequent highpass subbands
+of increasing resolution following.
+.LP
+Essentially,
+.BR QccWAVWaveletDWT1D()
+calls
+.BR QccWAVWaveletAnalysis1D (3)
+for each level of decomposition.
+.BR QccWAVWaveletAnalysis1D (3)
+in turn calls either
+.BR QccWAVFilterBankAnalysis (3)
+or
+.BR QccWAVLiftingAnalysis (3)
+depending on whether
+.I wavelet
+specifies a filter-bank or
+lifting implementation.
+In either case,
+.I signal_origin
+indicates the sample index at which 
+.I signal
+starts.
+.LP
+.B QccWAVWaveletInverseDWT1D()
+performs the inverse DWT of
+.IR signal
+which is assumed to have been produced
+by
+.BR QccWAVWaveletDWT1D() .
+.I num_scales
+gives the number of levels of decomposition that exist in
+.IR signal .
+Essentially,
+.B QccWAVWaveletInverseDWT1D()
+calls
+.BR QccWAVWaveletSynthesis1D (3)
+for each level of synthesis;
+.BR QccWAVWaveletSynthesis1D (3)
+in turn calls either
+.BR QccWAVFilterBankSynthesis (3)
+or
+.BR QccWAVLiftingSynthesis (3)
+depending on whether
+.I wavelet
+specifies a filter-bank or
+lifting implementation.
+In either case,
+.I signal_origin
+indicates the sample index at which
+.I signal
+starts.
+.LP
+.I subsample_pattern
+indicates the even- or odd-phase subsampling to be used at each level
+of decomposition. In most applications, even subsampling at all
+levels is desired, in which case
+.I subsample_pattern
+should be set to zero.
+In more general settings, when some mixture of even- and odd-phase subsampling
+is desired, 
+.I subsample_pattern
+can be an integer between 0 and
+.RI "2^" num_levels " - 1."
+In this integer, the 
+.IR j th
+bit (where
+.I j
+= 1 is the least-significant bit) indicates whether the
+.IR j th
+level of decomposition employs
+even or odd subsampling (0 = even, 1 = odd).
+For example, if
+.I subsample_pattern
+is 5, then the first and third decompositions use odd-phase
+subsampling, while all others use even subsampling.
+.LP
+.BR QccWAVWaveletDWTSubbandLength()
+gives the length of a subband produced by
+.BR QccWAVWaveletDWT1D() .
+.I original_length
+gives the original length of the undecomposed original signal.
+.I level
+and
+.I highpass
+indicates for which subband the length is to be returned.
+.I level
+gives the level of decomposition of the subband of interest,
+with 0 denoting the highest resolution (i.e., the level of the original
+signal) and
+.I num_scales
+being the lowest resolution scale (where 
+.I num_scales
+is the number of scales used by
+.BR QccWAVWaveletDWT1D()
+in the decomposition).
+.I highpass
+indicates whether the highpass
+.RI ( highpass
+= 1)
+or lowpass
+.RI ( highpass
+= 0)
+subband at the given
+.I level
+is of interest.
+.I signal_origin
+indicates the sample index at which the original signal started.
+.SH "RETURN VALUES"
+.BR QccWAVWaveletDWTSubbandLength()
+returns the subband length;
+the other routines
+return 0 on success and 1 on error.
+.SH "SEE ALSO"
+.BR QccWAVWaveletAnalysis1D (3),
+.BR QccWAVWaveletSynthesis1D (3),
+.BR QccWAVFilterBankAnalysis (3),
+.BR QccWAVFilterBankSynthesis (3),
+.BR QccWAVLiftingAnalysis (3),
+.BR QccWAVLiftingSynthesis (3),
+.BR QccWAVWaveletRedundantDWT1D (3),
+.BR QccWAVWavelet (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.LP
+M. Antonini, M. Barlaud, P. Mathieu, and I. Daubechies,
+"Image Coding Using Wavelet Transform,"
+.IR "IEEE Transactions on Image Processing" ,
+vol. 1, pp. 205-220, April 1992.
+.LP
+I. Daubechies and W. Sweldens,
+"Factoring Wavelet Transforms Into Lifting Steps,"
+.IR "J. Fourier Anal. Appl." ,
+vol. 4, no. 3, pp. 245-267, 1998.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+

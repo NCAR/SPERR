@@ -1,0 +1,25 @@
+FBK0.12
+
+#
+#  Daubechies.8.fbk
+#
+#  The length-8 Daubechies orthonormal wavelet with compact support.
+#
+#  Reference:
+#    I. Daubechies, "Orthonormal Bases of Compactly Supported Wavelets,"
+#      Communications on Pure and Applied Mathematics, vol. 41,
+#      pp. 909-996, 1988.
+#
+
+0
+0
+8
+ 0.23037781330890
+ 0.71484657055292
+ 0.63088076792986
+-0.02798376941686
+-0.18703481171909
+ 0.03084138183556
+ 0.03288301166689
+-0.01059740178507
+

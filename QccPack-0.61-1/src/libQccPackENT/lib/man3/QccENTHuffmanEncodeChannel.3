@@ -1,0 +1,106 @@
+.TH QCCENTHUFFMANENCODECHANNEL 3 "QCCPACK" ""
+.SH NAME
+QccENTHuffmanEncodeChannel, QccENTHuffmanDecodeChannel \- 
+Huffman encoding and decoding of channels
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccENTHuffmanEncodeChannel(const QccChannel *" channel ", QccBitBuffer *" output_buffer ", QccENTHuffmanTable *" table );
+.br
+.BI "int QccENTHuffmanDecodeChannel(QccBitBuffer *" input_buffer ", const QccChannel *" channel ", const QccENTHuffmanTable *" table );
+.SH DESCRIPTION
+.BR QccENTHuffmanEncodeChannel()
+performs Huffman coding of the symbol stream in
+.IR channel ,
+outputting the binary codewords to
+.IR output_buffer .
+.I channel
+should not contain any null symbols
+(see 
+.BR QccChannel (3));
+use
+.BR QccChannelRemoveNullSymbols (3)
+to remove null symbols if needed.
+.BR QccENTHuffmanEncodeChannel() 
+designs a Huffman code table, via a call to
+.BR QccENTHuffmanDesign (3),
+specifically for the symbols in
+.I channel
+by estimating symbol probabilities from the number of times each
+symbol occurs in 
+.IR channel .
+.BR QccENTHuffmanEncode (3)
+is then called to produce the binary coding of the
+.I channel
+symbols with the newly designed Huffman code table.
+Finally,
+the Huffman table used is returned as
+.IR huffman_table 
+.RI table -> table_type
+=
+.BR QCCENTHUFFMAN_ENCODETABLE ).
+.LP
+.BR QccENTHuffmanDecodeChannel()
+performs Huffman decoding of the bits in the bitstream
+.IR input_buffer ,
+producing a output stream of channel symbols that are stored in
+.I channel .
+.I channel
+must be allocated prior to calling
+.BR QccENTHuffmanDecodeChannel ();
+.BR QccChannelGetBlockSize (3)
+is called to find out how many channel symbols are to be decoded from
+.IR input_buffer .
+.BR QccENTHuffmanDecodeChannel ()
+calls
+.BR QccENTHuffmanDecode (3)
+to actually do the Huffman decoding.
+.SH "NOTES"
+Multiple successive calls to
+.BR QccENTHuffmanEncodeChannel()
+are possible; in this case, the individual bitstreams produced by each
+encoding appear concatenated in the final output bitstream.
+.BR QccBitBufferFlush (3)
+must be called after the
+.I final
+call to
+.BR QccENTHuffmanEncodeChannel()
+(but not after any of the preceeding calls to
+.BR QccENTHuffmanEncodeChannel() )
+to ensure that the last few bits of the
+concatenated bitstream are actually written
+to the output file.
+Multiple calls to
+.BR QccENTHuffmanDecodeChannel()
+can be used to decode the concatenated bitstream produced in this fashion,
+or a single call will work too.
+.SH "RETURN VALUE"
+These routines return 0 on success, and 1 on failure.
+.SH "SEE ALSO"
+.BR QccENTHuffmanEncode (3),
+.BR QccENTHuffmanDecode (3),
+.BR QccENTHuffmanDesign (3),
+.BR QccENTHuffmanTable (3),
+.BR QccChannel (3),
+.BR QccPackENT (3),
+.BR QccPack (3)
+.LP
+D. A. Huffman, "A Method for the Construction of Minimum-Redundancy Codes,"
+.IR "Proceedings of the IRE" ,
+vol. 40, pp. 1098-1101, September 1952.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

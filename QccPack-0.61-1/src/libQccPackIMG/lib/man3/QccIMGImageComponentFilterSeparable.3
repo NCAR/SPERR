@@ -1,0 +1,127 @@
+.TH QCCIMGIMAGECOMPONENTFILTERSEPARABLE 3 "QCCPACK" ""
+.SH NAME
+QccIMGImageComponentFilterSeparable,
+QccIMGImageFilterSeparable,
+QccIMGImageComponentFilter2D,
+QccIMGImageFilter2D
+\- 
+image and image-component filtering
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccIMGImageComponentFilterSeparable(const QccIMGImageComponent *" input_image ", QccIMGImageComponent *" output_image ", const QccFilter *" horizontal_filter ", const QccFilter *" vertical_filter ", int " boundary_extension );
+.br
+.BI "int QccIMGImageFilterSeparable(const QccIMGImage *" input_image ", QccIMGImage *" output_image ", const QccFilter *" horizontal_filter ", const QccFilter *" vertical_filter ", int " boundary_extension );
+.br
+.sp
+.BI "int QccIMGImageComponentFilter2D(const QccIMGImageComponent *" input_image ", QccIMGImageComponent *" output_image ", const QccIMGImageComponent *" filter );
+.br
+.BI "int QccIMGImageFilter2D(const QccIMGImage *" input_image ", QccIMGImage *" output_image ", const QccIMGImageComponent *" filter );
+.SH DESCRIPTION
+.B QccIMGImageComponentFilterSeparable()
+implements the separable two-dimensional FIR filtering of an image component.
+.I horizontal_filter
+gives the one-dimensional FIR filter for filtering along the
+rows (i.e., in the horizontal direction);
+.I vertical_filter
+gives the one-dimensional FIR filter for filtering along the
+columns (i.e., in the vertical direction).
+.I input_image
+is the image component to be filtered, and
+.I output_image
+is the resulting filtered image component. 
+.I output_image
+must be allocated to the same size as
+.I input_image
+prior to calling
+.BR QccIMGImageComponentMatrixSeparable() .
+The FIR filtering operation is implemented by
+time-domain convolutions, one for each row and column in
+.IR input_image .
+These convolutions are implemented via a call to
+.BR QccFilterMatrixSeparable (3).
+.I boundary_extension
+specifies the method for handling the left and right signal boundaries in
+the 1D FIR convolutions.
+See 
+.BR QccFilterVector (3)
+for the possible values of
+.IR boundary_extension .
+.LP
+.BR QccIMGImageFilterSeparable()
+filters
+.IR input_image ,
+producing filtered
+.IR output_image .
+In effect,
+.BR QccIMGImageFilterSeparable()
+simply calls
+.BR QccIMGImageComponentFilterSeparable()
+for each of the
+.IR Y ,
+.IR U ,
+and
+.IR V
+components of the images.
+.LP
+.BR QccIMGImageComponentFilter2D()
+implements non-separable filtering of
+.IR input_image
+using the 2D filter kernel given by
+.IR filter .
+.IR filter
+must have an odd number of rows and an odd number of columns; the center of
+the filter kernel is assumed to be at
+.RI ( floor ( filter->num_rows " / 2), " floor ( filter->num_cols " / 2)).
+.IR output_image
+is then the result of a 2D
+convolution of
+.IR filter
+and
+.IR input_image .
+.IR output_image
+must be allocated to the same size as
+.IR input_image
+prior to calling
+.BR QccIMGImageComponentFilter2D() .
+.LP
+.BR QccIMGImageFilter2D()
+filters
+.IR input_image ,
+producing filtered
+.IR output_image .
+In effect,
+.BR QccIMGImageFilter2D()
+simply calls
+.BR QccIMGImageComponentFilter2D()
+for each of the
+.IR Y ,
+.IR U ,
+and
+.IR V
+components of the images.
+.SH "RETURN VALUE"
+These routines return 0 on success, 1 on failure.
+.SH "SEE ALSO"
+.BR QccFilterMatrixSeparable (3),
+.BR QccFilterVector (3),
+.BR QccIMGImageComponent (3),
+.BR QccIMGImage (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

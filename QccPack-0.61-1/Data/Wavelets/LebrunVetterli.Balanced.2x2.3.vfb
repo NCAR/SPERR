@@ -1,0 +1,38 @@
+VFB0.17
+#
+#  LebrunVetterli.Balanced.2x2.3.vfb
+#
+#  The 2x2 vector-filter-bank coefficient matrices for the orthonormal
+#  multiwavelet system developed by Lebrun and Vetterli.  These coefficient
+#  matrices correspond to the so-called "balanced multiwavelets," order 1,
+#  derived by "balancing" Chui-Lian multiwavelets. The coefficient matrices
+#  here have been normalized so that the multiscaling and multiwavelet
+#  functions have unity norm.
+#
+#
+#  References:
+#    J. Lebrun and M. Vetterli, "Balanced Multiwavelets - Theory and Design,"
+#      IEEE Transactions on Signal Processing, vol. 46, no. 4, pp. 1109-1125,
+#      April 1998.
+#
+
+0
+2
+3
+0
+   0.0000000e+00   8.2126056e-01
+   0.0000000e+00  -1.1415378e-01
+   5.3033009e-01   1.7677670e-01
+   1.7677670e-01   5.3033009e-01
+  -1.1415378e-01   0.0000000e+00
+   8.2126056e-01   0.0000000e+00
+
+2
+3
+0
+   0.0000000e+00  -5.0000000e-01
+   0.0000000e+00   2.5000000e-01
+   5.0000000e-01   5.0000000e-01
+  -6.6143783e-01   6.6143783e-01
+  -5.0000000e-01   0.0000000e+00
+  -2.5000000e-01  -0.0000000e+00

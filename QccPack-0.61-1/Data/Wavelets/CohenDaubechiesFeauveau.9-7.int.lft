@@ -1,0 +1,28 @@
+LFT0.53
+
+#
+#  CohenDaubechiesFeauveau.9-7.int.lft
+#
+#  An integer version of the lifting implementation of the popular
+#    Cohen-Daubechies-Feauveau 9/7 biorthogonal wavelet. Scaling is
+#    implemented via additional lifting steps as described by Xiong et al.
+#
+#  Permitted boundary methods:
+#    symmetric extension, periodic extension
+#
+#  Permitted signal length:
+#    any, start with even- or odd-indexed sample
+#
+#  References:
+#    Z. Xiong, X. Wu, S. Cheng, J. Hua, "Lossy-to-Lossless Compression of
+#      Medical Volumetric Data Using Three-Dimensional Integer Wavelet
+#      Transforms," IEEE Transactions on Medical Imaging, vol. 22,
+#      pp. 459-470, March 2003.
+#
+#    A. R. Calderbank, I. Daubechies, W. Sweldens, B.-L. Yeo, "Lossless
+#      Image Compression Using Integer to Integer Wavelet Transforms",
+#      in Proceedings of the International Conference on Image Processing,
+#      Lausanne, Switzerland, pp. 596-599, September 1997.
+#
+
+5

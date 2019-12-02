@@ -1,0 +1,14 @@
+CURRENT_DIR = $(QCCPACK)/src/libQccPackVID/utils
+
+EXECUTABLES = \@@\
+	spatialblockencode spatialblockdecode \@@\
+	rdwtblockencode rdwtblockdecode \@@\
+	rwmhencode rwmhdecode \@@\
+	memc mesh_memc
+
+SHELL_SCRIPTS = 
+MAN_SUFFIX = 1
+
+QccDir()
+
+QccUtils()

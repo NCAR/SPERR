@@ -1,0 +1,32 @@
+CURRENT_DIR = $(QCCPACK)/src/libQccPackWAV/utils
+
+EXECUTABLES = \@@\
+	sbpsplit sbpassemble sbptoicp icptosbp \@@\
+	sbpzero \@@\
+	imgdwt imgidwt \@@\
+	imgrdwt imgirdwt \@@\
+	datdmwt datidmwt \@@\
+	make_noise_image \@@\
+	sfqencode sfqdecode \@@\
+	srencode srdecode \@@\
+	wdrencode wdrdecode \@@\
+	wdrencode3d wdrdecode3d \@@\
+	tarpencode tarpdecode \@@\
+	tarpencode3d tarpdecode3d \@@\
+	tceencode tcedecode \@@\
+	tceencode3d tcedecode3d \@@\
+	tceencode3d_lossless tcedecode3d_lossless \@@\
+	klttceencode3d klttcedecode3d \@@\
+	klttceencode3d_lossless klttcedecode3d_lossless \@@\
+	dcttceencode dcttcedecode \@@\
+	tarpencode3d tarpdecode3d \@@\
+	biskencode biskdecode \@@\
+	biskencode3d biskdecode3d \@@\
+	mask_bar
+
+SHELL_SCRIPTS = 
+MAN_SUFFIX = 1
+
+QccDir()
+
+QccUtils()

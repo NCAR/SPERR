@@ -1,0 +1,106 @@
+.TH GLA 1 "QCCPACK" ""
+.SH NAME
+gla \- train codebooks for vector quantization using the generalized Lloyd
+algorithm
+.SH SYNOPSIS
+.B gla
+.RB "[\|" \-i
+.IR  initialcodebookfile "\|]"
+.RB "[\|" \-s
+.IR codebooksize "\|]"
+.RB "[\|" \-I 
+.IR iterations "\|]"
+.RB "[\|" \-t
+.IR threshold "\|]"
+.I trainingfile
+.I codebookfile
+.SH DESCRIPTION
+.LP
+.B gla
+implements the generalized Lloyd algorithm
+for training   
+codebooks to be used in vector quantization (see
+.BR vqencode (1)
+and
+.BR vqdecode (1)).
+.I trainingfile
+is an input data file in DAT
+format which contains training vectors.  
+.I codebookfile
+is the output file in CBK
+format which contains the codewords which form the    
+codebook.  Initial codewords are chosen at       
+random, unless 
+.I initialcodebookfile
+is specified.  
+The distortion measure which
+.B gla
+attempts to minimize is the squared error.
+.SH OPTIONS
+.TP
+.BI \-i " initialcodebookfile"
+String. Initial codebook.
+Note: one (and only one) of 
+.B \-i 
+and 
+.B \-s
+must be given.  
+.TP
+.BI \-s " codebooksize"
+Integer. Number of codewords to create for random initial codebook.
+Note: one (and only one) of 
+.B \-i 
+and 
+.B \-s
+must be given.  
+.TP
+.BI \-I " iterations"
+Integer. Traininging stops after
+.I iterations 
+iterations
+of the generalized Lloyd algorithm through the training data.
+Note: one (and only one) of 
+.B \-t
+and 
+.B \-I
+must be given.  
+.TP 
+.BI \-t " threshold"
+Float. Stop the training process when the average distortion changes by less
+than 
+.I threshold
+from one iteration to the next; that is, stop if
+(D(i-1) - D(i))/D(i) <
+.IR threshold ,
+where D(i) is the average distortion for the ith iteration and is
+averaged over the entire training set.  
+Note: one (and only one) of 
+.B \-t
+and 
+.B \-I
+must be given.  
+.SH "SEE ALSO"
+.BR vqencode (1),
+.BR vqdecode (1),
+.BR QccPackVQ (3),
+.BR QccPack (3)
+
+A. Gersho and R. Gray, 
+.IR "Vector Quantization and Signal Compression" .
+Norwell, MA: Kluwer Academic Publishers, 1992.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

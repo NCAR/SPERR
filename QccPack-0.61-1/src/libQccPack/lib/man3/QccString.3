@@ -1,0 +1,86 @@
+.TH QCCSTRING 3 "QCCPACK" ""
+.SH NAME
+QccStringMakeNull, QccStringNull, QccConvertToQccString \- string operations
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "void QccStringMakeNull(QccString " qccstring );
+.br
+.BI "int QccStringNull(const QccString " qccstring );
+.br
+.BI "void QccConvertToQccString(QccString " qccstring ", const char *" str );
+.br
+.BI "void QccStringCopy(QccString " qccstring1 ", const QccString " qccstring2 );
+.br
+.BI "void QccStringSprintf(QccString " qccstring ", const char *" format ", ...);"
+.SH DESCRIPTION
+QccPack library routines use strings of type 
+.B QccString
+which is defined in as
+.RS
+.nf
+typedef char QccString[QCCSTRINGLEN + 1];
+.fi
+.RE
+.LP
+.B QccStringMakeNull()
+sets
+.I qccstring
+to zero length.
+.LP
+.B QccStringNull()
+returns 1 if
+.I qccstring
+is a NULL pointer or has zero length and 0 otherwise.
+.LP
+.B QccConvertToQccString()
+converts a character array into type
+.B QccString
+which entails copying characters from
+.I str
+to
+.I qccstring
+up to 
+.B QCCSTRINGLEN
+characters and ensuring that
+.I qccstring
+is NULL-terminated.
+.LP
+.B QccStringCopy()
+copies
+.I qccstring2
+to
+.IR qccstring1 .
+.LP
+.B QccStringSprintf()
+is a wrapper around
+.BR sprintf (3).
+If 
+.BR snprintf (3)
+exists, it is called to ensure that the string written to
+.I qccstring
+does not exceed the length of
+.IR qccstring .
+Otherwise,
+.BR sprintf (3)
+is called to write the string to
+.I qccstring
+and a buffer overflow may occur if the string is too long.
+.SH "SEE ALSO"
+.BR QccPack (3),
+.BR sprintf (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

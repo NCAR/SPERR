@@ -1,0 +1,195 @@
+.TH SPECKENCODE 1 "QCCPACK" ""
+.SH NAME
+speckencode, speckdecode \-
+encode/decode an image using the SPECK algorithm
+.SH SYNOPSIS
+.sp
+.B speckencode
+.RB "[\|" \-w
+.IR  wavelet "\|]"
+.RB "[\|" \-b
+.IR  boundary "\|]"
+.RB "[\|" \-nl
+.IR  levels "\|]"
+.RB "[\|" \-m
+.IR  mask "\|]"
+.RB "[\|" \-vo "\|]"
+.I rate
+.I imgfile
+.I bitstream
+.LP
+.B speckdecode
+.RB "[\|" \-w
+.IR  wavelet "\|]"
+.RB "[\|" \-b
+.IR  boundary "\|]"
+.RB "[\|" \-m
+.IR  mask "\|]"
+.RB "[\|" \-r
+.IR  rate "\|]"
+.I bitstream
+.I imgfile
+.SH OPTIONS
+.TP
+.BI \-w " wavelet"
+String. 
+Name of the wavelet file
+.RB ( FBK
+or
+.B LFT
+format); default = "CohenDaubechiesFeauveau.9-7.lft"
+.TP
+.BI \-b " boundary"
+String. Type of boundary extension; default = "symmetric".
+.TP 
+.BI \-nl " levels"
+Integer. Number of levels of dyadic decomposition; default value is 5 levels.
+.TP
+.BI \-m " mask"
+String. Name of file containing the transparency mask for
+shape-adaptive coding. Default is to not use a mask.
+.TP
+.BI \-r " rate"
+Float. Rate at which to stop decoding. Default is to decode until
+end of input bitstream is reached.
+.TP
+.B \-vo
+Print only the value of the rate to stdout (terse output);
+default is verbose output.
+.SH DESCRIPTION
+.LP
+.B speckencode
+codes an image,
+.IR imgfile ,
+using the Set-Partitioning Embedded Block (SPECK)
+algorithm by Pearlman
+.IR "et al."
+The SPECK algorithm involves a 2D DWT followed by 
+a progressive "bitplane" coding of the wavelet coefficients using a
+block-splitting quantization structure based on quadtrees.
+.LP
+The transform is either the usual discrete
+wavelet transform (DWT) or a shape-adaptive
+DWT (SA-DWT); see
+.BR imgdwt (1)
+for complete details.
+Option
+.B \-w
+specifies the wavelet, 
+and option
+.B \-b
+specifies the boundary extension.
+The
+.B \-m
+option gives the image file to be used as a transparency mask
+for the SA-DWT.
+.I mask
+must be a grayscale image
+in which black in this image indicates transparency, white
+indicates full opacity, and gray tones are degrees of
+translucence
+(see
+.BR QccAlpha (3)).
+If the
+.B \-m
+option is not given, the usual DWT is used.
+.LP
+The desired bitrate of the output
+.I bitstream
+is specified by
+.IR rate ,
+which is expressed in bits per pixel of the original image.
+.B speckencode
+normally prints to stdout a small amount of information
+concerning this target bitrate and the actual bitrate achieved.
+Usually these rates are identical, but may differ slightly.
+If the 
+.B \-vo
+(value-only) option is given, all printed output is suppressed except for
+the actual bitrate.
+.LP
+.B speckdecode
+performs the corresponding decoding using the SPECK algorithm, decoding
+the
+.I bitstream
+made by
+.B speckencode
+and producing
+a reconstructed image,
+.IR imgfile .
+For sane results, 
+.IR wavelet 
+and
+.IR boundary 
+should be the same as they were for
+.BR speckencode ,
+and
+.I mask
+should be the same if an SA-DWT was used as the transform.
+If a decoding rate is specified with the
+.B \-r
+option, then
+.B speckdecode
+stops decoding when
+.I rate
+bits per pixel from the input bitstream
+have been decoded. Otherwise, decoding stops when the
+end of the input bitstream is reached.
+.LP
+.BR speckencode
+and
+.BR speckdecode
+call
+.BR QccSPECKEncode (3)
+and
+.BR QccSPECKDecode (3),
+respectively, to perform SPECK encoding and decoding.
+Refer to the man pages for these functions for more information
+on the details of the QccPack implementation of the SPECK algorithm
+and how its performance compares to that described by
+Pearlman
+.IR "et al."
+in their original description.
+.SH "SEE ALSO"
+.BR QccSPECKEncode (3),
+.BR QccSPECKDecode (3),
+.BR imgdwt (1),
+.BR QccWAVSubbandPyramid (3),
+.BR QccPackWAV (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+W. A. Pearlman, A. Islam, N. Nagaraj, and A. Said,
+"Efficient, Low-Complexity Image Coding with a Set-Partitioning
+Embedded Block Coder,"
+.IR "IEEE Transactions on Circuits and Systems for Video Technology" ,
+to appear, 2003.
+
+A. Islam and W. A. Pearlman,
+"An Embedded and Efficient Low-Complexity Hierarchical Image Coder,"
+in
+.IR "Visual Communications and Image Processing" ,
+K. Aizawa, R. L. Stevenson, and Y.-Q. Zhang, Eds., San Jose, CA,
+January 1999, Proc. SPIE 3653, pp. 294-305.
+
+Z. Lu and W. A. Pearlman,
+"Wavelet Video Coding of Video Object by Object-Based SPECK Algorithm,"
+in
+.IR "Proceedings of the Picture Coding Symposium" ,
+Seoul, Korea, April 2001, pp. 413-416.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+
+.SH LICENSE
+The Set-Partitioning Embedded Block (SPECK) algorithm is protected by US
+Patent #6,671,413 (issued December 30, 2003) and by patents pending.
+An implementation of the SPECK algorithm is included herein (utility
+programs speckencode and speckdecode, and speck.c in the QccPack library)
+with the permission of Dr. William A. Pearlman, exclusive holder of patent
+rights. Dr. Pearlman has graciously granted a license with certain
+restrictions governing the terms and conditions for use, copying,
+distribution, and modification of the SPECK algorithm implementation
+contained herein. Specifically, only use in academic and non-commercial
+research is permitted, while all commercial use is prohibited. Refer to
+the file LICENSE-SPECK for more details.

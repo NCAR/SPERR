@@ -1,0 +1,42 @@
+.TH QCCGETPROGRAMNAME 3 "QCCPACK" ""
+.SH NAME
+QccGetProgramName \- program name
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccGetProgramName(QccString " program_name );
+.SH DESCRIPTION
+.B QccGetProgramName()
+returns the name of the program calling the QccPack library.  The program
+name is simply the filename of the calling program, any leading path
+characters stripped away, similar to the operation of
+.BR basename (1).
+.LP
+The name of the current program is set when
+.BR QccInit (3)
+is called with a
+.RB non- NULL
+pointer for
+.IR argv .
+.BR QccGetProgramName()
+will return 0 on success, 
+or a 1 in the case that no valid program name has been set.
+.SH "SEE ALSO"
+.BR QccInit (3),
+.BR QccPack (3),
+.BR basename (1)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

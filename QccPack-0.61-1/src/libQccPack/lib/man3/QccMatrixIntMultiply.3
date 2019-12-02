@@ -1,0 +1,60 @@
+.TH QCCMATRIXINTMULTIPLY 3 "QCCPACK" ""
+.SH NAME
+QccMatrixIntMultiply
+\- multiply two integer matrices
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccMatrixIntMultiply(const QccMatrixInt " matrix1 ", int " num_rows1 ", int " num_cols1 ", const QccMatrixInt " matrix2 ", int " num_rows2 ", int " num_cols2 ", QccMatrixInt " matrix3 );
+.SH DESCRIPTION
+.B QccMatrixIntMultiply()
+multiplies
+.IR matrix1 ,
+a matrix of dimension
+.I num_rows1
+x
+.I num_cols1
+by another matrix,
+.IR matrix2 ,
+of dimension
+.I num_rows2
+x
+.IR num_cols2 .
+The result of the multiplication, a matrix of dimension
+.IR num_rows1
+x
+.IR num_cols2
+is returned as
+.IR matrix3
+which must be allocated to this size before calling
+.BR QccMatrixIntMultiply() .
+.LP
+The inner matrix dimensions must agree for matrix multiplication. That is,
+.IR num_cols1
+and
+.IR num_rows2
+must be the same; if not,
+.BR QccMatrixIntMultiply()
+returns in error.
+.SH "RETURN VALUE"
+.B QccMatrixIntMultiply()
+returns 0 on success, 1 on error.
+.SH "SEE ALSO"
+.BR QccMatrix (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

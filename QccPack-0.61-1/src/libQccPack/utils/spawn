@@ -1,0 +1,82 @@
+#!/bin/sh
+
+usage()
+{
+  echo "usage: `basename $0` [-n level] [-t] [-l log_file] command [arguments...]"
+  exit 1
+}
+
+if [ $# -lt 1 ]; then
+  usage
+fi
+
+if [ \"$1\" = \"-h\" -o \"$1\" = \"-help\" -o \"$1\" = \"--help\" ]; then
+  usage
+fi
+
+LOGFILE="log"
+NICE=0
+TIMER=0
+
+DATE=`date`
+
+while [ \"${1:0:1}\" = \"-\" ]; do
+  if [ \"$1\" = \"-n\" ]; then
+    NICE=$2
+    shift 2
+  elif [ \"$1\" = \"-t\" ]; then
+    TIMER=1
+    shift
+  elif [ \"$1\" = \"-l\" ]; then
+    LOGFILE=$2
+    shift 2
+  else
+    usage
+  fi
+done
+
+if [ $# -lt 1 ]; then
+  usage
+fi
+
+COMMAND=$*
+
+if !(which $1 > /dev/null 2>&1); then
+  echo `basename $0`: $1 not found
+  exit 1
+fi
+
+echo ------------------------------------------------------------------------ >$LOGFILE
+echo >>$LOGFILE
+echo >>$LOGFILE
+echo Process started on $HOST --- $DATE >> $LOGFILE
+echo "         Command: "$COMMAND >>$LOGFILE
+if [ $NICE -gt 0 ]; then
+	echo "      Nice level: "$NICE >>$LOGFILE
+else
+	echo "      Nice level: (none)" >>$LOGFILE
+fi
+echo >>$LOGFILE
+echo >>$LOGFILE
+echo ------------------------------------------------------------------------ >>$LOGFILE
+echo >>$LOGFILE
+echo >>$LOGFILE
+
+# Detach from xterm
+unset DISPLAY
+
+if [ $NICE -gt 0 ]; then
+  if [ $TIMER -eq 1 ]; then
+    (nice -$NICE /usr/bin/time $COMMAND >> $LOGFILE 2>&1 ; \
+     spawn_end $LOGFILE )&
+  else
+    (nice -$NICE $COMMAND >> $LOGFILE 2>&1 ; spawn_end $LOGFILE )&
+  fi
+else
+  if [ $TIMER -eq 1 ]; then
+    (/usr/bin/time $COMMAND >> $LOGFILE 2>&1 ; spawn_end $LOGFILE )&
+  else
+    ($COMMAND >> $LOGFILE 2>&1 ; spawn_end $LOGFILE )&
+  fi
+fi
+

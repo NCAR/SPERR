@@ -1,0 +1,126 @@
+.TH QCCENTHUFFMANENCODE 3 "QCCPACK" ""
+.SH NAME
+QccENTHuffmanEncode, QccENTHuffmanDecode \- 
+Huffman encoding and decoding
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccENTHuffmanEncode(QccBitBuffer *" output_buffer ", const int *" symbols ", int " num_symbols ", const QccENTHuffmanTable *" table );
+.br
+.BI "int QccENTHuffmanDecode(QccBitBuffer *" input_buffer ", int *" symbols ", int " num_symbols ", const QccENTHuffmanTable *" table );
+.SH DESCRIPTION
+.BR QccENTHuffmanEncode()
+performs Huffman coding of the symbol stream in
+.IR symbols ,
+outputting the binary codewords to
+.IR output_buffer .
+.I num_symbols
+indicates how many symbols are in the symbol stream (which can be
+as short as one symbol).
+.I output_buffer
+must be a
+.BR QccBitBuffer
+that has been opened for writing prior to calling
+.BR QccENTHuffmanEncode() .
+Finally,
+.I table
+gives the table of Huffman codewords for the alphabet of possible
+symbols.
+.BR QccENTHuffmanDesign (3)
+can be used to design this table from a probability distribution
+of the symbols.
+.I table
+must be an encoding table;
+i.e.,
+.IR table -> table_type
+must be
+.BR QCCENTHUFFMAN_ENCODETABLE .
+After calling
+.BR QccENTHuffmanEncode() ,
+.BR QccBitBufferFlush (3)
+must be called 
+to ensure that the last few bits of the bitstream are actually written
+to the output file.
+.LP
+.BR QccENTHuffmanDecode()
+performs Huffman decoding of the bits in the bitstream
+.IR input_buffer ,
+producing a output stream of symbols that are stored in
+.I symbols .
+The
+.I symbols 
+array must be allocated with space sufficient for holding
+.I num_symbols
+integers; this allocation must be done prior to calling
+.BR QccENTHuffmanDecode() .
+Additionally,
+.I input_buffer
+must be opened for reading prior to calling
+.BR QccENTHuffmanDecode() .
+.SH "NOTES"
+Multiple successive calls to
+.BR QccENTHuffmanEncode()
+are possible; in this case, the individual bitstreams produced by each
+encoding appear concatenated in the final output bitstream.
+.BR QccBitBufferFlush (3)
+must be called after the
+.I final
+call to
+.BR QccENTHuffmanEncode()
+(but not after any of the preceeding calls to
+.BR QccENTHuffmanEncode() )
+to ensure that the last few bits of the
+concatenated bitstream are actually written
+to the output file.
+Multiple calls to
+.BR QccENTHuffmanDecode()
+can be used to decode the concatenated bitstream produced in this fashion,
+or a single call (with an appropriately larger
+.IR num_symbols
+value) will work too.
+.LP
+These routines are based upon the implementations of Huffman encoding and
+decoding suggested in Annexes C & F of the JPEG
+standard, ISO/IEC 10918.
+.SH "RETURN VALUE"
+These routines return 0 on success, and 1 on failure.
+.LP
+.BR QccENTHuffmanEncode()
+will fail if it encounters an invalid symbol (a symbol that is
+outside of the permissible range of 0 to 
+.BR QCCENTHUFFMAN_MAXSYMBOL ,
+or a symbol that does not have a valid codeword assigned to it in
+the Huffman table).
+.LP
+.BR QccENTHuffmanDecode()
+will fail if it encounters a bit pattern in the bitstream that does
+not correspond to a valid codeword in the Huffman table.
+.SH "SEE ALSO"
+.BR QccENTHuffmanDesign (3),
+.BR QccENTHuffmanTable (3),
+.BR QccPackENT (3),
+.BR QccPack (3)
+.LP
+D. A. Huffman, "A Method for the Construction of Minimum-Redundancy Codes,"
+.IR "Proceedings of the IRE" ,
+vol. 40, pp. 1098-1101, September 1952.
+.LP
+ISO/IEC 10918,
+.IR "Digital compression and coding of continuous-tone still images" ,
+1994.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

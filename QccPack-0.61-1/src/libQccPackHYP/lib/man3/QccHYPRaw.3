@@ -1,0 +1,145 @@
+.TH QCCHYPRAW 3 "QCCPACK" ""
+.SH NAME
+QccHYPRaw \- routines for reading and writing raw binary files
+typical of hyperspectral applications
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccHYPRawRead2D(QccString " filename ", QccIMGImageComponent *" image_component ", int " bpp ", int " signed_data ", int " endian );
+.br
+.BI "int QccHYPRawWrite2D(QccString " filename ", const QccIMGImageComponent *" image_component ", int " bpp ", int " endian );
+.br
+.BI "int QccHYPRawRead3D(QccString " filename ", QccIMGImageCube *" image_cube ", int " bpv ", int " signed_data ", int " format ", int " endian );
+.br
+.BI "int QccHYPRawWrite3D(QccString " filename ", const QccIMGImageCube *" image_cube ", int " bpv ", int " format ", int " endian );
+.SH DESCRIPTION
+QccPack provides data structure
+routines for reading and writing raw binary files that
+are typically used and produced by hyperspectral applications.
+Both 2D and 3D data files with arbitrary byte order are supported.
+For 3D datasets, the three popular scan orders (BSQ, BIL, BIP) are
+supported.
+.SH "FILE FORMAT"
+Hyperspectral applications typically use files that are stored
+in raw binary format without any headers. Each sample value
+is a binary number which is stored in the raw-format file
+in either 1, 2, or 4 consecutive bytes
+in either big-endian (most-significant byte first) or little-endian
+(least-significant byte first) order.
+.LP
+For 2D files, it is assumed that the pixels are stored in
+row-major order; i.e., pixels are ordered
+such that rows are stored one after the other.
+The loop order for outer to inner is: row, column.
+.LP
+For 3D files, samples (voxels) are stored in one of the following orders:
+.TP
+.BR "Band Sequential (BSQ)" " - "
+entire spectral bands are stored one after another.
+The loop order (outer to inner) is: band, row, col.
+.TP
+.BR "Band Interleaved by Line (BIL)" " - "
+entire lines from each band are stored one after another.
+The loop order is: row, band, col.
+.TP
+.BR "Band Interleaved by Pixel (BIP)" " - "
+entire pixels are stored one after another.
+The loop order is: row, col, band.
+.LP
+Note that AVIRIS data is typically BIP, while TRWIS uses BIL.
+QccPack's
+.BR ICB
+format for the
+.BR QccIMGImageCube (3)
+structure uses BSQ.
+.LP
+Note that, internally, QccPack refers to spectral bands as "frames"
+as the
+.BR QccIMGImageCube (3)
+structure originally was deployed for video data in which the third
+dimension represents temporal frames. Thus, routines often refer to
+.IR num_frames
+as the size in the third dimension.
+.SH "ROUTINES"
+.B QccHYPRawRead2D()
+reads the 2D raw file with the indicated
+.IR filename ,
+returning it in
+.IR image_component ,
+which must be allocated beforehand.
+The size of
+.IR image_component
+indicates how many values to read from the file.
+.B QccHYPRawRead3D()
+operates similarly, reading into the 3D
+.IR image_cube .
+.LP
+.B QccHYPWrite2D()
+writes values from
+.IR image_component
+to the 2D raw file given by
+.IR filename .
+.B QccHYPWrite3D()
+operates similarly, writing from the 3D
+.IR image_cube.
+.LP
+In all of these routines,
+the parameters
+.IR bpp
+(2D files) or
+.IR bpv
+(3D files)
+specify the number of bits that each pixel or voxel value contains,
+respectively; these values 
+must be between 1 and 32. If
+.IR bpp " or " bpv
+is <= 8, then each sample is stored 
+as the least significant
+bits in a single byte; otherwise, if
+.IR bpp " or " bpv
+is <= 16, then each sample is stored
+as the least significant bits of two consecutive bytes;
+otherwise, if
+.IR bpp " or " bpv
+is <= 32, then each sample is stored
+as the least significant bits of four consecutive bytes.
+.IR signed_data
+indicates whether the sample values are signed or not;
+likewise,
+.IR endian ,
+which is one of
+.BR QCCHYP_RAWENDIAN_BIG
+or
+.BR QCCHYP_RAWENDIAN_LITTLE ,
+indicates the endianness of the binary values.
+For 3D reading and writing,
+.IR format
+must be one of
+.BR QCCHYP_RAWFORMAT_BSQ ,
+.BR QCCHYP_RAWFORMAT_BIL ,
+or
+.BR QCCHYP_RAWFORMAT_BIP
+to indicate the scan order of the 3D file.
+.SH "RETURN VALUE"
+These routines return 0 on success, and 1 on failure.
+.SH "SEE ALSO"
+.BR QccHYPRawDist2D (3),
+.BR QccHYPRawDist3D (3),
+.BR QccPackHYP (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

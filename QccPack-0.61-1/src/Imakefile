@@ -1,0 +1,39 @@
+CURRENT_DIR = $(QCCPACK)/src
+
+STANDARD_MODULES = \@@\
+	libQccPack \@@\
+	libQccPackENT \@@\
+	libQccPackECC \@@\
+	libQccPackSQ \@@\
+	libQccPackVQ \@@\
+	libQccPackAVQ \@@\
+	libQccPackIMG \@@\
+	libQccPackWAV \@@\
+	libQccPackVID \@@\
+	libQccPackHYP
+
+#ifdef QCCPACK_SPIHT
+SPIHT_MODULE = libQccPackSPIHT
+#endif
+#ifdef QCCPACK_SPECK
+SPECK_MODULE = libQccPackSPECK
+#endif
+
+OPTIONAL_MODULES = \@@\
+	$(SPIHT_MODULE) \@@\
+	$(SPECK_MODULE)
+
+XCOMM Add any other modules here
+OTHER_MODULES =
+
+MODULES = $(STANDARD_MODULES) \@@\
+	$(OPTIONAL_MODULES) \@@\
+	$(OTHER_MODULES)
+
+CLEAN_FILES = *~
+COMPRESS_FILES = 
+
+QccDir()
+
+QccSubdirs($(MODULES))
+

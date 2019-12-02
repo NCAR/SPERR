@@ -1,0 +1,13 @@
+#!/bin/sh
+
+if [ $# -ne 2 ]; then
+    echo 'usage: install_cygwin file1 file2'
+    exit 0
+fi
+
+
+if [ -r $1.exe ]; then
+    cp $1.exe $2
+else
+    cp $1 $2
+fi

@@ -1,0 +1,100 @@
+.TH RAWTOICP 1 "QCCPACK" ""
+.SH NAME
+rawtoicp \- converts raw file to image component
+.SH SYNOPSIS
+.B rawtoicp
+.RB "[\|" \-s "\|]"
+.RB "[\|" \-bpp
+.IB bits_per_pixel "\|]"
+.RB "[\|" \-bend "\|]"
+.RB "[\|" \-lend "\|]"
+.I num_rows
+.I num_cols
+.I rawfile
+.I icpfile
+.SH OPTIONS
+.TP
+.BI \-s
+Indicates raw file contains signed values.
+Default: raw file contains unsigned values.
+.TP
+.BI \-bpp
+Indicates the number of bits per each pixel (sample) value.
+Default is 16.
+.TP
+.BI \-bend
+Indicates raw file contains integers stored in
+big-endian format. This is the default.
+.TP
+.BI \-lend
+Indicates raw file contains integers stored in
+little-endian format.
+.SH DESCRIPTION
+.LP
+.B rawtoicp
+converts a raw file
+containing a 2D array of integer pixels into a
+.BR ICP -format
+file. The size of the raw file must be given as
+.IR num_rows
+and
+.IR num_cols .
+.LP
+The option
+.BR \-bpp
+specifies the number of bits that each pixel value contains.
+.IR bits_per_pixel
+must be between 1 and 32. If
+.IR bits_per_pixel
+is <= 8, then each sample is stored in
+.IR rawfile
+as the least significant
+bits in a single byte; otherwise, if
+.IR bits_per_pixel
+is <= 16, then each sample is stored in
+.IR rawfile
+as the least significant bits of two consecutive bytes (the default);
+otherwise, if
+.IR bits_per_pixel
+is <= 32, then each sample is stored in
+.IR rawfile
+as the least significant bits of four consecutive bytes.
+The option
+.BR \-s
+indicates that the raw file contains signed values;
+unsigned is assumed if the
+.BR \-s
+option is absent.
+The options
+.BR \-bend
+and
+.BR \-lend
+indicate whether the raw file is in
+big-endian or little-endian
+format, respectively.
+If neither is specified,
+big-endian is assumed.
+.LP
+.I rawfile
+must be stored in row-major order.
+.SH "SEE ALSO"
+.BR icptoraw (1),
+.BR QccHYPRaw (3),
+.BR QccPackHYP (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

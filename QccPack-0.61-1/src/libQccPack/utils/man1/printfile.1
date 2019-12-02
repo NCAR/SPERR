@@ -1,0 +1,58 @@
+.TH PRINTFILE 1 "QCCPACK" ""
+.SH NAME
+printfile \- print file
+.SH SYNOPSIS
+.B printfile
+.RB "[\|" \-sq
+.IR  codebook\_coder "\|]"
+.I file
+.SH OPTIONS
+.TP
+.BI \-sq " codebook\_coder"
+String. Name of the codebook coder to use for the printing of
+.BR SID -format
+files.
+.SH DESCRIPTION
+.LP
+.B printfile
+prints the contents of 
+.I file 
+to 
+.BR stdout .
+.B printfile
+determines the file type of 
+.I file
+from its magic number.
+.LP
+The
+.B \-sq
+option gives the name of the codebook-coder file (a 
+.BR SQ -format
+file)
+to use in the printing of a 
+.BR SID -format
+file.
+If
+.I file
+is 
+.B SID
+format, this option is required.
+.SH "SEE ALSO"
+.BR QccPack (3)
+
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

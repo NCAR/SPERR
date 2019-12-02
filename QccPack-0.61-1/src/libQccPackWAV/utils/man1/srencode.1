@@ -1,0 +1,186 @@
+.TH SRENCODE 1 "QCCPACK" ""
+.SH NAME
+srencode, srdecode \-
+encode/decode an image using the SR algorithm
+.SH SYNOPSIS
+.sp
+.B srencode
+.RB "[\|" \-w
+.IR  wavelet "\|]"
+.RB "[\|" \-b
+.IR  boundary "\|]"
+.RB "[\|" \-pw
+.IR  pcpfile "\|]"
+.RB "[\|" \-nl
+.IR  levels "\|]"
+.RB "[\|" \-q
+.IR  stepsize "\|]"
+.RB "[\|" \-d
+.IR  dead\_zone "\|]"
+.RB "[\|" \-vo "\|]"
+.I imgfile
+.I bitstream
+.LP
+.B srdecode
+.RB "[\|" \-w
+.IR  wavelet "\|]"
+.RB "[\|" \-b
+.IR  boundary "\|]"
+.RB "[\|" \-pw
+.IR  pcpfile "\|]"
+.I bitstream
+.I imgfile
+.SH OPTIONS
+.TP
+.BI \-w " wavelet"
+String. 
+Name of the wavelet file
+.RB ( FBK
+or
+.B LFT
+format); default = "CohenDaubechiesFeauveau.9-7.lft"
+.TP
+.BI \-b " boundary"
+String. Type of boundary extension; default = "symmetric".
+.TP
+.BI \-pw " pcpfile"
+String. Name of file containing perceptual weights.
+.TP 
+.BI \-nl " levels"
+Integer. Number of levels of dyadic decomposition; default value is 5 levels.
+.TP 
+.BI \-q " stepsize"
+Float. Stepsize of the uniform scalar quantizer. Default value is 47.1.
+.TP
+.BI \-d " dead\_zone"
+Float. Size of the dead zone to use with the scalar quantizer.  Default is
+to not use a dead zone.
+.TP
+.B \-vo
+Print only the value of the rate to stdout (terse output);
+default is verbose output.
+.SH DESCRIPTION
+.LP
+.B srencode
+codes an image,
+.IR imgfile ,
+using the stack-run (SR) algorithm by Tsai 
+.IR "et al" .
+The SR algorithm involves a 2D DWT followed by 
+uniform scalar quantization of the wavelet coefficients.
+Runs of the zero index are identified and are run-length encoded.
+The SR algorithm then uses a 4-symbol alphabet to code the binary digits
+of the runs and the quantizer indices of the nonzero coefficients
+(the "stacks").  The stream of symbols from this 4-symbol alphabet
+is then coded with arithmetic entropy coding.
+.LP
+The DWT is performed as described for
+.BR imgdwt (1).
+Option
+.B \-w
+specifies the wavelet, 
+option
+.B \-b
+specifies the boundary extension, and option
+.B \-pw
+indicates whether perceptual weighting is to be used.
+See 
+.BR imgdwt (1)
+for more details.
+.LP
+The rate-distortion performance of the SR algorithm is determined by the
+stepsize of the uniform scalar quantizer, specified
+with the
+.B \-q
+option.
+Additionally, an optional dead zone may be applied to the uniform scalar
+quantizer.  That is, the size of the quantizer bin centered at zero may
+be enlarged so that more wavelet coefficients are quantized to zero,
+consequently increasing the likelihood of longer runs (see
+.BR squniform (1)
+for more details).
+.LP
+.B srencode
+normally prints to stdout a small amount of information
+concerning the encoding being performed, most notably the bit rate,
+expressed in bits per pixel,
+achieved by the program.  If the 
+.B \-vo
+(value-only) option is given, this printed output is suppressed except for
+the bit rate.
+.LP
+Note: the original presentation of SR given by Tsai 
+.IR "et al" .
+does not include perceptual weighting as allowed by
+.B srencode
+(the 
+.B \-pw
+option).  Refer to
+.BR imgdwt (1)
+and
+.BR QccWAVPerceptualWeights (3)
+for details on the implementation of perceptual weighting.
+.LP
+Note:
+.BR srencode
+currently achieves rate-distortion performance slightly below that reported
+by Tsai 
+.IR "et al" .
+For instance, when coding the "Barbara" 
+image at 0.5 bits/pixel, 
+.B srencode 
+achieves a PSNR about 0.5dB below the reported figure.
+The reasons for this performance gap are currently being investigated.
+.LP
+.B srdecode
+performs the corresponding decoding using the SR algorithm, decoding
+the
+.I bitstream
+made by
+.B srencode
+and producing
+a reconstructed image,
+.IR imgfile .
+For sane results, 
+.IR wavelet ,
+.IR boundary ,
+and
+.I pcpfile
+should be the same as they were for
+.BR srencode .
+.SH "SEE ALSO"
+.BR QccWAVsrEncode (3),
+.BR QccWAVsrDecode (3),
+.BR imgdwt (1),
+.BR squniform (1),
+.BR QccWAVPerceptualWeights (3),
+.BR QccWAVSubbandPyramid (3),
+.BR QccPackWAV (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+M.-J. Tsai, J. D. Villasenor, and F. Chen,
+"Stack-Run Image Coding,"
+.IR "IEEE Transactions on Circuits and Systems for Video Technology" ,
+vol. 6, no. 5, pp. 519-521, October 1996.
+
+M.-J. Tsai, J. D. Villasenor, and F. Chen,
+"Stack-Run Coding for Low Bit Rate Image Communication,"
+.IR "Proceedings IEEE International Conference on Image Processing" ,
+pp. 681-684, September 1996.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

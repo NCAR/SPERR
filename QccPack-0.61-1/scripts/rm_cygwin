@@ -1,0 +1,16 @@
+#!/bin/sh
+
+if [ $# -lt 1 ]; then
+    echo 'usage: install_cygwin files...'
+    exit 0
+fi
+
+while [ $# -ge 1 ]
+do
+  if [ -r $1.exe ]; then
+      rm -f $1.exe
+  else
+      rm -f $1
+  fi
+  shift
+done

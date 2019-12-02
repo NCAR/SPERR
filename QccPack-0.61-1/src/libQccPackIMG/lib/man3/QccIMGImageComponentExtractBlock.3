@@ -1,0 +1,80 @@
+.TH QCCIMGIMAGECOMPONENTEXTRACTBLOCK 3 "QCCPACK" ""
+.SH NAME
+QccIMGImageComponentExtractBlock,
+QccIMGImageComponentInsertBlock
+\- 
+block extraction and insertion from/to image component
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccIMGImageComponentExtractBlock(const QccIMGImageComponent *" image_component ", int " image_row ", int " image_col ", QccMatrix " block ", int " block_num_rows ", int " block_num_cols );
+.br
+.BI "int QccIMGImageComponentInsertBlock(QccIMGImageComponent *" image_component ", int " image_row ", int " image_col ", const QccMatrix " block ", int " block_num_rows ", int " block_num_cols );
+.SH DESCRIPTION
+.BR QccIMGImageComponentExtractBlock()
+extracts a
+.I block
+of size
+.IR block_num_rows
+by
+.IR block_num_cols
+from
+.IR image_component .
+The
+.I block
+is extracted such that the upper-left corner of the extracted
+.I block
+lies at location
+.RI ( image_col ", " image_row )
+in
+.IR image_component .
+If any part of the extracted
+.I block
+lies beyond the bounds of
+.IR image_component ,
+the corresponding pixels in
+.IR block
+beyond the image-component bounds are set to 0.
+.LP
+.BR QccIMGImageComponentInsertBlock()
+inserts a
+.IR block
+of size
+.IR block_num_rows
+by
+.IR block_num_cols
+into
+.IR image_component
+at location
+.RI ( image_col ", " image_row ).
+Any part of the inserted
+.IR block
+that would lie beyond the bounds of
+.IR image_component
+is ignored, i.e., not inserted into
+.IR image_component .
+.SH "RETURN VALUES"
+These routines return 0 on success and 1 on error.
+.SH "SEE ALSO"
+.BR QccIMGImageComponent (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+

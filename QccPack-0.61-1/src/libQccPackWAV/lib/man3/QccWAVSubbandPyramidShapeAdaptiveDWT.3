@@ -1,0 +1,106 @@
+.TH QCCWAVSUBBANDPYRAMIDSHAPEADAPTIVEDWT 3 "QCCPACK" ""
+.SH NAME
+QccWAVSubbandPyramidShapeAdaptiveDWT,
+QccWAVSubbandPyramidInverseShapeAdaptiveDWT \- 
+separable 2D shape-adaptive discrete wavelet transform and inverse transform
+for subband-pyramid data
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVSubbandPyramidShapeAdaptiveDWT(QccWAVSubbandPyramid *" subband_pyramid ", QccWAVSubbandPyramid *" mask ", int " num_levels ", const QccWAVWavelet *" wavelet );
+.br
+.BI "int QccWAVSubbandPyramidInverseShapeAdaptiveDWT(QccWAVSubbandPyramid *" subband_pyramid ", QccWAVSubbandPyramid *" mask ", const QccWAVWavelet *" wavelet );
+.SH DESCRIPTION
+.B QccWAVSubbandPyramidShapeAdaptiveDWT()
+calls
+.BR QccWAVWaveletShapeAdaptiveDWT2D (3)
+to perform a separable 2D shape-adaptive
+discrete wavelet transform (SA-DWT) on the
+.I matrix
+field of
+.IR subband_pyramid .
+.I num_levels
+is the number of levels (scales) of decomposition to perform;
+the 
+.I num_levels
+field of
+.I subband_pyramid
+is set to
+.IR num_levels .
+.IR mask
+is the transparency mask defining the shape of the data to be transformed;
+the
+.I matrix
+field of
+.I mask
+is passed as the transparency mask to
+.BR QccWAVWaveletShapeAdaptiveDWT2D (3).
+During the process of performing the 2D SA-DWT, the
+.I mask
+is transformed with a Lazy wavelet transform so as to correctly indicate
+where valid coefficients reside in the wavelet domain in the transformed
+.IR subband_pyramid .
+The transformed mask is return in
+.I mask
+upon completion of
+.BR QccWAVWaveletSubbandPyramidShapeAdaptiveDWT() .
+.LP
+.BR QccWAVSubbandPyramidInverseShapeAdaptiveDWT()
+calls
+.BR QccWAVWaveletInverseShapeAdaptiveDWT2D (3)
+to perform a separable 2D inverse SA-DWT on the
+.I matrix
+field of
+.IR subband_pyramid .
+The number of levels of the inverse transform is retrieved from the
+.I num_levels
+field of
+.IR subband_pyramid ;
+.I num_levels
+is set to 0 upon return of
+.BR QccWAVSubbandPyramidInverseShapeAdaptiveDWT() .
+.I mask
+should be the Lazy-wavelet transformed mask that was output by
+.BR QccWAVWaveletSubbandPyramidShapeAdaptiveDWT() .
+Upon return from
+.BR QccWAVSubbandPyramidInverseShapeAdaptiveDWT() ,
+.I mask
+is the original transparency mask; i.e., the mask that
+indicates where valid data resides in the original spatial domain.
+.SH "RETURN VALUES"
+These routines
+return 0 on success and 1 on error.
+.SH "SEE ALSO"
+.BR QccWAVWaveletShapeAdaptiveDWT2D (3),
+.BR QccWAVWaveletInversShapeAdaptiveDWT2D (3),
+.BR QccWAVWavelet (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.LP
+S. Li and W. Li, "Shape-Adaptive Discrete Wavelet Transforms for
+Arbitrarily Shaped Visual Object Coding,"
+.IR "IEEE Transactions on Circuits and Systems for Video Coding" ,
+vol. 10, pp. 725-743, August 2000.
+.LP
+ISO/IEC 14496-2, "Information Technology -- Coding of audio-visual objects --
+Part 2: Visual," 
+.IR "MPEG-4 Standard" ,
+Amendment 1, July 2000.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+

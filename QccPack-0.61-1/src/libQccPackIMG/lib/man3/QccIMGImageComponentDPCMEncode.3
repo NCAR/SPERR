@@ -1,0 +1,206 @@
+.TH QCCIMGIMAGECOMPONENTDPCMENCODE 3 "QCCPACK" ""
+.SH NAME
+QccIMGImageComponentDPCMEncode,
+QccIMGImageComponentDPCMDecode,
+QccIMGImageDPCMEncode,
+QccIMGImageDPCMDecode
+\- 
+DPCM encoding and decoding of images and image components
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccIMGImageComponentDPCMEncode(const QccIMGImageComponent *" image_component ", const QccSQScalarQuantizer *" quantizer ", double " out_of_bound_value ", int " predictor_code ", QccIMGImageComponent *" difference_image ", QccChannel *" channel );
+.br
+.BI "int QccIMGImageComponentDPCMDecode(QccChannel *" channel ", const QccSQScalarQuantizer *" quantizer ", double " out_of_bound_value ", int " predictor_code ", QccIMGImageComponent *" image_component );
+.br
+.sp
+.BI "int QccIMGImageDPCMEncode(const QccIMGImage *" image ", const QccSQScalarQuantizer *" quantizers ", const QccVector " out_of_bound_values ", int " predictor_code ", QccIMGImage *" difference_image ", QccChannel *" channels );
+.br
+.BI "int QccIMGImageDPCMDecode(QccChannel *" channels ", const QccSQScalarQuantizer *" quantizers ", const QccVector " out_of_bound_values ", int " predictor_code ", QccIMGImage *" image);
+.SH DESCRIPTION
+.IR QccIMGImageComponentDPCMEncode()
+and
+.IR QccIMGImageComponentDPCMDecode()
+implement differential pulse-code modulation (DPCM) of an
+.IR image_component .
+In essence, DPCM encoding consists of making a prediction of the current
+pixel, subtracting the prediction from the current pixel,
+and scalar-quantizing the resulting difference value to produce a
+quantization index. This procedure is repeated in a raster-scan fashion
+throughout the image.
+DPCM decoding reverses the procedure by inverse scalar-quantizing the
+index to produce a reconstructed difference and then adding
+this reconstructed difference to a prediction to reconstruct the
+current pixel. See "PREDICTION" below for more detail on the
+predictors used in the DPCM encoder and decoder.
+.LP
+.IR QccIMGImageComponentDPCMEncode()
+encodes
+.IR image_component
+with DPCM using the predictor specified by
+.IR predictor_code ,
+quantizing difference values with
+.IR quantizer ,
+and outputting the resulting quantizer indices to
+.IR channel .
+.IR QccChannelNormalize (3)
+is called if the quantization indices consist of both positive and
+negative numbers, which is the case unless
+.IR quantizer->type
+is
+.BR QCCSQSCALARQUANTIZER_GENERAL .
+If
+.IR difference_image
+is 
+.RB non- NULL ,
+the image of difference values is returned.
+.IR channel
+must be allocated with sufficient storage space to hold all
+the quantizer indices (i.e., one for each pixel in
+.IR image_component )
+prior to calling
+.BR QccIMGImageComponentDPCMEncode() .
+.LP
+.BR QccIMGImageComponentDPCMDecode()
+decodes the
+.IR channel
+produced by
+.BR QccIMGImageComponentDPCMEncode() ,
+reconstructing
+.IR image_component .
+For sane results,
+.IR predictor_code ,
+.IR out_of_bound_value ,
+and
+.IR quantizer
+must be the same as those used by
+.BR QccIMGImageComponentDPCMEncode() .
+.IR image_component
+must be allocated prior to calling
+.BR QccIMGImageComponentDPCMDecode() .
+.LP
+.BR QccIMGImageDPCMEncode()
+and
+.BR QccIMGImageDPCMDecode()
+implement DPCM encoding and decoding, respectively, for
+.IR image .
+Essentially,
+.BR QccIMGImageDPCMEncode()
+calls
+.BR QccIMGImageComponentDPCMEncode()
+for each of the
+.IR Y ,
+.IR U ,
+and
+.IR V
+image components of
+.IR image .
+.IR out_of_bound_values
+is a vector of three values to use in the predictor,
+.IR quantizers
+is an array of three quantizers to apply to the prediction
+residuals, and 
+.IR channels
+is an array of three channels used to store the quantization
+indices for each of the three components.
+Similarly,
+.BR QccIMGImageDPCMDecode()
+calls
+.BR QccIMGImageComponentDPCMDecode()
+for each of the
+.IR Y ,
+.IR U ,
+and
+.IR V
+image components of
+.IR image .
+.SH "PREDICTION"
+For best performance, 
+it is necessary for the DPCM encoder and decoder to stay synchronized
+throughout the coding of an image component.
+Thus, the encoder and decoder must
+use exactly the same predictions. Consequently, both the encoder
+and decoder calculate a prediction of the current pixel based on
+previously encoded and reconstructed pixels in the causal neighborhood
+surrounding the current pixel in the raster scan.
+.LP
+Jain identifies six linear predictors as being particularly useful for
+image coding. These predictors use four pixels
+.IR A , " B" , " C" ", and " D
+in the causal neighborhood surrounding current pixel
+.IR X
+as illustrated below.
+.nf
+
+.RI "previous line    ... *   *   *   " B "   " C "   " D "   *   *   * ..."
+.RI " current line    ... *   *   *   " A "   " X "   -   -   -   - ..."
+    next line    ... -   -   -   -   -   -   -   -   - ...
+
+.IR "" "         *: previously encoded pixels"
+.IR "" "         -: pixels not yet encoded"
+.IR A ", " B ", " C ", " D ": previously encoded pixels used by predictor"
+.IR "         X" ": current pixel (to be predicted)
+
+.fi
+The different predictors, specified by
+.IR predictor_code
+in these routines, are as follows, where
+.I P
+is the predicted value of the current pixel,
+.IR X .
+.TP
+Predictor code: 0
+.IR P " = " A
+.TP
+Predictor code: 1
+.IR P " = (" A " + " D ") / 2"
+.TP
+Predictor code: 2
+.IR P " = (" A " + " C ") / 2"
+.TP
+Predictor code: 3
+.IR P " = ((" A " + (" C " + " D ")/2) / 2)"
+.TP
+Predictor code: 4
+.IR P " = " A " + (" C " - " B ")"
+.TP
+Predictor code: 5
+.IR P " = " A " + (" D " - " B ")/2"
+.LP
+In the event that the current pixel is close to the boundaries
+of the image component, one or more of the
+.IR A , " B" , " C" ", or " D
+pixels may not be available for these predictors. In this case,
+the predictor substitutes
+.IR out_of_bound_value
+for the missing pixel in the prediction formula.
+.SH "RETURN VALUE"
+These routines return 0 on success, 1 on failure.
+.SH "SEE ALSO"
+.BR QccSQScalarQuantization (3),
+.BR QccChannelNormalize (3),
+.BR QccIMGImageComponent (3),
+.BR QccIMGImage (3),
+.BR QccChannel (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+A. K. Jain,
+.IR "Fundamentals of Digital Image Processing" .
+Englewood Cliffs, NJ: Prentice Hall, 1989.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

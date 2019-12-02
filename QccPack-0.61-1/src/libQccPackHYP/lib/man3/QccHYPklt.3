@@ -1,0 +1,327 @@
+.TH QCCHYPKLT 3 "QCCPACK" ""
+.SH NAME
+QccHYPklt \- 
+data structure
+.B QccHYPklt
+for spectral KLT transform
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccHYPkltInitialize(QccHYPklt *" klt );
+.br
+.BI "int QccHYPkltAlloc(QccHYPklt *" klt );
+.br
+.BI "void QccHYPkltFree(QccHYPklt *" klt );
+.br
+.BI "int QccHYPkltPrint(const QccHYPklt *" klt );
+.br
+.BI "int QccHYPkltRead(QccHYPklt *" klt );
+.br
+.BI "int QccHYPkltWrite(const QccHYPklt *" klt );
+.SH DESCRIPTION
+QccPack provides data structure
+.B QccHYPklt
+for representing a KLT transform.
+.LP
+The components of a
+.B QccHYPklt
+structure are a vector representing the dataset mean and
+a matrix representing the transform itself, as determined
+by a singular value decomposition of the dataset's covariance
+matrix.
+.SH "DATA STRUCTURE"
+The
+.B QccHYPklt
+data structure is defined as:
+.RS
+.nf
+
+typedef struct
+{
+  QccString filename;
+  QccString magic_num;
+  int major_version;
+  int minor_version;
+  int num_bands;
+  QccVector mean;
+  QccMatrix matrix;
+} QccHYPklt;
+.fi
+.RE
+.LP
+The fields of
+.B QccHYPklt
+are as follows:
+.TP
+.IR filename
+The name of the file.
+.TP
+.IR magic_num ", " major_version ", " minor_version
+The magic number and version of the file.
+.TP
+.IR num_bands
+The number of spectral bands the KLT is designed for.
+.TP
+.IR mean
+The mean vector (length =
+.IR num_bands ).
+.TP
+.IR matrix
+The transform matrix (size = 
+.IR num_bands " x " num_bands ).
+.SH "FILE FORMAT"
+For reading and writing structures
+of type
+.BR QccHYPklt ,
+QccPack provides the
+.B KLT
+file format.
+This file format starts with an ASCII header followed by
+binary data.
+The ASCII header consists of magic-number/revision
+information
+followed by any amount of white space
+(space, `\\t' (tab), `\\n' (newline), `\\r' (return)) and/or
+comments lines (lines starting with `#').  Following this white space,
+additional ASCII
+header information is given, separated by blanks and newlines.
+Binary data follows this ASCII header information.
+.LP
+The
+.B KLT
+file format consists of the following information:
+.RS
+.sp
+.BI KLT X.X
+.br
+.I "<white space>"
+.br
+.I num_bands
+.br
+.I mean
+.br
+\|.
+.br
+\|.
+.br
+\|.
+.br
+.I matrix
+.br
+\|.
+.br
+\|.
+.br
+\|.
+.br
+.sp
+.RE
+where
+.B KLT
+is the magic number,
+.I X.X
+is the version number,
+.I "<white space>"
+is white space and/or 
+comment lines, 
+.I num_bands
+is the number of bands,
+.I mean
+are the elements of the mean vector,
+and
+.I matrix
+are the elements of the transform matrix.
+.I num_bands
+is stored in ASCII, while the
+.I mean
+and
+.I matrix
+values are stored as binary
+(4 bytes, MSB first, see
+.BR QccFileWriteDouble (3)).
+No white space may exist between the 
+.I mean
+and
+.I matrix
+values.
+.SH "ROUTINES"
+.B QccHYPkltInitialize()
+should be called before any use of a
+.B QccHYPklt
+structure.
+.B QccHYPkltInitialize()
+initializes the fields of
+.I klt
+to the following values:
+.RS
+
+.IR filename :
+.B NULL
+string
+.br
+.IR magic_num :
+.B QCCFILTERBANK_MAGICNUM
+.br
+.IR major_version ", " minor_version :
+initialized to output of 
+.BR QccGetQccPackVersion (3)
+.br
+.IR num_bands :
+0
+.br
+.IR mean :
+.B NULL
+.br
+.IR matrix :
+.B NULL
+.br
+.RE
+.LP
+.B QccHYPkltAlloc()
+allocates the
+.I mean
+and
+.I matrix
+fields of the KLT.
+.IR num_bands
+must be set prior to calling
+.BR QccHYPkltAlloc() .
+.LP
+.B QccHYPkltFree()
+frees the 
+.I mean
+and
+.I matrix
+fields of
+.IR klt .
+.LP
+.B QccHYPkltPrint()
+prints the contents of
+.I klt
+to stdout.
+.LP
+.BR QccHYPkltRead()
+reads a
+.BR QccHYPklt
+structure from a file;
+the filename of the
+.BR KLT -format
+file to be read must be stored as
+.IR klt->filename .
+.LP
+.BR QccHYPkltWrite()
+writes a
+.BR QccHYPklt
+structure to a file;
+the filename of the
+.BR KLT -format
+file to be written must be stored as
+.IR klt->filename .
+.SH "THEORY"
+The Karhunen-Loève transform (KLT) is a data-dependent linear
+transform that is optimal in the sense that it
+packs the most signal energy into a given number of
+transform coefficients.
+.LP
+The KLT is often used for spectral decorrelation in a hyperspectral
+image. Let
+.I X
+be a collection of pixel vectors; i.e.,
+.I X
+is a
+.IR num_bands " x " num_pixels
+matrix, where
+.I num_bands
+is the number of spectral bands in the hyperspectral image.
+Let
+.I u
+be the mean vector of the pixel vectors (a
+.IR num_bands " x 1"
+vector).
+The covariance matrix
+.I R
+of
+.I X
+is then
+.IR R " = " X * X ^T/ num_pixels " - " u * u ^T,
+where the size of 
+.I R
+is
+.IR num_bands " x " num_bands .
+The singular value decomposition of
+.I R
+is
+.IR R " = " U * S * V ^T,
+where
+.I U
+is the transform matrix for the KLT (size
+.IR num_bands " x " num_bands ).
+.LP
+The forward KLT transform is applied to the dataset in question
+using the transpose of the matrix
+.IR U .
+Specifically, for a
+.IR num_bands " x 1"
+pixel vector
+.IR x ,
+the forward KLT is
+.IR y " = " U ^T*( x " - " u ).
+The inverse KLT transform uses the matrix
+.IR U
+directly; i.e.,
+.IR x " = " U * y " + " u .
+Here,
+.IR u
+is the mean vector.
+.LP
+In QccPack,
+.BR QccHYPkltTrain (3)
+determines the mean vector
+.I u
+and the transform matrix
+.I U
+given the set of pixel vectors in a hyperspectral image;
+.BR QccHYPkltTrain (3)
+uses
+.BR QccMatrixSVD (3)
+to perform the SVD of the covariance matrix.
+For application of the forward and inverse transforms to the 
+image cube, use
+.BR QccHYPkltTransform (3)
+and
+.BR QccHYPkltInverseTransform (3),
+respectively.
+.LP
+The KLT is also called the Hotelling transform or
+principal component analysis (PCA).
+The name PCA is typically used when only a subset of transform coefficients
+(i.e., the principal components) is retained; that is,
+PCA typically refers to dimensionality reduction in addition
+to the spectral decorreltation inherent in the KLT.
+.SH "RETURN VALUE"
+These routines return 0 on success, and 1 on failure.
+.SH "SEE ALSO"
+.BR QccHYPkltTrain (3),
+.BR QccHYPkltTransform (3),
+.BR QccHYPkltInverseTransform (3),
+.BR QccMatrixSVD (3),
+.BR QccIMGImageCube (3),
+.BR QccPackHYP (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

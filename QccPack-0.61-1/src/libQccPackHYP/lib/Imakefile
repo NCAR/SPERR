@@ -1,0 +1,45 @@
+CURRENT_DIR = $(QCCPACK)/src/libQccPackHYP/lib
+
+OBJS = \@@\
+	rawfile.o \@@\
+	sam.o \@@\
+	hyperspectral.o \@@\
+	klt.o \@@\
+	rklt.o
+
+MAN_PAGES = \@@\
+	QccPackHYP \@@\
+	QccHYPRaw \@@\
+	QccHYPRawRead2D \@@\
+	QccHYPRawWrite2D \@@\
+	QccHYPRawDist2D \@@\
+	QccHYPRawRead3D \@@\
+	QccHYPRawWrite3D \@@\
+	QccHYPRawDist3D \@@\
+	QccHYPImageCubeMeanSAM \@@\
+	QccHYPImageCubeToColor \@@\
+	QccHYPklt \@@\
+	QccHYPkltInitialize \@@\
+	QccHYPkltAlloc \@@\
+	QccHYPkltFree \@@\
+	QccHYPkltPrint \@@\
+	QccHYPkltRead \@@\
+	QccHYPkltWrite \@@\
+	QccHYPkltTrain \@@\
+	QccHYPkltTransform \@@\
+	QccHYPkltInverseTransform \@@\
+	QccHYPrklt \@@\
+	QccHYPrkltAlloc \@@\
+	QccHYPrkltFree \@@\
+	QccHYPrkltTrain \@@\
+	QccHYPrkltFactorization \@@\
+	QccHYPrkltTransform \@@\
+	QccHYPrkltInverseTransform
+
+MAN_SUFFIX = 3
+
+HEADER = libQccPackHYP.h
+
+QccDir()
+
+QccLib()

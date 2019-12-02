@@ -1,0 +1,73 @@
+.TH ICBKLT 1 "QCCPACK" ""
+.SH NAME
+icbklt \- transform image cube with KLT
+.SH SYNOPSIS
+.B icbklt
+.RB "[\|" \-p
+.IR num_pcs "\|]"
+.I kltfile
+.I icbfile1
+.I icbfile2
+.SH OPTIONS
+.TP
+.BI \-p
+Gives the number of PCs to retain after the transform is applied.
+Default is to retain all PCs.
+.SH DESCRIPTION
+.LP
+.B icbklt
+performs the forward KLT transform
+.IR klt
+on the hyperspectral image in
+.IR icbfile1 ,
+spectrally decorrelating all the pixel vectors.
+The resulting transformed image cube is written to
+.IR icbfile2 .
+.LP
+If the
+.BR \-p
+option is not specified, all PCs produced by the transform
+are retained and written to
+.IR icbfile2 ;
+that is,
+.IR icbfile2
+has the same size as
+.IR icbfile1 .
+On the other hand, specifying
+.BR \-p
+results in the retaining of only
+.IR num_pcs
+spectral principal components (PCs). In this case,
+.IR num_pcs
+must be less than or equal to the number of spectral bands of
+.IR icbfile1 ,
+and
+.IR icbfile2
+will be the same size spatially as
+.IR icbfile1
+but will have only
+.IR num_pcs
+PCS.
+.SH "SEE ALSO"
+.BR icbiklt (1),
+.BR QccHYPkltTransform (3),
+.BR QccHYPkltInverseTransform (3),
+.BR QccHYPklt (3),
+.BR QccPackHYP (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

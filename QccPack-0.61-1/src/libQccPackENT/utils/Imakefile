@@ -1,0 +1,18 @@
+CURRENT_DIR = $(QCCPACK)/src/libQccPackENT/utils
+
+EXECUTABLES = \@@\
+	chnarithmeticencode \@@\
+	chnarithmeticdecode \@@\
+	chnhuffmanencode \@@\
+	chnhuffmandecode \@@\
+	chngolombencode \@@\
+	chngolombdecode \@@\
+	chnagolombencode \@@\
+	chnagolombdecode
+
+SHELL_SCRIPTS = 
+MAN_SUFFIX = 1
+
+QccDir()
+
+QccUtils()

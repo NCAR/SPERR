@@ -1,0 +1,165 @@
+.TH DCTTCEENCODE 1 "QCCPACK" ""
+.SH NAME
+dcttceencode, dcttcedecode \-
+encode/decode an image using the DCT-TCE algorithm
+.SH SYNOPSIS
+.sp
+.B dcttceencode
+.RB "[\|" \-nl
+.IR  num_levels "\|]"
+.RB "[\|" \-ss
+.IR  stepsize "\|]"
+.RB "[\|" \-r
+.IR  rate "\|]"
+.RB "[\|" \-vo "\|]"
+.RB "[\|" \-os
+.IR  overlap_sample "\|]"
+.RB "[\|" \-sf
+.IR  smooth_factor "\|]"
+.I imgfile
+.I bitstream
+.LP
+.B dcttcedecode
+.RB "[\|" \-r
+.IR  rate "\|]"
+.I bitstream
+.I imgfile
+.SH OPTIONS
+.TP 
+.BI \-nl " num_levels"
+Integer. Determines the block size used for the DCT; the block size is
+.RI "2^" num_levels " x 2^" num_levels .
+After reorganization in the dyadic structure, the dyadic decomposition has
+.IR num_levels
+resolution levels. Default value is 4 levels.
+.TP
+.BI \-ss " stepsize"
+Float. The initial quantization stepsize;
+if this option is specified, the coder will encode until all bitplanes
+of the quantized coefficients are encoded.
+.TP
+.BI \-r " rate"
+Float. The target encode/decode bit rate.
+.TP
+.B \-vo
+Print only the value of the rate to stdout (terse output);
+default is verbose output.
+.TP
+.BI \-os " overlap_sample"
+Integer. Number of samples of overlap between DCT blocks in pre/postfiter.
+Default is 
+.RI "2^(" num_levels " - 1)."
+.TP
+.BI \-sf " smooth_factor"
+Float. Smoothing factor for pre/postfilter. Default is 1.33.
+.SH DESCRIPTION
+.LP
+.B dcttceencode
+codes an image,
+.IR imgfile ,
+using the DCT-TCE algorithm by Shah
+.IR "et al" .
+The DCT-TCE algorithm combines a block-based lapped biorthogonal 
+transform based on the DCT with the embedded TCE coder.
+See 
+.BR QccWAVdcttceEncode (3)
+for more detail on the DCT-TCE algorithm.
+.LP
+The
+.B \-os
+and
+.B \-sf
+control the overlapping and smoothing of the
+prefilter and postfilter that, when combined with a
+block-based DCT, form the lapped biorthogonal transform.
+.LP
+.B dcttceencode
+supports two encoding modes.
+Mode 1 consists of first applying a scalar quantizer to all
+DWT coefficients and then encoding the coefficients,
+bitplane by bitplane, until all bitplanes are encoded.
+Mode 2 consists of direct bitplane encoding without any
+scalar quantization of coefficients; in this mode, encoding
+stops when the target bitrate is reached.
+Mode 1 is selected by specifying a quantization
+.I stepsize
+with the
+.B \-ss
+option. Mode 2 is selected by specifying a target encoding
+.I rate
+with the 
+.B \-r
+option.
+Note that one, and only one, of
+.B \-ss
+and
+.B \-r
+must be specified.
+.LP
+.B dcttceencode
+prints to stdout a small amount of information concerning 
+the target bitrate and the actual bitrate achieved, as well as some
+run time information. Usually these rates are identical, but may
+differ slightly. If the
+.B \-vo
+(value-only) option is given, all printed output is suppressed except for
+the actual bitrate.
+.LP
+.B dcttcedecode
+performs the corresponding decoding using the DCT-TCE algorithm,
+decoding the
+.I bitstream
+made by
+.B dcttceencode
+and producing a reconstructed image,
+.IR imgfile .
+The
+.B \-r
+option for
+.B dcttcedecode
+specifies the
+.I rate
+at which to stop decoding, which may be any rate less than that at which
+.I bitstream
+was originally produced.
+.LP
+.B dcttceencode
+and
+.B dcttcedecode
+call
+.BR QccWAVdcttceEncode (3)
+and
+.BR QccWAVdcttceDecode (3),
+respectively, to perform DCT-TCE encoding and decoding.
+Refer to the man pages for these functions for more information
+on the details of the QccPack implementation of the TCE algorithm. 
+.SH "SEE ALSO"
+.BR QccWAVdcttceEncode (3),
+.BR QccWAVdcttceDecode (3),
+.BR QccPackWAV (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+.LP
+V. P. Shah, J. E. Fowler, and N. H. Younan, "Tarp Filtering of
+Block-Transform Coefficients for Embedded Image Coding," in
+.IR "Proceedings of the IEEE International Conference on Acoustics, Speech, and Signal Processing" ,
+Toulouse, France, May 2006, vol. 2, pp. 21-24.
+
+.SH AUTHOR
+Written by Vijay Shah, Mississippi State University
+
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

@@ -1,0 +1,16 @@
+FBK0.55
+
+#
+#  Haar.fbk
+#
+#  The length-2 Haar orthonormal wavelet.
+#
+#  Permitted boundary methods:
+#    periodic extension
+#
+
+0
+0
+2
+ 0.70710678118654752440
+ 0.70710678118654752440

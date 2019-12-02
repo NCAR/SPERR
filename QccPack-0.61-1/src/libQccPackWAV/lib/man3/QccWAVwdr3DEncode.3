@@ -1,0 +1,210 @@
+.TH QCCWAVWDR3DENCODE 1 "QCCPACK" ""
+.SH NAME
+QccWAVwdr3DEncode, QccWAVwdr3DDecode \-
+encode/decode an image cube using the 3D-WDR algorithm
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVwdr3DEncode(const QccIMGImageCube *" image_cube ", const QccIMGImageCube *" mask ", int " transform_type ", int " temporal_num_levels ", int " spatial_num_levels ", const QccWAVWavelet *" wavelet ", QccBitBuffer *" output_buffer ", int " target_bit_cnt );
+.sp
+.BI "int QccWAVwdr3DDecodeHeader(QccBitBuffer *" input_buffer ", int *" transform_type ", int *" temporal_num_levels ", int *" spatial_num_levels ", int *" num_frames ", int *" num_rows ", int *" num_cols ", double *" image_mean ", int *" max_coefficient_bits );
+.sp
+.BI "int QccWAVwdr3DDecode(QccBitBuffer *" input_buffer ", QccIMGImageCube *" image_cube ", const QccIMGImageCube *" mask ", int " transform_type ", int " temporal_num_levels ", int " spatial_num_levels ", const QccWAVWavelet *" wavelet ", double " image_mean ", int " max_coefficient_bits ", int " target_bit_bit );
+.SH DESCRIPTION
+.SS Encoding
+.LP
+.B QccWAVwdr3DEncode()
+encodes an image cube,
+.IR image_cube ,
+using a 3D generalization of the WDR algorithm.
+The original WDR algorithm was developed for 2D images by
+Tian and Wells; it was latter extended to 3D by Rucker and Fowler.
+In essence, the 3D-WDR algorithm involves a 3D DWT followed by 
+a progressive "bitplane" coding of the wavelet coefficients involving
+a form of runlength coding of significance information.
+.LP
+.I image_cube
+is the image cube to be coded and
+.I output_buffer
+is the output bitstream.
+.I output_buffer
+must be of
+.B QCCBITBUFFER_OUTPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3).
+.LP
+.BR QccWAVwdr3DEncode ()
+supports the use of both wavelet-packet and dyadic wavelet-transform
+decompositions.
+If
+.IR transform_type
+is
+.BR QCCWAVSUBBANDPYRAMID3D_DYADIC ,
+a dyadic DWT is used; if
+.IR transform_type
+is
+.BR QCCWAVSUBBANDPYRAMID3D_PACKET ,
+a wavelet-packet DWT is used.
+.IR temporal_num_levels 
+and
+.IR spatial_num_levels
+give the number of levels of wavelet decomposition to perform
+for both transform types; for a dyadic transform,
+.IR temporal_num_levels 
+should equal
+.IR spatial_num_levels .
+.I wavelet
+is the wavelet to use for decomposition.
+.LP
+The bitstream output from the 3D-WDR encoder is embedded, meaning that
+any prefix of the bitstream can be decoded to give a valid 
+representation of the image.  The 3D-WDR encoder essentially produces
+output bits until the number of bits output reaches
+.IR target_bit_cnt ,
+the desired (target) total length of the output bitstream in bits,
+and then it stops.
+Note that this is the bitstream length in bits, not the rate of the bitstream
+(which would be expressed in bits per voxel).
+.LP
+.BR QccWAVwdr3DEncode()
+optionally supports the use of a shape-adaptive DWT (SA-DWT) rather than
+the usual DWT. That is, 
+.BR QccWAVwdr3DEncode()
+can call
+.BR QccWAVSubbandPyramid3DShapeAdaptiveDWT (3)
+as the wavelet transform rather than the usual
+.BR QccWAVSubbandPyramid3DDWT (3).
+The use of a SA-DWT is indicated by a non-NULL
+.IR mask ;
+if 
+.I mask
+is NULL, then the usual DWT is used.
+In the case of a SA-DWT,
+.I mask 
+gives the transparency mask which indicates which voxels of the image
+are non-transparent and thus have data that is to be transformed.
+Refer to 
+.BR QccWAVSubbandPyramid3DShapeAdaptiveDWT (3)
+for more details on the calculation of this SA-DWT.
+The wavelet transform is essentially
+the only component of the 3D-WDR algorithm
+that is affected by the shape-adaptive nature of the processing.
+That is, transparent regions in the image are effectively
+skipped over when the 3D-WDR algorithm is initialized;
+i.e., transparent coefficients are not added to the lists
+of coefficients when the lists are created.
+Thus, the transparent coefficients are not
+counted in the calculation of runlengths.
+.SS Decoding
+.LP
+.B QccWAVwdr3DDecodeHeader()
+decodes the header information 
+in a bitstream previously produced by
+.BR QccWAVwdr3DEncode() .
+The input bitstream is
+.I input_buffer
+which must be of
+.B QCCBITBUFFER_INPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3).
+.LP
+The header information is returned in
+.I transform_type
+(either
+.BR QCCWAVSUBBANDPYRAMID3D_DYADIC 
+or
+.BR QCCWAVSUBBANDPYRAMID3D_PACKET 
+to indicate a dyadic or wavelet-packet transform decomposition, respectively),
+.I temporal_num_levels
+(number of levels of wavelet decomposition in the temporal direction),
+.I spatial_num_levels
+(number of levels of wavelet decomposition in the spatial directions),
+.I num_frames
+(size of the image cube in the temporal direction),
+.I num_rows
+(vertical size of image cube),
+.I num_cols
+(horizontal size of image cube),
+.I image_mean
+(the mean value of the original image cube), and
+.I max_coefficient_bits
+(indicates the precision, in number of bits, of the wavelet coefficient
+with the largest magnitude).
+.LP
+.B QccWAVwdr3DDecode()
+decodes the bitstream
+.IR input_buffer ,
+producing the reconstructed image cube,
+.IR image_cube .
+The bitstream must already have had its header read by a prior call
+to
+.B QccWAVwdr3DDecodeHeader()
+(i.e., you call
+.B QccWAVwdr3DDecodeHeader() 
+first and then
+.BR QccWAVwdr3DDecode() ).
+If
+.I target_bit_cnt
+is
+.BR QCCENT_ANYNUMBITS ,
+then decoding stops when the end of the input bitstream is reached;
+otherwise, decoding stops when
+.I target_num_bits
+from the input bitstream have been decoded.
+.LP
+If a SA-DWT was used in 3D-WDR encoding, then the original transparency
+mask should be passed to 
+.BR QccWAVwdr3DDecode()
+as
+.IR mask .
+That is,
+.I mask
+should be the same transparency mask (untransformed) 
+that was passed to
+.BR QccWAVwdr3DEncode() .
+Note that
+.BR QccWAVwdr3DDecode()
+will transform this
+.I mask
+via a Lazy wavelet transform, and then pass the transformed mask
+to 
+.BR QccWAVSubbandPyramid3DInverseShapeAdaptiveDWT (3).
+If the usual, full-volume DWT was used in encoding, then
+.I mask
+should be a NULL pointer.
+.SH "SEE ALSO"
+.BR wdrencode3d (1),
+.BR wdrdecode3d (1),
+.BR QccBitBuffer (3),
+.BR QccWAVSubbandPyramid3D (3),
+.BR QccWAVSubbandPyramid3DDWT (3),
+.BR QccWAVSubbandPyramid3DShapeAdaptiveDWT (3),
+.BR QccWAVwdrEncode (3),
+.BR QccPackWAV (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+J. Tian and R. O. Wells, Jr.,
+"Embedded Image Coding Using Wavelet Difference Reduction", in
+.IR "Wavelet Image and Video Compression" , 
+P. N. Topiwala, Ed., pp. 289-302,
+Kluwer Academic Publishers, Norwell, MA, 1998.
+
+.SH AUTHOR
+Written by Justin Rucker based on the 2D-WDR implementation
+by Yufei Yuan.
+
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

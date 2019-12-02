@@ -1,0 +1,84 @@
+.TH QCCFILEPATHSEARCH 3 "QCCPACK" ""
+.SH NAME
+QccFilePathSearch, QccFilePathSearchOpenRead \- searching operations for
+a filename in a path
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccFilePathSearch(const QccString " pathlist ", const QccString " filename ", QccString " found_pathname );
+.br
+.BI "FILE *QccFilePathSearchOpenRead(QccString " filename ", const char *" environment_path_variable ", const char *" default_path_list );
+.SH DESCRIPTION
+.B QccFilePathSearch()
+searches for a file named 
+.I filename
+in the path specified by 
+.IR pathlist .
+.IR pathlist
+is a string of directory names separated by colons, in a manner similar
+to that used by the $PATH environment variable in various shells.
+If the file is found in one of the specified directories, the full 
+path to the file is returned in
+.IR found_pathname .  
+Additionally, 
+.B QccFilePathSearch()
+returns 0.  If the file is not found,
+.B QccFilePathSearch()
+returns 1, and
+.I found_pathname
+is set to the zero-length string.
+.B QccFilePathSearch()
+assumes that space is allocated for
+.I found_pathname
+prior to the function call.
+.LP
+.B QccFilePathSearchOpenRead()
+is similar to
+.B QccFilePathSearch()
+except that the path to use is retrieved from the environment variable
+specified by
+.IR environment_path_variable ,
+and the file, if found, is opened for reading.
+A 
+.B FILE
+pointer to the opened file is returned.
+If the file is not found,
+.B QccFilePathSearchOpenRead()
+returns a 
+.B NULL
+pointer.
+If the file is found, the full path to the found file is returned in
+.IR filename ,
+overwriting the original filename passed to the routine.
+If
+.I environment_path_variable
+is
+.BR NULL ,
+or the environment variable is not found in the environment,
+then
+.I default_path_list
+is used as the path in the search. If, in turn,
+.I default_path_list
+is
+.BR NULL ,
+then the current directory (i.e., a path of ".") is used
+as the search path.
+.SH "SEE ALSO"
+.BR QccFileOpen (3),
+.BR QccPack (3),
+.BR glob (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

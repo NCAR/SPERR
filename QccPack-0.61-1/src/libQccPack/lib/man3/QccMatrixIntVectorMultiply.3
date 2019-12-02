@@ -1,0 +1,57 @@
+.TH QCCMATRIXINTVECTORMULTIPLY 3 "QCCPACK" ""
+.SH NAME
+QccMatrixIntVectorMultiply
+\- multiply an integer matrix on the right by a column vector
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccMatrixIntVectorMultiply(const QccMatrixInt " matrix ", const QccVectorInt " vector1 ", QccVectorInt " vector2 ", int " num_rows ", int " num_cols );
+.SH DESCRIPTION
+.B QccMatrixIntVectorMultiply()
+multiplies an integer matrix of dimension
+.I num_rows
+by
+.I num_cols
+by an integer vector,
+.IR vector1 ,
+of dimension 1 by
+.I num_cols
+(i.e., a column vector).
+This multiplication is accomplished by using 
+.BR QccVectorIntDotProduct (3)
+to take the inner product between each row of
+.I matrix
+and
+.IR vector1 .
+The result of the multiplication, a 1 by
+.I num_rows
+dimensioned integer vector, is returned in
+.IR vector2 .
+It is assumed that 
+.I vector2
+is allocated to the proper size before
+.B QccMatrixIntVectorMultiply() 
+is called.
+.SH "RETURN VALUE"
+.B QccMatrixIntVectorMultiply()
+returns 0 on success, 1 on error.
+.SH "SEE ALSO"
+.BR QccVectorIntDotProduct (3),
+.BR QccMatrixInt (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

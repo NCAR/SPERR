@@ -1,0 +1,93 @@
+.TH DATDIST 1 "QCCPACK" ""
+.SH NAME
+datdist \- calculate the distortion between two DAT files
+.SH SYNOPSIS
+.B datdist
+.RB "[\|" \-vo "\|]"
+.RB "[\|" \-mse "\|]"
+.RB "[\|" \-psnr "\|]"
+.I datfile1
+.I datfile2
+.SH OPTIONS
+.TP
+.B \-vo
+Output only the value of the distortion (terse output).
+.TP
+.B \-mse
+Express the distortion in terms of MSE.
+.TP
+.B \-psnr
+Express the distortion in terms of PSNR.
+.SH DESCRIPTION
+.LP
+.B datdist
+prints
+the mean square error (MSE) or
+peak signal-to-noise ratio (PSNR)
+between DAT-format files
+.I datfile1
+and
+.I datfile2
+to stdout.
+.LP
+The options
+.B \-mse 
+and
+.B \-psnr
+indicate in which form the distortion should be expressed.
+If neither of these
+options are specified, 
+.B datdist
+prints the distortion in both forms.
+.LP
+If the option
+.B \-vo
+is specified,
+then 
+.B datdist
+prints a terse output, consisting of only the value of the distortion,
+to stdout.  One of the options
+.B \-mse 
+or
+.B \-psnr
+must be specified in this case.
+.LP
+For the calculation of PSNR,
+.B datfile1
+is considered the original signal; 
+.B datdist
+thus uses 
+.I max
+-
+.I min
+as the
+peak-to-peak range of
+.BR datfile1 ,
+where 
+.I max
+and
+.I min
+are specified in the header of
+.B datfile1
+(see
+.BR QccPack (1)).
+.SH "SEE ALSO"
+.BR imgdist (1),
+.BR QccDatasetMSE (3),
+.BR QccDataset (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

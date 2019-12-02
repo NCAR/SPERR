@@ -1,0 +1,54 @@
+.TH QCCDATASETMSE 3 "QCCPACK" ""
+.SH NAME
+QccDatasetMSE
+\- calculate mean squared error (MSE) between two datasets
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "double QccDatasetMSE(const QccDataset " *dataset1 ", const QccDataset *" dataset2 );
+.SH DESCRIPTION
+.B QccDatasetMSE()
+calculates the mean squared error (MSE) between the vector arrays of
+two datasets.
+The
+.I vector_dimension
+and
+.I access_block_size
+of the datasets must be the same.
+.LP
+The MSE is calculated as follows.
+For each
+.IR i ,
+the vector difference is calculated between
+.IR dataset1 -> vectors [ i ]
+and
+.IR dataset2 -> vectors [ i ].
+The square of this norm is calculated to give the squared distance,
+or squared error, between the two vectors.
+Finally, the squared error for all vectors is summed and divided by
+the block size to give the mean squared error.
+.SH "RETURN VALUE"
+On success, the MSE value (necessarily a nonnegative floating-point number)
+is returned.  On error, -1.0 is returned.
+.SH "SEE ALSO"
+.BR QccDataset (3),
+.BR QccPack (3)
+.SH NOTES
+For datasets being accessed via block-based access,
+.B QccDatasetMSE()
+calculates the MSE on only the current blocks of each dataset.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

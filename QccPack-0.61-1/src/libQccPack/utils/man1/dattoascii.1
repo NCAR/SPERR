@@ -1,0 +1,37 @@
+.TH DATTOASCII 1 "QCCPACK" ""
+.SH NAME
+dattoascii \- convert file from DAT format to ASCII
+.SH SYNOPSIS
+.B dattoascii
+.I datfile
+.I asciifile
+.SH DESCRIPTION
+.LP
+.B dattoascii
+reads binary floating-point numbers
+from DAT-format file
+.I datfile
+and writes them
+in ASCII form to
+.IR asciifile .
+Each vector is written as a separate line ended with a carriage
+return, with vector components within the line separated by spaces.
+.SH "SEE ALSO"
+.BR asciitodat (3),
+.BR QccDataset (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

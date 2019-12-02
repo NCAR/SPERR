@@ -1,0 +1,84 @@
+.TH QCCWAVZEROTREENULLSYMBOL 3 "QCCPACK" ""
+.SH NAME
+QccWAVZerotreeNullSymbol,
+QccWAVZerotreeMakeSymbolNull,
+QccWAVZerotreeMakeSymbolNonnull
+ \- 
+operations on zerotree symbols
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVZerotreeNullSymbol(const char " symbol );
+.br
+.BI "int QccWAVZerotreeMakeSymbolNull(char *" symbol );
+.br
+.BI "int QccWAVZerotreeMakeSymbolNonnull(char *" symbol );
+.SH DESCRIPTION
+.LP
+The 
+.BR QccWAVZerotree
+structure contains an array of symbols, one for
+each coefficient in the corresponding subband pyramid.
+The value of each symbol can be one of the following:
+.TP
+.B QCCWAVZEROTREE_SYMBOLSIGNIFICANT
+The corresponding coefficient is significant.
+.TP
+.B QCCWAVZEROTREE_SYMBOLINSIGNIFICANT
+The corresponding coefficient is insignificant.
+.TP
+.B QCCWAVZEROTREE_SYMBOLZTROOT
+The corresponding coefficient is a zerotree root.
+.TP
+.B QCCWAVZEROTREE_SYMBOLTEMP
+A temporary label for the coefficient.
+.LP
+Any one of the valid symbols above can be marked as "null" using the
+function
+.BR QccWAVZerotreeMakeSymbolNull().
+This is done in such a way so that the original value of the symbol is
+not lost.  Specifically, the values
+.BR QCCWAVZEROTREE_SYMBOLSIGNIFICANT ,
+.BR QCCWAVZEROTREE_SYMBOLINSIGNIFICANT ,
+.BR QCCWAVZEROTREE_SYMBOLZTROOT ,
+and
+.B QCCWAVZEROTREE_SYMBOLTEMP
+are all defined as
+positive constants; these symbols are marked "null" by making
+them negative.  To recover the original value of the symbol,
+.BR QccWAVZerotreeMakeSymbolNonnull()
+makes the symbol positive again.
+Finally,
+.BR QccWAVZerotreeNullSymbol()
+returns 1 if
+.I symbol
+is "null" and 0 otherwise.
+.SH "RETURN VALUE"
+Except for
+.BR QccWAVZerotreeNullSymbol() ,
+these routines return 0 on success, and 1 on failure.
+.SH "SEE ALSO"
+.BR QccWAVZerotree (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.LP
+J. M. Shapiro,
+"Embedded Image Coding Using Zerotrees of Wavelet Coefficients,"
+.IR "IEEE Transactions on Signal Processing" ,
+vol. 41, no. 12, pp. 3445-3462, December 1993.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

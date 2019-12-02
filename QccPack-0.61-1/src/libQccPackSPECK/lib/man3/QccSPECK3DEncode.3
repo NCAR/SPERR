@@ -1,0 +1,249 @@
+.TH QCCSPECK3DENCODE 1 "QCCPACK" ""
+.SH NAME
+QccSPECK3DEncode, QccSPECK3DDecode \-
+encode/decode an image cube using the 3D-SPECK algorithm
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccSPECK3DEncode(const QccIMGImageCube *" image_cube ", const QccIMGImageCube *" mask ", int " transform_type ", int " temporal_num_levels ", int " spatial_num_levels ", const QccWAVWavelet *" wavelet ", QccBitBuffer *" output_buffer ", int " target_bit_cnt );
+.sp
+.BI "int QccSPECK3DDecodeHeader(QccBitBuffer *" input_buffer ", int *" transform_type ", int *" temporal_num_levels ", int *" spatial_num_levels ", int *" num_frames ", int *" num_rows ", int *" num_cols ", double *" image_mean ", int *" max_coefficient_bits );
+.sp
+.BI "int QccSPECK3DDecode(QccBitBuffer *" input_buffer ", QccIMGImageCube *" image_cube ", const QccIMGImageCube *" mask ", int " transform_type ", int " temporal_num_levels ", int " spatial_num_levels ", const QccWAVWavelet *" wavelet ", double " image_mean ", int " max_coefficient_bits ", int " target_bit_bit );
+.SH DESCRIPTION
+.SS Encoding
+.LP
+.B QccSPECK3DEncode()
+encodes an image cube,
+.IR image_cube ,
+using a 3D generalization of the SPECK algorithm.
+The original SPECK algorithm was developed for 2D images by
+Pearlman
+.IR "et al" .;
+it was latter extended to 3D by Tang
+.IR "et al" .
+In essence, the 3D-SPECK algorithm involves a 3D DWT followed by 
+a progressive "bitplane" coding of the wavelet coefficients using a
+cube-splitting quantization structure based on
+octtrees. See "ALGORITHM" below for more detail.
+.LP
+.I image_cube
+is the image cube to be coded and
+.I output_buffer
+is the output bitstream.
+.I output_buffer
+must be of
+.B QCCBITBUFFER_OUTPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3).
+.LP
+.BR QccSPECK3DEncode ()
+supports the use of both wavelet-packet and dyadic wavelet-transform
+decompositions.
+If
+.IR transform_type
+is
+.BR QCCWAVSUBBANDPYRAMID3D_DYADIC ,
+a dyadic DWT is used; if
+.IR transform_type
+is
+.BR QCCWAVSUBBANDPYRAMID3D_PACKET ,
+a wavelet-packet DWT is used.
+.IR temporal_num_levels 
+and
+.IR spatial_num_levels
+give the number of levels of wavelet decomposition to perform
+for both transform types; for a dyadic transform,
+.IR temporal_num_levels 
+should equal
+.IR spatial_num_levels .
+.I wavelet
+is the wavelet to use for decomposition.
+.LP
+The bitstream output from the 3D-SPECK encoder is embedded, meaning that
+any prefix of the bitstream can be decoded to give a valid 
+representation of the image.  The 3D-SPECK encoder essentially produces
+output bits until the number of bits output reaches
+.IR target_bit_cnt ,
+the desired (target) total length of the output bitstream in bits,
+and then it stops.
+Note that this is the bitstream length in bits, not the rate of the bitstream
+(which would be expressed in bits per voxel).
+.LP
+.BR QccSPECK3DEncode()
+optionally supports the use of a shape-adaptive DWT (SA-DWT) rather than
+the usual DWT. That is, 
+.BR QccSPECK3DEncode()
+can call
+.BR QccWAVSubbandPyramid3DShapeAdaptiveDWT (3)
+as the wavelet transform rather than the usual
+.BR QccWAVSubbandPyramid3DDWT (3).
+The use of a SA-DWT is indicated by a non-NULL
+.IR mask ;
+if 
+.I mask
+is NULL, then the usual DWT is used.
+In the case of a SA-DWT,
+.I mask 
+gives the transparency mask which indicates which voxels of the image
+are non-transparent and thus have data that is to be transformed.
+Refer to 
+.BR QccWAVSubbandPyramid3DShapeAdaptiveDWT (3)
+for more details on the calculation of this SA-DWT.
+See "ALGORITHM" below for details on how the 3D-SPECK
+algorithm handles shape-adaptive coding.
+.SS Decoding
+.LP
+.B QccSPECK3DDecodeHeader()
+decodes the header information 
+in a bitstream previously produced by
+.BR QccSPECK3DEncode() .
+The input bitstream is
+.I input_buffer
+which must be of
+.B QCCBITBUFFER_INPUT
+type and opened via a prior call to
+.BR QccBitBufferStart (3).
+.LP
+The header information is returned in
+.I transform_type
+(either
+.BR QCCWAVSUBBANDPYRAMID3D_DYADIC 
+or
+.BR QCCWAVSUBBANDPYRAMID3D_PACKET 
+to indicate a dyadic or wavelet-packet transform decomposition, respectively),
+.I temporal_num_levels
+(number of levels of wavelet decomposition in the temporal direction),
+.I spatial_num_levels
+(number of levels of wavelet decomposition in the spatial directions),
+.I num_frames
+(size of the image cube in the temporal direction),
+.I num_rows
+(vertical size of image cube),
+.I num_cols
+(horizontal size of image cube),
+.I image_mean
+(the mean value of the original image cube), and
+.I max_coefficient_bits
+(indicates the precision, in number of bits, of the wavelet coefficient
+with the largest magnitude).
+.LP
+.B QccSPECK3DDecode()
+decodes the bitstream
+.IR input_buffer ,
+producing the reconstructed image cube,
+.IR image_cube .
+The bitstream must already have had its header read by a prior call
+to
+.B QccSPECK3DDecodeHeader()
+(i.e., you call
+.B QccSPECK3DDecodeHeader() 
+first and then
+.BR QccSPECK3DDecode() ).
+If
+.I target_bit_cnt
+is
+.BR QCCENT_ANYNUMBITS ,
+then decoding stops when the end of the input bitstream is reached;
+otherwise, decoding stops when
+.I target_num_bits
+from the input bitstream have been decoded.
+.LP
+If a SA-DWT was used in 3D-SPECK encoding, then the original transparency
+mask should be passed to 
+.BR QccSPECK3DDecode()
+as
+.IR mask .
+That is,
+.I mask
+should be the same transparency mask (untransformed) 
+that was passed to
+.BR QccSPECK3DEncode() .
+Note that
+.BR QccSPECK3DDecode()
+will transform this
+.I mask
+via a Lazy wavelet transform, and then pass the transformed mask
+to 
+.BR QccWAVSubbandPyramid3DInverseShapeAdaptiveDWT (3).
+If the usual, full-volume DWT was used in encoding, then
+.I mask
+should be a NULL pointer.
+.SH "ALGORITHM"
+The 3D-SPECK algorithm involves a 3D DWT followed by a progressive encoding
+of the bitplanes of wavelet coefficients.
+As is common with bitplane-based embedded coders,
+the encoder of the 3D-SPECK algorithm
+codes significance information in a significance pass
+followed by refinement-bit information in a refinement pass.
+The significance pass determines the significance of a wavelet coefficient
+against a given threshold, while the refinement pass codes the bits of
+those coefficients previously determined to be significant.
+The 3D-SPECK algoorithm uses
+octtree partitioning in which the significance state of an entire
+cube of coefficients is tested and coded, the cube is subdivided into
+eight subcubes of approximately equal size, and the significance-coding
+process is repeated recursively on each of the subcubes.
+Unlike the original 2D SPECK algorithm, the 3D-SPECK algorithm
+uses only one type of set, rather than having S and I sets
+as in 2D SPECK. Consequently, each subband in the DWT decomposition is
+added to an LIS at the start of the 3D-SPECK algorithm, whereas the 2D
+algorithm initializes with only the baseband subband in an LIS.
+.LP
+The QccPack implementation of 3D-SPECK supports shape-adaptive
+coding by generalizing the 2D OB-SPECK approach described
+by Lu and Pearlman to 3D (see
+.BR QccSPECKEncode (3)).
+.SH "SEE ALSO"
+.BR speckencode3d (1),
+.BR speckdecode3d (1),
+.BR QccBitBuffer (3),
+.BR QccWAVSubbandPyramid3D (3),
+.BR QccWAVSubbandPyramid3DDWT (3),
+.BR QccWAVSubbandPyramid3DShapeAdaptiveDWT (3),
+.BR QccSPECKEncode (3),
+.BR QccPackWAV (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+X. Tang, W. A. Pearlman, and J. W. Modestino,
+"Hyperspectral Image Compression Using Three-Dimensional
+Wavelet Coding,"
+in
+.IR "Image and Video Communications and Processing" ,
+Santa Clara, CA, January 2003, Proc. SPIE 5022, pp. 1037-1047.
+
+W. A. Pearlman, A. Islam, N. Nagaraj, and A. Said,
+"Efficient, Low-Complexity Image Coding with a Set-Partitioning
+Embedded Block Coder,"
+.IR "IEEE Transactions on Circuits and Systems for Video Technology" ,
+to appear, 2003.
+
+A. Islam and W. A. Pearlman,
+"An Embedded and Efficient Low-Complexity Hierarchical Image Coder,"
+in
+.IR "Visual Communications and Image Processing" ,
+K. Aizawa, R. L. Stevenson, and Y.-Q. Zhang, Eds., San Jose, CA,
+January 1999, Proc. SPIE 3653, pp. 294-305.
+
+Z. Lu and W. A. Pearlman,
+"Wavelet Video Coding of Video Object by Object-Based SPECK Algorithm,"
+in
+.IR "Proceedings of the Picture Coding Symposium" ,
+Seoul, Korea, April 2001, pp. 413-416.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

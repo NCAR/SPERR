@@ -1,0 +1,250 @@
+.TH QCCWAVFILTERBANK 3 "QCCPACK" ""
+.SH NAME
+QccWAVFilterBank \- 
+data structure 
+.B QccWAVFilterBank
+and corresponding
+.B FBK
+file format for wavelet-based analysis/synthesis using a
+filter-bank implementation
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVFilterBankInitialize(QccWAVFilterBank *" filter_bank );
+.br
+.BI "int QccWAVFilterBankAlloc(QccWAVFilterBank *" filter_bank );
+.br
+.BI "void QccWAVFilterBankFree(QccWAVFilterBank *" filter_bank );
+.br
+.BI "int QccWAVFilterBankPrint(const QccWAVFilterBank *" filter_bank );
+.SH DESCRIPTION
+QccPack provides data structure
+.B QccWAVFilterBank
+for representing the filter coefficients for a two-band filter
+bank.  Such a two-band filter bank would be used for wavelet-based
+analysis and synthesis using filtering (as opposed to lifting; see
+.BR QccWAVLiftingScheme (3) ).
+This filter-bank structure can be read from and written to 
+.BR FBK -format
+files, or a
+.B QccWAVFilterBank
+structure can be used without file input or output.
+.LP
+The main component of a
+.B QccWAVFilterBank
+structure is a set of four
+.B QccFilter
+structures; each of these structures contain the filter coefficients
+for the two analysis filters (highpass and lowpass) and the two
+synthesis filters (highpass and lowpass) of a biorthogonal
+filter bank (orthogonal filters are supported as a special case).
+.SH "DATA STRUCTURE"
+The
+.B QccWAVFilterBank
+data structure is defined as:
+.RS
+.nf
+
+typedef struct
+{
+  QccString filename;
+  QccString magic_num;
+  int major_version;
+  int minor_version;
+  int orthogonality;
+  QccFilter lowpass_analysis_filter;
+  QccFilter highpass_analysis_filter;
+  QccFilter lowpass_synthesis_filter;
+  QccFilter highpass_synthesis_filter;
+} QccWAVFilterBank;
+.fi
+.RE
+.LP
+The fields of
+.B QccWAVFilterBank
+are as follows:
+.TP
+.I filename
+The name of the file.
+.TP
+.IR magic_num ", " major_version ", " minor_version
+The magic number and version of the file.
+.TP
+.IR orthogonality
+The orthogonality of the filter bank -- possible values are
+.BR QCCWAVFILTERBANK_ORTHOGONAL ,
+.BR QCCWAVFILTERBANK_BIORTHOGONAL ,
+or
+.BR QCCWAVFILTERBANK_GENERAL
+(this last case is for when the filter bank is neither orthogonal
+nor biorthogonal).
+.TP
+.IR lowpass_analysis_filter ", " highpass_analysis_filter
+Filters for analysis.
+.TP
+.IR lowpass_synthesis_filter ", " highpass_synthesis_filter
+Filters for synthesis.
+.SH "FILE FORMAT"
+For reading and writing structures
+of type
+.BR QccWAVFilterBank ,
+QccPack provides the
+.B FBK
+file format.
+This file format starts with an ASCII header followed by
+binary data.
+The ASCII header consists of magic-number/revision
+information
+followed by any amount of white space
+(space, `\\t' (tab), `\\n' (newline), `\\r' (return)) and/or
+comments lines (lines starting with `#').  Following this white space,
+additional ASCII
+header information is given, separated by blanks and newlines.
+Binary data follows this ASCII header information.
+.LP
+The
+.B FBK
+file format consists of the following information:
+.RS
+.sp
+.BI FBK X.X
+.br
+.I "<white space>"
+.br
+.I orthogonality
+.br
+.I causality
+.br
+.I length
+.br
+.I coefficients
+.br
+\|.
+.br
+\|.
+.br
+\|.
+.br
+.sp
+.RE
+where
+.B FBK
+is the magic number,
+.I X.X
+is the version number,
+.I "<white space>"
+is white space and/or 
+comment lines, 
+.I orthogonality
+is the orthogonality of the filter bank
+(one of 
+.BR QCCWAVFILTERBANK_ORTHOGONAL ,
+.BR QCCWAVFILTERBANK_BIORTHOGONAL ,
+or
+.BR QCCWAVFILTERBANK_GENERAL ),
+.I causality
+is the causality of the first filter (one of 
+.BR QCCFILTER_CAUSAL 
+or
+.BR QCCFILTER_ANTICAUSAL ),
+and
+.I coefficients
+are the first filter coefficients listed in order of increasing
+indices.
+If there are other filters in the file (see below), the causality, length,
+and coefficients of these follow in turn.
+.LP
+For an orthogonal filter bank,
+the 
+.B FBK
+file contains only one set of filter coefficients, those of
+the scaling filter (i.e., the lowpass synthesis filter);
+the other three filters can be obtained by a call to
+.BR QccWAVFilterBankMakeOrthogonal (3).
+.LP
+For a biorthogonal filter bank,
+the 
+.B FBK
+file contains two sets of filter coefficients.  The first filter in the
+file is the primary scaling filter (i.e, the lowpass synthesis filter);
+the second filter is the dual scaling filter (i.e., the lowpass analysis
+filter).  
+The other two filters (the two
+wavelet or highpass filters) can by obtained by a call to
+.BR QccWAVFilterBankMakeBiorthogonal (3).
+.LP
+For a 
+.B QCCWAVFILTERBANK_GENERAL
+type of filter bank, all four filters are stored in the file, in the order
+of lowpass analysis, highpass analysis, lowpass synthesis, and highpass
+synthesis.
+.SH "ROUTINES"
+.B QccWAVFilterBankInitialize()
+should be called before any use of a
+.B QccWAVFilterBank
+structure.
+.B QccWAVFilterBankInitialize()
+initializes the fields of
+.I filter_bank
+to the following values:
+.RS
+
+.IR filename :
+.B NULL
+string
+.br
+.IR magic_num :
+.B QCCFILTERBANK_MAGICNUM
+.br
+.IR major_version ", " minor_version :
+initialized to output of 
+.BR QccGetQccPackVersion (3)
+.br
+.IR orthogonality :
+-1 (undefined)
+.RE
+.BR QccFilterInitialize (3)
+is called for each of the four filters.
+.LP
+.B QccWAVFilterBankAlloc()
+allocates the filter bank by calling
+.BR QccFilterAlloc (3)
+for each of the four filters of the filter bank.
+The lengths of each of the four filters must be set prior to calling
+.BR QccWAVFilterBankAlloc() .
+.LP
+.B QccWAVFilterBankFree()
+frees the filter bank by calling
+.BR QccFilterFree (3)
+for each of the four filters of the filter bank.
+.LP
+.B QccWAVFilterBankPrint()
+prints the contents of
+.I filter_bank
+to stdout.
+.SH "RETURN VALUE"
+These routines return 0 on success, and 1 on failure.
+.SH "SEE ALSO"
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.LP
+M. Antonini, M. Barlaud, P. Mathieu, and I. Daubechies,
+"Image Coding Using Wavelet Transform,"
+.IR "IEEE Transactions on Image Processing" ,
+vol. 1, pp. 205-220, April 1992.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

@@ -1,0 +1,93 @@
+.TH QCCWAVSUBBANDPYRAMIDINTZEROSUBBAND 3 "QCCPACK" ""
+.SH NAME
+QccWAVSubbandPyramidIntZeroSubband,
+QccWAVSubbandPyramidIntSubtractMean,
+QccWAVSubbandPyramidIntAddMean \- 
+operations on integer-valued subband pyramids
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVSubbandPyramidIntZeroSubband(QccWAVSubbandPyramidInt *" subband_pyramid ", int " subband );
+.br
+.BI "int QccWAVSubbandPyramidIntSubtractMean(QccWAVSubbandPyramidInt *" subband_pyramid ", int *" mean );
+.br
+.BI "int QccWAVSubbandPyramidIntAddMean(QccWAVSubbandPyramidInt *" subband_pyramid ", int " mean );
+.SH DESCRIPTION
+.LP
+.BR QccWAVSubbandPyramidIntZeroSubband()
+sets the coefficients of the specified
+.I subband
+in
+.I subband_pyramid
+to zero.
+.I subband
+is the subband number of the desired subband (see 
+.BR QccWAVSubbandPyramidInt (3)
+for more detail on addressing individual subbands in the
+subband-pyramid structure).
+.LP
+.BR QccWAVSubbandPyramidIntSubtractMean()
+calculates the mean value of the coefficients of the baseband of
+.IR subband_pyramid 
+using
+.BR QccMatrixIntMean (3),
+rounds the mean to the nearest integer,
+and subtracts the result from the baseband coefficients.
+If
+.I mean
+is
+.RB non- NULL ,
+the value subtracted from the coefficients (the integer-valued mean)
+is returned as
+.IR mean .
+.LP
+.BR QccWAVSubbandPyramidIntAddMean()
+adds value
+.I mean
+to all baseband coefficients of
+.IR subband_pyramid .
+It is intended to implement the reverse 
+operation of
+.BR QccWAVSubbandPyramidIntSubtractMean() ,
+so
+.I mean
+would be returned from this latter routine in most cases.
+.SH "RETURN VALUE"
+These routines return 0 on success, and 1 on failure.
+.SH "SEE ALSO"
+.BR QccWAVSubbandPyramidIntDWT (3),
+.BR QccWAVSubbandPyramidIntInverseDWT (3),
+.BR QccWAVSubbandPyramidInt (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.LP
+A. R. Calderbank, I. Daubechies, W. Sweldens, B.-L. Yeo, "Lossless
+Image Compression Using Integer to Integer Wavelet Transforms", in
+.IR "Proceedings of the International Conference on Image Processing" ,
+Lausanne, Switzerland, pp. 596-599, September 1997.
+
+Z. Xiong, X. Wu, S. Cheng, J. Hua, "Lossy-to-Lossless Compression of
+Medical Volumetric Data Using Three-Dimensional Integer Wavelet Transforms,"
+.IR "IEEE Transactions on Medical Imaging" ,
+vol. 22, pp. 459-470, March 2003.
+
+M. Antonini, M. Barlaud, P. Mathieu, and I. Daubechies,
+"Image Coding Using Wavelet Transform,"
+.IR "IEEE Transactions on Image Processing" ,
+vol. 1, pp. 205-220, April 1992.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

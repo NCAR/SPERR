@@ -1,0 +1,63 @@
+.TH SBPZERO 1 "QCCPACK" ""
+.SH NAME
+sbpzero \- zero subbands of subband pyramid
+.SH SYNOPSIS
+.B sbpzero
+.RB "[\|" \-z
+.IR  subband "\|]"
+.I subband\_pyramid1
+.I subband\_pyramid2
+.SH OPTIONS
+.TP
+.BI \-z " subband"
+Integer. Subband at which to start zeroing.
+.SH DESCRIPTION
+.LP
+.B sbpzero
+reads the multi-level subband pyramid
+.I subband\_pyramid1
+.RB ( SBP
+format with
+.I L
+>= 1 in the header).
+Each subband starting with
+.I subband
+is zeroed and the resulting subband pyramid is written to
+.IR subband\_pyramid2 .
+.LP
+.I subband
+is an integer ranging from 0 (the baseband)
+up to the maximum subband number of
+.I L
+* 3, which is the diagonal subband of the highest-resolution subband
+of the pyramid.  The intermediate subbands are numbered in the order
+horizontal, vertical, diagonal, so that subbands 1, 2, and 3, are the
+horizontal, vertical, and diagonal subbands, respectively, of the
+lowest-resolution level, 4, 5, 6 are the horizontal, vertical, and diagonal
+subbands, respectively, of the next highest-resolution level, and so on.
+If the 
+.B \-z
+option is not specified,
+.I subband
+defaults to 1; i.e., all highpass subbands are zeroed and only the
+baseband is retained.
+.SH "SEE ALSO"
+.BR QccPackWAVSubbandPyramid (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

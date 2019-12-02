@@ -1,0 +1,306 @@
+.TH QCCIMGIMAGE 3 "QCCPACK" ""
+.SH NAME
+QccIMGImage \- 
+data structure 
+.B QccIMGImage
+grayscale and color images
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccIMGImageInitialize(QccIMGImage *" image );
+.br
+.BI "int QccIMGImageGetSize(const QccIMGImage *" image ", int *" num_rows ", int *" num_cols );
+.br
+.BI "int QccIMGImageGetSizeYUV(const QccIMGImage *" image ", int *" num_rows_Y ", int *" num_cols_Y ", int *" num_rows_U ", int *" num_cols_U ", int *" num_rows_V ", int *" num_cols_V );
+.br
+.BI "int QccIMGImageSetSize(QccIMGImage *" image ", int " num_rows ", int " num_cols );
+.br
+.BI "int QccIMGImageSetSizeYUV(QccIMGImage *" image ", int " num_rows_Y ", int " num_cols_Y ", int " num_rows_U ", int " num_cols_U ", int " num_rows_V ", int " num_cols_V );
+.br
+.BI "int QccIMGImageAlloc(QccIMGImage *" image );
+.br
+.BI "void QccIMGImageFree(QccIMGImage *" image );
+.br
+.BI "int QccIMGImageSetMaxMin(QccIMGImage *" image );
+.br
+.BI "int QccIMGImageColor(const QccIMGImage *" image );
+.SH DESCRIPTION
+QccPack provides data structure
+.B QccIMGImage
+for representing grayscale and color images.
+This image-component structure can be read from and written to 
+several image file formats (see "IMAGE TYPES" below).
+.LP
+A
+.B QccIMGImage
+structure is essentially a collection of three image components:
+a luminance component, and two chrominance components.
+These three components are each stored in a
+.BR QccIMGImageComponent (3)
+structure. In the case of a grayscale image, only the luminance
+component holds data; the two chrominance components are empty.
+.SH "DATA STRUCTURE"
+The
+.B QccIMGImage
+data structure is defined as:
+.RS
+.nf
+
+typedef struct
+{
+  int image_type;
+  QccString filename;
+  QccIMGImageComponent Y;
+  QccIMGImageComponent U;
+  QccIMGImageComponent V;
+} QccIMGImage;
+.fi
+.RE
+.LP
+The fields of
+.B QccIMGImage
+are as follows:
+.TP
+.I image_type
+The type of the image.
+.TP
+.I filename
+The name of the file.
+.TP
+.I Y
+The luminance component.
+.TP
+.IR U ", " V
+The two chrominance components.
+.SH "IMAGE TYPES"
+The
+.BR QccIMGImage 
+can be read from or written to a variety of image file formats.
+The field
+.I image_type
+in the
+.BR QccIMGImage
+structure denotes the type of the image and can be one of the following:
+.SS "QCCIMGTYPE_PPM"
+A color image associated with the
+.BR PPM
+file format (see
+.BR ppm (5)).
+Although the
+.BR PPM
+file format stores a color image as red, green, blue (RGB) components,
+.BR QccIMGImageRGBtoYUV (3)
+is used to convert RGB to luminance/chrominance (YUV) color space
+upon file reading, or
+.BR QccIMGImageYUVtoRGB (3)
+upon file writing, so that the three components are stored as YUV
+within the
+.BR QccIMGImage
+structure.
+The RGB pixels in a
+.BR PPM
+file are in the range 0 to 255;
+the corresponding YUV values are such that
+Y is in the range 0 to 255, while U and V
+are approximately in the range -111 to 111 for U
+and -157 to 157 for V.
+.SS "QCCIMGTYPE_PGM"
+A grayscale image associated with the
+.BR PGM
+file format (see
+pgm (5)).
+The grayscale array associated with the
+.BR PGM
+file is stored in the luminance component of the
+.BR QccIMGImage
+structure (i.e., the
+.IR Y
+field), while the chrominance components
+.RI ( U " and " V )
+are empty. The grayscale pixel values lie in the range 0 to 255.
+.SS "QCCIMGTYPE_PBM"
+A binary (black/white) image associated with the
+.BR PBM
+file format (see
+.BR pbm (5)).
+The bilevel array associated with the
+.BR PBM
+file is stored in the luminance component of the
+.BR QccIMGImage
+structure (i.e., the
+.IR Y
+field), while the chrominance components
+.RI ( U " and " V )
+are empty.
+Note that, while the
+.BR PBM 
+file format dictates that a pixel value of 1 is black and 0 is white,
+within the
+.BR QccIMGImage
+structure, the opposite convention is used, i.e., 0 is black and 1 is white.
+.SS "QCCIMGTYPE_ICP"
+A grayscale image associated with the
+.BR ICP
+file format for
+.BR QccIMGImageComponent
+structure for a single image component.
+The single component is considered to be a grayscale image
+and is stored in the luminance component of the
+.BR QccIMGImage
+structure (i.e., the
+.IR Y
+field), while the chrominance components
+.RI ( U " and " V )
+are empty.
+.SH "ROUTINES"
+.B QccIMGImageInitialize()
+should be called before any use of a
+.B QccIMGImage
+structure.
+.B QccIMGImageInitialize()
+initializes the fields of
+.I image
+to the following values:
+.RS
+
+.IR image_type :
+.B QCCIMGTYPE_UNKNOWN
+.br
+.IR filename :
+.B NULL
+string
+
+.RE
+Additionally,
+.BR QccIMGImageComponentInitialize (3)
+is called for each of the three
+.IR Y ,
+.IR U,
+and
+.IR V
+image-component fields.
+.LP
+.BR QccIMGImageGetSize()
+returns the number of rows and number of columns
+of
+.IR image
+in
+.IR num_rows
+and
+.IR num_cols ,
+respectively.
+In essence, it is assumed that
+.I image
+is not color, so the image size is derived from the
+.IR Y
+component of
+.IR image .
+.LP
+.BR QccIMGImageGetSizeYUV()
+returns the size of each of the
+.IR Y ,
+.IR U,
+and
+.IR V
+image components.
+In essence,
+.I image
+is assumed to be color,
+so the sizes are derived from each of the respective
+.BR QccIMGImageComponent
+structues.
+.LP
+.BR QccIMGImageSetSize()
+sets the image size. If the image is color
+(as indicated by
+.BR QccIMGImageColor()
+returning nonzero), then the size of all three components
+are set to the specified number of rows and columns.
+Otherwise, for a grayscale image,
+only the
+.I Y
+component is set to the specified size, while the
+.I U
+and
+.I V
+components are set to size 0 x 0.
+.LP
+.BR QccIMGImageSetSizeYUV()
+sets each of the three image components to the indicated sizes,
+which need not all be identical.
+.LP
+.B QccIMGImageAlloc()
+calls
+.BR QccIMGImageComponentAlloc (3)
+to allocate storage space for each of the three image components in
+.IR image .
+The size of the image must be set via a call to
+.BR QccIMGImageSetSize()
+or
+.BR QccIMGImageSetSizeYUV()
+prior to calling
+.BR QccIMGImageAlloc() .
+.LP
+.B QccIMGImageFree()
+frees the three image components via three calls to
+.BR QccIMGImageComponentFree (3).
+.LP
+.BR QccIMGImageSetMaxMin()
+sets the mimimum and maximum values in each of the three image components
+via three calls to
+.BR QccIMGImageComponentSetMaxMin (3).
+.LP
+.BR QccIMGImageColor()
+returns 1 if the image is color (i.e., if
+.IR image->image_type
+is
+.BR QCCIMGTYPE_PPM ),
+and 0 otherwise.
+.SH "RETURN VALUE"
+These routines return 0 on success, and 1 on failure.
+.SH "NOTES"
+The
+.BR PPM ,
+.BR PGM ,
+and
+.BR PBM
+are popular image file formats that are read and written by a number of
+applications. They belong to the
+.BR PNM
+family of file applications which can be generated and manipulated with
+the open-source
+.I Netpbm
+package,
+.BR http://netpbm.sourceforge.net .
+The routines in QccPack can handle files from this family
+in both their "raw" (binary) and "plain" (ASCII) variants.
+.SH "SEE ALSO"
+.BR QccIMGImageComponent (3),
+.BR QccIMGImageRGBtoYUV (3),
+.BR QccIMGImageYUVtoRGB (3),
+.BR QccIMGImageRead (3),
+.BR QccIMGImageWrite (3),
+.BR pnm (5),
+.BR ppm (5),
+.BR pgm (5),
+.BR pbm (5),
+.BR QccIMGImage (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

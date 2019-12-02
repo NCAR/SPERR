@@ -1,0 +1,101 @@
+.TH IMGDPCMENCODE 1 "QCCPACK" ""
+.SH NAME
+imgdpcmencode,
+imgdpcmdecode
+\- encode and decode an image using DPCM
+.SH SYNOPSIS
+.B imgdpcmencode
+.RB "[\|" \-p
+.IR predictor "\|]"
+.I imgfile
+.I quantizers...
+.I channels...
+.br
+.sp
+.B imgdpcmdecode
+.RB "[\|" \-p
+.IR predictor "\|]"
+.I imagewidth
+.I imageheight
+.I quantizers...
+.I channels...
+.I imgfile
+.SH OPTIONS
+.TP
+.BI \-p " predictor"
+Predictor code to be used for DPCM. The default code is 2.
+.SH DESCRIPTION
+.LP
+.B imgdpcmencode
+encodes an image using two-dimensional DPCM.
+DPCM encoding is accomplished by calling
+.BR QccIMGImageDPCMEncode (3) ;
+essentially, DPCM is
+applied to each image component (Y, U, V) separately.
+A separate
+.IR channel
+file (CHN format) is output for each component.
+.LP
+.B imgdpcmdecode
+performs decoding of 
+.I channels
+produced by
+.BR imgdpcmencode (1),
+outputting the reconstructed image to
+.IR imgfile .
+.B imgdpcmdecode
+can produce grayscale (PGM) or color (PPM) images.
+In the case of color images,
+DPCM decoding is applied to each image component (Y, U, V) separately.
+.LP
+For color images,
+.B imgdpcmencode
+and
+.B imgdpcmdecode
+expect to be given three scalar
+.IR  quantizers ,
+one for each of the Y, U, and V components, respectively,
+of the image.
+Additionally, channel indices are written to or
+read from three separate channel files
+.RI ( channels ).
+For grayscale images, only one
+.I quantizer
+and one
+.I channel
+need be specified.
+.LP
+The 
+.B \-p 
+option specifies the 
+.I predictor
+code to be used.
+See
+.BR QccIMGImageDPCMEncode (3)
+for valid values.
+.SH "SEE ALSO"
+.BR QccIMGImageDPCMEncode (3) ,
+.BR QccIMGImageDPCMDecode (3) ,
+.BR QccIMGImage (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+A. K. Jain,
+.IR "Fundamentals of Digital Image Processing" .
+Englewood Cliffs, NJ: Prentice Hall, 1989, pp. 483-498.
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

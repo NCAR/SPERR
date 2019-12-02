@@ -1,0 +1,35 @@
+VFB0.17
+#
+#  ChuiLian.2x2.3.vfb
+#
+#  The 2x2 vector-filter-bank coefficient matrices for the orthonormal
+#  multiwavelet system with support [0, 2] derived by Chui and Lian.  The
+#  coefficient matrices here have been normalized so that the
+#  multiscaling and multiwavelet functions have unity norm.
+#
+#
+#  References:
+#    C. K. Chui and J. Lian, "A Study of Orthonormal Multi-wavelets,"
+#      Applied Numerical Mathematics," vol. 20, p. 273-298, 1996.
+#
+
+0
+2
+3
+0
+   3.5355339e-01   3.5355339e-01
+  -4.6770717e-01  -4.6770717e-01
+   7.0710678e-01   0.0000000e+00
+   0.0000000e+00   3.5355339e-01
+   3.5355339e-01  -3.5355339e-01
+   4.6770717e-01  -4.6770717e-01
+
+2
+3
+0
+  -3.5355339e-01  -3.5355339e-01
+   1.7677670e-01   1.7677670e-01
+   7.0710678e-01   0.0000000e+00
+   0.0000000e+00   9.3541435e-01
+  -3.5355339e-01   3.5355339e-01
+  -1.7677670e-01   1.7677670e-01

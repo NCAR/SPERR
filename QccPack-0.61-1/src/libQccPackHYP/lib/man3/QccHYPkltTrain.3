@@ -1,0 +1,92 @@
+.TH QCCHYPKLTTRAIN 3 "QCCPACK" ""
+.SH NAME
+QccHYPkltTrain,
+QccHYPkltTransform,
+QccHYPkltInverseTransform
+\- KLT-transform training and forward/inverse KLT application
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccHYPkltTrain(const QccIMGImageCube *" image ", QccHYPklt *" klt );
+.br
+.BI "int QccHYPkltTransform(QccIMGImageCube *" image ", const QccHYPklt *" klt ", int " num_pcs );
+.br
+.BI "int QccHYPkltInverseTransform(QccIMGImageCube *" image ", const QccHYPklt *" klt );
+.SH DESCRIPTION
+.BR QccHYPkltTrain()
+determines the KLT transform mean vector and transform matrix
+for the pixel vectors contained in
+.IR image .
+Together, the mean vector and transform matrix constitute the KLT
+for
+.IR image ,
+and they are returned in
+.IR klt .
+.IR klt
+must be allocated prior to calling
+.BR QccHYPkltTrain() ;
+furthermore, the
+.IR num_bands
+field of
+.IR klt
+must match the
+.IR num_frames
+field of
+.IR image
+(i.e., the number of frames of the image cube is considered to be
+the number of spectral bands of the hyperspectral image).
+.LP
+.BR QccHYPkltTransform()
+applies the forward KLT spectrally to each pixel vector in
+.IR image ,
+which is overwritten with the transformed dataset.
+.IR num_pcs
+must be less than or equal to
+.IR klt->num_bands .
+If
+.IR num_pcs
+is less than
+.IR klt->num_bands ,
+.BR QccIMGImageCubeResize (3)
+is called after the spectral transform is performed in order to
+retain only
+.IR num_pcs
+spectral principal components (PCs).
+.LP
+.BR QccHYPkltInverseTransform()
+is the corresponding inverse transform.
+If
+.IR image->num_frames
+is less than
+.IR klt->num_bands ,
+.BR QccIMGImageCubeResize (3)
+is called prior to application of the inverse transform to resize
+.I image
+to have dimension of
+.IR klt->num_bands
+spectrally such that the added PCs are zero.
+.SH "THEORY"
+See
+.BR QccHYPklt (3).
+.SH "RETURN VALUE"
+Both routines
+return 0 on success, 1 on error.
+.SH "SEE ALSO"
+.BR QccHYPklt (3),
+.BR QccPackHYP (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

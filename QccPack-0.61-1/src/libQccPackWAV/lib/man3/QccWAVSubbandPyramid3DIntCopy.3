@@ -1,0 +1,63 @@
+.TH QCCWAVSUBBANDPYRAMID3DINTCOPY 3 "QCCPACK" ""
+.SH NAME
+QccWAVSubbandPyramid3DIntCopy \- 
+copy integer-valued 3D subband pyramid
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVSubbandPyramid3DIntCopy(QccWAVSubbandPyramid3DInt *" subband_pyramid1 ", const QccWAVSubbandPyramid3DInt *" subband_pyramid2 );
+.SH DESCRIPTION
+.LP
+.BR QccWAVSubbandPyramid3DIntCopy()
+copies the contexts of
+.I subband_pyramid2
+to
+.IR subband_pyramid1 .
+If
+.I subband_pyramid1
+is not allocated prior to the call to
+.BR QccWAVSubbandPyramid3DIntCopy() ,
+.BR QccWAVSubbandPyramid3DIntAlloc (3)
+is called to allocate
+.I subband_pryamid1
+to the same size as
+.IR subband_pyramid2 .
+.SH "RETURN VALUE"
+This routine returns 0 on success, and 1 on failure.
+.SH "SEE ALSO"
+.BR QccWAVSubbandPyramid3DIntAlloc (3),
+.BR QccWAVSubbandPyramid3DInt (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.LP
+A. R. Calderbank, I. Daubechies, W. Sweldens, B.-L. Yeo, "Lossless
+Image Compression Using Integer to Integer Wavelet Transforms", in
+.IR "Proceedings of the International Conference on Image Processing" ,
+Lausanne, Switzerland, pp. 596-599, September 1997.
+
+Z. Xiong, X. Wu, S. Cheng, J. Hua, "Lossy-to-Lossless Compression of
+Medical Volumetric Data Using Three-Dimensional Integer Wavelet Transforms,"
+.IR "IEEE Transactions on Medical Imaging" ,
+vol. 22, pp. 459-470, March 2003.
+
+B.-J. Kim, Z. Xiong, and W. A. Pearlman,
+"Low Bit-Rate Scalable Video Coding with 3-D Set Partitioning
+in Hierarchical Trees (3-D SPIHT),"
+.IR "IEEE Transactions on Circuits and Systems for Video Technology" ,
+vol. 10, no. 8, pp. 1374-1387, December 2000.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

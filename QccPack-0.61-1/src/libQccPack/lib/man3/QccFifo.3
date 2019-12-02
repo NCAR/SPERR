@@ -1,0 +1,208 @@
+.TH QCCFIFO 3 "QCCPACK" ""
+.SH NAME
+QccFifo \- data structure for bitstream fifo
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccFifoInitialize(QccFifo *" fifo );
+.br
+.BI "int QccFifoStart(QccFifo *" fifo );
+.br
+.BI "int QccFifoEnd(QccFifo *" fifo );
+.br
+.BI "int QccFifoFlush(QccFifo *" fifo );
+.br
+.BI "int QccFifoRestart(QccFifo *" fifo );
+.SH DESCRIPTION
+QccPack provides the
+.B QccFifo
+data structure to provide first-in, first-out operation on bitstreams.
+That is, a bitstream can be written to
+.I fifo
+and then read from
+.I fifo
+with the bits read out in the same order they were written in.
+.SH "DATA STRUCTURE"
+The
+.B QccFifo
+data structure is defined as:
+.RS
+.nf
+
+typedef struct
+{
+  QccBitBuffer output_buffer;
+  QccBitBuffer input_buffer;
+} QccFifo;
+.fi
+.RE
+.LP
+The fields of
+.B QccFifo
+are as follows:
+.TP
+.I output_buffer
+The
+.BR QccBitBuffer (3)
+structure to which the bitstream is written.
+.TP
+.I input_buffer
+The
+.BR QccBitBuffer (3)
+structure from which the bitstream is read.
+.SH "ROUTINES"
+.B QccFifoInitialize()
+should be called before any use of a
+.B QccFifo
+structure.
+.B QccFifoInitialize()
+initializes the
+.IR input_buffer
+and
+.IR output_buffer
+fields via calls to
+.BR QccBitBufferInitialize (3).
+.LP
+.B QccFifoStart()
+starts both
+.IR input_buffer
+and
+.IR output_buffer
+via calls to
+.BR QccBitBufferStart (3).
+.LP
+.B QccFifoEnd()
+should be called after all accesses (read or write) to
+.I fifo
+are complete.
+.B QccFifoEnd()
+calls
+.BR QccBitBufferEnd (3)
+to stop both buffers.
+.LP
+.B QccFifoFlush()
+should be called at the end of writing a bitstream
+after all bits have been written
+but before 
+.BR QccFifoEnd() 
+is called.
+.B QccFifoFlush()
+ensures that the last byte being packed with bits, which may not be
+full, is output to the fifo by
+calling
+.BR QccBitBufferFlush (3)
+on both buffers.
+.LP
+Once
+.BR QccFifoStart (3)
+has been called, any of the usual bit-buffer routines for
+reading (e.g.,
+.BR QccBitBufferReadChar (3),
+.BR QccBitBufferReadInt (3))
+or writing (e.g.,
+.BR QccBitBufferWriteChar (3),
+.BR QccBitBufferWriteInt (3))
+can be called on the
+.IR input_buffer
+and
+.IR output_buffer
+fields of the fifo.
+The bits are read out of
+.I input_buffer
+in the same order they were written into
+.IR output_buffer ,
+so one or more calls to
+write to
+.IR output_buffer
+should precede the first call to read from
+.IR input_buffer .
+.LP
+.BR QccFifoRestart()
+restarts
+.I fifo
+by calling
+.BR QccFifoEnd()
+and
+.BR QccFifoStart()
+in succession.
+Any data currently held in
+.I fifo
+is lost; that is, the
+.I fifo
+is emptied.
+.SH "IMPLEMENTATION"
+The fifo operation within the
+.BR QccFifo
+structure is implemented with a pipe created by a call to
+.BR pipe (2)
+during the call to
+.BR QccFifoStart() .
+Specifically,
+.IR fileptr
+of
+.IR output_buffer
+is set to the write end of the pipe,
+while
+.IR fileptr
+of
+.IR input_buffer
+is set to the read end.
+Consequently,
+.IR input_buffer
+is joined to
+.IR output_buffer
+through this pipe.
+.BR QccFileDescriptorOpen (3)
+is called to create file streams for the file descriptors returned by
+.BR pipe (2),
+and
+.BR fcntl (2)
+is used to set both ends of the pipe to non-blocking.
+.LP
+As a consequence of the use of
+.BR pipe (2)
+to implement the fifo,
+there is a limit to amount of bits that may be held in the fifo
+at any given time. Unfortunately, this limit is system-dependent.
+On POSIX-compliant systems, the pipe is required to be capable of
+holding at least
+.BR PIPE_BUF
+bytes, and
+.BR PIPE_BUF
+must be at least 512 bytes.
+This means that, on a POSIX-compliant system,
+at least 4096 bits can be written to a
+.BR QccFifo
+structure before bits must be read out.
+.LP
+Attempts to write to a full fifo (one already containing the
+system-dependent maximum number of bits) will return in error,
+as will attempts to read from an empty fifo.
+It is the responsibility of the calling application to avoid
+fifo overflow and underflow, and the calling application
+should do so without trying to determine the maximum size of the fifo,
+as there does not seem to be a reliable system-independent way of
+doing so.
+.SH "RETURN VALUE"
+Each of these routines return 0 upon successful completion, 1 on error.
+.SH "SEE ALSO"
+.BR QccBitBuffer (3),
+.BR QccFileDescriptorOpen (3),
+.BR QccPack (3),
+.BR pipe (2),
+.BR fcntl (2)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

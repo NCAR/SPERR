@@ -1,0 +1,58 @@
+.TH SBPASSEMBLE 1 "QCCPACK" ""
+.SH NAME
+sbpassemble \- assemble separate files into a multi-level subband pyramid
+.SH SYNOPSIS
+.B sbpassemble
+.IR icpfiles "..."
+.I subband\_pyramid
+.SH DESCRIPTION
+.LP
+.B sbpassemble
+reads a series of 
+.BR ICP -format
+image files and assembles them into
+a multi-level subband pyramid
+.I subband\_pyramid
+.RB ( SBP
+format with
+.I L
+>= 1 in the header).
+It is assumed that the low-resolution baseband image comes first in
+the list 
+.IR icpfiles ;
+the subsequent high-resolution subbands are input in order
+horizontal, vertical, and diagonal, starting at level 
+.I L
+of the pyramid (low resolution, low frequency)
+and ending with level 1 (high resolution, high frequency).
+.LP
+The number of
+.I icpfiles
+must be exact--for a subband pyramid of
+.I L
+levels, there must be
+.I (L*3+1)
+.I icpfiles
+given.
+.SH "SEE ALSO"
+.BR sbpsplit (1),
+.BR imgdwt (1),
+.BR imgidwt (1),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

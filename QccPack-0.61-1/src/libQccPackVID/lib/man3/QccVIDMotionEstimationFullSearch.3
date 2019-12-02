@@ -1,0 +1,245 @@
+.TH QCCVIDMOTIONESTIMATIONFULLSEARCH 3 "QCCPACK" ""
+.SH NAME
+QccVIDMotionEstimationMAE,
+QccVIDMotionEstimationExtractBlock,
+QccVIDMotionEstimationInsertBlock,
+QccVIDMotionEstimationFullSearch,
+QccVIDMotionEstimationCalcReferenceFrameSize,
+QccVIDMotionEstimationCreateReferenceFrame,
+QccVIDMotionEstimationCreateCompensatedFrame \- routines for
+full-search, block-based motion estimation and compensation
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "double QccVIDMotionEstimationMAE(QccMatrix " current_block ", QccMatrix " reference_block ", int " block_size );
+.br
+.sp
+.BI "int QccVIDMotionEstimationExtractBlock(const QccIMGImageComponent *" image ", double " row ", double " col ", QccMatrix " block ", int " block_size ", int " subpixel_accuracy );
+.br
+.sp
+.BI "int QccVIDMotionEstimationInsertBlock(QccIMGImageComponent *" image ", double " row ", double " col ", const QccMatrix " block ", int " block_size ", int " subpixel_accuracy );
+.br
+.sp
+.BI "int QccVIDMotionEstimationFullSearch(const QccIMGImageComponent *" current_frame ", const QccIMGImageComponent *" reference_frame ", QccIMGImageComponent *" motion_vectors_horizontal ", QccIMGImageComponent *" motion_vectors_vertical ", int " block_size ", int " window_size ", int " subpixel_accuracy );
+.br
+.sp
+.BI "int QccVIDMotionEstimationCalcReferenceFrameSize(int " num_rows ", int " num_cols ", int *" reference_num_rows ", int *" reference_num_cols ", int " subpixel_accuracy );
+.br
+.sp
+.BI "int QccVIDMotionEstimationCreateReferenceFrame(const QccIMGImageComponent *" current_frame ", QccIMGImageComponent *" reference_frame ", int " subpixel_accuracy ", const QccFilter *" filter1 ", const QccFilter *" filter2 ", const QccFilter *" filter3 );
+.br
+.sp
+.BI "int QccVIDMotionEstimationCreateCompensatedFrame(QccIMGImageComponent *" motion_compensated_frame ", const QccIMGImageComponent *" reference_frame ", const QccIMGImageComponent *" motion_vectors_horizontal ", const QccIMGImageComponent *" motion_vectors_vertical ", int " block_size ", int " subpixel_accuracy );
+.SH DESCRIPTION
+.BR QccVIDMotionEstimationMAE()
+calculates the mean absolute error (MAE) between
+.I current_block
+and
+.I reference_block
+where both blocks have
+a block size of
+.IR block_size 
+by
+.IR block_size .
+.LP
+.BR QccVIDMotionEstimationExtractBlock()
+extracts a
+.I block
+of size
+.I block_size
+by
+.I block_size
+from
+.IR image .
+The block is extracted from location
+.RI ( row ", " col ),
+where this location is the upper-left corner of the block to extact.
+.I subpixel_accuracy
+is one of
+.BR QCCVID_ME_FULLPIXEL ,
+.BR QCCVID_ME_HALFPIXEL ,
+.BR QCCVID_ME_QUARTERPIXEL ,
+or 
+.BR QCCVID_ME_EIGHTHPIXEL ,
+indicating full-, half-, quarter-, or eighth-pixel accuracy.
+Unless the accuracy is full-pixel,
+.I image
+is assumed to be interpolated to support motion-estimation at
+the specified accuracy (using
+.BR QccVIDMotionEstimationCreateReferenceFrame()
+described below).
+Unless the accuracy is full-pixel,
+.I row
+and
+.I col
+refer to the location in the original image, not the
+interpolated image.
+.LP
+.BR QccVIDMotionEstimationInsertBlock()
+does the inverse of
+.BR QccVIDMotionEstimationExtractBlock() ;
+that is, it inserts
+.I block
+into the specified location in
+.IR image .
+.LP
+.BR QccVIDMotionEstimationFullSearch()
+does full-search, block-based motion estimation in
+.IR current_frame
+using
+.IR reference_frame
+as the reference frame. That is,
+for each block in
+.IR current_frame ,
+every block in a window surrounding the current-block location
+in
+.IR reference_frame
+is searched, and the best-matching block chosen.
+The motion vectors indicating the displacement from the blocks
+in
+.I current_frame
+to their matching blocks in
+.IR reference_frame
+are returned in
+.I motion_vectors_horizontal
+and
+.IR motion_vectors_vertical ,
+which are the horizontal and vertical components
+of the motion vectors, respectively.
+.I block_size
+gives the size of the blocks to match.
+.I window_size
+gives the size of the window to search in
+.IR reference_frame
+.RI ( window_size
+should be positive, so that the search window is
+.I -window_size
+to
+.IR +window_size ) .
+.I subpixel_accuracy
+is one of
+.BR QCCVID_ME_FULLPIXEL ,
+.BR QCCVID_ME_HALFPIXEL ,
+.BR QCCVID_ME_QUARTERPIXEL ,
+or 
+.BR QCCVID_ME_EIGHTHPIXEL ,
+indicating full-, half-, quarter-, or eighth-pixel motion-estimation accuracy.
+It is assumed that
+.IR reference_frame
+is already interpolated to support the specified accuracy using
+.BR QccVIDMotionEstimationCreateReferenceFrame() .
+.LP
+.BR QccVIDMotionEstimationCalcReferenceFrameSize()
+returns the size that a reference frame needs to be to support
+motion-estimation accuracy of the specified
+.IR subpixel_accuracy .
+.I num_rows
+and
+.I num_cols
+give the original size of the frame;
+the size of the interpolated reference frame is returned in
+.I reference_num_rows
+and
+.IR reference_num_cols .
+.LP
+.BR QccVIDMotionEstimationCreateReferenceFrame()
+interpolates
+.I current_frame
+into
+.IR reference_frame 
+at the specified
+.IR subpixel_accuracy .
+If
+.IR subpixel_accuracy
+is
+.BR QCCVID_ME_FULLPIXEL ,
+.I current_frame
+is simply copied into
+.IR reference_frame .
+If
+.IR subpixel_accuracy
+is
+.BR QCCVID_ME_HALFPIXEL ,
+and
+.IR filter1
+is not
+.BR NULL ,
+then
+.IR current_frame
+is filtered into
+.IR reference_frame
+using
+.BR QccIMGImageComponentInterpolateFilter (3).
+On the other hand, if
+.I filter1
+is
+.BR NULL ,
+then bilinear interpolation is performed via
+.BR QccIMGImageComponentInterpolateBilinear (3).
+Similarly, if
+.IR subpixel_accuracy
+is
+.BR QCCVID_ME_QUARTERPIXEL ,
+then
+.IR filter1
+and
+.IR filter2
+determine whether bilinear or filtered interpolation is
+used to go from full-pixel to half-pixel accuracy
+.RI ( filter1 ),
+and from half-pixel to quarter-pixel accuracy
+.RI ( filter2 ).
+Likewise,
+.IR filter3
+determines whether bilinear or filtered interpolation
+is used in going from quarter-pixel to eighth-pixel accuracy when
+.IR subpixel_accuracy
+is
+.BR QCCVID_ME_EIGHTHPIXEL .
+.LP
+.BR QccVIDMotionEstimationCreateCompensatedFrame()
+extracts blocks from
+.IR reference_frame
+to create
+.IR motion_compensated_frame ,
+where the blocks are extracted according to the specified motion field as
+given by
+.IR motion_vectors_horizontal
+and
+.IR motion_vectors_vertical .
+.I block_size
+gives the size of the blocks, and
+.IR subpixel_accuracy
+indicates the subpixel accuracy of
+.IR reference_frame .
+It is assumed that
+.IR reference_frame
+is interpolated with
+.BR QccVIDMotionEstimationCreateReferenceFrame()
+to the specified
+.IR subpixel_accuracy .
+.SH "RETURN VALUE"
+These routines return 0 on success, and 1 on failure.
+.SH "SEE ALSO"
+.BR QccVIDMotionVectorsEncode (3),
+.BR QccVIDMotionVectorsDecode (3),
+.BR memc (1),
+.BR QccPackVID (3),
+.BR QccPackENT (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

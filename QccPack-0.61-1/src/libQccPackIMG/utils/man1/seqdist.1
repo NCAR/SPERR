@@ -1,0 +1,151 @@
+.TH SEQDIST 1 "QCCPACK" ""
+.SH NAME
+seqdist \- calculate the distortion between two image sequences
+.SH SYNOPSIS
+.B seqdist
+.RB "[\|" \-vo "\|]"
+.RB "[\|" \-sf
+.IR  startframe "\|]"
+.RB "[\|" \-ef
+.IR  endframe "\|]"
+.RB "[\|" \-mse "\|]"
+.RB "[\|" \-snr "\|]"
+.RB "[\|" \-psnr "\|]"
+.RB "[\|" \-mae "\|]"
+.RB "[\|" \-w "\|]"
+.I seqfile1
+.I seqfile2
+.SH OPTIONS
+.TP
+.B \-vo
+Output only the value of the distortion (terse output).
+.TP
+.B \-sf
+Start frame for subsequence over which to calculate distortion.
+Default is first available frame.
+.TP
+.B \-ef
+End frame for subsequence over which to calculate distortion.
+Default is last available frame.
+.TP
+.B \-mse
+Express the distortion in terms of MSE.
+.TP
+.B \-snr
+Express the distortion in terms of SNR.
+.TP
+.B \-psnr
+Express the distortion in terms of PSNR.
+.TP
+.B \-mae
+Express the distortion in terms of MAE.
+.TP
+.B \-w
+Output the distortion over all frames of the sequence only.
+.SH DESCRIPTION
+.LP
+.B seqdist
+prints
+the mean square error (MSE), signal-to-noise ratio (SNR),
+peak signal-to-noise ratio (PSNR), or
+maximum absolute error (MAE)
+between image sequences
+.I seqfile1
+and
+.I seqfile2
+to stdout.
+.LP
+The options
+.BR \-mse ,
+.BR \-snr ,
+.BR \-psnr ,
+and
+.BR \-mae 
+indicate in which form the distortion should be expressed.
+If none of these
+options are specified, 
+.B seqdist
+prints the distortion in all forms.
+.LP
+If the option
+.B \-vo
+is specified,
+then 
+.B seqdist
+prints a terse output, consisting of only the value of the distortion,
+to stdout.  One of the options
+.BR \-mse ,
+.BR \-snr ,
+.BR \-psnr ,
+or
+.BR \-mae
+must be specified in this case.
+.LP
+The options
+.B \-sf
+and
+.B \-ef
+specify the starting and ending frame numbers, respectively, 
+over which to calculate the distortion. If either of these
+is not specified,
+.BR seqdist
+determines the first and/or last frame automatically from the files that
+exist via
+.BR QccIMGImageSequenceFindFrameNums (3).
+.LP
+If the 
+.B \-w
+option is not given, 
+the distortion over each individual frame is printed.  Additionally,
+in the case of verbose output 
+.RB ( \-vo
+not given), the distortion over the entire sequence (or relevant
+subsequence, in the case that
+.B \-sf
+or
+.B \-ef
+are specified) is output.
+If
+.B \-w
+is given, only this latter distortion is output.
+.LP
+If the image files are color,
+the distortion calculations are performed separately for the Y, U, and V 
+components of the image.  The distortions for each image component are
+output in order.
+.LP
+For the calculation of SNR and PSNR,
+.B seqfile1
+is considered the original signal; 
+.B seqdist
+thus finds the variance of
+.B seqfile1
+for use in the SNR calculation.
+For the calculation of PSNR,
+.B seqdist
+assumes that the peak-to-peak range of
+.B seqfile1
+is 255 levels.
+.SH "SEE ALSO"
+.BR imgdist (1),
+.BR QccIMGImageComponentMSE (3),
+.BR QccIMGImageComponentMAE (3),
+.BR QccIMGImageSequence (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

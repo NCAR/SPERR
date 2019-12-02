@@ -1,0 +1,484 @@
+.TH QCCPACKIMG 3 "QCCPACKIMG" ""
+.SH NAME
+QccPackIMG \- QccPack module for image processing and manipulation
+.SH DESCRIPTION
+.B QccPackIMG
+provides a collection of library routines and utility programs for
+image processing and manipulation.
+.SS "DATA TYPES AND FILE FORMATS"
+.TP
+.BR QccIMGImageComponent (3)
+data structure 
+.B QccIMGImageComponent
+and corresponding
+.B ICP
+file format for a single-band image component
+.TP
+.BR QccIMGImage (3)
+data structure for grayscale and color images
+.TP
+.BR QccIMGImageCube (3)
+data structure 
+.B QccIMGImageCube
+and corresponding
+.B ICB
+file format for a 3D image cube
+.TP
+.BR QccIMGImageSequence (3)
+data structure for a sequence of images
+.SS "LIBRARY ROUTINES"
+.SS "Image Component"
+.TP
+.BR QccIMGImageComponentInitialize (3)
+initialize image component
+.TP
+.BR QccIMGImageComponentAlloc (3)
+allocate image component
+.TP
+.BR QccIMGImageComponentFree (3)
+free image component
+.TP
+.BR QccIMGImageComponentPrint (3)
+print image component
+.TP
+.BR QccIMGImageComponentSetMin (3)
+set image-component minimum value
+.TP
+.BR QccIMGImageComponentSetMax (3)
+set image-component maximum value
+.TP
+.BR QccIMGImageComponentSetMaxMin (3)
+set image-component maximum and minimum values
+.TP
+.BR QccIMGImageComponentResize (3)
+resize image component
+.TP
+.BR QccIMGImageComponentRead (3)
+read a image component from file
+.TP
+.BR QccIMGImageComponentWrite (3)
+write a image component to file
+.TP
+.BR QccIMGImageComponentClipPixel (3)
+clip pixel value
+.TP
+.BR QccIMGImageComponentClip (3)
+clip all pixels of image component
+.TP
+.BR QccIMGImageComponentNormalize (3)
+normalize image component
+.TP
+.BR QccIMGImageComponentAbsoluteValue (3)
+absolute value of image component
+.TP
+.BR QccIMGImageComponentMean (3)
+calculate mean of image component
+.TP
+.BR QccIMGImageComponentShapeAdaptiveMean (3)
+calculate mean of image component using shape-adaptive mask
+.TP
+.BR QccIMGImageComponentVariance (3)
+calculate variance of image component
+.TP
+.BR QccIMGImageComponentShapeAdaptiveVariance (3)
+calculate variance of image component using shape-adaptive mask
+.TP
+.BR QccIMGImageComponentSubtractMean (3)
+subtract mean from image component
+.TP
+.BR QccIMGImageComponentAddMean (3)
+add mean to image component
+.TP
+.BR QccIMGImageComponentMSE (3)
+mean squared error between two image components
+.TP
+.BR QccIMGImageComponentShapeAdaptiveMSE (3)
+mean squared error between two image components using shape-adaptive mask
+.TP
+.BR QccIMGImageComponentMAE (3)
+maximum absolute error between two image components
+.TP
+.BR QccIMGImageComponentShapeAdaptiveMAE (3)
+maximum absolute error between two image components using shape-adaptive mask
+.TP
+.BR QccIMGImageComponentExtractBlock (3)
+extract block from image component
+.TP
+.BR QccIMGImageComponentInsertBlock (3)
+insert block into image component
+.TP
+.BR QccIMGImageComponentCopy (3)
+copy image components
+.TP
+.BR QccIMGImageComponentAdd (3)
+add two image components
+.TP
+.BR QccIMGImageComponentSubtract
+subtract one image component from another
+.TP
+.BR QccIMGImageComponentExtractSubpixel (3)
+extract subpixel via bilinear interpolation
+.TP
+.BR QccIMGImageComponentInterpolateBilinear (3)
+bilinear-interpolate an image component
+.TP
+.BR QccIMGImageComponentInterpolateFilter (3)
+interpolate an image component using an interpolation filter
+.SS "Image"
+.TP
+.BR QccIMGImageInitialize (3)
+initialize image
+.TP
+.BR QccIMGImageGetSize (3)
+get image size
+.TP
+.BR QccIMGImageGetSizeYUV (3)
+get color-image size
+.TP
+.BR QccIMGImageSetSize (3)
+set image size
+.TP
+.BR QccIMGImageSetSizeYUV (3)
+set color-image size
+.TP
+.BR QccIMGImageAlloc (3)
+allocate image
+.TP
+.BR QccIMGImageFree (3)
+free image
+.TP
+.BR QccIMGImageSetMaxMin (3)
+set image-component minimas and maximas
+.TP
+.BR QccIMGImageColor (3)
+determine if image is color
+.TP
+.BR QccIMGImageDetermineType (3)
+determine image type
+.TP
+.BR QccIMGImageRead (3)
+read image
+.TP
+.BR QccIMGImageWrite (3)
+write image
+.TP
+.BR QccIMGImageCopy (3)
+copy image
+.TP
+.BR QccIMGImageColorSNR (3)
+CIE-colorspace SNR between two images
+.SS "Color-Space Conversions"
+.TP
+.BR QccIMGImageRGBtoYUV (3)
+RGB to YUV color-space conversion
+.TP
+.BR QccIMGImageYUVtoRGB (3)
+YUV to RGB color-space conversion
+.TP
+.BR QccIMGImageRGBtoYCC (3)
+RGB to CCIR-601 YCbCr color-space conversion
+.TP
+.BR QccIMGImageYCCtoRGB (3)
+CCIR-601 YCbCr to RGB color-space conversion
+.TP
+.BR QccIMGImageRGBtoXYZ (3)
+RGB to CIE XYZ color-space conversion
+.TP
+.BR QccIMGImageXYZtoRGB (3)
+CIE XYZ to RGB color-space conversion
+.TP
+.BR QccIMGImageRGBtoUCS (3)
+RGB to CIE UCS color-space conversion
+.TP
+.BR QccIMGImageUCStoRGB (3)
+CIE UCS to RGB color-space conversion
+.TP
+.BR QccIMGImageRGBtoModifiedUCS (3)
+RGB to CIE Modified UCS color-space conversion
+.TP
+.BR QccIMGImageModifiedUCStoRGB (3)
+Modified CIE UCS to RGB color-space conversion
+.TP
+.BR QccIMGImageModifiedUCSColorMetric (3)
+distance metric in CIE Modified UCS color space
+.TP
+.BR QccIMGImageRGBtoHSV (3)
+RGB to HSV color-space conversion
+.TP
+.BR QccIMGImageHSVtoRGB (3)
+HSV to RGB color-space conversion
+.SS "Image Cube"
+.TP
+.BR QccIMGImageCubeInitialize (3)
+initialize image cube
+.TP
+.BR QccIMGImageCubeAlloc (3)
+allocate image cube
+.TP
+.BR QccIMGImageCubeFree (3)
+free image cube
+.TP
+.BR QccIMGImageCubePrint (3)
+print image cube
+.TP
+.BR QccIMGImageCubeSetMin (3)
+set image-cube minimum value
+.TP
+.BR QccIMGImageCubeSetMax (3)
+set image-cube maximum value
+.TP
+.BR QccIMGImageCubeSetMaxMin (3)
+set image-cube maximum and minimum values
+.TP
+.BR QccIMGImageCubeResize (3)
+resize image cube
+.TP
+.BR QccIMGImageCubeRead (3)
+read a image cube from file
+.TP
+.BR QccIMGImageCubeWrite (3)
+write a image cube to file
+.TP
+.BR QccIMGImageCubeClip (3)
+clip all voxels of image cube
+.TP
+.BR QccIMGImageCubeNormalize (3)
+normalize image cube
+.TP
+.BR QccIMGImageCubeAbsoluteValue (3)
+absolute value of image cube
+.TP
+.BR QccIMGImageCubeMean (3)
+calculate mean of image cube
+.TP
+.BR QccIMGImageCubeShapeAdaptiveMean (3)
+calculate mean of image cube using shape-adaptive mask
+.TP
+.BR QccIMGImageCubeVariance (3)
+calculate variance of image cube
+.TP
+.BR QccIMGImageCubeShapeAdaptiveVariance (3)
+calculate variance of image cube using shape-adaptive mask
+.TP
+.BR QccIMGImageCubeSubtractMean (3)
+subtract mean from image cube
+.TP
+.BR QccIMGImageCubeAddMean (3)
+add mean to image cube
+.TP
+.BR QccIMGImageCubeMSE (3)
+mean squared error between two image cubes
+.TP
+.BR QccIMGImageCubeShapeAdaptiveMSE (3)
+mean squared error between two image cubes using shape-adaptive mask
+.TP
+.BR QccIMGImageCubeMAE (3)
+maximum absolute error between two image cubes
+.TP
+.BR QccIMGImageCubeShapeAdaptiveMAE (3)
+maximum absolute error between two image cubes using shape-adaptive mask
+.TP
+.BR QccIMGImageCubeExtractBlock (3)
+extract block from image cube
+.TP
+.BR QccIMGImageCubeInsertBlock (3)
+insert block into image cube
+.TP
+.BR QccIMGImageCubeCopy (3)
+copy image cubes
+.TP
+.BR QccIMGImageCubeAdd (3)
+add two image cubes
+.TP
+.BR QccIMGImageCubeSubtract (3)
+subtract one image cube from another
+.TP
+.BR QccIMGImageExtractFrame (3)
+extract a single frame from image cube
+.SS "Image Sequence"
+.TP
+.BR QccIMGImageSequenceInitialize (3)
+initialize image sequence
+.TP
+.BR QccIMGImageSequenceAlloc (3)
+allocate image sequence
+.TP
+.BR QccIMGImageSequenceFree (3)
+free image sequence
+.TP
+.BR QccIMGImageSequenceLength (3)
+calculate length of image sequence
+.TP
+.BR QccIMGImageSequenceSetCurrentFilename (3)
+update filename of current frame of image sequence
+.TP
+.BR QccIMGImageSequenceIncrementFrameNum (3)
+increment current frame number of image sequence
+.TP
+.BR QccIMGImageSequenceFindFrameNums (3)
+find starting and ending frame numbers of image sequence
+.TP
+.BR QccIMGImageSequenceReadFrame (3)
+read current frame of image sequence
+.TP
+.BR QccIMGImageSequenceWriteFrame (3)
+write current frame of image sequence
+.TP
+.BR QccIMGImageSequenceStartRead (3)
+read first frame of image sequence
+.SS "Image Filtering"
+.TP
+.BR QccIMGImageComponentFilterSeparable (3)
+separable filtering of image component
+.TP
+.BR QccIMGImageFilterSeparable (3)
+separable filtering of image
+.TP
+.BR QccIMGImageComponentFilter2D (3)
+2D filtering of image component
+.TP
+.BR QccIMGImageFilter2D (3)
+2D filtering of image
+.SS "DPCM Coding"
+.TP
+.BR QccIMGImageComponentDPCMEncode (3)
+DPCM encoding of image component
+.TP
+.BR QccIMGImageComponentDPCMDecode (3)
+DPCM decoding of image component
+.TP
+.BR QccIMGImageDPCMEncode (3)
+DPCM encoding of image
+.TP
+.BR QccIMGImageDPCMDecode (3)
+DPCM decoding of image
+.SS "Scalar Quantization"
+.TP
+.BR QccIMGImageComponentScalarQuantize (3)
+scalar quantize image component
+.TP
+.BR QccIMGImageComponentInverseScalarQuantize (3)
+inverse scalar quantize image component
+.TP
+.BR QccIMGImageScalarQuantize (3)
+scalar quantize image
+.TP
+.BR QccIMGImageInverseScalarQuantize (3)
+inverse scalar quantize image
+.SS "Block-Based Discrete Cosine Transform (DCT)"
+.TP
+.BR QccIMGImageComponentDCT (3)
+2D block-based DCT of image component
+.TP
+.BR QccIMGImageComponentInverseDCT (3)
+2D block-based inverse DCT of image component
+.TP
+.BR QccIMGImageDCT (3)
+2D block-based DCT of image
+.TP
+.BR QccIMGImageInverseDCT (3)
+2D block-based inverse DCT of image
+.SS "Lapped Biorthogonal Transform (LBT)"
+.TP
+.BR QccIMGImageComponentLBT (3)
+2D LBT of image component
+.TP
+.BR QccIMGImageComponentInverseLBT (3)
+2D inverse LBT of image component
+.SS "Deinterlacing"
+.TP
+.BR QccIMGImageComponentDeinterlace (3)
+deinterlace image component
+.TP
+.BR QccIMGImageDeinterlace (3)
+deinterlace image
+.TP
+.BR QccIMGImageSequenceDeinterlace (3)
+deinterlace image sequence
+.SS "Conversions Between Data Structures"
+.TP
+.BR QccIMGImageComponentToDataset (3)
+convert image component to dataset
+.TP
+.BR QccIMGDatasetToImageComponent (3)
+convert dataset to image component
+.TP
+.BR QccIMGImageSequenceToImageCube (3)
+convert image sequence to image cube
+.TP
+.BR QccIMGImageCubeToImageSequence (3)
+convert image cube to image sequence
+.SS "UTILITY PROGRAMS"
+.TP
+.BR icptoimg (1)
+converts image component to image
+.TP
+.BR imgtoicp (1)
+converts image to image component
+.TP
+.BR dattoicp (1)
+converts file of dataset to image component
+.TP
+.BR icptodat (1)
+converts image component to dataset
+.TP
+.BR dattoimg (1)
+converts dataset to image
+.TP
+.BR imgtodat (1)
+converts image to dataset
+.TP
+.BR seqtoicb (1)
+converts image sequence to image cube
+.TP
+.BR icbtoseq (1)
+converts image cube to image sequence
+.TP
+.BR icbextractframe (1)
+extract single frame from image cube
+.TP
+.BR yuvtoseq (1)
+converts YUV file to image sequence
+.TP
+.BR seqtoyuv (1)
+converts image sequence to YUV file
+.TP
+.BR imgdist (1)
+calculate the distortion between two images
+.TP
+.BR icbdist (1)
+calculate the distortion between two image cubes
+.TP
+.BR seqdist (1)
+calculate the distortion between two image sequences
+.TP
+.BR imgdpcmencode (1)
+encodes an image using DPCM
+.TP
+.BR imgdpcmdecode (1)
+decodes an image using DPCM
+.TP
+.BR seqdeinterlace (1)
+deinterlace image sequence
+.SH "SEE ALSO"
+.BR QccPackENT (3),
+.BR QccPackSQ (3),
+.BR QccPackVQ (3),
+.BR QccPackAVQ (3),
+.BR QccPackWAV (3)
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

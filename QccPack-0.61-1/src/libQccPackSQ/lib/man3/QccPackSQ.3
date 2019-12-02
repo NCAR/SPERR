@@ -1,0 +1,139 @@
+.TH QCCPACKSQ 3 "QCCPACKSQ" ""
+.SH NAME
+QccPackSQ \- QccPack module for scalar quantization
+.SH DESCRIPTION
+.B QccPackSQ
+provides a collection of library routines and utility programs for
+scalar quantization.
+.SS "LIBRARY ROUTINES"
+- no documentation at this time -
+.SS "UTILITY PROGRAMS"
+.TP
+.BR squniform (1)
+make uniform scalar quantizer
+.TP
+.BR sqlloyd (1)
+design Lloyd optimal mean-square scalar quantizer for Gaussian and 
+Laplacian densities
+.TP
+.BR sqencode (1)
+encoding using scalar quantization
+.TP
+.BR sqdecode (1)
+scalar-quantization decoding
+.SS "FILE FORMATS"
+In general, each file format starts with an ASCII header followed by
+ASCII or binary data.  The ASCII header starts with a magic number, and can be
+followed with any amount of white space (blanks, `\\t' (tab), `\\n' (newline),
+`\\r' (carriage return)) and/or
+comments lines (lines starting with "#").  Following this white space,
+each format has a varying amount of header information in ASCII.
+This ASCII header information is separated by blanks and newlines.
+The data follows this ASCII header information.  The data is
+in binary, and one (and only one) newline
+.B must
+immediately follow the last component of ASCII header information.
+.TP
+.BR SQ " - scalar-quantizer format"
+.br
+SQX.X                                                          
+.br
+.I "<white space>"                                                   
+.br
+.I "<type>"
+.br
+.IR "<data>" \|.\|.\|.
+
+where SQ is the magic number, X.X is the revision number,
+.I "<white space>" 
+is white space and/or 
+comment lines, 
+and
+.I "<type>"
+is an ASCII integer specifying one three possible formats.
+
+For the
+general scalar quantizer
+.RI ( "<type>" " = 0),"
+.I "<data>"
+is of the following form:
+.br
+
+.I N                                                           
+.br
+.IR "l1 l2 l3" \|.\|.\|.
+.br
+.IR "p1 p2 p3" \|.\|.\|.
+.br
+.IR "b1 b2 b3" \|.\|.\|.
+.br
+\|.
+.br
+\|.
+.br
+\|.
+
+where
+.I N 
+is the number of reproduction levels the file contains,
+.I li
+are the reproduction levels,
+.I pi
+are the level probabilities, and
+.I bi
+are the boundaries between reproduction levels.
+.I N 
+is an ASCII integer;
+.IR li ", " pi ", and " bi 
+are doubles,
+stored as binary (4 bytes, MSB first).
+The files contains
+.I N
+values each for
+.I li
+and 
+.IR pi ;
+the file contains
+.IR N  " - 1"
+.I bi 
+values.
+
+For the uniform quantizer,
+.RI ( "<type>" " = 1),"
+.I "<data>"
+is a single double value stored as binary giving the stepsize of the
+uniform scalar quantizer.
+
+For the deadzone quantizer,
+.RI ( "<type>" " = 2),"
+.I "<data>"
+is a double value stored as binary giving the stepsize of the
+uniform scalar quantizer, followed by another double giving the size
+of the deadzone.
+
+.SH "SEE ALSO"
+.BR squniform (1),
+.BR sqlloyd (1),
+.BR sqencode (1),
+.BR sqdecode (1),
+.BR QccPackENT (3),
+.BR QccPackVQ (3),
+.BR QccPackAVQ (3),
+.BR QccPackIMG (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

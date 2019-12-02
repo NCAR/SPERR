@@ -1,0 +1,281 @@
+.TH QCCENTARITHMETICMODEL 3 "QCCPACK" ""
+.SH NAME
+QccENTArithmeticModel \- 
+data structure 
+.B QccENTArithmeticModel
+for arithmetic encoding and decoding
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "void QccENTArithmeticFreeModel(QccENTArithmeticModel *" model );
+.br
+.BI "int QccENTArithmeticSetModelContext(QccENTArithmeticModel *" model ", int " current_context );
+.br
+.BI "void QccENTArithmeticSetModelAdaption(QccENTArithmeticModel *" model ", int " adaptive );
+.br
+.BI "int QccENTArithmeticSetModelProbabilities(QccENTArithmeticModel *" model ", double *" probabilities ", int " context );
+.br
+.BI "int QccENTArithmeticResetModel(QccENTArithmeticModel *" model ", int " context );
+.SH DESCRIPTION
+QccPack provides data structure
+.B QccENTArithmeticModel
+for representing the arithmetic-coding model to use in arithmetic encoding and
+decoding.
+.LP
+.B CAVEAT:
+The
+.B QccENTArithmeticModel
+data structure contains a number of variables and arrays which are
+used internally in the arithmetic encoding and decoding routines; these
+variables and arrays are described briefly below, but they should
+.I under no circumstances
+be accessed or modified by the user directly, as this will likely
+result in erroneous operation of the coder.
+Users who are interested in modifying the internal structure
+of the QccPack arithmetic-coder code should consult the paper
+by Witten et al. for details on the internal operation of
+the QccPack arithmetic coder and
+a thorough description of the variables and arrays internal
+to the
+.BR QccENTArithmeticModel
+structure.
+.SH "DATA STRUCTURE"
+The
+.B QccENTArithmeticModel
+data structure is defined as:
+.RS
+.nf
+
+typedef struct
+{
+  int num_contexts;
+  int *num_symbols;
+  int **translate_symbol_to_index;
+  int **translate_index_to_symbol;
+  int **cumulative_frequencies;
+  int **frequencies;
+  QccENTCodeValue low, high;
+  long bits_to_follow;
+  int garbage_bits;
+  int target_num_bits;
+  int adaptive_model;
+  QccENTArithmeticGetContext context_function;
+  int current_context;
+  QccENTCodeValue current_code_value;
+} QccENTArithmeticModel;
+.fi
+.RE
+.LP
+The fields of
+.B QccENTArithmeticModel
+are as follows:
+.TP
+.I num_contexts
+The total number of contexts.
+.TP
+.I num_symbols
+An array of
+.I num_contexts
+entries, with each entry
+providing the number of symbols
+in the corresponding context.
+.TP
+.IR translate_symbol_to_index ", " translate_index_to_symbol 
+Internal arrays for translating between symbols and internal symbol indices.
+See Witten et al.
+.TP
+.IR cumulative_frequencies ", " frequencies 
+Together these arrays provide the probabilities and
+cumulative probabilities for the symbols in each context, expressed
+for practical reasons as integer frequencies. See
+Witten et al.
+.TP
+.IR low ", " high ", " bit_to_follow ", " current_code_value
+Internal storage for the current code value and known range. See
+Witten et al.
+.TP
+.IR target_num_bits
+The total number of desired bits
+to be read 
+by the arithmetic decoder; useful for decoding
+the bitstream from packets with known sizes.
+A value of
+.B QCCENT_ANYNUMBITS
+indicates that there is no packet-length constraint; i.e., the
+decoder reads symbols until it reaches the end of the bitstream or
+the EOF symbol output by
+.BR QccENTArithmeticEncodeEnd (3).
+.TP
+.IR garbage_bits
+The number of bits the decoder has read beyond
+.I target_num_bits
+(or beyond the end of the file if
+.I target_num_bits
+is
+.BR QCCENT_ANYNUMBITS )
+while attempting to decode the last symbol; needed since 
+the decoder reads bits from the bitstream in advance of symbol output.
+.TP
+.I adaptive_model
+Indicates whether adaption in the model is currently turned on or off;
+i.e., whether the model is adaptive or nonadaptive.
+In an adaptive model, symbol frequency counts are updated each time
+a symbol is coded.
+In a nonadaptive model, symbol frequency counts are
+not changed except through explicit setting of the frequency counts.
+Use
+.BR QccENTArithmeticSetModelAdaption (3)
+to change the state of adaption in the model, and
+.BR QccENTArithmeticSetModelProbabilities (3)
+to explicit chage frequency counts in a nonadaptive model.
+The model is initially created as an adaptive model.
+.TP
+.I context_function
+A function that returns the current context to be used in coding when
+.I num_contexts
+is greater than 1.
+.I context_function
+can be 
+.B NULL
+in which case the current context is retrieved from the
+.I current_context
+field of the model. See
+.BR QccENTArithmeticGetContext (3).
+.TP
+.I current_context
+If
+.I context_function
+is 
+.BR NULL ,
+the current context to be used in coding is retrieved from the
+.I current_context
+field of the arithmetic-model structure. User routines may set this field
+by calling
+.BR QccENTArithmeticSetModelContext (3)
+before calling routines such as
+.BR QccENTArithmeticEncode (3) 
+and
+.BR QccENTArithmeticDecode (3).
+.SH "ROUTINES"
+.BR QccENTArithmeticFreeModel()
+frees all the arrays contained in
+.IR model 
+as well as 
+.I model
+itself.
+.BR QccENTArithmeticFreeModel()
+should be called after
+.BR QccENTArithmeticEncodeEnd (3)
+or
+.BR QccENTArithmeticDecode (3)
+to get rid of the
+.B QccENTArithmeticModel
+structure that has been used for encoding and decoding, when
+one is done encoding or decoding.
+.LP
+.BR QccENTArithmeticSetModelContext()
+sets the current-context field of
+.I model
+to
+.IR current_context .
+.I current_context
+must be greater than or equal to zero, and less than or
+equal to
+.IR model->num_contexts .
+.BR QccENTArithmeticSetModelContext()
+returns 0 on success, or 1 if 
+.I current_context
+is an invalid context number.
+.LP
+.BR QccENTArithmeticSetModelAdaption()
+changes the adaption state of the model. If
+.I adaptive
+is
+.BR QCCENT_NONADAPTIVE ,
+the model is made nonadaptive; otherwise,
+if
+.I adaptive
+is
+.BR QCCENT_ADAPTIVE ,
+the model becomes adaptive.
+The adaption mode of the model can be changed at any time during encoding,
+as long as the same changes to the adaption state are made during
+decoding as well.
+When
+.I model
+is initially created, the model is set to be adaptive.
+.LP
+.BR QccENTArithmeticSetModelProbabilities()
+can be use to manually set the frequency counts in a particular
+.I context
+in a nonadaptive
+.I model
+according to any desired probability distribution.
+.I probabilities
+is a list of probability values, double-precision floating point
+numbers each greater than or equal to 0.0 and less than or equal to 1.0.
+There should be as many values in
+.I probabilities
+as there are symbols in
+.IR context 
+(not including the EOF symbol automatically added to the context
+during the call to
+.BR QccENTArithmeticCreateModel (3);
+the frequency of the EOF symbol is set to automatically set to
+1 by
+.BR QccENTArithmeticSetModelProbabilities() ).
+Additionally, the probability values should form a valid
+probability mass function; i.e., they should sum to 1.0.
+.BR QccENTArithmeticSetModelProbabilities()
+updates
+.I model->cumulative_frequencies
+and
+.I model->frequencies
+to approximate the distribution specified by
+.IR probabilities .
+.BR QccENTArithmeticSetModelProbabilities()
+returns in error if 
+.I model
+is not nonadaptive.
+.LP
+.BR QccENTArithmeticResetModel()
+manually resets the frequency counts in a particular
+.I context
+back to their initial values; i.e.,
+all frequency counts in the
+.I context
+are set to 1. Unlike
+.BR QccENTArithmeticSetModelProbabilities() ,
+.I model
+may be either adaptive or nonadaptive.
+.SH "SEE ALSO"
+.BR QccENTArithmeticEncode (3),
+.BR QccENTArithmeticEncodeStart (3),
+.BR QccENTArithmeticEncodeEnd (3),
+.BR QccENTArithmeticDecode (3),
+.BR QccENTArithmeticDecodeStart (3),
+.BR QccENTArithmeticDecodeRestart (3),
+.BR QccENTArithmeticGetContext (3),
+.BR QccPackENT (3),
+.BR QccPack (3)
+.LP
+I. H. Witten, R. M. Neal, and J. G. Cleary,
+"Arithmetic Coding for Data Compression,"
+.IR "Communications of the ACM" ,
+vol. 30, no. 6, pp. 520-540, June 1987.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

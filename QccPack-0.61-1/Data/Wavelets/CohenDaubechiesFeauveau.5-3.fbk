@@ -1,0 +1,35 @@
+FBK0.14
+
+#
+#  CohenDaubechiesFeauveau.5-3.fbk
+#
+#  This biorthogonal spline wavelet filter bank is equivalent to
+#  linear lifting when unitary scaling is employed in the lifting scheme.
+#
+#  Permitted boundary methods:
+#    symmetric extension, periodic extension
+#
+#  References:
+#    A. Cohen, I. Daubechies, J. C. Feauveau, "Biorthogonal Bases of
+#      Compactly Supported Wavelets," Communications on Pure and
+#      Applied Mathematics, vol. 45, no. 5, pp. 485-560, May 1992.
+#
+#    W. Sweldens, "The Lifting Scheme: A New Philosophy in Biorthogonal
+#      Wavelet Constructions," in Wavelet Applications in Signal
+#      Processing III, Proc. SPIE 2569, pp. 68-79, 1995.
+# 
+#    W. Sweldens, P. Schroder, "Building Your Own Wavelets At Home,"
+#      ACM SIGGRAPH Course Notes, pp. 15-87, 1996
+#
+
+1
+2
+2
+ 0.70710678118655
+ 0.35355339059327
+2
+3
+ 1.06066017177982
+ 0.35355339059327
+-0.17677669529664
+

@@ -1,0 +1,127 @@
+.TH QCCIMGIMAGEREAD 3 "QCCPACK" ""
+.SH NAME
+QccIMGImageDetermineType,
+QccIMGImageRead,
+QccIMGImageWrite \- 
+read/write image to/from file
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccIMGImageDetermineType(QccIMGImage *" image );
+.br
+.sp
+.BI "int QccIMGImageRead(QccIMGImage *" image );
+.br
+.BI "int QccIMGImageWrite(QccIMGImage *" image );
+.SH DESCRIPTION
+.BR QccIMGImageDetermineType()
+attempts to determine the type of the image,
+setting the
+.IR image->image_type
+field appropriately.
+First,
+.BR QccIMGImageDetermineType()
+checks to see whether
+.IR image->image_type
+is already set to something other than
+.BR QCCIMGTYPE_UNKNOWN .
+If it is,
+.BR QccIMGImageDetermineType()
+returns immediately, making no changes to
+.IR image .
+Otherwise, if
+.IR image->image_type
+is equal to
+.BR QCCIMGTYPE_UNKNOWN ,
+.BR QccIMGImageDetermineType()
+checks to see whether the file indicated by
+.IR image->filename
+exists. If it does, it reads the magic number from the file,
+and sets
+.IR image->image_type
+to
+.BR QCCIMGTYPE_PPM ,
+.BR QCCIMGTYPE_PGM ,
+.BR QCCIMGTYPE_PBM ,
+or
+.BR QCCIMGTYPE_ICP 
+according to the magic number, or to
+.BR QCCIMGTYPE_UNKNOWN
+if the magic number is not recognized.
+On the other hand, if the file does not exist,
+.BR QccIMGImageDetermineType()
+attempts to determine the image type from the
+.IR filename
+itself.
+If
+.I filename
+ends in ".ppm",
+.IR image->image_type
+is set to
+.BR QCCIMGTYPE_PPM .
+If
+.I filename
+ends in ".pgm",
+.IR image->image_type
+is set to
+.BR QCCIMGTYPE_PGM .
+If
+.I filename
+ends in ".pbm",
+.IR image->image_type
+is set to
+.BR QCCIMGTYPE_PBM .
+If
+.I filename
+ends in ".icp",
+.IR image->image_type
+is set to
+.BR QCCIMGTYPE_ICP .
+Otherwise,
+.IR image->image_type
+is set to
+.BR QCCIMGTYPE_UNKNOWN .
+.LP
+.B QccIMGImageRead()
+reads a 
+.B QccIMGImage
+structure from the file specified by
+.IR image->filename .
+.BR QccIMGImageDetermineType()
+is called to determine the image file's type,
+and then the appropriate steps are taken to read the specific file format.
+.LP
+.B QccIMGImageWrite()
+writes a
+.B QccIMGImage
+structure to a file; the filename of the image
+file to be written must be stored as
+.IR image->filename .
+.BR QccIMGImageDetermineType()
+is called to determine the image file's type,
+and then the appropriate steps are taken to write the specific file format.
+.SH "RETURN VALUES"
+These routines return 0 on success and 1 on error.
+.SH "SEE ALSO"
+.BR QccIMGImage (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+

@@ -1,0 +1,138 @@
+.TH QCCIMGIMAGECOMPONENTMSE 3 "QCCPACK" ""
+.SH NAME
+QccIMGImageComponentMSE,
+QccIMGImageComponentShapeAdaptiveMSE,
+QccIMGImageComponentMAE,
+QccIMGImageComponentShapeAdaptiveMAE
+\- 
+mean squared error and maximum absolute error between image components
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "double QccIMGImageComponentMSE(const QccIMGImageComponent *" image_component1 ", const QccIMGImageComponent *" image_component2 );
+.br
+.BI "double QccIMGImageComponentShapeAdaptiveMSE(const QccIMGImageComponent *" image_component1 ", const QccIMGImageComponent *" image_component2 ", const QccIMGImageComponent *" alpha_mask );
+.br
+.sp
+.BI "double QccIMGImageComponentMAE(const QccIMGImageComponent *" image_component1 ", const QccIMGImageComponent *" image_component2 );
+.br
+.BI "double QccIMGImageComponentShapeAdaptiveMAE(const QccIMGImageComponent *" image_component1 ", const QccIMGImageComponent *" image_component2 ", const QccIMGImageComponent *" alpha_mask );
+.SH DESCRIPTION
+.BR QccIMGImageComponentMSE()
+returns the mean squared error (MSE) between
+.IR image_component1
+and
+.IR image_component2 .
+The MSE is calculated by taking the difference between a pixel in
+.IR image_component1
+and its corresponding pixel in
+.IR image_component2 ,
+squaring this difference, and finally averaging all the squared differences
+over the entire image component.
+.IR image_component1
+and
+.IR image_component2
+must have the same size.
+.LP
+.BR QccIMGImageComponentShapeAdaptiveMSE()
+performs an MSE calculation similar to that of
+.BR QccIMGImageComponentMSE() ,
+except that
+.IR alpha_mask
+is assumed to denote regions that are "transparent" in
+both
+.IR image_component1
+and
+.IR image_component2
+and thus contain no valid pixel data.
+That is,
+.BR QccIMGImageComponentShapeAdaptiveMSE()
+skips over pixels in the MSE calculation for which
+.BR QccAlphaTransparent (3)
+returns non-zero when applied to
+.IR alpha_mask
+at the current pixel location.
+If
+.IR alpha_mask
+is
+.BR NULL ,
+the usual, full-image MSE is calculated via
+.BR QccIMGImageComponentMSE() .
+.IR image_component1 ,
+.IR image_component2 ,
+and
+.IR alpha_mask
+(if it is
+.RB non- NULL )
+must all have the same size.
+.LP
+.BR QccIMGImageComponentMAE()
+returns the maximum absolute error (MAE) between
+.IR image_component1
+and
+.IR image_component2 .
+The MAE is calculated by taking the difference between a pixel in
+.IR image_component1
+and its corresponding pixel in
+.IR image_component2 ,
+and then calculating the absolute value of this difference using
+.BR fabs (3).
+The largest absolute value encountered in this fashion
+over the entire image component is returned by
+.BR QccIMGImageComponentMAE() .
+.IR image_component1
+and
+.IR image_component2
+must have the same size.
+.LP
+.BR QccIMGImageComponentShapeAdaptiveMAE()
+performs an MAE calculation similar to that of
+.BR QccIMGImageComponentMAE() ,
+except that
+.IR alpha_mask
+is assumed to denote regions that are "transparent" in
+both
+.IR image_component1
+and
+.IR image_component2
+and thus contain no valid pixel data.
+.IR alpha_mask
+is
+.BR NULL ,
+the usual, full-image MAE is calculated via
+.BR QccIMGImageComponentMAE() .
+.IR image_component1 ,
+.IR image_component2 ,
+and
+.IR alpha_mask
+(if it is
+.RB non- NULL )
+must all have the same size.
+.SH "RETURN VALUES"
+These routines return the value of the MSE or MAE quantity they calculate;
+in the case of an error, these routines return 0.0.
+.SH "SEE ALSO"
+.BR fabs (3),
+.BR QccAlphaTransparent (3),
+.BR QccIMGImageComponent (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+

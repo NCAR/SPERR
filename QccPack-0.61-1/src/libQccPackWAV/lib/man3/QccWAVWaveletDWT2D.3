@@ -1,0 +1,149 @@
+.TH QCCWAVWAVELETDWT2D 3 "QCCPACK" ""
+.SH NAME
+QccWAVWaveletDWT2D, QccWAVWaveletInverseDWT2D \- 
+separable 2D discrete wavelet transform and inverse transform for a 2D signal
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccWAVWaveletDWT2D(QccMatrix " matrix ", int " num_rows ", int " num_cols ", int " origin_row ", int " origin_col ", int " subsample_pattern_row ", int " subsample_pattern_col ", int " num_scales ", const QccWAVWavelet *" wavelet );
+.br
+.BI "int QccWAVWaveletInverseDWT2D(QccMatrix " matrix ", int " num_rows ", int " num_cols ", int " origin_row ", int " origin_col ", int " subsample_pattern_row ", int " subsample_pattern_col ", int " num_scales ", const QccWAVWavelet *" wavelet );
+.SH DESCRIPTION
+.B QccWAVWaveletDWT2D()
+performs a separable 2D
+discrete wavelet transform (DWT) of a two-dimensional signal,
+.IR matrix ,
+which is represented as a matrix of
+.I num_rows
+rows and
+.I num_cols
+columns.
+.I origin_row
+and
+.I origin_col
+indicates the row and column indices, respectively, of the upper-left
+corner of the image.
+Usually, one assumes that the upper-left corner of the image is
+indexed as (0, 0) - in this case, both
+.I origin_row
+and
+.I origin_col
+would be zero.
+.I num_scales
+gives the number of scales, or levels, of the decomposition.
+.BR QccWAVWaveletDWT2D()
+implements a dyadic, or octave, decomposition of
+.IR matrix ;
+that is, the low-low subband (baseband)
+is recursively decomposed into a lowpass and
+three highpass bands for each level of decomposition, each of which being
+one quarter the size of the baseband that was decomposed.
+The output of the DWT is returned in
+.IR matrix ,
+overwriting the original input matrix.
+The output subbands reside in 
+.I matrix
+with the baseband in the upper-left corner, with highpass subbands
+successively "nested" from the upper-left corner to lower-right corner.
+.BR QccWAVWaveletDWT2D()
+calls
+.BR QccWAVWaveletAnalysis2D (3)
+for each level of decomposition, using the baseband
+subband for the current level of decomposition as input.
+As a result, the transform recursively decomposes the upper-left corner of
+the input matrix.
+.LP
+.B QccWAVWaveletInverseDWT2D()
+performs the corresponding separable 2D inverse DWT of
+.IR matrix
+which is assumed to have been produced
+by
+.BR QccWAVWaveletDWT2D() .
+.I num_scales
+gives the number of levels of decomposition that exist in
+.IR matrix .
+.B QccWAVWaveletInverseDWT2D()
+calls
+.BR QccWAVWaveletSynthesis2D (3)
+for each level of synthesis.
+.LP
+.I subsample_pattern_row
+and
+.I subsample_pattern_col
+indicate the even- or odd-phase subsampling to be used at each level
+of row and column decomposition.
+In most applications, even subsampling at all
+levels is desired, in which case both 
+.I subsample_pattern_row
+and
+.I subsample_pattern_col
+should be set to zero.
+In more general settings, when some mixture of even- and odd-phase subsampling
+is desired, 
+.I subsample_pattern_row
+and
+.I subsample_pattern_col
+can be integers between 0 and
+.IR "(2 ^ num_levels) - 1" .
+In these integers, the 
+.IR j th
+bit (where
+.I j
+= 1 is the least-significant bit) indicates whether the
+.IR j th
+level of decomposition employs
+even or odd subsampling (0 = even, 1 = odd).
+For example, if
+.I subsample_pattern_row
+is 5, then the first and third row decompositions use odd-phase
+subsampling, while all others use even subsampling.
+.LP
+Use
+.BR QccWAVSubbandPyramidDWT (3)
+and
+.BR QccWAVSubbandPyramidInverseDWT (3)
+to perform a 2D separable DWT or inverse DWT on a
+.B QccWAVSubbandPyramid
+data structure (which is the recommended way to do it, since the
+.B QccWAVSubbandPyramid
+structure stores the number of levels of decomposition along with
+the transform coefficients).
+.SH "RETURN VALUES"
+These routines
+return 0 on success and 1 on error.
+.SH "SEE ALSO"
+.BR QccWAVWaveletAnalysis2D (3),
+.BR QccWAVWaveletSynthesis2D (3),
+.BR QccWAVSubbandPyramidDWT (3),
+.BR QccWAVSubbandPyramidInverseDWT (3),
+.BR QccWAVWavelet (3),
+.BR QccPackWAV (3),
+.BR QccPack (3)
+.LP
+M. Antonini, M. Barlaud, P. Mathieu, and I. Daubechies,
+"Image Coding Using Wavelet Transform,"
+.IR "IEEE Transactions on Image Processing" ,
+vol. 1, pp. 205-220, April 1992.
+.LP
+I. Daubechies and W. Sweldens,
+"Factoring Wavelet Transforms Into Lifting Steps,"
+.IR "J. Fourier Anal. Appl." ,
+vol. 4, no. 3, pp. 245-267, 1998.
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+

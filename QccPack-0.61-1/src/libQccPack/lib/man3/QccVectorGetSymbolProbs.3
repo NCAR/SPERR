@@ -1,0 +1,68 @@
+.TH QCCVECTORGETSYMBOLPROBS 3 "QCCPACK" ""
+.SH NAME
+QccVectorGetSymbolProbs \- calculate probabilities of a list of symbols
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "int QccVectorGetSymbolProbs(const int *" symbol_list ", int " symbol_list_length ", QccVector " probs ", int " num_symbols );
+.SH DESCRIPTION
+.B QccVectorGetSymbolProbs()
+accepts a list of symbols, counts the number of times each
+symbol occurs in the list, and returns a list of probabilities
+based on the observed occurrences of the symbol values in the list.
+.LP
+More specifically,
+.I symbol_list
+is the list of symbol values,
+.I symbol_list_length
+is the length of the symbol list,
+.I probs
+is the list of probabilities returned,
+and
+.I num_symbols
+is the length of the probability list (one probability for each 
+possible symbol).
+Each symbol in
+.I symbol_list
+must be an
+.B int
+in the range of 0 to
+.I num_symbols
+- 1.
+Suppose that 
+.I symbol
+is a symbol in the range 0 to
+.I num_symbols
+- 1;
+.B QccVectorGetSymbolProbs()
+counts the number of occurrences of
+.I symbol
+in 
+.IR symbol_list .
+The probability of 
+.IR symbol ,
+which is returned in
+.IR probs [ symbol ]
+is calculated as
+.RI count( symbol ") / " symbol_list_length .
+.LP
+The returned list of probabilities,
+.IR probs ,
+is a valid probability density it that in sums to 1.0.
+.SH "SEE ALSO"
+.BR QccPack (3)
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

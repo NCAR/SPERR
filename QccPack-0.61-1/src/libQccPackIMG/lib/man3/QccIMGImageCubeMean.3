@@ -1,0 +1,132 @@
+.TH QCCIMGIMAGECUBEMEAN 3 "QCCPACK" ""
+.SH NAME
+QccIMGImageCubeMean,
+QccIMGImageCubeShapeAdaptiveMean,
+QccIMGImageCubeVariance,
+QccIMGImageCubeShapeAdaptiveVariance,
+QccIMGImageCubeSubtractMean,
+QccIMGImageCubeAddMean
+\- 
+mean and variance operations on image cubes
+.SH SYNOPSIS
+.B #include "libQccPack.h"
+.sp
+.BI "double QccIMGImageCubeMean(const QccIMGImageCube *" image_cube );
+.br
+.BI "double QccIMGImageCubeShapeAdaptiveMean(const QccIMGImageCube *" image_cube ", const QccIMGImageCube *" alpha_mask );
+.br
+.sp
+.BI "double QccIMGImageCubeVariance(const QccIMGImageCube *" image_cube );
+.br
+.BI "double QccIMGImageCubeShapeAdaptiveVariance(const QccIMGImageCube *" image_cube ", const QccIMGImageCube *alpha_mask );
+.br
+.sp
+.BI "int QccIMGImageCubeSubtractMean(QccIMGImageCube *" image_cube ", double *" mean ", const QccSQScalarQuantizer *" quantizer );
+.br
+.BI "int QccIMGImageCubeAddMean(QccIMGImageCube *" image_cube ", double " mean );
+.SH DESCRIPTION
+.BR QccIMGImageCubeMean()
+returns the mean of the
+.IR volume
+array of
+.IR image_cube .
+.LP
+.BR QccIMGImageCubeShapeAdaptiveMean()
+performs a mean calculation similar to that of
+.BR QccIMGImageCubeMean() ,
+except that
+.IR alpha_mask
+is assumed to denote regions that are "transparent" in
+.I image_cube
+and thus contain no valid voxel data.
+That is,
+.BR QccIMGImageCubeShapeAdaptiveMean()
+skips over voxels in the mean calculation for which
+.BR QccAlphaTransparent (3)
+returns non-zero when applied to
+.IR alpha_mask
+at the current voxel location.
+.LP
+.BR QccIMGImageCubeVariance()
+returns the variance of the
+.IR volume
+array of
+.IR image_cube .
+.LP
+.BR QccIMGImageCubeShapeAdaptiveVariance()
+performs a variance calculation similar to that of
+.BR QccIMGImageCubeVariance() ,
+except that
+.IR alpha_mask
+is assumed to denote regions that are "transparent" in
+.I image_cube
+and thus contain no valid voxel data.
+.LP
+.BR QccIMGImageCubeSubtractMean()
+first calculates the mean of
+.IR image_cube .
+If
+.IR quantizer
+is not
+.BR NULL ,
+.BR QccSQScalarQuantization (3)
+and
+.BR QccSQInverseScalarQuantization (3)
+are called in succession to calculate a quantized reconstruction
+of the mean value, which is then subtracted from each voxel value of
+.IR image_cube .
+On the other hand, if
+.IR quantizer
+is
+.BR NULL ,
+then the calculated mean is subtracted directly from each voxel value of
+.IR image_cube .
+If
+.IR mean
+is not
+.BR NULL,
+the value subtracted from
+.IR image_cube ,
+quantized or not,
+is returned in the location pointed to by
+.IR mean .
+.LP
+.BR QccIMGImageCubeAddMean()
+restores the
+.I mean
+that was removed by
+.BR QccIMGImageCubeSubtractMean() .
+That is,
+.IR mean
+is added to each voxel in
+.IR image_cube .
+.SH "RETURN VALUES"
+.BR QccIMGImageCubeSubtractMean()
+and
+.BR QccIMGImageCubeAddMean()
+return 0 on success and 1 on error;
+the other routines return the mean or variance value they calculate.
+.SH "SEE ALSO"
+.BR QccAlphaTransparent (3),
+.BR QccIMGImageCube (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them an.or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+

@@ -1,0 +1,72 @@
+.TH SEQTOICB 1 "QCCPACK" ""
+.SH NAME
+seqtoicb \- converts image sequence to image cube
+.SH SYNOPSIS
+.B seqtoicb
+.RB "[\|" \-sf
+.IR  startframe "\|]"
+.RB "[\|" \-ef
+.IR  endframe "\|]"
+.I seqfile
+.I icbfile
+.SH OPTIONS
+.TP
+.B \-sf
+Start frame for image sequence.
+Default is first available frame.
+.TP
+.B \-ef
+End frame for sequence.
+Default is last available frame.
+.SH DESCRIPTION
+.LP
+.B seqtoicb
+converts an image sequence
+.IR seqfile ,
+to an image cube,
+.IR icbfile ,
+in ICB format. All frames of
+.IR seqfile
+must be grayscale.
+.LP
+The options
+.B \-sf
+and
+.B \-ef
+specify the starting and ending frame numbers, respectively, 
+over which to convert frames to the image cube. If either of these
+is not specified,
+.BR seqdist
+determines the first and/or last frame automatically from the files that
+exist via
+.BR QccIMGImageSequenceFindFrameNums (3).
+.LP
+.BR seqtoicb
+calls
+.BR QccIMGImageSequenceToImageCube (3).
+.LP
+Note: converting from PGM format files to ICB format implies simply converting
+integer pixels to floating-point values.
+.SH "SEE ALSO"
+.BR icbtoseq (1),
+.BR QccIMGImageSequenceToImageCube (3),
+.BR QccIMGImageSequence (3),
+.BR QccIMGImageCube (3),
+.BR QccPackIMG (3),
+.BR QccPack (3)
+
+.SH AUTHOR
+Copyright (C) 1997-2016  James E. Fowler
+.\"  The programs herein are free software; you can redistribute them and/or
+.\"  modify them under the terms of the GNU General Public License
+.\"  as published by the Free Software Foundation; either version 2
+.\"  of the License, or (at your option) any later version.
+.\"  
+.\"  These programs are distributed in the hope that they will be useful,
+.\"  but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"  GNU General Public License for more details.
+.\"  
+.\"  You should have received a copy of the GNU General Public License
+.\"  along with these programs; if not, write to the Free Software
+.\"  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
