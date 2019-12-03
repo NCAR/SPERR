@@ -37,3 +37,6 @@ tags
 
 # actual config file
 QccPack-0.61-1/QccPack.config
+
+# all the Makefiles
+**/Makefile
