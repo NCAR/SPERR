@@ -39,4 +39,15 @@ tags
 QccPack-0.61-1/QccPack.config
 
 # all the Makefiles
-**/Makefile
+Makefile
+
+# executables in the utils directory
+**/utils/*
+!**/utils/*.c
+!**/utils/*.h
+!**/utils/html-man
+!**/utils/man1
+
+# lib and include directory
+QccPack-0.61-1/lib
+QccPack-0.61-1/include
