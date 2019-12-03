@@ -51,3 +51,4 @@ Makefile
 # lib and include directory
 QccPack-0.61-1/lib
 QccPack-0.61-1/include
+QccPack-0.61-1/install
