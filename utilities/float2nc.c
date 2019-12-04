@@ -8,8 +8,8 @@
 
 /* We are writing 2D data, an NX * NY grid. */
 #define NDIMS 2
-#define NX 1024
-#define NY 1024
+#define NX 128
+#define NY 128
 
 /* Handle errors by printing an error message and exiting with a non-zero status. */
 #define ERRCODE 2
@@ -47,6 +47,7 @@ int main( int argc, char** argv )
     if( fread( data_buf, sizeof(float), NX * NY, f ) != NX * NY )
     {
         fprintf( stderr, "Error! Input file read error: %s\n", argv[1] );
+        free( data_buf );
         fclose( f );
         return 1;
     }
@@ -55,10 +56,6 @@ int main( int argc, char** argv )
     /* When we create netCDF variables and dimensions, we get back an ID for each one. */
     int ncid, x_dimid, y_dimid, varid, retval;
     int dimids[NDIMS];
-
-    /* Loop indexes, and error handling. */
-    long x, y; 
-
 
     /* Always check the return code of every netCDF function call. In
      * this example program, any retval which is not equal to NC_NOERR

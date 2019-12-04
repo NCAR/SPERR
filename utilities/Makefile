@@ -13,6 +13,9 @@ all:
 float2nc.out: float2nc.c
 	$(CC) $< -o $@ -lnetcdf
 
+crop2d.out: crop2d.c
+	$(CC) $< -o $@
+
 
 clean:
-	rm bin2ascii dec2hex calcerr input2bin readrandom calcerr maxdiff cropcube zeroout cropanysize
+	rm -f *.out *.o
