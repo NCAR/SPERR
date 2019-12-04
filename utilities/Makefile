@@ -10,7 +10,7 @@ endif
 
 all:
 
-float2nc: float2nc.c
+float2nc.out: float2nc.c
 	$(CC) $< -o $@ -lnetcdf
 
 
