@@ -99,6 +99,6 @@ int main( int argc, char** argv )
 
     free( data_buf );
 
-    printf( "*** SUCCESS writing NetCDF file %s!\n", argv[2] );
+    printf( "*** SUCCESS writing NetCDF file %s! ***\n", argv[2] );
     return 0;
 }
