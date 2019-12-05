@@ -83,7 +83,8 @@ XCOMM
 XCOMM  Set to the desired compiler
 XCOMM
 XCOMM  -- GNU Compiler Collection (gcc) --
-CC = /usr/local/opt/llvm/bin/clang -stdlib=libc++ -I/usr/local/opt/llvm/include
+XCOMM CC = /usr/local/opt/llvm/bin/clang 
+CC = clang
 XCOMM
 XCOMM  -- Intel C++ Compiler for Linux (icc) --
 XCOMM CC = icc
@@ -92,6 +93,7 @@ XCOMM
 XCOMM  Set to the desired compiler flags
 XCOMM
 XCOMM  -- GNU Compiler Collection (gcc) --
+XCOMM CFLAGS = -Wall -stdlib=libc++ -I/usr/local/opt/llvm/include
 CFLAGS = -Wall
 XCOMM
 XCOMM  -- Intel C++ Compiler for Linux (icc) --
@@ -125,7 +127,8 @@ XCOMM
 XCOMM  -- GNU Compiler Collection (gcc) --
 SHARED_OBJ_FLAGS = -shared
 CFLAGS += -fPIC
-LD = /usr/local/opt/llvm/bin/clang -L/usr/local/opt/llvm/lib -Wl,-rpath,/usr/local/opt/llvm/lib
+XCOMM LD = $(CC) -L/usr/local/opt/llvm/lib -Wl,-rpath,/usr/local/opt/llvm/lib
+LD = $(CC)
 XCOMM
 XCOMM  -- Intel C++ Compiler for Linux (icc) --
 XCOMM SHARED_OBJ_FLAGS = -shared
