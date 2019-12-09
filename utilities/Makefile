@@ -18,10 +18,10 @@ float2nc.out: float2nc.c
 crop2d.out: crop2d.c
 	$(CC) $< -o $@
 
-evaluate2d.out: evaluate2d.c calc_stats.o
+evaluate2d.out: evaluate2d.c helper.o
 	$(CC) $^ -I$(QCC_INSTALL_DIR)/include $(QCC_INSTALL_DIR)/lib/libQccPack.a -o $@
 
-calc_stats.o: calc_stats.c calc_stats.h
+helper.o: helper.c helper.h
 	$(CC) $< -c -o $@
 
 
