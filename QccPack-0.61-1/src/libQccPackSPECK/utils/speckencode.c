@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
     }
 
   if (MaskSpecified)
-  {/*
+  {
       if (QccIMGImageRead(&Mask))
         {
           QccErrorAddMessage("%s: Error calling QccIMGImageRead()",
@@ -187,7 +187,6 @@ int main(int argc, char *argv[])
         for (col = 0; col < MaskNumCols; col++)
           if (!QccAlphaTransparent(Mask.Y.image[row][col]))
             NumPixels++;
-    */
   }
   else
     NumPixels = ImageNumRows * ImageNumCols;
