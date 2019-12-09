@@ -73,7 +73,7 @@ int QccParseParameters(int argc, char *argv[], const char *format, ...);
 
 
 /*  string.c  */
-#define QCCSTRINGLEN 1193
+#define QCCSTRINGLEN 1186
 typedef char QccString[QCCSTRINGLEN + 1];
 void QccStringMakeNull(QccString qccstring);
 int QccStringNull(const QccString qccstring);
