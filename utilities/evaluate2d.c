@@ -6,6 +6,7 @@
 #define HAVE_SPECK
 
 #include "libQccPack.h"
+#include "calc_stats.h"
 
 
 int sam_read_data( QccIMGImageComponent* image )
