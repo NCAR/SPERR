@@ -26,4 +26,4 @@ helper.o: helper.c helper.h
 
 
 clean:
-	rm -f *.out *.o
+	rm -f *.out *.o *.tmp

@@ -83,7 +83,7 @@ XCOMM
 XCOMM  Set to the desired compiler
 XCOMM
 XCOMM  -- GNU Compiler Collection (gcc) --
-CC = clang
+CC = gcc
 XCOMM
 XCOMM  -- Intel C++ Compiler for Linux (icc) --
 XCOMM CC = icc
