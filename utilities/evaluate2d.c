@@ -6,50 +6,19 @@
 #define HAVE_SPECK
 
 #include "libQccPack.h"
-#include "calc_stats.h"
+#include "helper.h"
+
+#include "assert.h"
 
 
-int sam_read_data( QccIMGImageComponent* image )
+int array_to_image( const float* array, QccIMGImageComponent* image )
 {
-    const char* filename     = image->filename;
-    const long  num_of_vals  = image->num_rows * image->num_cols;
-    const long  num_of_bytes = sizeof(float) * num_of_vals;
-
-    /* Test if the input file is healthy. */
-    FILE* f = fopen( filename, "r" );
-    if( f == NULL )
-    {
-        fprintf( stderr, "Error! Cannot open input file: %s\n", filename );
-        return 1;
-    }
-    fseek( f, 0, SEEK_END );
-    if( ftell(f) != num_of_bytes )
-    {
-        fprintf( stderr, "Error! Input file size error: %s\n", filename );
-        fprintf( stderr, "  Expecting %ld bytes, got %ld bytes.\n", num_of_bytes, ftell(f) );
-        fclose( f );
-        return 1;
-    }
-    fseek( f, 0, SEEK_SET );
-
-    /* Allocate space for the input data */
-    float* data_buf = (float*)malloc( num_of_bytes );
-    if( fread( data_buf, sizeof(float), num_of_vals, f ) != num_of_vals )
-    {
-        fprintf( stderr, "Error! Input file read error: %s\n", filename );
-        free( data_buf );
-        fclose( f );
-        return 1;
-    }
-    fclose( f );
-
-    /* Fill the image */
-    float min = data_buf[0], max = data_buf[0];
+    float min = array[0], max = array[0];
     long counter = 0, row, col;
     for( row = 0; row < image->num_rows; row++ )
         for( col = 0; col < image->num_cols; col++ )
         {
-            float val = data_buf[ counter++ ];
+            float val = array[ counter++ ];
             image->image[row][col] = val;
             if( val < min )     min = val;
             if( val > max )     max = val;
@@ -58,7 +27,20 @@ int sam_read_data( QccIMGImageComponent* image )
     image->min_val = min;
     image->max_val = max;
 
-    free( data_buf );
+    return 0;
+}
+
+int image_to_array( const QccIMGImageComponent* image, float* array )
+{
+    long counter = 0, row, col;
+    for( row = 0; row < image->num_rows; row++ )
+    {
+        for( col = 0; col < image->num_cols; col++ )
+        {
+            array[counter++] = image->image[row][col];
+        }
+    }
+
     return 0;
 }
 
@@ -70,13 +52,19 @@ int main( int argc, char** argv )
         fprintf( stderr, "Usage: ./a.out input_raw_file num_of_cols(DimX) num_of_rows(DimY)\n" );
         return 1;
     }
-    const char* input_name  = argv[1];
-    const char* output_name = "stream.tmp";
-    const int   num_of_cols = atoi( argv[2] );
-    const int   num_of_rows = atoi( argv[3] );
-    const int   bpp         = 1;    /* bit per pixel */
-    const int   total_bits  = bpp * num_of_cols * num_of_rows;
-    const int   num_of_levels = 3;
+    const char* input_name    = argv[1];
+    const char* output_name   = "stream.tmp";
+    int         num_of_cols   = atoi( argv[2] );
+    int         num_of_rows   = atoi( argv[3] );
+    const long  num_of_vals   = num_of_cols * num_of_rows;
+    const long  num_of_bytes  = sizeof(float) * num_of_vals;
+    const float cratio        = 20.0f;  /* compression ratio */
+    const int   total_bits    = (int)(8.0f * num_of_bytes / cratio);
+    int         num_of_levels = 7;
+
+    /*
+     * Stage 1: Encoding
+     */
 
     /* Prepare necessary Wavelets. */
     QccString             WaveletFilename = QCCWAVWAVELET_DEFAULT_WAVELET;
@@ -108,7 +96,7 @@ int main( int argc, char** argv )
         return 1;
     }
 
-    /* Prepare necessary image component, and read data. */
+    /* Prepare necessary image component. */
     QccIMGImageComponent    Image;
     if( QccIMGImageComponentInitialize( &Image ) )
     {
@@ -123,9 +111,15 @@ int main( int argc, char** argv )
         fprintf( stderr, "QccIMGImageComponentAlloc failed.\n" );
         return 1;
     }
-    if( sam_read_data( &Image ) )
+
+    /* Get ready to read data. */
+    float* in_array = (float*)malloc( num_of_bytes );
+    if( read_n_bytes( input_name, num_of_bytes, in_array ) != 0 )
+        return 1;
+    if( array_to_image( in_array, &Image ) )
     {
         fprintf( stderr, "sam_read_data failed.\n" );
+        free( in_array );
         return 1;
     }
 
@@ -134,18 +128,78 @@ int main( int argc, char** argv )
                         total_bits, &Wavelet, &OutputBuffer ) )
     {
         fprintf( stderr, "QccSPECKEncode failed.\n" );
+        free( in_array );
         return 1;
     }
     if( QccBitBufferEnd( &OutputBuffer ) )
     {
         fprintf( stderr, "QccBitBufferEnd failed.\n" );
+        free( in_array );
         return 1;
     }
+
+
+    /*
+     * Stage 2: Decoding
+     */
+
+    /* Prepare input buffer. */
+    QccBitBuffer                 InputBuffer;
+    if( QccBitBufferInitialize( &InputBuffer ) )
+    {
+        fprintf( stderr, "QccBitBufferInitialize failed.\n" );
+        free( in_array );
+        return 1;
+    }
+    QccStringCopy( InputBuffer.filename, output_name );
+    InputBuffer.type = QCCBITBUFFER_INPUT;
+    if (QccBitBufferStart(&InputBuffer))
+    {
+        fprintf( stderr, "QccBitBufferStart failed.\n" );
+        free( in_array );
+        return 1;
+    }
+
+    double image_mean;
+    int    max_coeff_bits;
+    if( QccSPECKDecodeHeader( &InputBuffer, &num_of_levels, &num_of_rows, 
+                              &num_of_cols, &image_mean, &max_coeff_bits ) )
+    {
+        fprintf( stderr, "QccSPECKDecodeHeader failed.\n" );
+        free( in_array );
+        return 1;
+    }
+    assert( num_of_vals == num_of_rows * num_of_cols );
+
+    /* Note that we re-use the ImageComponent that was used for encoding. */
+
+    if( QccSPECKDecode( &InputBuffer, &Image, NULL, num_of_levels, &Wavelet,
+                        image_mean, max_coeff_bits, total_bits           ) )
+    {
+        fprintf( stderr, "QccSPECKDecode failed.\n" );
+        free( in_array );
+        return 1;
+    }
+
+    /* Evaluate the encoding and decoding process! */
+    float* out_array = (float*)malloc( num_of_bytes );
+    image_to_array( &Image, out_array );
+    float  rmse, lmax;
+    if( get_rmse_lmax( in_array, out_array, num_of_vals, &rmse, &lmax ) )
+    {
+        fprintf( stderr, "get_rmse_max failed.\n" );
+        free( in_array );
+        free( out_array );
+        return 1;
+    }
+    printf("rmse = %f, lmax = %f\n", rmse, lmax );
 
 
     /* Cleanup */
     QccWAVWaveletFree(&Wavelet);
     QccIMGImageComponentFree( &Image );
+    free( in_array );
+    free( out_array );
 
     return 0;
 }

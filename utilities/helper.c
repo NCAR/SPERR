@@ -1,15 +1,16 @@
 
 #include "helper.h"
 
-#include "math.h"
+#include <math.h>
+#include <stdio.h>
 
-int get_rmse_max( const float* arr1, const float* arr2, long len, /* input */
-                  float* rmse,       float* max               )   /* output */
+int get_rmse_lmax( const float* arr1, const float* arr2, long len, /* input  */
+                   float* rmse,       float* lmax              )   /* output */
 {
     float sum = 0.0f, c = 0.0f;
     float diff, y, t;
     long  i;
-    *max  = 0.0f;
+    *lmax = 0.0f;
     for( i = 0; i < len; i++) 
     {
         /* Kahan summation */
@@ -19,9 +20,9 @@ int get_rmse_max( const float* arr1, const float* arr2, long len, /* input */
         c    = t - sum - y;
         sum  = t;
 
-        /* detect the max */
-        if( diff > *max )
-            *max = diff;
+        /* detect the lmax*/
+        if( diff > *lmax )
+            *lmax = diff;
     }
 
     sum  /= (float)len;
@@ -30,3 +31,33 @@ int get_rmse_max( const float* arr1, const float* arr2, long len, /* input */
     return  0;
 }
 
+
+int read_n_bytes( const char* filename, long n_bytes,             /* input  */
+                  void*       buffer               )              /* output */
+{
+    FILE* f = fopen( filename, "r" );
+    if( f == NULL )
+    {
+        fprintf( stderr, "Error! Cannot open input file: %s\n", filename );
+        return 1;
+    }
+    fseek( f, 0, SEEK_END );
+    if( ftell(f) != n_bytes )
+    {
+        fprintf( stderr, "Error! Input file size error: %s\n", filename );
+        fprintf( stderr, "  Expecting %ld bytes, got %ld bytes.\n", n_bytes, ftell(f) );
+        fclose( f );
+        return 1;
+    }
+    fseek( f, 0, SEEK_SET );
+
+    if( fread( buffer, 1, n_bytes, f ) != n_bytes )
+    {
+        fprintf( stderr, "Error! Input file read error: %s\n", filename );
+        fclose( f );
+        return 1;
+    }
+
+    fclose( f );
+    return 0;
+}
