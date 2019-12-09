@@ -60,7 +60,7 @@ int main( int argc, char** argv )
     const long  num_of_bytes  = sizeof(float) * num_of_vals;
     const float cratio        = 20.0f;  /* compression ratio */
     const int   total_bits    = (int)(8.0f * num_of_bytes / cratio);
-    int         num_of_levels = 7;
+    int         num_of_levels = 5;
 
     /*
      * Stage 1: Encoding

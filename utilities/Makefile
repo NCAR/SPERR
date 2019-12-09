@@ -19,10 +19,10 @@ crop2d.out: crop2d.c
 	$(CC) $< -o $@
 
 evaluate2d.out: evaluate2d.c helper.o
-	$(CC) $^ -I$(QCC_INSTALL_DIR)/include $(QCC_INSTALL_DIR)/lib/libQccPack.a -o $@
+	$(CC) $^ -I$(QCC_INSTALL_DIR)/include $(QCC_INSTALL_DIR)/lib/libQccPack.a -lm -o $@
 
 helper.o: helper.c helper.h
-	$(CC) $< -c -o $@
+	$(CC) $< -c -lm -o $@
 
 
 clean:
