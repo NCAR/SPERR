@@ -114,7 +114,7 @@ int main( int argc, char** argv )
 
     /* Get ready to read data. */
     float* in_array = (float*)malloc( num_of_bytes );
-    if( read_n_bytes( input_name, num_of_bytes, in_array ) != 0 )
+    if( sam_read_n_bytes( input_name, num_of_bytes, in_array ) != 0 )
         return 1;
     if( array_to_image( in_array, &Image ) )
     {
@@ -185,7 +185,7 @@ int main( int argc, char** argv )
     float* out_array = (float*)malloc( num_of_bytes );
     image_to_array( &Image, out_array );
     float  rmse, lmax, min, max;
-    if( get_rmse_lmax( in_array, out_array, num_of_vals, &rmse, &lmax, &min, &max ) )
+    if( sam_get_stats( in_array, out_array, num_of_vals, &rmse, &lmax, &min, &max ) )
     {
         fprintf( stderr, "get_rmse_max failed.\n" );
         free( in_array );
