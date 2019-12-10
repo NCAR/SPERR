@@ -5,8 +5,11 @@
 #include <stdio.h>
 
 int get_rmse_lmax( const float* arr1, const float* arr2, long len, /* input  */
-                   float* rmse,       float* lmax              )   /* output */
+                   float* rmse,       float* lmax,                 /* output */
+                   float* arr1min,    float* arr1max            )  /* output */
 {
+    *arr1min  = arr1[0];
+    *arr1max  = arr1[0];
     float sum = 0.0f, c = 0.0f;
     float diff, y, t;
     long  i;
@@ -23,6 +26,12 @@ int get_rmse_lmax( const float* arr1, const float* arr2, long len, /* input  */
         /* detect the lmax*/
         if( diff > *lmax )
             *lmax = diff;
+
+        /* detect min and max of arr1 */
+        if( arr1[i]  < *arr1min )
+            *arr1min = arr1[i];
+        if( arr1[i]  > *arr1max )
+            *arr1max = arr1[i];
     }
 
     sum  /= (float)len;

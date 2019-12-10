@@ -184,15 +184,15 @@ int main( int argc, char** argv )
     /* Evaluate the encoding and decoding process! */
     float* out_array = (float*)malloc( num_of_bytes );
     image_to_array( &Image, out_array );
-    float  rmse, lmax;
-    if( get_rmse_lmax( in_array, out_array, num_of_vals, &rmse, &lmax ) )
+    float  rmse, lmax, min, max;
+    if( get_rmse_lmax( in_array, out_array, num_of_vals, &rmse, &lmax, &min, &max ) )
     {
         fprintf( stderr, "get_rmse_max failed.\n" );
         free( in_array );
         free( out_array );
         return 1;
     }
-    printf("rmse = %f, lmax = %f\n", rmse, lmax );
+    printf("rmse = %f, lmax = %f, orig_min = %f, orig_max = %f\n", rmse, lmax, min, max );
 
 
     /* Cleanup */

@@ -1,11 +1,12 @@
 CC=gcc
 CXX=g++
-CXXFLAGS=-O2 -g -Wall
+CFLAGS=-O2 -g -Wall -lm
 
 ARCH=$(shell uname)
 ifeq ($(ARCH), Darwin)
   CC=clang
   CXX=clang++
+  CFLAGS=-O2 -g -Wall 
 endif
 
 QCC_INSTALL_DIR=../QccPack-0.61-1/install
@@ -19,10 +20,10 @@ crop2d.out: crop2d.c
 	$(CC) $< -o $@
 
 evaluate2d.out: evaluate2d.c helper.o
-	$(CC) $^ -I$(QCC_INSTALL_DIR)/include $(QCC_INSTALL_DIR)/lib/libQccPack.a -lm -o $@
+	$(CC) $(CFLAGS) -I$(QCC_INSTALL_DIR)/include $^ $(QCC_INSTALL_DIR)/lib/libQccPack.a -o $@
 
 helper.o: helper.c helper.h
-	$(CC) $< -c -lm -o $@
+	$(CC) $(CFLAGS) $< -c -o $@
 
 
 clean:
