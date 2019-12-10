@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 int sam_get_stats( const float* arr1, const float* arr2, long len, /* input  */
-                   float* rmse,       float* lmax,                 /* output */
+                   float* rmse,       float* lmax,    float* psnr, /* output */
                    float* arr1min,    float* arr1max            )  /* output */
 {
     *arr1min  = arr1[0];
@@ -17,7 +17,7 @@ int sam_get_stats( const float* arr1, const float* arr2, long len, /* input  */
     for( i = 0; i < len; i++) 
     {
         /* Kahan summation */
-        diff = fabsf( arr1[i] - arr2[i] ); /* single precision version */
+        diff = fabsf( arr1[i] - arr2[i] ); /* single precision version of abs() */
         y    = diff * diff - c;
         t    = sum + y;
         c    = t - sum - y;
@@ -35,14 +35,17 @@ int sam_get_stats( const float* arr1, const float* arr2, long len, /* input  */
     }
 
     sum  /= (float)len;
-    *rmse = sqrtf( sum );   /* single precision version */
+    *rmse = sqrtf( sum );   /* single precision version of sqrt() */
+
+    float range2 = (*arr1max - *arr1min) * (*arr1max - *arr1min );
+    *psnr = -10.0f * log10f( sum / range2 ); /* single precision version of log10() */
     
     return  0;
 }
 
 
 int sam_read_n_bytes( const char* filename, long n_bytes,             /* input  */
-                  void*       buffer               )              /* output */
+                      void*       buffer               )              /* output */
 {
     FILE* f = fopen( filename, "r" );
     if( f == NULL )
