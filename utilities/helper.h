@@ -1,6 +1,7 @@
 
 /* Note: psnr is calculated in dB, and follows the equation described in:
    http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/VELDHUIZEN/node18.html
+   Also refer to https://www.mathworks.com/help/vision/ref/psnr.html
  */
 int sam_get_stats( const float* arr1, const float* arr2, long len, /* input  */
                    float* rmse,       float* lmax,    float* psnr, /* output */
