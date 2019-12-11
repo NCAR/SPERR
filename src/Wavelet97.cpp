@@ -26,16 +26,6 @@ template int speck::Wavelet97::assign_data( const float*  data, long x, long y, 
 template int speck::Wavelet97::assign_data( const double* data, long x, long y, long z );
 
 
-const double* speck::Wavelet97::get_data() const
-{
-    return data_buf.get();
-}
-
-double speck::Wavelet97::get_mean() const
-{
-    return data_mean;
-}
-
 void speck::Wavelet97::calc_mean()
 {
     //
