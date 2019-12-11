@@ -30,10 +30,12 @@ private:
     
 
     // Note on the coefficients, ALPHA, BETA, etc.
-    // The ones from QccPack are slightly different from what's described in the paper:
-    // Pg19 of FACTORING WAVELET TRANSFORMS INTO LIFTING STEPS, DAUBECHIES and  SWELDEN.
+    // The ones from QccPack are slightly different from what's described in the lifting scheme paper:
+    // Pg19 of "FACTORING WAVELET TRANSFORMS INTO LIFTING STEPS," DAUBECHIES and SWELDEN.
     // (https://9p.io/who/wim/papers/factor/factor.pdf)
     // JasPer, OpenJPEG, and FFMpeg use coefficients closer to the paper.
+    // The filter bank coefficients (h[] array) are from "Biorthogonal Bases of Compactly Supported Wavelets,"
+    // by Cohen et al., Page 551. (https://services.math.duke.edu/~ingrid/publications/CPAM_1992_p485.pdf) 
 
     // Paper coefficients
     static constexpr double h[5]{  .602949018236, .266864118443, -.078223266529,
