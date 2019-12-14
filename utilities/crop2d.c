@@ -7,14 +7,14 @@
 
 #define IN_NX  1024
 #define IN_NY  1024
-#define OUT_NX 128
-#define OUT_NY 128
+#define OUT_NX 85
+#define OUT_NY 85
 
 int main( int argc, char** argv )
 {
     if( argc != 3 )
     {
-        fprintf( stderr, "Usage: ./a.out input_filename output_filename." );
+        fprintf( stderr, "Usage: ./a.out input_filename output_filename.\n" );
         return 1;
     }
 

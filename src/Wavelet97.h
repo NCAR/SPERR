@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <cmath>
+#include <vector>
 
 namespace speck
 {
@@ -20,14 +21,41 @@ public:
     // For debug only ==================//
 
 private:
-    void calc_mean();   // Calculate data_mean from data_buf
+    //
+    // Private methods
+    //
+    void subtract_mean();       // Calculate data_mean from data_buf
 
 
+    //
+    // Methods from QccPack
+    //
+    void QccWAVCDF97AnalysisSymmetricEvenEven( double* signal,  long signal_length);
+    void QccWAVCDF97SynthesisSymmetricEvenEven( double* signal, long signal_length);
+
+
+    //
+    // Private data members
+    //
     std::unique_ptr<double[]> data_buf = nullptr;
     double data_mean = 0.0;                 // Mean of the values in data_buf
     long dim_x = 0, dim_y = 0, dim_z = 0;   // Dimension of the data volume
     int  level_xy = 5,  level_z = 5;        // Transform num. of levels
     
+    std::vector<bool> sign_array, significance_map;
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // Note on the coefficients, ALPHA, BETA, etc.
     // The ones from QccPack are slightly different from what's described in the lifting scheme paper:
@@ -43,7 +71,7 @@ private:
     static constexpr double r0      = h[0] - 2.0  * h[4] * h[1] / h[3];
     static constexpr double r1      = h[2] - h[4] - h[4] * h[1] / h[3];
     static constexpr double s0      = h[1] - h[3] - h[3] * r0   / r1; 
-    static constexpr double t0      = (h[0] - 2.0 * (h[2] - h[4]));
+    static constexpr double t0      = h[0] - 2.0 * (h[2] - h[4]);
     static constexpr double ALPHA   = h[4] / h[3];
     static constexpr double BETA    = h[3] / r1; 
     static constexpr double GAMMA   = r1   / s0; 

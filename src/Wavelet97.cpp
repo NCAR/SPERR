@@ -15,18 +15,16 @@ int speck::Wavelet97::assign_data( const T* data, long x, long y, long z )
     for( long i = 0; i < num_of_vals; i++ )
         data_buf[i] = data[i];
 
-    // Now we calculate the mean of data_buf, and then subtract the mean.
-    calc_mean();
-    for( long i = 0; i < num_of_vals; i++ )
-        data_buf[i] -= data_mean;
-
     return 0;
 }
 template int speck::Wavelet97::assign_data( const float*  data, long x, long y, long z );
 template int speck::Wavelet97::assign_data( const double* data, long x, long y, long z );
 
-
-void speck::Wavelet97::calc_mean()
+    
+//
+// Private Method
+//
+void speck::Wavelet97::subtract_mean()
 {
     //
     // Here we calculate row by row to avoid too big numbers.
@@ -59,8 +57,70 @@ void speck::Wavelet97::calc_mean()
         sum += layer_means[ z ];
 
     data_mean = sum / double(dim_z);
+
+    for( long i = 0; i < dim_x * dim_y * dim_z; i++ )
+        data_buf[i] -= data_mean;
 }
 
+
+//
+// Methods from QccPack
+//
+void speck::Wavelet97::QccWAVCDF97AnalysisSymmetricEvenEven( double* signal, 
+                                                             long signal_length)
+{
+    long index;
+    for (index = 1; index < signal_length - 2; index += 2)
+        signal[index] += ALPHA * (signal[index - 1] + signal[index + 1]);
+
+    signal[signal_length - 1] += 2 * ALPHA * signal[signal_length - 2];
+    signal[0] += 2 * BETA * signal[1];
+
+    for (index = 2; index < signal_length; index += 2)
+        signal[index] += BETA * (signal[index + 1] + signal[index - 1]);
+
+    for (index = 1; index < signal_length - 2; index += 2)
+        signal[index] +=  GAMMA * (signal[index - 1] + signal[index + 1]);
+
+    signal[signal_length - 1] += 2 * GAMMA * signal[signal_length - 2];
+    signal[0] = EPSILON * (signal[0] + 2 * DELTA * signal[1]);
+
+    for (index = 2; index < signal_length; index += 2)
+        signal[index] =  EPSILON * (signal[index] + DELTA * (signal[index + 1] + 
+                                    signal[index - 1]));
+
+    for (index = 1; index < signal_length; index += 2)
+        signal[index] /= (-EPSILON);
+}
+
+
+void speck::Wavelet97::QccWAVCDF97SynthesisSymmetricEvenEven( double* signal, 
+                                                              long signal_length)
+{
+    long index;
+    for (index = 1; index < signal_length; index += 2)
+        signal[index] *= (-EPSILON);
+
+    signal[0] = signal[0]/EPSILON - 2 * DELTA * signal[1];
+
+    for (index = 2; index < signal_length; index += 2)
+        signal[index] = signal[index]/EPSILON - DELTA * (signal[index + 1] + 
+                        signal[index - 1]);
+
+    for (index = 1; index < signal_length - 2; index += 2)
+        signal[index] -= GAMMA * (signal[index - 1] + signal[index + 1]);
+
+    signal[signal_length - 1] -= 2 * GAMMA * signal[signal_length - 2];
+    signal[0] -= 2 * BETA * signal[1];
+
+    for (index = 2; index < signal_length; index += 2)
+        signal[index] -= BETA * (signal[index + 1] + signal[index - 1]);
+
+    for (index = 1; index < signal_length - 2; index += 2)
+        signal[index] -= ALPHA * (signal[index - 1] + signal[index + 1]);
+
+    signal[signal_length - 1] -= 2 * ALPHA * signal[signal_length - 2];
+}
 
 // For debug only 
 const double* speck::Wavelet97::get_data() const
