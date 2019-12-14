@@ -30,10 +30,15 @@
 #define DELTA      0.44350482244527
 #define EPSILON    1.14960430535816
 
+#define SAM
 
 static void QccWAVCDF97AnalysisSymmetricEvenEven(QccVector signal,
                                                  int signal_length)
 {
+#ifdef SAM
+fprintf( stderr, "signal_len = %d, using Even Even\n", signal_length );
+#endif
+
   int index;
   
   for (index = 1; index < signal_length - 2; index += 2)
@@ -70,6 +75,10 @@ static void QccWAVCDF97AnalysisSymmetricEvenEven(QccVector signal,
 static void QccWAVCDF97AnalysisSymmetricEvenOdd(QccVector signal,
                                                 int signal_length)
 {
+#ifdef SAM
+fprintf( stderr, "signal_len = %d, using Even Odd\n", signal_length );
+#endif
+
   int index;
 
   signal[0] +=
@@ -106,6 +115,10 @@ static void QccWAVCDF97AnalysisSymmetricEvenOdd(QccVector signal,
 static void QccWAVCDF97AnalysisSymmetricOddEven(QccVector signal,
                                                 int signal_length)
 {
+#ifdef SAM
+fprintf( stderr, "signal_len = %d, using Odd Even\n", signal_length );
+#endif
+
   int index;
 
   for (index = 1; index < signal_length - 1; index += 2)
@@ -143,6 +156,10 @@ static void QccWAVCDF97AnalysisSymmetricOddEven(QccVector signal,
 static void QccWAVCDF97AnalysisSymmetricOddOdd(QccVector signal,
                                                int signal_length)
 {
+#ifdef SAM
+fprintf( stderr, "signal_len = %d, using Odd Odd\n", signal_length );
+#endif
+
   int index;
 
   signal[0] +=

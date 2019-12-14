@@ -1339,7 +1339,7 @@ static int QccSPECKEncodeDWT(QccWAVSubbandPyramid *image_subband_pyramid,
         }
     }
   else
-    {
+    { /*
       if (QccMatrixCopy(mask_subband_pyramid->matrix, mask->image,
                         mask->num_rows, mask->num_cols))
         {
@@ -1356,10 +1356,11 @@ static int QccSPECKEncodeDWT(QccWAVSubbandPyramid *image_subband_pyramid,
           else
             image_subband_pyramid->matrix[row][col] =
               image->image[row][col] - *image_mean;
+        */
     }
   
   if (mask != NULL)
-    {
+    { /*
       if (QccWAVSubbandPyramidShapeAdaptiveDWT(image_subband_pyramid,
                                                mask_subband_pyramid,
                                                num_levels,
@@ -1367,7 +1368,7 @@ static int QccSPECKEncodeDWT(QccWAVSubbandPyramid *image_subband_pyramid,
         {
           QccErrorAddMessage("(QccSPECKEncodeDWT): Error calling QccWAVSubbandPyramidShapeAdaptiveDWT()");
           return(1);
-        }
+        } */
     }
   else
     if (QccWAVSubbandPyramidDWT(image_subband_pyramid,

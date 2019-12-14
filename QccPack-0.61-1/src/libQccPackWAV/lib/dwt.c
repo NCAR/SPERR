@@ -25,7 +25,7 @@
 
 
 static int QccWAVWaveletDWTSubbandPhase(int level, int signal_origin,
-                                        int subsample_pattern)
+                                        int subsample_pattern)  /* Equals 0 in most cases */
 {
   int phase = -(signal_origin % (1 << level));
   
