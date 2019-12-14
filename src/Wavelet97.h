@@ -30,8 +30,10 @@ private:
     //
     // Methods from QccPack
     //
-    void QccWAVCDF97AnalysisSymmetricEvenEven( double* signal,  long signal_length);
-    void QccWAVCDF97SynthesisSymmetricEvenEven( double* signal, long signal_length);
+    void QccWAVCDF97AnalysisSymmetricEvenEven( double* signal, long signal_length);
+    void QccWAVCDF97AnalysisSymmetricOddEven(  double* signal, long signal_length);
+    void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, long signal_length);
+    void QccWAVCDF97SynthesisSymmetricOddEven( double* signal, long signal_length);
 
 
     //
