@@ -32,7 +32,7 @@ private:
                             // perform one level of 2D dwt on a given plain (dim_x, dim_y),
                             // specifically on its top left (len_x, len_y) subset.
     void m_calc_num_of_levels();    // determine level_xy and level_z
-    long m_calc_low_freq_len( long orig_len, long lev );
+    long m_calc_approx_len( long orig_len, long lev );
                                     // determine the low frequency signal length after
                                     // lev times of transformation (lev > 0).
 

@@ -140,7 +140,7 @@ void speck::Wavelet97::m_calc_num_of_levels()
 }
 
 
-long m_calc_low_freq_len( long orig_len, long lev )
+long m_calc_approx_len( long orig_len, long lev )
 {
     assert( lev > 0 );
     long low_len = orig_len;

@@ -3,16 +3,18 @@
 #include <cstdio>
 #include <cmath>
 
+
 int main()
 {
 /*
     const long N = 30;
     std::unique_ptr<float[]> buf( new float[N] );
     for( long i = 0; i < N; i++ )
-        buf[i] = float(i) - 2.1f;
+        buf[i] = float(i) * 3.3f - 2.1f;
 
     speck::Wavelet97 w;
-    w.assign_data( buf.get(), 5, 2, 3 );
+    w.assign_data( buf.get(), 5, 6, 1 );
+    w.subtract_mean();
 
     double m = w.get_mean();
         std::cout << "mean = " << m << std::endl;
@@ -21,6 +23,7 @@ int main()
         std::cout << p[i] << std::endl;
 */
 
+/*
     double h[5]{ .602949018236,
                  .266864118443,
                 -.078223266529,
@@ -39,4 +42,6 @@ int main()
 
     printf( "alpha = %0.15f,  beta = %0.15f,  gamma = %0.15f, delta = %0.15f,  eps = %0.15f\n", 
             alpha, beta, gamma, delta, eps );
+*/
+
 }
