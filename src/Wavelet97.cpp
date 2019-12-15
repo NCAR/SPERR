@@ -62,6 +62,57 @@ void speck::Wavelet97::subtract_mean()
         data_buf[i] -= data_mean;
 }
 
+    
+void speck::Wavelet97::dwt2d_one_level( double* plain, long len_x, long len_y )
+{
+    assert( len_x <= dim_x && len_y <= dim_y );
+
+    // First perform DWT along X for every row
+    if( len_x % 2 == 0 )    // Even length
+    {
+        for( long i = 0; i < len_y; i++ )
+            this->QccWAVCDF97AnalysisSymmetricEvenEven( plain + i * dim_x, len_x );
+    }
+    else                    // Odd length
+    {
+        for( long i = 0; i < len_y; i++ )
+            this->QccWAVCDF97AnalysisSymmetricOddEven(  plain + i * dim_x, len_x );
+    }
+
+    // Second perform DWT along Y for every column
+    double tmp_buf[MAX_LEN];
+    std::unique_ptr<double[]> tmp_ptr(nullptr);
+    double* buf_ptr = tmp_buf;
+    if( MAX_LEN < len_y )   // Need to allocate memory on the heap!
+    {
+        tmp_ptr.reset( new double[ len_y ] );
+        buf_ptr = tmp_ptr.get();
+    }
+
+    if( len_y % 2 == 0 )    // Even length
+    {
+        for( long x = 0; x < len_x; x++ )
+        {
+            for( long y = 0; y < len_y; y++ )
+                buf_ptr[y] = plain[ y * dim_x + x ];
+            this->QccWAVCDF97AnalysisSymmetricEvenEven( buf_ptr, len_y );
+            for( long y = 0; y < len_y; y++ )
+                plain[ y * dim_x + x ] = buf_ptr[y];
+        }
+    }
+    else                    // Odd length
+    {
+        for( long x = 0; x < len_x; x++ )
+        {
+            for( long y = 0; y < len_y; y++ )
+                buf_ptr[y] = plain[ y * dim_x + x ];
+            this->QccWAVCDF97AnalysisSymmetricOddEven( buf_ptr, len_y );
+            for( long y = 0; y < len_y; y++ )
+                plain[ y * dim_x + x ] = buf_ptr[y];
+        }
+    }
+}
+
 
 //
 // Methods from QccPack

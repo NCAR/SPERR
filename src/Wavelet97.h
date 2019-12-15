@@ -24,7 +24,10 @@ private:
     //
     // Private methods
     //
-    void subtract_mean();       // Calculate data_mean from data_buf
+    void subtract_mean();   // Calculate data_mean from data_buf
+    void dwt2d_one_level( double* plain, long len_x, long len_y ); 
+                            // Perform one level of 2D dwt on a given plain (dim_x, dim_y),
+                            // specifically on its top left (len_x, len_y) subset.
 
 
     //
@@ -42,7 +45,8 @@ private:
     std::unique_ptr<double[]> data_buf = nullptr;
     double data_mean = 0.0;                 // Mean of the values in data_buf
     long dim_x = 0, dim_y = 0, dim_z = 0;   // Dimension of the data volume
-    int  level_xy = 5,  level_z = 5;        // Transform num. of levels
+    long level_xy = 5,  level_z = 5;        // Transform num. of levels
+    const long MAX_LEN = 128;               // Max num. of values in one dimension
     
     std::vector<bool> sign_array, significance_map;
 
