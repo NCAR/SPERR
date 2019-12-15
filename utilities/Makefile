@@ -25,6 +25,9 @@ evaluate2d.out: evaluate2d.c helper.o
 helper.o: helper.c helper.h
 	$(CC) $(CFLAGS) $< -c -o $@
 
+test.out: test.c
+	$(CC) $(CFLAGS) -I$(QCC_INSTALL_DIR)/include $^ $(QCC_INSTALL_DIR)/lib/libQccPack.a -o $@
+
 
 clean:
 	rm -rf *.out* *.o *.tmp
