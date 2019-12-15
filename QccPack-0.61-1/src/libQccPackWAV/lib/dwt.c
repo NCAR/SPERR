@@ -220,7 +220,7 @@ int QccWAVWaveletDWT2D(QccMatrix matrix,
                                                subsample_pattern_row);
       phase_col = QccWAVWaveletDWTSubbandPhase(scale + 1, origin_col,
                                                subsample_pattern_col);
-
+      /* phase_row and phase_col seem to be always zero */
       if (QccWAVWaveletAnalysis2D(matrix,
                                   num_rows,
                                   num_cols,
