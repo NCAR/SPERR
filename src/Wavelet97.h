@@ -13,6 +13,9 @@ class Wavelet97
 public:
     template< typename T >
     int assign_data( const T* data, long x, long y, long z  = 1 );
+    int dwt2d();            // 1) calculates the number of levels of dwt,
+                            // 2) subtract mean of the data,
+                            // 3) perform the actual dwt.
 
     
     // For debug only ==================//
@@ -24,14 +27,17 @@ private:
     //
     // Private methods
     //
-    void subtract_mean();   // Calculate data_mean from data_buf
-    void dwt2d_one_level( double* plain, long len_x, long len_y ); 
-                            // Perform one level of 2D dwt on a given plain (dim_x, dim_y),
+    void m_subtract_mean(); // calculate data_mean from data_buf
+    void m_dwt2d_one_level( double* plain, long len_x, long len_y ); 
+                            // perform one level of 2D dwt on a given plain (dim_x, dim_y),
                             // specifically on its top left (len_x, len_y) subset.
-
+    void m_calc_num_of_levels();    // determine level_xy and level_z
+    long m_calc_low_freq_len( long orig_len, long lev );
+                                    // determine the low frequency signal length after
+                                    // lev times of transformation (lev > 0).
 
     //
-    // Methods from QccPack
+    // Methods from QccPack, keep their original name.
     //
     void QccWAVCDF97AnalysisSymmetricEvenEven( double* signal, long signal_length);
     void QccWAVCDF97AnalysisSymmetricOddEven(  double* signal, long signal_length);
@@ -41,15 +47,14 @@ private:
 
     //
     // Private data members
+    // Note: use long type to store all integers. int is only used for return values.
     //
-    std::unique_ptr<double[]> data_buf = nullptr;
-    double data_mean = 0.0;                 // Mean of the values in data_buf
-    long dim_x = 0, dim_y = 0, dim_z = 0;   // Dimension of the data volume
-    long level_xy = 5,  level_z = 5;        // Transform num. of levels
     const long MAX_LEN = 128;               // Max num. of values in one dimension
+    double data_mean   = 0.0;               // Mean of the values in data_buf
+    long dim_x = 0, dim_y = 0, dim_z = 0;   // Dimension of the data volume
+    long level_xy = -1,  level_z = -1;      // Transform num. of levels
+    std::unique_ptr<double[]> data_buf = nullptr;
     
-    std::vector<bool> sign_array, significance_map;
-
 
 
 

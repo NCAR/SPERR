@@ -21,12 +21,26 @@ int speck::Wavelet97::assign_data( const T* data, long x, long y, long z )
 template int speck::Wavelet97::assign_data( const float*  data, long x, long y, long z );
 template int speck::Wavelet97::assign_data( const double* data, long x, long y, long z );
 
+
+int speck::Wavelet97::dwt2d()
+{
+    //
+    // Pre-process data
+    //
+    m_calc_num_of_levels();
+    m_subtract_mean();
+
+    return 0;
+}
+
     
 //
 // Private Methods
 //
-void speck::Wavelet97::subtract_mean()
+void speck::Wavelet97::m_subtract_mean()
 {
+    assert( dim_x > 0 && dim_y > 0 && dim_z > 0 );
+
     //
     // Here we calculate row by row to avoid too big numbers.
     //
@@ -64,7 +78,7 @@ void speck::Wavelet97::subtract_mean()
 }
 
     
-void speck::Wavelet97::dwt2d_one_level( double* plain, long len_x, long len_y )
+void speck::Wavelet97::m_dwt2d_one_level( double* plain, long len_x, long len_y )
 {
     assert( len_x <= dim_x && len_y <= dim_y );
 
@@ -112,6 +126,28 @@ void speck::Wavelet97::dwt2d_one_level( double* plain, long len_x, long len_y )
                 plain[ y * dim_x + x ] = buf_ptr[y];
         }
     }
+}
+    
+
+void speck::Wavelet97::m_calc_num_of_levels()
+{
+    assert( dim_x > 0 && dim_y > 0 && dim_z > 0 );
+    auto min_xy = std::min( dim_x, dim_y );
+    float f     = std::log2(float(min_xy) / 9.0f);
+    level_xy    = f < 0.0f ? 0 : long(f) + 1;
+    f           = std::log2( float(dim_z) / 9.0f );
+    level_z     = f < 0.0f ? 0 : long(f) + 1;
+}
+
+
+long m_calc_low_freq_len( long orig_len, long lev )
+{
+    assert( lev > 0 );
+    long low_len = orig_len;
+    for( long i = 0; i < lev; i++ )
+        low_len = low_len % 2 == 0 ? low_len / 2 : (low_len + 1) / 2;
+    
+    return low_len;
 }
 
 
