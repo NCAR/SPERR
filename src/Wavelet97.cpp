@@ -1,6 +1,7 @@
 #include "Wavelet97.h"
 
 #include <type_traits>
+#include <cassert>
 
 template< typename T >
 int speck::Wavelet97::assign_data( const T* data, long x, long y, long z )
