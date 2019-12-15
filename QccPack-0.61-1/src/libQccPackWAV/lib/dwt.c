@@ -42,7 +42,7 @@ static int QccWAVWaveletDWTSubbandPhase(int level, int signal_origin,
 
 int QccWAVWaveletDWTSubbandLength(int original_length, int level,
                                   int highband, int signal_origin,
-                                  int subsample_pattern)
+                                  int subsample_pattern) /* mostly 0 for last 3 params */
 {
   int scale;
   int length;
@@ -189,10 +189,10 @@ int QccWAVWaveletInverseDWT1D(QccVector signal,
 int QccWAVWaveletDWT2D(QccMatrix matrix,
                        int num_rows,
                        int num_cols,
-                       int origin_row,
-                       int origin_col,
-                       int subsample_pattern_row,
-                       int subsample_pattern_col,
+                       int origin_row,            /* usually 0 */
+                       int origin_col,            /* usually 0 */
+                       int subsample_pattern_row, /* usually 0 */
+                       int subsample_pattern_col, /* usually 0 */
                        int num_scales,
                        const QccWAVWavelet *wavelet)
 {
