@@ -1,4 +1,4 @@
-#include "Wavelet97.h"
+#include "CDF97.h"
 #include <iostream>
 #include <cstdio>
 #include <cmath>
@@ -12,7 +12,7 @@ int main()
     for( long i = 0; i < N; i++ )
         buf[i] = float(i) * 3.3f - 2.1f;
 
-    speck::Wavelet97 w;
+    speck::CDF97 w;
     w.assign_data( buf.get(), 5, 6, 1 );
     w.subtract_mean();
 

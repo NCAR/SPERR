@@ -11,10 +11,10 @@ endif
 
 all:
 
-main.out: main.cpp Wavelet97.o
+main.out: main.cpp CDF97.o
 	$(CXX) $(CFLAGS) $^ -o $@
 
-Wavelet97.o: Wavelet97.cpp Wavelet97.h
+CDF97.o: CDF97.cpp CDF97.h
 	$(CXX) $(CFLAGS) $< -c -o $@
 
 

@@ -8,7 +8,7 @@
 namespace speck
 {
 
-class Wavelet97
+class CDF97
 {
 public:
     template< typename T >

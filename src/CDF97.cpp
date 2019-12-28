@@ -1,10 +1,10 @@
-#include "Wavelet97.h"
+#include "CDF97.h"
 
 #include <type_traits>
 #include <cassert>
 
 template< typename T >
-int speck::Wavelet97::assign_data( const T* data, long x, long y, long z )
+int speck::CDF97::assign_data( const T* data, long x, long y, long z )
 {
     static_assert( std::is_floating_point<T>::value, 
                    "!! Only floating point values are supported !!" );
@@ -18,11 +18,11 @@ int speck::Wavelet97::assign_data( const T* data, long x, long y, long z )
 
     return 0;
 }
-template int speck::Wavelet97::assign_data( const float*  data, long x, long y, long z );
-template int speck::Wavelet97::assign_data( const double* data, long x, long y, long z );
+template int speck::CDF97::assign_data( const float*  data, long x, long y, long z );
+template int speck::CDF97::assign_data( const double* data, long x, long y, long z );
 
 
-int speck::Wavelet97::dwt2d()
+int speck::CDF97::dwt2d()
 {
     //
     // Pre-process data
@@ -44,7 +44,7 @@ int speck::Wavelet97::dwt2d()
 //
 // Private Methods
 //
-void speck::Wavelet97::m_subtract_mean()
+void speck::CDF97::m_subtract_mean()
 {
     assert( m_dim_x > 0 && m_dim_y > 0 && m_dim_z > 0 );
 
@@ -86,7 +86,7 @@ void speck::Wavelet97::m_subtract_mean()
 }
 
     
-void speck::Wavelet97::m_dwt2d_one_level( double* plane, long len_x, long len_y )
+void speck::CDF97::m_dwt2d_one_level( double* plane, long len_x, long len_y )
 {
     assert( len_x <= m_dim_x && len_y <= m_dim_y );
 
@@ -137,7 +137,7 @@ void speck::Wavelet97::m_dwt2d_one_level( double* plane, long len_x, long len_y 
 }
     
 
-long speck::Wavelet97::m_num_of_levels_xy() const
+long speck::CDF97::m_num_of_levels_xy() const
 {
     assert( m_dim_x > 0 && m_dim_y > 0 );
     auto min_xy = std::min( m_dim_x, m_dim_y );
@@ -147,7 +147,7 @@ long speck::Wavelet97::m_num_of_levels_xy() const
 }
 
 
-long speck::Wavelet97::m_num_of_levels_z() const
+long speck::CDF97::m_num_of_levels_z() const
 {
     assert( m_dim_z > 0 );
     float f      = std::log2( float(m_dim_z) / 9.0f ); // 9.0f for CDF 9/7 kernel
@@ -170,7 +170,7 @@ long m_calc_approx_len( long orig_len, long lev )
 //
 // Methods from QccPack
 //
-void speck::Wavelet97::QccWAVCDF97AnalysisSymmetricEvenEven( double* signal, 
+void speck::CDF97::QccWAVCDF97AnalysisSymmetricEvenEven( double* signal, 
                                                              long signal_length)
 {
     long index;
@@ -199,7 +199,7 @@ void speck::Wavelet97::QccWAVCDF97AnalysisSymmetricEvenEven( double* signal,
 }
 
 
-void speck::Wavelet97::QccWAVCDF97SynthesisSymmetricEvenEven( double* signal, 
+void speck::CDF97::QccWAVCDF97SynthesisSymmetricEvenEven( double* signal, 
                                                               long signal_length)
 {
     long index;
@@ -229,7 +229,7 @@ void speck::Wavelet97::QccWAVCDF97SynthesisSymmetricEvenEven( double* signal,
 }
 
 
-void speck::Wavelet97::QccWAVCDF97SynthesisSymmetricOddEven( double* signal,
+void speck::CDF97::QccWAVCDF97SynthesisSymmetricOddEven( double* signal,
                                                              long signal_length)
 {
   long index;
@@ -261,7 +261,7 @@ void speck::Wavelet97::QccWAVCDF97SynthesisSymmetricOddEven( double* signal,
 }
 
 
-void speck::Wavelet97::QccWAVCDF97AnalysisSymmetricOddEven(double*  signal,
+void speck::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double*  signal,
                                                            long signal_length)
 {
   long index;
@@ -296,11 +296,11 @@ void speck::Wavelet97::QccWAVCDF97AnalysisSymmetricOddEven(double*  signal,
 //
 // For debug only 
 //
-const double* speck::Wavelet97::get_data() const
+const double* speck::CDF97::get_data() const
 {
     return m_data_buf.get();
 }
-double speck::Wavelet97::get_mean() const
+double speck::CDF97::get_mean() const
 {
     return m_data_mean;
 }
