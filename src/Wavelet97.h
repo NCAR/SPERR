@@ -28,8 +28,8 @@ private:
     // Private methods
     //
     void m_subtract_mean(); // calculate data_mean from data_buf
-    void m_dwt2d_one_level( double* plain, long len_x, long len_y ); 
-                            // perform one level of 2D dwt on a given plain (dim_x, dim_y),
+    void m_dwt2d_one_level( double* plane, long len_x, long len_y ); 
+                            // perform one level of 2D dwt on a given plane (dim_x, dim_y),
                             // specifically on its top left (len_x, len_y) subset.
     void m_calc_num_of_levels();    // determine level_xy and level_z
     long m_calc_approx_len( long orig_len, long lev );
@@ -49,7 +49,7 @@ private:
     // Private data members
     // Note: use long type to store all integers. int is only used for return values.
     //
-    const long MAX_LEN = 128;               // Max num. of values in one dimension
+    const long BUF_LEN = 128;               // Temp buffer length
     double data_mean   = 0.0;               // Mean of the values in data_buf
     long dim_x = 0, dim_y = 0, dim_z = 0;   // Dimension of the data volume
     long level_xy = -1,  level_z = -1;      // Transform num. of levels
