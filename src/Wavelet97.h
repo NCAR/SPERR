@@ -31,7 +31,8 @@ private:
     void m_dwt2d_one_level( double* plane, long len_x, long len_y ); 
                             // perform one level of 2D dwt on a given plane (dim_x, dim_y),
                             // specifically on its top left (len_x, len_y) subset.
-    void m_calc_num_of_levels();    // determine level_xy and level_z
+    long m_num_of_levels_xy() const;  // How many levels of DWT on the XY plane?
+    long m_num_of_levels_z()  const;  // How many levels of DWT on the Z direction?
     long m_calc_approx_len( long orig_len, long lev );
                                     // determine the low frequency signal length after
                                     // lev times of transformation (lev > 0).
@@ -49,11 +50,10 @@ private:
     // Private data members
     // Note: use long type to store all integers. int is only used for return values.
     //
-    const long BUF_LEN = 128;               // Temp buffer length
-    double data_mean   = 0.0;               // Mean of the values in data_buf
-    long dim_x = 0, dim_y = 0, dim_z = 0;   // Dimension of the data volume
-    long level_xy = -1,  level_z = -1;      // Transform num. of levels
-    std::unique_ptr<double[]> data_buf = nullptr;
+    const long BUF_LEN = 128;                       // Temp buffer length
+    double m_data_mean   = 0.0;                     // Mean of the values in data_buf
+    long m_dim_x = 0, m_dim_y = 0, m_dim_z = 0;     // Dimension of the data volume
+    std::unique_ptr<double[]> m_data_buf = nullptr; // Holds the entire input data.
     
 
 
