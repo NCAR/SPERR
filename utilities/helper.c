@@ -73,3 +73,22 @@ int sam_read_n_bytes( const char* filename, long n_bytes,             /* input  
     fclose( f );
     return 0;
 }
+
+int sam_write_n_doubles( const char*   filename, long n_vals,
+                         const double* buffer              )
+{
+    FILE* f = fopen( filename, "w" );
+    if( f == NULL )
+    {
+        fprintf( stderr, "Error! Cannot open output file: %s\n", filename );
+        return 1;
+    }
+    if( fwrite(buffer, sizeof(double), n_vals, f) != n_vals )
+    {
+        fprintf( stderr, "Error! Output file write error: %s\n", filename );
+        fclose( f );
+        return 1;
+    }
+    fclose( f );
+    return 0;
+}

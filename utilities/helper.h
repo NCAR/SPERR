@@ -10,3 +10,6 @@ int sam_get_stats( const float* arr1, const float* arr2, long len, /* input  */
 
 int sam_read_n_bytes( const char* filename, long n_bytes,             /* input  */
                       void*       buffer               );             /* output */
+
+int sam_write_n_doubles( const char*   filename, long n_vals,         /* input  */
+                         const double* buffer              );         /* input  */
