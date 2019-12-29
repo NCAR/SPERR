@@ -1,13 +1,13 @@
 CC=gcc
 CXX=g++
-CFLAGS=-O2 -g -Wall -lm
+CFLAGS=-O2 -g -Wall -lm -Wno-unused-variable
 CXXFLAGS=-std=c++11 -O2 -g -Wall -Wno-unused-variable -Wno-unused-private-field -lm
 
 ARCH=$(shell uname)
 ifeq ($(ARCH), Darwin)
   CC=clang
   CXX=clang++
-  CFLAGS=-O2 -g -Wall 
+  CFLAGS=-O2 -g -Wall -Wno-unused-variable
   CXXFLAGS=-std=c++11 -O2 -g -Wall -Wno-unused-private-field -Wno-unused-variable
 endif
 
@@ -33,6 +33,9 @@ test.out: test.c
 
 test_sam_dwt2d.out: test_sam_dwt2d.cpp helper.o
 	$(CXX) $(CXXFLAGS) -I$(SPECK_DIR) $^ $(SPECK_DIR)/CDF97.o -o $@
+
+test_qcc_dwt2d.out: test_qcc_dwt2d.c helper.o
+	$(CC) $(CFLAGS) -I$(QCC_INSTALL_DIR)/include $^ $(QCC_INSTALL_DIR)/lib/libQccPack.a -o $@
 
 
 clean:

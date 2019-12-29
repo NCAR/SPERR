@@ -34,12 +34,10 @@ int image_to_array( const QccIMGImageComponent* image, float* array )
 {
     long counter = 0, row, col;
     for( row = 0; row < image->num_rows; row++ )
-    {
         for( col = 0; col < image->num_cols; col++ )
         {
             array[counter++] = image->image[row][col];
         }
-    }
 
     return 0;
 }

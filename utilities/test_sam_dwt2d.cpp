@@ -44,6 +44,7 @@ int main( int argc, char* argv[] )
         std::cerr << "Output write error!" << std::endl;
         return 1;
     }
+    std::cout << "Mean is = " << cdf.get_mean() << std::endl;
 
     delete[] in_buf;
 }
