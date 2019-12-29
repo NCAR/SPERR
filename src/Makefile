@@ -11,9 +11,6 @@ endif
 
 all:
 
-main.out: main.cpp CDF97.o
-	$(CXX) $(CFLAGS) $^ -o $@
-
 CDF97.o: CDF97.cpp CDF97.h
 	$(CXX) $(CFLAGS) $< -c -o $@
 
