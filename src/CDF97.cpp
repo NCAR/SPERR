@@ -158,7 +158,7 @@ long speck::CDF97::m_num_of_levels_z() const
 
 long speck::CDF97::m_calc_approx_len( long orig_len, long lev )
 {
-    assert( lev > 0 );
+    assert( lev >= 0 );
     long low_len = orig_len;
     for( long i = 0; i < lev; i++ )
         low_len = low_len % 2 == 0 ? low_len / 2 : (low_len + 1) / 2;
