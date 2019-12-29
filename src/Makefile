@@ -1,18 +1,18 @@
 CC=gcc
 CXX=g++
-CFLAGS=-std=c++11 -g -Wall -lm
+CXXFLAGS=-std=c++11 -O2 -Wall -lm
 
 ARCH=$(shell uname)
 ifeq ($(ARCH), Darwin)
   CC=clang
   CXX=clang++
-  CFLAGS=-std=c++11 -g -Wall -Wno-unused-private-field
+  CXXFLAGS=-std=c++11 -O2 -Wall -Wno-unused-private-field
 endif
 
 all:
 
 CDF97.o: CDF97.cpp CDF97.h
-	$(CXX) $(CFLAGS) $< -c -o $@
+	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 
 clean:

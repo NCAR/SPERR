@@ -156,7 +156,7 @@ long speck::CDF97::m_num_of_levels_z() const
 }
 
 
-long m_calc_approx_len( long orig_len, long lev )
+long speck::CDF97::m_calc_approx_len( long orig_len, long lev )
 {
     assert( lev > 0 );
     long low_len = orig_len;
