@@ -36,6 +36,7 @@
 
 # Any tmp file
 *.tmp
+**/tmp
 
 # ctags 
 tags
