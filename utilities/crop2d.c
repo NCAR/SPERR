@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define IN_NX  1024
-#define IN_NY  1024
-#define OUT_NX 85
-#define OUT_NY 85
+#define IN_NX  128
+#define IN_NY  128
+#define OUT_NX 15
+#define OUT_NY 15
 
 int main( int argc, char** argv )
 {

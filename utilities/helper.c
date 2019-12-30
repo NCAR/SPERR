@@ -56,7 +56,7 @@ int sam_get_statsd( const double* arr1, const double* arr2, long len, /* input  
     for( i = 0; i < len; i++) 
     {
         /* Kahan summation */
-        diff = fabsf( arr1[i] - arr2[i] ); /* single precision version of abs() */
+        diff = fabs( arr1[i] - arr2[i] ); /* single precision version of abs() */
         y    = diff * diff - c;
         t    = sum + y;
         c    = t - sum - y;

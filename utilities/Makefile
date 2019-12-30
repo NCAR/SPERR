@@ -37,6 +37,8 @@ test_sam_dwt2d.out: test_sam_dwt2d.cpp helper.o
 test_qcc_dwt2d.out: test_qcc_dwt2d.c helper.o
 	$(CC) $(CFLAGS) -I$(QCC_INSTALL_DIR)/include $^ $(QCC_INSTALL_DIR)/lib/libQccPack.a -o $@
 
+compare_raw.out: compare_raw.c helper.o
+	$(CC) $(CFLAGS) $^ -o $@
 
 clean:
 	rm -rf *.out* *.o *.tmp

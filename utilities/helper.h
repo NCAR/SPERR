@@ -1,3 +1,5 @@
+#ifndef SAM_HELPERS_H
+#define SAM_HELPERS_H
 
 /* Note: psnr is calculated in dB, and follows the equation described in:
    http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/VELDHUIZEN/node18.html
@@ -17,3 +19,6 @@ int sam_read_n_bytes( const char* filename, long n_bytes,             /* input  
 
 int sam_write_n_doubles( const char*   filename, long n_vals,         /* input  */
                          const double* buffer              );         /* input  */
+
+
+#endif 
