@@ -56,7 +56,7 @@ int sam_get_statsd( const double* arr1, const double* arr2, long len, /* input  
     for( i = 0; i < len; i++) 
     {
         /* Kahan summation */
-        diff = fabs( arr1[i] - arr2[i] ); /* single precision version of abs() */
+        diff = fabs( arr1[i] - arr2[i] ); /* double precision version of abs() */
         y    = diff * diff - c;
         t    = sum + y;
         c    = t - sum - y;
@@ -74,10 +74,10 @@ int sam_get_statsd( const double* arr1, const double* arr2, long len, /* input  
     }
 
     sum  /= (double)len;
-    *rmse = sqrtf( sum );   /* single precision version of sqrt() */
+    *rmse = sqrt( sum );   /* double precision version of sqrt() */
 
     double range2 = (*arr1max - *arr1min) * (*arr1max - *arr1min );
-    *psnr = -10.0 * log10f( sum / range2 ); /* single precision version of log10() */
+    *psnr = -10.0 * log10( sum / range2 ); /* double precision version of log10() */
     
     return  0;
 }

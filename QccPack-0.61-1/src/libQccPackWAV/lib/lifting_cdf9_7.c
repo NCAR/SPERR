@@ -30,7 +30,9 @@
 #define DELTA      0.44350482244527
 #define EPSILON    1.14960430535816
 
+/*
 #define SAM
+ */
 
 static void QccWAVCDF97AnalysisSymmetricEvenEven(QccVector signal,
                                                  int signal_length)

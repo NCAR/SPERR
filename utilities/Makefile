@@ -28,7 +28,7 @@ evaluate2d_qcc.out: evaluate2d_qcc.c helper.o
 helper.o: helper.c helper.h
 	$(CC) $(CFLAGS) $< -c -o $@
 
-test.out: test.c
+main.out: main.c
 	$(CC) $(CFLAGS) -I$(QCC_INSTALL_DIR)/include $^ $(QCC_INSTALL_DIR)/lib/libQccPack.a -o $@
 
 test_sam_dwt2d.out: test_sam_dwt2d.cpp helper.o
