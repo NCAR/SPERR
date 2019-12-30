@@ -4,9 +4,9 @@
 #include <math.h>
 #include <stdio.h>
 
-int sam_get_stats( const float* arr1, const float* arr2, long len, /* input  */
-                   float* rmse,       float* lmax,    float* psnr, /* output */
-                   float* arr1min,    float* arr1max            )  /* output */
+int sam_get_statsf( const float* arr1, const float* arr2, long len, /* input  */
+                    float* rmse,       float* lmax,    float* psnr, /* output */
+                    float* arr1min,    float* arr1max            )  /* output */
 {
     *arr1min  = arr1[0];
     *arr1max  = arr1[0];

@@ -183,8 +183,7 @@ int main( int argc, char** argv )
     float* out_array = (float*)malloc( num_of_bytes );
     image_to_array( &Image, out_array );
     float  rmse, lmax, min, max, psnr;
-    if( sam_get_stats( in_array, out_array, num_of_vals, &rmse, &lmax, &psnr, 
-                       &min, &max ) )
+    if( sam_get_statsf( in_array, out_array, num_of_vals, &rmse, &lmax, &psnr, &min, &max ) )
     {
         fprintf( stderr, "get_rmse_max failed.\n" );
         free( in_array );
