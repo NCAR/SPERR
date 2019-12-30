@@ -7,6 +7,10 @@ int sam_get_statsf( const float* arr1, const float* arr2, long len,   /* input  
                     float* rmse,       float* lmax,    float* psnr,   /* output */
                     float* arr1min,    float* arr1max            );   /* output */
 
+int sam_get_statsd( const double* arr1, const double* arr2, long len, /* input  */
+                    double* rmse,       double* lmax,   double* psnr, /* output */
+                    double* arr1min,    double* arr1max            ); /* output */
+
 
 int sam_read_n_bytes( const char* filename, long n_bytes,             /* input  */
                       void*       buffer               );             /* output */
