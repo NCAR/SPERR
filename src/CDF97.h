@@ -29,13 +29,17 @@ private:
     //
     void m_subtract_mean(); // calculate data_mean from data_buf
     void m_dwt2d_one_level( double* plane, long len_x, long len_y ); 
-                            // perform one level of 2D dwt on a given plane (dim_x, dim_y),
+                            // Perform one level of 2D dwt on a given plane (dim_x, dim_y),
                             // specifically on its top left (len_x, len_y) subset.
     long m_num_of_levels_xy() const;  // How many levels of DWT on the XY plane?
     long m_num_of_levels_z()  const;  // How many levels of DWT on the Z direction?
-    long m_calc_approx_len( long orig_len, long lev );
-                                    // determine the low frequency signal length after
-                                    // lev times of transformation (lev > 0).
+    long m_calc_approx_len( long orig_len, long lev ) const;
+                            // Determine the low frequency signal length after
+                            // lev times of transformation (lev > 0).
+    void m_gather_even_odd( double* dest, const double* orig, long len ) const;
+                            // Separate even and odd indexed elements to be at the front 
+                            // and back of the dest array. Note: sufficient memory space 
+                            // should be allocated by the caller.
 
     //
     // Methods from QccPack, keep their original name.
@@ -77,7 +81,7 @@ private:
     // by Cohen et al., Page 551. (https://services.math.duke.edu/~ingrid/publications/CPAM_1992_p485.pdf) 
 
     // Paper coefficients
-    static constexpr double h[5]{  .602949018236, .266864118443, -.078223266529,
+    /* static constexpr double h[5]{  .602949018236, .266864118443, -.078223266529,
                                   -.016864118443, .026748757411 };
     static constexpr double r0      = h[0] - 2.0  * h[4] * h[1] / h[3];
     static constexpr double r1      = h[2] - h[4] - h[4] * h[1] / h[3];
@@ -88,13 +92,14 @@ private:
     static constexpr double GAMMA   = r1   / s0; 
     static constexpr double DELTA   = s0   / t0; 
            const     double EPSILON = std::sqrt(2.0) * t0;
+    */
 
     // QccPack coefficients
-    //const double ALPHA   = -1.58615986717275;
-    //const double BETA    = -0.05297864003258;
-    //const double GAMMA   =  0.88293362717904;
-    //const double DELTA   =  0.44350482244527;
-    //const double EPSILON =  1.14960430535816;
+    const double ALPHA   = -1.58615986717275;
+    const double BETA    = -0.05297864003258;
+    const double GAMMA   =  0.88293362717904;
+    const double DELTA   =  0.44350482244527;
+    const double EPSILON =  1.14960430535816;
 };
 
 

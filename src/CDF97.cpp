@@ -90,28 +90,40 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, long len_x, long len_y )
 {
     assert( len_x <= m_dim_x && len_y <= m_dim_y );
 
+    // Temp buffer to work on
+    double tmp_buf[BUF_LEN];
+    std::unique_ptr<double[]> tmp_ptr(nullptr);
+    double* buf_ptr = tmp_buf;
+    long len_xy = std::max( len_x, len_y );
+    if( BUF_LEN < len_xy )   // Need to allocate memory on the heap!
+    {
+        tmp_ptr.reset( new double[ len_xy ] );
+        buf_ptr = tmp_ptr.get();
+    }
+
     // First perform DWT along X for every row
     if( len_x % 2 == 0 )    // Even length
     {
         for( long i = 0; i < len_y; i++ )
-            this->QccWAVCDF97AnalysisSymmetricEvenEven( plane + i * m_dim_x, len_x );
+        {
+            auto* pos = plane + i * m_dim_x;
+            std::memcpy( buf_ptr, pos, sizeof(double) * len_x );
+            this->QccWAVCDF97AnalysisSymmetricEvenEven( buf_ptr, len_x );
+            this->m_gather_even_odd( pos, buf_ptr, len_x );
+        }
     }
     else                    // Odd length
     {
         for( long i = 0; i < len_y; i++ )
+        {
+            auto* pos = plane + i * m_dim_x;
+            std::memcpy( buf_ptr, pos, sizeof(double) * len_x );
             this->QccWAVCDF97AnalysisSymmetricOddEven(  plane + i * m_dim_x, len_x );
+            this->m_gather_even_odd( pos, buf_ptr, len_x );
+        }
     }
 
     // Second perform DWT along Y for every column
-    double tmp_buf[BUF_LEN];
-    std::unique_ptr<double[]> tmp_ptr(nullptr);
-    double* buf_ptr = tmp_buf;
-    if( BUF_LEN < len_y )   // Need to allocate memory on the heap!
-    {
-        tmp_ptr.reset( new double[ len_y ] );
-        buf_ptr = tmp_ptr.get();
-    }
-
     if( len_y % 2 == 0 )    // Even length
     {
         for( long x = 0; x < len_x; x++ )
@@ -119,8 +131,15 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, long len_x, long len_y )
             for( long y = 0; y < len_y; y++ )
                 buf_ptr[y] = plane[ y * m_dim_x + x ];
             this->QccWAVCDF97AnalysisSymmetricEvenEven( buf_ptr, len_y );
-            for( long y = 0; y < len_y; y++ )
-                plane[ y * m_dim_x + x ] = buf_ptr[y];
+            // Manually put back the results in appropriate column locations,
+            // using the same logic in m_gather_even_odd()
+            long idxY = 0;
+            for( long i = 0; i < len_y / 2; i++ )
+                plane[ (idxY++) * m_dim_x + x ] = buf_ptr[i*2]; 
+            if( len_y % 2 == 1 )
+                plane[ (idxY++) * m_dim_x + x ] = buf_ptr[len_y - 1];
+            for( long i = 0; i < len_y / 2; i++ )
+                plane[ (idxY++) * m_dim_x + x ] = buf_ptr[i*2+1]; 
         }
     }
     else                    // Odd length
@@ -130,8 +149,15 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, long len_x, long len_y )
             for( long y = 0; y < len_y; y++ )
                 buf_ptr[y] = plane[ y * m_dim_x + x ];
             this->QccWAVCDF97AnalysisSymmetricOddEven( buf_ptr, len_y );
-            for( long y = 0; y < len_y; y++ )
-                plane[ y * m_dim_x + x ] = buf_ptr[y];
+            // Manually put back the results in appropriate column locations,
+            // using the same logic in m_gather_even_odd()
+            long idxY = 0;
+            for( long i = 0; i < len_y / 2; i++ )
+                plane[ (idxY++) * m_dim_x + x ] = buf_ptr[i*2]; 
+            if( len_y % 2 == 1 )
+                plane[ (idxY++) * m_dim_x + x ] = buf_ptr[len_y - 1];
+            for( long i = 0; i < len_y / 2; i++ )
+                plane[ (idxY++) * m_dim_x + x ] = buf_ptr[i*2+1]; 
         }
     }
 }
@@ -156,7 +182,7 @@ long speck::CDF97::m_num_of_levels_z() const
 }
 
 
-long speck::CDF97::m_calc_approx_len( long orig_len, long lev )
+long speck::CDF97::m_calc_approx_len( long orig_len, long lev ) const
 {
     assert( lev >= 0 );
     long low_len = orig_len;
@@ -166,12 +192,23 @@ long speck::CDF97::m_calc_approx_len( long orig_len, long lev )
     return low_len;
 }
 
+void speck::CDF97::m_gather_even_odd( double* dest, const double* orig, long len ) const
+{
+    long counter = 0;
+    for( long i = 0; i < len / 2; i++ )
+        dest[counter++] = orig[i*2];    // Even indexed elements
+    if( len % 2 == 1 )
+        dest[counter++] = orig[len-1];  // The last even-indexed element
+    for( long i = 0; i < len / 2; i++ )
+        dest[counter++] = orig[i*2+1];  // Odd indexed elements
+}
+
 
 //
 // Methods from QccPack
 //
 void speck::CDF97::QccWAVCDF97AnalysisSymmetricEvenEven( double* signal, 
-                                                             long signal_length)
+                                                         long signal_length)
 {
     long index;
 

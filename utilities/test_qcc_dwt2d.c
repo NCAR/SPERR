@@ -92,7 +92,7 @@ int main( int argc, char* argv[] )
     QccWAVSubbandPyramidDWT( &pyramid, level_xy, &Wavelet );
 
     /* write coefficients to a file */
-    double* out_buf = (double*) malloc( sizeof(double) * num_of_vals );
+    double* out_buf = (double*)malloc( sizeof(double) * num_of_vals );
     pyramid_to_array( &pyramid, out_buf );
     if( sam_write_n_doubles( output_name, num_of_vals, out_buf ) )
     {
