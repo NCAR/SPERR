@@ -123,7 +123,7 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, long len_x, long len_y )
         {
             auto* pos = plane + i * m_dim_x;
             std::memcpy( buf_ptr, pos, sizeof(double) * len_x );
-            this->QccWAVCDF97AnalysisSymmetricOddEven(  plane + i * m_dim_x, len_x );
+            this->QccWAVCDF97AnalysisSymmetricOddEven( buf_ptr, len_x );
             // pub back the resluts in low-pass and high-pass groups
             long idxX = 0;
             for( long i = 0; i < len_x / 2; i++ )
@@ -232,7 +232,7 @@ void speck::CDF97::QccWAVCDF97AnalysisSymmetricEvenEven( double* signal,
 
 
 void speck::CDF97::QccWAVCDF97SynthesisSymmetricEvenEven( double* signal, 
-                                                              long signal_length)
+                                                          long signal_length)
 {
     long index;
 
@@ -262,7 +262,7 @@ void speck::CDF97::QccWAVCDF97SynthesisSymmetricEvenEven( double* signal,
 
 
 void speck::CDF97::QccWAVCDF97SynthesisSymmetricOddEven( double* signal,
-                                                             long signal_length)
+                                                         long signal_length)
 {
   long index;
   
@@ -294,7 +294,7 @@ void speck::CDF97::QccWAVCDF97SynthesisSymmetricOddEven( double* signal,
 
 
 void speck::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double*  signal,
-                                                           long signal_length)
+                                                       long signal_length)
 {
   long index;
 
