@@ -36,6 +36,10 @@ private:
     long m_calc_approx_len( long orig_len, long lev ) const;
                             // Determine the low frequency signal length after
                             // lev times of transformation (lev > 0).
+    void m_gather_even_odd( double* dest, const double* orig, long len ) const;
+                            // Separate even and odd indexed elements to be at the front 
+                            // and back of the dest array. Note: sufficient memory space 
+                            // should be allocated by the caller.
 
     //
     // Methods from QccPack, keep their original name.
