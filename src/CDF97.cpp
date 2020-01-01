@@ -48,7 +48,7 @@ int speck::CDF97::idwt2d()
 {
     const auto level_xy = m_num_of_levels_xy();
 
-    for( long lev = level_xy - 1; lev > 0; lev-- )
+    for( long lev = level_xy - 1; lev >= 0; lev-- )
     {
         long len_x = m_calc_approx_len( m_dim_x, lev );
         long len_y = m_calc_approx_len( m_dim_y, lev );
@@ -206,7 +206,7 @@ void speck::CDF97::m_idwt2d_one_level( double* plane, long len_x, long len_y )
                 buf_ptr[y] = plane[ y * m_dim_x + x ];
             // Re-organize the coefficients as interleaved low-pass and high-pass ones
             m_scatter_even_odd( buf_ptr2, buf_ptr, len_y );
-            this->QccWAVCDF97AnalysisSymmetricEvenEven( buf_ptr2, len_y );
+            this->QccWAVCDF97SynthesisSymmetricEvenEven( buf_ptr2, len_y );
             // Manually put back the results in appropriate column locations.
             for( long y = 0; y < len_y; y++ )
                 plane[ y * m_dim_x + x ] = buf_ptr2[y];
@@ -220,7 +220,7 @@ void speck::CDF97::m_idwt2d_one_level( double* plane, long len_x, long len_y )
                 buf_ptr[y] = plane[ y * m_dim_x + x ];
             // Re-organize the coefficients as interleaved low-pass and high-pass ones
             m_scatter_even_odd( buf_ptr2, buf_ptr, len_y );
-            this->QccWAVCDF97AnalysisSymmetricOddEven( buf_ptr2, len_y );
+            this->QccWAVCDF97SynthesisSymmetricOddEven( buf_ptr2, len_y );
             // Manually put back the results in appropriate column locations.
             for( long y = 0; y < len_y; y++ )
                 plane[ y * m_dim_x + x ] = buf_ptr2[y];
@@ -235,7 +235,7 @@ void speck::CDF97::m_idwt2d_one_level( double* plane, long len_x, long len_y )
             auto* pos = plane + i * m_dim_x;
             // Re-organize the coefficients as interleaved low-pass and high-pass ones
             m_scatter_even_odd( buf_ptr, pos, len_x );
-            this->QccWAVCDF97AnalysisSymmetricEvenEven( buf_ptr, len_x );
+            this->QccWAVCDF97SynthesisSymmetricEvenEven( buf_ptr, len_x );
             // pub back the resluts in the plane
             std::memcpy( pos, buf_ptr, sizeof(double) * len_x );
         }
@@ -248,7 +248,7 @@ void speck::CDF97::m_idwt2d_one_level( double* plane, long len_x, long len_y )
             // Re-organize the coefficients as interleaved low-pass and high-pass ones
             m_scatter_even_odd( buf_ptr, pos, len_x );
             //std::memcpy( buf_ptr, pos, sizeof(double) * len_x );
-            this->QccWAVCDF97AnalysisSymmetricOddEven( buf_ptr, len_x );
+            this->QccWAVCDF97SynthesisSymmetricOddEven( buf_ptr, len_x );
             // pub back the resluts in the plane
             std::memcpy( pos, buf_ptr, sizeof(double) * len_x );
         }

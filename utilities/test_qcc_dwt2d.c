@@ -91,6 +91,10 @@ int main( int argc, char* argv[] )
     int level_xy = f < 0.0f ? 0 : (int)f + 1;
     QccWAVSubbandPyramidDWT( &pyramid, level_xy, &Wavelet );
 
+    /* Apply idwt */
+    QccWAVSubbandPyramidInverseDWT( &pyramid, &Wavelet );
+    QccWAVSubbandPyramidAddMean( &pyramid, image_mean );
+
     /* write coefficients to a file */
     double* out_buf = (double*)malloc( sizeof(double) * num_of_vals );
     pyramid_to_array( &pyramid, out_buf );

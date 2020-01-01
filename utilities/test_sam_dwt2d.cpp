@@ -32,12 +32,13 @@ int main( int argc, char* argv[] )
         return 1;
     }
 
-    // Use a speck::CDF97 to perform DWT.
+    // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
     cdf.assign_data( in_buf, dim_x, dim_y );
     cdf.dwt2d();
+    cdf.idwt2d();
 
-    // Write out the coefficients after DWT.
+    // Write out the results after DWT.
     const auto* coeffs = cdf.get_data();
     if( sam_write_n_doubles( output, total_vals, coeffs ) )
     {
