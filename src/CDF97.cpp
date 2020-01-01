@@ -125,7 +125,7 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, long len_x, long len_y )
             std::memcpy( buf_ptr, pos, sizeof(double) * len_x );
             this->QccWAVCDF97AnalysisSymmetricEvenEven( buf_ptr, len_x );
             // pub back the resluts in low-pass and high-pass groups
-            m_gather_even_odd( pos, buf_ptr, len_x );
+            m_gather_even( pos, buf_ptr, len_x );
         }
     }
     else                    // Odd length
@@ -136,7 +136,7 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, long len_x, long len_y )
             std::memcpy( buf_ptr, pos, sizeof(double) * len_x );
             this->QccWAVCDF97AnalysisSymmetricOddEven( buf_ptr, len_x );
             // pub back the resluts in low-pass and high-pass groups
-            m_gather_even_odd( pos, buf_ptr, len_x );
+            m_gather_odd( pos, buf_ptr, len_x );
         }
     }
 
@@ -149,7 +149,7 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, long len_x, long len_y )
                 buf_ptr[y] = plane[ y * m_dim_x + x ];
             this->QccWAVCDF97AnalysisSymmetricEvenEven( buf_ptr, len_y );
             // Re-organize the resluts in low-pass and high-pass groups
-            m_gather_even_odd( buf_ptr2, buf_ptr, len_y );
+            m_gather_even( buf_ptr2, buf_ptr, len_y );
             for( long y = 0; y < len_y; y++ )
                 plane[ y * m_dim_x + x ] = buf_ptr2[y];
         }
@@ -162,7 +162,7 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, long len_x, long len_y )
                 buf_ptr[y] = plane[ y * m_dim_x + x ];
             this->QccWAVCDF97AnalysisSymmetricOddEven( buf_ptr, len_y );
             // Re-organize the resluts in low-pass and high-pass groups
-            m_gather_even_odd( buf_ptr2, buf_ptr, len_y );
+            m_gather_odd( buf_ptr2, buf_ptr, len_y );
             for( long y = 0; y < len_y; y++ )
                 plane[ y * m_dim_x + x ] = buf_ptr2[y];
         }
@@ -189,7 +189,7 @@ void speck::CDF97::m_idwt2d_one_level( double* plane, long len_x, long len_y )
             for( long y = 0; y < len_y; y++ )
                 buf_ptr[y] = plane[ y * m_dim_x + x ];
             // Re-organize the coefficients as interleaved low-pass and high-pass ones
-            m_scatter_even_odd( buf_ptr2, buf_ptr, len_y );
+            m_scatter_even( buf_ptr2, buf_ptr, len_y );
             this->QccWAVCDF97SynthesisSymmetricEvenEven( buf_ptr2, len_y );
             for( long y = 0; y < len_y; y++ )
                 plane[ y * m_dim_x + x ] = buf_ptr2[y];
@@ -202,7 +202,7 @@ void speck::CDF97::m_idwt2d_one_level( double* plane, long len_x, long len_y )
             for( long y = 0; y < len_y; y++ )
                 buf_ptr[y] = plane[ y * m_dim_x + x ];
             // Re-organize the coefficients as interleaved low-pass and high-pass ones
-            m_scatter_even_odd( buf_ptr2, buf_ptr, len_y );
+            m_scatter_odd( buf_ptr2, buf_ptr, len_y );
             this->QccWAVCDF97SynthesisSymmetricOddEven( buf_ptr2, len_y );
             for( long y = 0; y < len_y; y++ )
                 plane[ y * m_dim_x + x ] = buf_ptr2[y];
@@ -216,7 +216,7 @@ void speck::CDF97::m_idwt2d_one_level( double* plane, long len_x, long len_y )
         {
             auto* pos = plane + i * m_dim_x;
             // Re-organize the coefficients as interleaved low-pass and high-pass ones
-            m_scatter_even_odd( buf_ptr, pos, len_x );
+            m_scatter_even( buf_ptr, pos, len_x );
             this->QccWAVCDF97SynthesisSymmetricEvenEven( buf_ptr, len_x );
             std::memcpy( pos, buf_ptr, sizeof(double) * len_x );
         }
@@ -227,7 +227,7 @@ void speck::CDF97::m_idwt2d_one_level( double* plane, long len_x, long len_y )
         {
             auto* pos = plane + i * m_dim_x;
             // Re-organize the coefficients as interleaved low-pass and high-pass ones
-            m_scatter_even_odd( buf_ptr, pos, len_x );
+            m_scatter_odd( buf_ptr, pos, len_x );
             this->QccWAVCDF97SynthesisSymmetricOddEven( buf_ptr, len_x );
             std::memcpy( pos, buf_ptr, sizeof(double) * len_x );
         }
@@ -265,28 +265,46 @@ long speck::CDF97::m_calc_approx_len( long orig_len, long lev ) const
 }
 
 
-void speck::CDF97::m_gather_even_odd( double* dest, const double* orig, long len ) const
+void speck::CDF97::m_gather_even( double* dest, const double* orig, long len ) const
 {
-    // How many low-pass and high-pass elements?
+    assert( len % 2 == 0 ); // This function specifically for even length input
     long low_count = len / 2, high_count = len / 2; 
-    if( len % 2 == 1 )
-        low_count++;
-
+                            // How many low-pass and high-pass elements?
     long counter = 0;
     for( long i = 0; i < low_count; i++ )
-        dest[counter++] = orig[i*2];    // Even indexed elements
+        dest[counter++] = orig[i*2];
     for( long i = 0; i < high_count; i++ )
-        dest[counter++] = orig[i*2+1];  // Odd indexed elements
+        dest[counter++] = orig[i*2+1];
+}
+void speck::CDF97::m_gather_odd( double* dest, const double* orig, long len ) const
+{
+    assert( len % 2 == 1 ); // This function specifically for odd length input
+    long low_count = len / 2 + 1, high_count = len / 2; 
+                            // How many low-pass and high-pass elements?
+    long counter = 0;
+    for( long i = 0; i < low_count; i++ )
+        dest[counter++] = orig[i*2];
+    for( long i = 0; i < high_count; i++ )
+        dest[counter++] = orig[i*2+1];
 }
 
 
-void speck::CDF97::m_scatter_even_odd( double* dest, const double* orig, long len ) const
+void speck::CDF97::m_scatter_even( double* dest, const double* orig, long len ) const
 {
-    // How many low-pass and high-pass elements?
+    assert( len % 2 == 0 ); // This function specifically for even length input
     long low_count = len / 2, high_count = len / 2;
-    if( len % 2 == 1 )
-        low_count++;
-
+                            // How many low-pass and high-pass elements?
+    long counter = 0;
+    for( long i = 0; i < low_count; i++ )
+        dest[i*2]   = orig[counter++];
+    for( long i = 0; i < high_count; i++ )
+        dest[i*2+1] = orig[counter++];
+}
+void speck::CDF97::m_scatter_odd( double* dest, const double* orig, long len ) const
+{
+    assert( len % 2 == 1 ); // This function specifically for odd length input
+    long low_count = len / 2 + 1, high_count = len / 2;
+                            // How many low-pass and high-pass elements?
     long counter = 0;
     for( long i = 0; i < low_count; i++ )
         dest[i*2]   = orig[counter++];

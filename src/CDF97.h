@@ -41,15 +41,19 @@ private:
     long m_num_of_levels_z()  const;  // How many levels of DWT on the Z direction?
     long m_calc_approx_len( long orig_len, long lev ) const;
                             // Determine the low frequency signal length after
-                            // lev times of transformation (lev > 0).
-    void m_gather_even_odd( double* dest, const double* orig, long len ) const;
+                            // lev times of transformation (lev >= 0).
+    void m_gather_even( double* dest, const double* orig, long len ) const;
+    void m_gather_odd(  double* dest, const double* orig, long len ) const;
                             // Separate even and odd indexed elements to be at the front 
                             // and back of the dest array. Note: sufficient memory space 
                             // should be allocated by the caller.
-    void m_scatter_even_odd( double* dest, const double* orig, long len ) const;
+                            // Note 2: two versions for even and odd length input.
+    void m_scatter_even( double* dest, const double* orig, long len ) const;
+    void m_scatter_odd(  double* dest, const double* orig, long len ) const;
                             // Interleave low and high pass elements to be at even and
                             // odd positions of the dest array. Note: sufficient memory 
                             // space should be allocated by the caller.
+                            // Note 2: two versions for even and odd length input.
 
     //
     // Methods from QccPack, keep their original name.
