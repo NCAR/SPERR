@@ -16,6 +16,9 @@ public:
     int dwt2d();            // 1) calculates the number of levels of dwt,
                             // 2) subtract mean of the data,
                             // 3) perform the actual dwt.
+    int idwt2d();           // 1) calculates the number of levels of dwt,
+                            // 2) perform the actual idwt
+                            // 3) add the mean back to the data
 
     
     // For debug only ==================//
@@ -27,9 +30,12 @@ private:
     //
     // Private methods
     //
-    void m_subtract_mean(); // calculate data_mean from data_buf
+    void m_calc_mean();     // calculate m_data_mean from m_data_buf
     void m_dwt2d_one_level( double* plane, long len_x, long len_y ); 
                             // Perform one level of 2D dwt on a given plane (dim_x, dim_y),
+                            // specifically on its top left (len_x, len_y) subset.
+    void m_idwt2d_one_level( double* plane, long len_x, long len_y ); 
+                            // Perform one level of 2D idwt on a given plane (dim_x, dim_y),
                             // specifically on its top left (len_x, len_y) subset.
     long m_num_of_levels_xy() const;  // How many levels of DWT on the XY plane?
     long m_num_of_levels_z()  const;  // How many levels of DWT on the Z direction?
@@ -40,6 +46,10 @@ private:
                             // Separate even and odd indexed elements to be at the front 
                             // and back of the dest array. Note: sufficient memory space 
                             // should be allocated by the caller.
+    void m_scatter_even_odd( double* dest, const double* orig, long len ) const;
+                            // Interleave low and high pass elements to be at even and
+                            // odd positions of the dest array. Note: sufficient memory 
+                            // space should be allocated by the caller.
 
     //
     // Methods from QccPack, keep their original name.
