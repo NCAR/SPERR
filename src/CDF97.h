@@ -64,7 +64,6 @@ private:
     // Private data members
     // Note: use long type to store all integers. int is only used for return values.
     //
-    const long BUF_LEN = 128;                       // Temp buffer length
     double m_data_mean   = 0.0;                     // Mean of the values in data_buf
     long m_dim_x = 0, m_dim_y = 0, m_dim_z = 0;     // Dimension of the data volume
     std::unique_ptr<double[]> m_data_buf = nullptr; // Holds the entire input data.
