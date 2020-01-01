@@ -96,6 +96,7 @@ int main( int argc, char* argv[] )
     QccWAVSubbandPyramidAddMean( &pyramid, image_mean );
 
     /* write coefficients to a file */
+    printf("mean = %lf\n", image_mean );
     double* out_buf = (double*)malloc( sizeof(double) * num_of_vals );
     pyramid_to_array( &pyramid, out_buf );
     if( sam_write_n_doubles( output_name, num_of_vals, out_buf ) )
@@ -103,9 +104,19 @@ int main( int argc, char* argv[] )
         printf("Output write error!\n");
         return 1;
     }
-    printf("mean = %lf\n", image_mean );
+
+    /* compare the results against the original in double precision */
+    double* in_bufd = (double*)malloc( sizeof(double) * num_of_vals );
+    for( long i = 0; i < num_of_vals; i++ )
+        in_bufd[i] = in_buf[i];
+    double rmse, lmax, psnr, arr1min, arr1max;
+    sam_get_statsd( in_bufd, out_buf, num_of_vals, 
+                    &rmse, &lmax, &psnr, &arr1min, &arr1max );
+    printf("Qcc: rmse = %f, lmax = %f, psnr = %fdB, orig_min = %f, orig_max = %f\n", 
+            rmse, lmax, psnr, arr1min, arr1max );
 
     /* clean up */
+    free( in_bufd );
     free( out_buf );
     QccWAVSubbandPyramidFree( &pyramid );
     free( in_buf );
