@@ -94,17 +94,17 @@ private:
     // by Cohen et al., Page 551. (https://services.math.duke.edu/~ingrid/publications/CPAM_1992_p485.pdf) 
 
     // Paper coefficients
-    /* static constexpr double h[5]{  .602949018236, .266864118443, -.078223266529,
-                                  -.016864118443, .026748757411 };
-    static constexpr double r0      = h[0] - 2.0  * h[4] * h[1] / h[3];
-    static constexpr double r1      = h[2] - h[4] - h[4] * h[1] / h[3];
-    static constexpr double s0      = h[1] - h[3] - h[3] * r0   / r1; 
-    static constexpr double t0      = h[0] - 2.0 * (h[2] - h[4]);
-    static constexpr double ALPHA   = h[4] / h[3];
-    static constexpr double BETA    = h[3] / r1; 
-    static constexpr double GAMMA   = r1   / s0; 
-    static constexpr double DELTA   = s0   / t0; 
-           const     double EPSILON = std::sqrt(2.0) * t0;
+    /*const double h[5]{ .602949018236, .266864118443, -.078223266529,
+                      -.016864118443, .026748757411 };
+    const double r0      = h[0] - 2.0  * h[4] * h[1] / h[3];
+    const double r1      = h[2] - h[4] - h[4] * h[1] / h[3];
+    const double s0      = h[1] - h[3] - h[3] * r0   / r1; 
+    const double t0      = h[0] - 2.0 * (h[2] - h[4]);
+    const double ALPHA   = h[4] / h[3];
+    const double BETA    = h[3] / r1; 
+    const double GAMMA   = r1   / s0; 
+    const double DELTA   = s0   / t0; 
+    const double EPSILON = std::sqrt(2.0) * t0;
     */
 
     // QccPack coefficients
