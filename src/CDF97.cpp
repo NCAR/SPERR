@@ -12,7 +12,7 @@ int speck::CDF97::assign_data( const T* data, long x, long y, long z )
     m_dim_y = y;
     m_dim_z = z;
     long num_of_vals = m_dim_x * m_dim_y * m_dim_z;
-    m_data_buf.reset( new double[ num_of_vals ] );
+    m_data_buf = std::make_unique<double[]>( num_of_vals );
     for( long i = 0; i < num_of_vals; i++ )
         m_data_buf[i] = data[i];
 
@@ -74,7 +74,7 @@ void speck::CDF97::m_calc_mean()
     // Here we calculate mean row by row to avoid too big numbers.
     // (Not using kahan summation because that's hard to vectorize.)
     //
-    std::unique_ptr<double[]> row_means( new double[ m_dim_y * m_dim_z ] );
+    buffer_type row_means = std::make_unique<double[]>( m_dim_y * m_dim_z );
     const double dim_x1 = 1.0 / double(m_dim_x);
     long counter1 = 0, counter2 = 0;
     for( long z = 0; z < m_dim_z; z++ )
@@ -86,7 +86,7 @@ void speck::CDF97::m_calc_mean()
             row_means[ counter2++ ] = sum * dim_x1;
         }
 
-    std::unique_ptr<double[]> layer_means( new double[ m_dim_z ] );
+    buffer_type layer_means = std::make_unique<double[]>( m_dim_z );
     const double dim_y1 = 1.0 / double(m_dim_y);
     counter1 = 0; counter2 = 0;
     for( long z = 0; z < m_dim_z; z++ )
@@ -112,7 +112,7 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, long len_x, long len_y )
     // Create temporary buffers to work on
     double *buf_ptr, *buf_ptr2;
     long len_xy = std::max( len_x, len_y );
-    std::unique_ptr<double[]>buffer( new double[ len_xy * 2 ] );
+    buffer_type buffer = std::make_unique<double[]>( len_xy * 2 );
     buf_ptr  = buffer.get();       // First half of the array
     buf_ptr2 = buf_ptr + len_xy;   // Second half of the array
 
@@ -177,7 +177,7 @@ void speck::CDF97::m_idwt2d_one_level( double* plane, long len_x, long len_y )
     // Create temporary buffers to work on
     double *buf_ptr, *buf_ptr2;
     long len_xy = std::max( len_x, len_y );
-    std::unique_ptr<double[]>buffer( new double[ len_xy * 2 ] );
+    buffer_type buffer = std::make_unique<double[]>( len_xy * 2 );
     buf_ptr  = buffer.get();       // First half of the array
     buf_ptr2 = buf_ptr + len_xy;   // Second half of the array
 
@@ -234,6 +234,12 @@ void speck::CDF97::m_idwt2d_one_level( double* plane, long len_x, long len_y )
     }
 }
     
+    
+double m_make_positive()
+{
+
+    return 0.0f;
+}
 
 long speck::CDF97::m_num_of_levels_xy() const
 {

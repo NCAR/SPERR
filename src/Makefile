@@ -1,12 +1,12 @@
 CC=gcc
 CXX=g++
-CXXFLAGS=-std=c++11 -O2 -Wall -g -lm
+CXXFLAGS=-std=c++14 -O2 -Wall -g -lm
 
 ARCH=$(shell uname)
 ifeq ($(ARCH), Darwin)
   CC=clang
   CXX=clang++
-  CXXFLAGS=-std=c++11 -O2 -Wall -g -Wno-unused-private-field
+  CXXFLAGS=-std=c++14 -O2 -Wall -g -Wno-unused-private-field
 endif
 
 all:
