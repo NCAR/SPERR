@@ -19,6 +19,7 @@ public:
     int idwt2d();           // 1) calculates the number of levels of dwt,
                             // 2) perform the actual idwt
                             // 3) add the mean back to the data
+    int speck2d();          // 1) make all coefficients positive
 
     
     // For debug only ==================//
