@@ -19,7 +19,6 @@ public:
     int idwt2d();           // 1) calculates the number of levels of dwt,
                             // 2) perform the actual idwt
                             // 3) add the mean back to the data
-    int speck2d();          // 1) make all coefficients positive
 
     
     // For debug only ==================//
@@ -55,14 +54,6 @@ private:
                             // odd positions of the dest array. Note: sufficient memory 
                             // space should be allocated by the caller.
                             // Note 2: two versions for even and odd length input.
-    double m_make_positive(); // 1) fill m_sign_array based on m_data_buf signs, and 
-                              // 2) make m_data_buf containing all positive values.
-                              // Returns the maximum magnitude of all encountered values.
-
-
-    //
-    // Private methods helping SPECK.
-    //
 
     //
     // Methods from QccPack, keep their original name.
@@ -78,12 +69,9 @@ private:
     // Note: use long type to store all integers. int is only used for return values.
     //
     double m_data_mean   = 0.0;                     // Mean of the values in data_buf
-    long m_max_coefficient_bits = 0;                // How many bits needed
     long m_dim_x = 0, m_dim_y = 0, m_dim_z = 0;     // Dimension of the data volume
     using buffer_type = std::unique_ptr<double[]>;
     buffer_type m_data_buf = nullptr;               // Holds the entire input data.
-    std::vector<bool> m_sign_array;                 // Note: vector<bool> is a lot faster 
-    std::vector<bool> m_significance_map;           //   and memory-efficient
     
 
 

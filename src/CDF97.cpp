@@ -61,14 +61,6 @@ int speck::CDF97::idwt2d()
 
     return 0;
 }
-    
-int speck::CDF97::speck2d()
-{
-    auto max_coeff = m_make_positive();
-    m_max_coefficient_bits = long(std::log2(max_coeff));
-
-    return 0;
-}
 
     
 //
@@ -238,27 +230,6 @@ void speck::CDF97::m_idwt2d_one_level( double* plane, long len_x, long len_y )
             std::memcpy( pos, buf_ptr, sizeof(double) * len_x );
         }
     }
-}
-    
-    
-double speck::CDF97::m_make_positive()
-{
-    long num_of_vals = m_dim_x * m_dim_y * m_dim_z;
-    assert( num_of_vals > 0 );
-    m_sign_array.assign( num_of_vals, true ); // Initial to represent all being positive
-    double max = std::fabs( m_data_buf[0] );
-    for( long i = 0; i < num_of_vals; i++ )
-    {
-        if( m_data_buf[i] < 0.0 )
-        {
-            m_data_buf[i]   = -m_data_buf[i];
-            m_sign_array[i] = false;
-        }
-        if( m_data_buf[i] > max )
-            max = m_data_buf[i];
-    }
-
-    return max;
 }
 
 long speck::CDF97::m_num_of_levels_xy() const
