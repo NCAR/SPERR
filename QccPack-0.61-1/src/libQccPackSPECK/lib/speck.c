@@ -302,7 +302,7 @@ static int QccSPECKInitialization(QccList *LIS,
                                   const QccWAVSubbandPyramid *mask)
 {
   QccSPECKSet   set_S;  /* A QccSPECKSet keeps indices of elements in this set, 
-                           but not the elements themselves.                   */
+                           but not the element values.                       */
   QccList       new_list;
   QccListNode*  new_list_node;
   int return_value;

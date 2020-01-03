@@ -29,7 +29,7 @@ public:
 
 private:
     //
-    // Private methods
+    // Private methods helping DWT.
     //
     void m_calc_mean();     // calculate m_data_mean from m_data_buf
     void m_dwt2d_one_level( double* plane, long len_x, long len_y ); 
@@ -59,6 +59,11 @@ private:
                               // 2) make m_data_buf containing all positive values.
                               // Returns the maximum magnitude of all encountered values.
 
+
+    //
+    // Private methods helping SPECK.
+    //
+
     //
     // Methods from QccPack, keep their original name.
     //
@@ -77,8 +82,8 @@ private:
     long m_dim_x = 0, m_dim_y = 0, m_dim_z = 0;     // Dimension of the data volume
     using buffer_type = std::unique_ptr<double[]>;
     buffer_type m_data_buf = nullptr;               // Holds the entire input data.
-    std::vector<bool> m_sign_array;                 // (vector<bool> is a lot faster 
-    std::vector<bool> m_significance_map;           // and memory-efficient)
+    std::vector<bool> m_sign_array;                 // Note: vector<bool> is a lot faster 
+    std::vector<bool> m_significance_map;           //   and memory-efficient
     
 
 
