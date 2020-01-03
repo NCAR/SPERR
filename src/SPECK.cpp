@@ -13,6 +13,7 @@ int speck::SPECK::speck2d()
     
 double speck::SPECK::m_make_positive()
 {
+    assert( m_coeff_buf.get() != nullptr );
     long num_of_vals = m_dim_x * m_dim_y * m_dim_z;
     assert( num_of_vals > 0 );
     m_sign_array.assign( num_of_vals, true ); // Initial to represent all being positive

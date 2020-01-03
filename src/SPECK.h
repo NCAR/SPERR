@@ -10,6 +10,8 @@ namespace speck
 class SPECK
 {
 public:
+    int assign_coeffs( const double* );               // Takes ownership of a chunck of memory
+    int assign_mean_dims( double, long, long, long ); // Accepts data mean and volume dimensions.
     int speck2d();
 
 private:
