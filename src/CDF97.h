@@ -19,6 +19,11 @@ public:
     int idwt2d();           // 1) calculates the number of levels of dwt,
                             // 2) perform the actual idwt
                             // 3) add the mean back to the data
+    double* release_buffer( double& mean, long& dim_x, long& dim_y, long& dim_z );
+                            // 1) Release the ownership of coefficients and return 
+                            //    a pointer pointing to the buffer.
+                            // 2) Pass the values of mean and dimensions.
+                            // 3) Clear the values of mean and dimensions.
 
     
     // For debug only ==================//
@@ -68,10 +73,10 @@ private:
     // Private data members
     // Note: use long type to store all integers. int is only used for return values.
     //
-    double m_data_mean   = 0.0;                     // Mean of the values in data_buf
-    long m_dim_x = 0, m_dim_y = 0, m_dim_z = 0;     // Dimension of the data volume
     using buffer_type = std::unique_ptr<double[]>;
     buffer_type m_data_buf = nullptr;               // Holds the entire input data.
+    double m_data_mean   = 0.0;                     // Mean of the values in data_buf
+    long m_dim_x = 0, m_dim_y = 0, m_dim_z = 0;     // Dimension of the data volume
     
 
 

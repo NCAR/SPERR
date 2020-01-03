@@ -62,6 +62,16 @@ int speck::CDF97::idwt2d()
     return 0;
 }
 
+
+double* speck::CDF97::release_buffer( double& mean, long& dim_x, long& dim_y, long& dim_z )
+{
+    mean  = m_data_mean;    m_data_mean = 0.0;
+    dim_x = m_dim_x;        m_dim_x     = 0;     
+    dim_y = m_dim_y;        m_dim_y     = 0;     
+    dim_z = m_dim_z;        m_dim_z     = 0;     
+    return m_data_buf.release();
+}
+
     
 //
 // Private Methods
