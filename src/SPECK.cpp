@@ -1,6 +1,20 @@
 #include "SPECK.h"
 #include <cassert>
 #include <cmath>
+
+
+void speck::SPECK::assign_coeffs( double* ptr )
+{
+    m_coeff_buf.reset( ptr );
+}
+
+void speck::SPECK::assign_mean_dims( double m, long dx, long dy, long dz )
+{
+    m_data_mean = m;
+    m_dim_x     = dx;
+    m_dim_y     = dy;
+    m_dim_z     = dz;
+}
     
 int speck::SPECK::speck2d()
 {
@@ -22,7 +36,7 @@ double speck::SPECK::m_make_positive()
     {
         if( m_coeff_buf[i] < 0.0 )
         {
-            m_coeff_buf[i]   = -m_coeff_buf[i];
+            m_coeff_buf[i]  = -m_coeff_buf[i];
             m_sign_array[i] = false;
         }
         if( m_coeff_buf[i] > max )
@@ -30,4 +44,10 @@ double speck::SPECK::m_make_positive()
     }
 
     return max;
+}
+
+
+bool speck::SPECKSet2D::is_single_pixel() const
+{
+    return ( num_rows == 1 && num_cols == 1 );
 }

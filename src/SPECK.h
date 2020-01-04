@@ -10,8 +10,9 @@ namespace speck
 class SPECK
 {
 public:
-    int assign_coeffs( const double* );               // Takes ownership of a chunck of memory
-    int assign_mean_dims( double, long, long, long ); // Accepts data mean and volume dimensions.
+    void assign_coeffs( double* );  // Takes ownership of a chunck of memory
+    void assign_mean_dims( double, long, long, long ); 
+                                    // Accepts data mean and volume dimensions.
     int speck2d();
 
 private:
@@ -32,6 +33,33 @@ private:
     long m_dim_x = 0, m_dim_y = 0, m_dim_z = 0;     // Volume dims
     std::vector<bool> m_sign_array;                 // Note: vector<bool> is a lot faster 
     std::vector<bool> m_significance_map;           //   and memory-efficient
+};
+
+
+//
+// Helper classes
+//
+enum class SPECKSetType : unsigned char
+{
+    TypeI,
+    TypeS
+};
+
+
+class SPECKSet2D
+{
+public:
+    // Member data
+    long level      = 0;
+    long origin_row = 0;
+    long origin_col = 0;
+    long num_rows   = 0;
+    long num_cols   = 0;
+    bool significance = false;
+    SPECKSetType type;
+
+    // Member functions
+    bool is_single_pixel() const;
 };
 
 };

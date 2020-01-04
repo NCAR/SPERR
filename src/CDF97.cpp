@@ -2,6 +2,7 @@
 
 #include <type_traits>
 #include <cassert>
+#include <cstring>  // for std::memcpy()
 
 template< typename T >
 int speck::CDF97::assign_data( const T* data, long x, long y, long z )
