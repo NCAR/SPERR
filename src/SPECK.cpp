@@ -18,8 +18,15 @@ void speck::SPECK::assign_mean_dims( double m, long dx, long dy, long dz )
     
 int speck::SPECK::speck2d()
 {
-    auto max_coeff = m_make_positive();
-    m_max_coefficient_bits = long(std::log2(max_coeff));
+    assert( m_coeff_buf != nullptr );                     // sanity check
+    assert( m_dim_x > 0 && m_dim_y > 0 && m_dim_z > 0 );  // sanity check
+
+    // Let's do some preparation work
+    long num_of_vals          = m_dim_x * m_dim_y * m_dim_z;
+    auto max_coeff            = m_make_positive();
+    long max_coefficient_bits = long(std::log2(max_coeff));
+    double threshold          = std::pow( 2.0, double(max_coefficient_bits) );
+    m_significance_map.assign( num_of_vals, false );    // initialized to be insignificant
 
     return 0;
 }
