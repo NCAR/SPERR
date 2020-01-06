@@ -45,8 +45,8 @@ private:
     long m_num_of_levels_xy() const;  // How many levels of DWT on the XY plane?
     long m_num_of_levels_z()  const;  // How many levels of DWT on the Z direction?
     long m_calc_approx_len( long orig_len, long lev ) const;
-                            // Determine the low frequency signal length after
-                            // lev times of transformation (lev >= 0).
+                            // Determine the low frequency signal length at level lev
+                            // (0 <= lev < num_level_xy/z).
     void m_gather_even( double* dest, const double* orig, long len ) const;
     void m_gather_odd(  double* dest, const double* orig, long len ) const;
                             // Separate even and odd indexed elements to be at the front 

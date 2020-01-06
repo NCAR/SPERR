@@ -336,7 +336,7 @@ static int QccSPECKInitialization(QccList *LIS,
   set_S.type         = QCCSPECK_SET_S;
   set_S.level        = coefficients->num_levels;
   set_S.significance = QCCSPECK_INSIGNIFICANT;
-  /* Determine other fields of set_S */
+  /* Determine other fields of set_S that regard to sizes and offsets */
   return_value = QccSPECKSetSize(&set_S,
                                  coefficients,
                                  0);        /* 0 means the top most band */
