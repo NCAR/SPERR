@@ -18,10 +18,10 @@ class SPECKSet2D
 {
 public:
     // Member data
-    long origin_row;
-    long origin_col;
-    long num_rows;   
-    long num_cols;
+    long start_x      = 0;
+    long start_y      = 0;
+    long length_x     = 0;   
+    long length_y     = 0;
     long part_level   = 0;  // which partition level is this set at?
     bool significance = false;
     SPECKSetType type;
