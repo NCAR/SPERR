@@ -231,8 +231,8 @@ static int QccSPECKSetTransparent(const QccSPECKSet *set,
 
 static int QccSPECKSetSize(QccSPECKSet *set,
                            const QccWAVSubbandPyramid *coefficients,
-                           int subband) /* specifies which chunk, though its 
-                                           mechanism seems quite complex. */
+                           int subband) /* specifies which chunk (0, 1, 2, 3), though 
+                                           its mechanism seems quite complex. */
 {
   if (QccWAVSubbandPyramidSubbandOffsets(coefficients,      /* input */
                                          subband,           /* input */

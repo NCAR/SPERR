@@ -242,8 +242,7 @@ int QccWAVSubbandPyramidSubbandSize(const QccWAVSubbandPyramid
 }
 
 
-int QccWAVSubbandPyramidSubbandOffsets(const QccWAVSubbandPyramid 
-                                       *subband_pyramid,
+int QccWAVSubbandPyramidSubbandOffsets(const QccWAVSubbandPyramid *subband_pyramid,
                                        int subband,
                                        int *row_offset,
                                        int *col_offset)

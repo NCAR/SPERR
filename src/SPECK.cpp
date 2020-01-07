@@ -26,11 +26,11 @@ int speck::SPECK::speck2d()
     std::vector<bool>  sign_array;
     auto max_coeff            = m_make_positive( sign_array );
     long max_coefficient_bits = long(std::log2(max_coeff));
-    long num_of_levels        = m_num_of_levels_xy();
+    long num_of_part_levels   = m_num_of_part_levels_2d();
 
     // Still preparing: lists and sets
     std::vector< SPECKSet2D >               LSP;
-    std::vector< std::vector<SPECKSet2D> >  LIS( num_of_levels );
+    std::vector< std::vector<SPECKSet2D> >  LIS( num_of_part_levels );
 
 
 
@@ -65,8 +65,22 @@ double speck::SPECK::m_make_positive( std::vector<bool>& sign_array ) const
     return max;
 }
 
+    
+// Calculate the number of partition levels in a plane.
+long speck::SPECK::m_num_of_part_levels_2d() const
+{
+    long num_of_lev = 1;    // Even no partition is performed, there's already one level.
+    long dim_x = m_dim_x, dim_y = m_dim_y;
+    while( dim_x > 1 || dim_y > 1 )
+    {
+        num_of_lev++;
+        dim_x -= dim_x / 2;
+        dim_y -= dim_y / 2;
+    }
+    return num_of_lev;
+}
 
-long speck::SPECK::m_num_of_levels_xy() const
+long speck::SPECK::m_num_of_xform_levels_xy() const
 {
     assert( m_dim_x > 0 && m_dim_y > 0 );
     const auto min_xy = std::min( m_dim_x, m_dim_y );
@@ -81,7 +95,7 @@ long speck::SPECK::m_num_of_levels_xy() const
 }
 
 
-long speck::SPECK::m_num_of_levels_z() const
+long speck::SPECK::m_num_of_xform_levels_z() const
 {
     assert( m_dim_z > 0 );
     float f      = std::log2( float(m_dim_z) / 9.0f ); // 9.0f for CDF 9/7 kernel
@@ -93,7 +107,6 @@ long speck::SPECK::m_num_of_levels_z() const
 
     return num_level_z;
 }
-
 
 long speck::SPECK::m_calc_approx_len( long orig_len, long lev ) const
 {
