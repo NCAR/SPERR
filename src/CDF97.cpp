@@ -37,8 +37,9 @@ int speck::CDF97::dwt2d()
     const auto num_level_xy = speck::calc_num_of_xform_levels( std::min( m_dim_x, m_dim_y ) );
     for( long lev = 0; lev < num_level_xy; lev++ )
     {
-        long len_x = speck::calc_approx_len( m_dim_x, lev );
-        long len_y = speck::calc_approx_len( m_dim_y, lev );
+        long tmp1, tmp2;
+        long len_x = speck::calc_approx_detail_len( m_dim_x, lev, tmp1, tmp2 );
+        long len_y = speck::calc_approx_detail_len( m_dim_y, lev, tmp1, tmp2 );
         m_dwt2d_one_level( m_data_buf.get(), len_x, len_y );
     }
 
@@ -52,8 +53,9 @@ int speck::CDF97::idwt2d()
 
     for( long lev = num_level_xy - 1; lev >= 0; lev-- )
     {
-        long len_x = speck::calc_approx_len( m_dim_x, lev );
-        long len_y = speck::calc_approx_len( m_dim_y, lev );
+        long tmp1, tmp2;
+        long len_x = speck::calc_approx_detail_len( m_dim_x, lev, tmp1, tmp2 );
+        long len_y = speck::calc_approx_detail_len( m_dim_y, lev, tmp1, tmp2 );
         m_idwt2d_one_level( m_data_buf.get(), len_x, len_y );
     }
 

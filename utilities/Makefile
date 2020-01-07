@@ -31,7 +31,7 @@ helper.o: helper.c helper.h
 main.out: main.c
 	$(CC) $(CFLAGS) -I$(QCC_INSTALL_DIR)/include $^ $(QCC_INSTALL_DIR)/lib/libQccPack.a -o $@
 
-test_sam_dwt2d.out: test_sam_dwt2d.cpp helper.o $(SPECK_DIR)/CDF97.o 
+test_sam_dwt2d.out: test_sam_dwt2d.cpp helper.o $(SPECK_DIR)/CDF97.o $(SPECK_DIR)/speck_helper.o 
 	$(CXX) $(CXXFLAGS) -I$(SPECK_DIR) $^ -o $@
 
 test_qcc_dwt2d.out: test_qcc_dwt2d.c helper.o

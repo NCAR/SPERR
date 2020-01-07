@@ -91,11 +91,7 @@ bool speck::SPECKSet2D::is_single_pixel() const
 }
 
 // Constructor
-speck::SPECKSet2D::SPECKSet2D( SPECKSetType t, long o_r, long o_c, long n_r, long n_c )
+speck::SPECKSet2D::SPECKSet2D( SPECKSetType t )
 {
-    type       = t;
-    origin_row = o_r;
-    origin_col = o_c;
-    num_rows   = n_r;
-    num_cols   = n_c;
+    type = t;
 }
