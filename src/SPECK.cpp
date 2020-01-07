@@ -1,4 +1,5 @@
 #include "SPECK.h"
+#include "speck_helper.h"
 #include <cassert>
 #include <cmath>
 
@@ -78,44 +79,6 @@ long speck::SPECK::m_num_of_part_levels_2d() const
         dim_y -= dim_y / 2;
     }
     return num_of_lev;
-}
-
-long speck::SPECK::m_num_of_xform_levels_xy() const
-{
-    assert( m_dim_x > 0 && m_dim_y > 0 );
-    const auto min_xy = std::min( m_dim_x, m_dim_y );
-    float f     = std::log2(float(min_xy) / 9.0f);  // 9.0f for CDF 9/7 kernel
-    long num_level_xy = f < 0.0f ? 0 : long(f) + 1;
-
-    // Treat this special case which would occur with power of 2 lengths
-    if( m_calc_approx_len( min_xy, num_level_xy - 1 ) == 8 )
-        num_level_xy++;
-
-    return num_level_xy;
-}
-
-
-long speck::SPECK::m_num_of_xform_levels_z() const
-{
-    assert( m_dim_z > 0 );
-    float f      = std::log2( float(m_dim_z) / 9.0f ); // 9.0f for CDF 9/7 kernel
-    long num_level_z = f < 0.0f ? 0 : long(f) + 1;
-
-    // Treat this special case which would occur with power of 2 lengths
-    if( m_calc_approx_len( m_dim_z, num_level_z - 1 ) == 8 )
-        num_level_z++;
-
-    return num_level_z;
-}
-
-long speck::SPECK::m_calc_approx_len( long orig_len, long lev ) const
-{
-    assert( lev >= 0 );
-    long low_len = orig_len;
-    for( long i = 0; i < lev; i++ )
-        low_len = low_len % 2 == 0 ? low_len / 2 : (low_len + 1) / 2;
-    
-    return low_len;
 }
 
 

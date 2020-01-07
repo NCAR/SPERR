@@ -1,4 +1,5 @@
 #include "CDF97.h"
+#include "speck_helper.h"
 
 #include <type_traits>
 #include <cassert>
@@ -33,11 +34,11 @@ int speck::CDF97::dwt2d()
     for( long i = 0; i < num_of_vals; i++ )
         m_data_buf[i] -= m_data_mean;
 
-    const auto num_level_xy = m_num_of_levels_xy();
+    const auto num_level_xy = speck::calc_num_of_xform_levels( std::min( m_dim_x, m_dim_y ) );
     for( long lev = 0; lev < num_level_xy; lev++ )
     {
-        long len_x = m_calc_approx_len( m_dim_x, lev );
-        long len_y = m_calc_approx_len( m_dim_y, lev );
+        long len_x = speck::calc_approx_len( m_dim_x, lev );
+        long len_y = speck::calc_approx_len( m_dim_y, lev );
         m_dwt2d_one_level( m_data_buf.get(), len_x, len_y );
     }
 
@@ -47,12 +48,12 @@ int speck::CDF97::dwt2d()
 
 int speck::CDF97::idwt2d()
 {
-    const auto num_level_xy = m_num_of_levels_xy();
+    const auto num_level_xy = speck::calc_num_of_xform_levels( std::min( m_dim_x, m_dim_y ) );
 
     for( long lev = num_level_xy - 1; lev >= 0; lev-- )
     {
-        long len_x = m_calc_approx_len( m_dim_x, lev );
-        long len_y = m_calc_approx_len( m_dim_y, lev );
+        long len_x = speck::calc_approx_len( m_dim_x, lev );
+        long len_y = speck::calc_approx_len( m_dim_y, lev );
         m_idwt2d_one_level( m_data_buf.get(), len_x, len_y );
     }
 
@@ -241,45 +242,6 @@ void speck::CDF97::m_idwt2d_one_level( double* plane, long len_x, long len_y )
             std::memcpy( pos, buf_ptr, sizeof(double) * len_x );
         }
     }
-}
-
-long speck::CDF97::m_num_of_levels_xy() const
-{
-    assert( m_dim_x > 0 && m_dim_y > 0 );
-    const auto min_xy = std::min( m_dim_x, m_dim_y );
-    float f     = std::log2(float(min_xy) / 9.0f);  // 9.0f for CDF 9/7 kernel
-    long num_level_xy = f < 0.0f ? 0 : long(f) + 1;
-
-    // Treat this special case which would occur with power of 2 lengths
-    if( m_calc_approx_len( min_xy, num_level_xy - 1 ) == 8 )
-        num_level_xy++;
-
-    return num_level_xy;
-}
-
-
-long speck::CDF97::m_num_of_levels_z() const
-{
-    assert( m_dim_z > 0 );
-    float f      = std::log2( float(m_dim_z) / 9.0f ); // 9.0f for CDF 9/7 kernel
-    long num_level_z = f < 0.0f ? 0 : long(f) + 1;
-
-    // Treat this special case which would occur with power of 2 lengths
-    if( m_calc_approx_len( m_dim_z, num_level_z - 1 ) == 8 )
-        num_level_z++;
-
-    return num_level_z;
-}
-
-
-long speck::CDF97::m_calc_approx_len( long orig_len, long lev ) const
-{
-    assert( lev >= 0 );
-    long low_len = orig_len;
-    for( long i = 0; i < lev; i++ )
-        low_len = low_len % 2 == 0 ? low_len / 2 : (low_len + 1) / 2;
-    
-    return low_len;
 }
 
 

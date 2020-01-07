@@ -55,15 +55,11 @@ private:
                           // Returns the maximum magnitude of all encountered values.
     long m_num_of_part_levels_2d() const; 
                           // How many partition levels are there given the 2D dimensions?
-    void m_calc_set_size_2d( SPECKSet2D& set, long subband ) const;
+    //void m_calc_set_size_2d( SPECKSet2D& set, long subband ) const;
                           // What's the set size and offsets?
-                          // TODO: need to think more about this function
+                          // subband = (0, 1, 2, 3)
+                          // TODO
 
-    long m_num_of_xform_levels_xy() const;  // How many levels of DWT on the XY plane?
-    long m_num_of_xform_levels_z()  const;  // How many levels of DWT on the Z direction?
-    long m_calc_approx_len( long orig_len, long lev ) const;
-                          // Determine the low frequency signal length at level lev
-                          // (0 <= lev < num_level_xy/z).
 
     //
     // Private data members
