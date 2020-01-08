@@ -87,13 +87,8 @@ int main( int argc, char* argv[] )
     float min_xy = (float)num_of_cols;
     if( num_of_rows < num_of_cols )
           min_xy = (float)num_of_rows;
-    float f      = log2f( min_xy / 9.0f );
+    float f      = log2f( min_xy / 8.0f );
     int num_level_xy = f < 0.0f ? 0 : (int)f + 1;
-    int low_len = min_xy;
-    for( int i = 0; i < num_level_xy; i++ )
-        low_len = low_len % 2 == 0 ? low_len / 2 : (low_len + 1) / 2;
-    if( low_len == 8 )
-        num_level_xy++;
     QccWAVSubbandPyramidDWT( &pyramid, num_level_xy, &Wavelet );
 
     /* Apply idwt */

@@ -48,6 +48,9 @@ public:
                                     // Accepts data mean and volume dimensions.
     int speck2d();
 
+    void m_calc_set_size_2d( SPECKSet2D& set, long subband ) const;
+                          // What's the set size and offsets?
+                          // subband = (0, 1, 2, 3)
 private:
     //
     // Private methods
@@ -58,9 +61,6 @@ private:
                           // Returns the maximum magnitude of all encountered values.
     long m_num_of_part_levels_2d() const; 
                           // How many partition levels are there given the 2D dimensions?
-    void m_calc_set_size_2d( SPECKSet2D& set, long subband ) const;
-                          // What's the set size and offsets?
-                          // subband = (0, 1, 2, 3)
 
 
     //

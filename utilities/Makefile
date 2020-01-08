@@ -41,7 +41,7 @@ compare_raw.out: compare_raw.c helper.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 expt.out: expt.cpp
-	$(CXX) $(CXXFLAGS) -I$(SPECK_DIR) $(SPECK_DIR)/speck_helper.o $^ -o $@
+	$(CXX) $(CXXFLAGS) -I$(SPECK_DIR) $(SPECK_DIR)/SPECK.o $(SPECK_DIR)/speck_helper.o $^ -o $@
 
 clean:
 	rm -rf *.out* *.o *.tmp
