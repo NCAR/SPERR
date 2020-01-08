@@ -14,6 +14,7 @@ enum class SPECKSetType : unsigned char
     TypeI,
     TypeS
 };
+
 class SPECKSet2D
 {
 public:
@@ -22,7 +23,9 @@ public:
     long start_y      = 0;
     long length_x     = 0;   
     long length_y     = 0;
-    long part_level   = 0;  // which partition level is this set at?
+    int  part_level   = 0;  // which partition level is this set at?
+                            // Since there'll be a large number of these sets generated,
+                            // let's use int here (to reduce 8 bytes for this structure).
     bool significance = false;
     SPECKSetType type;
 
