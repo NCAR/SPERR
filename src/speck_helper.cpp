@@ -3,16 +3,13 @@
 #include <cmath>
 #include <cassert>
 
+
 long speck::calc_num_of_xform_levels( long len )
 {
     assert( len > 0 );
-    float f      = std::log2( float(len) / 9.0f ); // 9.0f for CDF 9/7 kernel
+    // I decide 8 is the minimal length to do one level of xform.
+    float f      = std::log2( float(len) / 8.0f ); 
     long num_of_levs = f < 0.0f ? 0 : long(f) + 1;
-
-    // Treat this special case which would occur with power of 2 lengths
-    long tmp1, tmp2;
-    if( speck::calc_approx_detail_len( len, num_of_levs - 1, tmp1, tmp2 ) == 8 )
-        num_of_levs++;
 
     return num_of_levs;
 }
