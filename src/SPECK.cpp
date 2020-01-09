@@ -22,20 +22,31 @@ int speck::SPECK::speck2d()
     assert( m_coeff_buf != nullptr );                     // sanity check
     assert( m_dim_x > 0 && m_dim_y > 0 && m_dim_z > 0 );  // sanity check
 
-    // Let's do some preparation work
+    // Let's do some preparation: gather some values
     long num_of_vals          = m_dim_x * m_dim_y * m_dim_z;
     std::vector<bool>  sign_array;
     auto max_coeff            = m_make_positive( sign_array );
     long max_coefficient_bits = long(std::log2(max_coeff));
     long num_of_part_levels   = m_num_of_part_levels_2d();
+    long num_of_xform_levels  = speck::calc_num_of_xform_levels( std::min( m_dim_x, m_dim_y) );
 
     // Still preparing: lists and sets
     std::vector< SPECKSet2D >               LSP;
     std::vector< std::vector<SPECKSet2D> >  LIS( num_of_part_levels );
 
+    SPECKSet2D   root( SPECKSetType::TypeS );
+    root.part_level = num_of_xform_levels - 1;
+    m_calc_set_size_2d( root, 0 );
+    LIS[ root.part_level ].push_back( root );
 
+    SPECKSet2D   I( SPECKSetType::TypeI );
+    I.part_level = num_of_xform_levels - 1;
+    I.start_x    = root.length_x;
+    I.start_y    = root.length_y;
+    I.length_x   = m_dim_x;
+    I.length_y   = m_dim_y;
 
-
+    // Get ready for the quantization loop! 
     std::vector<bool>  significance_map( num_of_vals, false );  // initialized to be insignificant
     double threshold   = std::pow( 2.0, double(max_coefficient_bits) );
 
@@ -91,6 +102,8 @@ void speck::SPECK::m_calc_set_size_2d( SPECKSet2D& set, long subband ) const
     speck::calc_approx_detail_len( m_dim_x, part_level, low_len_x, high_len_x );
     speck::calc_approx_detail_len( m_dim_y, part_level, low_len_y, high_len_y );
     
+    // Note: the index of subbands (0, 1, 2, 3) follows what's used in QccPack,
+    //       and is different from what is described in Figure 4 of the Pearlman paper.
     if( subband == 0 )      // top left
     {
         set.start_x  = 0;

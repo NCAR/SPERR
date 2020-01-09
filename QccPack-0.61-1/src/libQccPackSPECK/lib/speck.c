@@ -334,7 +334,7 @@ static int QccSPECKInitialization(QccList *LIS,
                  into corresponding lists.                                           */
 
   set_S.type         = QCCSPECK_SET_S;
-  set_S.level        = coefficients->num_levels;
+  set_S.level        = coefficients->num_levels; /* Sam's level == qcc's level - 1 */
   set_S.significance = QCCSPECK_INSIGNIFICANT;
   /* Determine other fields of set_S that regard to sizes and offsets */
   return_value = QccSPECKSetSize(&set_S,
@@ -363,7 +363,7 @@ static int QccSPECKInitialization(QccList *LIS,
   QccListInitialize(LSP);   /* initialize as an empty list */
 
   I->type = QCCSPECK_SET_I;
-  I->level = coefficients->num_levels;
+  I->level = coefficients->num_levels; /* Sam's level == qcc's level - 1 */
   I->origin_row = set_S.num_rows;
   I->origin_col = set_S.num_cols;
   I->num_rows = coefficients->num_rows;
