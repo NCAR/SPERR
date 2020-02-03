@@ -153,6 +153,10 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, long len_x, long len_y )
     }
 
     // Second, perform DWT along Y for every column
+
+// TODO: evaluate if it will result in better performance if the plane
+//       is transposed first to do column transforms.
+
     if( len_y % 2 == 0 )    // Even length
     {
         for( long x = 0; x < len_x; x++ )
