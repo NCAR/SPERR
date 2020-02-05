@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <chrono>
 
 extern "C"  // C Function calls, and don't include the C header!
 {
