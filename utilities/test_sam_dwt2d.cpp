@@ -38,8 +38,13 @@ int main( int argc, char* argv[] )
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
     cdf.assign_data( in_buf.get(), dim_x, dim_y );
+
+    const auto startT = std::chrono::high_resolution_clock::now();
     cdf.dwt2d();
     cdf.idwt2d();
+    const auto endT   = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<double> diffT  = endT - startT;
+    std::cout << "Time for transforms: " << diffT.count() << std::endl;
 
     // Write out the results after DWT.
     std::cout << "Mean is = " << cdf.get_mean() << std::endl;
