@@ -6,7 +6,7 @@
 #include <cstring>  // for std::memcpy()
 
 template< typename T >
-int speck::CDF97::assign_data( const T* data, long x, long y, long z )
+int speck::CDF97::assign_data( const T* data, const long x, const long y, const long z )
 {
     static_assert( std::is_floating_point<T>::value, 
                    "!! Only floating point values are supported !!" );
@@ -20,8 +20,10 @@ int speck::CDF97::assign_data( const T* data, long x, long y, long z )
 
     return 0;
 }
-template int speck::CDF97::assign_data( const float*  data, long x, long y, long z );
-template int speck::CDF97::assign_data( const double* data, long x, long y, long z );
+template int speck::CDF97::assign_data( const float*  data, const long x, 
+                                        const long y,       const long z );
+template int speck::CDF97::assign_data( const double* data, const long x, 
+                                        const long y,       const long z );
 
 
 int speck::CDF97::dwt2d()
@@ -118,7 +120,7 @@ void speck::CDF97::m_calc_mean()
 }
 
     
-void speck::CDF97::m_dwt2d_one_level( double* plane, long len_x, long len_y )
+void speck::CDF97::m_dwt2d_one_level( double* plane, const long len_x, const long len_y )
 {
     assert( len_x <= m_dim_x && len_y <= m_dim_y );
 
@@ -153,9 +155,8 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, long len_x, long len_y )
     }
 
     // Second, perform DWT along Y for every column
-
-// TODO: evaluate if it will result in better performance if the plane
-//       is transposed first to do column transforms.
+    // Note, I've tested that it is slightly slower to transpose the plane
+    // and then perform the transforms, on both a MacBook and a RaspberryPi.
 
     if( len_y % 2 == 0 )    // Even length
     {
@@ -186,7 +187,7 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, long len_x, long len_y )
 }
     
 
-void speck::CDF97::m_idwt2d_one_level( double* plane, long len_x, long len_y )
+void speck::CDF97::m_idwt2d_one_level( double* plane, const long len_x, const long len_y )
 {
     assert( len_x <= m_dim_x && len_y <= m_dim_y );
 
@@ -250,7 +251,7 @@ void speck::CDF97::m_idwt2d_one_level( double* plane, long len_x, long len_y )
 }
 
 
-void speck::CDF97::m_gather_even( double* dest, const double* orig, long len ) const
+void speck::CDF97::m_gather_even( double* dest, const double* orig, const long len ) const
 {
     assert( len % 2 == 0 ); // This function specifically for even length input
     long low_count = len / 2, high_count = len / 2; 
@@ -261,7 +262,7 @@ void speck::CDF97::m_gather_even( double* dest, const double* orig, long len ) c
     for( long i = 0; i < high_count; i++ )
         dest[counter++] = orig[i*2+1];
 }
-void speck::CDF97::m_gather_odd( double* dest, const double* orig, long len ) const
+void speck::CDF97::m_gather_odd( double* dest, const double* orig, const long len ) const
 {
     assert( len % 2 == 1 ); // This function specifically for odd length input
     long low_count = len / 2 + 1, high_count = len / 2; 
@@ -274,7 +275,7 @@ void speck::CDF97::m_gather_odd( double* dest, const double* orig, long len ) co
 }
 
 
-void speck::CDF97::m_scatter_even( double* dest, const double* orig, long len ) const
+void speck::CDF97::m_scatter_even( double* dest, const double* orig, const long len ) const
 {
     assert( len % 2 == 0 ); // This function specifically for even length input
     long low_count = len / 2, high_count = len / 2;
@@ -285,7 +286,7 @@ void speck::CDF97::m_scatter_even( double* dest, const double* orig, long len ) 
     for( long i = 0; i < high_count; i++ )
         dest[i*2+1] = orig[counter++];
 }
-void speck::CDF97::m_scatter_odd( double* dest, const double* orig, long len ) const
+void speck::CDF97::m_scatter_odd( double* dest, const double* orig, const long len ) const
 {
     assert( len % 2 == 1 ); // This function specifically for odd length input
     long low_count = len / 2 + 1, high_count = len / 2;
@@ -301,8 +302,8 @@ void speck::CDF97::m_scatter_odd( double* dest, const double* orig, long len ) c
 //
 // Methods from QccPack
 //
-void speck::CDF97::QccWAVCDF97AnalysisSymmetricEvenEven( double* signal, 
-                                                         long signal_length)
+void speck::CDF97::QccWAVCDF97AnalysisSymmetricEvenEven( double*    signal, 
+                                                         const long signal_length)
 {
     long index;
 
@@ -330,8 +331,8 @@ void speck::CDF97::QccWAVCDF97AnalysisSymmetricEvenEven( double* signal,
 }
 
 
-void speck::CDF97::QccWAVCDF97SynthesisSymmetricEvenEven( double* signal, 
-                                                          long signal_length)
+void speck::CDF97::QccWAVCDF97SynthesisSymmetricEvenEven( double*    signal, 
+                                                          const long signal_length)
 {
     long index;
 
@@ -360,8 +361,8 @@ void speck::CDF97::QccWAVCDF97SynthesisSymmetricEvenEven( double* signal,
 }
 
 
-void speck::CDF97::QccWAVCDF97SynthesisSymmetricOddEven( double* signal,
-                                                         long signal_length)
+void speck::CDF97::QccWAVCDF97SynthesisSymmetricOddEven( double*    signal,
+                                                         const long signal_length)
 {
   long index;
   
@@ -392,8 +393,8 @@ void speck::CDF97::QccWAVCDF97SynthesisSymmetricOddEven( double* signal,
 }
 
 
-void speck::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double*  signal,
-                                                       long signal_length)
+void speck::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double*    signal,
+                                                       const long signal_length)
 {
   long index;
 

@@ -12,7 +12,7 @@ class CDF97
 {
 public:
     template< typename T >
-    int assign_data( const T* data, long x, long y, long z  = 1 );
+    int assign_data( const T* data, const long x, const long y, const long z  = 1 );
     int dwt2d();            // 1) calculates the number of levels of dwt,
                             // 2) subtract mean of the data,
                             // 3) perform the actual dwt.
@@ -36,20 +36,20 @@ private:
     // Private methods helping DWT.
     //
     void m_calc_mean();     // calculate m_data_mean from m_data_buf
-    void m_dwt2d_one_level( double* plane, long len_x, long len_y ); 
+    void m_dwt2d_one_level( double* plane, const long len_x, const long len_y ); 
                             // Perform one level of 2D dwt on a given plane (dim_x, dim_y),
                             // specifically on its top left (len_x, len_y) subset.
-    void m_idwt2d_one_level( double* plane, long len_x, long len_y ); 
+    void m_idwt2d_one_level( double* plane, const long len_x, const long len_y ); 
                             // Perform one level of 2D idwt on a given plane (dim_x, dim_y),
                             // specifically on its top left (len_x, len_y) subset.
-    void m_gather_even( double* dest, const double* orig, long len ) const;
-    void m_gather_odd(  double* dest, const double* orig, long len ) const;
+    void m_gather_even( double* dest, const double* orig, const long len ) const;
+    void m_gather_odd(  double* dest, const double* orig, const long len ) const;
                             // Separate even and odd indexed elements to be at the front 
                             // and back of the dest array. Note: sufficient memory space 
                             // should be allocated by the caller.
                             // Note 2: two versions for even and odd length input.
-    void m_scatter_even( double* dest, const double* orig, long len ) const;
-    void m_scatter_odd(  double* dest, const double* orig, long len ) const;
+    void m_scatter_even( double* dest, const double* orig, const long len ) const;
+    void m_scatter_odd(  double* dest, const double* orig, const long len ) const;
                             // Interleave low and high pass elements to be at even and
                             // odd positions of the dest array. Note: sufficient memory 
                             // space should be allocated by the caller.
@@ -58,10 +58,10 @@ private:
     //
     // Methods from QccPack, keep their original name.
     //
-    void QccWAVCDF97AnalysisSymmetricEvenEven( double* signal, long signal_length);
-    void QccWAVCDF97AnalysisSymmetricOddEven(  double* signal, long signal_length);
-    void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, long signal_length);
-    void QccWAVCDF97SynthesisSymmetricOddEven( double* signal, long signal_length);
+    void QccWAVCDF97AnalysisSymmetricEvenEven( double* signal, const long signal_length);
+    void QccWAVCDF97AnalysisSymmetricOddEven(  double* signal, const long signal_length);
+    void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, const long signal_length);
+    void QccWAVCDF97SynthesisSymmetricOddEven( double* signal, const long signal_length);
 
 
     //
