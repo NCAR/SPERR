@@ -299,6 +299,61 @@ void speck::CDF97::m_scatter_odd( double* dest, const double* orig, const long l
 }
 
 
+//                 Z
+//                /
+//               /
+//              /---------
+//       cut_z /        /|
+//            /        / |
+//            |-------|  |---------X
+//            |       |  /
+//      cut_y |       | /
+//            |       |/
+//            |--------
+//            |  cut_x
+//            |
+//            Y
+
+void speck::CDF97::m_cut_transpose_XtoZ( double* dest, const long cut_len_x, const long cut_len_y, 
+                                                       const long cut_len_z ) const
+{
+    // This operation essentially swaps the X and Z indices, so we have
+    const long dest_len_x = cut_len_z;
+    const long dest_len_y = cut_len_y;
+    const long dest_len_z = cut_len_x;
+
+    const long plane_size = m_dim_x * m_dim_y;
+    long counter = 0;
+    for( long z = 0; z < dest_len_z; z++ )
+        for( long y = 0; y < dest_len_y; y++ )
+            for( long x = 0; x < dest_len_x; x++ )
+            {
+                const long src_x   = z;
+                const long src_y   = y;
+                const long src_z   = x;
+                const long src_idx = src_z * plane_size + src_y * m_dim_x + src_x;
+                dest[ counter++ ]  = m_data_buf[ src_idx ];
+            }
+}
+void speck::CDF97::m_transpose_put_back_ZtoX( const double* buf, const long len_x, 
+                                              const long len_y,  const long len_z ) const
+{
+    // This operation essentially swaps the X and Z indices, so we have
+    const long plane_size = m_dim_x * m_dim_y;
+    long counter = 0;
+
+    for( long z = 0; z < len_z; z++ )
+        for( long y = 0; y < len_y; y++ )
+            for( long x = 0; x < len_x; x++ )
+            {
+                const long dest_x      = z;
+                const long dest_y      = y;
+                const long dest_z      = x;
+                const long dest_idx    = dest_z * plane_size + dest_y * m_dim_x + dest_x;
+                m_data_buf[ dest_idx ] = buf[ counter++ ];
+            }
+}
+
 //
 // Methods from QccPack
 //
