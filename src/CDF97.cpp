@@ -155,8 +155,9 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, const long len_x, const lon
     }
 
     // Second, perform DWT along Y for every column
-    // Note, I've tested that it is slightly slower to transpose the plane
-    // and then perform the transforms, on both a MacBook and a RaspberryPi.
+    // Note, I've tested that up to 1024^2 planes it is actually slightly slower to 
+    // transpose the plane and then perform the transforms.
+    // This was consistent on both a MacBook and a RaspberryPi 3.
 
     if( len_y % 2 == 0 )    // Even length
     {
