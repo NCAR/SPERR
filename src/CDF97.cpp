@@ -315,8 +315,8 @@ void speck::CDF97::m_scatter_odd( double* dest, const double* orig, const long l
 //            |
 //            Y
 
-void speck::CDF97::m_cut_transpose_XtoZ( double* dest, const long cut_len_x, const long cut_len_y, 
-                                                       const long cut_len_z ) const
+void speck::CDF97::m_cut_transpose_XtoZ( double*    dest,      const long cut_len_x, 
+                                         const long cut_len_y, const long cut_len_z ) const
 {
     // This operation essentially swaps the X and Z indices, so we have
     const long dest_len_x = cut_len_z;

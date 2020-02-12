@@ -12,7 +12,7 @@ endif
 all:
 
 SPECK.o: SPECK.cpp speck_helper.o
-	$(CXX) $(CXXFLAGS) $^ -c -o $@
+	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 CDF97.o: CDF97.cpp speck_helper.o
 	$(CXX) $(CXXFLAGS) $< -c -o $@

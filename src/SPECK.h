@@ -15,17 +15,27 @@ enum class SPECKSetType : unsigned char
     TypeS
 };
 
+
+//
+// Auxiliary class to hold a SPECK Set
+//
+#define FOUR_BYTE_SPECK_SET
 class SPECKSet2D
 {
 public:
+
+#ifdef FOUR_BYTE_SPECK_SET
+    using INT = uint32_t;   // unsigned int
+#else
+    using INT = int64_t;    // long
+#endif
+    
     // Member data
-    long start_x      = 0;
-    long start_y      = 0;
-    long length_x     = 0;   
-    long length_y     = 0;
-    int  part_level   = 0;  // which partition level is this set at?
-                            // Since there'll be a large number of these sets generated,
-                            // let's use int here (to reduce 8 bytes for this structure).
+    INT start_x       = 0;
+    INT start_y       = 0;
+    INT length_x      = 0;   
+    INT length_y      = 0;
+    INT part_level    = 0;  // which partition level is this set at (starting from zero)?
     bool significance = false;
     SPECKSetType type;
 
@@ -36,6 +46,7 @@ public:
     SPECKSet2D( SPECKSetType t );
     bool is_single_pixel() const;
 };
+
 
 //
 // Main SPECK class
