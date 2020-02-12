@@ -18,6 +18,8 @@ enum class SPECKSetType : unsigned char
 
 //
 // Auxiliary class to hold a SPECK Set
+//   Comment out the following macro will double the size of SPECKSet2D
+//   from 24 bytes to 48 bytes.
 //
 #define FOUR_BYTE_SPECK_SET
 class SPECKSet2D
@@ -31,11 +33,11 @@ public:
 #endif
     
     // Member data
-    INT start_x       = 0;
-    INT start_y       = 0;
-    INT length_x      = 0;   
-    INT length_y      = 0;
-    INT part_level    = 0;  // which partition level is this set at (starting from zero)?
+    INT  start_x      = 0;
+    INT  start_y      = 0;
+    INT  length_x     = 0;   
+    INT  length_y     = 0;
+    INT  part_level   = 0;  // which partition level is this set at (starting from zero)?
     bool significance = false;
     SPECKSetType type;
 
