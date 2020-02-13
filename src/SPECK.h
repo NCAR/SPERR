@@ -74,6 +74,9 @@ private:
                           // Returns the maximum magnitude of all encountered values.
     long m_num_of_part_levels_2d() const; 
                           // How many partition levels are there given the 2D dimensions?
+    void m_fill_significance_map( std::vector<bool>& map, const double threshold ) const;
+                          // Fill the significance map according to threshold.
+                          // Note: map should already have its space allocated.
 
 
     //

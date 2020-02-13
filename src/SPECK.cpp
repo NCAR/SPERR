@@ -47,15 +47,33 @@ int speck::SPECK::speck2d()
     I.length_y   = m_dim_y;
 
     // Get ready for the quantization loop!  L1598 of speck.c
-    std::vector<bool> significance_map( num_of_vals, false );  // initialized to be insignificant
+    std::vector<bool> significance_map( num_of_vals );
     double threshold  = std::pow( 2.0, double(max_coefficient_bits) );
 
 
 
     return 0;
 }
+
+    
+// Calculate the number of partition levels in a plane.
+long speck::SPECK::m_num_of_part_levels_2d() const
+{
+    long num_of_lev = 1;    // Even no partition is performed, there's already one level.
+    long dim_x = m_dim_x, dim_y = m_dim_y;
+    while( dim_x > 1 || dim_y > 1 )
+    {
+        num_of_lev++;
+        dim_x -= dim_x / 2;
+        dim_y -= dim_y / 2;
+    }
+    return num_of_lev;
+}
     
     
+//
+// Private methods
+//
 double speck::SPECK::m_make_positive( std::vector<bool>& sign_array ) const
 {
     assert( m_coeff_buf.get() != nullptr );
@@ -75,21 +93,6 @@ double speck::SPECK::m_make_positive( std::vector<bool>& sign_array ) const
     }
 
     return max;
-}
-
-    
-// Calculate the number of partition levels in a plane.
-long speck::SPECK::m_num_of_part_levels_2d() const
-{
-    long num_of_lev = 1;    // Even no partition is performed, there's already one level.
-    long dim_x = m_dim_x, dim_y = m_dim_y;
-    while( dim_x > 1 || dim_y > 1 )
-    {
-        num_of_lev++;
-        dim_x -= dim_x / 2;
-        dim_y -= dim_y / 2;
-    }
-    return num_of_lev;
 }
 
 
@@ -132,6 +135,16 @@ void speck::SPECK::m_calc_set_size_2d( SPECKSet2D& set, long subband ) const
         set.start_y  = low_len_y;
         set.length_y = high_len_y;
     }
+}
+
+
+void speck::SPECK::m_fill_significance_map( std::vector<bool>&  significance_map, 
+                                            const double        threshold ) const
+{
+    assert( significance_map.size() == m_dim_x * m_dim_y * m_dim_z );
+
+    for( long i = 0; i < significance_map.size(); i++ )
+        significance_map[i] = (m_coeff_buf[i] >= threshold);
 }
 
 
