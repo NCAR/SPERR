@@ -475,6 +475,7 @@ static int QccSPECKInputOutputSetSignificance(QccSPECKSet *current_set,
           }
           
           symbol = (current_set->significance == QCCSPECK_SIGNIFICANT);
+printf("set significance = %d\n", symbol );
           
           return_value = QccENTArithmeticEncode(&symbol, 1, model, buffer);
 
@@ -491,9 +492,7 @@ static int QccSPECKInputOutputSetSignificance(QccSPECKSet *current_set,
   }
   else if (model->current_context != QCCSPECK_CONTEXT_NOCODE)
   {
-        if (QccENTArithmeticDecode(buffer,
-                                   model,
-                                   &symbol, 1))
+        if (QccENTArithmeticDecode(buffer, model, &symbol, 1))
           return(2);
         
         current_set->significance =
@@ -520,6 +519,8 @@ static int QccSPECKInputOutputSign(char *sign,
   if (buffer->type == QCCBITBUFFER_OUTPUT)
   {
       symbol = (*sign == QCCSPECK_POSITIVE);
+printf("pixel sign = %d\n", symbol );
+
       *coefficient -= threshold;
       
       return_value = QccENTArithmeticEncode(&symbol, 1, model, buffer);
@@ -774,6 +775,7 @@ static int QccSPECKCodeS(QccListNode *current_set_node,
 
       current_subset = (QccSPECKSet *)(current_subset_node->value);
       prior_significance = current_subset->significance;
+      /* seems empty set occurs when this set is marked by ''mask'' */
       if ((prior_significance != QCCSPECK_INSIGNIFICANT) &&
           (prior_significance != QCCSPECK_EMPTYSET))
         significance_cnt++;
@@ -802,7 +804,8 @@ static int QccSPECKProcessS(QccListNode *current_set_node,
   QccSPECKSet*  current_set  = (QccSPECKSet *)(current_set_node->value);
   QccList*      current_list = (QccList *)(current_list_node->value);
 
-  /* if the current set is empty, then put it in garbage list */
+  /* if the current set is empty, then put it in the garbage list and return! */
+  /* seems empty set occurs when this set is marked by ''mask'' */
   if (current_set->significance == QCCSPECK_EMPTYSET)
     {
       if (QccListRemoveNode(current_list, current_set_node))
@@ -841,6 +844,8 @@ static int QccSPECKProcessS(QccListNode *current_set_node,
           QccErrorAddMessage("(QccSPECKProcessS): Error calling QccListRemoveNode()");
           return(1);
         }
+      /* temporarily put current_set_node in garbage. It will be rescued either in line 
+         873 or inside of CodeS at line 886. */
       if (QccListAppendNode(garbage, current_set_node))
         {
           QccErrorAddMessage("(QccSPECKProcessS): Error calling QccListAppendNode()");
@@ -850,10 +855,10 @@ static int QccSPECKProcessS(QccListNode *current_set_node,
       if (QccSPECKSetIsPixel(current_set)) /* Current set is one pixel. */
       {
           current_set->significance = QCCSPECK_NEWLY_SIGNIFICANT;
-          return_value = QccSPECKInputOutputSign(&sign_array
+          return_value = QccSPECKInputOutputSign(&sign_array              /* sign is output */
                                                  [current_set->origin_row]
                                                  [current_set->origin_col],
-                                                 &coefficients->matrix
+       /* coefficient is reduced by threshold */ &coefficients->matrix
                                                  [current_set->origin_row]
                                                  [current_set->origin_col],
                                                  threshold,

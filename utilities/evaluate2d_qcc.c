@@ -51,14 +51,14 @@ int main( int argc, char** argv )
         return 1;
     }
     const char* input_name    = argv[1];
-    const char* output_name   = "stream.tmp";
+    const char* output_name   = "tmp/stream.tmp";
     int         num_of_cols   = atoi( argv[2] );
     int         num_of_rows   = atoi( argv[3] );
     const long  num_of_vals   = num_of_cols * num_of_rows;
     const long  num_of_bytes  = sizeof(float) * num_of_vals;
     const float cratio        = 20.0f;  /* compression ratio */
     const int   total_bits    = (int)(8.0f * num_of_bytes / cratio);
-    int         num_of_levels = 5;
+    int         num_of_levels = 1;
 
     /*
      * Stage 1: Encoding
