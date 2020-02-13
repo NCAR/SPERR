@@ -475,7 +475,7 @@ static int QccSPECKInputOutputSetSignificance(QccSPECKSet *current_set,
           }
           
           symbol = (current_set->significance == QCCSPECK_SIGNIFICANT);
-printf("sorting: set significance = %d\n", symbol );
+          printf("sorting: set significance = %d\n", symbol );
           
           return_value = QccENTArithmeticEncode(&symbol, 1, model, buffer);
 
