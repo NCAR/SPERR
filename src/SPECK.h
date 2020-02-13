@@ -15,6 +15,13 @@ enum class SPECKSetType : unsigned char
     TypeS
 };
 
+enum class Significance : unsigned char
+{
+    Insignificant,
+    Significant,
+    Newly_Significant
+};
+
 
 //
 // Auxiliary class to hold a SPECK Set
@@ -38,7 +45,7 @@ public:
     INT  length_x     = 0;   
     INT  length_y     = 0;
     INT  part_level   = 0;  // which partition level is this set at (starting from zero)?
-    bool significance = false;
+    Significance sig  = Significance::Insignificant;
     SPECKSetType type;
 
     //
