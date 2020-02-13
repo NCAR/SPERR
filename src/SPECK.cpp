@@ -31,20 +31,18 @@ int speck::SPECK::speck2d()
     long num_of_xform_levels  = speck::calc_num_of_xform_levels( std::min( m_dim_x, m_dim_y) );
 
     // Still preparing: lists and sets
-    std::vector< SPECKSet2D >               LSP;
-    std::vector< std::vector<SPECKSet2D> >  LIS( num_of_part_levels );
+    m_LIS_2d.resize( num_of_part_levels );
 
     SPECKSet2D root( SPECKSetType::TypeS );
     root.part_level = num_of_xform_levels - 1;
     m_calc_set_size_2d( root, 0 );      // Populate other data fields of root.
-    LIS[ root.part_level ].push_back( root );
+    m_LIS_2d[ root.part_level ].push_back( root );
 
-    SPECKSet2D   I( SPECKSetType::TypeI );
-    I.part_level = num_of_xform_levels - 1;
-    I.start_x    = root.length_x;
-    I.start_y    = root.length_y;
-    I.length_x   = m_dim_x;
-    I.length_y   = m_dim_y;
+    m_I_2d.part_level = num_of_xform_levels - 1;
+    m_I_2d.start_x    = root.length_x;
+    m_I_2d.start_y    = root.length_y;
+    m_I_2d.length_x   = m_dim_x;
+    m_I_2d.length_y   = m_dim_y;
 
     // Get ready for the quantization loop!  L1598 of speck.c
     std::vector<bool> significance_map( num_of_vals );
@@ -158,6 +156,5 @@ bool speck::SPECKSet2D::is_single_pixel() const
 
 // Constructor
 speck::SPECKSet2D::SPECKSet2D( SPECKSetType t )
-{
-    type = t;
-}
+                 : type( t )
+{ }

@@ -46,7 +46,7 @@ public:
     INT  length_y     = 0;
     INT  part_level   = 0;  // which partition level is this set at (starting from zero)?
     Significance sig  = Significance::Insignificant;
-    SPECKSetType type;
+    const SPECKSetType type;
 
     //
     // Member functions
@@ -93,6 +93,11 @@ private:
     buffer_type m_coeff_buf = nullptr;              // All coefficients are kept here
     double      m_data_mean = 0.0;                  // Mean subtracted before DWT
     long m_dim_x = 0, m_dim_y = 0, m_dim_z = 0;     // Volume dims
+
+    // Lists and sets specifically for 2D encoding
+    std::vector< SPECKSet2D >               m_LSP_2d;
+    std::vector< std::vector<SPECKSet2D> >  m_LIS_2d;
+    SPECKSet2D   m_I_2d = SPECKSet2D( SPECKSetType::TypeI );
 };
 
 };
