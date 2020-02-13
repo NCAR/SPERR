@@ -1,47 +1,45 @@
-#include "SPECK.h"
-#include "speck_helper.h"
+#include "SPECK2D.h"
 #include <cassert>
 #include <cmath>
 
 
-void speck::SPECK::assign_coeffs( double* ptr )
+void speck::SPECK2D::assign_coeffs( double* ptr )
 {
     m_coeff_buf.reset( ptr );
 }
 
-void speck::SPECK::assign_mean_dims( double m, long dx, long dy, long dz )
+void speck::SPECK2D::assign_mean_dims( double m, long dx, long dy )
 {
     m_data_mean = m;
     m_dim_x     = dx;
     m_dim_y     = dy;
-    m_dim_z     = dz;
 }
     
-int speck::SPECK::speck2d()
+int speck::SPECK2D::speck2d()
 {
-    assert( m_coeff_buf != nullptr );                     // sanity check
-    assert( m_dim_x > 0 && m_dim_y > 0 && m_dim_z > 0 );  // sanity check
+    assert( m_coeff_buf != nullptr );               // sanity check
+    assert( m_dim_x > 0 && m_dim_y > 0 );           // sanity check
 
     // Let's do some preparation: gather some values
-    long num_of_vals          = m_dim_x * m_dim_y * m_dim_z;
+    long num_of_vals          = m_dim_x * m_dim_y;
     std::vector<bool>  sign_array;
     auto max_coeff            = m_make_positive( sign_array );
     long max_coefficient_bits = long(std::log2(max_coeff));
-    long num_of_part_levels   = m_num_of_part_levels_2d();
+    long num_of_part_levels   = m_num_of_part_levels();
     long num_of_xform_levels  = speck::calc_num_of_xform_levels( std::min( m_dim_x, m_dim_y) );
 
     // Still preparing: lists and sets
-    m_LIS_2d.resize( num_of_part_levels );
+    m_LIS.resize( num_of_part_levels );
     SPECKSet2D root( SPECKSetType::TypeS );
     root.part_level = num_of_xform_levels - 1;
-    m_calc_set_size_2d( root, 0 );      // Populate other data fields of root.
-    m_LIS_2d[ root.part_level ].push_back( root );
+    m_calc_set_size( root, 0 );      // Populate other data fields of root.
+    m_LIS[ root.part_level ].push_back( root );
 
-    m_I_2d.part_level = num_of_xform_levels - 1;
-    m_I_2d.start_x    = root.length_x;
-    m_I_2d.start_y    = root.length_y;
-    m_I_2d.length_x   = m_dim_x;
-    m_I_2d.length_y   = m_dim_y;
+    m_I.part_level = num_of_xform_levels - 1;
+    m_I.start_x    = root.length_x;
+    m_I.start_y    = root.length_y;
+    m_I.length_x   = m_dim_x;
+    m_I.length_y   = m_dim_y;
 
     // Get ready for the quantization loop!  L1598 of speck.c
     m_significance_map.resize( num_of_vals );
@@ -56,25 +54,25 @@ int speck::SPECK::speck2d()
 //
 // Private methods
 //
-void speck::SPECK::m_sorting_pass_2d( const double threshold )
+void speck::SPECK2D::m_sorting_pass( const double threshold )
 {
 
 
 }
 
 
-void speck::SPECK::m_process_S_2d( SPECKSet2D& set )
+void speck::SPECK2D::m_process_S( SPECKSet2D& set )
 {
 
 }
 
 
 // It outputs by printing out the value right now.
-void speck::SPECK::m_output_set_significance_2d( SPECKSet2D& set ) const
+void speck::SPECK2D::m_output_set_significance( SPECKSet2D& set ) const
 {
     // Sanity check
     assert( set.type == SPECKSetType::TypeS );
-    assert( m_significance_map.size() == m_dim_x * m_dim_y * m_dim_z );
+    assert( m_significance_map.size() == m_dim_x * m_dim_y );
 
     set.sig = Significance::Insignificant;
     for( long y = set.start_y; y < (set.start_y + set.length_y); y++ )
@@ -86,7 +84,7 @@ void speck::SPECK::m_output_set_significance_2d( SPECKSet2D& set ) const
 
     
 // Calculate the number of partition levels in a plane.
-long speck::SPECK::m_num_of_part_levels_2d() const
+long speck::SPECK2D::m_num_of_part_levels() const
 {
     long num_of_lev = 1;    // Even no partition is performed, there's already one level.
     long dim_x = m_dim_x, dim_y = m_dim_y;
@@ -100,10 +98,10 @@ long speck::SPECK::m_num_of_part_levels_2d() const
 }
 
 
-double speck::SPECK::m_make_positive( std::vector<bool>& sign_array ) const
+double speck::SPECK2D::m_make_positive( std::vector<bool>& sign_array ) const
 {
     assert( m_coeff_buf.get() != nullptr );
-    long num_of_vals = m_dim_x * m_dim_y * m_dim_z;
+    long num_of_vals = m_dim_x * m_dim_y ;
     assert( num_of_vals > 0 );
     sign_array.assign( num_of_vals, true ); // Initial to represent all being positive
     double max = std::fabs( m_coeff_buf[0] );
@@ -122,7 +120,7 @@ double speck::SPECK::m_make_positive( std::vector<bool>& sign_array ) const
 }
 
 
-void speck::SPECK::m_calc_set_size_2d( SPECKSet2D& set, long subband ) const
+void speck::SPECK2D::m_calc_set_size( SPECKSet2D& set, long subband ) const
 {
     assert( subband >= 0 && subband <= 3 );
     long part_level = set.part_level;
@@ -164,9 +162,9 @@ void speck::SPECK::m_calc_set_size_2d( SPECKSet2D& set, long subband ) const
 }
 
 
-void speck::SPECK::m_update_significance_map( const double threshold )
+void speck::SPECK2D::m_update_significance_map( const double threshold )
 {
-    assert( m_significance_map.size() == m_dim_x * m_dim_y * m_dim_z );
+    assert( m_significance_map.size() == m_dim_x * m_dim_y );
 
     for( long i = 0; i < m_significance_map.size(); i++ )
         m_significance_map[i] = (m_coeff_buf[i] >= threshold);

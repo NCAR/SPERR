@@ -1,28 +1,13 @@
-#ifndef SPECK_H
-#define SPECK_H
+#ifndef SPECK2D_H
+#define SPECK2D_H
+
+#include "speck_helper.h"
 
 #include <memory>
 #include <vector>
 
 namespace speck
 {
-//
-// Helper classes
-//
-enum class SPECKSetType : unsigned char
-{
-    TypeI,
-    TypeS
-};
-
-enum class Significance : unsigned char
-{
-    Insignificant,
-    Significant,
-    Newly_Significant
-};
-
-
 //
 // Auxiliary class to hold a SPECK Set
 //   Comment out the following macro will double the size of SPECKSet2D
@@ -58,13 +43,13 @@ public:
 
 
 //
-// Main SPECK class
+// Main SPECK2D class
 //
-class SPECK
+class SPECK2D
 {
 public:
     void assign_coeffs( double* );  // Takes ownership of a chunck of memory
-    void assign_mean_dims( double, long, long, long ); 
+    void assign_mean_dims( double, long, long ); 
                                     // Accepts data mean and volume dimensions.
     int speck2d();
 
@@ -72,21 +57,16 @@ private:
     //
     // Private methods
     //
-    // Methods specific to 2D cases
-    //
-    void m_sorting_pass_2d( const double threshold );
-    void m_process_S_2d( SPECKSet2D& set );
-    void m_output_set_significance_2d( SPECKSet2D& set ) const;
-    long m_num_of_part_levels_2d() const; 
+    void m_sorting_pass( const double threshold );
+    void m_process_S( SPECKSet2D& set );
+    void m_output_set_significance( SPECKSet2D& set ) const;
+    long m_num_of_part_levels() const; 
                           // How many partition levels are there given the 2D dimensions?
-    void m_calc_set_size_2d( SPECKSet2D& set, long subband ) const;
+    void m_calc_set_size( SPECKSet2D& set, long subband ) const;
                           // What's the set size and offsets?
                           // subband = (0, 1, 2, 3)
 
     
-    //
-    // Methods can be used for both 2D and 3D cases
-    //
     double m_make_positive( std::vector<bool>& sign_array ) const; 
                           // 1) fill m_sign_array based on m_data_buf signs, and 
                           // 2) make m_data_buf containing all positive values.
@@ -101,14 +81,14 @@ private:
     using buffer_type = std::unique_ptr<double[]>;
     buffer_type m_coeff_buf = nullptr;              // All coefficients are kept here
     double      m_data_mean = 0.0;                  // Mean subtracted before DWT
-    long m_dim_x = 0, m_dim_y = 0, m_dim_z = 0;     // Volume dims
+    long m_dim_x = 0, m_dim_y = 0;                  // 2D plane dims
 
     std::vector<bool> m_significance_map;
 
     // Lists and sets specifically for 2D encoding
-    std::vector< SPECKSet2D >               m_LSP_2d;
-    std::vector< std::vector<SPECKSet2D> >  m_LIS_2d;
-    SPECKSet2D   m_I_2d = SPECKSet2D( SPECKSetType::TypeI );
+    std::vector< SPECKSet2D >               m_LSP;
+    std::vector< std::vector<SPECKSet2D> >  m_LIS;
+    SPECKSet2D                              m_I = SPECKSet2D( SPECKSetType::TypeI );
 };
 
 };

@@ -5,6 +5,26 @@
 
 namespace speck
 {
+    //
+    // Helper classes
+    //
+    enum class SPECKSetType : unsigned char
+    {
+        TypeI,
+        TypeS
+    };
+
+    enum class Significance : unsigned char
+    {
+        Insignificant,
+        Significant,
+        Newly_Significant
+    };
+
+
+    //
+    // Helper functions
+    //
     // Given a certain length, how many levels of transforms to be performed?
     long calc_num_of_xform_levels( long len );
 
