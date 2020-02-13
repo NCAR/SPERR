@@ -56,10 +56,32 @@ int speck::SPECK::speck2d()
 //
 // Private methods
 //
-void speck::SPECK::m_sorting_pass( const double threshold )
+void speck::SPECK::m_sorting_pass_2d( const double threshold )
 {
 
 
+}
+
+
+void speck::SPECK::m_process_S_2d( SPECKSet2D& set )
+{
+
+}
+
+
+// It outputs by printing out the value right now.
+void speck::SPECK::m_output_set_significance_2d( SPECKSet2D& set ) const
+{
+    // Sanity check
+    assert( set.type == SPECKSetType::TypeS );
+    assert( m_significance_map.size() == m_dim_x * m_dim_y * m_dim_z );
+
+    set.sig = Significance::Insignificant;
+    for( long y = set.start_y; y < (set.start_y + set.length_y); y++ )
+        for( long x = set.start_x; x < (set.start_x + set.length_x); x++ )
+        {
+        }
+    
 }
 
     

@@ -72,16 +72,25 @@ private:
     //
     // Private methods
     //
-    void m_sorting_pass( const double threshold );
+    // Methods specific to 2D cases
+    //
+    void m_sorting_pass_2d( const double threshold );
+    void m_process_S_2d( SPECKSet2D& set );
+    void m_output_set_significance_2d( SPECKSet2D& set ) const;
     long m_num_of_part_levels_2d() const; 
                           // How many partition levels are there given the 2D dimensions?
+    void m_calc_set_size_2d( SPECKSet2D& set, long subband ) const;
+                          // What's the set size and offsets?
+                          // subband = (0, 1, 2, 3)
+
+    
+    //
+    // Methods can be used for both 2D and 3D cases
+    //
     double m_make_positive( std::vector<bool>& sign_array ) const; 
                           // 1) fill m_sign_array based on m_data_buf signs, and 
                           // 2) make m_data_buf containing all positive values.
                           // Returns the maximum magnitude of all encountered values.
-    void m_calc_set_size_2d( SPECKSet2D& set, long subband ) const;
-                          // What's the set size and offsets?
-                          // subband = (0, 1, 2, 3)
     void m_update_significance_map( const double threshold );
                           // Update the significance map according to threshold.
 
