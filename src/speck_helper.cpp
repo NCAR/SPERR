@@ -35,8 +35,7 @@ long speck::calc_approx_detail_len( long  orig_len,   long  lev,
 }
 
 
-double speck::make_positive( double* data_buf, const long len,
-                             std::vector<bool>& sign_array   )
+double speck::make_positive( double* data_buf, long len, std::vector<bool>& sign_array   )
 {
     sign_array.assign( len, true ); // Initial to represent all being positive
     double max = std::abs( data_buf[0] );
@@ -55,8 +54,8 @@ double speck::make_positive( double* data_buf, const long len,
 }
 
 
-void speck::update_significance_map( const double* data_buf, const long len, 
-                                     const double threshold, std::vector<bool>& significance_map )
+void speck::update_significance_map( const double* data_buf, long len, double threshold, 
+                                     std::vector<bool>& significance_map )
 {
     significance_map.resize( len );
     for( long i = 0; i < len; i++ )

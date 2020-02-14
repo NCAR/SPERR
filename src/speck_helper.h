@@ -42,13 +42,13 @@ namespace speck
     // 2) make data_buf containing all positive values.
     // Returns the maximum magnitude of all encountered values.
     // Note: sign_array will be resized to have length len.
-    double make_positive( double* data_buf, const long len, std::vector<bool>& sign_array ); 
+    double make_positive( double* data_buf, long len, std::vector<bool>& sign_array ); 
 
 
     // Update the significance map according to threshold.
     // Note: significance_map will be resized to have length len.
-    void update_significance_map( const double* data_buf,  const long len, 
-                                  const double threshold,  std::vector<bool>& significance_map  );
+    void update_significance_map( const double* data_buf,  long len, double threshold,  
+                                  std::vector<bool>& significance_map  );
 };
 
 #endif
