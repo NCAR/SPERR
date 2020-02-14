@@ -66,11 +66,9 @@ private:
                           // What's the set size and offsets?
                           // subband = (0, 1, 2, 3)
 
-    
-    double m_make_positive( std::vector<bool>& sign_array ) const; 
-                          // 1) fill m_sign_array based on m_data_buf signs, and 
-                          // 2) make m_data_buf containing all positive values.
-                          // Returns the maximum magnitude of all encountered values.
+    double m_make_positive(); // 1) fill m_sign_array based on m_data_buf signs, and 
+                              // 2) make m_data_buf containing all positive values.
+                              // Returns the maximum magnitude of all encountered values.
     void m_update_significance_map( const double threshold );
                           // Update the significance map according to threshold.
 
@@ -84,8 +82,8 @@ private:
     long m_dim_x = 0, m_dim_y = 0;                  // 2D plane dims
 
     std::vector<bool> m_significance_map;
+    std::vector<bool> m_sign_array;
 
-    // Lists and sets specifically for 2D encoding
     std::vector< SPECKSet2D >               m_LSP;
     std::vector< std::vector<SPECKSet2D> >  m_LIS;
     SPECKSet2D                              m_I = SPECKSet2D( SPECKSetType::TypeI );

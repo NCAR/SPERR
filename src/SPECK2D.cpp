@@ -22,13 +22,13 @@ int speck::SPECK2D::speck2d()
 
     // Let's do some preparation: gather some values
     long num_of_vals          = m_dim_x * m_dim_y;
-    std::vector<bool>  sign_array;
-    auto max_coeff            = m_make_positive( sign_array );
+    auto max_coeff            = m_make_positive();  // also maintains m_sign_array
     long max_coefficient_bits = long(std::log2(max_coeff));
     long num_of_part_levels   = m_num_of_part_levels();
     long num_of_xform_levels  = speck::calc_num_of_xform_levels( std::min( m_dim_x, m_dim_y) );
 
     // Still preparing: lists and sets
+    m_LIS.clear();
     m_LIS.resize( num_of_part_levels );
     SPECKSet2D root( SPECKSetType::TypeS );
     root.part_level = num_of_xform_levels - 1;
@@ -98,19 +98,19 @@ long speck::SPECK2D::m_num_of_part_levels() const
 }
 
 
-double speck::SPECK2D::m_make_positive( std::vector<bool>& sign_array ) const
+double speck::SPECK2D::m_make_positive( )
 {
     assert( m_coeff_buf.get() != nullptr );
     long num_of_vals = m_dim_x * m_dim_y ;
     assert( num_of_vals > 0 );
-    sign_array.assign( num_of_vals, true ); // Initial to represent all being positive
-    double max = std::fabs( m_coeff_buf[0] );
+    m_sign_array.assign( num_of_vals, true ); // Initial to represent all being positive
+    double max = std::abs( m_coeff_buf[0] );
     for( long i = 0; i < num_of_vals; i++ )
     {
         if( m_coeff_buf[i] < 0.0 )
         {
             m_coeff_buf[i]  = -m_coeff_buf[i];
-            sign_array[i] = false;
+            m_sign_array[i] = false;
         }
         if( m_coeff_buf[i] > max )
             max = m_coeff_buf[i];
