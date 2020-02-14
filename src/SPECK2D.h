@@ -38,7 +38,7 @@ public:
     //
     // Constructor
     SPECKSet2D( SPECKSetType t );
-    bool is_single_pixel() const;
+    bool is_pixel() const;
 };
 
 

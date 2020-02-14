@@ -1,6 +1,7 @@
 #include "SPECK2D.h"
 #include <cassert>
 #include <cmath>
+#include <iostream>
 
 
 void speck::SPECK2D::assign_coeffs( double* ptr )
@@ -63,7 +64,14 @@ void speck::SPECK2D::m_sorting_pass( const double threshold )
 
 void speck::SPECK2D::m_process_S( SPECKSet2D& set )
 {
-
+    m_output_set_significance( set );   // It also keeps the significance value in the set
+    if( set.sig != Significance::Insignificant )
+    {
+        if( set.is_pixel() )
+        {
+            set.sig = Significance::Newly_Significant;
+        }
+    }
 }
 
 
@@ -76,9 +84,24 @@ void speck::SPECK2D::m_output_set_significance( SPECKSet2D& set ) const
 
     set.sig = Significance::Insignificant;
     for( long y = set.start_y; y < (set.start_y + set.length_y); y++ )
+    {
         for( long x = set.start_x; x < (set.start_x + set.length_x); x++ )
         {
+            long idx = y * m_dim_x + x;
+            if( m_significance_map[ idx ] )
+            {
+                set.sig = Significance::Significant;
+                break;
+            }
         }
+        if( set.sig == Significance::Significant )
+            break;
+    }
+
+    if( set.sig == Significance::Significant )
+        std::cout << "sorting: set significance = 1" << std::endl;
+    else
+        std::cout << "sorting: set significance = 0" << std::endl;
     
 }
 
@@ -174,7 +197,7 @@ void speck::SPECK2D::m_update_significance_map( const double threshold )
 //
 // Class SPECKSet2D
 //
-bool speck::SPECKSet2D::is_single_pixel() const
+bool speck::SPECKSet2D::is_pixel() const
 {
     return ( length_x == 1 && length_y == 1 );
 }
