@@ -66,12 +66,6 @@ private:
                           // What's the set size and offsets?
                           // subband = (0, 1, 2, 3)
 
-    double m_make_positive(); // 1) fill m_sign_array based on m_data_buf signs, and 
-                              // 2) make m_data_buf containing all positive values.
-                              // Returns the maximum magnitude of all encountered values.
-    void m_update_significance_map( const double threshold );
-                          // Update the significance map according to threshold.
-
 
     //
     // Private data members
