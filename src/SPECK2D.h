@@ -57,9 +57,10 @@ private:
     //
     // Private methods
     //
-    void m_sorting_pass( const double threshold );
+    void m_sorting_pass( double threshold );
     void m_process_S( SPECKSet2D& set );
     void m_output_set_significance( SPECKSet2D& set ) const;
+    void m_output_pixel_sign( const SPECKSet2D& pixel, double threshold );
     long m_num_of_part_levels() const; 
                           // How many partition levels are there given the 2D dimensions?
     void m_calc_set_size( SPECKSet2D& set, long subband ) const;

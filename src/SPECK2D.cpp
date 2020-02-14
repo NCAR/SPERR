@@ -31,6 +31,9 @@ int speck::SPECK2D::speck2d()
     // Still preparing: lists and sets
     m_LIS.clear();
     m_LIS.resize( num_of_part_levels );
+    for( auto& v : m_LIS )  // Avoid frequent memory allocations.
+        v.reserve( 8 );
+    m_LSP.reserve( 8 );
     SPECKSet2D root( SPECKSetType::TypeS );
     root.part_level = num_of_xform_levels - 1;
     m_calc_set_size( root, 0 );      // Populate other data fields of root.
@@ -55,7 +58,7 @@ int speck::SPECK2D::speck2d()
 //
 // Private methods
 //
-void speck::SPECK2D::m_sorting_pass( const double threshold )
+void speck::SPECK2D::m_sorting_pass( double threshold )
 {
 
 
@@ -103,6 +106,21 @@ void speck::SPECK2D::m_output_set_significance( SPECKSet2D& set ) const
     else
         std::cout << "sorting: set significance = 0" << std::endl;
     
+}
+
+
+// It outputs by printing out the value right now.
+void speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel, double threshold )
+{
+    auto x   = pixel.start_x;
+    auto y   = pixel.start_y;
+    auto idx = y * m_dim_x * x;
+    if( m_sign_array[ idx ] )
+        std::cout << "sorting: pixel sign = 1" << std::endl;
+    else
+        std::cout << "sorting: pixel sign = 0" << std::endl;
+
+    m_coeff_buf[ idx ] -= threshold;
 }
 
     

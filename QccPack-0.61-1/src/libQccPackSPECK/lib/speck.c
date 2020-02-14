@@ -519,7 +519,7 @@ static int QccSPECKInputOutputSign(char *sign,
   if (buffer->type == QCCBITBUFFER_OUTPUT)
   {
       symbol = (*sign == QCCSPECK_POSITIVE);
-printf("sorting: pixel sign       = %d\n", symbol );
+      printf("sorting: pixel sign       = %d\n", symbol );
 
       *coefficient -= threshold;
       
