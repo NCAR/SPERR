@@ -46,8 +46,7 @@ int speck::SPECK2D::speck2d()
     m_I.length_y   = m_dim_y;
 
     // Get ready for the quantization loop!  L1598 of speck.c
-    m_significance_map.resize( num_of_vals );
-    double threshold  = std::pow( 2.0, double(max_coefficient_bits) );
+    m_threshold = std::pow( 2.0, double(max_coefficient_bits) );
 
 
 
@@ -58,7 +57,7 @@ int speck::SPECK2D::speck2d()
 //
 // Private methods
 //
-void speck::SPECK2D::m_sorting_pass( double threshold )
+void speck::SPECK2D::m_sorting_pass( )
 {
 
 
@@ -67,14 +66,26 @@ void speck::SPECK2D::m_sorting_pass( double threshold )
 
 void speck::SPECK2D::m_process_S( SPECKSet2D& set )
 {
-    m_output_set_significance( set );   // It also keeps the significance value in the set
+    m_output_set_significance( set );   // It also assigns the significance value to the set
     if( set.sig != Significance::Insignificant )
     {
         if( set.is_pixel() )
         {
             set.sig = Significance::Newly_Significant;
+            m_output_pixel_sign( set );
+            m_LSP.push_back( set );
         }
     }
+    else
+    {
+        m_code_S( set );
+    }
+}
+
+
+void speck::SPECK2D::m_code_S( SPECKSet2D& set )
+{
+
 }
 
 
@@ -110,7 +121,7 @@ void speck::SPECK2D::m_output_set_significance( SPECKSet2D& set ) const
 
 
 // It outputs by printing out the value right now.
-void speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel, double threshold )
+void speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel )
 {
     auto x   = pixel.start_x;
     auto y   = pixel.start_y;
@@ -120,7 +131,7 @@ void speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel, double thresh
     else
         std::cout << "sorting: pixel sign = 0" << std::endl;
 
-    m_coeff_buf[ idx ] -= threshold;
+    m_coeff_buf[ idx ] -= m_threshold;
 }
 
     

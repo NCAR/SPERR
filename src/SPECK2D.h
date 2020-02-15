@@ -57,10 +57,11 @@ private:
     //
     // Private methods
     //
-    void m_sorting_pass( double threshold );
+    void m_sorting_pass( );
     void m_process_S( SPECKSet2D& set );
+    void m_code_S(    SPECKSet2D& set );
     void m_output_set_significance( SPECKSet2D& set ) const;
-    void m_output_pixel_sign( const SPECKSet2D& pixel, double threshold );
+    void m_output_pixel_sign( const SPECKSet2D& pixel );
     long m_num_of_part_levels() const; 
                           // How many partition levels are there given the 2D dimensions?
     void m_calc_set_size( SPECKSet2D& set, long subband ) const;
@@ -72,9 +73,10 @@ private:
     // Private data members
     //
     using buffer_type = std::unique_ptr<double[]>;
-    buffer_type m_coeff_buf = nullptr;              // All coefficients are kept here
-    double      m_data_mean = 0.0;                  // Mean subtracted before DWT
-    long m_dim_x = 0, m_dim_y = 0;                  // 2D plane dims
+    buffer_type m_coeff_buf = nullptr;      // All coefficients are kept here
+    double      m_data_mean = 0.0;          // Mean subtracted before DWT
+    double      m_threshold = 0.0;          // Threshold that's used for an iteration
+    long m_dim_x = 0, m_dim_y = 0;          // 2D plane dims
 
     std::vector<bool> m_significance_map;
     std::vector<bool> m_sign_array;
