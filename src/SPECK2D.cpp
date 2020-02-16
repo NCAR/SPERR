@@ -144,14 +144,10 @@ void speck::SPECK2D::m_partition_S( const SPECKSet2D& set, std::vector<SPECKSet2
 // It outputs by printing out the value right now.
 void speck::SPECK2D::m_output_set_significance( SPECKSet2D& set ) const
 {
-    // Sanity check
-    assert( set.type == SPECKSetType::TypeS );
-    assert( m_significance_map.size() == m_dim_x * m_dim_y );
-
     set.signif = Significance::Insig;
-    for( long y = set.start_y; y < (set.start_y + set.length_y); y++ )
+    for( auto y = set.start_y; y < (set.start_y + set.length_y); y++ )
     {
-        for( long x = set.start_x; x < (set.start_x + set.length_x); x++ )
+        for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ )
         {
             long idx = y * m_dim_x + x;
             if( m_significance_map[ idx ] )
