@@ -844,8 +844,7 @@ static int QccSPECKProcessS(QccListNode *current_set_node,
           QccErrorAddMessage("(QccSPECKProcessS): Error calling QccListRemoveNode()");
           return(1);
         }
-      /* temporarily put current_set_node in garbage. It will be rescued either in line 
-         873 or inside of CodeS at line 886. */
+      /* temporarily put current_set_node in garbage. It will be rescued either in line 880 */ 
       if (QccListAppendNode(garbage, current_set_node))
         {
           QccErrorAddMessage("(QccSPECKProcessS): Error calling QccListAppendNode()");

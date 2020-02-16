@@ -20,7 +20,9 @@ namespace speck
     {
         Insignificant,
         Significant,
-        Newly_Significant
+        NewlySignificant,
+        Empty,
+        Garbage     // Garbage marked sets will be discarded.
     };
 
 

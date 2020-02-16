@@ -67,18 +67,20 @@ void speck::SPECK2D::m_sorting_pass( )
 void speck::SPECK2D::m_process_S( SPECKSet2D& set )
 {
     m_output_set_significance( set );   // It also assigns the significance value to the set
-    if( set.sig != Significance::Insignificant )
+    if( set.sig == Significance::Significant || set.sig == Significance::NewlySignificant )
     {
         if( set.is_pixel() )
         {
-            set.sig = Significance::Newly_Significant;
+            set.sig = Significance::NewlySignificant;
             m_output_pixel_sign( set );
-            m_LSP.push_back( set );
+            m_LSP.push_back( set );             // A copy is saved to m_LSP.
+            set.sig = Significance::Garbage;    // This set will be discarded.
         }
     }
     else
     {
         m_code_S( set );
+        set.sig = Significance::Garbage;        // This set will be discarded.
     }
 }
 
