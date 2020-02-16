@@ -18,11 +18,10 @@ namespace speck
 
     enum class Significance : unsigned char
     {
-        Insignificant,
-        Significant,
-        NewlySignificant,
+        Insig,
+        Sig,
+        NewlySig,
         Empty,
-        Garbage     // Garbage marked sets will be discarded.
     };
 
 

@@ -67,20 +67,20 @@ void speck::SPECK2D::m_sorting_pass( )
 void speck::SPECK2D::m_process_S( SPECKSet2D& set )
 {
     m_output_set_significance( set );   // It also assigns the significance value to the set
-    if( set.sig == Significance::Significant || set.sig == Significance::NewlySignificant )
+    if( set.signif == Significance::Sig || set.signif == Significance::NewlySig )
     {
         if( set.is_pixel() )
         {
-            set.sig = Significance::NewlySignificant;
+            set.signif = Significance::NewlySig;
             m_output_pixel_sign( set );
-            m_LSP.push_back( set );             // A copy is saved to m_LSP.
-            set.sig = Significance::Garbage;    // This set will be discarded.
+            m_LSP.push_back( set ); // A copy is saved to m_LSP.
+            set.garbage = true;     // This set will be discarded.
         }
     }
     else
     {
         m_code_S( set );
-        set.sig = Significance::Garbage;        // This set will be discarded.
+        set.garbage = true;         // This set will be discarded.
     }
 }
 
@@ -148,7 +148,7 @@ void speck::SPECK2D::m_output_set_significance( SPECKSet2D& set ) const
     assert( set.type == SPECKSetType::TypeS );
     assert( m_significance_map.size() == m_dim_x * m_dim_y );
 
-    set.sig = Significance::Insignificant;
+    set.signif = Significance::Insig;
     for( long y = set.start_y; y < (set.start_y + set.length_y); y++ )
     {
         for( long x = set.start_x; x < (set.start_x + set.length_x); x++ )
@@ -156,15 +156,15 @@ void speck::SPECK2D::m_output_set_significance( SPECKSet2D& set ) const
             long idx = y * m_dim_x + x;
             if( m_significance_map[ idx ] )
             {
-                set.sig = Significance::Significant;
+                set.signif = Significance::Sig;
                 break;
             }
         }
-        if( set.sig == Significance::Significant )
+        if( set.signif == Significance::Sig )
             break;
     }
 
-    if( set.sig == Significance::Significant )
+    if( set.signif == Significance::Sig )
         std::cout << "sorting: set significance = 1" << std::endl;
     else
         std::cout << "sorting: set significance = 0" << std::endl;

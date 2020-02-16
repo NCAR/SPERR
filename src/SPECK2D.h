@@ -31,8 +31,9 @@ public:
     INT  length_x     = 0;   
     INT  length_y     = 0;
     INT  part_level   = 0;  // which partition level is this set at (starting from zero).
-    Significance       sig  = Significance::Insignificant;
+    Significance signif     = Significance::Insig;
     const SPECKSetType type = SPECKSetType::TypeS;
+    bool  garbage           = false;
 
     //
     // Member functions
