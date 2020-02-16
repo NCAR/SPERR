@@ -61,8 +61,8 @@ private:
     // Private methods
     //
     void m_sorting_pass( );
-    void m_process_S( SPECKSet2D& set );
-    void m_code_S(    SPECKSet2D& set );
+    void m_process_S( long idx1, long idx2 );   // idx1 and idx2 locates which set to process from m_LIS,
+    void m_code_S(    long idx1, long idx2 );   // because the choice to use vectors to represent lists.
     void m_partition_S( const SPECKSet2D& set, std::vector<SPECKSet2D>& list ) const;
                           // Partition set into 4 smaller sets, and put them in list.
                           // Note: list will be resized to 4 and contains the 4 subsets.
@@ -89,6 +89,7 @@ private:
 
     std::vector< SPECKSet2D >               m_LSP;
     std::vector< std::vector<SPECKSet2D> >  m_LIS;
+    std::vector< long >                     m_LIS_garbage_cnt;
     SPECKSet2D                              m_I = SPECKSet2D( SPECKSetType::TypeI );
 };
 

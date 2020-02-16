@@ -33,6 +33,7 @@ int speck::SPECK2D::speck2d()
     m_LIS.resize( num_of_part_levels );
     for( auto& v : m_LIS )  // Avoid frequent memory allocations.
         v.reserve( 8 );
+    m_LIS_garbage_cnt.assign( num_of_part_levels, 0 );
     m_LSP.reserve( 8 );
     SPECKSet2D root( SPECKSetType::TypeS );
     root.part_level = num_of_xform_levels - 1;
@@ -64,8 +65,9 @@ void speck::SPECK2D::m_sorting_pass( )
 }
 
 
-void speck::SPECK2D::m_process_S( SPECKSet2D& set )
+void speck::SPECK2D::m_process_S( long idx1, long idx2 )
 {
+    auto& set = m_LIS[idx1][idx2];
     m_output_set_significance( set );   // It also assigns the significance value to the set
     if( set.signif == Significance::Sig || set.signif == Significance::NewlySig )
     {
@@ -79,20 +81,22 @@ void speck::SPECK2D::m_process_S( SPECKSet2D& set )
     }
     else
     {
-        m_code_S( set );
+        //m_code_S( set );
         set.garbage = true;         // This set will be discarded.
     }
 }
 
 
-void speck::SPECK2D::m_code_S( SPECKSet2D& set )
+void speck::SPECK2D::m_code_S( long idx1, long idx2 )
 {
+    auto& set = m_LIS[idx1][idx2];
+    // TODO: use an std::array here.
     std::vector< SPECKSet2D > subsets;
     m_partition_S( set, subsets );
     for( auto& s : subsets )
     {
         m_LIS[ s.part_level ].push_back( s );
-        m_process_S( s );
+        //m_process_S( s );
     }
 }
 
