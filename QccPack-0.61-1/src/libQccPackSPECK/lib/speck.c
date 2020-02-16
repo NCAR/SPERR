@@ -565,7 +565,7 @@ static int QccSPECKPartitionSet(const QccSPECKSet *set,
 
   /* Lower right */
   new_set.type = QCCSPECK_SET_S;
-  new_set.level = set->level + 1;
+  new_set.level = set->level + 1;   /* smaller sets have bigger level numbers */
   new_set.origin_row = set->origin_row + num_rows;
   new_set.origin_col = set->origin_col + num_cols;
   new_set.num_rows = set->num_rows - num_rows;
@@ -607,7 +607,7 @@ static int QccSPECKPartitionSet(const QccSPECKSet *set,
       return(1);
     }
   
-  /* Upper right */
+  /* Top right */
   new_set.type = QCCSPECK_SET_S;
   new_set.level = set->level + 1;
   new_set.origin_row = set->origin_row;
@@ -629,7 +629,7 @@ static int QccSPECKPartitionSet(const QccSPECKSet *set,
       return(1);
     }
   
-  /* Upper left */
+  /* Top left */
   new_set.type = QCCSPECK_SET_S;
   new_set.level = set->level + 1;
   new_set.origin_row = set->origin_row;
