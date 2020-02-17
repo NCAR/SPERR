@@ -246,13 +246,13 @@ void speck::SPECK2D::m_clean_LIS()
 {
     std::vector<SPECKSet2D> tmp;
     tmp.reserve( 8 );
-    const auto garbage = []( const SPECKSet2D& s ){ return s.garbage; };
+    const auto is_garbage = []( const SPECKSet2D& s ){ return s.garbage; };
 
     for( size_t i = 0; i < m_LIS_garbage_cnt.size(); i++ )
     {
         if( m_LIS_garbage_cnt[i] > 0 )
         {
-            std::remove_copy_if( m_LIS[i].begin(), m_LIS[i].end(), tmp.begin(), garbage );
+            std::remove_copy_if( m_LIS[i].begin(), m_LIS[i].end(), tmp.begin(), is_garbage );
             // Now tmp has all the non-garbage elements, let's do a swap!
             std::swap( m_LIS[i], tmp );
             // m_LIS[i] does not have garbage anymore!
