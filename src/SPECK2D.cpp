@@ -69,6 +69,7 @@ void speck::SPECK2D::m_sorting_pass( )
 void speck::SPECK2D::m_process_S( long idx1, long idx2 )
 {
     auto& set = m_LIS[idx1][idx2];
+
     m_output_set_significance( set );   // It also assigns the significance value to the set
     if( set.signif == Significance::Sig || set.signif == Significance::NewlySig )
     {
@@ -77,13 +78,13 @@ void speck::SPECK2D::m_process_S( long idx1, long idx2 )
             set.signif = Significance::NewlySig;
             m_output_pixel_sign( set );
             m_LSP.push_back( set ); // A copy is saved to m_LSP.
-            set.garbage = true;     // This set will be discarded.
+            set.garbage = true;     // This specific variable, set, will be discarded.
         }
     }
     else
     {
-        //m_code_S( set );
-        set.garbage = true;         // This set will be discarded.
+        m_code_S( idx1, idx2 );
+        set.garbage = true;         // This particular object will be discarded.
     }
 }
 
@@ -91,12 +92,13 @@ void speck::SPECK2D::m_process_S( long idx1, long idx2 )
 void speck::SPECK2D::m_code_S( long idx1, long idx2 )
 {
     auto& set = m_LIS[idx1][idx2];
+
     std::array< SPECKSet2D, 4 > subsets;
     m_partition_S( set, subsets );
     for( auto& s : subsets )
     {
         m_LIS[ s.part_level ].push_back( s );
-        //m_process_S( s );
+        m_process_S( s.part_level, m_LIS[s.part_level].size() - 1 );
     }
 }
 
@@ -108,7 +110,7 @@ void speck::SPECK2D::m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D
     const auto bigger_x = set.length_x - (set.length_x / 2);
     const auto bigger_y = set.length_y - (set.length_y / 2);
 
-    // Put them in the list the same order as did in QccPack.
+    // Put generated subsets in the list the same order as did in QccPack.
     SPECKSet2D& TL = list[3];               // Top left set
     TL.part_level  = set.part_level + 1;
     TL.start_x     = set.start_x;
@@ -167,7 +169,7 @@ void speck::SPECK2D::m_output_set_significance( SPECKSet2D& set ) const
 
 
 // It outputs by printing out the value right now.
-void speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel )
+void speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel ) const
 {
     auto x   = pixel.start_x;
     auto y   = pixel.start_y;

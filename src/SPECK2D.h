@@ -71,8 +71,8 @@ private:
     void m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D, 4>& list ) const;
                           // Partition set into 4 smaller sets, and put them in list.
                           // Note: list will be resized to 4 and contains the 4 subsets.
-    void m_output_set_significance( SPECKSet2D& set ) const;
-    void m_output_pixel_sign( const SPECKSet2D& pixel );
+    void m_output_set_significance( SPECKSet2D& set )   const;
+    void m_output_pixel_sign( const SPECKSet2D& pixel ) const;
     long m_num_of_part_levels() const; 
                           // How many partition levels are there given the 2D dimensions?
     void m_calc_set_size( SPECKSet2D& set, long subband ) const;
