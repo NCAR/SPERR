@@ -78,7 +78,7 @@ void speck::SPECK2D::m_process_S( long idx1, long idx2 )
             set.signif = Significance::NewlySig;
             m_output_pixel_sign( set );
             m_LSP.push_back( set ); // A copy is saved to m_LSP.
-            set.garbage = true;     // This specific variable, set, will be discarded.
+            set.garbage = true;     // This particular object will be discarded.
         }
     }
     else
@@ -237,6 +237,26 @@ void speck::SPECK2D::m_calc_set_size( SPECKSet2D& set, long subband ) const
         set.length_x = high_len_x;
         set.start_y  = low_len_y;
         set.length_y = high_len_y;
+    }
+}
+
+
+void speck::SPECK2D::m_clean_LIS()
+{
+    std::vector<SPECKSet2D> tmp;
+    tmp.reserve( 8 );
+    const auto garbage = []( const SPECKSet2D& s ){ return s.garbage; };
+
+    for( long i = 0; i < m_LIS_garbage_cnt.size(); i++ )
+    {
+        if( m_LIS_garbage_cnt[i] > 0 )
+        {
+            std::remove_copy_if( m_LIS[i].begin(), m_LIS[i].end(), tmp.begin(), garbage );
+            // Now tmp has all the non-garbage elements, let's do a swap!
+            std::swap( m_LIS[i], tmp );
+            // m_LIS[i] does not have garbage anymore!
+            m_LIS_garbage_cnt[i] = 0;
+        }
     }
 }
 

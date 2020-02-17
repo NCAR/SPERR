@@ -78,6 +78,7 @@ private:
     void m_calc_set_size( SPECKSet2D& set, long subband ) const;
                           // What's the set size and offsets?
                           // subband = (0, 1, 2, 3)
+    void m_clean_LIS();   // Clean garbage sets from m_LIS if garbage exists.
 
 
     //
