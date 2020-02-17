@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream>
 #include <array>
+#include <algorithm>
 
 
 void speck::SPECK2D::assign_coeffs( double* ptr )
@@ -247,7 +248,7 @@ void speck::SPECK2D::m_clean_LIS()
     tmp.reserve( 8 );
     const auto garbage = []( const SPECKSet2D& s ){ return s.garbage; };
 
-    for( long i = 0; i < m_LIS_garbage_cnt.size(); i++ )
+    for( size_t i = 0; i < m_LIS_garbage_cnt.size(); i++ )
     {
         if( m_LIS_garbage_cnt[i] > 0 )
         {
