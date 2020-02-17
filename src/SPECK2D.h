@@ -31,17 +31,22 @@ public:
     INT  length_x     = 0;   
     INT  length_y     = 0;
     INT  part_level   = 0;  // which partition level is this set at (starting from zero).
-    Significance signif     = Significance::Insig;
-    const SPECKSetType type = SPECKSetType::TypeS;
-    bool  garbage           = false;
+    Significance signif = Significance::Insig;
+    bool garbage        = false;
 
+private:
+    SPECKSetType m_type = SPECKSetType::TypeS;
+
+public:
     //
     // Member functions
     //
     // Constructor
     SPECKSet2D() = default;
     SPECKSet2D( SPECKSetType t );
-    bool is_pixel() const;
+
+    bool         is_pixel() const;
+    SPECKSetType type()     const;
 };
 
 
@@ -61,9 +66,9 @@ private:
     // Private methods
     //
     void m_sorting_pass( );
-    void m_process_S( long idx1, long idx2 );   // idx1 and idx2 locates which set to process from m_LIS,
+    void m_process_S( long idx1, long idx2 );   // Use indices to locate which set to process from m_LIS,
     void m_code_S(    long idx1, long idx2 );   // because the choice to use vectors to represent lists.
-    void m_partition_S( const SPECKSet2D& set, std::vector<SPECKSet2D>& list ) const;
+    void m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D, 4>& list ) const;
                           // Partition set into 4 smaller sets, and put them in list.
                           // Note: list will be resized to 4 and contains the 4 subsets.
     void m_output_set_significance( SPECKSet2D& set ) const;

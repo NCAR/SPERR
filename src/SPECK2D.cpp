@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
+#include <array>
 
 
 void speck::SPECK2D::assign_coeffs( double* ptr )
@@ -90,8 +91,7 @@ void speck::SPECK2D::m_process_S( long idx1, long idx2 )
 void speck::SPECK2D::m_code_S( long idx1, long idx2 )
 {
     auto& set = m_LIS[idx1][idx2];
-    // TODO: use an std::array here.
-    std::vector< SPECKSet2D > subsets;
+    std::array< SPECKSet2D, 4 > subsets;
     m_partition_S( set, subsets );
     for( auto& s : subsets )
     {
@@ -101,47 +101,41 @@ void speck::SPECK2D::m_code_S( long idx1, long idx2 )
 }
 
 
-void speck::SPECK2D::m_partition_S( const SPECKSet2D& set, std::vector<SPECKSet2D>& list ) const
+void speck::SPECK2D::m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D, 4>& list ) const
 {
     // The top-left set will have these bigger dimensions in case that 
     // the current set has odd dimensions.
     const auto bigger_x = set.length_x - (set.length_x / 2);
     const auto bigger_y = set.length_y - (set.length_y / 2);
 
-    SPECKSet2D TL( SPECKSetType::TypeS );   // Top left set
-    TL.part_level = set.part_level + 1;
-    TL.start_x    = set.start_x;
-    TL.start_y    = set.start_y;
-    TL.length_x   = bigger_x;
-    TL.length_y   = bigger_y;
+    // Put them in the list the same order as did in QccPack.
+    SPECKSet2D& TL = list[3];               // Top left set
+    TL.part_level  = set.part_level + 1;
+    TL.start_x     = set.start_x;
+    TL.start_y     = set.start_y;
+    TL.length_x    = bigger_x;
+    TL.length_y    = bigger_y;
 
-    SPECKSet2D TR( SPECKSetType::TypeS );   // Top right set
-    TR.part_level = set.part_level + 1;
-    TR.start_x    = set.start_x    + bigger_x;
-    TR.start_y    = set.start_y;
-    TR.length_x   = set.length_x   - bigger_x;
-    TR.length_y   = bigger_y;
+    SPECKSet2D& TR = list[2];               // Top right set
+    TR.part_level  = set.part_level + 1;
+    TR.start_x     = set.start_x    + bigger_x;
+    TR.start_y     = set.start_y;
+    TR.length_x    = set.length_x   - bigger_x;
+    TR.length_y    = bigger_y;
 
-    SPECKSet2D LL( SPECKSetType::TypeS );   // Lower left set
-    LL.part_level = set.part_level + 1;
-    LL.start_x    = set.start_x;
-    LL.start_y    = set.start_y    + bigger_x;
-    LL.length_x   = set.length_x;
-    LL.length_y   = set.length_y   - bigger_y;
+    SPECKSet2D& LL = list[1];               // Lower left set
+    LL.part_level  = set.part_level + 1;
+    LL.start_x     = set.start_x;
+    LL.start_y     = set.start_y    + bigger_x;
+    LL.length_x    = set.length_x;
+    LL.length_y    = set.length_y   - bigger_y;
 
-    SPECKSet2D LR( SPECKSetType::TypeS );   // Lower right set
-    LR.part_level = set.part_level + 1;
-    LR.start_x    = set.start_x    + bigger_x;
-    LR.start_y    = set.start_y    + bigger_x;
-    LR.length_x   = set.length_x   - bigger_x;
-    LR.length_y   = set.length_y   - bigger_y;
-
-    list.clear();     
-    list.reserve( 4 );
-    list.push_back( LR );   // Put them in the list the same order as in QccPack.
-    list.push_back( LL );
-    list.push_back( TR );
-    list.push_back( TL );
+    SPECKSet2D& LR = list[0];               // Lower right set
+    LR.part_level  = set.part_level + 1;
+    LR.start_x     = set.start_x    + bigger_x;
+    LR.start_y     = set.start_y    + bigger_x;
+    LR.length_x    = set.length_x   - bigger_x;
+    LR.length_y    = set.length_y   - bigger_y;
 }
 
 
@@ -253,7 +247,12 @@ bool speck::SPECKSet2D::is_pixel() const
     return ( length_x == 1 && length_y == 1 );
 }
 
+speck::SPECKSetType speck::SPECKSet2D::type() const
+{
+    return m_type;
+}
+
 // Constructor
 speck::SPECKSet2D::SPECKSet2D( SPECKSetType t )
-                 : type( t )
+                 : m_type( t )
 { }
