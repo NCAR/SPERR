@@ -32,19 +32,19 @@ int speck::SPECK2D::speck2d()
 
     // Still preparing: lists and sets
     m_LIS.clear();
-    m_LIS.resize( num_of_parts );
+    m_LIS.resize( num_of_parts + 1 );
     for( auto& v : m_LIS )  // Avoid frequent memory allocations.
         v.reserve( 8 );
-    m_LIS_garbage_cnt.assign( num_of_parts, 0 );
+    m_LIS_garbage_cnt.assign( num_of_parts + 1, 0 );
     m_LSP.reserve( 8 );
-    SPECKSet2D root( SPECKSetType::TypeS );
-    root.part_level = num_of_xforms - 1;
-    m_calc_set_size( root, 0 );      // Populate other data fields of root.
-    m_LIS[ root.part_level ].push_back( root );
+    SPECKSet2D S( SPECKSetType::TypeS );
+    S.part_level = num_of_xforms;
+    m_calc_set_size( S, 0 );      // Populate other data fields of S.
+    m_LIS[ S.part_level ].push_back( S );
 
-    m_I.part_level = num_of_xforms - 1;
-    m_I.start_x    = root.length_x;
-    m_I.start_y    = root.length_y;
+    m_I.part_level = num_of_xforms;
+    m_I.start_x    = S.length_x;
+    m_I.start_y    = S.length_y;
     m_I.length_x   = m_dim_x;
     m_I.length_y   = m_dim_y;
 
@@ -123,39 +123,70 @@ void speck::SPECK2D::m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D
     const auto bigger_y = set.length_y - (set.length_y / 2);
 
     // Put generated subsets in the list the same order as did in QccPack.
-    SPECKSet2D& TL = list[3];               // Top left set
-    TL.part_level  = set.part_level + 1;
-    TL.start_x     = set.start_x;
-    TL.start_y     = set.start_y;
-    TL.length_x    = bigger_x;
-    TL.length_y    = bigger_y;
+    auto& TL      = list[3];               // Top left set
+    TL.part_level = set.part_level + 1;
+    TL.start_x    = set.start_x;
+    TL.start_y    = set.start_y;
+    TL.length_x   = bigger_x;
+    TL.length_y   = bigger_y;
 
-    SPECKSet2D& TR = list[2];               // Top right set
-    TR.part_level  = set.part_level + 1;
-    TR.start_x     = set.start_x    + bigger_x;
-    TR.start_y     = set.start_y;
-    TR.length_x    = set.length_x   - bigger_x;
-    TR.length_y    = bigger_y;
+    auto& TR      = list[2];               // Top right set
+    TR.part_level = set.part_level + 1;
+    TR.start_x    = set.start_x    + bigger_x;
+    TR.start_y    = set.start_y;
+    TR.length_x   = set.length_x   - bigger_x;
+    TR.length_y   = bigger_y;
 
-    SPECKSet2D& LL = list[1];               // Lower left set
-    LL.part_level  = set.part_level + 1;
-    LL.start_x     = set.start_x;
-    LL.start_y     = set.start_y    + bigger_x;
-    LL.length_x    = set.length_x;
-    LL.length_y    = set.length_y   - bigger_y;
+    auto& BL      = list[1];               // Bottom left set
+    BL.part_level = set.part_level + 1;
+    BL.start_x    = set.start_x;
+    BL.start_y    = set.start_y    + bigger_x;
+    BL.length_x   = set.length_x;
+    BL.length_y   = set.length_y   - bigger_y;
 
-    SPECKSet2D& LR = list[0];               // Lower right set
-    LR.part_level  = set.part_level + 1;
-    LR.start_x     = set.start_x    + bigger_x;
-    LR.start_y     = set.start_y    + bigger_x;
-    LR.length_x    = set.length_x   - bigger_x;
-    LR.length_y    = set.length_y   - bigger_y;
+    auto& BR      = list[0];               // Bottom right set
+    BR.part_level = set.part_level + 1;
+    BR.start_x    = set.start_x    + bigger_x;
+    BR.start_y    = set.start_y    + bigger_x;
+    BR.length_x   = set.length_x   - bigger_x;
+    BR.length_y   = set.length_y   - bigger_y;
+}
+
+
+void speck::SPECK2D::m_partition_I( std::array<SPECKSet2D, 3>& subsets )
+{
+    const auto current_lev = m_I.part_level;
+    long approx_len_x, detail_len_x;
+    long approx_len_y, detail_len_y;
+    speck::calc_approx_detail_len( m_dim_x, current_lev, approx_len_x, detail_len_x );
+    speck::calc_approx_detail_len( m_dim_y, current_lev, approx_len_y, detail_len_y );
+
+    // specify the subsets following the same order in QccPack
+    auto& BR      = subsets[0];         // Bottom right
+    BR.part_level = current_lev;
+    BR.start_x    = approx_len_x;
+    BR.start_y    = approx_len_y;
+    BR.length_x   = detail_len_x;
+    BR.length_y   = detail_len_y;
+
+    auto& TR      = subsets[1];         // Top right
+    TR.part_level = current_lev;
+    TR.start_x    = approx_len_x;
+    TR.start_y    = 0;
+    TR.length_x   = detail_len_x;
+    TR.length_y   = approx_len_y;
+
+    auto& BL      = subsets[2];         // Bottom left
+    BL.part_level = current_lev;
+    BL.start_x    = 0;
+    BL.start_y    = approx_len_y;
+    BL.length_x   = approx_len_x;
+    BL.length_y   = detail_len_y; 
 }
 
 
 void speck::SPECK2D::m_process_I()
 {
-
 }
 
 

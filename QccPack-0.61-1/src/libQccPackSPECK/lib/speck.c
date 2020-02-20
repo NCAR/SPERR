@@ -475,7 +475,7 @@ static int QccSPECKInputOutputSetSignificance(QccSPECKSet *current_set,
           }
           
           symbol = (current_set->significance == QCCSPECK_SIGNIFICANT);
-          printf("sorting: set significance = %d\n", symbol );
+          //printf("sorting: set significance = %d\n", symbol );
           
           return_value = QccENTArithmeticEncode(&symbol, 1, model, buffer);
 
@@ -519,7 +519,7 @@ static int QccSPECKInputOutputSign(char *sign,
   if (buffer->type == QCCBITBUFFER_OUTPUT)
   {
       symbol = (*sign == QCCSPECK_POSITIVE);
-      printf("sorting: pixel sign       = %d\n", symbol );
+      //printf("sorting: pixel sign       = %d\n", symbol );
 
       *coefficient -= threshold;
       
@@ -968,6 +968,13 @@ static int QccSPECKCodeI(QccSPECKSet *I,
       return_value = QccSPECKSetSize(&set_S,
                                      coefficients,
                                      mask_subband);
+
+printf("subband = %d, subset = (%d, %d, %d, %d), level = %d\n", subband,
+        set_S.origin_col, set_S.origin_row, set_S.num_cols, set_S.num_rows, set_S.level );
+/* subband == 3  ==>  bottom right */
+/* subband == 2  ==>  top right    */
+/* subband == 1  ==>  bottom left  */
+
       if (return_value == 1)
         {
           QccErrorAddMessage("(QccSPECKCodeI): Error calling QccSPECKSetSize()");
@@ -1240,7 +1247,7 @@ static int QccSPECKRefinementInputOutput(double *coefficient,
         }
       else
         symbol = 0;
-printf("refinement: output        = %d\n", symbol );
+//printf("refinement: output        = %d\n", symbol );
 
       return_value =
         QccENTArithmeticEncode(&symbol, 1,
