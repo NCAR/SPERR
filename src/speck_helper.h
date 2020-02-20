@@ -28,12 +28,12 @@ namespace speck
     //
     // Helper functions
     //
-    // Given a certain length, how many levels of transforms to be performed?
-    long calc_num_of_xform_levels( long len );
+    // Given a certain length, how many transforms to be performed?
+    long calc_num_of_xforms( long len );
 
 
     // Determine the approximation and detail signal length at a certain 
-    // transformation level lev: 0 <= lev < num_of_levels. 
+    // transformation level lev: 0 <= lev < num_of_xforms. 
     // It also returns the approximate length for ease of use in some cases.
     long calc_approx_detail_len( long  orig_len,   long  lev,          // input
                                  long& approx_len, long& detail_len ); // output

@@ -34,8 +34,8 @@ int speck::CDF97::dwt2d()
     for( long i = 0; i < num_of_vals; i++ )
         m_data_buf[i] -= m_data_mean;
 
-    auto num_level_xy = speck::calc_num_of_xform_levels( std::min( m_dim_x, m_dim_y ) );
-    for( long lev = 0; lev < num_level_xy; lev++ )
+    auto num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
+    for( long lev = 0; lev < num_xforms_xy; lev++ )
     {
         long tmp1, tmp2;
         long len_x = speck::calc_approx_detail_len( m_dim_x, lev, tmp1, tmp2 );
@@ -49,8 +49,8 @@ int speck::CDF97::dwt2d()
 
 int speck::CDF97::idwt2d()
 {
-    auto num_level_xy = speck::calc_num_of_xform_levels( std::min( m_dim_x, m_dim_y ) );
-    for( long lev = num_level_xy - 1; lev >= 0; lev-- )
+    auto num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
+    for( long lev = num_xforms_xy - 1; lev >= 0; lev-- )
     {
         long tmp1, tmp2;
         long len_x = speck::calc_approx_detail_len( m_dim_x, lev, tmp1, tmp2 );

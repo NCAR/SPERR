@@ -4,14 +4,14 @@
 #include <cassert>
 
 
-long speck::calc_num_of_xform_levels( long len )
+long speck::calc_num_of_xforms( long len )
 {
     assert( len > 0 );
     // I decide 8 is the minimal length to do one level of xform.
     float f      = std::log2( float(len) / 8.0f ); 
-    long num_of_levs = f < 0.0f ? 0 : long(f) + 1;
+    long num_of_xforms = f < 0.0f ? 0 : long(f) + 1;
 
-    return num_of_levs;
+    return num_of_xforms;
 }
     
 

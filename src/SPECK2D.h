@@ -74,8 +74,8 @@ private:
     void m_process_I();
     void m_output_set_significance( SPECKSet2D& set )   const;
     void m_output_pixel_sign( const SPECKSet2D& pixel ) const;
-    long m_num_of_part_levels() const; 
-                          // How many partition levels are there given the 2D dimensions?
+    long m_num_of_partitions() const; 
+                          // How many partitions available to perform given the 2D dimensions?
     void m_calc_set_size( SPECKSet2D& set, long subband ) const;
                           // What's the set size and offsets?
                           // subband = (0, 1, 2, 3)

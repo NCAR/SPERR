@@ -27,22 +27,22 @@ int speck::SPECK2D::speck2d()
     long num_of_vals = m_dim_x * m_dim_y;
     auto max_coeff   = speck::make_positive( m_coeff_buf.get(), num_of_vals, m_sign_array );
     long max_coefficient_bits = long(std::log2(max_coeff));
-    long num_of_part_levels   = m_num_of_part_levels();
-    long num_of_xform_levels  = speck::calc_num_of_xform_levels( std::min( m_dim_x, m_dim_y) );
+    long num_of_parts         = m_num_of_partitions();
+    long num_of_xforms        = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y) );
 
     // Still preparing: lists and sets
     m_LIS.clear();
-    m_LIS.resize( num_of_part_levels );
+    m_LIS.resize( num_of_parts );
     for( auto& v : m_LIS )  // Avoid frequent memory allocations.
         v.reserve( 8 );
-    m_LIS_garbage_cnt.assign( num_of_part_levels, 0 );
+    m_LIS_garbage_cnt.assign( num_of_parts, 0 );
     m_LSP.reserve( 8 );
     SPECKSet2D root( SPECKSetType::TypeS );
-    root.part_level = num_of_xform_levels - 1;
+    root.part_level = num_of_xforms - 1;
     m_calc_set_size( root, 0 );      // Populate other data fields of root.
     m_LIS[ root.part_level ].push_back( root );
 
-    m_I.part_level = num_of_xform_levels - 1;
+    m_I.part_level = num_of_xforms - 1;
     m_I.start_x    = root.length_x;
     m_I.start_y    = root.length_y;
     m_I.length_x   = m_dim_x;
@@ -221,18 +221,18 @@ void speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel ) const
 }
 
     
-// Calculate the number of partition levels in a plane.
-long speck::SPECK2D::m_num_of_part_levels() const
+// Calculate the number of partitions able to be performed
+long speck::SPECK2D::m_num_of_partitions() const
 {
-    long num_of_lev = 1;    // Even no partition is performed, there's already one level.
+    long num_of_parts = 0;
     long dim_x = m_dim_x, dim_y = m_dim_y;
     while( dim_x > 1 || dim_y > 1 )
     {
-        num_of_lev++;
+        num_of_parts++;
         dim_x -= dim_x / 2;
         dim_y -= dim_y / 2;
     }
-    return num_of_lev;
+    return num_of_parts;
 }
 
 
