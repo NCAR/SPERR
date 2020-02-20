@@ -182,6 +182,13 @@ void speck::SPECK2D::m_partition_I( std::array<SPECKSet2D, 3>& subsets )
     BL.start_y    = approx_len_y;
     BL.length_x   = approx_len_x;
     BL.length_y   = detail_len_y; 
+
+    for( long i = 3; i >= 0; i-- )
+    {
+        const auto& s = subsets[i];
+        printf("subband = %d, subset = (%d, %d, %d, %d), level = %d\n", i,
+        s.start_x, s.start_y, s.length_x, s.length_y, s.part_level );
+    }
 }
 
 
