@@ -66,8 +66,8 @@ void speck::SPECK2D::m_sorting_pass( )
     speck::update_significance_map( m_coeff_buf.get(), m_dim_x * m_dim_y, m_threshold, 
                                     m_significance_map );
 
-    for( size_t idx1 = m_LIS.size() - 1; idx1 >= 0; idx1-- )
-        for( size_t idx2  = 0; idx2 < m_LIS[idx1].size(); idx2++ )
+    for( long idx1 = m_LIS.size() - 1; idx1 >= 0; idx1-- )
+        for( long idx2  = 0; idx2 < m_LIS[idx1].size(); idx2++ )
         {
             if( !m_LIS[idx1][idx2].garbage )
                 m_process_S( idx1, idx2 );
@@ -164,18 +164,15 @@ void speck::SPECK2D::m_output_set_significance( SPECKSet2D& set ) const
 {
     set.signif = Significance::Insig;
 
-    auto x = set.start_x;   // declare x and y this way, so the compiler doesn't
-    auto y = set.start_y;   // complain type incompatables.
-
     // For TypeS sets, we test an obvious rectangle specified by this set.
     if( set.type() == SPECKSetType::TypeS )
     {
-        for( y = set.start_y; y < (set.start_y + set.length_y) &&
+        for( long y = set.start_y; y < (set.start_y + set.length_y) &&
                               set.signif == Significance::Insig; y++ )
-            for( x = set.start_x; x < (set.start_x + set.length_x) &&
+            for( long x = set.start_x; x < (set.start_x + set.length_x) &&
                                   set.signif == Significance::Insig; x++ )
             {
-                size_t idx = y * m_dim_x + x;
+                long idx = y * m_dim_x + x;
                 if( m_significance_map[ idx ] )
                     set.signif = Significance::Sig;
             }
@@ -183,19 +180,19 @@ void speck::SPECK2D::m_output_set_significance( SPECKSet2D& set ) const
     else    // For TypeI sets, we need to test two rectangles!
     {
         // First rectangle: directly to the right of the missing top-left corner
-        for( y = 0; y < set.start_y && set.signif == Significance::Insig; y++ )
-            for( x = set.start_x; x < m_dim_x && set.signif == Significance::Insig; x++ )
+        for( long y = 0; y < set.start_y && set.signif == Significance::Insig; y++ )
+            for( long x = set.start_x; x < m_dim_x && set.signif == Significance::Insig; x++ )
             {
-                size_t idx = y * m_dim_x + x;
+                long idx = y * m_dim_x + x;
                 if( m_significance_map[ idx ] )
                     set.signif = Significance::Sig;
             }
 
         // Second rectangle: the rest area at the bottom
-        for( y = set.start_y; y < m_dim_y && set.signif == Significance::Insig; y++ )
-            for( x = 0; x < m_dim_x && set.signif == Significance::Insig; x++ )
+        for( long y = set.start_y; y < m_dim_y && set.signif == Significance::Insig; y++ )
+            for( long x = 0; x < m_dim_x && set.signif == Significance::Insig; x++ )
             {
-                size_t idx = y * m_dim_x + x;
+                long idx = y * m_dim_x + x;
                 if( m_significance_map[ idx ] )
                     set.signif = Significance::Sig;
             }
@@ -288,7 +285,7 @@ void speck::SPECK2D::m_clean_LIS()
     tmp.reserve( 8 );
     const auto is_garbage = []( const SPECKSet2D& s ){ return s.garbage; };
 
-    for( size_t i = 0; i < m_LIS_garbage_cnt.size(); i++ )
+    for( long i = 0; i < m_LIS_garbage_cnt.size(); i++ )
     {
         if( m_LIS_garbage_cnt[i] > 0 )
         {
