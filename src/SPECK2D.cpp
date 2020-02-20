@@ -172,7 +172,7 @@ void speck::SPECK2D::m_output_set_significance( SPECKSet2D& set ) const
             for( long x = set.start_x; x < (set.start_x + set.length_x) &&
                                   set.signif == Significance::Insig; x++ )
             {
-                long idx = y * m_dim_x + x;
+                auto idx = y * m_dim_x + x;
                 if( m_significance_map[ idx ] )
                     set.signif = Significance::Sig;
             }
@@ -183,19 +183,19 @@ void speck::SPECK2D::m_output_set_significance( SPECKSet2D& set ) const
         for( long y = 0; y < set.start_y && set.signif == Significance::Insig; y++ )
             for( long x = set.start_x; x < m_dim_x && set.signif == Significance::Insig; x++ )
             {
-                long idx = y * m_dim_x + x;
+                auto idx = y * m_dim_x + x;
                 if( m_significance_map[ idx ] )
                     set.signif = Significance::Sig;
             }
 
         // Second rectangle: the rest area at the bottom
-        for( long y = set.start_y; y < m_dim_y && set.signif == Significance::Insig; y++ )
-            for( long x = 0; x < m_dim_x && set.signif == Significance::Insig; x++ )
-            {
-                long idx = y * m_dim_x + x;
-                if( m_significance_map[ idx ] )
-                    set.signif = Significance::Sig;
-            }
+        // Note: this rectangle is stored in a contiguous chunk of memory :)
+        for( long i = set.start_y * m_dim_x; i < m_dim_x * m_dim_y && 
+                                             set.signif == Significance::Insig; i++ )
+        {
+            if( m_significance_map[ i ] )
+                set.signif = Significance::Sig;
+        }
     }
 
     if( set.signif == Significance::Sig )
