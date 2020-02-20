@@ -4,8 +4,8 @@ CXXFLAGS=-std=c++14 -O2 -Wall -g -lm
 
 ARCH=$(shell uname)
 ifeq ($(ARCH), Darwin)
-  CC=clang
-  CXX=clang++
+  CC=gcc-9
+  CXX=g++-9
   CXXFLAGS=-std=c++14 -O2 -Wall -g 
 endif
 

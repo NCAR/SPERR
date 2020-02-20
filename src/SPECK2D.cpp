@@ -153,23 +153,52 @@ void speck::SPECK2D::m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D
 }
 
 
+void speck::SPECK2D::m_process_I()
+{
+
+}
+
+
 // It outputs by printing out the value right now.
 void speck::SPECK2D::m_output_set_significance( SPECKSet2D& set ) const
 {
     set.signif = Significance::Insig;
-    for( auto y = set.start_y; y < (set.start_y + set.length_y); y++ )
+
+    auto x = set.start_x;   // declare x and y this way, so the compiler doesn't
+    auto y = set.start_y;   // complain type incompatables.
+
+    // For TypeS sets, we test an obvious rectangle specified by this set.
+    if( set.type() == SPECKSetType::TypeS )
     {
-        for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ )
-        {
-            long idx = y * m_dim_x + x;
-            if( m_significance_map[ idx ] )
+        for( y = set.start_y; y < (set.start_y + set.length_y) &&
+                              set.signif == Significance::Insig; y++ )
+            for( x = set.start_x; x < (set.start_x + set.length_x) &&
+                                  set.signif == Significance::Insig; x++ )
             {
-                set.signif = Significance::Sig;
-                break;
+                size_t idx = y * m_dim_x + x;
+                if( m_significance_map[ idx ] )
+                    set.signif = Significance::Sig;
             }
-        }
-        if( set.signif == Significance::Sig )
-            break;
+    }
+    else    // For TypeI sets, we need to test two rectangles!
+    {
+        // First rectangle: directly to the right of the missing top-left corner
+        for( y = 0; y < set.start_y && set.signif == Significance::Insig; y++ )
+            for( x = set.start_x; x < m_dim_x && set.signif == Significance::Insig; x++ )
+            {
+                size_t idx = y * m_dim_x + x;
+                if( m_significance_map[ idx ] )
+                    set.signif = Significance::Sig;
+            }
+
+        // Second rectangle: the rest area at the bottom
+        for( y = set.start_y; y < m_dim_y && set.signif == Significance::Insig; y++ )
+            for( x = 0; x < m_dim_x && set.signif == Significance::Insig; x++ )
+            {
+                size_t idx = y * m_dim_x + x;
+                if( m_significance_map[ idx ] )
+                    set.signif = Significance::Sig;
+            }
     }
 
     if( set.signif == Significance::Sig )
