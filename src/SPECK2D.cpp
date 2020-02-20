@@ -62,8 +62,18 @@ int speck::SPECK2D::speck2d()
 //
 void speck::SPECK2D::m_sorting_pass( )
 {
+    // Update the significance map based on the current threshold
+    speck::update_significance_map( m_coeff_buf.get(), m_dim_x * m_dim_y, m_threshold, 
+                                    m_significance_map );
 
+    for( size_t idx1 = m_LIS.size() - 1; idx1 >= 0; idx1-- )
+        for( size_t idx2  = 0; idx2 < m_LIS[idx1].size(); idx2++ )
+        {
+            if( !m_LIS[idx1][idx2].garbage )
+                m_process_S( idx1, idx2 );
+        }
 
+    // ProcessI()
 }
 
 
@@ -72,6 +82,7 @@ void speck::SPECK2D::m_process_S( long idx1, long idx2 )
     auto& set = m_LIS[idx1][idx2];
 
     m_output_set_significance( set );   // It also assigns the significance value to the set
+
     if( set.signif == Significance::Sig || set.signif == Significance::NewlySig )
     {
         if( set.is_pixel() )
@@ -81,18 +92,18 @@ void speck::SPECK2D::m_process_S( long idx1, long idx2 )
             m_LSP.push_back( set ); // A copy is saved to m_LSP.
             set.garbage = true;     // This particular object will be discarded.
         }
-    }
-    else
-    {
-        m_code_S( idx1, idx2 );
-        set.garbage = true;         // This particular object will be discarded.
+        else
+        {
+            m_code_S( idx1, idx2 );
+            set.garbage = true;         // This particular object will be discarded.
+        }
     }
 }
 
 
 void speck::SPECK2D::m_code_S( long idx1, long idx2 )
 {
-    auto& set = m_LIS[idx1][idx2];
+    const auto& set = m_LIS[idx1][idx2];
 
     std::array< SPECKSet2D, 4 > subsets;
     m_partition_S( set, subsets );

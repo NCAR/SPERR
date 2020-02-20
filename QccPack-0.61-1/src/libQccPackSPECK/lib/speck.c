@@ -883,7 +883,7 @@ static int QccSPECKProcessS(QccListNode *current_set_node,
               return(1);
             }
       }
-      else
+      else  /* if not a single pixel, just partition it */
       {
           return_value = QccSPECKCodeS(current_set_node,
                                        current_list_node,
