@@ -38,7 +38,7 @@ int main( int argc, char* argv[] )
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.assign_data( in_buf.get(), dim_x, dim_y );
+    cdf.copy_data( in_buf.get(), dim_x, dim_y );
 
     const auto startT = std::chrono::high_resolution_clock::now();
     cdf.dwt2d();
