@@ -62,7 +62,6 @@ public:
     void assign_mean_dims( double, long, long ); 
                                     // Accepts data mean and volume dimensions.
     int speck2d();
-    void m_partition_I( std::array<SPECKSet2D, 3>& subsets );
 
 private:
     //
@@ -75,6 +74,7 @@ private:
                           // Partition set into 4 smaller sets, and put them in list.
                           // Note: list will be resized to 4 and contains the 4 subsets.
     void m_process_I();
+    void m_partition_I( std::array<SPECKSet2D, 3>& subsets );
     void m_output_set_significance( SPECKSet2D& set )   const;
     void m_output_pixel_sign( const SPECKSet2D& pixel ) const;
     long m_num_of_partitions() const; 

@@ -969,7 +969,8 @@ static int QccSPECKCodeI(QccSPECKSet *I,
                                      coefficients,
                                      mask_subband);
 
-printf("subband = %d, subset = (%d, %d, %d, %d), level = %d\n", subband,
+if (buffer->type == QCCBITBUFFER_OUTPUT)
+    printf("subset = (%d, %d, %d, %d), level = %d\n",
         set_S.origin_col, set_S.origin_row, set_S.num_cols, set_S.num_rows, set_S.level );
 /* subband == 3  ==>  bottom right */
 /* subband == 2  ==>  top right    */
