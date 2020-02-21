@@ -138,19 +138,12 @@ void speck::SPECK2D::m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D
     const auto bigger_y = set.length_y - (set.length_y / 2);
 
     // Put generated subsets in the list the same order as did in QccPack.
-    auto& TL      = list[3];               // Top left set
-    TL.part_level = set.part_level + 1;
-    TL.start_x    = set.start_x;
-    TL.start_y    = set.start_y;
-    TL.length_x   = bigger_x;
-    TL.length_y   = bigger_y;
-
-    auto& TR      = list[2];               // Top right set
-    TR.part_level = set.part_level + 1;
-    TR.start_x    = set.start_x    + bigger_x;
-    TR.start_y    = set.start_y;
-    TR.length_x   = set.length_x   - bigger_x;
-    TR.length_y   = bigger_y;
+    auto& BR      = list[0];               // Bottom right set
+    BR.part_level = set.part_level + 1;
+    BR.start_x    = set.start_x    + bigger_x;
+    BR.start_y    = set.start_y    + bigger_x;
+    BR.length_x   = set.length_x   - bigger_x;
+    BR.length_y   = set.length_y   - bigger_y;
 
     auto& BL      = list[1];               // Bottom left set
     BL.part_level = set.part_level + 1;
@@ -159,12 +152,41 @@ void speck::SPECK2D::m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D
     BL.length_x   = set.length_x;
     BL.length_y   = set.length_y   - bigger_y;
 
-    auto& BR      = list[0];               // Bottom right set
-    BR.part_level = set.part_level + 1;
-    BR.start_x    = set.start_x    + bigger_x;
-    BR.start_y    = set.start_y    + bigger_x;
-    BR.length_x   = set.length_x   - bigger_x;
-    BR.length_y   = set.length_y   - bigger_y;
+    auto& TR      = list[2];               // Top right set
+    TR.part_level = set.part_level + 1;
+    TR.start_x    = set.start_x    + bigger_x;
+    TR.start_y    = set.start_y;
+    TR.length_x   = set.length_x   - bigger_x;
+    TR.length_y   = bigger_y;
+
+    auto& TL      = list[3];               // Top left set
+    TL.part_level = set.part_level + 1;
+    TL.start_x    = set.start_x;
+    TL.start_y    = set.start_y;
+    TL.length_x   = bigger_x;
+    TL.length_y   = bigger_y;
+}
+
+
+void speck::SPECK2D::m_process_I()
+{
+    m_output_set_significance( m_I );
+    if( m_I.signif == Significance::Sig )
+        m_code_I();
+}
+
+
+void speck::SPECK2D::m_code_I()
+{
+    std::array< SPECKSet2D, 3 > subsets;
+    m_partition_I( subsets );
+    for( auto& s : subsets )
+    {
+        m_LIS[ s.part_level ].push_back( s );
+        m_process_S( s.part_level, m_LIS[s.part_level].size() - 1 );
+    }
+
+    m_process_I();
 }
 
 
@@ -202,11 +224,6 @@ void speck::SPECK2D::m_partition_I( std::array<SPECKSet2D, 3>& subsets )
     m_I.part_level--;
     m_I.start_x += detail_len_x;
     m_I.start_y += detail_len_y;
-}
-
-
-void speck::SPECK2D::m_process_I()
-{
 }
 
 
