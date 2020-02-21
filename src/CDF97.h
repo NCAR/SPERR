@@ -12,7 +12,7 @@ class CDF97
 {
 public:
     template< typename T >
-    int assign_data( const T* data, long x, long y, long z  = 1 );
+    int copy_data( const T* data, long x, long y, long z  = 1 );
     int dwt2d();            // 1) calculates the number of levels of dwt,
                             // 2) subtract mean of the data,
                             // 3) perform the actual dwt.

@@ -11,6 +11,21 @@ void speck::SPECK2D::assign_coeffs( double* ptr )
     m_coeff_buf.reset( ptr );
 }
 
+template<typename T>
+void speck::SPECK2D::copy_coeffs( const T* p )
+{
+    static_assert( std::is_floating_point<T>::value, 
+                   "!! Only floating point values are supported !!" );
+    assert( m_dim_x > 0 && m_dim_y > 0 );
+
+    long num_of_vals = m_dim_x * m_dim_y;
+    m_coeff_buf = std::make_unique<double[]>( num_of_vals );
+    for( long i = 0; i < num_of_vals; i++ )
+        m_coeff_buf[i] = p[i];
+}
+template void speck::SPECK2D::copy_coeffs( const float*  ); 
+template void speck::SPECK2D::copy_coeffs( const double* );
+
 void speck::SPECK2D::assign_mean_dims( double m, long dx, long dy )
 {
     m_data_mean = m;

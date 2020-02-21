@@ -6,7 +6,7 @@
 #include <cstring>  // for std::memcpy()
 
 template< typename T >
-int speck::CDF97::assign_data( const T* data, long x, long y, long z )
+int speck::CDF97::copy_data( const T* data, long x, long y, long z )
 {
     static_assert( std::is_floating_point<T>::value, 
                    "!! Only floating point values are supported !!" );
@@ -20,8 +20,8 @@ int speck::CDF97::assign_data( const T* data, long x, long y, long z )
 
     return 0;
 }
-template int speck::CDF97::assign_data( const float*  data, long x, long y, long z );
-template int speck::CDF97::assign_data( const double* data, long x, long y, long z );
+template int speck::CDF97::copy_data( const float*  data, long x, long y, long z );
+template int speck::CDF97::copy_data( const double* data, long x, long y, long z );
 
 
 int speck::CDF97::dwt2d()
