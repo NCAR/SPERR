@@ -22,7 +22,7 @@ float2nc.out: float2nc.c
 crop2d.out: crop2d.c
 	$(CC) $< -o $@
 
-evaluate2d_qcc.out: evaluate2d_qcc.c helper.o
+test_qcc_speck2d.out: test_qcc_speck2d.c helper.o
 	$(CC) $(CFLAGS) -I$(QCC_INSTALL_DIR)/include $^ $(QCC_INSTALL_DIR)/lib/libQccPack.a -o $@
 
 helper.o: helper.c helper.h
