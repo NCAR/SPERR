@@ -67,14 +67,15 @@ private:
     //
     // Private methods
     //
-    void m_sorting_pass( );
-    void m_process_S( long idx1, long idx2 );   // Use indices to locate which set to process from m_LIS,
-    void m_code_S(    long idx1, long idx2 );   // because the choice to use vectors to represent lists.
+    // Return 0 for normal execution, 1 for bit budget met.
+    int  m_sorting_pass( );
+    int  m_process_S( long idx1, long idx2 );   // Use indices to locate which set to process from m_LIS,
+    int  m_code_S(    long idx1, long idx2 );   // because the choice to use vectors to represent lists.
     void m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D, 4>& subsets ) const;
                           // Partition set into 4 smaller sets, and put them in list.
                           // Note: list will be resized to 4 and contains the 4 subsets.
-    void m_process_I();
-    void m_code_I();
+    int  m_process_I();
+    int  m_code_I();
     void m_partition_I( std::array<SPECKSet2D, 3>& subsets );
     void m_output_set_significance( SPECKSet2D& set )   const;
     void m_output_pixel_sign( const SPECKSet2D& pixel ) const;
@@ -93,6 +94,8 @@ private:
     buffer_type m_coeff_buf = nullptr;      // All coefficients are kept here
     double      m_data_mean = 0.0;          // Mean subtracted before DWT
     double      m_threshold = 0.0;          // Threshold that's used for an iteration
+    uint64_t    m_budget    = 0;            // What's the budget for num of bits?
+    uint64_t    m_bit_cnt   = 0;            // How many bits are already output/input?
     long m_dim_x = 0, m_dim_y = 0;          // 2D plane dims
 
     std::vector<bool> m_significance_map;

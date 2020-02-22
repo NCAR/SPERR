@@ -64,6 +64,7 @@ int speck::SPECK2D::speck2d()
     m_I.length_y   = m_dim_y;
 
     // Get ready for the quantization loop!  L1598 of speck.c
+    m_bit_cnt = 0;
     m_threshold = std::pow( 2.0, double(max_coefficient_bits) );
 
 
@@ -75,7 +76,7 @@ int speck::SPECK2D::speck2d()
 //
 // Private methods
 //
-void speck::SPECK2D::m_sorting_pass( )
+int speck::SPECK2D::m_sorting_pass( )
 {
     // Update the significance map based on the current threshold
     speck::update_significance_map( m_coeff_buf.get(), m_dim_x * m_dim_y, m_threshold, 
@@ -88,35 +89,46 @@ void speck::SPECK2D::m_sorting_pass( )
                 m_process_S( idx1, idx2 );
         }
 
-    // ProcessI()
+    m_process_I();
+
+    return 0;
 }
 
 
-void speck::SPECK2D::m_process_S( long idx1, long idx2 )
+int speck::SPECK2D::m_process_S( long idx1, long idx2 )
 {
     auto& set = m_LIS[idx1][idx2];
 
-    m_output_set_significance( set );   // It also assigns the significance value to the set
+    int rv = 0;
+    rv = m_output_set_significance( set );   // It also assigns the significance value to the set
+    if( rv == 1 )
+        return 1;
 
     if( set.signif == Significance::Sig || set.signif == Significance::NewlySig )
     {
         if( set.is_pixel() )
         {
             set.signif = Significance::NewlySig;
-            m_output_pixel_sign( set );
+            rv = m_output_pixel_sign( set );
+            if( rv == 1 )
+                return 1;
             m_LSP.push_back( set ); // A copy is saved to m_LSP.
             set.garbage = true;     // This particular object will be discarded.
         }
         else
         {
-            m_code_S( idx1, idx2 );
+            rv = m_code_S( idx1, idx2 );
+            if( rv == 1 )
+                return 1;
             set.garbage = true;         // This particular object will be discarded.
         }
     }
+
+    return 0;
 }
 
-
-void speck::SPECK2D::m_code_S( long idx1, long idx2 )
+// TODO
+int speck::SPECK2D::m_code_S( long idx1, long idx2 )
 {
     const auto& set = m_LIS[idx1][idx2];
 
