@@ -60,7 +60,9 @@ public:
     template <typename T>
     void copy_coeffs( const T* );   // Make a copy of the incoming data.
     void assign_mean_dims( double, long, long ); 
-                                    // Accepts data mean and volume dimensions.
+                                    // Accepts data mean and plane  dimensions.
+    void assign_bit_budget( long ); // How many bits does speck process? 
+
     int speck2d();
 
 private:
@@ -77,8 +79,8 @@ private:
     int  m_process_I();
     int  m_code_I();
     void m_partition_I( std::array<SPECKSet2D, 3>& subsets );
-    void m_output_set_significance( SPECKSet2D& set )   const;
-    void m_output_pixel_sign( const SPECKSet2D& pixel ) const;
+    int  m_output_set_significance( SPECKSet2D& set );
+    int  m_output_pixel_sign( const SPECKSet2D& pixel );
     long m_num_of_partitions() const; 
                           // How many partitions available to perform given the 2D dimensions?
     void m_calc_set_size( SPECKSet2D& set, long subband ) const;

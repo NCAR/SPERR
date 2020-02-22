@@ -26,13 +26,22 @@ void speck::SPECK2D::copy_coeffs( const T* p )
 template void speck::SPECK2D::copy_coeffs( const float*  ); 
 template void speck::SPECK2D::copy_coeffs( const double* );
 
+
 void speck::SPECK2D::assign_mean_dims( double m, long dx, long dy )
 {
     m_data_mean = m;
     m_dim_x     = dx;
     m_dim_y     = dy;
 }
+
+
+void speck::SPECK2D::assign_bit_budget( long budget )
+{
+    assert( budget > 0 );
+    m_budget = budget;
+}
     
+
 int speck::SPECK2D::speck2d()
 {
     assert( m_coeff_buf != nullptr );               // sanity check
@@ -127,7 +136,7 @@ int speck::SPECK2D::m_process_S( long idx1, long idx2 )
     return 0;
 }
 
-// TODO
+
 int speck::SPECK2D::m_code_S( long idx1, long idx2 )
 {
     const auto& set = m_LIS[idx1][idx2];
@@ -137,8 +146,12 @@ int speck::SPECK2D::m_code_S( long idx1, long idx2 )
     for( auto& s : subsets )
     {
         m_LIS[ s.part_level ].push_back( s );
-        m_process_S( s.part_level, m_LIS[s.part_level].size() - 1 );
+        int rv = m_process_S( s.part_level, m_LIS[s.part_level].size() - 1 );
+        if( rv == 1 )
+            return 1;
     }
+
+    return 0;
 }
 
 
@@ -180,25 +193,41 @@ void speck::SPECK2D::m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D
 }
 
 
-void speck::SPECK2D::m_process_I()
+int speck::SPECK2D::m_process_I()
 {
-    m_output_set_significance( m_I );
+    int rv = 0;
+    rv = m_output_set_significance( m_I );
+    if( rv == 1 )
+        return 1;
     if( m_I.signif == Significance::Sig )
-        m_code_I();
+    {
+        rv = m_code_I();
+        if( rv == 1 )
+            return 1;
+    }
+
+    return 0;
 }
 
 
-void speck::SPECK2D::m_code_I()
+int speck::SPECK2D::m_code_I()
 {
+    int rv = 0;
     std::array< SPECKSet2D, 3 > subsets;
     m_partition_I( subsets );
     for( auto& s : subsets )
     {
         m_LIS[ s.part_level ].push_back( s );
-        m_process_S( s.part_level, m_LIS[s.part_level].size() - 1 );
+        rv = m_process_S( s.part_level, m_LIS[s.part_level].size() - 1 );
+        if( rv == 1 )
+            return 1;
     }
 
-    m_process_I();
+    rv = m_process_I();
+    if( rv == 1 )
+        return 1;
+    else
+        return 0;
 }
 
 
@@ -240,7 +269,7 @@ void speck::SPECK2D::m_partition_I( std::array<SPECKSet2D, 3>& subsets )
 
 
 // It outputs by printing out the value right now.
-void speck::SPECK2D::m_output_set_significance( SPECKSet2D& set ) const
+int speck::SPECK2D::m_output_set_significance( SPECKSet2D& set )
 {
     set.signif = Significance::Insig;
 
@@ -278,26 +307,43 @@ void speck::SPECK2D::m_output_set_significance( SPECKSet2D& set ) const
         }
     }
 
+    // Let's output the significance!
     if( set.signif == Significance::Sig )
         std::cout << "sorting: set significance = 1" << std::endl;
     else
         std::cout << "sorting: set significance = 0" << std::endl;
     
+    // Let's also see if we're reached the bit budget
+    m_bit_cnt++;
+    if( m_bit_cnt >= m_budget )
+        return 1;
+    else
+        return 0;
 }
 
 
 // It outputs by printing out the value right now.
-void speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel ) const
+int speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel )
 {
     auto x   = pixel.start_x;
     auto y   = pixel.start_y;
     auto idx = y * m_dim_x * x;
+
+    // Let output the pixel sign! 
     if( m_sign_array[ idx ] )
         std::cout << "sorting: pixel sign = 1" << std::endl;
     else
         std::cout << "sorting: pixel sign = 0" << std::endl;
 
+    // Progressive quantization!
     m_coeff_buf[ idx ] -= m_threshold;
+
+    // Let's also see if we're reached the bit budget
+    m_bit_cnt++;
+    if( m_bit_cnt >= m_budget )
+        return 1;
+    else
+        return 0;
 }
 
     
