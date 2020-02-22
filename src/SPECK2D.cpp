@@ -35,7 +35,7 @@ void speck::SPECK2D::assign_mean_dims( double m, long dx, long dy )
 }
 
 
-void speck::SPECK2D::assign_bit_budget( long budget )
+void speck::SPECK2D::assign_bit_budget( uint64_t budget )
 {
     assert( budget > 0 );
     m_budget = budget;
@@ -90,17 +90,18 @@ int speck::SPECK2D::m_sorting_pass( )
     // Update the significance map based on the current threshold
     speck::update_significance_map( m_coeff_buf.get(), m_dim_x * m_dim_y, m_threshold, 
                                     m_significance_map );
-
     for( long idx1 = m_LIS.size() - 1; idx1 >= 0; idx1-- )
         for( long idx2  = 0; idx2 < m_LIS[idx1].size(); idx2++ )
-        {
             if( !m_LIS[idx1][idx2].garbage )
-                m_process_S( idx1, idx2 );
-        }
+            {
+                if( m_process_S( idx1, idx2 ) == 1 )
+                    return 1;                
+            }
 
-    m_process_I();
-
-    return 0;
+    if( m_process_I() == 1 )
+        return 1;                
+    else
+        return 0;
 }
 
 
@@ -108,26 +109,23 @@ int speck::SPECK2D::m_process_S( long idx1, long idx2 )
 {
     auto& set = m_LIS[idx1][idx2];
 
-    int rv = 0;
-    rv = m_output_set_significance( set );   // It also assigns the significance value to the set
-    if( rv == 1 )
+    // This function call also assigns the significance value to the set
+    if( m_output_set_significance( set ) == 1 )
         return 1;
 
-    if( set.signif == Significance::Sig || set.signif == Significance::NewlySig )
+    if( set.signif == Significance::Sig )
     {
         if( set.is_pixel() )
         {
             set.signif = Significance::NewlySig;
-            rv = m_output_pixel_sign( set );
-            if( rv == 1 )
+            if( m_output_pixel_sign( set ) == 1 )
                 return 1;
             m_LSP.push_back( set ); // A copy is saved to m_LSP.
             set.garbage = true;     // This particular object will be discarded.
         }
         else
         {
-            rv = m_code_S( idx1, idx2 );
-            if( rv == 1 )
+            if( m_code_S( idx1, idx2 ) == 1 )
                 return 1;
             set.garbage = true;         // This particular object will be discarded.
         }
@@ -146,8 +144,7 @@ int speck::SPECK2D::m_code_S( long idx1, long idx2 )
     for( auto& s : subsets )
     {
         m_LIS[ s.part_level ].push_back( s );
-        int rv = m_process_S( s.part_level, m_LIS[s.part_level].size() - 1 );
-        if( rv == 1 )
+        if( m_process_S( s.part_level, m_LIS[s.part_level].size() - 1 ) == 1 )
             return 1;
     }
 
@@ -195,14 +192,11 @@ void speck::SPECK2D::m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D
 
 int speck::SPECK2D::m_process_I()
 {
-    int rv = 0;
-    rv = m_output_set_significance( m_I );
-    if( rv == 1 )
+    if( m_output_set_significance( m_I ) == 1 )
         return 1;
     if( m_I.signif == Significance::Sig )
     {
-        rv = m_code_I();
-        if( rv == 1 )
+        if( m_code_I() == 1 )
             return 1;
     }
 
@@ -212,19 +206,16 @@ int speck::SPECK2D::m_process_I()
 
 int speck::SPECK2D::m_code_I()
 {
-    int rv = 0;
     std::array< SPECKSet2D, 3 > subsets;
     m_partition_I( subsets );
     for( auto& s : subsets )
     {
         m_LIS[ s.part_level ].push_back( s );
-        rv = m_process_S( s.part_level, m_LIS[s.part_level].size() - 1 );
-        if( rv == 1 )
+        if( m_process_S( s.part_level, m_LIS[s.part_level].size() - 1 ) == 1 )
             return 1;
     }
 
-    rv = m_process_I();
-    if( rv == 1 )
+    if( m_process_I() )
         return 1;
     else
         return 0;
