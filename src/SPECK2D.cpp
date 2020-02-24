@@ -106,6 +106,23 @@ int speck::SPECK2D::m_sorting_pass( )
 }
 
 
+int speck::SPECK2D::m_refinement_pass( )
+{
+    for( auto& p : m_LSP )
+    {
+        if( p.signif == Significance::NewlySig )
+            p.signif  = Significance::Sig;
+        else
+        {
+            if( m_output_refinement( p ) == 1 )
+                return 1;
+        }
+    }
+
+    return 0;
+}
+
+
 int speck::SPECK2D::m_process_S( long idx1, long idx2 )
 {
     auto& set = m_LIS[idx1][idx2];
@@ -318,7 +335,7 @@ int speck::SPECK2D::m_output_set_significance( const SPECKSet2D& set )
 }
 
 
-// It outputs by printing out the value right now.
+// It outputs by printing out the value at this point.
 int speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel )
 {
     auto x   = pixel.start_x;
@@ -343,6 +360,27 @@ int speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel )
 }
 
 
+int speck::SPECK2D::m_output_refinement( const SPECKSet2D& pixel )
+{
+    auto x   = pixel.start_x;
+    auto y   = pixel.start_y;
+    auto idx = y * m_dim_x * x;
+
+    if( m_coeff_buf[idx] >= m_threshold ) 
+    {
+        std::cout << "refinement: output        = 1" << std::endl;
+        m_coeff_buf[idx] -= m_threshold;
+    }
+    else
+        std::cout << "refinement: output        = 0" << std::endl;
+
+    // Let's also see if we're reached the bit budget
+    m_bit_cnt++;
+    if( m_bit_cnt >= m_budget )
+        return 1;
+    else
+        return 0;
+}
 
     
 // Calculate the number of partitions able to be performed

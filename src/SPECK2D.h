@@ -70,6 +70,7 @@ private:
     // 1 means bit budget met. 
     //
     int  m_sorting_pass( );
+    int  m_refinement_pass( );
     int  m_process_S( long idx1, long idx2 );   // Use indices to locate which set to process from m_LIS,
     int  m_code_S(    long idx1, long idx2 );   // because the choice to use vectors to represent lists.
     void m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D, 4>& subsets ) const;
@@ -81,7 +82,7 @@ private:
     void m_decide_set_significance( SPECKSet2D& set );
     int  m_output_set_significance( const SPECKSet2D& set );
     int  m_output_pixel_sign( const SPECKSet2D& pixel );
-    // int  m_output_refinement( );
+    int  m_output_refinement( const SPECKSet2D& pixel );
     long m_num_of_partitions() const; 
                           // How many partitions available to perform given the 2D dimensions?
     void m_calc_set_size( SPECKSet2D& set, long subband ) const;
