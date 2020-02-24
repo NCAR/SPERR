@@ -75,7 +75,15 @@ int speck::SPECK2D::speck2d()
     // Get ready for the quantization loop!  L1598 of speck.c
     m_bit_cnt = 0;
     m_threshold = std::pow( 2.0, double(max_coefficient_bits) );
+    for( long bitplane = 0; bitplane < 128; i++ )
+    {
+        if( m_sorting_pass() == 1 )
+            return 1;
+        if( m_refinement_pass() == 1 )
+            return 1;
 
+        m_threshold *= 0.5;
+    }
 
 
     return 0;
