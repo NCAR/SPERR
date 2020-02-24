@@ -19,17 +19,11 @@ public:
     int idwt2d();           // 1) calculates the number of levels of dwt,
                             // 2) perform the actual idwt
                             // 3) add the mean back to the data
-    double* release_buffer( double& mean, long& dim_x, long& dim_y, long& dim_z );
-                            // 1) Release the ownership of coefficients and return 
-                            //    a pointer pointing to the buffer.
-                            // 2) Pass the values of mean and dimensions.
-                            // 3) Clear the values of mean and dimensions.
-
     
-    // For debug only ==================//
-    const double* get_data() const;     //
-    double get_mean() const;            //
-    // For debug only ==================//
+    // communicate results
+    const double* get_read_only_data() const;   // Others can read the data
+    std::unique_ptr<double[]> release_data();   // Others take ownership of the data
+    double get_mean() const; 
 
 private:
     //

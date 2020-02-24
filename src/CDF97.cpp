@@ -65,16 +65,6 @@ int speck::CDF97::idwt2d()
     return 0;
 }
 
-
-double* speck::CDF97::release_buffer( double& mean, long& dim_x, long& dim_y, long& dim_z )
-{
-    mean  = m_data_mean;    m_data_mean = 0.0;
-    dim_x = m_dim_x;        m_dim_x     = 0;     
-    dim_y = m_dim_y;        m_dim_y     = 0;     
-    dim_z = m_dim_z;        m_dim_z     = 0;     
-    return m_data_buf.release();
-}
-
     
 //
 // Private Methods
@@ -475,13 +465,18 @@ void speck::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double* signal, long sign
 }
 
 
-//
-// For debug only 
-//
-const double* speck::CDF97::get_data() const
+const double* speck::CDF97::get_read_only_data() const
 {
     return m_data_buf.get();
 }
+
+
+std::unique_ptr<double[]> speck::CDF97::release_data()
+{
+    return std::move( m_data_buf );
+}
+
+
 double speck::CDF97::get_mean() const
 {
     return m_data_mean;
