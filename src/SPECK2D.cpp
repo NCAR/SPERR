@@ -90,6 +90,7 @@ int speck::SPECK2D::m_sorting_pass( )
     // Update the significance map based on the current threshold
     speck::update_significance_map( m_coeff_buf.get(), m_dim_x * m_dim_y, m_threshold, 
                                     m_significance_map );
+
     for( long idx1 = m_LIS.size() - 1; idx1 >= 0; idx1-- )
         for( long idx2  = 0; idx2 < m_LIS[idx1].size(); idx2++ )
             if( !m_LIS[idx1][idx2].garbage )
@@ -109,7 +110,7 @@ int speck::SPECK2D::m_process_S( long idx1, long idx2 )
 {
     auto& set = m_LIS[idx1][idx2];
 
-    // This function call also assigns the significance value to the set
+    m_decide_set_significance( set );
     if( m_output_set_significance( set ) == 1 )
         return 1;
 
@@ -192,6 +193,7 @@ void speck::SPECK2D::m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D
 
 int speck::SPECK2D::m_process_I()
 {
+    m_decide_set_significance( m_I );
     if( m_output_set_significance( m_I ) == 1 )
         return 1;
     if( m_I.signif == Significance::Sig )
@@ -259,8 +261,7 @@ void speck::SPECK2D::m_partition_I( std::array<SPECKSet2D, 3>& subsets )
 }
 
 
-// It outputs by printing out the value right now.
-int speck::SPECK2D::m_output_set_significance( SPECKSet2D& set )
+void speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
 {
     set.signif = Significance::Insig;
 
@@ -297,8 +298,12 @@ int speck::SPECK2D::m_output_set_significance( SPECKSet2D& set )
                 set.signif = Significance::Sig;
         }
     }
+}
 
-    // Let's output the significance!
+
+// Output by printing it out
+int speck::SPECK2D::m_output_set_significance( const SPECKSet2D& set )
+{
     if( set.signif == Significance::Sig )
         std::cout << "sorting: set significance = 1" << std::endl;
     else
@@ -336,6 +341,8 @@ int speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel )
     else
         return 0;
 }
+
+
 
     
 // Calculate the number of partitions able to be performed
