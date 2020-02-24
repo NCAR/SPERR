@@ -49,7 +49,7 @@ int main( int argc, char* argv[] )
 
     // Write out the results after DWT.
     std::cout << "Mean is = " << cdf.get_mean() << std::endl;
-    const auto* coeffs = cdf.get_data();
+    const auto* coeffs = cdf.get_read_only_data();
     if( sam_write_n_doubles( output, total_vals, coeffs ) )
     {
         std::cerr << "Output write error!" << std::endl;
@@ -61,7 +61,7 @@ int main( int argc, char* argv[] )
     for( long i = 0; i < total_vals; i++ )
         in_bufd[i] = in_buf[i];
     double rmse, lmax, psnr, arr1min, arr1max;
-    sam_get_statsd( in_bufd.get(), cdf.get_data(), total_vals, 
+    sam_get_statsd( in_bufd.get(), cdf.get_read_only_data(), total_vals, 
                     &rmse, &lmax, &psnr, &arr1min, &arr1max );
     printf("Sam: rmse = %f, lmax = %f, psnr = %fdB, orig_min = %f, orig_max = %f\n", 
             rmse, lmax, psnr, arr1min, arr1max );

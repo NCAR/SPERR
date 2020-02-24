@@ -56,7 +56,7 @@ public:
 class SPECK2D
 {
 public:
-    void assign_coeffs( double* );  // Takes ownership of a chunck of memory.
+    void take_coeffs( std::unique_ptr<double[]> );  // Take ownership of a chunck of memory.
     template <typename T>
     void copy_coeffs( const T* );   // Make a copy of the incoming data.
     void assign_mean_dims( double, long, long ); // Accepts data mean and plane dimensions.

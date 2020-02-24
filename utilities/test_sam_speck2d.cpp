@@ -1,4 +1,5 @@
 #include "SPECK2D.h"
+#include "CDF97.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -36,24 +37,16 @@ int main( int argc, char* argv[] )
         return 1;
     }
 
+    // Take input to go through DWT.
+    speck::CDF97 cdf;
+    cdf.copy_data( in_buf.get(), dim_x, dim_y );
+    cdf.dwt2d();
+
     speck::SPECK2D speck;
     speck.assign_mean_dims( 0.0, dim_x, dim_y );
     speck.copy_coeffs( in_buf.get() );
+    speck.assign_bit_budget( 10 );
     speck.speck2d();
-    std::array<speck::SPECKSet2D, 3> subsets;
-    speck.m_partition_I( subsets );
-    speck.m_partition_I( subsets );
-    speck.m_partition_I( subsets );
     
 
-    // Compare the result with the original input in double precision
-/*    std::unique_ptr<double[]> in_bufd( new double[ total_vals ] );
-    for( long i = 0; i < total_vals; i++ )
-        in_bufd[i] = in_buf[i];
-    double rmse, lmax, psnr, arr1min, arr1max;
-    sam_get_statsd( in_bufd.get(), cdf.get_data(), total_vals, 
-                    &rmse, &lmax, &psnr, &arr1min, &arr1max );
-    printf("Sam: rmse = %f, lmax = %f, psnr = %fdB, orig_min = %f, orig_max = %f\n", 
-            rmse, lmax, psnr, arr1min, arr1max );
-*/
 }

@@ -6,9 +6,9 @@
 #include <algorithm>
 
 
-void speck::SPECK2D::assign_coeffs( double* ptr )
+void speck::SPECK2D::take_coeffs( std::unique_ptr<double[]> ptr )
 {
-    m_coeff_buf.reset( ptr );
+    m_coeff_buf = std::move( ptr );
 }
 
 template<typename T>
@@ -72,10 +72,10 @@ int speck::SPECK2D::speck2d()
     m_I.length_x   = m_dim_x;
     m_I.length_y   = m_dim_y;
 
-    // Get ready for the quantization loop!  L1598 of speck.c
+    // Get ready for the quantization loop!
     m_bit_cnt = 0;
     m_threshold = std::pow( 2.0, double(max_coefficient_bits) );
-    for( long bitplane = 0; bitplane < 128; i++ )
+    for( long bitplane = 0; bitplane < 128; bitplane++ )
     {
         if( m_sorting_pass() == 1 )
             return 1;
