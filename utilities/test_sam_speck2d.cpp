@@ -45,7 +45,7 @@ int main( int argc, char* argv[] )
     speck::SPECK2D speck;
     speck.assign_mean_dims( cdf.get_mean(), dim_x, dim_y );
     speck.take_coeffs( cdf.release_data() );
-    speck.assign_bit_budget( 10 );
+    speck.assign_bit_budget( 100 );
     speck.speck2d();
     
 

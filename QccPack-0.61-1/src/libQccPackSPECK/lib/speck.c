@@ -475,7 +475,7 @@ static int QccSPECKInputOutputSetSignificance(QccSPECKSet *current_set,
           }
           
           symbol = (current_set->significance == QCCSPECK_SIGNIFICANT);
-          printf("sorting: set significance = %d\n", symbol );
+          printf("s%d\n", symbol );
           
           return_value = QccENTArithmeticEncode(&symbol, 1, model, buffer);
 
@@ -519,7 +519,7 @@ static int QccSPECKInputOutputSign(char *sign,
   if (buffer->type == QCCBITBUFFER_OUTPUT)
   {
       symbol = (*sign == QCCSPECK_POSITIVE);
-      printf("sorting: pixel sign       = %d\n", symbol );
+      printf("p%d\n", symbol );
 
       *coefficient -= threshold;
       
@@ -1251,7 +1251,7 @@ static int QccSPECKRefinementInputOutput(double *coefficient,
       else
         symbol = 0;
 
-      printf("refinement: output        = %d\n", symbol );
+      printf("r%d\n", symbol );
 
       return_value =
         QccENTArithmeticEncode(&symbol, 1,

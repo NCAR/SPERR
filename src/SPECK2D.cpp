@@ -330,9 +330,9 @@ void speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
 int speck::SPECK2D::m_output_set_significance( const SPECKSet2D& set )
 {
     if( set.signif == Significance::Sig )
-        std::cout << "sorting: set significance = 1" << std::endl;
+        std::cout << "s1" << std::endl;
     else
-        std::cout << "sorting: set significance = 0" << std::endl;
+        std::cout << "s0" << std::endl;
     
     // Let's also see if we're reached the bit budget
     m_bit_cnt++;
@@ -352,9 +352,9 @@ int speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel )
 
     // Let output the pixel sign! 
     if( m_sign_array[ idx ] )
-        std::cout << "sorting: pixel sign = 1" << std::endl;
+        std::cout << "p1" << std::endl;
     else
-        std::cout << "sorting: pixel sign = 0" << std::endl;
+        std::cout << "p0" << std::endl;
 
     // Progressive quantization!
     m_coeff_buf[ idx ] -= m_threshold;
@@ -376,11 +376,11 @@ int speck::SPECK2D::m_output_refinement( const SPECKSet2D& pixel )
 
     if( m_coeff_buf[idx] >= m_threshold ) 
     {
-        std::cout << "refinement: output        = 1" << std::endl;
+        std::cout << "r1" << std::endl;
         m_coeff_buf[idx] -= m_threshold;
     }
     else
-        std::cout << "refinement: output        = 0" << std::endl;
+        std::cout << "r0" << std::endl;
 
     // Let's also see if we're reached the bit budget
     m_bit_cnt++;
