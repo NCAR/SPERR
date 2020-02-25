@@ -71,8 +71,10 @@ private:
     //
     int  m_sorting_pass( );
     int  m_refinement_pass( );
-    int  m_process_S( long idx1, long idx2 );   // Use indices to locate which set to process from m_LIS,
-    int  m_code_S(    long idx1, long idx2 );   // because the choice to use vectors to represent lists.
+    // For the following 2 methods, indices are used to locate which set to process from m_LIS,
+    // because of the choice to use vectors to represent lists, only indices are invariant. 
+    int  m_process_S( long idx1, long idx2, bool );  // code this set or not? 
+    int  m_code_S(    long idx1, long idx2 );
     void m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D, 4>& subsets ) const;
                           // Partition set into 4 smaller sets, and put them in list.
                           // Note: list will be resized to 4 and contains the 4 subsets.
@@ -90,7 +92,7 @@ private:
                           // subband = (0, 1, 2, 3)
     void m_clean_LIS();   // Clean garbage sets from m_LIS if garbage exists.
 
-    void m_print_set( const SPECKSet2D& set ) const;
+    void m_print_set( const char*, const SPECKSet2D& set ) const;
 
 
     //

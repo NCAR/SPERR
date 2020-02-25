@@ -143,6 +143,22 @@ static int QccSPECKSetIsPixel(QccSPECKSet *set)
   return(0);
 }
 
+static void SamPrintSet( const char* str, const QccSPECKSet* set )
+{
+    printf( "%s: (%d, %d, %d, %d)\n", str, set->origin_col, set->origin_row, 
+                                           set->num_cols,   set->num_rows );
+}
+
+static int SamDetectSet( const QccSPECKSet* set, int start_x, int start_y,
+                         int len_x, int len_y )
+{
+    if( set->origin_col == start_x && set->origin_row == start_y &&
+        set->num_cols   == len_x   && set->num_rows   == len_y )
+        return 1;
+    else
+        return 0;
+}
+
 
 #if 0
 static void QccSPECKSetPrint(const QccSPECKSet *set)
@@ -489,7 +505,7 @@ static int QccSPECKInputOutputSetSignificance(QccSPECKSet *current_set,
       }
       else
         current_set->significance = QCCSPECK_SIGNIFICANT;
-  }
+  } /* End buffer output case */
   else if (model->current_context != QCCSPECK_CONTEXT_NOCODE)
   {
         if (QccENTArithmeticDecode(buffer, model, &symbol, 1))
@@ -700,6 +716,8 @@ static int QccSPECKCodeS(QccListNode *current_set_node,
   int           significance_cnt = 0;
   int           context_offset;
 
+SamPrintSet( "code_S", current_set );
+
   QccListInitialize(&subsets);
 
   if (QccSPECKPartitionSet(current_set,
@@ -804,6 +822,8 @@ static int QccSPECKProcessS(QccListNode *current_set_node,
   QccSPECKSet*  current_set  = (QccSPECKSet *)(current_set_node->value);
   QccList*      current_list = (QccList *)(current_list_node->value);
 
+SamPrintSet( "process_S", current_set );
+
   /* if the current set is empty, then put it in the garbage list and return! */
   /* seems empty set occurs when this set is marked by ''mask'' */
   if (current_set->significance == QCCSPECK_EMPTYSET)
@@ -835,6 +855,9 @@ static int QccSPECKProcessS(QccListNode *current_set_node,
     }
   else if (return_value == 2) /* reach target_num_bits */
       return(2);
+
+if( SamDetectSet( current_set, 6, 0, 1, 1 ) != 0 )
+    printf( "found set (6, 0, 1, 1)!\n" );
 
   /* Line 2) of ProcessS() in Figure 2. */
   if (current_set->significance != QCCSPECK_INSIGNIFICANT)
@@ -1147,6 +1170,8 @@ static int QccSPECKSortingPass(QccWAVSubbandPyramid *coefficients,
   QccListNode*  current_set_node;
   QccListNode*  next_set_node;
   QccList       garbage;
+
+printf("--> sorting pass, threshold = %f\n", threshold );
 
   QccListInitialize(&garbage);
 

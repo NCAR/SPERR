@@ -83,6 +83,8 @@ int speck::SPECK2D::speck2d()
             return 1;
 
         m_threshold *= 0.5;
+
+        m_clean_LIS();
     }
 
 
@@ -95,17 +97,23 @@ int speck::SPECK2D::speck2d()
 //
 int speck::SPECK2D::m_sorting_pass( )
 {
+std::cout << "--> sorting pass, threshold = " << m_threshold << std::endl;
+
     // Update the significance map based on the current threshold
     speck::update_significance_map( m_coeff_buf.get(), m_dim_x * m_dim_y, m_threshold, 
                                     m_significance_map );
 
     for( long idx1 = m_LIS.size() - 1; idx1 >= 0; idx1-- )
         for( long idx2  = 0; idx2 < m_LIS[idx1].size(); idx2++ )
-            if( !m_LIS[idx1][idx2].garbage )
+        {
+            auto& s = m_LIS[idx1][idx2];
+            if( !s.garbage )
             {
-                if( m_process_S( idx1, idx2 ) == 1 )
+                m_decide_set_significance( s );
+                if( m_process_S( idx1, idx2, true ) == 1 )
                     return 1;                
             }
+        }
 
     if( m_process_I() == 1 )
         return 1;                
@@ -131,13 +139,17 @@ int speck::SPECK2D::m_refinement_pass( )
 }
 
 
-int speck::SPECK2D::m_process_S( long idx1, long idx2 )
+int speck::SPECK2D::m_process_S( long idx1, long idx2, bool code_this_set )
 {
     auto& set = m_LIS[idx1][idx2];
+    
+    m_print_set( "process_S", set );
 
-    m_decide_set_significance( set );
-    if( m_output_set_significance( set ) == 1 )
-        return 1;
+    if( code_this_set )
+    {
+        if( m_output_set_significance( set ) == 1 )
+            return 1;
+    }
 
     if( set.signif == Significance::Sig )
     {
@@ -164,13 +176,36 @@ int speck::SPECK2D::m_process_S( long idx1, long idx2 )
 int speck::SPECK2D::m_code_S( long idx1, long idx2 )
 {
     const auto& set = m_LIS[idx1][idx2];
+    
+    m_print_set( "code_S", set );
 
     std::array< SPECKSet2D, 4 > subsets;
     m_partition_S( set, subsets );
-    for( auto& s : subsets )
+
+    // We count how many subsets are significant, and if the first 3 subsets ain't,
+    // then the 4th one must be significant.
+    long already_sig = 0;
+    for( size_t i = 0; i < 3; i++ )
     {
+        m_decide_set_significance( subsets[i] );
+        if( subsets[i].signif == Significance::Sig )
+            already_sig++;
+    }
+    if( already_sig == 0 )
+        subsets[3].signif = Significance::Sig;
+    else
+        m_decide_set_significance( subsets[3] );
+
+    // Definitely code the first 3 subsets
+    bool code_set[4] = {true, true, true, true};
+    if( already_sig == 0 )
+        code_set[3] = false;
+
+    for( size_t i = 0; i < subsets.size(); i++ )
+    {
+        auto& s = subsets[i];
         m_LIS[ s.part_level ].push_back( s );
-        if( m_process_S( s.part_level, m_LIS[s.part_level].size() - 1 ) == 1 )
+        if( m_process_S( s.part_level, m_LIS[s.part_level].size() - 1, code_set[i] ) == 1 )
             return 1;
     }
 
@@ -182,45 +217,47 @@ void speck::SPECK2D::m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D
 {
     // The top-left set will have these bigger dimensions in case that 
     // the current set has odd dimensions.
-    const auto bigger_x = set.length_x - (set.length_x / 2);
-    const auto bigger_y = set.length_y - (set.length_y / 2);
+    const auto detail_len_x = set.length_x / 2;
+    const auto detail_len_y = set.length_y / 2;
+    const auto approx_len_x = set.length_x - detail_len_x;
+    const auto approx_len_y = set.length_y - detail_len_y;
 
     // Put generated subsets in the list the same order as did in QccPack.
     auto& BR      = list[0];               // Bottom right set
     BR.part_level = set.part_level + 1;
-    BR.start_x    = set.start_x    + bigger_x;
-    BR.start_y    = set.start_y    + bigger_x;
-    BR.length_x   = set.length_x   - bigger_x;
-    BR.length_y   = set.length_y   - bigger_y;
+    BR.start_x    = set.start_x + approx_len_x;
+    BR.start_y    = set.start_y + approx_len_y;
+    BR.length_x   = detail_len_x;
+    BR.length_y   = detail_len_y;
 
     auto& BL      = list[1];               // Bottom left set
     BL.part_level = set.part_level + 1;
     BL.start_x    = set.start_x;
-    BL.start_y    = set.start_y    + bigger_x;
-    BL.length_x   = set.length_x;
-    BL.length_y   = set.length_y   - bigger_y;
+    BL.start_y    = set.start_y + approx_len_y;
+    BL.length_x   = approx_len_x;
+    BL.length_y   = detail_len_y;
 
     auto& TR      = list[2];               // Top right set
     TR.part_level = set.part_level + 1;
-    TR.start_x    = set.start_x    + bigger_x;
+    TR.start_x    = set.start_x + approx_len_x;
     TR.start_y    = set.start_y;
-    TR.length_x   = set.length_x   - bigger_x;
-    TR.length_y   = bigger_y;
+    TR.length_x   = detail_len_x;
+    TR.length_y   = approx_len_y;
 
     auto& TL      = list[3];               // Top left set
     TL.part_level = set.part_level + 1;
     TL.start_x    = set.start_x;
     TL.start_y    = set.start_y;
-    TL.length_x   = bigger_x;
-    TL.length_y   = bigger_y;
+    TL.length_x   = approx_len_x;
+    TL.length_y   = approx_len_y;
 }
 
 
 int speck::SPECK2D::m_process_I()
 {
-    m_decide_set_significance( m_I );
     if( m_output_set_significance( m_I ) == 1 )
         return 1;
+
     if( m_I.signif == Significance::Sig )
     {
         if( m_code_I() == 1 )
@@ -235,13 +272,35 @@ int speck::SPECK2D::m_code_I()
 {
     std::array< SPECKSet2D, 3 > subsets;
     m_partition_I( subsets );
-    for( auto& s : subsets )
+
+    // We count how many subsets are significant, and if the first 2 subsets ain't,
+    // then the 3rd one must be significant.
+    long already_sig = 0;
+    for( size_t i = 0; i < 2; i++ )
     {
+        m_decide_set_significance( subsets[i] );
+        if( subsets[i].signif == Significance::Sig )
+            already_sig++;
+    }
+    if( already_sig == 0 )
+        subsets[2].signif = Significance::Sig;
+    else
+        m_decide_set_significance( subsets[2] );
+
+    // Definitely code the first 2 subsets
+    bool code_set[3] = {true, true, true};
+    if( already_sig == 0 )
+        code_set[2] = false;
+
+    for( size_t i = 0; i < subsets.size(); i++ )
+    {
+        auto& s = subsets[i];
         m_LIS[ s.part_level ].push_back( s );
-        if( m_process_S( s.part_level, m_LIS[s.part_level].size() - 1 ) == 1 )
+        if( m_process_S( s.part_level, m_LIS[s.part_level].size() - 1, code_set[i] ) == 1 )
             return 1;
     }
 
+    m_decide_set_significance( m_I );
     if( m_process_I() )
         return 1;
     else
@@ -348,7 +407,7 @@ int speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel )
 {
     auto x   = pixel.start_x;
     auto y   = pixel.start_y;
-    auto idx = y * m_dim_x * x;
+    auto idx = y * m_dim_x + x;
 
     // Let output the pixel sign! 
     if( m_sign_array[ idx ] )
@@ -372,7 +431,7 @@ int speck::SPECK2D::m_output_refinement( const SPECKSet2D& pixel )
 {
     auto x   = pixel.start_x;
     auto y   = pixel.start_y;
-    auto idx = y * m_dim_x * x;
+    auto idx = y * m_dim_x + x;
 
     if( m_coeff_buf[idx] >= m_threshold ) 
     {
@@ -469,9 +528,10 @@ void speck::SPECK2D::m_clean_LIS()
 }
 
 
-void speck::SPECK2D::m_print_set( const SPECKSet2D& set ) const
+void speck::SPECK2D::m_print_set( const char* str, const SPECKSet2D& set ) const
 {
-    printf( "(%d, %d, %d, %d)\n", set.start_x, set.start_y, set.length_x, set.length_y );
+    printf( "%s: (%d, %d, %d, %d)\n", str, set.start_x, set.start_y, 
+                                       set.length_x, set.length_y );
 }
 
 
