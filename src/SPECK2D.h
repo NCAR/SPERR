@@ -90,6 +90,8 @@ private:
                           // subband = (0, 1, 2, 3)
     void m_clean_LIS();   // Clean garbage sets from m_LIS if garbage exists.
 
+    void m_print_set( const SPECKSet2D& set ) const;
+
 
     //
     // Private data members

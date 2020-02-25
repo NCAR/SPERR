@@ -469,6 +469,12 @@ void speck::SPECK2D::m_clean_LIS()
 }
 
 
+void speck::SPECK2D::m_print_set( const SPECKSet2D& set ) const
+{
+    printf( "(%d, %d, %d, %d)\n", set.start_x, set.start_y, set.length_x, set.length_y );
+}
+
+
 //
 // Class SPECKSet2D
 //
