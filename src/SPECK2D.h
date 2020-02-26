@@ -71,15 +71,13 @@ private:
     //
     int  m_sorting_pass( );
     int  m_refinement_pass( );
-    // For the following 2 methods, indices are used to locate which set to process from m_LIS,
+    // For the following 4 methods, indices are used to locate which set to process from m_LIS,
     // because of the choice to use vectors to represent lists, only indices are invariant. 
     int  m_process_S( long idx1, long idx2, bool );  // code this set or not? 
-    int  m_code_S(    long idx1, long idx2 );
+    int  m_code_S   ( long idx1, long idx2 );
+    int  m_process_I( );
+    int  m_code_I   ( );
     void m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D, 4>& subsets ) const;
-                          // Partition set into 4 smaller sets, and put them in list.
-                          // Note: list will be resized to 4 and contains the 4 subsets.
-    int  m_process_I();
-    int  m_code_I();
     void m_partition_I( std::array<SPECKSet2D, 3>& subsets );
     void m_decide_set_significance( SPECKSet2D& set );
     int  m_output_set_significance( const SPECKSet2D& set );
@@ -92,7 +90,9 @@ private:
                           // subband = (0, 1, 2, 3)
     void m_clean_LIS();   // Clean garbage sets from m_LIS if garbage exists.
 
+#ifndef NDEBUG
     void m_print_set( const char*, const SPECKSet2D& set ) const;
+#endif
 
 
     //
@@ -105,6 +105,7 @@ private:
     uint64_t    m_budget    = 0;            // What's the budget for num of bits?
     uint64_t    m_bit_cnt   = 0;            // How many bits are already output/input?
     long m_dim_x = 0, m_dim_y = 0;          // 2D plane dims
+    const long  m_vec_init_capacity = 8;    // Vectors are initialized to have this capacity.
 
     std::vector<bool> m_significance_map;
     std::vector<bool> m_sign_array;

@@ -54,15 +54,17 @@ int speck::SPECK2D::speck2d()
     long num_of_parts         = m_num_of_partitions();
     long num_of_xforms        = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y) );
 
-std::cout << "xform levels = " << num_of_xforms << std::endl;
+#ifndef NDEBUG
+    std::cout << "xform levels = " << num_of_xforms << std::endl;
+#endif
 
     // Still preparing: lists and sets
     m_LIS.clear();
     m_LIS.resize( num_of_parts + 1 );
     for( auto& v : m_LIS )  // Avoid frequent memory allocations.
-        v.reserve( 8 );
+        v.reserve( m_vec_init_capacity );
     m_LIS_garbage_cnt.assign( num_of_parts + 1, 0 );
-    m_LSP.reserve( 8 );
+    m_LSP.reserve( m_vec_init_capacity );
     SPECKSet2D S( SPECKSetType::TypeS );
     S.part_level = num_of_xforms;
     m_calc_set_size( S, 0 );      // Populate other data fields of S.
@@ -99,7 +101,9 @@ std::cout << "xform levels = " << num_of_xforms << std::endl;
 //
 int speck::SPECK2D::m_sorting_pass( )
 {
-std::cout << "--> sorting pass, threshold = " << m_threshold << std::endl;
+#ifndef NDEBUG
+    printf("--> sorting pass, threshold = %f\n", m_threshold );
+#endif
 
     // Update the significance map based on the current threshold
     speck::update_significance_map( m_coeff_buf.get(), m_dim_x * m_dim_y, m_threshold, 
@@ -146,11 +150,14 @@ int speck::SPECK2D::m_process_S( long idx1, long idx2, bool code_this_set )
 {
     auto& set = m_LIS[idx1][idx2];
     
+#ifndef NDEBUG
     m_print_set( "process_S", set );
+#endif
 
     if( set.signif == Significance::Empty ) // Skip empty sets completely
     {
         set.garbage = true;
+        m_LIS_garbage_cnt[ set.part_level ]++;
         return 0;
     }
 
@@ -169,12 +176,14 @@ int speck::SPECK2D::m_process_S( long idx1, long idx2, bool code_this_set )
                 return 1;
             m_LSP.push_back( set ); // A copy is saved to m_LSP.
             set.garbage = true;     // This particular object will be discarded.
+            m_LIS_garbage_cnt[ set.part_level ]++;
         }
         else
         {
             if( m_code_S( idx1, idx2 ) == 1 )
                 return 1;
             set.garbage = true;     // This particular object will be discarded.
+            m_LIS_garbage_cnt[ set.part_level ]++;
         }
     }
 
@@ -186,7 +195,9 @@ int speck::SPECK2D::m_code_S( long idx1, long idx2 )
 {
     const auto& set = m_LIS[idx1][idx2];
     
+#ifndef NDEBUG
     m_print_set( "code_S", set );
+#endif
 
     std::array< SPECKSet2D, 4 > subsets;
     m_partition_S( set, subsets );
@@ -267,7 +278,9 @@ int speck::SPECK2D::m_process_I()
     if( m_I.part_level == 0 )   // m_I is empty at this point
         return 0;
 
+#ifndef NDEBUG
     m_print_set( "process_I", m_I );
+#endif
     
     if( m_output_set_significance( m_I ) == 1 )
         return 1;
@@ -415,10 +428,12 @@ void speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
 // Output by printing it out
 int speck::SPECK2D::m_output_set_significance( const SPECKSet2D& set )
 {
+#ifndef NDEBUG
     if( set.signif == Significance::Sig )
         std::cout << "s1" << std::endl;
     else
         std::cout << "s0" << std::endl;
+#endif
     
     // Let's also see if we're reached the bit budget
     m_bit_cnt++;
@@ -436,11 +451,12 @@ int speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel )
     auto y   = pixel.start_y;
     auto idx = y * m_dim_x + x;
 
-    // Let output the pixel sign! 
+#ifndef NDEBUG
     if( m_sign_array[ idx ] )
         std::cout << "p1" << std::endl;
     else
         std::cout << "p0" << std::endl;
+#endif
 
     // Progressive quantization!
     m_coeff_buf[ idx ] -= m_threshold;
@@ -460,6 +476,7 @@ int speck::SPECK2D::m_output_refinement( const SPECKSet2D& pixel )
     auto y   = pixel.start_y;
     auto idx = y * m_dim_x + x;
 
+#ifndef NDEBUG
     if( m_coeff_buf[idx] >= m_threshold ) 
     {
         std::cout << "r1" << std::endl;
@@ -467,6 +484,7 @@ int speck::SPECK2D::m_output_refinement( const SPECKSet2D& pixel )
     }
     else
         std::cout << "r0" << std::endl;
+#endif
 
     // Let's also see if we're reached the bit budget
     m_bit_cnt++;
@@ -538,28 +556,33 @@ void speck::SPECK2D::m_calc_set_size( SPECKSet2D& set, long subband ) const
 void speck::SPECK2D::m_clean_LIS()
 {
     std::vector<SPECKSet2D> tmp;
-    tmp.reserve( 8 );
-    const auto is_garbage = []( const SPECKSet2D& s ){ return s.garbage; };
 
     for( long i = 0; i < m_LIS_garbage_cnt.size(); i++ )
     {
-        if( m_LIS_garbage_cnt[i] > 0 )
+        // Only consolidate memory if the garbage amount is big enough, 
+        // in both absolute and relative senses.
+        if( m_LIS_garbage_cnt[i] > m_vec_init_capacity && 
+            m_LIS_garbage_cnt[i] > m_LIS[i].size() / 2  )
         {
-            std::remove_copy_if( m_LIS[i].begin(), m_LIS[i].end(), tmp.begin(), is_garbage );
-            // Now tmp has all the non-garbage elements, let's do a swap!
+            tmp.clear();
+            tmp.reserve( m_vec_init_capacity );
+            for( const auto& s : m_LIS[i] )
+                if( !s.garbage )
+                    tmp.push_back( s );
             std::swap( m_LIS[i], tmp );
-            // m_LIS[i] does not have garbage anymore!
             m_LIS_garbage_cnt[i] = 0;
         }
     }
 }
 
 
+#ifndef NDEBUG
 void speck::SPECK2D::m_print_set( const char* str, const SPECKSet2D& set ) const
 {
     printf( "%s: (%d, %d, %d, %d)\n", str, set.start_x, set.start_y, 
                                        set.length_x, set.length_y );
 }
+#endif
 
 
 //

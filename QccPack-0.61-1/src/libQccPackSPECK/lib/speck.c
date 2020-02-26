@@ -716,7 +716,8 @@ static int QccSPECKCodeS(QccListNode *current_set_node,
   int           significance_cnt = 0;
   int           context_offset;
 
-SamPrintSet( "code_S", current_set );
+if( buffer->type == QCCBITBUFFER_OUTPUT )
+    SamPrintSet( "code_S", current_set );
 
   QccListInitialize(&subsets);
 
@@ -822,7 +823,8 @@ static int QccSPECKProcessS(QccListNode *current_set_node,
   QccSPECKSet*  current_set  = (QccSPECKSet *)(current_set_node->value);
   QccList*      current_list = (QccList *)(current_list_node->value);
 
-SamPrintSet( "process_S", current_set );
+if( buffer->type == QCCBITBUFFER_OUTPUT )
+  SamPrintSet( "process_S", current_set );
 //if( SamDetectSet( current_set, 6, 4, 0, 1 ) != 0 )
 //    printf("detected!");
 
@@ -1115,6 +1117,7 @@ static int QccSPECKProcessI(QccSPECKSet *I,
   if (!I->level)
     return(0);
 
+if( buffer->type == QCCBITBUFFER_OUTPUT )
   SamPrintSet( "process_I", I );
 
   model->current_context = QCCSPECK_CONTEXT_I;
@@ -1175,10 +1178,8 @@ static int QccSPECKSortingPass(QccWAVSubbandPyramid *coefficients,
   QccListNode*  next_set_node;
   QccList       garbage;
 
-if( (int)threshold > 0 )
-  printf("--> sorting pass, threshold = %d\n", (int)(threshold) );
-else
-  printf("--> sorting pass, threshold = %f\n", (threshold) );
+  if( buffer->type == QCCBITBUFFER_OUTPUT )
+    printf("--> sorting pass, threshold = %f\n", (threshold) );
 
   QccListInitialize(&garbage);
 
