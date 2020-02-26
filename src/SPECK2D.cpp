@@ -148,6 +148,12 @@ int speck::SPECK2D::m_process_S( long idx1, long idx2, bool code_this_set )
     
     m_print_set( "process_S", set );
 
+    if( set.signif == Significance::Empty ) // Skip empty sets completely
+    {
+        set.garbage = true;
+        return 0;
+    }
+
     if( code_this_set )
     {
         if( m_output_set_significance( set ) == 1 )
@@ -168,7 +174,7 @@ int speck::SPECK2D::m_process_S( long idx1, long idx2, bool code_this_set )
         {
             if( m_code_S( idx1, idx2 ) == 1 )
                 return 1;
-            set.garbage = true;         // This particular object will be discarded.
+            set.garbage = true;     // This particular object will be discarded.
         }
     }
 
@@ -201,7 +207,7 @@ int speck::SPECK2D::m_code_S( long idx1, long idx2 )
 
     // Definitely code the first 3 subsets
     bool code_set[4] = {true, true, true, true};
-    if( already_sig == 0 )
+    if( already_sig == 0 )  // Might not need to code the 4th set.
         code_set[3] = false;
 
     for( size_t i = 0; i < subsets.size(); i++ )
@@ -258,7 +264,7 @@ void speck::SPECK2D::m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D
 
 int speck::SPECK2D::m_process_I()
 {
-    if( m_I.part_level == 0 )
+    if( m_I.part_level == 0 )   // m_I is empty at this point
         return 0;
 
     m_print_set( "process_I", m_I );
@@ -356,8 +362,7 @@ void speck::SPECK2D::m_partition_I( std::array<SPECKSet2D, 3>& subsets )
 void speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
 {
     // In case of an S set with zero dimension, mark it empty
-    if( ( set.length_x == 0 || set.length_y == 0 ) &&
-          set.type() == SPECKSetType::TypeS  )
+    if( set.type() == SPECKSetType::TypeS && (set.length_x == 0 || set.length_y == 0) )
     {
         set.signif = Significance::Empty;
         return;
