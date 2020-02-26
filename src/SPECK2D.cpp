@@ -54,6 +54,8 @@ int speck::SPECK2D::speck2d()
     long num_of_parts         = m_num_of_partitions();
     long num_of_xforms        = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y) );
 
+std::cout << "xform levels = " << num_of_xforms << std::endl;
+
     // Still preparing: lists and sets
     m_LIS.clear();
     m_LIS.resize( num_of_parts + 1 );
@@ -115,6 +117,7 @@ std::cout << "--> sorting pass, threshold = " << m_threshold << std::endl;
             }
         }
 
+    m_decide_set_significance( m_I );
     if( m_process_I() == 1 )
         return 1;                
     else
@@ -255,6 +258,11 @@ void speck::SPECK2D::m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D
 
 int speck::SPECK2D::m_process_I()
 {
+    if( m_I.part_level == 0 )
+        return 0;
+
+    m_print_set( "process_I", m_I );
+    
     if( m_output_set_significance( m_I ) == 1 )
         return 1;
 
@@ -347,39 +355,53 @@ void speck::SPECK2D::m_partition_I( std::array<SPECKSet2D, 3>& subsets )
 
 void speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
 {
+    // In case of an S set with zero dimension, mark it empty
+    if( ( set.length_x == 0 || set.length_y == 0 ) &&
+          set.type() == SPECKSetType::TypeS  )
+    {
+        set.signif = Significance::Empty;
+        return;
+    }
+
     set.signif = Significance::Insig;
 
     // For TypeS sets, we test an obvious rectangle specified by this set.
     if( set.type() == SPECKSetType::TypeS )
     {
-        for( long y = set.start_y; y < (set.start_y + set.length_y) &&
-                              set.signif == Significance::Insig; y++ )
-            for( long x = set.start_x; x < (set.start_x + set.length_x) &&
-                                  set.signif == Significance::Insig; x++ )
+        for( long y = set.start_y; y < (set.start_y + set.length_y); y++ )
+            for( long x = set.start_x; x < (set.start_x + set.length_x); x++ )
             {
                 auto idx = y * m_dim_x + x;
                 if( m_significance_map[ idx ] )
+                {
                     set.signif = Significance::Sig;
+                    return;
+                }
             }
     }
     else    // For TypeI sets, we need to test two rectangles!
     {
         // First rectangle: directly to the right of the missing top-left corner
-        for( long y = 0; y < set.start_y && set.signif == Significance::Insig; y++ )
-            for( long x = set.start_x; x < m_dim_x && set.signif == Significance::Insig; x++ )
+        for( long y = 0; y < set.start_y; y++ )
+            for( long x = set.start_x; x < m_dim_x; x++ )
             {
                 auto idx = y * m_dim_x + x;
                 if( m_significance_map[ idx ] )
+                {
                     set.signif = Significance::Sig;
+                    return;
+                }
             }
 
         // Second rectangle: the rest area at the bottom
         // Note: this rectangle is stored in a contiguous chunk of memory :)
-        for( long i = set.start_y * m_dim_x; i < m_dim_x * m_dim_y && 
-                                             set.signif == Significance::Insig; i++ )
+        for( long i = set.start_y * m_dim_x; i < m_dim_x * m_dim_y; i++ )
         {
             if( m_significance_map[ i ] )
+            {
                 set.signif = Significance::Sig;
+                return;
+            }
         }
     }
 }

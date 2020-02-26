@@ -823,6 +823,8 @@ static int QccSPECKProcessS(QccListNode *current_set_node,
   QccList*      current_list = (QccList *)(current_list_node->value);
 
 SamPrintSet( "process_S", current_set );
+//if( SamDetectSet( current_set, 6, 4, 0, 1 ) != 0 )
+//    printf("detected!");
 
   /* if the current set is empty, then put it in the garbage list and return! */
   /* seems empty set occurs when this set is marked by ''mask'' */
@@ -856,8 +858,8 @@ SamPrintSet( "process_S", current_set );
   else if (return_value == 2) /* reach target_num_bits */
       return(2);
 
-if( SamDetectSet( current_set, 6, 0, 1, 1 ) != 0 )
-    printf( "found set (6, 0, 1, 1)!\n" );
+//if( SamDetectSet( current_set, 6, 0, 1, 1 ) != 0 )
+//    printf( "found set (6, 0, 1, 1)!\n" );
 
   /* Line 2) of ProcessS() in Figure 2. */
   if (current_set->significance != QCCSPECK_INSIGNIFICANT)
@@ -1113,6 +1115,8 @@ static int QccSPECKProcessI(QccSPECKSet *I,
   if (!I->level)
     return(0);
 
+  SamPrintSet( "process_I", I );
+
   model->current_context = QCCSPECK_CONTEXT_I;
 
   return_value = QccSPECKInputOutputSetSignificance(I,
@@ -1171,7 +1175,7 @@ static int QccSPECKSortingPass(QccWAVSubbandPyramid *coefficients,
   QccListNode*  next_set_node;
   QccList       garbage;
 
-printf("--> sorting pass, threshold = %f\n", threshold );
+printf("--> sorting pass, threshold = %d\n", (int)(threshold) );
 
   QccListInitialize(&garbage);
 

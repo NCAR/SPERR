@@ -42,6 +42,17 @@ int image_to_array( const QccIMGImageComponent* image, float* array )
     return 0;
 }
 
+int calc_num_of_xforms( int len )
+{
+    assert( len > 0 );
+    // I decide 8 is the minimal length to do one level of xform.
+    float ratio = (float)len / 8.0f;
+    float f     = logf(ratio) / logf(2.0f);
+    int num_of_xforms = f < 0.0f ? 0 : (int)f + 1;
+
+    return num_of_xforms;
+}
+
 
 int main( int argc, char** argv )
 {
@@ -56,10 +67,10 @@ int main( int argc, char** argv )
     int         num_of_rows   = atoi( argv[3] );
     const long  num_of_vals   = num_of_cols * num_of_rows;
     const long  num_of_bytes  = sizeof(float) * num_of_vals;
-    const float cratio        = 20.0f;  /* compression ratio */
+    const float cratio        = 10.0f;  /* compression ratio */
     const int   total_bits    = (int)(8.0f * num_of_bytes / cratio);
-    //const int   total_bits    = 100;
-    int         num_of_levels = 1;
+    int         num_of_levels = calc_num_of_xforms( num_of_cols );
+    printf( "xform levels = %d\n", num_of_levels );
 
     /*
      * Stage 1: Encoding
