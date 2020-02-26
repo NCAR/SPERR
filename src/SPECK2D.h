@@ -59,9 +59,11 @@ class SPECK2D
 public:
     void take_coeffs( std::unique_ptr<double[]> );  // Take ownership of a chunck of memory.
     template <typename T>
-    void copy_coeffs( const T* );   // Make a copy of the incoming data.
-    void assign_mean_dims( double, long, long ); // Accepts data mean and plane dimensions.
-    void assign_bit_budget( uint64_t );          // How many bits does speck process? 
+    void copy_coeffs( const T* );           // Make a copy of the incoming data.
+    void assign_mean( double );             // Accepts data mean.
+    void assign_dims( long, long );         // Accepts plane dimension
+    void assign_max_coeff_bits( uint16_t ); // (Useful for reconstruction)
+    void assign_bit_budget( uint64_t );     // How many bits does speck process? 
 
     int speck2d();
 
@@ -89,7 +91,10 @@ private:
     void m_calc_set_size( SPECKSet2D& set, long subband ) const;
                           // What's the set size and offsets?
                           // subband = (0, 1, 2, 3)
-    void m_clean_LIS();   // Clean garbage sets from m_LIS if garbage exists.
+    void m_clean_LIS();   // Clean garbage sets from m_LIS if too much garbage exists.
+
+    bool m_ready_to_encode() const;
+    bool m_ready_to_decode() const;
 
 #ifdef PRINT
     void m_print_set( const char*, const SPECKSet2D& set ) const;
@@ -104,6 +109,7 @@ private:
     double      m_data_mean = 0.0;          // Mean subtracted before DWT
     double      m_threshold = 0.0;          // Threshold that's used for an iteration
     uint64_t    m_budget    = 0;            // What's the budget for num of bits?
+    uint16_t    m_max_coefficient_bits = 0; // = log2(max_coefficient)
     long m_dim_x = 0, m_dim_y = 0;          // 2D plane dims
     const long  m_vec_init_capacity = 8;    // Vectors are initialized to have this capacity.
 

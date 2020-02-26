@@ -27,32 +27,45 @@ template void speck::SPECK2D::copy_coeffs( const float*  );
 template void speck::SPECK2D::copy_coeffs( const double* );
 
 
-void speck::SPECK2D::assign_mean_dims( double m, long dx, long dy )
+void speck::SPECK2D::assign_mean( double m )
 {
     m_data_mean = m;
-    m_dim_x     = dx;
-    m_dim_y     = dy;
+}
+
+
+void speck::SPECK2D::assign_dims( long dx, long dy )
+{
+    m_dim_x = dx;
+    m_dim_y = dy;
+}
+
+
+void speck::SPECK2D::assign_max_coeff_bits( uint16_t bits )
+{
+    m_max_coefficient_bits = bits;
 }
 
 
 void speck::SPECK2D::assign_bit_budget( uint64_t budget )
 {
-    assert( budget > 0 );
     m_budget = budget;
 }
     
 
 int speck::SPECK2D::speck2d()
 {
-    assert( m_coeff_buf != nullptr );               // sanity check
-    assert( m_dim_x > 0 && m_dim_y > 0 );           // sanity check
+    assert( m_ready_to_encode() );
 
     // Let's do some preparation: gather some values
     long num_of_vals = m_dim_x * m_dim_y;
     auto max_coeff   = speck::make_positive( m_coeff_buf.get(), num_of_vals, m_sign_array );
-    long max_coefficient_bits = long(std::log2(max_coeff));
-    long num_of_parts         = m_num_of_partitions();
-    long num_of_xforms        = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y) );
+    long num_of_parts  = m_num_of_partitions();
+    long num_of_xforms = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y) );
+    m_max_coefficient_bits = uint16_t( std::log2(max_coeff) );
+
+    // when max_coeff is very close to zero, m_max_coefficient_bits could be zero.
+    // I don't know how to deal with that situation yet...
+    assert( m_max_coefficient_bits > 0 );   
 
 #ifdef PRINT
     std::cout << "xform levels = " << num_of_xforms << std::endl;
@@ -79,7 +92,7 @@ int speck::SPECK2D::speck2d()
     // Get ready for the quantization loop!
     m_bit_buffer.clear();
     m_bit_buffer.reserve( m_budget + m_vec_init_capacity );
-    m_threshold = std::pow( 2.0, double(max_coefficient_bits) );
+    m_threshold = std::pow( 2.0, double(m_max_coefficient_bits) );
     for( long bitplane = 0; bitplane < 128; bitplane++ )
     {
         if( m_sorting_pass() == 1 )
@@ -589,6 +602,32 @@ void speck::SPECK2D::m_clean_LIS()
             m_LIS_garbage_cnt[i] = 0;
         }
     }
+}
+
+
+bool speck::SPECK2D::m_ready_to_encode() const
+{
+    if( m_coeff_buf == nullptr )
+        return false;
+    if( m_dim_x <= 0 || m_dim_y <= 0 )
+        return false;
+    if( m_budget == 0 )
+        return false;
+
+    return true;
+}
+
+
+bool speck::SPECK2D::m_ready_to_decode() const
+{
+    if( m_bit_buffer.empty() )
+        return false;
+    if( m_dim_x <= 0 || m_dim_y <= 0 )
+        return false;
+    if( m_max_coefficient_bits == 0 )
+        return false;
+
+    return true;
 }
 
 

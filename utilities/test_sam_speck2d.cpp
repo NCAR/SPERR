@@ -43,7 +43,7 @@ int main( int argc, char* argv[] )
     cdf.dwt2d();
 
     speck::SPECK2D speck;
-    speck.assign_mean_dims( cdf.get_mean(), dim_x, dim_y );
+    speck.assign_dims( dim_x, dim_y );
     speck.take_coeffs( cdf.release_data() );
     const float cratio        = 10.0f;  /* compression ratio */
     const long  total_bits    = long(32.0f * total_vals / cratio);
