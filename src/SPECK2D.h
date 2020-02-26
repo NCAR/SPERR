@@ -74,7 +74,7 @@ private:
     //
     int  m_sorting_pass( );
     int  m_refinement_pass( );
-    // For the following 4 methods, indices are used to locate which set to process from m_LIS,
+    // For the following 2 methods, indices are used to locate which set to process from m_LIS,
     // because of the choice to use vectors to represent lists, only indices are invariant. 
     int  m_process_S( long idx1, long idx2, bool );  // code this set or not? 
     int  m_code_S   ( long idx1, long idx2 );
@@ -86,13 +86,11 @@ private:
     int  m_output_set_significance( const SPECKSet2D& set );
     int  m_output_pixel_sign( const SPECKSet2D& pixel );
     int  m_output_refinement( const SPECKSet2D& pixel );
+
+    void m_calc_root_size( SPECKSet2D& root ) const;
     long m_num_of_partitions() const; 
                           // How many partitions available to perform given the 2D dimensions?
-    void m_calc_set_size( SPECKSet2D& set, long subband ) const;
-                          // What's the set size and offsets?
-                          // subband = (0, 1, 2, 3)
     void m_clean_LIS();   // Clean garbage sets from m_LIS if too much garbage exists.
-
     bool m_ready_to_encode() const;
     bool m_ready_to_decode() const;
 

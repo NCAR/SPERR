@@ -80,7 +80,7 @@ int speck::SPECK2D::speck2d()
     m_LSP.reserve( m_vec_init_capacity );
     SPECKSet2D S( SPECKSetType::TypeS );
     S.part_level = num_of_xforms;
-    m_calc_set_size( S, 0 );      // Populate other data fields of S.
+    m_calc_root_size( S );
     m_LIS[ S.part_level ].push_back( S );
 
     m_I.part_level = num_of_xforms;
@@ -540,45 +540,18 @@ long speck::SPECK2D::m_num_of_partitions() const
 
 
 
-void speck::SPECK2D::m_calc_set_size( SPECKSet2D& set, long subband ) const
+void speck::SPECK2D::m_calc_root_size( SPECKSet2D& root ) const
 {
-    assert( subband >= 0 && subband <= 3 );
-    long part_level = set.part_level;
+    long part_level = root.part_level;
     long low_len_x, high_len_x;
     long low_len_y, high_len_y;
     speck::calc_approx_detail_len( m_dim_x, part_level, low_len_x, high_len_x );
     speck::calc_approx_detail_len( m_dim_y, part_level, low_len_y, high_len_y );
     
-    // Note: the index of subbands (0, 1, 2, 3) follows what's used in QccPack,
-    //       and is different from what is described in Figure 4 of the Pearlman paper.
-    if( subband == 0 )      // top left
-    {
-        set.start_x  = 0;
-        set.length_x = low_len_x;
-        set.start_y  = 0;
-        set.length_y = low_len_y;
-    }
-    else if( subband == 1 ) // bottom left
-    {
-        set.start_x  = 0;
-        set.length_x = low_len_x;
-        set.start_y  = low_len_y;
-        set.length_y = high_len_y;
-    }
-    else if( subband == 2 ) // top right
-    {
-        set.start_x  = low_len_x;
-        set.length_x = high_len_x;
-        set.start_y  = 0;
-        set.length_y = low_len_y;
-    }
-    else                    // bottom right
-    {
-        set.start_x  = low_len_x;
-        set.length_x = high_len_x;
-        set.start_y  = low_len_y;
-        set.length_y = high_len_y;
-    }
+    root.start_x  = 0;
+    root.start_y  = 0;
+    root.length_x = low_len_x;
+    root.length_y = low_len_y;
 }
 
 
