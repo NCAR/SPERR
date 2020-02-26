@@ -1175,7 +1175,10 @@ static int QccSPECKSortingPass(QccWAVSubbandPyramid *coefficients,
   QccListNode*  next_set_node;
   QccList       garbage;
 
-printf("--> sorting pass, threshold = %d\n", (int)(threshold) );
+if( (int)threshold > 0 )
+  printf("--> sorting pass, threshold = %d\n", (int)(threshold) );
+else
+  printf("--> sorting pass, threshold = %f\n", (threshold) );
 
   QccListInitialize(&garbage);
 
