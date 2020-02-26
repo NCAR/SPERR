@@ -54,7 +54,7 @@ int speck::SPECK2D::speck2d()
     long num_of_parts         = m_num_of_partitions();
     long num_of_xforms        = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y) );
 
-#ifndef NDEBUG
+#ifdef PRINT
     std::cout << "xform levels = " << num_of_xforms << std::endl;
 #endif
 
@@ -77,7 +77,8 @@ int speck::SPECK2D::speck2d()
     m_I.length_y   = m_dim_y;
 
     // Get ready for the quantization loop!
-    m_bit_cnt = 0;
+    m_bit_buffer.clear();
+    m_bit_buffer.reserve( m_budget + m_vec_init_capacity );
     m_threshold = std::pow( 2.0, double(max_coefficient_bits) );
     for( long bitplane = 0; bitplane < 128; bitplane++ )
     {
@@ -101,7 +102,7 @@ int speck::SPECK2D::speck2d()
 //
 int speck::SPECK2D::m_sorting_pass( )
 {
-#ifndef NDEBUG
+#ifdef PRINT
     printf("--> sorting pass, threshold = %f\n", m_threshold );
 #endif
 
@@ -150,7 +151,7 @@ int speck::SPECK2D::m_process_S( long idx1, long idx2, bool code_this_set )
 {
     auto& set = m_LIS[idx1][idx2];
     
-#ifndef NDEBUG
+#ifdef PRINT
     m_print_set( "process_S", set );
 #endif
 
@@ -195,7 +196,7 @@ int speck::SPECK2D::m_code_S( long idx1, long idx2 )
 {
     const auto& set = m_LIS[idx1][idx2];
     
-#ifndef NDEBUG
+#ifdef PRINT
     m_print_set( "code_S", set );
 #endif
 
@@ -278,7 +279,7 @@ int speck::SPECK2D::m_process_I()
     if( m_I.part_level == 0 )   // m_I is empty at this point
         return 0;
 
-#ifndef NDEBUG
+#ifdef PRINT
     m_print_set( "process_I", m_I );
 #endif
     
@@ -428,16 +429,20 @@ void speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
 // Output by printing it out
 int speck::SPECK2D::m_output_set_significance( const SPECKSet2D& set )
 {
-#ifndef NDEBUG
+#ifdef PRINT
     if( set.signif == Significance::Sig )
         std::cout << "s1" << std::endl;
     else
         std::cout << "s0" << std::endl;
 #endif
+
+    if( set.signif == Significance::Sig )
+        m_bit_buffer.push_back( true );
+    else
+        m_bit_buffer.push_back( false );
     
     // Let's also see if we're reached the bit budget
-    m_bit_cnt++;
-    if( m_bit_cnt >= m_budget )
+    if( m_bit_buffer.size() >= m_budget )
         return 1;
     else
         return 0;
@@ -451,19 +456,23 @@ int speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel )
     auto y   = pixel.start_y;
     auto idx = y * m_dim_x + x;
 
-#ifndef NDEBUG
+#ifdef PRINT
     if( m_sign_array[ idx ] )
         std::cout << "p1" << std::endl;
     else
         std::cout << "p0" << std::endl;
 #endif
 
+    if( m_sign_array[ idx ] )
+        m_bit_buffer.push_back( true );
+    else
+        m_bit_buffer.push_back( false );
+
     // Progressive quantization!
     m_coeff_buf[ idx ] -= m_threshold;
 
     // Let's also see if we're reached the bit budget
-    m_bit_cnt++;
-    if( m_bit_cnt >= m_budget )
+    if( m_bit_buffer.size() >= m_budget )
         return 1;
     else
         return 0;
@@ -476,7 +485,7 @@ int speck::SPECK2D::m_output_refinement( const SPECKSet2D& pixel )
     auto y   = pixel.start_y;
     auto idx = y * m_dim_x + x;
 
-#ifndef NDEBUG
+#ifdef PRINT
     if( m_coeff_buf[idx] >= m_threshold ) 
     {
         std::cout << "r1" << std::endl;
@@ -486,9 +495,16 @@ int speck::SPECK2D::m_output_refinement( const SPECKSet2D& pixel )
         std::cout << "r0" << std::endl;
 #endif
 
+    if( m_coeff_buf[idx] >= m_threshold ) 
+    {
+        m_bit_buffer.push_back( true );
+        m_coeff_buf[idx] -= m_threshold;
+    }
+    else
+        m_bit_buffer.push_back( false );
+
     // Let's also see if we're reached the bit budget
-    m_bit_cnt++;
-    if( m_bit_cnt >= m_budget )
+    if( m_bit_buffer.size() >= m_budget )
         return 1;
     else
         return 0;
@@ -576,7 +592,7 @@ void speck::SPECK2D::m_clean_LIS()
 }
 
 
-#ifndef NDEBUG
+#ifdef PRINT
 void speck::SPECK2D::m_print_set( const char* str, const SPECKSet2D& set ) const
 {
     printf( "%s: (%d, %d, %d, %d)\n", str, set.start_x, set.start_y, 

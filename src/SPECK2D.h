@@ -14,6 +14,7 @@ namespace speck
 //   from 24 bytes to 48 bytes.
 //
 #define FOUR_BYTE_SPECK_SET
+#define PRINT
 
 class SPECKSet2D
 {
@@ -90,7 +91,7 @@ private:
                           // subband = (0, 1, 2, 3)
     void m_clean_LIS();   // Clean garbage sets from m_LIS if garbage exists.
 
-#ifndef NDEBUG
+#ifdef PRINT
     void m_print_set( const char*, const SPECKSet2D& set ) const;
 #endif
 
@@ -103,12 +104,12 @@ private:
     double      m_data_mean = 0.0;          // Mean subtracted before DWT
     double      m_threshold = 0.0;          // Threshold that's used for an iteration
     uint64_t    m_budget    = 0;            // What's the budget for num of bits?
-    uint64_t    m_bit_cnt   = 0;            // How many bits are already output/input?
     long m_dim_x = 0, m_dim_y = 0;          // 2D plane dims
     const long  m_vec_init_capacity = 8;    // Vectors are initialized to have this capacity.
 
     std::vector<bool> m_significance_map;
     std::vector<bool> m_sign_array;
+    std::vector<bool> m_bit_buffer;
 
     std::vector< SPECKSet2D >               m_LSP;
     std::vector< std::vector<SPECKSet2D> >  m_LIS;
