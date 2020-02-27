@@ -48,7 +48,7 @@ int main( int argc, char* argv[] )
     const float cratio        = 10.0f;  /* compression ratio */
     const long  total_bits    = long(32.0f * total_vals / cratio);
     speck.assign_bit_budget( total_bits );
-    speck.speck2d();
+    speck.encode();
     
 
 }

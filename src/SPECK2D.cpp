@@ -77,46 +77,21 @@ void speck::SPECK2D::assign_bit_budget( uint64_t budget )
 }
     
 
-int speck::SPECK2D::speck2d()
+int speck::SPECK2D::encode()
 {
     assert( m_ready_to_encode() );
+    m_encode_mode = true;
 
-    // Let's do some preparation: gather some values
-    long num_of_vals = m_dim_x * m_dim_y;
-    auto max_coeff   = speck::make_positive( m_coeff_buf.get(), num_of_vals, m_sign_array );
-    long num_of_parts  = m_num_of_partitions();
-    long num_of_xforms = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y) );
-    m_max_coefficient_bits = uint16_t( std::log2(max_coeff) );
-
-    // when max_coeff is very close to zero, m_max_coefficient_bits could be zero.
-    // I don't know how to deal with that situation yet...
-    assert( m_max_coefficient_bits > 0 );   
-
-#ifdef PRINT
-    std::cout << "xform levels = " << num_of_xforms << std::endl;
-#endif
-
-    // Still preparing: lists and sets
-    m_LIS.clear();
-    m_LIS.resize( num_of_parts + 1 );
-    for( auto& v : m_LIS )  // Avoid frequent memory allocations.
-        v.reserve( m_vec_init_capacity );
-    m_LIS_garbage_cnt.assign( num_of_parts + 1, 0 );
-    m_LSP.reserve( m_vec_init_capacity );
-    SPECKSet2D S( SPECKSetType::TypeS );
-    S.part_level = num_of_xforms;
-    m_calc_root_size( S );
-    m_LIS[ S.part_level ].push_back( S );
-
-    m_I.part_level = num_of_xforms;
-    m_I.start_x    = S.length_x;
-    m_I.start_y    = S.length_y;
-    m_I.length_x   = m_dim_x;
-    m_I.length_y   = m_dim_y;
+    m_initialize_sets_lists();
 
     // Get ready for the quantization loop!
     m_bit_buffer.clear();
     m_bit_buffer.reserve( m_budget + m_vec_init_capacity );
+    auto max_coeff = speck::make_positive( m_coeff_buf.get(), m_dim_x * m_dim_y, m_sign_array );
+    m_max_coefficient_bits = uint16_t( std::log2(max_coeff) );
+    // ( when max_coeff is very close to zero, m_max_coefficient_bits could be zero.
+    // I don't know how to deal with that situation yet... )
+    assert( m_max_coefficient_bits > 0 );   
     m_threshold = std::pow( 2.0, double(m_max_coefficient_bits) );
     for( long bitplane = 0; bitplane < 128; bitplane++ )
     {
@@ -132,6 +107,59 @@ int speck::SPECK2D::speck2d()
 
 
     return 0;
+}
+
+
+int speck::SPECK2D::decode()
+{
+    assert( m_ready_to_decode() );
+    m_encode_mode = false;
+
+    // collect a few values
+    long num_of_vals = m_dim_x * m_dim_y;
+    long num_of_parts  = m_num_of_partitions();
+    long num_of_xforms = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y) );
+
+    // initialize coefficients to be zero, and signs to be all positive
+    m_coeff_buf = std::make_unique<double[]>( num_of_vals );
+    for( long i = 0; i < num_of_vals; i++ )
+        m_coeff_buf[i] = 0.0;
+    m_sign_array.assign( num_of_vals, true );
+
+    // initialize sets and lists
+
+    return 0;
+}
+
+
+void speck::SPECK2D::m_initialize_sets_lists()
+{
+    auto num_of_parts  = m_num_of_partitions();
+    auto num_of_xforms = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y) );
+
+    // prepare m_LIS
+    m_LIS.clear();
+    m_LIS.resize( num_of_parts + 1 );
+    for( auto& v : m_LIS )  // Avoid frequent memory allocations.
+        v.reserve( m_vec_init_capacity );
+    m_LIS_garbage_cnt.assign( num_of_parts + 1, 0 );
+
+    // prepare the root, S
+    SPECKSet2D S( SPECKSetType::TypeS );
+    S.part_level = num_of_xforms;
+    m_calc_root_size( S );
+    m_LIS[ S.part_level ].push_back( S );
+
+    // clear m_LSP
+    m_LSP.clear();
+    m_LSP.reserve( m_vec_init_capacity );
+
+    // prepare m_I
+    m_I.part_level = num_of_xforms;
+    m_I.start_x    = S.length_x;
+    m_I.start_y    = S.length_y;
+    m_I.length_x   = m_dim_x;
+    m_I.length_y   = m_dim_y;
 }
     
     

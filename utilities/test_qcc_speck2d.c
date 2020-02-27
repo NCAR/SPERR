@@ -70,7 +70,6 @@ int main( int argc, char** argv )
     const float cratio        = 10.0f;  /* compression ratio */
     const int   total_bits    = (int)(8.0f * num_of_bytes / cratio);
     int         num_of_levels = calc_num_of_xforms( num_of_cols );
-    printf( "xform levels = %d\n", num_of_levels );
 
     /*
      * Stage 1: Encoding

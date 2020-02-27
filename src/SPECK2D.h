@@ -73,7 +73,8 @@ public:
     void assign_bit_budget( uint64_t );     // How many bits does speck process? 
 
     // core operations
-    int speck2d();
+    int encode();
+    int decode();
 
 private:
     //
@@ -88,6 +89,7 @@ private:
     int  m_code_S   ( long idx1, long idx2 );
     int  m_process_I( );
     int  m_code_I   ( );
+    void m_initialize_sets_lists();
     void m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D, 4>& subsets ) const;
     void m_partition_I( std::array<SPECKSet2D, 3>& subsets );
     void m_decide_set_significance( SPECKSet2D& set );
@@ -118,6 +120,7 @@ private:
     uint16_t    m_max_coefficient_bits = 0; // = log2(max_coefficient)
     long m_dim_x = 0, m_dim_y = 0;          // 2D plane dims
     const long  m_vec_init_capacity = 8;    // Vectors are initialized to have this capacity.
+    bool        m_encode_mode = true;       // Encode (true) or Decode (false) mode?
 
     std::vector<bool> m_significance_map;
     std::vector<bool> m_sign_array;
