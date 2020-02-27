@@ -57,14 +57,22 @@ public:
 class SPECK2D
 {
 public:
+    // memory management
     void take_coeffs( std::unique_ptr<double[]> );  // Take ownership of a chunck of memory.
     template <typename T>
-    void copy_coeffs( const T* );           // Make a copy of the incoming data.
+    void copy_coeffs( const T* );                   // Make a copy of the incoming data.
+    void take_bitstream( std::vector<bool>& );      // Take ownership of the bitstream.
+    void copy_bitstream( const std::vector<bool>& );// Make a copy of the bitstream.
+    const std::vector<bool>& get_read_only_bitstream() const;
+    std::vector<bool>& release_bitstream();         // The bitstream will be up to changes.
+
+    // trivial properties
     void assign_mean( double );             // Accepts data mean.
     void assign_dims( long, long );         // Accepts plane dimension
     void assign_max_coeff_bits( uint16_t ); // (Useful for reconstruction)
     void assign_bit_budget( uint64_t );     // How many bits does speck process? 
 
+    // core operations
     int speck2d();
 
 private:

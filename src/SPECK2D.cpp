@@ -27,6 +27,31 @@ template void speck::SPECK2D::copy_coeffs( const float*  );
 template void speck::SPECK2D::copy_coeffs( const double* );
 
 
+void speck::SPECK2D::copy_bitstream( const std::vector<bool>& stream )
+{
+    m_bit_buffer = stream;
+}
+
+
+void speck::SPECK2D::take_bitstream( std::vector<bool>& stream )
+{
+    m_bit_buffer.resize( 0 );
+    std::swap( m_bit_buffer, stream );
+}
+
+
+const std::vector<bool>& speck::SPECK2D::get_read_only_bitstream() const
+{
+    return m_bit_buffer;
+}
+
+
+std::vector<bool>& speck::SPECK2D::release_bitstream()
+{
+    return m_bit_buffer;
+}
+
+
 void speck::SPECK2D::assign_mean( double m )
 {
     m_data_mean = m;
@@ -598,6 +623,8 @@ bool speck::SPECK2D::m_ready_to_decode() const
     if( m_dim_x <= 0 || m_dim_y <= 0 )
         return false;
     if( m_max_coefficient_bits == 0 )
+        return false;
+    if( m_budget == 0 )
         return false;
 
     return true;
