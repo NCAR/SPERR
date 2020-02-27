@@ -105,7 +105,6 @@ int speck::SPECK2D::encode()
         m_clean_LIS();
     }
 
-
     return 0;
 }
 
@@ -115,18 +114,28 @@ int speck::SPECK2D::decode()
     assert( m_ready_to_decode() );
     m_encode_mode = false;
 
-    // collect a few values
-    long num_of_vals = m_dim_x * m_dim_y;
-    long num_of_parts  = m_num_of_partitions();
-    long num_of_xforms = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y) );
-
     // initialize coefficients to be zero, and signs to be all positive
+    long num_of_vals = m_dim_x * m_dim_y;
     m_coeff_buf = std::make_unique<double[]>( num_of_vals );
     for( long i = 0; i < num_of_vals; i++ )
         m_coeff_buf[i] = 0.0;
     m_sign_array.assign( num_of_vals, true );
 
-    // initialize sets and lists
+    m_initialize_sets_lists();
+    
+    m_bit_idx = 0;
+    m_threshold = std::pow( 2.0, double(m_max_coefficient_bits) );
+    for( long bitplane = 0; bitplane < 128; bitplane++ )
+    {
+        if( m_sorting_pass() == 1 )
+            return 1;
+        if( m_refinement_pass() == 1 )
+            return 1;
+
+        m_threshold *= 0.5;
+
+        m_clean_LIS();
+    }
 
     return 0;
 }
@@ -172,9 +181,11 @@ int speck::SPECK2D::m_sorting_pass( )
     printf("--> sorting pass, threshold = %f\n", m_threshold );
 #endif
 
-    // Update the significance map based on the current threshold
-    speck::update_significance_map( m_coeff_buf.get(), m_dim_x * m_dim_y, m_threshold, 
-                                    m_significance_map );
+    if( m_encode_mode )
+    {   // Update the significance map based on the current threshold
+        speck::update_significance_map( m_coeff_buf.get(), m_dim_x * m_dim_y, 
+                                        m_threshold, m_significance_map );
+    }
 
     for( long idx1 = m_LIS.size() - 1; idx1 >= 0; idx1-- )
         for( long idx2  = 0; idx2 < m_LIS[idx1].size(); idx2++ )

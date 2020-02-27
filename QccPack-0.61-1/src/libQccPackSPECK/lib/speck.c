@@ -1497,7 +1497,7 @@ int QccSPECKEncodeHeader(QccBitBuffer *output_buffer,
 
 
 
-/* Sam: Overall Encoding Procedure */
+/* Sam: overall encoding Procedure */
 int QccSPECKEncode(const QccIMGImageComponent *image,
                    const QccIMGImageComponent *mask,
                    int num_levels,
@@ -1966,7 +1966,7 @@ int QccSPECKDecode(QccBitBuffer *input_buffer,
       return_value = QccSPECKSortingPass(&image_subband_pyramid,
                                          ((mask != NULL) ?
                                           &mask_subband_pyramid : NULL),
-                                         NULL,
+                                         NULL, /* this was significance_map when encoding */
                                          sign_array,
                                          threshold,
                                          &LIS,

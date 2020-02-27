@@ -117,6 +117,7 @@ private:
     double      m_data_mean = 0.0;          // Mean subtracted before DWT
     double      m_threshold = 0.0;          // Threshold that's used for an iteration
     uint64_t    m_budget    = 0;            // What's the budget for num of bits?
+    uint64_t    m_bit_idx   = 0;            // Used for decode. Which bit we're at?
     uint16_t    m_max_coefficient_bits = 0; // = log2(max_coefficient)
     long m_dim_x = 0, m_dim_y = 0;          // 2D plane dims
     const long  m_vec_init_capacity = 8;    // Vectors are initialized to have this capacity.
