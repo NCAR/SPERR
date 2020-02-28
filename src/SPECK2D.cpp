@@ -71,6 +71,12 @@ void speck::SPECK2D::assign_max_coeff_bits( uint16_t bits )
 }
 
 
+uint16_t speck::SPECK2D::get_max_coeff_bits() const
+{
+    return m_max_coefficient_bits;
+}
+
+
 void speck::SPECK2D::assign_bit_budget( uint64_t budget )
 {
     m_budget = budget;
@@ -93,7 +99,7 @@ int speck::SPECK2D::encode()
     // I don't know how to deal with that situation yet... )
     assert( m_max_coefficient_bits > 0 );   
     m_threshold = std::pow( 2.0, double(m_max_coefficient_bits) );
-    for( long bitplane = 0; bitplane < 128; bitplane++ )
+    for( long bitplane = 0; bitplane < 2; bitplane++ )
     {
         if( m_sorting_pass() == 1 )
             return 1;
@@ -113,6 +119,10 @@ int speck::SPECK2D::decode()
 {
     assert( m_ready_to_decode() );
     m_encode_mode = false;
+
+#ifdef PRINT
+    printf("\n\nstart decoding!\n");
+#endif
 
     // initialize coefficients to be zero, and signs to be all positive
     long num_of_vals = m_dim_x * m_dim_y;
@@ -211,6 +221,9 @@ int speck::SPECK2D::m_sorting_pass( )
 
 int speck::SPECK2D::m_refinement_pass( )
 {
+#ifdef PRINT
+    printf("--> refinement pass, threshold = %f\n", m_threshold );
+#endif
     for( auto& p : m_LSP )
     {
         if( p.signif == Significance::NewlySig )
@@ -240,6 +253,13 @@ int speck::SPECK2D::m_process_S( long idx1, long idx2, bool code_this_set )
     
 #ifdef PRINT
     m_print_set( "process_S", set );
+
+    if( (!m_encode_mode) && code_this_set )
+    {
+        auto bit = ( set.signif == Significance::Sig );
+        std::string str = bit ? "s1" : "s0";
+        std::cout << str << std::endl;
+    }
 #endif
 
     if( set.signif == Significance::Empty ) // Skip empty sets 
@@ -380,6 +400,13 @@ int speck::SPECK2D::m_process_I()
 
 #ifdef PRINT
     m_print_set( "process_I", m_I );
+
+    if( !m_encode_mode )
+    {
+        auto bit = ( m_I.signif == Significance::Sig );
+        std::string str = bit ? "s1" : "s0";
+        std::cout << str << std::endl;
+    }
 #endif
     
     if( m_encode_mode )
@@ -608,6 +635,12 @@ int speck::SPECK2D::m_input_pixel_sign( const SPECKSet2D& pixel )
 
     // Progressive quantization!
     m_coeff_buf[ idx ] = 1.5 * m_threshold;
+
+#ifdef PRINT
+    auto bit = m_sign_array[ idx ];
+    std::string str = bit ? "p1" : "p0";
+    std::cout << str << std::endl;
+#endif
 
     return 0;
 }

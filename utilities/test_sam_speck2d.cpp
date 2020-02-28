@@ -45,10 +45,15 @@ int main( int argc, char* argv[] )
     speck::SPECK2D speck;
     speck.assign_dims( dim_x, dim_y );
     speck.take_coeffs( cdf.release_data() );
-    const float cratio        = 10.0f;  /* compression ratio */
+    const float cratio        = 5.0f;  /* compression ratio */
     const long  total_bits    = long(32.0f * total_vals / cratio);
     speck.assign_bit_budget( total_bits );
     speck.encode();
     
-
+    speck::SPECK2D decoder;
+    decoder.assign_dims( dim_x, dim_y );
+    decoder.assign_max_coeff_bits( speck.get_max_coeff_bits() );
+    decoder.assign_bit_budget( total_bits );
+    decoder.copy_bitstream( speck.get_read_only_bitstream() );
+    decoder.decode();
 }

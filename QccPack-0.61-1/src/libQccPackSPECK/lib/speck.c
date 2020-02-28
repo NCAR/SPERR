@@ -1645,7 +1645,8 @@ int QccSPECKEncode(const QccIMGImageComponent *image,
     }
 
   /* bitplane starts from 0, while QCCSPECK_MAXBITPLANES is 128 */
-  while (bitplane < QCCSPECK_MAXBITPLANES)
+  /* while (bitplane < QCCSPECK_MAXBITPLANES) */
+  while (bitplane < 2)
     {
       return_value = QccSPECKSortingPass(&image_subband_pyramid,
                                          ((mask != NULL) ?

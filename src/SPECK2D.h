@@ -71,6 +71,7 @@ public:
     void assign_dims( long, long );         // Accepts plane dimension
     void assign_max_coeff_bits( uint16_t ); // (Useful for reconstruction)
     void assign_bit_budget( uint64_t );     // How many bits does speck process? 
+    uint16_t get_max_coeff_bits() const;
 
     // core operations
     int encode();
