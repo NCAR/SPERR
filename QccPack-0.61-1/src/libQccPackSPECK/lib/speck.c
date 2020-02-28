@@ -1185,6 +1185,7 @@ static int QccSPECKSortingPass(QccWAVSubbandPyramid *coefficients,
 
   /* Compare every coefficient against the threshold. Note coefficients are ALL positive 
      at this point. Keep the comparison results in significance_map. */
+  /* When Decoding, it does nothing. */
   if (QccSPECKSignificanceMap(coefficients,
                               mask,
                               significance_map,

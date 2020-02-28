@@ -94,7 +94,7 @@ XCOMM  Set to the desired compiler flags
 XCOMM
 XCOMM  -- GNU Compiler Collection (gcc) --
 XCOMM CFLAGS = -Wall -stdlib=libc++ -I/usr/local/opt/llvm/include
-CFLAGS = -Wall -O2 -g
+CFLAGS = -Wall -g
 XCOMM
 XCOMM  -- Intel C++ Compiler for Linux (icc) --
 XCOMM       The following optimizations are for Pentium II/III processors

@@ -92,7 +92,7 @@ private:
     void m_initialize_sets_lists();
     void m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D, 4>& subsets ) const;
     void m_partition_I( std::array<SPECKSet2D, 3>& subsets );
-    void m_decide_set_significance( SPECKSet2D& set );
+    int  m_decide_set_significance( SPECKSet2D& set );  // both encoding and decoding
     int  m_output_set_significance( const SPECKSet2D& set );
     int  m_output_pixel_sign( const SPECKSet2D& pixel );
     int  m_output_refinement( const SPECKSet2D& pixel );

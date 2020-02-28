@@ -193,17 +193,19 @@ int speck::SPECK2D::m_sorting_pass( )
             auto& s = m_LIS[idx1][idx2];
             if( !s.garbage )
             {
-                m_decide_set_significance( s );
+                if( m_decide_set_significance( s )  == 1 )
+                    return 1;
                 if( m_process_S( idx1, idx2, true ) == 1 )
-                    return 1;                
+                    return 1;
             }
         }
 
-    m_decide_set_significance( m_I );
+    if( m_decide_set_significance( m_I ) )
+        return 1;
     if( m_process_I() == 1 )
-        return 1;                
-    else
-        return 0;
+        return 1;
+
+    return 0;
 }
 
 
@@ -232,14 +234,14 @@ int speck::SPECK2D::m_process_S( long idx1, long idx2, bool code_this_set )
     m_print_set( "process_S", set );
 #endif
 
-    if( set.signif == Significance::Empty ) // Skip empty sets completely
+    if( set.signif == Significance::Empty ) // Skip empty sets 
     {
         set.garbage = true;
         m_LIS_garbage_cnt[ set.part_level ]++;
         return 0;
     }
 
-    if( code_this_set )
+    if( m_encode_mode && code_this_set )
     {
         if( m_output_set_significance( set ) == 1 )
             return 1;
@@ -450,15 +452,32 @@ void speck::SPECK2D::m_partition_I( std::array<SPECKSet2D, 3>& subsets )
 }
 
 
-void speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
+int speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
 {
     // In case of an S set with zero dimension, mark it empty
     if( set.type() == SPECKSetType::TypeS && (set.length_x == 0 || set.length_y == 0) )
     {
         set.signif = Significance::Empty;
-        return;
+        return 0;
     }
 
+    // If decoding, simply read a bit from the bitstream
+    // Note: the only case this method returns 1 is when decoding and we have 
+    //       already decoded enough number of bits.
+    //       All other cases return 0, meaning successfully decided the 
+    //       significance of this set.  
+    if( !m_encode_mode )
+    {
+        if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
+            return 1;   // 1 means the algorithm needs to stop! 
+
+        auto bit = m_bit_buffer[ m_bit_idx++ ];
+        set.signif = bit ? Significance::Sig : Significance::Insig;
+        return 0;
+    }
+
+    // If encoding, we start by marking it insignificant, and then compare with the
+    // significance map.
     set.signif = Significance::Insig;
 
     // For TypeS sets, we test an obvious rectangle specified by this set.
@@ -471,7 +490,7 @@ void speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
                 if( m_significance_map[ idx ] )
                 {
                     set.signif = Significance::Sig;
-                    return;
+                    return 0;
                 }
             }
     }
@@ -485,7 +504,7 @@ void speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
                 if( m_significance_map[ idx ] )
                 {
                     set.signif = Significance::Sig;
-                    return;
+                    return 0;
                 }
             }
 
@@ -496,10 +515,12 @@ void speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
             if( m_significance_map[ i ] )
             {
                 set.signif = Significance::Sig;
-                return;
+                return 0;
             }
         }
     }
+
+    return 0;
 }
 
 
@@ -513,10 +534,8 @@ int speck::SPECK2D::m_output_set_significance( const SPECKSet2D& set )
         std::cout << "s0" << std::endl;
 #endif
 
-    if( set.signif == Significance::Sig )
-        m_bit_buffer.push_back( true );
-    else
-        m_bit_buffer.push_back( false );
+    auto bit = set.signif == Significance::Sig;
+    m_bit_buffer.push_back( bit );
     
     // Let's also see if we're reached the bit budget
     if( m_bit_buffer.size() >= m_budget )
@@ -540,10 +559,7 @@ int speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel )
         std::cout << "p0" << std::endl;
 #endif
 
-    if( m_sign_array[ idx ] )
-        m_bit_buffer.push_back( true );
-    else
-        m_bit_buffer.push_back( false );
+    m_bit_buffer.push_back( m_sign_array[idx] );
 
     // Progressive quantization!
     m_coeff_buf[ idx ] -= m_threshold;
