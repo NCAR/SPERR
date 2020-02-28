@@ -97,6 +97,7 @@ private:
     int  m_output_pixel_sign( const SPECKSet2D& pixel );
     int  m_input_pixel_sign(  const SPECKSet2D& pixel );
     int  m_output_refinement( const SPECKSet2D& pixel );
+    int  m_input_refinement(  const SPECKSet2D& pixel );
 
     void m_calc_root_size( SPECKSet2D& root ) const;
     long m_num_of_partitions() const; 

@@ -217,8 +217,16 @@ int speck::SPECK2D::m_refinement_pass( )
             p.signif  = Significance::Sig;
         else
         {
-            if( m_output_refinement( p ) == 1 )
-                return 1;
+            if( m_encode_mode )
+            {
+                if( m_output_refinement( p ) == 1 )
+                    return 1;
+            }
+            else
+            {
+                if( m_input_refinement( p ) == 1 )
+                    return 1;
+            }
         }
     }
 
@@ -374,8 +382,11 @@ int speck::SPECK2D::m_process_I()
     m_print_set( "process_I", m_I );
 #endif
     
-    if( m_output_set_significance( m_I ) == 1 )
-        return 1;
+    if( m_encode_mode )
+    {
+        if( m_output_set_significance( m_I ) == 1 )
+            return 1;
+    }
 
     if( m_I.signif == Significance::Sig )
     {
@@ -478,7 +489,7 @@ int speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
         return 0;
     }
 
-    // If decoding, simply read a bit from the bitstream
+    // If decoding, simply read a bit from the bitstream, no matter TypeS or TypeI.
     // Note: the only case this method returns 1 is when decoding and we have 
     //       already decoded enough number of bits.
     //       All other cases return 0, meaning successfully decided the 
@@ -551,7 +562,7 @@ int speck::SPECK2D::m_output_set_significance( const SPECKSet2D& set )
         std::cout << "s0" << std::endl;
 #endif
 
-    auto bit = set.signif == Significance::Sig;
+    auto bit = (set.signif == Significance::Sig);
     m_bit_buffer.push_back( bit );
     
     // Let's also see if we're reached the bit budget
@@ -629,6 +640,19 @@ int speck::SPECK2D::m_output_refinement( const SPECKSet2D& pixel )
         return 1;
     else
         return 0;
+}
+
+
+int speck::SPECK2D::m_input_refinement( const SPECKSet2D& pixel )
+{
+    if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
+        return 1;
+
+    auto bit = m_bit_buffer[ m_bit_idx++ ];
+    auto idx = pixel.start_y * m_dim_x + pixel.start_x;
+    m_coeff_buf[ idx ] += bit ? m_threshold * 0.5 : m_threshold * -0.5;
+
+    return 0;
 }
 
     
