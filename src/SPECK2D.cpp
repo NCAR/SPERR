@@ -252,8 +252,16 @@ int speck::SPECK2D::m_process_S( long idx1, long idx2, bool code_this_set )
         if( set.is_pixel() )
         {
             set.signif = Significance::NewlySig;
-            if( m_output_pixel_sign( set ) == 1 )
-                return 1;
+            if( m_encode_mode )
+            {
+                if( m_output_pixel_sign( set ) == 1 )
+                    return 1;
+            }
+            else
+            {
+                if( m_input_pixel_sign( set ) == 1 )
+                    return 1;
+            }
             m_LSP.push_back( set ); // A copy is saved to m_LSP.
             set.garbage = true;     // This particular object will be discarded.
             m_LIS_garbage_cnt[ set.part_level ]++;
@@ -548,9 +556,7 @@ int speck::SPECK2D::m_output_set_significance( const SPECKSet2D& set )
 // It outputs by printing out the value at this point.
 int speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel )
 {
-    auto x   = pixel.start_x;
-    auto y   = pixel.start_y;
-    auto idx = y * m_dim_x + x;
+    auto idx = pixel.start_y * m_dim_x + pixel.start_x;
 
 #ifdef PRINT
     if( m_sign_array[ idx ] )
@@ -572,11 +578,24 @@ int speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel )
 }
 
 
+int speck::SPECK2D::m_input_pixel_sign( const SPECKSet2D& pixel )
+{
+    if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
+        return 1;
+
+    auto idx = pixel.start_y * m_dim_x + pixel.start_x ;
+    m_sign_array[ idx ] = m_bit_buffer[ m_bit_idx++ ];
+
+    // Progressive quantization!
+    m_coeff_buf[ idx ] = 1.5 * m_threshold;
+
+    return 0;
+}
+
+
 int speck::SPECK2D::m_output_refinement( const SPECKSet2D& pixel )
 {
-    auto x   = pixel.start_x;
-    auto y   = pixel.start_y;
-    auto idx = y * m_dim_x + x;
+    auto idx = pixel.start_y * m_dim_x + pixel.start_x;
 
 #ifdef PRINT
     if( m_coeff_buf[idx] >= m_threshold ) 
