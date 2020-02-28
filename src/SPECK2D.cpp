@@ -295,14 +295,18 @@ int speck::SPECK2D::m_code_S( long idx1, long idx2 )
     long already_sig = 0;
     for( size_t i = 0; i < 3; i++ )
     {
-        m_decide_set_significance( subsets[i] );
+        if( m_decide_set_significance( subsets[i] ) == 1 )
+            return 1;
         if( subsets[i].signif == Significance::Sig )
             already_sig++;
     }
     if( already_sig == 0 )
         subsets[3].signif = Significance::Sig;
     else
-        m_decide_set_significance( subsets[3] );
+    {
+        if( m_decide_set_significance( subsets[3] ) == 1 )
+            return 1;
+    }
 
     // Definitely code the first 3 subsets
     bool code_set[4] = {true, true, true, true};
@@ -393,14 +397,18 @@ int speck::SPECK2D::m_code_I()
     long already_sig = 0;
     for( size_t i = 0; i < 2; i++ )
     {
-        m_decide_set_significance( subsets[i] );
+        if( m_decide_set_significance( subsets[i] ) == 1 )
+            return 1;
         if( subsets[i].signif == Significance::Sig )
             already_sig++;
     }
     if( already_sig == 0 )
         subsets[2].signif = Significance::Sig;
     else
-        m_decide_set_significance( subsets[2] );
+    {
+        if( m_decide_set_significance( subsets[2] ) == 1 )
+            return 1;
+    }
 
     // Definitely code the first 2 subsets
     bool code_set[3] = {true, true, true};
@@ -415,11 +423,12 @@ int speck::SPECK2D::m_code_I()
             return 1;
     }
 
-    m_decide_set_significance( m_I );
+    if( m_decide_set_significance( m_I ) == 1 )
+        return 1;
     if( m_process_I() )
         return 1;
-    else
-        return 0;
+
+    return 0;
 }
 
 
