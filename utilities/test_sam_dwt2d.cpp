@@ -6,9 +6,9 @@
 
 extern "C"  // C Function calls, and don't include the C header!
 {
-    int sam_read_n_bytes( const char*, long, void* );
-    int sam_write_n_doubles( const char*, long, const double* );
-    int sam_get_statsd( const double* arr1, const double* arr2, long len,
+    int sam_read_n_bytes( const char*, size_t, void* );
+    int sam_write_n_doubles( const char*, size_t, const double* );
+    int sam_get_statsd( const double* arr1, const double* arr2, size_t len,
                         double* rmse,       double* lmax,   double* psnr,
                         double* arr1min,    double* arr1max            );
 }
@@ -22,11 +22,11 @@ int main( int argc, char* argv[] )
         return 1;
     }
 
-    const char* input = argv[1];
-    const long  dim_x = std::atol( argv[2] );
-    const long  dim_y = std::atol( argv[3] );
-    const char* output = argv[4];
-    const long  total_vals = dim_x * dim_y;
+    const char*   input = argv[1];
+    const size_t  dim_x = std::atoi( argv[2] );
+    const size_t  dim_y = std::atoi( argv[3] );
+    const char*  output = argv[4];
+    const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
     std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
@@ -58,7 +58,7 @@ int main( int argc, char* argv[] )
 
     // Compare the result with the original input in double precision
     std::unique_ptr<double[]> in_bufd( new double[ total_vals ] );
-    for( long i = 0; i < total_vals; i++ )
+    for( size_t i = 0; i < total_vals; i++ )
         in_bufd[i] = in_buf[i];
     double rmse, lmax, psnr, arr1min, arr1max;
     sam_get_statsd( in_bufd.get(), cdf.get_read_only_data(), total_vals, 

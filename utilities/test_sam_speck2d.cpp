@@ -8,9 +8,9 @@
 
 extern "C"  // C Function calls, and don't include the C header!
 {
-    int sam_read_n_bytes( const char*, long, void* );
-    int sam_write_n_doubles( const char*, long, const double* );
-    int sam_get_statsd( const double* arr1, const double* arr2, long len,
+    int sam_read_n_bytes( const char*, size_t, void* );
+    int sam_write_n_doubles( const char*, size_t, const double* );
+    int sam_get_statsd( const double* arr1, const double* arr2, size_t len,
                         double* rmse,       double* lmax,   double* psnr,
                         double* arr1min,    double* arr1max            );
 }
@@ -24,10 +24,10 @@ int main( int argc, char* argv[] )
         return 1;
     }
 
-    const char* input = argv[1];
-    const long  dim_x = std::atol( argv[2] );
-    const long  dim_y = std::atol( argv[3] );
-    const long  total_vals = dim_x * dim_y;
+    const char*   input = argv[1];
+    const size_t  dim_x = std::atol( argv[2] );
+    const size_t  dim_y = std::atol( argv[3] );
+    const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
     std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
@@ -45,8 +45,8 @@ int main( int argc, char* argv[] )
     speck::SPECK2D speck;
     speck.assign_dims( dim_x, dim_y );
     speck.take_coeffs( cdf.release_data() );
-    const float cratio        = 5.0f;  /* compression ratio */
-    const long  total_bits    = long(32.0f * total_vals / cratio);
+    const float  cratio       = 5.0f;  /* compression ratio */
+    const size_t total_bits   = size_t(32.0f * total_vals / cratio);
     speck.assign_bit_budget( total_bits );
     speck.encode();
     

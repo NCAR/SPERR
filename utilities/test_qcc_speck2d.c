@@ -14,7 +14,7 @@
 int array_to_image( const float* array, QccIMGImageComponent* image )
 {
     float min = array[0], max = array[0];
-    long counter = 0, row, col;
+    size_t counter = 0, row, col;
     for( row = 0; row < image->num_rows; row++ )
         for( col = 0; col < image->num_cols; col++ )
         {
@@ -32,7 +32,7 @@ int array_to_image( const float* array, QccIMGImageComponent* image )
 
 int image_to_array( const QccIMGImageComponent* image, float* array )
 {
-    long counter = 0, row, col;
+    size_t counter = 0, row, col;
     for( row = 0; row < image->num_rows; row++ )
         for( col = 0; col < image->num_cols; col++ )
         {
@@ -65,8 +65,8 @@ int main( int argc, char** argv )
     const char* output_name   = "tmp/stream.tmp";
     int         num_of_cols   = atoi( argv[2] );
     int         num_of_rows   = atoi( argv[3] );
-    const long  num_of_vals   = num_of_cols * num_of_rows;
-    const long  num_of_bytes  = sizeof(float) * num_of_vals;
+    const size_t num_of_vals  = num_of_cols * num_of_rows;
+    const size_t num_of_bytes = sizeof(float) * num_of_vals;
     const float cratio        = 5.0f;  /* compression ratio */
     const int   total_bits    = (int)(8.0f * num_of_bytes / cratio);
     int         num_of_levels = calc_num_of_xforms( num_of_cols );

@@ -9,7 +9,7 @@
 
 int array_to_pyramid( const float* array, QccWAVSubbandPyramid* pyramid )
 {
-    long counter = 0, row, col;
+    size_t counter = 0, row, col;
     for( row = 0; row < pyramid->num_rows; row++ )
         for( col = 0; col < pyramid->num_cols; col++ )
         {
@@ -21,7 +21,7 @@ int array_to_pyramid( const float* array, QccWAVSubbandPyramid* pyramid )
 
 int pyramid_to_array( const QccWAVSubbandPyramid* pyramid, double* array )
 {
-    long counter = 0, row, col;
+    size_t counter = 0, row, col;
     for( row = 0; row < pyramid->num_rows; row++ )
         for( col = 0; col < pyramid->num_cols; col++ )
         {
@@ -39,11 +39,11 @@ int main( int argc, char* argv[] )
         return 1;
     }
 
-    const char* input_name    = argv[1];
-    const long  num_of_cols   = atol( argv[2] );
-    const long  num_of_rows   = atol( argv[3] );
-    const char* output_name   = argv[4];
-    const long  num_of_vals   = num_of_cols * num_of_rows;
+    const char*   input_name    = argv[1];
+    const size_t  num_of_cols   = atoi( argv[2] );
+    const size_t  num_of_rows   = atoi( argv[3] );
+    const char*   output_name   = argv[4];
+    const size_t  num_of_vals   = num_of_cols * num_of_rows;
 
     /* Read input data */
     float* in_buf = (float*)malloc( sizeof(float) * num_of_vals );
@@ -107,7 +107,7 @@ int main( int argc, char* argv[] )
 
     /* compare the results against the original in double precision */
     double* in_bufd = (double*)malloc( sizeof(double) * num_of_vals );
-    for( long i = 0; i < num_of_vals; i++ )
+    for( size_t i = 0; i < num_of_vals; i++ )
         in_bufd[i] = in_buf[i];
     double rmse, lmax, psnr, arr1min, arr1max;
     sam_get_statsd( in_bufd, out_buf, num_of_vals, 

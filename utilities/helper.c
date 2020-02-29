@@ -4,15 +4,15 @@
 #include <math.h>
 #include <stdio.h>
 
-int sam_get_statsf( const float* arr1, const float* arr2, long len, /* input  */
-                    float* rmse,       float* lmax,    float* psnr, /* output */
-                    float* arr1min,    float* arr1max            )  /* output */
+int sam_get_statsf( const float* arr1, const float* arr2, size_t len,/* input  */
+                    float* rmse,       float* lmax,    float* psnr,  /* output */
+                    float* arr1min,    float* arr1max            )   /* output */
 {
     *arr1min  = arr1[0];
     *arr1max  = arr1[0];
     float sum = 0.0f, c = 0.0f;
     float diff, y, t;
-    long  i;
+    size_t  i;
     *lmax = 0.0f;
     for( i = 0; i < len; i++) 
     {
@@ -43,15 +43,15 @@ int sam_get_statsf( const float* arr1, const float* arr2, long len, /* input  */
     return  0;
 }
 
-int sam_get_statsd( const double* arr1, const double* arr2, long len, /* input  */
-                    double* rmse,       double* lmax,   double* psnr, /* output */
-                    double* arr1min,    double* arr1max            )  /* output */
+int sam_get_statsd( const double* arr1, const double* arr2, size_t len, /* input  */
+                    double* rmse,       double* lmax,   double* psnr,   /* output */
+                    double* arr1min,    double* arr1max            )    /* output */
 {
     *arr1min  = arr1[0];
     *arr1max  = arr1[0];
     double sum = 0.0, c = 0.0;
     double diff, y, t;
-    long  i;
+    size_t  i;
     *lmax = 0.0;
     for( i = 0; i < len; i++) 
     {
@@ -83,7 +83,7 @@ int sam_get_statsd( const double* arr1, const double* arr2, long len, /* input  
 }
 
 
-int sam_read_n_bytes( const char* filename, long n_bytes,             /* input  */
+int sam_read_n_bytes( const char* filename, size_t n_bytes,           /* input  */
                       void*       buffer               )              /* output */
 {
     FILE* f = fopen( filename, "r" );
@@ -113,7 +113,7 @@ int sam_read_n_bytes( const char* filename, long n_bytes,             /* input  
     return 0;
 }
 
-int sam_write_n_doubles( const char*   filename, long n_vals,
+int sam_write_n_doubles( const char*   filename, size_t n_vals,
                          const double* buffer              )
 {
     FILE* f = fopen( filename, "w" );
