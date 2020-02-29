@@ -12,7 +12,7 @@ class CDF97
 {
 public:
     template< typename T >
-    int copy_data( const T* data, long x, long y, long z  = 1 );
+    int copy_data( const T* data, size_t x, size_t y, size_t z  = 1 );
     int dwt2d();            // 1) calculates the number of levels of dwt,
                             // 2) subtract mean of the data,
                             // 3) perform the actual dwt.
@@ -30,30 +30,30 @@ private:
     // Private methods helping DWT.
     //
     void m_calc_mean();     // calculate m_data_mean from m_data_buf
-    void m_dwt2d_one_level( double* plane, long len_x, long len_y ); 
+    void m_dwt2d_one_level( double* plane, size_t len_x, size_t len_y ); 
                             // Perform one level of 2D dwt on a given plane (dim_x, dim_y),
                             // specifically on its top left (len_x, len_y) subset.
-    void m_idwt2d_one_level( double* plane, long len_x, long len_y ); 
+    void m_idwt2d_one_level( double* plane, size_t len_x, size_t len_y ); 
                             // Perform one level of 2D idwt on a given plane (dim_x, dim_y),
                             // specifically on its top left (len_x, len_y) subset.
-    void m_gather_even( double* dest, const double* orig, long len ) const;
-    void m_gather_odd(  double* dest, const double* orig, long len ) const;
+    void m_gather_even( double* dest, const double* orig, size_t len ) const;
+    void m_gather_odd(  double* dest, const double* orig, size_t len ) const;
                             // Separate even and odd indexed elements to be at the front 
                             // and back of the dest array. Note: sufficient memory space 
                             // should be allocated by the caller.
                             // Note 2: two versions for even and odd length input.
-    void m_scatter_even( double* dest, const double* orig, long len ) const;
-    void m_scatter_odd(  double* dest, const double* orig, long len ) const;
+    void m_scatter_even( double* dest, const double* orig, size_t len ) const;
+    void m_scatter_odd(  double* dest, const double* orig, size_t len ) const;
                             // Interleave low and high pass elements to be at even and
                             // odd positions of the dest array. Note: sufficient memory 
                             // space should be allocated by the caller.
                             // Note 2: two versions for even and odd length input.
-    void m_cut_transpose_XtoZ( double* dest, long x, long y, long z ) const;
+    void m_cut_transpose_XtoZ( double* dest, size_t x, size_t y, size_t z ) const;
                             // Cut a smaller cube (x, y, z) from the main buffer.
                             // It also transposes this cube from X-varying-fastest to
                             // Z-varying fastest.
                             // The destination buffer should already be allocated.
-    void m_transpose_put_back_ZtoX( const double* buf, long x, long y, long z ) const;
+    void m_transpose_put_back_ZtoX( const double* buf, size_t x, size_t y, size_t z ) const;
                             // Transpose a cube of size (x, y, z) by swapping X and Z
                             // indices, and then put back to the main buffer.
 
@@ -61,20 +61,21 @@ private:
     //
     // Methods from QccPack, keep their original name.
     //
-    void QccWAVCDF97AnalysisSymmetricEvenEven( double* signal, long signal_length);
-    void QccWAVCDF97AnalysisSymmetricOddEven(  double* signal, long signal_length);
-    void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, long signal_length);
-    void QccWAVCDF97SynthesisSymmetricOddEven( double* signal, long signal_length);
+    void QccWAVCDF97AnalysisSymmetricEvenEven( double* signal, size_t signal_length);
+    void QccWAVCDF97AnalysisSymmetricOddEven(  double* signal, size_t signal_length);
+    void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length);
+    void QccWAVCDF97SynthesisSymmetricOddEven( double* signal, size_t signal_length);
 
 
     //
     // Private data members
-    // Note: use long type to store all integers. int is only used for return values.
     //
     using buffer_type = std::unique_ptr<double[]>;
-    buffer_type m_data_buf = nullptr;               // Holds the entire input data.
-    double m_data_mean   = 0.0;                     // Mean of the values in data_buf
-    long m_dim_x = 0, m_dim_y = 0, m_dim_z = 0;     // Dimension of the data volume
+    buffer_type m_data_buf = nullptr;       // Holds the entire input data.
+    double m_data_mean     = 0.0;           // Mean of the values in data_buf
+    size_t m_dim_x         = 0;             // Dimension of the data volume
+    size_t m_dim_y         = 0;
+    size_t m_dim_z         = 0;
     
 
 

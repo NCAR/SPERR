@@ -18,9 +18,9 @@ void speck::SPECK2D::copy_coeffs( const T* p )
                    "!! Only floating point values are supported !!" );
     assert( m_dim_x > 0 && m_dim_y > 0 );
 
-    long num_of_vals = m_dim_x * m_dim_y;
+    auto num_of_vals = m_dim_x * m_dim_y;
     m_coeff_buf = std::make_unique<double[]>( num_of_vals );
-    for( long i = 0; i < num_of_vals; i++ )
+    for( size_t i = 0; i < num_of_vals; i++ )
         m_coeff_buf[i] = p[i];
 }
 template void speck::SPECK2D::copy_coeffs( const float*  ); 
@@ -58,7 +58,7 @@ void speck::SPECK2D::assign_mean( double m )
 }
 
 
-void speck::SPECK2D::assign_dims( long dx, long dy )
+void speck::SPECK2D::assign_dims( size_t dx, size_t dy )
 {
     m_dim_x = dx;
     m_dim_y = dy;
@@ -77,7 +77,7 @@ uint16_t speck::SPECK2D::get_max_coeff_bits() const
 }
 
 
-void speck::SPECK2D::assign_bit_budget( uint64_t budget )
+void speck::SPECK2D::assign_bit_budget( size_t budget )
 {
     m_budget = budget;
 }
@@ -99,7 +99,7 @@ int speck::SPECK2D::encode()
     // I don't know how to deal with that situation yet... )
     assert( m_max_coefficient_bits > 0 );   
     m_threshold = std::pow( 2.0, double(m_max_coefficient_bits) );
-    for( long bitplane = 0; bitplane < 2; bitplane++ )
+    for( size_t bitplane = 0; bitplane < 2; bitplane++ )
     {
         if( m_sorting_pass() == 1 )
             return 1;
@@ -125,9 +125,9 @@ int speck::SPECK2D::decode()
 #endif
 
     // initialize coefficients to be zero, and signs to be all positive
-    long num_of_vals = m_dim_x * m_dim_y;
+    size_t num_of_vals = m_dim_x * m_dim_y;
     m_coeff_buf = std::make_unique<double[]>( num_of_vals );
-    for( long i = 0; i < num_of_vals; i++ )
+    for( size_t i = 0; i < num_of_vals; i++ )
         m_coeff_buf[i] = 0.0;
     m_sign_array.assign( num_of_vals, true );
 
@@ -135,7 +135,7 @@ int speck::SPECK2D::decode()
     
     m_bit_idx = 0;
     m_threshold = std::pow( 2.0, double(m_max_coefficient_bits) );
-    for( long bitplane = 0; bitplane < 128; bitplane++ )
+    for( size_t bitplane = 0; bitplane < 128; bitplane++ )
     {
         if( m_sorting_pass() == 1 )
             return 1;
@@ -197,8 +197,8 @@ int speck::SPECK2D::m_sorting_pass( )
                                         m_threshold, m_significance_map );
     }
 
-    for( long idx1 = m_LIS.size() - 1; idx1 >= 0; idx1-- )
-        for( long idx2  = 0; idx2 < m_LIS[idx1].size(); idx2++ )
+    for( auto idx1 = m_LIS.size() - 1; idx1 >= 0; idx1-- )
+        for( size_t idx2  = 0; idx2 < m_LIS[idx1].size(); idx2++ )
         {
             auto& s = m_LIS[idx1][idx2];
             if( !s.garbage )
@@ -247,7 +247,7 @@ int speck::SPECK2D::m_refinement_pass( )
 }
 
 
-int speck::SPECK2D::m_process_S( long idx1, long idx2, bool code_this_set )
+int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool code_this_set )
 {
     auto& set = m_LIS[idx1][idx2];
     
@@ -307,7 +307,7 @@ int speck::SPECK2D::m_process_S( long idx1, long idx2, bool code_this_set )
 }
 
 
-int speck::SPECK2D::m_code_S( long idx1, long idx2 )
+int speck::SPECK2D::m_code_S( size_t idx1, size_t idx2 )
 {
     const auto& set = m_LIS[idx1][idx2];
     
@@ -320,8 +320,8 @@ int speck::SPECK2D::m_code_S( long idx1, long idx2 )
 
     // We count how many subsets are significant, and if the first 3 subsets ain't,
     // then the 4th one must be significant.
-    long already_sig = 0;
-    for( size_t i = 0; i < 3; i++ )
+    auto already_sig = 0;
+    for( auto i = 0; i < 3; i++ )
     {
         if( m_decide_set_significance( subsets[i] ) == 1 )
             return 1;
@@ -432,8 +432,8 @@ int speck::SPECK2D::m_code_I()
 
     // We count how many subsets are significant, and if the first 2 subsets ain't,
     // then the 3rd one must be significant.
-    long already_sig = 0;
-    for( size_t i = 0; i < 2; i++ )
+    auto already_sig = 0;
+    for( auto i = 0; i < 2; i++ )
     {
         if( m_decide_set_significance( subsets[i] ) == 1 )
             return 1;
@@ -472,29 +472,31 @@ int speck::SPECK2D::m_code_I()
 
 void speck::SPECK2D::m_partition_I( std::array<SPECKSet2D, 3>& subsets )
 {
-    const auto current_lev = m_I.part_level;
-    long approx_len_x, detail_len_x;
-    long approx_len_y, detail_len_y;
-    speck::calc_approx_detail_len( m_dim_x, current_lev, approx_len_x, detail_len_x );
-    speck::calc_approx_detail_len( m_dim_y, current_lev, approx_len_y, detail_len_y );
+    std::array<size_t, 2> len_x, len_y;
+    speck::calc_approx_detail_len( m_dim_x, m_I.part_level, len_x );
+    speck::calc_approx_detail_len( m_dim_y, m_I.part_level, len_y );
+    auto approx_len_x = len_x[0];
+    auto detail_len_x = len_x[1];
+    auto approx_len_y = len_y[0];
+    auto detail_len_y = len_y[1];
 
     // specify the subsets following the same order in QccPack
     auto& BR      = subsets[0];         // Bottom right
-    BR.part_level = current_lev;
+    BR.part_level = m_I.part_level;
     BR.start_x    = approx_len_x;
     BR.start_y    = approx_len_y;
     BR.length_x   = detail_len_x;
     BR.length_y   = detail_len_y;
 
     auto& TR      = subsets[1];         // Top right
-    TR.part_level = current_lev;
+    TR.part_level = m_I.part_level;
     TR.start_x    = approx_len_x;
     TR.start_y    = 0;
     TR.length_x   = detail_len_x;
     TR.length_y   = approx_len_y;
 
     auto& BL      = subsets[2];         // Bottom left
-    BL.part_level = current_lev;
+    BL.part_level = m_I.part_level;
     BL.start_x    = 0;
     BL.start_y    = approx_len_y;
     BL.length_x   = approx_len_x;
@@ -538,8 +540,8 @@ int speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
     // For TypeS sets, we test an obvious rectangle specified by this set.
     if( set.type() == SPECKSetType::TypeS )
     {
-        for( long y = set.start_y; y < (set.start_y + set.length_y); y++ )
-            for( long x = set.start_x; x < (set.start_x + set.length_x); x++ )
+        for( auto y = set.start_y; y < (set.start_y + set.length_y); y++ )
+            for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ )
             {
                 auto idx = y * m_dim_x + x;
                 if( m_significance_map[ idx ] )
@@ -552,8 +554,8 @@ int speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
     else    // For TypeI sets, we need to test two rectangles!
     {
         // First rectangle: directly to the right of the missing top-left corner
-        for( long y = 0; y < set.start_y; y++ )
-            for( long x = set.start_x; x < m_dim_x; x++ )
+        for( size_t y = 0; y < set.start_y; y++ )
+            for( auto x = set.start_x; x < m_dim_x; x++ )
             {
                 auto idx = y * m_dim_x + x;
                 if( m_significance_map[ idx ] )
@@ -565,7 +567,7 @@ int speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
 
         // Second rectangle: the rest area at the bottom
         // Note: this rectangle is stored in a contiguous chunk of memory :)
-        for( long i = set.start_y * m_dim_x; i < m_dim_x * m_dim_y; i++ )
+        for( auto i = set.start_y * m_dim_x; i < m_dim_x * m_dim_y; i++ )
         {
             if( m_significance_map[ i ] )
             {
@@ -690,10 +692,10 @@ int speck::SPECK2D::m_input_refinement( const SPECKSet2D& pixel )
 
     
 // Calculate the number of partitions able to be performed
-long speck::SPECK2D::m_num_of_partitions() const
+size_t speck::SPECK2D::m_num_of_partitions() const
 {
-    long num_of_parts = 0;
-    long dim_x = m_dim_x, dim_y = m_dim_y;
+    size_t num_of_parts = 0;
+    size_t dim_x = m_dim_x, dim_y = m_dim_y;
     while( dim_x > 1 || dim_y > 1 )
     {
         num_of_parts++;
@@ -707,16 +709,15 @@ long speck::SPECK2D::m_num_of_partitions() const
 
 void speck::SPECK2D::m_calc_root_size( SPECKSet2D& root ) const
 {
-    long part_level = root.part_level;
-    long low_len_x, high_len_x;
-    long low_len_y, high_len_y;
-    speck::calc_approx_detail_len( m_dim_x, part_level, low_len_x, high_len_x );
-    speck::calc_approx_detail_len( m_dim_y, part_level, low_len_y, high_len_y );
+    // approximation and detail lengths are placed as the 1st and 2nd element
+    std::array<size_t, 2> len_x, len_y;
+    speck::calc_approx_detail_len( m_dim_x, root.part_level, len_x );
+    speck::calc_approx_detail_len( m_dim_y, root.part_level, len_y );
     
     root.start_x  = 0;
     root.start_y  = 0;
-    root.length_x = low_len_x;
-    root.length_y = low_len_y;
+    root.length_x = len_x[0];
+    root.length_y = len_y[0];
 }
 
 
@@ -724,7 +725,7 @@ void speck::SPECK2D::m_clean_LIS()
 {
     std::vector<SPECKSet2D> tmp;
 
-    for( long i = 0; i < m_LIS_garbage_cnt.size(); i++ )
+    for( size_t i = 0; i < m_LIS_garbage_cnt.size(); i++ )
     {
         // Only consolidate memory if the garbage amount is big enough, 
         // in both absolute and relative senses.
