@@ -31,7 +31,7 @@ public:
     INT  start_y      = 0;
     INT  length_x     = 0;   
     INT  length_y     = 0;
-    INT  part_level   = 0;  // which partition level is this set at (starting from zero).
+    uint16_t part_level = 0;  // which partition level is this set at (starting from zero).
     Significance signif = Significance::Insig;
     bool garbage        = false;
 
