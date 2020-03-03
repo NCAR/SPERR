@@ -50,10 +50,12 @@ int main( int argc, char* argv[] )
     speck.assign_bit_budget( total_bits );
     speck.encode();
     
+/*
     speck::SPECK2D decoder;
     decoder.assign_dims( dim_x, dim_y );
     decoder.assign_max_coeff_bits( speck.get_max_coeff_bits() );
     decoder.assign_bit_budget( total_bits );
     decoder.copy_bitstream( speck.get_read_only_bitstream() );
     decoder.decode();
+*/
 }

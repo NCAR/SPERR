@@ -111,7 +111,7 @@ int speck::SPECK2D::encode()
     // I don't know how to deal with that situation yet... )
     assert( m_max_coefficient_bits > 0 );   
     m_threshold = std::pow( 2.0, double(m_max_coefficient_bits) );
-    for( size_t bitplane = 0; bitplane < 2; bitplane++ )
+    for( size_t bitplane = 0; bitplane < 128; bitplane++ )
     {
         if( m_sorting_pass() == 1 )
             return 1;
@@ -336,34 +336,36 @@ int speck::SPECK2D::m_code_S( size_t idx1, size_t idx2 )
 
     // We count how many subsets are significant, and if the first 3 subsets ain't,
     // then the 4th one must be significant.
-    auto already_sig = 0;
-    for( auto i = 0; i < 3; i++ )
+    int already_sig = 0;
+    for( size_t i = 0; i < 3; i++ )
     {
+        auto& s = subsets[i];
         if( m_decide_set_significance( subsets[i] ) == 1 )
             return 1;
         if( subsets[i].signif == Significance::Sig )
             already_sig++;
+
+        m_LIS[ s.part_level ].push_back( s );
+        if( m_process_S( s.part_level, m_LIS[s.part_level].size() - 1, true ) == 1 )
+            return 1;
     }
+
+    auto& s4 = subsets[3];
+    bool  code_s4;
     if( already_sig == 0 )
-        subsets[3].signif = Significance::Sig;
+    {
+        s4.signif = Significance::Sig;
+        code_s4   = false;
+    }
     else
     {
-        if( m_decide_set_significance( subsets[3] ) == 1 )
+        if( m_decide_set_significance( s4 ) == 1 )
             return 1;
+        code_s4  = true;
     }
-
-    // Definitely code the first 3 subsets
-    bool code_set[4] = {true, true, true, true};
-    if( already_sig == 0 )  // Might not need to code the 4th set.
-        code_set[3] = false;
-
-    for( size_t i = 0; i < subsets.size(); i++ )
-    {
-        auto& s = subsets[i];
-        m_LIS[ s.part_level ].push_back( s );
-        if( m_process_S( s.part_level, m_LIS[s.part_level].size() - 1, code_set[i] ) == 1 )
-            return 1;
-    }
+    m_LIS[ s4.part_level ].push_back( s4 );
+    if( m_process_S( s4.part_level, m_LIS[s4.part_level].size() - 1, code_s4 ) == 1 )
+        return 1;
 
     return 0;
 }
@@ -448,34 +450,31 @@ int speck::SPECK2D::m_code_I()
 
     // We count how many subsets are significant, and if the first 2 subsets ain't,
     // then the 3rd one must be significant.
-    auto already_sig = 0;
-    for( auto i = 0; i < 2; i++ )
-    {
-        if( m_decide_set_significance( subsets[i] ) == 1 )
-            return 1;
-        if( subsets[i].signif == Significance::Sig )
-            already_sig++;
-    }
-    if( already_sig == 0 )
-        subsets[2].signif = Significance::Sig;
-    else
-    {
-        if( m_decide_set_significance( subsets[2] ) == 1 )
-            return 1;
-    }
-
-    // Definitely code the first 2 subsets
-    bool code_set[3] = {true, true, true};
-    if( already_sig == 0 )
-        code_set[2] = false;
-
-    for( size_t i = 0; i < subsets.size(); i++ )
+    int already_sig = 0;
+    for( size_t i = 0; i < 2; i++ )
     {
         auto& s = subsets[i];
         m_LIS[ s.part_level ].push_back( s );
-        if( m_process_S( s.part_level, m_LIS[s.part_level].size() - 1, code_set[i] ) == 1 )
+        if( m_process_S( s.part_level, m_LIS[s.part_level].size() - 1, true ) == 1 )
             return 1;
     }
+
+    auto& s3 = subsets[2];
+    bool code_s3;
+    if( already_sig == 0 )
+    {
+        s3.signif = Significance::Sig;
+        code_s3   = false;
+    }
+    else
+    {
+        if( m_decide_set_significance( s3 ) == 1 )
+            return 1;
+        code_s3 = true;
+    }
+    m_LIS[ s3.part_level ].push_back( s3 );
+    if( m_process_S( s3.part_level, m_LIS[s3.part_level].size() - 1, code_s3 ) == 1 )
+        return 1;
 
     if( m_decide_set_significance( m_I ) == 1 )
         return 1;
