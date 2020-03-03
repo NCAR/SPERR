@@ -22,7 +22,7 @@ namespace speck
         Insig,
         Sig,
         NewlySig,
-        Empty,
+        Empty
     };
 
 

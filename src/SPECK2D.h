@@ -47,6 +47,7 @@ public:
     SPECKSet2D( SPECKSetType t );
 
     bool         is_pixel() const;
+    bool         is_empty() const;
     SPECKSetType type()     const;
 };
 
@@ -90,7 +91,7 @@ private:
     int  m_refinement_pass( );
     // For the following 2 methods, indices are used to locate which set to process from m_LIS,
     // because of the choice to use vectors to represent lists, only indices are invariant. 
-    int  m_process_S( size_t idx1, size_t idx2, bool ); // code this set or not? 
+    int  m_process_S( size_t idx1, size_t idx2, bool ); // need to decide if it's signif?
     int  m_code_S   ( size_t idx1, size_t idx2 );
     int  m_process_I( );
     int  m_code_I   ( );

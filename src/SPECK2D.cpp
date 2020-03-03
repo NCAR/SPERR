@@ -107,8 +107,8 @@ int speck::SPECK2D::encode()
     m_bit_buffer.reserve( m_budget + m_vec_init_capacity );
     auto max_coeff = speck::make_positive( m_coeff_buf.get(), m_dim_x * m_dim_y, m_sign_array );
     m_max_coefficient_bits = uint16_t( std::log2(max_coeff) );
-    // ( when max_coeff is very close to zero, m_max_coefficient_bits could be zero.
-    // I don't know how to deal with that situation yet... )
+    /* When max_coeff is very close to zero, m_max_coefficient_bits could be zero.
+       I don't know how to deal with that situation yet...                      */
     assert( m_max_coefficient_bits > 0 );   
     m_threshold = std::pow( 2.0, double(m_max_coefficient_bits) );
     for( size_t bitplane = 0; bitplane < 128; bitplane++ )
@@ -218,16 +218,12 @@ int speck::SPECK2D::m_sorting_pass( )
             auto& s = m_LIS[idx1][idx2];
             if( !s.garbage )
             {
-                if( m_decide_set_significance( s )  == 1 )
-                    return 1;
                 if( m_process_S( idx1, idx2, true ) == 1 )
                     return 1;
             }
         }
     }
 
-    if( m_decide_set_significance( m_I ) )
-        return 1;
     if( m_process_I() == 1 )
         return 1;
 
@@ -263,11 +259,11 @@ int speck::SPECK2D::m_refinement_pass( )
 }
 
 
-int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool code_this_set )
+int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool need_decide_signif )
 {
     auto& set = m_LIS[idx1][idx2];
 
-    if( set.signif == Significance::Empty ) // Skip empty sets 
+    if( set.is_empty() ) // Skip empty sets 
     {
         set.garbage = true;
         m_LIS_garbage_cnt[ set.part_level ]++;
@@ -276,20 +272,24 @@ int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool code_this_set )
     
 #ifdef PRINT
     m_print_set( "process_S", set );
-
-    if( (!m_encode_mode) && code_this_set )
-    {
-        auto bit = ( set.signif == Significance::Sig );
-        std::string str = bit ? "s1" : "s0";
-        std::cout << str << std::endl;
-    }
 #endif
 
-    if( m_encode_mode && code_this_set )
+    if( need_decide_signif )
     {
-        if( m_output_set_significance( set ) == 1 )
-            return 1;
+        if( m_encode_mode )
+        {
+            m_decide_set_significance( set );
+            if( m_output_set_significance( set ) == 1 )
+                return 1;
+        }
+        else
+        {
+            if( m_decide_set_significance( set ) == 1 )
+                return 1;
+        }
     }
+    else
+        set.signif = Significance::Sig;
 
     if( set.signif == Significance::Sig )
     {
@@ -340,31 +340,21 @@ int speck::SPECK2D::m_code_S( size_t idx1, size_t idx2 )
     for( size_t i = 0; i < 3; i++ )
     {
         auto& s = subsets[i];
-        if( m_decide_set_significance( subsets[i] ) == 1 )
-            return 1;
-        if( subsets[i].signif == Significance::Sig )
-            already_sig++;
-
         m_LIS[ s.part_level ].push_back( s );
-        if( m_process_S( s.part_level, m_LIS[s.part_level].size() - 1, true ) == 1 )
+        size_t newidx1 = s.part_level;
+        size_t newidx2 = m_LIS[ newidx1 ].size() - 1;
+        if( m_process_S( newidx1, newidx2, true ) == 1 )
             return 1;
+
+        if( m_LIS[ newidx1 ][ newidx2 ].signif == Significance::Sig ||
+            m_LIS[ newidx1 ][ newidx2 ].signif == Significance::NewlySig )
+            already_sig++;
     }
 
     auto& s4 = subsets[3];
-    bool  code_s4;
-    if( already_sig == 0 )
-    {
-        s4.signif = Significance::Sig;
-        code_s4   = false;
-    }
-    else
-    {
-        if( m_decide_set_significance( s4 ) == 1 )
-            return 1;
-        code_s4  = true;
-    }
+    bool need_decide_sig = already_sig == 0 ? false : true;
     m_LIS[ s4.part_level ].push_back( s4 );
-    if( m_process_S( s4.part_level, m_LIS[s4.part_level].size() - 1, code_s4 ) == 1 )
+    if( m_process_S( s4.part_level, m_LIS[s4.part_level].size() - 1, need_decide_sig ) == 1 )
         return 1;
 
     return 0;
@@ -426,12 +416,19 @@ int speck::SPECK2D::m_process_I()
         std::cout << str << std::endl;
     }
 #endif
-    
+
     if( m_encode_mode )
     {
+        m_decide_set_significance( m_I );
         if( m_output_set_significance( m_I ) == 1 )
             return 1;
     }
+    else
+    {
+        if( m_decide_set_significance( m_I ) )
+            return 1;
+    }
+    
 
     if( m_I.signif == Significance::Sig )
     {
@@ -454,35 +451,23 @@ int speck::SPECK2D::m_code_I()
     for( size_t i = 0; i < 2; i++ )
     {
         auto& s = subsets[i];
-        if( m_decide_set_significance( s ) == 1 )
-            return 1;
-        if( s.signif == Significance::Sig )
-            already_sig++;
-
         m_LIS[ s.part_level ].push_back( s );
-        if( m_process_S( s.part_level, m_LIS[s.part_level].size() - 1, true ) == 1 )
+        size_t newidx1 = s.part_level;
+        size_t newidx2 = m_LIS[ newidx1 ].size() - 1;
+        if( m_process_S( newidx1, newidx2, true ) == 1 )
             return 1;
+
+        if( m_LIS[ newidx1 ][ newidx2 ].signif == Significance::Sig ||
+            m_LIS[ newidx1 ][ newidx2 ].signif == Significance::NewlySig )
+            already_sig++;
     }
 
     auto& s3 = subsets[2];
-    bool code_s3;
-    if( already_sig == 0 )
-    {
-        s3.signif = Significance::Sig;
-        code_s3   = false;
-    }
-    else
-    {
-        if( m_decide_set_significance( s3 ) == 1 )
-            return 1;
-        code_s3 = true;
-    }
+    bool need_decide_sig = already_sig == 0 ? false : true;
     m_LIS[ s3.part_level ].push_back( s3 );
-    if( m_process_S( s3.part_level, m_LIS[s3.part_level].size() - 1, code_s3 ) == 1 )
+    if( m_process_S( s3.part_level, m_LIS[s3.part_level].size() - 1, need_decide_sig ) == 1 )
         return 1;
 
-    if( m_decide_set_significance( m_I ) == 1 )
-        return 1;
     if( m_process_I() )
         return 1;
 
@@ -531,18 +516,12 @@ void speck::SPECK2D::m_partition_I( std::array<SPECKSet2D, 3>& subsets )
 
 int speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
 {
-    // In case of an S set with zero dimension, mark it empty
-    if( set.type() == SPECKSetType::TypeS && (set.length_x == 0 || set.length_y == 0) )
-    {
-        set.signif = Significance::Empty;
-        return 0;
-    }
-
-    // If decoding, simply read a bit from the bitstream, no matter TypeS or TypeI.
     // Note: the only case this method returns 1 is when decoding and we have 
     //       already decoded enough number of bits.
     //       All other cases return 0, meaning successfully decided the 
     //       significance of this set.  
+
+    // If decoding, simply read a bit from the bitstream, no matter TypeS or TypeI.
     if( !m_encode_mode )
     {
         if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
@@ -807,6 +786,11 @@ void speck::SPECK2D::m_print_set( const char* str, const SPECKSet2D& set ) const
 bool speck::SPECKSet2D::is_pixel() const
 {
     return ( length_x == 1 && length_y == 1 );
+}
+
+bool speck::SPECKSet2D::is_empty() const
+{
+    return ( length_x == 0 || length_y == 0 );
 }
 
 speck::SPECKSetType speck::SPECKSet2D::type() const
