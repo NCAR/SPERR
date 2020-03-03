@@ -823,11 +823,6 @@ static int QccSPECKProcessS(QccListNode *current_set_node,
   QccSPECKSet*  current_set  = (QccSPECKSet *)(current_set_node->value);
   QccList*      current_list = (QccList *)(current_list_node->value);
 
-if( buffer->type == QCCBITBUFFER_OUTPUT )
-  SamPrintSet( "process_S", current_set );
-//if( SamDetectSet( current_set, 6, 4, 0, 1 ) != 0 )
-//    printf("detected!");
-
   /* if the current set is empty, then put it in the garbage list and return! */
   /* seems empty set occurs when this set is marked by ''mask'' */
   if (current_set->significance == QCCSPECK_EMPTYSET)
@@ -845,6 +840,12 @@ if( buffer->type == QCCBITBUFFER_OUTPUT )
 
       return(0);
     }
+
+if( buffer->type == QCCBITBUFFER_OUTPUT )
+  SamPrintSet( "process_S", current_set );
+//if( SamDetectSet( current_set, 6, 4, 0, 1 ) != 0 )
+//    printf("detected!");
+
 
   /* Write to buffer the significance value of current_set.
      Corresponds to line 1) of ProcessS() in Figure 2.   */
@@ -1323,6 +1324,8 @@ static int QccSPECKRefinementPass(QccWAVSubbandPyramid *coefficients,
   int return_value;
   QccListNode *current_set_node;
   QccSPECKSet *current_set;
+
+  printf("--> refinement pass, threshold = %f\n", threshold );
 
   current_set_node = LSP->start;
   while (current_set_node != NULL)

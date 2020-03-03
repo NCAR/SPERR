@@ -454,6 +454,11 @@ int speck::SPECK2D::m_code_I()
     for( size_t i = 0; i < 2; i++ )
     {
         auto& s = subsets[i];
+        if( m_decide_set_significance( s ) == 1 )
+            return 1;
+        if( s.signif == Significance::Sig )
+            already_sig++;
+
         m_LIS[ s.part_level ].push_back( s );
         if( m_process_S( s.part_level, m_LIS[s.part_level].size() - 1, true ) == 1 )
             return 1;
