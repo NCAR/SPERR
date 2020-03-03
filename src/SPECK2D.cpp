@@ -82,6 +82,18 @@ void speck::SPECK2D::assign_bit_budget( size_t budget )
     m_budget = budget;
 }
     
+    
+size_t speck::SPECK2D::get_bit_idx() const
+{
+    return m_bit_idx;
+}
+
+    
+size_t speck::SPECK2D::get_bit_buffer_size() const
+{
+    return m_bit_buffer.size();
+}
+
 
 int speck::SPECK2D::encode()
 {
@@ -197,7 +209,10 @@ int speck::SPECK2D::m_sorting_pass( )
                                         m_threshold, m_significance_map );
     }
 
-    for( auto idx1 = m_LIS.size() - 1; idx1 >= 0; idx1-- )
+    for( size_t tmp = 0; tmp < m_LIS.size(); tmp++ )
+    {
+        // From the end to the front of m_LIS, smaller sets first.
+        size_t idx1 = m_LIS.size() - 1 - tmp;
         for( size_t idx2  = 0; idx2 < m_LIS[idx1].size(); idx2++ )
         {
             auto& s = m_LIS[idx1][idx2];
@@ -209,6 +224,7 @@ int speck::SPECK2D::m_sorting_pass( )
                     return 1;
             }
         }
+    }
 
     if( m_decide_set_significance( m_I ) )
         return 1;
@@ -250,6 +266,13 @@ int speck::SPECK2D::m_refinement_pass( )
 int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool code_this_set )
 {
     auto& set = m_LIS[idx1][idx2];
+
+    if( set.signif == Significance::Empty ) // Skip empty sets 
+    {
+        set.garbage = true;
+        m_LIS_garbage_cnt[ set.part_level ]++;
+        return 0;
+    }
     
 #ifdef PRINT
     m_print_set( "process_S", set );
@@ -261,13 +284,6 @@ int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool code_this_set )
         std::cout << str << std::endl;
     }
 #endif
-
-    if( set.signif == Significance::Empty ) // Skip empty sets 
-    {
-        set.garbage = true;
-        m_LIS_garbage_cnt[ set.part_level ]++;
-        return 0;
-    }
 
     if( m_encode_mode && code_this_set )
     {
