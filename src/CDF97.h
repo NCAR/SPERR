@@ -11,20 +11,27 @@ namespace speck
 class CDF97
 {
 public:
+    // Input
     template< typename T >
-    int copy_data( const T* data, size_t x, size_t y, size_t z  = 1 );
-    int dwt2d();            // 1) calculates the number of levels of dwt,
+    void copy_data( const T*  );
+    void take_data( std::unique_ptr<double[]> );    // Take ownership
+    void set_mean( double );
+    void set_dims( size_t x, size_t y, size_t z = 1 );
+    
+    // Output
+    const double* get_read_only_data() const;   // Others can read the data
+    std::unique_ptr<double[]> release_data();   // Others take ownership of the data
+    double get_mean() const; 
+    void   get_dims( std::array<size_t, 2>& ) const;    // 2D case 
+    void   get_dims( std::array<size_t, 3>& ) const;    // 3D case 
+
+    // Common methods
+    int  dwt2d();           // 1) calculates the number of levels of dwt,
                             // 2) subtract mean of the data,
                             // 3) perform the actual dwt.
     int idwt2d();           // 1) calculates the number of levels of dwt,
                             // 2) perform the actual idwt
                             // 3) add the mean back to the data
-    
-    // communicate results
-    const double* get_read_only_data() const;   // Others can read the data
-    std::unique_ptr<double[]> release_data();   // Others take ownership of the data
-    double get_mean() const; 
-
 private:
     //
     // Private methods helping DWT.

@@ -6,22 +6,37 @@
 #include <cstring>  // for std::memcpy()
 
 template< typename T >
-int speck::CDF97::copy_data( const T* data, size_t x, size_t y, size_t z )
+void speck::CDF97::copy_data( const T* data )
 {
     static_assert( std::is_floating_point<T>::value, 
                    "!! Only floating point values are supported !!" );
-    m_dim_x = x;
-    m_dim_y = y;
-    m_dim_z = z;
+
+    assert( m_dim_x > 0 && m_dim_y > 0 && m_dim_z > 0 );
     size_t num_of_vals = m_dim_x * m_dim_y * m_dim_z;
     m_data_buf = std::make_unique<double[]>( num_of_vals );
     for( size_t i = 0; i < num_of_vals; i++ )
         m_data_buf[i] = data[i];
-
-    return 0;
 }
-template int speck::CDF97::copy_data( const float*  data, size_t x, size_t y, size_t z );
-template int speck::CDF97::copy_data( const double* data, size_t x, size_t y, size_t z );
+template void speck::CDF97::copy_data( const float*  );
+template void speck::CDF97::copy_data( const double* );
+
+
+void speck::CDF97::take_data( std::unique_ptr<double[]> ptr )
+{
+    m_data_buf = std::move( ptr );
+}
+
+
+const double* speck::CDF97::get_read_only_data() const
+{
+    return m_data_buf.get();
+}
+
+
+std::unique_ptr<double[]> speck::CDF97::release_data()
+{
+    return std::move( m_data_buf );
+}
 
 
 int speck::CDF97::dwt2d()
@@ -30,7 +45,7 @@ int speck::CDF97::dwt2d()
     // Pre-process data
     //
     m_calc_mean();
-    size_t num_of_vals = m_dim_x * m_dim_y * m_dim_z;
+    size_t num_of_vals = m_dim_x * m_dim_y ;
     for( size_t i = 0; i < num_of_vals; i++ )
         m_data_buf[i] -= m_data_mean;
 
@@ -52,16 +67,16 @@ int speck::CDF97::idwt2d()
     size_t num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
     if( num_xforms_xy > 0 )
     {
-        for( size_t lev = num_xforms_xy - 1; lev >= 0; lev-- )
+        for( size_t lev = num_xforms_xy; lev > 0; lev-- )
         {
             std::array<size_t, 2> len_x, len_y;
-            speck::calc_approx_detail_len( m_dim_x, lev, len_x );
-            speck::calc_approx_detail_len( m_dim_y, lev, len_y );
+            speck::calc_approx_detail_len( m_dim_x, lev - 1, len_x );
+            speck::calc_approx_detail_len( m_dim_y, lev - 1, len_y );
             m_idwt2d_one_level( m_data_buf.get(), len_x[0], len_y[0] );
         }
     }
 
-    size_t num_of_vals = m_dim_x * m_dim_y * m_dim_z;
+    size_t num_of_vals = m_dim_x * m_dim_y ;
     for( size_t i = 0; i < num_of_vals; i++ )
         m_data_buf[i] += m_data_mean;
 
@@ -468,19 +483,36 @@ void speck::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t si
 }
 
 
-const double* speck::CDF97::get_read_only_data() const
+void speck::CDF97::set_mean( double m )
 {
-    return m_data_buf.get();
+    m_data_mean = m;
 }
 
 
-std::unique_ptr<double[]> speck::CDF97::release_data()
+void speck::CDF97::set_dims( size_t x, size_t y, size_t z )
 {
-    return std::move( m_data_buf );
+    m_dim_x = x;
+    m_dim_y = y;
+    m_dim_z = z;
 }
 
 
 double speck::CDF97::get_mean() const
 {
     return m_data_mean;
+}
+
+
+void speck::CDF97::get_dims( std::array<size_t, 2>& dims ) const
+{
+    dims[0] = m_dim_x;
+    dims[1] = m_dim_y;
+}
+
+
+void speck::CDF97::get_dims( std::array<size_t, 3>& dims ) const
+{
+    dims[0] = m_dim_x;
+    dims[1] = m_dim_y;
+    dims[2] = m_dim_z;
 }
