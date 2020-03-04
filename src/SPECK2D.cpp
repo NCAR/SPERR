@@ -133,7 +133,7 @@ int speck::SPECK2D::decode()
     m_encode_mode = false;
 
 #ifdef PRINT
-    printf("\n\nstart decoding!\n");
+    std::cout << "<-- start decoding -->" << std::endl;
 #endif
 
     // initialize coefficients to be zero, and signs to be all positive
@@ -269,7 +269,7 @@ int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool need_decide_sign
         m_LIS_garbage_cnt[ set.part_level ]++;
         return 0;
     }
-    
+
 #ifdef PRINT
     m_print_set( "process_S", set );
 #endif
@@ -286,6 +286,11 @@ int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool need_decide_sign
         {
             if( m_decide_set_significance( set ) == 1 )
                 return 1;
+#ifdef PRINT
+            auto bit = ( set.signif == Significance::Sig );
+            std::string str = bit ? "s1" : "s0";
+            std::cout << str << std::endl;
+#endif
         }
     }
     else
@@ -405,16 +410,9 @@ int speck::SPECK2D::m_process_I()
 {
     if( m_I.part_level == 0 )   // m_I is empty at this point
         return 0;
-
+    
 #ifdef PRINT
     m_print_set( "process_I", m_I );
-
-    if( !m_encode_mode )
-    {
-        auto bit = ( m_I.signif == Significance::Sig );
-        std::string str = bit ? "s1" : "s0";
-        std::cout << str << std::endl;
-    }
 #endif
 
     if( m_encode_mode )
@@ -427,8 +425,14 @@ int speck::SPECK2D::m_process_I()
     {
         if( m_decide_set_significance( m_I ) )
             return 1;
+#ifdef PRINT
+        auto bit = ( m_I.signif == Significance::Sig );
+        std::string str = bit ? "s1" : "s0";
+        std::cout << str << std::endl;
+#endif
     }
-    
+
+
 
     if( m_I.signif == Significance::Sig )
     {
@@ -651,23 +655,21 @@ int speck::SPECK2D::m_output_refinement( const SPECKSet2D& pixel )
 {
     auto idx = pixel.start_y * m_dim_x + pixel.start_x;
 
-#ifdef PRINT
-    if( m_coeff_buf[idx] >= m_threshold ) 
-    {
-        std::cout << "r1" << std::endl;
-        m_coeff_buf[idx] -= m_threshold;
-    }
-    else
-        std::cout << "r0" << std::endl;
-#endif
-
     if( m_coeff_buf[idx] >= m_threshold ) 
     {
         m_bit_buffer.push_back( true );
+#ifdef PRINT
+        std::cout << "r1" << std::endl;
+#endif
         m_coeff_buf[idx] -= m_threshold;
     }
     else
+    {
         m_bit_buffer.push_back( false );
+#ifdef PRINT
+        std::cout << "r0" << std::endl;
+#endif
+    }
 
     // Let's also see if we're reached the bit budget
     if( m_bit_buffer.size() >= m_budget )
@@ -685,6 +687,13 @@ int speck::SPECK2D::m_input_refinement( const SPECKSet2D& pixel )
     auto bit = m_bit_buffer[ m_bit_idx++ ];
     auto idx = pixel.start_y * m_dim_x + pixel.start_x;
     m_coeff_buf[ idx ] += bit ? m_threshold * 0.5 : m_threshold * -0.5;
+
+#ifdef PRINT
+    if( bit )
+        std::cout << "r1" << std::endl;
+    else
+        std::cout << "r0" << std::endl;
+#endif
 
     return 0;
 }
