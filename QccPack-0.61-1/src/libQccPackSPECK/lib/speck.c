@@ -143,11 +143,13 @@ static int QccSPECKSetIsPixel(QccSPECKSet *set)
   return(0);
 }
 
+#ifdef PRINT
 static void SamPrintSet( const char* str, const QccSPECKSet* set )
 {
     printf( "%s: (%d, %d, %d, %d)\n", str, set->origin_col, set->origin_row, 
                                            set->num_cols,   set->num_rows );
 }
+#endif
 
 static int SamDetectSet( const QccSPECKSet* set, int start_x, int start_y,
                          int len_x, int len_y )
@@ -491,7 +493,9 @@ static int QccSPECKInputOutputSetSignificance(QccSPECKSet *current_set,
           }
           
           symbol = (current_set->significance == QCCSPECK_SIGNIFICANT);
+#ifdef PRINT
           printf("s%d\n", symbol );
+#endif
           
           return_value = QccENTArithmeticEncode(&symbol, 1, model, buffer);
 
@@ -535,7 +539,9 @@ static int QccSPECKInputOutputSign(char *sign,
   if (buffer->type == QCCBITBUFFER_OUTPUT)
   {
       symbol = (*sign == QCCSPECK_POSITIVE);
+#ifdef PRINT
       printf("p%d\n", symbol );
+#endif
 
       *coefficient -= threshold;
       
@@ -716,8 +722,10 @@ static int QccSPECKCodeS(QccListNode *current_set_node,
   int           significance_cnt = 0;
   int           context_offset;
 
+#ifdef PRINT
 if( buffer->type == QCCBITBUFFER_OUTPUT )
     SamPrintSet( "code_S", current_set );
+#endif
 
   QccListInitialize(&subsets);
 
@@ -841,11 +849,10 @@ static int QccSPECKProcessS(QccListNode *current_set_node,
       return(0);
     }
 
-if( buffer->type == QCCBITBUFFER_OUTPUT )
-  SamPrintSet( "process_S", current_set );
-//if( SamDetectSet( current_set, 6, 4, 0, 1 ) != 0 )
-//    printf("detected!");
-
+#ifdef PRINT
+    if( buffer->type == QCCBITBUFFER_OUTPUT )
+      SamPrintSet( "process_S", current_set );
+#endif
 
   /* Write to buffer the significance value of current_set.
      Corresponds to line 1) of ProcessS() in Figure 2.   */
@@ -860,9 +867,6 @@ if( buffer->type == QCCBITBUFFER_OUTPUT )
     }
   else if (return_value == 2) /* reach target_num_bits */
       return(2);
-
-//if( SamDetectSet( current_set, 6, 0, 1, 1 ) != 0 )
-//    printf( "found set (6, 0, 1, 1)!\n" );
 
   /* Line 2) of ProcessS() in Figure 2. */
   if (current_set->significance != QCCSPECK_INSIGNIFICANT)
@@ -998,9 +1002,9 @@ static int QccSPECKCodeI(QccSPECKSet *I,
                                      mask_subband);
 
 /*
-if (buffer->type == QCCBITBUFFER_OUTPUT)
-    printf("subset = (%d, %d, %d, %d), level = %d\n",
-        set_S.origin_col, set_S.origin_row, set_S.num_cols, set_S.num_rows, set_S.level );
+    if (buffer->type == QCCBITBUFFER_OUTPUT)
+        printf("subset = (%d, %d, %d, %d), level = %d\n",
+            set_S.origin_col, set_S.origin_row, set_S.num_cols, set_S.num_rows, set_S.level );
 */
 /* subband == 3  ==>  bottom right */
 /* subband == 2  ==>  top right    */
@@ -1118,8 +1122,10 @@ static int QccSPECKProcessI(QccSPECKSet *I,
   if (!I->level)
     return(0);
 
-if( buffer->type == QCCBITBUFFER_OUTPUT )
-  SamPrintSet( "process_I", I );
+#ifdef PRINT
+    if( buffer->type == QCCBITBUFFER_OUTPUT )
+      SamPrintSet( "process_I", I );
+#endif
 
   model->current_context = QCCSPECK_CONTEXT_I;
 
@@ -1179,8 +1185,10 @@ static int QccSPECKSortingPass(QccWAVSubbandPyramid *coefficients,
   QccListNode*  next_set_node;
   QccList       garbage;
 
+#ifdef PRINT
   if( buffer->type == QCCBITBUFFER_OUTPUT )
     printf("--> sorting pass, threshold = %f\n", (threshold) );
+#endif
 
   QccListInitialize(&garbage);
 
@@ -1286,7 +1294,9 @@ static int QccSPECKRefinementInputOutput(double *coefficient,
       else
         symbol = 0;
 
+#ifdef PRINT
       printf("r%d\n", symbol );
+#endif
 
       return_value =
         QccENTArithmeticEncode(&symbol, 1,
@@ -1325,7 +1335,10 @@ static int QccSPECKRefinementPass(QccWAVSubbandPyramid *coefficients,
   QccListNode *current_set_node;
   QccSPECKSet *current_set;
 
-  printf("--> refinement pass, threshold = %f\n", threshold );
+#ifdef PRINT
+  if( buffer->type == QCCBITBUFFER_OUTPUT )
+    printf("--> refinement pass, threshold = %f\n", threshold );
+#endif
 
   current_set_node = LSP->start;
   while (current_set_node != NULL)
