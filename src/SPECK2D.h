@@ -13,24 +13,22 @@ namespace speck
 //   Comment out the following macro will double the size of SPECKSet2D
 //   from 24 bytes to 48 bytes.
 //
-#define FOUR_BYTE_SPECK_SET
-#define PRINT
 
 class SPECKSet2D
 {
 public:
 
-#ifdef FOUR_BYTE_SPECK_SET
-    using INT = uint32_t;   // unsigned int
+#ifdef EIGHT_BYTE_SPECK_SET
+    using UINT = uint64_t;   // unsigned long
 #else
-    using INT = uint64_t;   // unsigned long
+    using UINT = uint32_t;   // unsigned int
 #endif
     
     // Member data
-    INT  start_x      = 0;
-    INT  start_y      = 0;
-    INT  length_x     = 0;   
-    INT  length_y     = 0;
+    UINT  start_x       = 0;
+    UINT  start_y       = 0;
+    UINT  length_x      = 0;   
+    UINT  length_y      = 0;
     uint16_t part_level = 0;  // which partition level is this set at (starting from zero).
     Significance signif = Significance::Insig;
     bool garbage        = false;
@@ -58,14 +56,18 @@ public:
 class SPECK2D
 {
 public:
-    // memory management
+    // memory management: input
     void take_coeffs( std::unique_ptr<double[]> );  // Take ownership of a chunck of memory.
     template <typename T>
     void copy_coeffs( const T* );                   // Make a copy of the incoming data.
     void take_bitstream( std::vector<bool>& );      // Take ownership of the bitstream.
     void copy_bitstream( const std::vector<bool>& );// Make a copy of the bitstream.
+
+    // memory management: output
     const std::vector<bool>& get_read_only_bitstream() const;
     std::vector<bool>& release_bitstream();         // The bitstream will be up to changes.
+    const double* get_read_only_coeffs() const;     // Others can read the data
+    std::unique_ptr<double[]> release_coeffs();     // Others take ownership of the data
 
     // trivial properties
     void assign_mean( double );             // Accepts data mean.

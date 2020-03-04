@@ -52,6 +52,18 @@ std::vector<bool>& speck::SPECK2D::release_bitstream()
 }
 
 
+const double* speck::SPECK2D::get_read_only_coeffs() const
+{
+    return m_coeff_buf.get();
+}
+
+
+std::unique_ptr<double[]> speck::SPECK2D::release_coeffs()
+{
+    return std::move( m_coeff_buf );
+}
+
+
 void speck::SPECK2D::assign_mean( double m )
 {
     m_data_mean = m;
