@@ -31,31 +31,3 @@ void speck::calc_approx_detail_len( size_t orig_len,  size_t lev,
     approx_detail_len[0] = low_len;
     approx_detail_len[1] = high_len;
 }
-
-
-double speck::make_positive( double* data_buf, size_t len, std::vector<bool>& sign_array   )
-{
-    sign_array.assign( len, true ); // Initial to represent all being positive
-    double max = std::abs( data_buf[0] );
-    for( size_t i = 0; i < len; i++ )
-    {
-        if( data_buf[i] < 0.0 )
-        {
-            data_buf[i]   = -data_buf[i];
-            sign_array[i] = false;
-        }
-        if( data_buf[i] > max )
-            max = data_buf[i];
-    }
-
-    return max;
-}
-
-
-void speck::update_significance_map( const double* data_buf, size_t len, double threshold, 
-                                     std::vector<bool>& significance_map )
-{
-    significance_map.resize( len );
-    for( size_t i = 0; i < len; i++ )
-        significance_map[i] = (data_buf[i] >= threshold);
-}

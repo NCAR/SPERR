@@ -117,25 +117,26 @@ int speck::SPECK2D::encode()
     // Get ready for the quantization loop!
     m_bit_buffer.clear();
     m_bit_buffer.reserve( m_budget + m_vec_init_capacity );
-    auto max_coeff = speck::make_positive( m_coeff_buf.get(), m_dim_x * m_dim_y, m_sign_array );
+    auto max_coeff = m_make_coeff_positive( );
     m_max_coefficient_bits = uint16_t( std::log2(max_coeff) );
     /* When max_coeff is very close to zero, m_max_coefficient_bits could be zero.
        I don't know how to deal with that situation yet...                      */
     assert( m_max_coefficient_bits > 0 );   
     m_threshold = std::pow( 2.0, double(m_max_coefficient_bits) );
+    int rtn = 0;
     for( size_t bitplane = 0; bitplane < 128; bitplane++ )
     {
-        if( m_sorting_pass() == 1 )
-            return 1;
-        if( m_refinement_pass() == 1 )
-            return 1;
+        if( (rtn = m_sorting_pass()) )
+            break;
+        if( (rtn = m_refinement_pass()) )
+            break;
 
         m_threshold *= 0.5;
 
         m_clean_LIS();
     }
 
-    return 0;
+    return rtn;
 }
 
 
@@ -159,19 +160,27 @@ int speck::SPECK2D::decode()
     
     m_bit_idx = 0;
     m_threshold = std::pow( 2.0, double(m_max_coefficient_bits) );
+    int rtn_val = 0;
     for( size_t bitplane = 0; bitplane < 128; bitplane++ )
     {
-        if( m_sorting_pass() == 1 )
-            return 1;
-        if( m_refinement_pass() == 1 )
-            return 1;
+        if( (rtn_val = m_sorting_pass()) )
+            break;
+        if( (rtn_val = m_refinement_pass()) )
+            break;
 
         m_threshold *= 0.5;
 
         m_clean_LIS();
     }
 
-    return 0;
+    // Restore coefficient signs
+    for( size_t i = 0; i < m_sign_array.size(); i++ )
+    {
+        if( !m_sign_array[i] )
+            m_coeff_buf[i] *= -1.0;
+    }
+
+    return rtn_val;
 }
 
 
@@ -217,10 +226,16 @@ int speck::SPECK2D::m_sorting_pass( )
 
     if( m_encode_mode )
     {   // Update the significance map based on the current threshold
-        speck::update_significance_map( m_coeff_buf.get(), m_dim_x * m_dim_y, 
-                                        m_threshold, m_significance_map );
+        size_t num_of_vals = m_dim_x * m_dim_y;
+        m_significance_map.assign( num_of_vals, false );
+        for( size_t i = 0; i < num_of_vals; i++ )
+        {
+            if( m_coeff_buf[i] >= m_threshold )
+                m_significance_map[i] = true;
+        }
     }
 
+    int rtn = 0;
     for( size_t tmp = 0; tmp < m_LIS.size(); tmp++ )
     {
         // From the end to the front of m_LIS, smaller sets first.
@@ -230,14 +245,14 @@ int speck::SPECK2D::m_sorting_pass( )
             auto& s = m_LIS[idx1][idx2];
             if( !s.garbage )
             {
-                if( m_process_S( idx1, idx2, true ) == 1 )
-                    return 1;
+                if( (rtn = m_process_S( idx1, idx2, true )) )
+                    return rtn;
             }
         }
     }
 
-    if( m_process_I() == 1 )
-        return 1;
+    if( (rtn = m_process_I()) )
+        return rtn;
 
     return 0;
 }
@@ -248,6 +263,8 @@ int speck::SPECK2D::m_refinement_pass( )
 #ifdef PRINT
     printf("--> refinement pass, threshold = %f\n", m_threshold );
 #endif
+
+    int rtn = 0;
     for( auto& p : m_LSP )
     {
         if( p.signif == Significance::NewlySig )
@@ -256,13 +273,13 @@ int speck::SPECK2D::m_refinement_pass( )
         {
             if( m_encode_mode )
             {
-                if( m_output_refinement( p ) == 1 )
-                    return 1;
+                if( (rtn = m_output_refinement( p )) )
+                    return rtn;
             }
             else
             {
-                if( m_input_refinement( p ) == 1 )
-                    return 1;
+                if( (rtn = m_input_refinement( p )) )
+                    return rtn;
             }
         }
     }
@@ -286,18 +303,19 @@ int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool need_decide_sign
     m_print_set( "process_S", set );
 #endif
 
+    int rtn = 0;
     if( need_decide_signif )
     {
         if( m_encode_mode )
         {
             m_decide_set_significance( set );
-            if( m_output_set_significance( set ) == 1 )
-                return 1;
+            if( (rtn = m_output_set_significance( set )) )
+                return rtn;
         }
         else
         {
-            if( m_decide_set_significance( set ) == 1 )
-                return 1;
+            if( (rtn = m_decide_set_significance( set )) )
+                return rtn;
 #ifdef PRINT
             auto bit = ( set.signif == Significance::Sig );
             std::string str = bit ? "s1" : "s0";
@@ -315,13 +333,13 @@ int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool need_decide_sign
             set.signif = Significance::NewlySig;
             if( m_encode_mode )
             {
-                if( m_output_pixel_sign( set ) == 1 )
-                    return 1;
+                if( (rtn = m_output_pixel_sign( set )) )
+                    return rtn;
             }
             else
             {
-                if( m_input_pixel_sign( set ) == 1 )
-                    return 1;
+                if( (rtn = m_input_pixel_sign( set )) )
+                    return rtn;
             }
             m_LSP.push_back( set ); // A copy is saved to m_LSP.
             set.garbage = true;     // This particular object will be discarded.
@@ -329,8 +347,8 @@ int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool need_decide_sign
         }
         else
         {
-            if( m_code_S( idx1, idx2 ) == 1 )
-                return 1;
+            if( (rtn = m_code_S( idx1, idx2 )) )
+                return rtn;
             set.garbage = true;     // This particular object will be discarded.
             m_LIS_garbage_cnt[ set.part_level ]++;
         }
@@ -353,15 +371,15 @@ int speck::SPECK2D::m_code_S( size_t idx1, size_t idx2 )
 
     // We count how many subsets are significant, and if the first 3 subsets ain't,
     // then the 4th one must be significant.
-    int already_sig = 0;
+    int already_sig = 0, rtn = 0;
     for( size_t i = 0; i < 3; i++ )
     {
         auto& s = subsets[i];
         m_LIS[ s.part_level ].push_back( s );
         size_t newidx1 = s.part_level;
         size_t newidx2 = m_LIS[ newidx1 ].size() - 1;
-        if( m_process_S( newidx1, newidx2, true ) == 1 )
-            return 1;
+        if( (rtn = m_process_S( newidx1, newidx2, true )) )
+            return rtn;
 
         if( m_LIS[ newidx1 ][ newidx2 ].signif == Significance::Sig ||
             m_LIS[ newidx1 ][ newidx2 ].signif == Significance::NewlySig )
@@ -371,8 +389,8 @@ int speck::SPECK2D::m_code_S( size_t idx1, size_t idx2 )
     auto& s4 = subsets[3];
     bool need_decide_sig = already_sig == 0 ? false : true;
     m_LIS[ s4.part_level ].push_back( s4 );
-    if( m_process_S( s4.part_level, m_LIS[s4.part_level].size() - 1, need_decide_sig ) == 1 )
-        return 1;
+    if( (rtn = m_process_S( s4.part_level, m_LIS[s4.part_level].size() - 1, need_decide_sig )) )
+        return rtn;
 
     return 0;
 }
@@ -427,16 +445,17 @@ int speck::SPECK2D::m_process_I()
     m_print_set( "process_I", m_I );
 #endif
 
+    int rtn = 0;
     if( m_encode_mode )
     {
         m_decide_set_significance( m_I );
-        if( m_output_set_significance( m_I ) == 1 )
-            return 1;
+        if( (rtn = m_output_set_significance( m_I )) )
+            return rtn;
     }
     else
     {
-        if( m_decide_set_significance( m_I ) )
-            return 1;
+        if( (rtn = m_decide_set_significance( m_I )) )
+            return rtn;
 #ifdef PRINT
         auto bit = ( m_I.signif == Significance::Sig );
         std::string str = bit ? "s1" : "s0";
@@ -448,8 +467,8 @@ int speck::SPECK2D::m_process_I()
 
     if( m_I.signif == Significance::Sig )
     {
-        if( m_code_I() == 1 )
-            return 1;
+        if( (rtn = m_code_I()) )
+            return rtn;
     }
 
     return 0;
@@ -463,15 +482,15 @@ int speck::SPECK2D::m_code_I()
 
     // We count how many subsets are significant, and if the first 2 subsets ain't,
     // then the 3rd one must be significant.
-    int already_sig = 0;
+    int already_sig = 0, rtn = 0;
     for( size_t i = 0; i < 2; i++ )
     {
         auto& s = subsets[i];
         m_LIS[ s.part_level ].push_back( s );
         size_t newidx1 = s.part_level;
         size_t newidx2 = m_LIS[ newidx1 ].size() - 1;
-        if( m_process_S( newidx1, newidx2, true ) == 1 )
-            return 1;
+        if( (rtn = m_process_S( newidx1, newidx2, true )) )
+            return rtn;
 
         if( m_LIS[ newidx1 ][ newidx2 ].signif == Significance::Sig ||
             m_LIS[ newidx1 ][ newidx2 ].signif == Significance::NewlySig )
@@ -481,11 +500,11 @@ int speck::SPECK2D::m_code_I()
     auto& s3 = subsets[2];
     bool need_decide_sig = already_sig == 0 ? false : true;
     m_LIS[ s3.part_level ].push_back( s3 );
-    if( m_process_S( s3.part_level, m_LIS[s3.part_level].size() - 1, need_decide_sig ) == 1 )
-        return 1;
+    if( (rtn = m_process_S( s3.part_level, m_LIS[s3.part_level].size() - 1, need_decide_sig )) )
+        return rtn;
 
-    if( m_process_I() )
-        return 1;
+    if( (rtn = m_process_I()) )
+        return rtn;
 
     return 0;
 }
@@ -789,6 +808,26 @@ bool speck::SPECK2D::m_ready_to_decode() const
         return false;
 
     return true;
+}
+
+
+double speck::SPECK2D::m_make_coeff_positive()
+{
+    auto num_of_vals = m_dim_x * m_dim_y;
+    m_sign_array.assign( num_of_vals, true );
+    double max = std::abs( m_coeff_buf[0] );
+    for( size_t i = 0; i < num_of_vals; i++ )
+    {
+        if( m_coeff_buf[i] < 0.0 )
+        {
+            m_coeff_buf[i] *= -1.0;
+            m_sign_array[i] = false;
+        }
+        if( m_coeff_buf[i] > max )
+            max = m_coeff_buf[i];
+    }
+
+    return max;
 }
 
 

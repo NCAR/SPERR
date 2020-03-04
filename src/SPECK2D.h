@@ -64,19 +64,19 @@ public:
     void copy_bitstream( const std::vector<bool>& );// Make a copy of the bitstream.
 
     // memory management: output
-    const std::vector<bool>& get_read_only_bitstream() const;
-    std::vector<bool>& release_bitstream();         // The bitstream will be up to changes.
-    const double* get_read_only_coeffs() const;     // Others can read the data
-    std::unique_ptr<double[]> release_coeffs();     // Others take ownership of the data
+    const std::vector<bool>&  get_read_only_bitstream() const;
+    std::vector<bool>&        release_bitstream();          // The bitstream will be up to changes.
+    const double*             get_read_only_coeffs() const; // Others can read the data
+    std::unique_ptr<double[]> release_coeffs();             // Others take ownership of the data
 
     // trivial properties
-    void assign_mean( double );             // Accepts data mean.
-    void assign_dims( size_t, size_t );     // Accepts plane dimension
-    void assign_max_coeff_bits( uint16_t ); // (Useful for reconstruction)
-    void assign_bit_budget( size_t );       // How many bits does speck process? 
-    uint16_t get_max_coeff_bits() const;
+    void     assign_mean( double );             // Accepts data mean.
+    void     assign_dims( size_t, size_t );     // Accepts plane dimension
+    void     assign_max_coeff_bits( uint16_t ); // (Useful for reconstruction)
+    void     assign_bit_budget( size_t );       // How many bits does speck process? 
+    uint16_t get_max_coeff_bits()   const;
 
-    // debug output
+    // debug use output
     size_t get_bit_idx() const;
     size_t get_bit_buffer_size() const;
 
@@ -113,6 +113,11 @@ private:
     void m_clean_LIS();   // Clean garbage sets from m_LIS if too much garbage exists.
     bool m_ready_to_encode() const;
     bool m_ready_to_decode() const;
+
+    // 1) fill m_sign_array based on data_buf signs, and 
+    // 2) make m_coeff_buf containing all positive values.
+    // Returns the maximum magnitude of all encountered values.
+    double m_make_coeff_positive( ); 
 
 #ifdef PRINT
     void m_print_set( const char*, const SPECKSet2D& set ) const;

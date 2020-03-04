@@ -39,9 +39,11 @@ int main( int argc, char* argv[] )
 
     // Take input to go through DWT.
     speck::CDF97 cdf;
-    cdf.copy_data( in_buf.get(), dim_x, dim_y );
+    cdf.set_dims( dim_x, dim_y );
+    cdf.copy_data( in_buf.get() );
     cdf.dwt2d();
 
+    // Do a speck encoding
     speck::SPECK2D speck;
     speck.assign_dims( dim_x, dim_y );
     speck.take_coeffs( cdf.release_data() );
@@ -50,10 +52,27 @@ int main( int argc, char* argv[] )
     speck.assign_bit_budget( total_bits );
     speck.encode();
     
+    // Do a speck decoding
     speck::SPECK2D decoder;
     decoder.assign_dims( dim_x, dim_y );
     decoder.assign_max_coeff_bits( speck.get_max_coeff_bits() );
     decoder.assign_bit_budget( total_bits );
     decoder.copy_bitstream( speck.get_read_only_bitstream() );
     decoder.decode();
+
+    speck::CDF97 idwt;
+    idwt.set_dims( dim_x, dim_y );
+    idwt.set_mean( cdf.get_mean() );
+    idwt.take_data( decoder.release_coeffs() );
+    idwt.idwt2d();
+
+    // Compare the result with the original input in double precision
+    std::unique_ptr<double[]> in_bufd( new double[ total_vals ] );
+    for( size_t i = 0; i < total_vals; i++ )
+        in_bufd[i] = in_buf[i];
+    double rmse, lmax, psnr, arr1min, arr1max;
+    sam_get_statsd( in_bufd.get(), idwt.get_read_only_data(), total_vals, 
+                    &rmse, &lmax, &psnr, &arr1min, &arr1max );
+    printf("Sam: rmse = %f, lmax = %f, psnr = %fdB, orig_min = %f, orig_max = %f\n", 
+            rmse, lmax, psnr, arr1min, arr1max );
 }
