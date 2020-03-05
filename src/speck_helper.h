@@ -47,8 +47,10 @@ namespace speck
     // 3) returns the maximum magnitude of all encountered values.
     double make_coeff_positive( double* buf, size_t len, std::vector<bool>& ); 
 
-    // Good solution to deal with bools and unsigned chars
-    // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
+
+    // Upon success, it returns 0. Upon failure, it return a non-zero value.
+    int encode_header_speck2d( size_t dim_x, size_t dim_y, double mean, uint16_t max_coeff_bits, 
+                               const std::vector<bool>& bit_buffer, const char* filename  );
 };
 
 #endif
