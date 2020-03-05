@@ -29,10 +29,7 @@ public:
     UINT  length_y      = 0;
     uint16_t part_level = 0;  // which partition level is this set at (starting from zero).
     Significance signif = Significance::Insig;
-    bool garbage        = false;
-
-private:
-    SPECKSetType m_type = SPECKSetType::TypeS;
+    SPECKSetType type   = SPECKSetType::TypeS;
 
 public:
     //
@@ -41,10 +38,8 @@ public:
     // Constructor
     SPECKSet2D() = default;
     SPECKSet2D( SPECKSetType t );
-
     bool         is_pixel() const;
     bool         is_empty() const;
-    SPECKSetType type()     const;
 };
 
 

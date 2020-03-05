@@ -13,8 +13,9 @@ namespace speck
     //
     enum class SPECKSetType : unsigned char
     {
+        TypeS,
         TypeI,
-        TypeS
+        Garbage
     };
 
     enum class Significance : unsigned char

@@ -242,7 +242,7 @@ int speck::SPECK2D::m_sorting_pass( )
         for( size_t idx2  = 0; idx2 < m_LIS[idx1].size(); idx2++ )
         {
             auto& s = m_LIS[idx1][idx2];
-            if( !s.garbage )
+            if( s.type != SPECKSetType::Garbage )
             {
                 if( (rtn = m_process_S( idx1, idx2, true )) )
                     return rtn;
@@ -293,7 +293,7 @@ int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool need_decide_sign
 
     if( set.is_empty() ) // Skip empty sets 
     {
-        set.garbage = true;
+        set.type = SPECKSetType::Garbage;
         m_LIS_garbage_cnt[ set.part_level ]++;
         return 0;
     }
@@ -340,15 +340,15 @@ int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool need_decide_sign
                 if( (rtn = m_input_pixel_sign( set )) )
                     return rtn;
             }
-            m_LSP.push_back( set ); // A copy is saved to m_LSP.
-            set.garbage = true;     // This particular object will be discarded.
+            m_LSP.push_back( set );             // A copy is saved to m_LSP.
+            set.type = SPECKSetType::Garbage ;  // This particular object will be discarded.
             m_LIS_garbage_cnt[ set.part_level ]++;
         }
         else
         {
             if( (rtn = m_code_S( idx1, idx2 )) )
                 return rtn;
-            set.garbage = true;     // This particular object will be discarded.
+            set.type = SPECKSetType::Garbage;   // This particular object will be discarded.
             m_LIS_garbage_cnt[ set.part_level ]++;
         }
     }
@@ -571,7 +571,7 @@ int speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
     set.signif = Significance::Insig;
 
     // For TypeS sets, we test an obvious rectangle specified by this set.
-    if( set.type() == SPECKSetType::TypeS )
+    if( set.type == SPECKSetType::TypeS )
     {
         for( auto y = set.start_y; y < (set.start_y + set.length_y); y++ )
             for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ )
@@ -584,7 +584,8 @@ int speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
                 }
             }
     }
-    else    // For TypeI sets, we need to test two rectangles!
+    // For TypeI sets, we need to test two rectangles!
+    else if( set.type == SPECKSetType::TypeI )   
     {
         // First rectangle: directly to the right of the missing top-left corner
         for( size_t y = 0; y < set.start_y; y++ )
@@ -773,7 +774,7 @@ void speck::SPECK2D::m_clean_LIS()
             tmp.clear();
             tmp.reserve( m_vec_init_capacity );
             for( const auto& s : m_LIS[i] )
-                if( !s.garbage )
+                if( s.type != SPECKSetType::Garbage )
                     tmp.push_back( s );
             std::swap( m_LIS[i], tmp );
             m_LIS_garbage_cnt[i] = 0;
@@ -832,12 +833,7 @@ bool speck::SPECKSet2D::is_empty() const
     return ( length_x == 0 || length_y == 0 );
 }
 
-speck::SPECKSetType speck::SPECKSet2D::type() const
-{
-    return m_type;
-}
-
 // Constructor
 speck::SPECKSet2D::SPECKSet2D( SPECKSetType t )
-                 : m_type( t )
+                 : type( t )
 { }
