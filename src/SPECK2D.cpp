@@ -85,7 +85,11 @@ uint16_t speck::SPECK2D::get_max_coeff_bits() const
 
 void speck::SPECK2D::assign_bit_budget( size_t budget )
 {
-    m_budget = budget;
+    size_t mod = budget % 8;
+    if( mod == 0 )
+        m_budget = budget;
+    else    // we can fill up that last byte!
+        m_budget = budget + 8 - mod;
 }
     
     
