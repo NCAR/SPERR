@@ -3,7 +3,6 @@
 
 #include <memory>
 #include <cmath>
-#include <vector>
 
 namespace speck
 {
