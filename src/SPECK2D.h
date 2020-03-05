@@ -125,7 +125,7 @@ private:
     size_t      m_dim_x       = 0;          // 2D plane dims
     size_t      m_dim_y       = 0;
     bool        m_encode_mode = true;       // Encode (true) or Decode (false) mode?
-    const size_t m_vec_init_capacity = 8;   // Vectors are initialized to have this capacity.
+    const size_t m_vec_init_capacity = 16;  // Vectors are initialized to have this capacity.
 
     std::vector<bool> m_significance_map;
     std::vector<bool> m_sign_array;
