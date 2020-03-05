@@ -64,12 +64,6 @@ std::unique_ptr<double[]> speck::SPECK2D::release_coeffs()
 }
 
 
-void speck::SPECK2D::assign_mean( double m )
-{
-    m_data_mean = m;
-}
-
-
 void speck::SPECK2D::assign_dims( size_t dx, size_t dy )
 {
     m_dim_x = dx;
@@ -117,7 +111,8 @@ int speck::SPECK2D::encode()
     // Get ready for the quantization loop!
     m_bit_buffer.clear();
     m_bit_buffer.reserve( m_budget + m_vec_init_capacity );
-    auto max_coeff = m_make_coeff_positive( );
+    auto max_coeff = speck::make_coeff_positive( m_coeff_buf.get(), m_dim_x * m_dim_y,
+                                                 m_sign_array );
     m_max_coefficient_bits = uint16_t( std::log2(max_coeff) );
     /* When max_coeff is very close to zero, m_max_coefficient_bits could be zero.
        I don't know how to deal with that situation yet...                      */
@@ -808,26 +803,6 @@ bool speck::SPECK2D::m_ready_to_decode() const
         return false;
 
     return true;
-}
-
-
-double speck::SPECK2D::m_make_coeff_positive()
-{
-    auto num_of_vals = m_dim_x * m_dim_y;
-    m_sign_array.assign( num_of_vals, true );
-    double max = std::abs( m_coeff_buf[0] );
-    for( size_t i = 0; i < num_of_vals; i++ )
-    {
-        if( m_coeff_buf[i] < 0.0 )
-        {
-            m_coeff_buf[i] *= -1.0;
-            m_sign_array[i] = false;
-        }
-        if( m_coeff_buf[i] > max )
-            max = m_coeff_buf[i];
-    }
-
-    return max;
 }
 
 

@@ -31,3 +31,22 @@ void speck::calc_approx_detail_len( size_t orig_len,  size_t lev,
     approx_detail_len[0] = low_len;
     approx_detail_len[1] = high_len;
 }
+
+
+double speck::make_coeff_positive( double* buf, size_t len, std::vector<bool>& sign_array )
+{
+    sign_array.assign( len, true );
+    double max = std::abs( buf[0] );
+    for( size_t i = 0; i < len; i++ )
+    {
+        if( buf[i] < 0.0 )
+        {
+            buf[i]       *= -1.0;
+            sign_array[i] = false;
+        }
+        if( buf[i] > max )
+            max = buf[i];
+    }
+
+    return max;
+}

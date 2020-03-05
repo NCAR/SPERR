@@ -8,12 +8,10 @@
 
 namespace speck
 {
+
 //
 // Auxiliary class to hold a SPECK Set
-//   Comment out the following macro will double the size of SPECKSet2D
-//   from 24 bytes to 48 bytes.
 //
-
 class SPECKSet2D
 {
 public:
@@ -69,11 +67,12 @@ public:
     const double*             get_read_only_coeffs() const; // Others can read the data
     std::unique_ptr<double[]> release_coeffs();             // Others take ownership of the data
 
-    // trivial properties
-    void     assign_mean( double );             // Accepts data mean.
+    // trivial input
     void     assign_dims( size_t, size_t );     // Accepts plane dimension
     void     assign_max_coeff_bits( uint16_t ); // (Useful for reconstruction)
     void     assign_bit_budget( size_t );       // How many bits does speck process? 
+
+    // trivial output
     uint16_t get_max_coeff_bits()   const;
 
     // debug use output
@@ -114,11 +113,6 @@ private:
     bool m_ready_to_encode() const;
     bool m_ready_to_decode() const;
 
-    // 1) fill m_sign_array based on data_buf signs, and 
-    // 2) make m_coeff_buf containing all positive values.
-    // Returns the maximum magnitude of all encountered values.
-    double m_make_coeff_positive( ); 
-
 #ifdef PRINT
     void m_print_set( const char*, const SPECKSet2D& set ) const;
 #endif
@@ -129,7 +123,6 @@ private:
     //
     using buffer_type = std::unique_ptr<double[]>;
     buffer_type m_coeff_buf = nullptr;      // All coefficients are kept here
-    double      m_data_mean = 0.0;          // Mean subtracted before DWT
     double      m_threshold = 0.0;          // Threshold that's used for an iteration
     size_t      m_budget    = 0;            // What's the budget for num of bits?
     size_t      m_bit_idx   = 0;            // Used for decode. Which bit we're at?
