@@ -46,6 +46,9 @@ namespace speck
     // 2) make coeff_buffer containing all positive values.
     // 3) returns the maximum magnitude of all encountered values.
     double make_coeff_positive( double* buf, size_t len, std::vector<bool>& ); 
+
+    // Good solution to deal with bools and unsigned chars
+    // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
 };
 
 #endif
