@@ -21,7 +21,7 @@ speck_helper.o: speck_helper.cpp speck_helper.h
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 a.out: main.cpp speck_helper.o
-	$(CXX) $(CXXFLAGS) $< -c -o $@
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
 
 clean:
