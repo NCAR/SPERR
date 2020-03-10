@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 
 
 size_t speck::calc_num_of_xforms( size_t len )
@@ -55,8 +56,8 @@ double speck::make_coeff_positive( double* buf, size_t len, std::vector<bool>& s
 
 // Good solution to deal with bools and unsigned chars
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
-int speck::encode_header_speck2d( size_t dim_x, size_t dim_y, double mean, uint16_t max_coeff_bits,
-                                  const std::vector<bool>& bit_buffer, const char* filename )
+int speck::output_speck2d( size_t dim_x, size_t dim_y, double mean, uint16_t max_coeff_bits,
+                           const std::vector<bool>& bit_buffer, const std::string& filename )
 {
     // Sanity check on the size of bit_buffer
     assert( bit_buffer.size() % 8 == 0 );
@@ -70,10 +71,11 @@ int speck::encode_header_speck2d( size_t dim_x, size_t dim_y, double mean, uint1
 
     // Copy over header values 
     size_t pos = 0;
-    unsigned char* buf = new unsigned char[ total_size ];
-    std::memcpy( buf + pos, dims,  sizeof(dims) );      pos += sizeof(dims);
-    std::memcpy( buf + pos, &mean, sizeof(mean) );      pos += sizeof(mean);
-    std::memcpy( buf + pos, &max_coeff_bits, sizeof(max_coeff_bits) );
+    std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>( total_size );
+    uint8_t* const bufptr = buf.get();
+    std::memcpy( bufptr + pos, dims,  sizeof(dims) );      pos += sizeof(dims);
+    std::memcpy( bufptr + pos, &mean, sizeof(mean) );      pos += sizeof(mean);
+    std::memcpy( bufptr + pos, &max_coeff_bits, sizeof(max_coeff_bits) );
     pos += sizeof(max_coeff_bits);
 
     // Pack booleans to buf!
@@ -87,12 +89,23 @@ int speck::encode_header_speck2d( size_t dim_x, size_t dim_y, double mean, uint1
         {
             uint64_t t   = *((uint64_t*)a);
             uint8_t  c   = (magic * t) >> 56;
-            buf[ pos++ ] = c;
+            bufptr[ pos++ ] = c;
         }
     }
 
-    delete[] buf;
+    // Write buf to a file.
+    // Good introduction here: http://www.cplusplus.com/doc/tutorial/files/
+    std::ofstream file( filename, std::ios::binary );
+    if( file.is_open() )
+    {
+        file.write( reinterpret_cast<const char*>(buf.get()), total_size );
+        file.close();
+        return 0;
+    }
+    else
+        return 1;
 
-    return 0;
+
+
 }
 
