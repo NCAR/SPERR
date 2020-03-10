@@ -67,9 +67,12 @@ int main( int argc, char** argv )
     int         num_of_rows   = atoi( argv[3] );
     const size_t num_of_vals  = num_of_cols * num_of_rows;
     const size_t num_of_bytes = sizeof(float) * num_of_vals;
-    const float cratio        = 5.0f;  /* compression ratio */
-    const int   total_bits    = (int)(8.0f * num_of_bytes / cratio);
     int         num_of_levels = calc_num_of_xforms( num_of_cols );
+
+    const float cratio        = 16.0f;                     /* compression ratio */
+    const int   header_size   = 21;                         /* bytes */
+    /* Allocate bit budget for the header too */
+    const int   total_bits    = (int)(8.0f * num_of_bytes / cratio) + 8 * header_size;
 
     /*
      * Stage 1: Encoding

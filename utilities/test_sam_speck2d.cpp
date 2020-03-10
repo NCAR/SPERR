@@ -47,7 +47,8 @@ int main( int argc, char* argv[] )
     speck::SPECK2D speck;
     speck.assign_dims( dim_x, dim_y );
     speck.take_coeffs( cdf.release_data() );
-    const float  cratio       = 5.0f;  /* compression ratio */
+    const size_t header_size  = 18;
+    const float  cratio       = 16.0f;  /* compression ratio */
     const size_t total_bits   = size_t(32.0f * total_vals / cratio);
     speck.assign_bit_budget( total_bits );
     speck.encode();
