@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <memory>
 
 
 size_t speck::calc_num_of_xforms( size_t len )

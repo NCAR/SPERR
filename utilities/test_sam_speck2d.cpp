@@ -41,24 +41,31 @@ int main( int argc, char* argv[] )
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y );
     cdf.copy_data( in_buf.get() );
+    const auto startT = std::chrono::high_resolution_clock::now();
     cdf.dwt2d();
 
     // Do a speck encoding
-    speck::SPECK2D speck;
-    speck.assign_dims( dim_x, dim_y );
-    speck.take_coeffs( cdf.release_data() );
+    speck::SPECK2D encoder;
+    encoder.assign_dims( dim_x, dim_y );
+    encoder.take_coeffs( cdf.release_data() );
     const size_t header_size  = 18;
     const float  cratio       = 16.0f;  /* compression ratio */
-    const size_t total_bits   = size_t(32.0f * total_vals / cratio);
-    speck.assign_bit_budget( total_bits );
-    speck.encode();
+    const size_t total_bits   = size_t(32.0f * total_vals / cratio) + header_size * 8;
+    encoder.assign_bit_budget( total_bits );
+    encoder.encode();
+
+    // Write to file
+    speck::output_speck2d( dim_x, dim_y, cdf.get_mean(), encoder.get_max_coeff_bits, encoder.get_read_only_bitstream(), "tmp/temp.tmp" );
+    const auto endT   = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<double> diffT  = endT - startT;
+    std::cout << "Time for SPECK: " << diffT.count() << std::endl;
     
     // Do a speck decoding
     speck::SPECK2D decoder;
     decoder.assign_dims( dim_x, dim_y );
-    decoder.assign_max_coeff_bits( speck.get_max_coeff_bits() );
+    decoder.assign_max_coeff_bits( encoder.get_max_coeff_bits() );
     decoder.assign_bit_budget( total_bits );
-    decoder.copy_bitstream( speck.get_read_only_bitstream() );
+    decoder.copy_bitstream( encoder.get_read_only_bitstream() );
     decoder.decode();
 
     speck::CDF97 idwt;

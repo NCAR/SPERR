@@ -1,7 +1,7 @@
 CC=gcc
 CXX=g++
-CFLAGS=-g -Wall -lm -Wno-unused-variable
-CXXFLAGS=-std=c++14 -g -Wall -Wno-unused-variable -Wno-unused-private-field -lm
+CFLAGS=-g -O2 -Wall -lm -Wno-unused-variable
+CXXFLAGS=-std=c++14 -g -O2 -Wall -Wno-unused-variable -Wno-unused-private-field -lm
 
 ARCH=$(shell uname)
 ifeq ($(ARCH), Darwin)

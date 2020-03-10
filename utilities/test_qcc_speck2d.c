@@ -4,11 +4,16 @@
  */
 
 #define HAVE_SPECK
+#define TIME
 
 #include "libQccPack.h"
 #include "helper.h"
 
 #include "assert.h"
+
+#ifdef TIME
+#include <sys/time.h>
+#endif
 
 
 int array_to_image( const float* array, QccIMGImageComponent* image )
@@ -69,7 +74,7 @@ int main( int argc, char** argv )
     const size_t num_of_bytes = sizeof(float) * num_of_vals;
     int         num_of_levels = calc_num_of_xforms( num_of_cols );
 
-    const float cratio        = 16.0f;                     /* compression ratio */
+    const float cratio        = 128.0f;                     /* compression ratio */
     const int   header_size   = 21;                         /* bytes */
     /* Allocate bit budget for the header too */
     const int   total_bits    = (int)(8.0f * num_of_bytes / cratio) + 8 * header_size;
@@ -136,6 +141,10 @@ int main( int argc, char** argv )
     }
 
     /* Encode to a bitstream, and write to the bit stream. */
+#ifdef TIME
+    struct timeval start, end;
+    gettimeofday( &start, NULL );
+#endif
     if( QccSPECKEncode( &Image, NULL, num_of_levels, 
                         total_bits, &Wavelet, &OutputBuffer ) )
     {
@@ -149,6 +158,11 @@ int main( int argc, char** argv )
         free( in_array );
         return 1;
     }
+#ifdef TIME
+    gettimeofday( &end, NULL );
+    long elapsed = (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec;
+    printf("qcc takes seconds: %f\n", (float)elapsed / 1000.0f );
+#endif
 
 
     /*

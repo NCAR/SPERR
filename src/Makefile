@@ -1,6 +1,6 @@
 CC=gcc
 CXX=g++
-CXXFLAGS=-std=c++14 -Wall -g -lm -Wno-sign-compare
+CXXFLAGS=-std=c++14 -Wall -g -O2 -lm -Wno-sign-compare
 
 ARCH=$(shell uname)
 ifeq ($(ARCH), Darwin)
