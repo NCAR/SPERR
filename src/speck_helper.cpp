@@ -57,7 +57,7 @@ double speck::make_coeff_positive( double* buf, size_t len, std::vector<bool>& s
 // Good solution to deal with bools and unsigned chars
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
 int speck::output_speck2d( size_t dim_x, size_t dim_y, double mean, uint16_t max_coeff_bits,
-                           const std::vector<bool>& bit_buffer, const std::string& filename )
+                           const std::vector<bool>& bit_buffer, const char* filename )
 {
     // Sanity check on the size of bit_buffer
     assert( bit_buffer.size() % 8 == 0 );
@@ -104,16 +104,10 @@ int speck::output_speck2d( size_t dim_x, size_t dim_y, double mean, uint16_t max
     else
         return 1;
 }
-int speck::output_speck2d( size_t dim_x, size_t dim_y, double mean, uint16_t max_coeff_bits,
-                           const std::vector<bool>& bit_buffer, const char* filename )
-{
-    std::string str( filename );
-    return output_speck2d( dim_x, dim_y, mean, max_coeff_bits, bit_buffer, str );
-}
 
 
 int speck::input_speck2d( size_t& dim_x, size_t& dim_y, double& mean, uint16_t& max_coeff_bits,
-                           std::vector<bool>& bit_buffer, const std::string& filename )
+                           std::vector<bool>& bit_buffer, const char* filename )
 {
     // The header format need to be kept in sync with the output routine.
     uint32_t dims[2];
@@ -139,6 +133,10 @@ int speck::input_speck2d( size_t& dim_x, size_t& dim_y, double& mean, uint16_t& 
     std::memcpy( dims,          bufptr + pos, sizeof(dims));        pos += sizeof(dims);
     std::memcpy( &my_mean,      bufptr + pos, sizeof(my_mean));     pos += sizeof(my_mean);
     std::memcpy( &my_max_bits,  bufptr + pos, sizeof(my_max_bits)); pos += sizeof(my_max_bits);
+    dim_x          = dims[0];
+    dim_y          = dims[1];
+    mean           = my_mean;
+    max_coeff_bits = my_max_bits;
 
     // Now interpret the booleans
     size_t num_bools = (total_size - pos) * 8;
@@ -156,4 +154,16 @@ int speck::input_speck2d( size_t& dim_x, size_t& dim_y, double& mean, uint16_t& 
     }
 
     return 0;
+}
+
+
+int speck::output_speck2d( size_t dim_x, size_t dim_y, double mean, uint16_t max_coeff_bits,
+                           const std::vector<bool>& bit_buffer, const std::string& filename )
+{
+    return output_speck2d( dim_x, dim_y, mean, max_coeff_bits, bit_buffer, filename.c_str() );
+}
+int speck::input_speck2d( size_t& dim_x, size_t& dim_y, double& mean, uint16_t& max_coeff_bits,
+                           std::vector<bool>& bit_buffer, const std::string& filename )
+{
+    return input_speck2d( dim_x, dim_y, mean, max_coeff_bits, bit_buffer, filename.c_str() );
 }
