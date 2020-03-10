@@ -65,7 +65,6 @@ int speck::output_speck2d( size_t dim_x, size_t dim_y, double mean, uint16_t max
     uint32_t dims[2];
     dims[0] = uint32_t(dim_x);
     dims[1] = uint32_t(dim_y);
-
     size_t header_size = sizeof(dims) + sizeof(mean) + sizeof(max_coeff_bits);
     size_t total_size  = header_size + bit_buffer.size() / 8;
 
@@ -110,4 +109,51 @@ int speck::output_speck2d( size_t dim_x, size_t dim_y, double mean, uint16_t max
 {
     std::string str( filename );
     return output_speck2d( dim_x, dim_y, mean, max_coeff_bits, bit_buffer, str );
+}
+
+
+int speck::input_speck2d( size_t& dim_x, size_t& dim_y, double& mean, uint16_t& max_coeff_bits,
+                           std::vector<bool>& bit_buffer, const std::string& filename )
+{
+    // The header format need to be kept in sync with the output routine.
+    uint32_t dims[2];
+    dims[0] = uint32_t(dim_x);
+    dims[1] = uint32_t(dim_y);
+    double    my_mean     = 0.0;
+    uint16_t  my_max_bits = 0;
+
+    // Open a file and read its content
+    std::ifstream file( filename, std::ios::binary );
+    if( !file.is_open() )
+        return 1;    
+    file.seekg( 0, file.end );
+    size_t total_size = file.tellg();
+    file.seekg( 0, file.beg );
+    std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>( total_size );
+    file.read( reinterpret_cast<char*>(buf.get()), total_size );
+    file.close();
+
+    // Now interpret the header
+    size_t pos = 0;
+    const uint8_t* const bufptr  = buf.get();
+    std::memcpy( dims,          bufptr + pos, sizeof(dims));        pos += sizeof(dims);
+    std::memcpy( &my_mean,      bufptr + pos, sizeof(my_mean));     pos += sizeof(my_mean);
+    std::memcpy( &my_max_bits,  bufptr + pos, sizeof(my_max_bits)); pos += sizeof(my_max_bits);
+
+    // Now interpret the booleans
+    size_t num_bools = (total_size - pos) * 8;
+    bit_buffer.clear();
+    bit_buffer.resize( num_bools );
+    const uint64_t magic = 0x8040201008040201;
+    const uint64_t mask  = 0x8080808080808080;
+    bool  a[8];
+    for( size_t i = 0; i < num_bools; i += 8 )
+    {
+        uint8_t b        = buf[ pos++ ];
+        *((uint64_t*)a)  = ((magic * b) & mask) >> 7;
+        for( size_t j = 0; j < 8; j++ )
+            bit_buffer[ i + j ] = a[j];
+    }
+
+    return 0;
 }
