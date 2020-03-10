@@ -104,8 +104,10 @@ int speck::output_speck2d( size_t dim_x, size_t dim_y, double mean, uint16_t max
     }
     else
         return 1;
-
-
-
 }
-
+int speck::output_speck2d( size_t dim_x, size_t dim_y, double mean, uint16_t max_coeff_bits,
+                           const std::vector<bool>& bit_buffer, const char* filename )
+{
+    std::string str( filename );
+    return output_speck2d( dim_x, dim_y, mean, max_coeff_bits, bit_buffer, str );
+}

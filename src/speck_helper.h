@@ -51,6 +51,8 @@ namespace speck
     // Upon success, it returns 0. Upon failure, it return a non-zero value.
     int output_speck2d( size_t dim_x, size_t dim_y, double mean, uint16_t max_coeff_bits, 
                         const std::vector<bool>& bit_buffer, const std::string& filename  );
+    int output_speck2d( size_t dim_x, size_t dim_y, double mean, uint16_t max_coeff_bits, 
+                        const std::vector<bool>& bit_buffer, const char* filename  );
 };
 
 #endif
