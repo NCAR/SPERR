@@ -35,7 +35,7 @@
 
 # Speed Measures in Millisecond
 
-Note: the reported speed for QccPack implementation include the following
+Note: the reported speed numbers for QccPack implementation include the following
 steps of operations:
 1. Wavelet Transform,
 2. SPECK Encoding,  
@@ -49,7 +49,7 @@ steps of operations:
 While for Sam's implementation, there are no arithmetic coding steps ( i.e., 3 and 6 ).
 
 
-Also note, these tests were performed on Sam's Chromebox with an Intel Celeron 1.4Ghz.
+Also note, these tests were performed on Sam's Chromebox with an Intel Celeron 1.4Ghz Haswell CPU.
 The compiler used was `gcc-9.2.1` with `-O2` optimization on.
 
 ## Turbulence1024
