@@ -49,16 +49,17 @@ int main( int argc, char* argv[] )
     encoder.assign_dims( dim_x, dim_y );
     encoder.take_coeffs( cdf.release_data() );
     const size_t header_size  = 18;
-    const float  cratio       = 16.0f;  /* compression ratio */
+    const float  cratio       = 128.0f;  /* compression ratio */
     const size_t total_bits   = size_t(32.0f * total_vals / cratio) + header_size * 8;
     encoder.assign_bit_budget( total_bits );
     encoder.encode();
 
     // Write to file
-    speck::output_speck2d( dim_x, dim_y, cdf.get_mean(), encoder.get_max_coeff_bits, encoder.get_read_only_bitstream(), "tmp/temp.tmp" );
+    speck::output_speck2d( dim_x, dim_y, cdf.get_mean(), encoder.get_max_coeff_bits(), 
+                           encoder.get_read_only_bitstream(), "tmp/temp.tmp" );
     const auto endT   = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<double> diffT  = endT - startT;
-    std::cout << "Time for SPECK: " << diffT.count() << std::endl;
+    std::cout << "Time for SPECK: " << diffT.count() * 1000.0f << std::endl;
     
     // Do a speck decoding
     speck::SPECK2D decoder;
