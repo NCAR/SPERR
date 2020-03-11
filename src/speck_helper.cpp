@@ -80,18 +80,16 @@ int speck::output_speck2d( size_t dim_x, size_t dim_y, double mean, uint16_t max
 
     // Pack booleans to buf!
     const uint64_t magic = 0x8040201008040201;
-    bool  a[8];
-    const uint64_t* const a_ptr = reinterpret_cast<uint64_t*>(a);
+    bool     a[8];
+    uint64_t t;
     for( size_t i = 0; i < bit_buffer.size(); i++ )
     {
         auto m = i % 8;
-        a[m]  = bit_buffer[i];
+        a[m]   = bit_buffer[i];
         if( m == 7 )    // Need to pack 8 booleans!
         {
-            //uint64_t t   = *((uint64_t*)a);
-            uint64_t t   = *a_ptr;
-            uint8_t  c   = (magic * t) >> 56;
-            bufptr[ pos++ ] = c;
+            std::memcpy( &t, a, 8 );
+            bufptr[ pos++ ] = (magic * t) >> 56;
         }
     }
 
@@ -147,13 +145,13 @@ int speck::input_speck2d( size_t& dim_x, size_t& dim_y, double& mean, uint16_t& 
     bit_buffer.resize( num_bools );
     const uint64_t magic = 0x8040201008040201;
     const uint64_t mask  = 0x8080808080808080;
-    bool  a[8];
-    uint64_t* const a_ptr = reinterpret_cast<uint64_t*>(a);
+    bool     a[8];
+    uint64_t t;
     for( size_t i = 0; i < num_bools; i += 8 )
     {
-        uint8_t b        = buf[ pos++ ];
-        //*((uint64_t*)a)  = ((magic * b) & mask) >> 7;
-        *a_ptr           = ((magic * b) & mask) >> 7;
+        uint8_t b  = buf[ pos++ ];
+        t          = ((magic * b) & mask) >> 7;
+        std::memcpy( a, &t, 8 );
         for( size_t j = 0; j < 8; j++ )
             bit_buffer[ i + j ] = a[j];
     }

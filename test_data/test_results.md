@@ -3,11 +3,11 @@
 ## Lena512
 
 *bpp*  |    *QccPack*    |  *Sam*
-------- | --------------- | ----------
-*0.25*  |     **32.74**    |      **32.52**
-*0.5*    |     **35.85**    |      **35.63**
-*1*       |     **39.02**    |      **38.80**
-*2*      |      **43.61**    |      **43.29**
+-------| --------------- | ----------
+*0.25* |     **32.74**   |      **32.52**
+*0.5*  |     **35.85**   |      **35.63**
+*1*    |     **39.02**   |      **38.80**
+*2*    |     **43.61**   |      **43.29**
 
 
 
@@ -15,10 +15,10 @@
 
 *bpp*    |    *QccPack*    |     *Sam*
 ---------|-----------------|-----------
-*0.25*   |     **34.90**    |        **34.63**
-*0.5*    |      **38.80**   |         **38.47**
-*1*      |       **43.89**  |          **43.44**
-*2*      |       **50.90**   |         **50.37**
+*0.25*   |     **34.90**   |     **34.63**
+*0.5*    |     **38.80**   |     **38.47**
+*1*      |     **43.89**   |     **43.44**
+*2*      |     **50.90**   |     **50.37**
 
 
 
@@ -26,31 +26,41 @@
 
 *bpp*     |   *QccPack*    |     *Sam*
 ----------|----------------|------------
-*0.25*    |    **33.46**   |         **33.21**
-*0.5*     |     **37.77**   |         **37.50**
-*1*       |      **42.79**   |         **42.49**
-*2*      |       **49.53**    |        **49.17**
+*0.25*    |   **33.46**    |     **33.21**
+*0.5*     |   **37.77**    |     **37.50**
+*1*       |   **42.79**    |     **42.49**
+*2*       |   **49.53**    |     **49.17**
 
 
 
 # Speed Measures in Millisecond
 
-Note: the reported speed for QccPack include 1) Wavelet Transform, 2) SPECK Encoding,  3) Arithmetic Coding, and 4) write the result to disk, while for Sam, it does NOT include step 3).
+Note: the reported speed for QccPack implementation include 1) Wavelet Transform, 2) SPECK Encoding,  
+3) Arithmetic Encoding, 4) File Output, 5) File Input, 6) Arithmetic Decoding, 
+7) SPECK Decoding, and 8) Inverse Wavelet Transform.
 
-Also note, these tests were performed on `cis-vapor` (Intel Core i7, Ubuntu 16.04 ) with `gcc-5.4` compiler and `-O2` optimization.
+While for Sam's implementation, there's no arithmetic coding steps ( i.e., 3 and 6 ).
+
+
+Also note, these tests were performed on Sam's Chromebox with an Intel Celeron@1.4Ghz.
+The compiler used was `gcc-9.2.1` with `-O2` optimization on.
 
 ## Turbulence1024
 
 *bpp*     |     *QccPack*     |    *Sam*
 ----------|-------------------|----------
-*0.25*     |     **74**       |       **40**
-*2*        |       **369**     |        **110**
+*0.25*    |     **375**       |    **241**
+*2*       |     **1711**      |    **561**
+*4*       |     **3213**      |    **881**
 
 
 
 ## Turbulence128
 
-*bpp*         |         *QccPack*     |    *Sam*
----------------|---------------------|--------------
-*0.25*     |      **3**              |     **2**
-*2*        |                **7**      |      **3**
+*bpp*      |      *QccPack*    |    *Sam*
+-----------|-------------------|--------------
+*0.25*     |      **6**        |    **3**
+*2*        |      **25**       |    **8**
+*4*        |      **36**       |    **12**
+
+

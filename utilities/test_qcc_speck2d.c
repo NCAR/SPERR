@@ -67,14 +67,14 @@ int main( int argc, char** argv )
         return 1;
     }
     const char* input_name    = argv[1];
-    const char* output_name   = "tmp/stream.tmp";
+    const char* output_name   = "tmp/qcc.tmp";
     int         num_of_cols   = atoi( argv[2] );
     int         num_of_rows   = atoi( argv[3] );
     const size_t num_of_vals  = num_of_cols * num_of_rows;
     const size_t num_of_bytes = sizeof(float) * num_of_vals;
     int         num_of_levels = calc_num_of_xforms( num_of_cols );
 
-    const float cratio        = 128.0f;                     /* compression ratio */
+    const float cratio        = 16.0f;                     /* compression ratio */
     const int   header_size   = 21;                         /* bytes */
     /* Allocate bit budget for the header too */
     const int   total_bits    = (int)(8.0f * num_of_bytes / cratio) + 8 * header_size;
@@ -158,11 +158,6 @@ int main( int argc, char** argv )
         free( in_array );
         return 1;
     }
-#ifdef TIME
-    gettimeofday( &end, NULL );
-    long elapsed = (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec;
-    printf("qcc takes seconds: %f\n", (float)elapsed / 1000.0f );
-#endif
 
 
     /*
@@ -206,6 +201,11 @@ int main( int argc, char** argv )
         free( in_array );
         return 1;
     }
+#ifdef TIME
+    gettimeofday( &end, NULL );
+    long elapsed = (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec;
+    printf("qcc takes seconds: %f\n", (float)elapsed / 1000.0f );
+#endif
 
     /* Evaluate the encoding and decoding process! */
     float* out_array = (float*)malloc( num_of_bytes );

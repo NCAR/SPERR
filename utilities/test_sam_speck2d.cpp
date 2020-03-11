@@ -49,24 +49,26 @@ int main( int argc, char* argv[] )
     encoder.assign_dims( dim_x, dim_y );
     encoder.take_coeffs( cdf.release_data() );
     const size_t header_size  = 18;
-    const float  cratio       = 128.0f;  /* compression ratio */
+    const float  cratio       = 8.0f;  /* compression ratio */
     const size_t total_bits   = size_t(32.0f * total_vals / cratio) + header_size * 8;
     encoder.assign_bit_budget( total_bits );
     encoder.encode();
 
-    // Write to file
+    // Write to file and read it back
     speck::output_speck2d( dim_x, dim_y, cdf.get_mean(), encoder.get_max_coeff_bits(), 
-                           encoder.get_read_only_bitstream(), "tmp/temp.tmp" );
-    const auto endT   = std::chrono::high_resolution_clock::now();
-    const std::chrono::duration<double> diffT  = endT - startT;
-    std::cout << "Time for SPECK: " << diffT.count() * 1000.0f << std::endl;
+                           encoder.get_read_only_bitstream(), "tmp/sam.tmp" );
+    size_t dim_x_r, dim_y_r;
+    double mean_r;
+    uint16_t max_bits_r;
+    std::vector<bool> bits_r;
+    speck::input_speck2d( dim_x_r, dim_y_r, mean_r, max_bits_r, bits_r, "tmp/sam.tmp" );
     
     // Do a speck decoding
     speck::SPECK2D decoder;
-    decoder.assign_dims( dim_x, dim_y );
-    decoder.assign_max_coeff_bits( encoder.get_max_coeff_bits() );
+    decoder.assign_dims( dim_x_r, dim_y_r );
+    decoder.assign_max_coeff_bits( max_bits_r );
+    decoder.take_bitstream( bits_r );
     decoder.assign_bit_budget( total_bits );
-    decoder.copy_bitstream( encoder.get_read_only_bitstream() );
     decoder.decode();
 
     speck::CDF97 idwt;
@@ -74,6 +76,11 @@ int main( int argc, char* argv[] )
     idwt.set_mean( cdf.get_mean() );
     idwt.take_data( decoder.release_coeffs() );
     idwt.idwt2d();
+
+    // Finish timer and print timing
+    const auto endT   = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<double> diffT  = endT - startT;
+    std::cout << "Time for SPECK: " << diffT.count() * 1000.0f << std::endl;
 
     // Compare the result with the original input in double precision
     std::unique_ptr<double[]> in_bufd( new double[ total_vals ] );
