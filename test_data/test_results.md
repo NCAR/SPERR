@@ -42,8 +42,27 @@
 
 
 
-# Speed Measures in Second
+# Speed Measures in Millisecond
 
-Note: the reported speed for QccPack include 1) Wavelet Transform, 2) SPECK Encoding, and 3) Arithmetic Coding, while for Sam, it includes only the first two steps.
+Note: the reported speed for QccPack include 1) Wavelet Transform, 2) SPECK Encoding,  3) Arithmetic Coding, and 4) write the result to disk, while for Sam, it does NOT include step 3).
 
-Also note, these tests were performed on `cis-vapor` (Intel Core i7, Ubuntu 16.04 ) with `gcc-5.3` compiler. 
+Also note, these tests were performed on `cis-vapor` (Intel Core i7, Ubuntu 16.04 ) with `gcc-5.4` compiler and `-O2` optimization. 
+
+## Turbulence1024
+
+*bpp*          *QccPack*         *Sam*
+
+*0.25*          **74**                   **40** 
+
+*2*               **369**                **110**
+
+
+
+## Turbulence128
+
+*bpp*                  *QccPack*         *Sam*
+
+*0.25*                   **3**                   **2** 
+
+*2*                        **7**                   **3**
+
