@@ -1,5 +1,4 @@
-
-#include "helper.h"
+#include "sam_helper.h"
 
 #include <math.h>
 #include <stdio.h>
