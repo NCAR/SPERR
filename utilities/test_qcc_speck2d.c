@@ -7,9 +7,11 @@
 #define TIME
 
 #include "libQccPack.h"
-#include "helper.h"
+#include "sam_helper.h"
 
 #include "assert.h"
+
+#include "SpeckConfig.h"
 
 #ifdef TIME
 #include <sys/time.h>
@@ -67,7 +69,7 @@ int main( int argc, char** argv )
         return 1;
     }
     const char* input_name    = argv[1];
-    const char* output_name   = "tmp/qcc.tmp";
+    const char* output_name   = "qcc.bitstream";
     int         num_of_cols   = atoi( argv[2] );
     int         num_of_rows   = atoi( argv[3] );
     const size_t num_of_vals  = num_of_cols * num_of_rows;
@@ -204,7 +206,7 @@ int main( int argc, char** argv )
 #ifdef TIME
     gettimeofday( &end, NULL );
     long elapsed = (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec;
-    printf("qcc takes seconds: %f\n", (float)elapsed / 1000.0f );
+    printf("qcc takes milliseconds: %f\n", (float)elapsed / 1000.0f );
 #endif
 
     /* Evaluate the encoding and decoding process! */

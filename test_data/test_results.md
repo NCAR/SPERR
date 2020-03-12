@@ -1,5 +1,8 @@
 # Accuracy Measures in Decibel
 
+Note: The reported accuracy difference between QccPack and Sam's implementation is due to 
+an arithmetic coding step that is employed by QccPack, but not in Sam's implementation.
+
 ## Lena512
 
 *bpp*  |    *QccPack*    |  *Sam*

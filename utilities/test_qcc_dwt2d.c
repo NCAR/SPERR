@@ -2,7 +2,7 @@
 #define HAVE_SPECK
 
 #include "libQccPack.h"
-#include "helper.h"
+#include "sam_helper.h"
 
 #include <stdlib.h>
 

@@ -5,5 +5,6 @@
 #define Speck_VERSION_MINOR @Speck_VERSION_MINOR@
 #cmakedefine EIGHT_BYTE_SPECK_SET 
 #cmakedefine PRINT
+#cmakedefine TIME
 
 #endif
