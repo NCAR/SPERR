@@ -6,6 +6,8 @@
 #include <vector>
 #include <array>
 
+#include "SpeckConfig.h"
+
 namespace speck
 {
     //

@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 option( EIGHT_BYTE_SPECK_SET "Use eight bytes for speck sets?" OFF)
-option( PRINT "Compile print code for debug purpose?" OFF)
+option( PRINT "Compile print statements for debug purpose?" OFF)
 
 # configure a header file to pass some of the CMake settings to the source code
 configure_file(SpeckConfig.h.in SpeckConfig.h)

@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#include "SpeckConfig.h"
+
 /* 
    Note: psnr is calculated in dB, and follows the equation described in:
    http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/VELDHUIZEN/node18.html

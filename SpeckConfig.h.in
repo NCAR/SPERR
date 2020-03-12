@@ -1,5 +1,9 @@
+#ifndef SPECK_CONFIG
+#define SPECK_CONFIG
 
 #define Speck_VERSION_MAJOR @Speck_VERSION_MAJOR@
 #define Speck_VERSION_MINOR @Speck_VERSION_MINOR@
 #cmakedefine EIGHT_BYTE_SPECK_SET 
 #cmakedefine PRINT
+
+#endif
