@@ -21,10 +21,12 @@ list( APPEND SPECK_LIBS sam_helper )
 list( APPEND SPECK_LIBS CDF97 )
 list( APPEND SPECK_LIBS SPECK2D )
 
+# Executable #1
 add_executable( test_sam_dwt2d utilities/test_sam_dwt2d.cpp )
-
 target_link_libraries( test_sam_dwt2d PUBLIC ${SPECK_LIBS})
+target_include_directories( test_sam_dwt2d PUBLIC ${PROJECT_BINARY_DIR} )
 
-target_include_directories( test_sam_dwt2d PUBLIC
-                            ${PROJECT_BINARY_DIR}
-                          )
+# Executable #2
+add_executable( test_sam_speck2d utilities/test_sam_speck2d.cpp )
+target_link_libraries( test_sam_speck2d PUBLIC ${SPECK_LIBS})
+target_include_directories( test_sam_speck2d PUBLIC ${PROJECT_BINARY_DIR} )

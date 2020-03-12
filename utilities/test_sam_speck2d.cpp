@@ -24,9 +24,10 @@ int main( int argc, char* argv[] )
         return 1;
     }
 
-    const char*   input = argv[1];
-    const size_t  dim_x = std::atol( argv[2] );
-    const size_t  dim_y = std::atol( argv[3] );
+    const char*   input  = argv[1];
+    const char*   output = "sam.tmp";
+    const size_t  dim_x  = std::atol( argv[2] );
+    const size_t  dim_y  = std::atol( argv[3] );
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
@@ -56,12 +57,12 @@ int main( int argc, char* argv[] )
 
     // Write to file and read it back
     speck::output_speck2d( dim_x, dim_y, cdf.get_mean(), encoder.get_max_coeff_bits(), 
-                           encoder.get_read_only_bitstream(), "tmp/sam.tmp" );
+                           encoder.get_read_only_bitstream(), output );
     size_t dim_x_r, dim_y_r;
     double mean_r;
     uint16_t max_bits_r;
     std::vector<bool> bits_r;
-    speck::input_speck2d( dim_x_r, dim_y_r, mean_r, max_bits_r, bits_r, "tmp/sam.tmp" );
+    speck::input_speck2d( dim_x_r, dim_y_r, mean_r, max_bits_r, bits_r, output );
     
     // Do a speck decoding
     speck::SPECK2D decoder;
