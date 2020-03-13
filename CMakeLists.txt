@@ -8,11 +8,35 @@ project(Speck VERSION 0.1)
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
     # Set the possible values of build type for cmake-gui
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
+endif()
+
+option( BUILD_UNIT_TESTS "Build unit tests using googletest?" OFF)
+if( BUILD_UNIT_TESTS )
+    # Download and unpack googletest at configure time
+    configure_file(GTestCMake.txt.in googletest-download/CMakeLists.txt)
+    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .  RESULT_VARIABLE result
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
+    if(result)
+      message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+    endif()
+
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .  RESULT_VARIABLE result
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
+    if(result)
+      message(FATAL_ERROR "Build step for googletest failed: ${result}")
+    endif()
+
+    # Prevent overriding the parent project's compiler/linker settings on Windows
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+    # Add googletest directly to our build. This defines the gtest and gtest_main targets.
+    add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
+                     ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
+                     EXCLUDE_FROM_ALL)
 endif()
 
 option( EIGHT_BYTE_SPECK_SET "Use eight bytes for speck sets?" OFF)
@@ -30,12 +54,12 @@ list( APPEND SPECK_LIBS CDF97 )
 list( APPEND SPECK_LIBS SPECK2D )
 
 # Executable #1
-add_executable(             test_sam_dwt2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/test_sam_dwt2d.cpp" )
+add_executable( test_sam_dwt2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/test_sam_dwt2d.cpp" )
 target_link_libraries(      test_sam_dwt2d PUBLIC ${SPECK_LIBS})
 target_include_directories( test_sam_dwt2d PUBLIC ${PROJECT_BINARY_DIR} )
 
 # Executable #2
-add_executable(             test_sam_speck2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/test_sam_speck2d.cpp" )
+add_executable( test_sam_speck2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/test_sam_speck2d.cpp" )
 target_link_libraries(      test_sam_speck2d PUBLIC ${SPECK_LIBS})
 target_include_directories( test_sam_speck2d PUBLIC ${PROJECT_BINARY_DIR} )
 
@@ -48,16 +72,28 @@ if( BUILD_QCC_TESTS )
          DESTINATION ${PROJECT_BINARY_DIR}                                          )
 
     # Qcc Executable #1
-    add_executable(             test_qcc_dwt2d  "${CMAKE_CURRENT_SOURCE_DIR}/utilities/test_qcc_dwt2d.c" )
+    add_executable( test_qcc_dwt2d  "${CMAKE_CURRENT_SOURCE_DIR}/utilities/test_qcc_dwt2d.c" )
     target_link_libraries(      test_qcc_dwt2d  PUBLIC sam_helper
                                                 PUBLIC ${QCCPACK_LIB}      )
     target_include_directories( test_qcc_dwt2d  PUBLIC ${PROJECT_BINARY_DIR}
                                                 PUBLIC ${QCCPACK_INC}      )
 
     # Qcc Executable #2
-    add_executable(             test_qcc_speck2d  "${CMAKE_CURRENT_SOURCE_DIR}/utilities/test_qcc_speck2d.c" )
+    add_executable( test_qcc_speck2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/test_qcc_speck2d.c" )
     target_link_libraries(      test_qcc_speck2d  PUBLIC sam_helper
                                                   PUBLIC ${QCCPACK_LIB}      )
     target_include_directories( test_qcc_speck2d  PUBLIC ${PROJECT_BINARY_DIR}
                                                   PUBLIC ${QCCPACK_INC}      )
 endif()
+
+if( BUILD_UNIT_TESTS )
+    # unit tests for speck_helper
+    add_executable( test_speck_helper 
+                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck_helper_unit_test.cpp" )
+    target_link_libraries(  test_speck_helper PUBLIC speck_helper 
+                                              PUBLIC gtest_main          )
+    add_test( NAME overall_test COMMAND test_speck_helper                )
+endif()
+
+
+

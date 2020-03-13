@@ -4,8 +4,6 @@
 #include <memory>
 #include <cmath>
 
-#include "SpeckConfig.h"
-
 namespace speck
 {
 
