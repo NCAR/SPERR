@@ -48,10 +48,10 @@ option( BUILD_QCC_TESTS "Build test utilities that link to QccPack?" OFF)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/SpeckConfig.h.in" "SpeckConfig.h")
 
 add_subdirectory( src )
-list( APPEND SPECK_LIBS speck_helper )
 list( APPEND SPECK_LIBS sam_helper )
-list( APPEND SPECK_LIBS CDF97 )
 list( APPEND SPECK_LIBS SPECK2D )
+list( APPEND SPECK_LIBS CDF97 )
+list( APPEND SPECK_LIBS speck_helper )
 
 # Executable #1
 add_executable( test_sam_dwt2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/test_sam_dwt2d.cpp" )
