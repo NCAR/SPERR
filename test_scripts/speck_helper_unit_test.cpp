@@ -24,5 +24,32 @@ TEST( speck_helper, num_of_xforms )
 }
 
 
+TEST( speck_helper, IO )
+{
+    size_t dims[2] = { 101, 999 };
+    double mean    = 3.14159;
+    uint16_t max_bit = 128;
+    const char* filename = "temp.temp";
+    std::vector<bool> a{ true, false, true, false, false, true, false, true, 
+                         true, true, false, false, true, true, false, false };
+    speck::output_speck2d( dims[0], dims[1], mean, max_bit, a, filename );
+
+    size_t dim_x, dim_y;
+    double mean_r;
+    uint16_t max_bit_r;
+    std::vector<bool> a_r;
+    speck::input_speck2d( dim_x, dim_y, mean_r, max_bit_r, a_r, filename );
+
+    EXPECT_EQ( dims[0], dim_x );
+    EXPECT_EQ( dims[1], dim_y );
+    EXPECT_EQ( mean,    mean_r );
+    EXPECT_EQ( max_bit, max_bit_r );
+    EXPECT_EQ( a.size(), a_r.size() );
+    for( size_t i = 0; i < a.size(); i++ )
+    {
+        EXPECT_EQ( a[i], a_r[i] );
+    }
+}
+
 
 }
