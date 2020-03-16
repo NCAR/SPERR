@@ -8,7 +8,6 @@ namespace
 TEST( speck_helper, num_of_xforms )
 {
     EXPECT_EQ( speck::calc_num_of_xforms( 1 ), 0 );
-    EXPECT_EQ( speck::calc_num_of_xforms( 2 ), 0 );
     EXPECT_EQ( speck::calc_num_of_xforms( 7 ), 0 );
     EXPECT_EQ( speck::calc_num_of_xforms( 8 ), 1 );
     EXPECT_EQ( speck::calc_num_of_xforms( 9 ), 1 );
@@ -24,7 +23,7 @@ TEST( speck_helper, num_of_xforms )
 }
 
 
-TEST( speck_helper, IO )
+TEST( speck_helper, input_output )
 {
     size_t dims[2] = { 101, 999 };
     double mean    = 3.14159;
@@ -49,6 +48,27 @@ TEST( speck_helper, IO )
     {
         EXPECT_EQ( a[i], a_r[i] );
     }
+}
+
+
+TEST( speck_helper, approx_detail_len )
+{
+    std::array<size_t, 2> len;
+    speck::calc_approx_detail_len( 7, 0, len );
+    EXPECT_EQ( len[0], 7 );
+    EXPECT_EQ( len[1], 0 );
+    speck::calc_approx_detail_len( 7, 1, len );
+    EXPECT_EQ( len[0], 4 );
+    EXPECT_EQ( len[1], 3 );
+    speck::calc_approx_detail_len( 8, 1, len );
+    EXPECT_EQ( len[0], 4 );
+    EXPECT_EQ( len[1], 4 );
+    speck::calc_approx_detail_len( 8, 2, len );
+    EXPECT_EQ( len[0], 2 );
+    EXPECT_EQ( len[1], 2 );
+    speck::calc_approx_detail_len( 16, 2, len );
+    EXPECT_EQ( len[0], 4 );
+    EXPECT_EQ( len[1], 4 );
 }
 
 
