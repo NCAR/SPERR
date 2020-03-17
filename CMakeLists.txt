@@ -86,13 +86,22 @@ if( BUILD_QCC_TESTS )
                                                   PUBLIC ${QCCPACK_INC}      )
 endif()
 
+
 if( BUILD_UNIT_TESTS )
     # unit tests for speck_helper
     add_executable( test_speck_helper 
                     "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck_helper_unit_test.cpp" )
-    target_link_libraries(  test_speck_helper PUBLIC speck_helper 
-                                              PUBLIC gtest_main          )
-    add_test( NAME overall_test COMMAND test_speck_helper                )
+    target_link_libraries( test_speck_helper PUBLIC speck_helper 
+                                             PUBLIC gtest_main          )
+    add_test( NAME test_speck_helper COMMAND test_speck_helper          )
+
+    # unit tests for dwt2d
+    add_executable( test_dwt2d
+                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/dwt2d_unit_test.cpp" )
+    target_link_libraries( test_dwt2d PUBLIC sam_helper
+                                      PUBLIC ${SPECK_LIBS} 
+                                      PUBLIC gtest_main                 )
+    add_test( NAME test_dwt2d COMMAND test_dwt2d                        )
 endif()
 
 
