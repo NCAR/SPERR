@@ -30,14 +30,14 @@ list( APPEND SPECK_LIBS CDF97 )
 list( APPEND SPECK_LIBS speck_helper )
 
 # Executable #1
-add_executable( test_sam_dwt2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/test_sam_dwt2d.cpp" )
-target_link_libraries(      test_sam_dwt2d PUBLIC ${SPECK_LIBS})
-target_include_directories( test_sam_dwt2d PUBLIC ${PROJECT_BINARY_DIR} )
+add_executable( example_dwt2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt2d.cpp" )
+target_link_libraries(      example_dwt2d PUBLIC ${SPECK_LIBS})
+target_include_directories( example_dwt2d PUBLIC ${PROJECT_BINARY_DIR} )
 
 # Executable #2
-add_executable( test_sam_speck2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/test_sam_speck2d.cpp" )
-target_link_libraries(      test_sam_speck2d PUBLIC ${SPECK_LIBS})
-target_include_directories( test_sam_speck2d PUBLIC ${PROJECT_BINARY_DIR} )
+add_executable( example_speck2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck2d.cpp" )
+target_link_libraries(      example_speck2d PUBLIC ${SPECK_LIBS})
+target_include_directories( example_speck2d PUBLIC ${PROJECT_BINARY_DIR} )
 
 if( BUILD_QCC_TESTS )
     set ( QCCPACK_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/QccPack-0.61-1/install/" 
