@@ -90,6 +90,7 @@ if( BUILD_UNIT_TESTS )
                      ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
                      EXCLUDE_FROM_ALL)
 
+    # Now we have all the tests! 
     # unit tests for speck_helper
     add_executable( test_speck_helper 
                     "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck_helper_unit_test.cpp" )
@@ -104,6 +105,14 @@ if( BUILD_UNIT_TESTS )
                                       PUBLIC ${SPECK_LIBS} 
                                       PUBLIC gtest_main                 )
     add_test( NAME test_dwt2d COMMAND test_dwt2d                        )
+
+    # unit tests for speck2d
+    add_executable( test_speck2d
+                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck2d_unit_test.cpp" )
+    target_link_libraries( test_speck2d PUBLIC sam_helper
+                                        PUBLIC ${SPECK_LIBS} 
+                                        PUBLIC gtest_main                 )
+    add_test( NAME test_speck2d COMMAND test_speck2d                    )
 endif()
 
 

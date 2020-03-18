@@ -30,7 +30,7 @@ int main( int argc, char* argv[] )
     const size_t  dim_y  = std::atol( argv[3] );
     const size_t  total_vals = dim_x * dim_y;
 
-    // Let read in binaries as 4-byte floats
+    // Let's read in binaries as 4-byte floats
     std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
     if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
     {
