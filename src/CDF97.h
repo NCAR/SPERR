@@ -83,19 +83,6 @@ private:
     size_t m_dim_y         = 0;
     size_t m_dim_z         = 0;
     
-
-
-
-
-
-
-
-
-
-
-
-
-
     // Note on the coefficients, ALPHA, BETA, etc.
     // The ones from QccPack are slightly different from what's described in the lifting scheme paper:
     // Pg19 of "FACTORING WAVELET TRANSFORMS INTO LIFTING STEPS," DAUBECHIES and SWELDEN.
@@ -105,7 +92,7 @@ private:
     // by Cohen et al., Page 551. (https://services.math.duke.edu/~ingrid/publications/CPAM_1992_p485.pdf) 
 
     // Paper coefficients
-    /*const double h[5]{ .602949018236, .266864118443, -.078223266529,
+    const double h[5]{ .602949018236, .266864118443, -.078223266529,
                       -.016864118443, .026748757411 };
     const double r0      = h[0] - 2.0  * h[4] * h[1] / h[3];
     const double r1      = h[2] - h[4] - h[4] * h[1] / h[3];
@@ -116,14 +103,14 @@ private:
     const double GAMMA   = r1   / s0; 
     const double DELTA   = s0   / t0; 
     const double EPSILON = std::sqrt(2.0) * t0;
-    */
 
     // QccPack coefficients
-    const double ALPHA   = -1.58615986717275;
+    /* const double ALPHA   = -1.58615986717275;
     const double BETA    = -0.05297864003258;
     const double GAMMA   =  0.88293362717904;
     const double DELTA   =  0.44350482244527;
     const double EPSILON =  1.14960430535816;
+    */
 };
 
 
