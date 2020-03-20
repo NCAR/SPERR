@@ -145,8 +145,8 @@ TEST( speck2d, lena )
     tester.execute( 64.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 35.6353 );
-    EXPECT_LT( lmax, 37.1092 );
+    EXPECT_GT( psnr, 35.635284 );
+    EXPECT_LT( lmax, 37.109243 );
 }
 
 
@@ -176,7 +176,7 @@ TEST( speck2d, odd_dim_image )
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
     EXPECT_GT( psnr, 35.2209 );
-    EXPECT_LT( lmax, 18.6444 );
+    EXPECT_LT( lmax, 18.644617 );
 }
 
 
