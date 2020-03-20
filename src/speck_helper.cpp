@@ -37,7 +37,8 @@ void speck::calc_approx_detail_len( size_t orig_len,  size_t lev,
 }
 
 
-double speck::make_coeff_positive( double* buf, size_t len, std::vector<bool>& sign_array )
+double speck::make_coeff_positive( buffer_type& buf, size_t len, 
+                                   std::vector<bool>& sign_array )
 {
     sign_array.assign( len, true );
     double max = std::abs( buf[0] );

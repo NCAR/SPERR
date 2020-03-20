@@ -6,64 +6,6 @@
 #include <algorithm>
 
 
-void speck::SPECK2D::take_coeffs( std::unique_ptr<double[]> ptr )
-{
-    m_coeff_buf = std::move( ptr );
-}
-
-template<typename T>
-void speck::SPECK2D::copy_coeffs( const T* p )
-{
-    static_assert( std::is_floating_point<T>::value, 
-                   "!! Only floating point values are supported !!" );
-    assert( m_dim_x > 0 && m_dim_y > 0 );
-
-    auto num_of_vals = m_dim_x * m_dim_y;
-    m_coeff_buf = std::make_unique<double[]>( num_of_vals );
-    for( size_t i = 0; i < num_of_vals; i++ )
-        m_coeff_buf[i] = p[i];
-}
-template void speck::SPECK2D::copy_coeffs( const float*  ); 
-template void speck::SPECK2D::copy_coeffs( const double* );
-
-
-void speck::SPECK2D::copy_bitstream( const std::vector<bool>& stream )
-{
-    m_bit_buffer = stream;
-}
-
-
-void speck::SPECK2D::take_bitstream( std::vector<bool>& stream )
-{
-    m_bit_buffer.resize( 0 );
-    std::swap( m_bit_buffer, stream );
-}
-
-
-const std::vector<bool>& speck::SPECK2D::get_read_only_bitstream() const
-{
-    return m_bit_buffer;
-}
-
-
-std::vector<bool>& speck::SPECK2D::release_bitstream()
-{
-    return m_bit_buffer;
-}
-
-
-const double* speck::SPECK2D::get_read_only_coeffs() const
-{
-    return m_coeff_buf.get();
-}
-
-
-std::unique_ptr<double[]> speck::SPECK2D::release_coeffs()
-{
-    return std::move( m_coeff_buf );
-}
-
-
 void speck::SPECK2D::assign_dims( size_t dx, size_t dy )
 {
     m_dim_x = dx;
@@ -103,7 +45,7 @@ int speck::SPECK2D::encode()
     // Get ready for the quantization loop!
     m_bit_buffer.clear();
     m_bit_buffer.reserve( m_budget + m_vec_init_capacity );
-    auto max_coeff = speck::make_coeff_positive( m_coeff_buf.get(), m_dim_x * m_dim_y,
+    auto max_coeff = speck::make_coeff_positive( m_coeff_buf, m_dim_x * m_dim_y,
                                                  m_sign_array );
     m_max_coefficient_bits = uint16_t( std::log2(max_coeff) );
     /* When max_coeff is very close to zero, m_max_coefficient_bits could be zero.

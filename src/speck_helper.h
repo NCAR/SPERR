@@ -9,6 +9,11 @@
 namespace speck
 {
     //
+    // Helper alias
+    //
+    using buffer_type = std::unique_ptr<double[]>;
+
+    //
     // Helper classes
     //
     enum class Significance : unsigned char
@@ -38,7 +43,7 @@ namespace speck
     // 1) fill sign_array based on coeff_buffer signs, and 
     // 2) make coeff_buffer containing all positive values.
     // 3) returns the maximum magnitude of all encountered values.
-    double make_coeff_positive( double* buf, size_t len, std::vector<bool>& ); 
+    double make_coeff_positive( buffer_type& buf, size_t len, std::vector<bool>& ); 
 
 
     // Upon success, it returns 0. Upon failure, it return a non-zero value.
