@@ -11,13 +11,6 @@ namespace speck
     //
     // Helper classes
     //
-    enum class SPECKSetType : unsigned char
-    {
-        TypeS,
-        TypeI,
-        Garbage
-    };
-
     enum class Significance : unsigned char
     {
         Insig,

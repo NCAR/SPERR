@@ -12,6 +12,13 @@ namespace speck
 //
 // Auxiliary class to hold a SPECK Set
 //
+enum class SetType : unsigned char
+{
+    TypeS,
+    TypeI,
+    Garbage
+};
+
 class SPECKSet2D
 {
 public:
@@ -29,7 +36,7 @@ public:
     UINT  length_y      = 0;
     uint16_t part_level = 0;  // which partition level is this set at (starting from zero).
     Significance signif = Significance::Insig;
-    SPECKSetType type   = SPECKSetType::TypeS;
+    SetType type        = SetType::TypeS;
 
 public:
     //
@@ -37,7 +44,7 @@ public:
     //
     // Constructor
     SPECKSet2D() = default;
-    SPECKSet2D( SPECKSetType t );
+    SPECKSet2D( SetType t );
     bool         is_pixel() const;
     bool         is_empty() const;
 };
@@ -69,10 +76,6 @@ public:
 
     // trivial output
     uint16_t get_max_coeff_bits()   const;
-
-    // debug use output
-    size_t get_bit_idx() const;
-    size_t get_bit_buffer_size() const;
 
     // core operations
     int encode();
@@ -134,7 +137,7 @@ private:
     std::vector< SPECKSet2D >               m_LSP;
     std::vector< std::vector<SPECKSet2D> >  m_LIS;
     std::vector< size_t >                   m_LIS_garbage_cnt;
-    SPECKSet2D                              m_I  = SPECKSet2D( SPECKSetType::TypeI );
+    SPECKSet2D                              m_I  = SPECKSet2D( SetType::TypeI );
 };
 
 };
