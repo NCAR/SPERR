@@ -7,6 +7,12 @@
 namespace speck
 {
 
+#ifndef BUFFER_TYPES
+#define BUFFER_TYPES
+    using buffer_type_d = std::unique_ptr<double[]>;
+    using buffer_type_f = std::unique_ptr<float[]>;
+#endif
+
 class CDF97
 {
 public:
@@ -76,24 +82,26 @@ private:
     //
     // Private data members
     //
-    using buffer_type = std::unique_ptr<double[]>;
-    buffer_type m_data_buf = nullptr;       // Holds the entire input data.
-    double m_data_mean     = 0.0;           // Mean of the values in data_buf
-    size_t m_dim_x         = 0;             // Dimension of the data volume
-    size_t m_dim_y         = 0;
-    size_t m_dim_z         = 0;
+    buffer_type_d m_data_buf = nullptr;   // Holds the entire input data.
+    double m_data_mean  = 0.0;            // Mean of the values in data_buf
+    size_t m_dim_x      = 0;              // Dimension of the data volume
+    size_t m_dim_y      = 0;
+    size_t m_dim_z      = 0;
     
-    // Note on the coefficients, ALPHA, BETA, etc.
-    // The ones from QccPack are slightly different from what's described in the lifting scheme paper:
-    // Pg19 of "FACTORING WAVELET TRANSFORMS INTO LIFTING STEPS," DAUBECHIES and SWELDEN.
-    // (https://9p.io/who/wim/papers/factor/factor.pdf)
-    // JasPer, OpenJPEG, and FFMpeg use coefficients closer to the paper.
-    // The filter bank coefficients (h[] array) are from "Biorthogonal Bases of Compactly Supported Wavelets,"
-    // by Cohen et al., Page 551. (https://services.math.duke.edu/~ingrid/publications/CPAM_1992_p485.pdf) 
+
+    /*
+     * Note on the coefficients, ALPHA, BETA, etc.
+     * The ones from QccPack are slightly different from what's described in the lifting scheme paper:
+     * Pg19 of "FACTORING WAVELET TRANSFORMS INTO LIFTING STEPS," DAUBECHIES and SWELDEN.
+     * (https://9p.io/who/wim/papers/factor/factor.pdf)
+     * JasPer, OpenJPEG, and FFMpeg use coefficients closer to the paper.
+     * The filter bank coefficients (h[] array) are from "Biorthogonal Bases of Compactly Supported Wavelets,"
+     * by Cohen et al., Page 551. (https://services.math.duke.edu/~ingrid/publications/CPAM_1992_p485.pdf) 
+     */
 
     // Paper coefficients
     const double h[5]{ .602949018236, .266864118443, -.078223266529,
-                      -.016864118443, .026748757411 };
+                                     -.016864118443,  .026748757411 };
     const double r0      = h[0] - 2.0  * h[4] * h[1] / h[3];
     const double r1      = h[2] - h[4] - h[4] * h[1] / h[3];
     const double s0      = h[1] - h[3] - h[3] * r0   / r1; 

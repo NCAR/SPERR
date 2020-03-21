@@ -95,7 +95,7 @@ void speck::CDF97::m_calc_mean()
     // Here we calculate mean row by row to avoid too big numbers.
     // (Not using kahan summation because that's hard to vectorize.)
     //
-    buffer_type row_means = std::make_unique<double[]>( m_dim_y * m_dim_z );
+    buffer_type_d row_means = std::make_unique<double[]>( m_dim_y * m_dim_z );
     const double dim_x1 = 1.0 / double(m_dim_x);
     size_t counter1 = 0, counter2 = 0;
     for( size_t z = 0; z < m_dim_z; z++ )
@@ -107,7 +107,7 @@ void speck::CDF97::m_calc_mean()
             row_means[ counter2++ ] = sum * dim_x1;
         }
 
-    buffer_type layer_means = std::make_unique<double[]>( m_dim_z );
+    buffer_type_d layer_means = std::make_unique<double[]>( m_dim_z );
     const double dim_y1 = 1.0 / double(m_dim_y);
     counter1 = 0; counter2 = 0;
     for( size_t z = 0; z < m_dim_z; z++ )
@@ -132,7 +132,7 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, size_t len_x, size_t len_y 
 
     // Create temporary buffers to work on
     size_t len_xy = std::max( len_x, len_y );
-    buffer_type buffer = std::make_unique<double[]>( len_xy * 2 );
+    buffer_type_d buffer = std::make_unique<double[]>( len_xy * 2 );
     double *const buf_ptr  = buffer.get();       // First half of the array
     double *const buf_ptr2 = buf_ptr + len_xy;   // Second half of the array
 
@@ -200,7 +200,7 @@ void speck::CDF97::m_idwt2d_one_level( double* plane, size_t len_x, size_t len_y
 
     // Create temporary buffers to work on
     size_t len_xy = std::max( len_x, len_y );
-    buffer_type buffer = std::make_unique<double[]>( len_xy * 2 );
+    buffer_type_d buffer = std::make_unique<double[]>( len_xy * 2 );
     double *const buf_ptr  = buffer.get();       // First half of the array
     double *const buf_ptr2 = buf_ptr + len_xy;   // Second half of the array
 
