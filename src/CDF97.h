@@ -18,14 +18,16 @@ class CDF97
 public:
     // Input
     template< typename T >
-    void copy_data( const T*  );
-    void take_data( std::unique_ptr<double[]> );    // Take ownership
+    void copy_data( const T*, size_t len);
+    template< typename T >
+    void copy_data( const T&, size_t len);
+    void take_data( buffer_type_d );        // Take ownership
     void set_mean( double );
     void set_dims( size_t x, size_t y, size_t z = 1 );
     
     // Output
-    const double* get_read_only_data() const;   // Others can read the data
-    std::unique_ptr<double[]> release_data();   // Others take ownership of the data
+    const buffer_type_d& get_read_only_data() const;    // Others can read the data
+    buffer_type_d        release_data();   // Others take ownership of the data
     double get_mean() const; 
     void   get_dims( std::array<size_t, 2>& ) const;    // 2D case 
     void   get_dims( std::array<size_t, 3>& ) const;    // 3D case 
@@ -40,6 +42,9 @@ public:
 private:
     //
     // Private methods helping DWT.
+    //
+    // Note: most of these methods operate on a partial array, i.e., not from the 
+    //       beginning of an array. Thus, raw pointers are used.
     //
     void m_calc_mean();     // calculate m_data_mean from m_data_buf
     void m_dwt2d_one_level( double* plane, size_t len_x, size_t len_y ); 
@@ -69,9 +74,8 @@ private:
                             // Transpose a cube of size (x, y, z) by swapping X and Z
                             // indices, and then put back to the main buffer.
 
-
     //
-    // Methods from QccPack, keep their original name.
+    // Methods from QccPack, keep their original names.
     //
     void QccWAVCDF97AnalysisSymmetricEvenEven( double* signal, size_t signal_length);
     void QccWAVCDF97AnalysisSymmetricOddEven(  double* signal, size_t signal_length);
@@ -87,6 +91,7 @@ private:
     size_t m_dim_x      = 0;              // Dimension of the data volume
     size_t m_dim_y      = 0;
     size_t m_dim_z      = 0;
+    size_t m_buf_len    = 0;
     
 
     /*

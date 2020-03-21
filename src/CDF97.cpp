@@ -6,19 +6,35 @@
 #include <cstring>  // for std::memcpy()
 
 template< typename T >
-void speck::CDF97::copy_data( const T* data )
+void speck::CDF97::copy_data( const T* data, size_t len )
 {
     static_assert( std::is_floating_point<T>::value, 
                    "!! Only floating point values are supported !!" );
 
-    assert( m_dim_x > 0 && m_dim_y > 0 && m_dim_z > 0 );
-    size_t num_of_vals = m_dim_x * m_dim_y * m_dim_z;
-    m_data_buf = std::make_unique<double[]>( num_of_vals );
-    for( size_t i = 0; i < num_of_vals; i++ )
+    assert( len > 0 );
+    size_t  tmp = m_dim_x * m_dim_y * m_dim_z;
+    assert( tmp == 0 || tmp == len );
+    m_buf_len = len;
+    m_data_buf = std::make_unique<double[]>( len );
+    for( size_t i = 0; i < len; i++ )
         m_data_buf[i] = data[i];
 }
-template void speck::CDF97::copy_data( const float*  );
-template void speck::CDF97::copy_data( const double* );
+template void speck::CDF97::copy_data( const float*,  size_t );
+template void speck::CDF97::copy_data( const double*, size_t );
+
+template< typename T >
+void speck::CDF97::copy_data( const T& data, size_t len )
+{
+    assert( len > 0 );
+    size_t  tmp = m_dim_x * m_dim_y * m_dim_z;
+    assert( tmp == 0 || tmp == len );
+    m_buf_len = len;
+    m_data_buf = std::make_unique<double[]>( len );
+    for( size_t i = 0; i < len; i++ )
+        m_data_buf[i] = data[i];
+}
+template void speck::CDF97::copy_data( const buffer_type_d&, size_t );
+template void speck::CDF97::copy_data( const buffer_type_f&, size_t );
 
 
 void speck::CDF97::take_data( std::unique_ptr<double[]> ptr )
@@ -27,9 +43,9 @@ void speck::CDF97::take_data( std::unique_ptr<double[]> ptr )
 }
 
 
-const double* speck::CDF97::get_read_only_data() const
+const speck::buffer_type_d& speck::CDF97::get_read_only_data() const
 {
-    return m_data_buf.get();
+    return m_data_buf;
 }
 
 
@@ -45,8 +61,7 @@ int speck::CDF97::dwt2d()
     // Pre-process data
     //
     m_calc_mean();
-    size_t num_of_vals = m_dim_x * m_dim_y ;
-    for( size_t i = 0; i < num_of_vals; i++ )
+    for( size_t i = 0; i < m_buf_len; i++ )
         m_data_buf[i] -= m_data_mean;
 
     auto num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
@@ -76,8 +91,7 @@ int speck::CDF97::idwt2d()
         }
     }
 
-    size_t num_of_vals = m_dim_x * m_dim_y ;
-    for( size_t i = 0; i < num_of_vals; i++ )
+    for( size_t i = 0; i < m_buf_len; i++ )
         m_data_buf[i] += m_data_mean;
 
     return 0;
@@ -494,6 +508,10 @@ void speck::CDF97::set_dims( size_t x, size_t y, size_t z )
     m_dim_x = x;
     m_dim_y = y;
     m_dim_z = z;
+    if( m_buf_len == 0 )
+        m_buf_len = x * y * z;
+    else
+        assert( m_buf_len == x * y * z );
 }
 
 

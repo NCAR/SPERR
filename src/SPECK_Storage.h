@@ -22,7 +22,7 @@ public:
     void take_coeffs( buffer_type_d, size_t );      // Take ownership of the incoming buffer 
     void take_coeffs( buffer_type_f, size_t );      // Take ownership of the incoming buffer 
     template <typename T>
-    void copy_coeffs( const T, size_t len );        // Make a copy of the incoming data.
+    void copy_coeffs( const T&, size_t len );       // Make a copy of the incoming data.
     void take_bitstream( std::vector<bool>& );      // Take ownership of the bitstream.
     void copy_bitstream( const std::vector<bool>& );  // Make a copy of the bitstream.
 

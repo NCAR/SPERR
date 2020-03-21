@@ -25,12 +25,12 @@ TEST( dwt2d, small_image_even )
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y );
-    cdf.copy_data( in_buf.get() );
+    cdf.copy_data( in_buf, dim_x * dim_y );
     cdf.dwt2d();
     cdf.idwt2d();
 
     // Claim that with single precision, the result is identical to the input
-    const double* result = cdf.get_read_only_data();
+    const auto& result = cdf.get_read_only_data();
     for( size_t i = 0; i < total_vals; i++ )
     {
         EXPECT_EQ( in_buf[i], float(result[i]) );
@@ -51,12 +51,12 @@ TEST( dwt2d, small_image_odd )
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y );
-    cdf.copy_data( in_buf.get() );
+    cdf.copy_data( in_buf, dim_x * dim_y );
     cdf.dwt2d();
     cdf.idwt2d();
 
     // Claim that with single precision, the result is identical to the input
-    const double* result = cdf.get_read_only_data();
+    const auto& result = cdf.get_read_only_data();
     for( size_t i = 0; i < total_vals; i++ )
     {
         EXPECT_EQ( in_buf[i], float(result[i]) );
@@ -77,12 +77,12 @@ TEST( dwt2d, big_image_even )
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y );
-    cdf.copy_data( in_buf.get() );
+    cdf.copy_data( in_buf, dim_x * dim_y );
     cdf.dwt2d();
     cdf.idwt2d();
 
     // Claim that with single precision, the result is identical to the input
-    const double* result = cdf.get_read_only_data();
+    const auto& result = cdf.get_read_only_data();
     for( size_t i = 0; i < total_vals; i++ )
     {
         EXPECT_EQ( in_buf[i], float(result[i]) );
@@ -103,12 +103,12 @@ TEST( dwt2d, big_image_odd )
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y );
-    cdf.copy_data( in_buf.get() );
+    cdf.copy_data( in_buf, dim_x * dim_y );
     cdf.dwt2d();
     cdf.idwt2d();
 
     // Claim that with single precision, the result is identical to the input
-    const double* result = cdf.get_read_only_data();
+    const auto& result = cdf.get_read_only_data();
     for( size_t i = 0; i < total_vals; i++ )
     {
         EXPECT_EQ( in_buf[i], float(result[i]) );

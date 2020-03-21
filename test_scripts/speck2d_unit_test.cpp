@@ -52,7 +52,7 @@ public:
         // Take input to go through DWT.
         speck::CDF97 cdf;
         cdf.set_dims( m_dim_x, m_dim_y );
-        cdf.copy_data( in_buf.get() );
+        cdf.copy_data( in_buf, m_dim_x * m_dim_y );
         cdf.dwt2d();
 
         // Do a speck encoding
@@ -100,8 +100,8 @@ public:
         for( size_t i = 0; i < total_vals; i++ )
             in_bufd[i] = in_buf[i];
         double rmse, lmax, psnr, arr1min, arr1max;
-        sam_get_statsd( in_bufd.get(), idwt.get_read_only_data(), total_vals, 
-                        &rmse, &lmax, &psnr, &arr1min, &arr1max );
+        sam_get_statsd( in_bufd.get(), idwt.get_read_only_data().get(), 
+                        total_vals, &rmse, &lmax, &psnr, &arr1min, &arr1max );
         // Uncomment the following lines to have these statistics printed.
         //printf("Sam: rmse = %f, lmax = %f, psnr = %fdB, orig_min = %f, orig_max = %f\n", 
         //        rmse, lmax, psnr, arr1min, arr1max );

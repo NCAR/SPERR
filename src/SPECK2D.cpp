@@ -10,7 +10,10 @@ void speck::SPECK2D::assign_dims( size_t dx, size_t dy )
 {
     m_dim_x = dx;
     m_dim_y = dy;
-    m_coeff_len = dx * dy;
+    if( m_coeff_len == 0 )
+        m_coeff_len = dx * dy;
+    else
+        assert( m_coeff_len == dx * dy );
 }
 
 

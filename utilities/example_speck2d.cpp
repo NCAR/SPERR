@@ -41,7 +41,7 @@ int main( int argc, char* argv[] )
     // Take input to go through DWT.
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y );
-    cdf.copy_data( in_buf.get() );
+    cdf.copy_data( in_buf, dim_x * dim_y );
     const auto startT = std::chrono::high_resolution_clock::now();
     cdf.dwt2d();
 
@@ -88,8 +88,8 @@ int main( int argc, char* argv[] )
     for( size_t i = 0; i < total_vals; i++ )
         in_bufd[i] = in_buf[i];
     double rmse, lmax, psnr, arr1min, arr1max;
-    sam_get_statsd( in_bufd.get(), idwt.get_read_only_data(), total_vals, 
-                    &rmse, &lmax, &psnr, &arr1min, &arr1max );
+    sam_get_statsd( in_bufd.get(), idwt.get_read_only_data().get(), 
+                    total_vals, &rmse, &lmax, &psnr, &arr1min, &arr1max );
     printf("Sam: rmse = %f, lmax = %f, psnr = %fdB, orig_min = %f, orig_max = %f\n", 
             rmse, lmax, psnr, arr1min, arr1max );
 }
