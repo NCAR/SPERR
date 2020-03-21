@@ -48,7 +48,7 @@ int main( int argc, char* argv[] )
     // Do a speck encoding
     speck::SPECK2D encoder;
     encoder.assign_dims( dim_x, dim_y );
-    encoder.take_coeffs( cdf.release_data() );
+    encoder.copy_coeffs( cdf.get_read_only_data(), dim_x * dim_y );
     const size_t header_size  = 18;
     const float  cratio       = 8.0f;  /* compression ratio */
     const size_t total_bits   = size_t(32.0f * total_vals / cratio) + header_size * 8;
@@ -75,7 +75,7 @@ int main( int argc, char* argv[] )
     speck::CDF97 idwt;
     idwt.set_dims( dim_x, dim_y );
     idwt.set_mean( cdf.get_mean() );
-    idwt.take_data( decoder.release_coeffs() );
+    idwt.take_data( decoder.release_coeffs_double() );
     idwt.idwt2d();
 
     // Finish timer and print timing

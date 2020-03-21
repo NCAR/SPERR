@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <array>
+#include <memory>
 
 namespace speck
 {

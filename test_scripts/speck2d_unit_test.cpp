@@ -58,7 +58,7 @@ public:
         // Do a speck encoding
         speck::SPECK2D encoder;
         encoder.assign_dims( m_dim_x, m_dim_y );
-        encoder.take_coeffs( cdf.release_data() );
+        encoder.copy_coeffs( cdf.get_read_only_data(), m_dim_x * m_dim_y );
         const size_t header_size  = 18;     // bytes
         const size_t total_bits   = size_t(32.0f * total_vals / cratio) + header_size * 8;
         encoder.assign_bit_budget( total_bits );
@@ -92,7 +92,7 @@ public:
         speck::CDF97 idwt;
         idwt.set_dims( dim_x_r, dim_y_r );
         idwt.set_mean( cdf.get_mean() );
-        idwt.take_data( decoder.release_coeffs() );
+        idwt.take_data( decoder.release_coeffs_double() );
         idwt.idwt2d();
 
         // Compare the result with the original input in double precision

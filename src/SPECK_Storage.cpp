@@ -1,24 +1,44 @@
 #include "SPECK_Storage.h"
-
-
-void speck::SPECK_Storage::take_coeffs( std::unique_ptr<double[]> ptr )
-{
-    m_coeff_buf = std::move( ptr );
-}
+#include <type_traits>
+#include <cassert>
 
 template<typename T>
-void speck::SPECK_Storage::copy_coeffs( const T* p, size_t len )
+void speck::SPECK_Storage::copy_coeffs( const T p, size_t len )
 {
-    static_assert( std::is_floating_point<T>::value, 
-                   "!! Only floating point values are supported !!" );
     assert( len > 0 );
 
+    m_coeff_len = len;
     m_coeff_buf = std::make_unique<double[]>( len );
     for( size_t i = 0; i < len; i++ )
         m_coeff_buf[i] = p[i];
 }
-template void speck::SPECK_Storage::copy_coeffs( const float*,  size_t );
+template void speck::SPECK_Storage::copy_coeffs( const buffer_type_d&, size_t);
+template void speck::SPECK_Storage::copy_coeffs( const buffer_type_f&, size_t);
 template void speck::SPECK_Storage::copy_coeffs( const double*, size_t);
+template void speck::SPECK_Storage::copy_coeffs( const float*,  size_t);
+
+
+#ifdef SPECK_USE_DOUBLE
+    void speck::SPECK_Storage::take_coeffs( buffer_type_d coeffs, size_t len )
+    {
+        m_coeff_len = len;
+        m_coeff_buf = std::move( coeffs );
+    }
+    void speck::SPECK_Storage::take_coeffs( buffer_type_f coeffs, size_t len )
+    {
+        copy_coeffs( std::move(coeffs), len );
+    }
+#else
+    void speck::SPECK_Storage::take_coeffs( buffer_type_d coeffs, size_t len )
+    {
+        copy_coeffs( std::move(coeffs), len );
+    }
+    void speck::SPECK_Storage::take_coeffs( buffer_type_f coeffs, size_t len )
+    {
+        m_coeff_len = len;
+        m_coeff_buf = std::move( coeffs );
+    }
+#endif
 
 
 void speck::SPECK_Storage::copy_bitstream( const std::vector<bool>& stream )
@@ -45,15 +65,32 @@ std::vector<bool>& speck::SPECK_Storage::release_bitstream()
     return m_bit_buffer;
 }
 
-
-const speck::buffer_type& speck::SPECK_Storage::get_read_only_coeffs() const
-{
-    return m_coeff_buf;
-}
-
-
-std::unique_ptr<double[]> speck::SPECK_Storage::release_coeffs()
-{
-    return std::move( m_coeff_buf );
-}
-
+#ifdef SPECK_USE_DOUBLE
+    speck::buffer_type_d speck::SPECK_Storage::release_coeffs_double()
+    {
+        m_coeff_len = 0;
+        return std::move( m_coeff_buf );
+    }
+    speck::buffer_type_f speck::SPECK_Storage::release_coeffs_float()
+    {
+        assert( m_coeff_len > 0 );
+        buffer_type_f tmp = std::make_unique<float[]>( m_coeff_len );
+        for( size_t i = 0; i < m_coeff_len; i++ )
+            tmp[i] = m_coeff_buf[i];
+        return std::move( tmp );
+    }
+#else
+    speck::buffer_type_d speck::SPECK_Storage::release_coeffs_double()
+    {
+        assert( m_coeff_len > 0 );
+        buffer_type_d tmp = std::make_unique<double[]>( m_coeff_len );
+        for( size_t i = 0; i < m_coeff_len; i++ )
+            tmp[i] = m_coeff_buf[i];
+        return std::move( tmp );
+    }
+    speck::buffer_type_f speck::SPECK_Storage::release_coeffs_float()
+    {
+        m_coeff_len = 0;
+        return std::move( m_coeff_buf );
+    }
+#endif
