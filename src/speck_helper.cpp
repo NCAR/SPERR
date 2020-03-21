@@ -37,11 +37,11 @@ void speck::calc_approx_detail_len( size_t orig_len,  size_t lev,
 }
 
 
-double speck::make_coeff_positive( buffer_type& buf, size_t len, 
-                                   std::vector<bool>& sign_array )
+template<typename T>
+double speck::make_coeff_positive( T& buf, size_t len, std::vector<bool>& sign_array )
 {
     sign_array.assign( len, true );
-    double max = std::abs( buf[0] );
+    auto max = std::abs( buf[0] );
     for( size_t i = 0; i < len; i++ )
     {
         if( buf[i] < 0.0 )
@@ -53,8 +53,11 @@ double speck::make_coeff_positive( buffer_type& buf, size_t len,
             max = buf[i];
     }
 
-    return max;
+    return double(max);
 }
+template double speck::make_coeff_positive( buffer_type_d&, size_t, std::vector<bool>& );
+template double speck::make_coeff_positive( buffer_type_f&, size_t, std::vector<bool>& );
+
 
 // Good solution to deal with bools and unsigned chars
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa

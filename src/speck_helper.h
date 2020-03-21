@@ -11,7 +11,8 @@ namespace speck
     //
     // Helper alias
     //
-    using buffer_type = std::unique_ptr<double[]>;
+    using buffer_type_d = std::unique_ptr<double[]>;
+    using buffer_type_f = std::unique_ptr<float[]>;
 
     //
     // Helper classes
@@ -43,7 +44,8 @@ namespace speck
     // 1) fill sign_array based on coeff_buffer signs, and 
     // 2) make coeff_buffer containing all positive values.
     // 3) returns the maximum magnitude of all encountered values.
-    double make_coeff_positive( buffer_type& buf, size_t len, std::vector<bool>& ); 
+    template<typename T>
+    double make_coeff_positive( T& buf, size_t len, std::vector<bool>& ); 
 
 
     // Upon success, it returns 0. Upon failure, it return a non-zero value.
