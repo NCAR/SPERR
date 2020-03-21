@@ -10,6 +10,7 @@ void speck::SPECK2D::assign_dims( size_t dx, size_t dy )
 {
     m_dim_x = dx;
     m_dim_y = dy;
+    m_coeff_len = dx * dy;
 }
 
 
@@ -51,7 +52,7 @@ int speck::SPECK2D::encode()
     /* When max_coeff is very close to zero, m_max_coefficient_bits could be zero.
        I don't know how to deal with that situation yet...                      */
     assert( m_max_coefficient_bits > 0 );   
-    m_threshold = std::pow( 2.0, double(m_max_coefficient_bits) );
+    m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
     int rtn = 0;
     for( size_t bitplane = 0; bitplane < 128; bitplane++ )
     {
@@ -60,7 +61,7 @@ int speck::SPECK2D::encode()
         if( (rtn = m_refinement_pass()) )
             break;
 
-        m_threshold *= 0.5;
+        m_threshold *= 0.5f;
 
         m_clean_LIS();
     }
@@ -79,16 +80,19 @@ int speck::SPECK2D::decode()
 #endif
 
     // initialize coefficients to be zero, and signs to be all positive
-    size_t num_of_vals = m_dim_x * m_dim_y;
-    m_coeff_buf = std::make_unique<double[]>( num_of_vals );
-    for( size_t i = 0; i < num_of_vals; i++ )
-        m_coeff_buf[i] = 0.0;
-    m_sign_array.assign( num_of_vals, true );
+#ifdef SPECK_USE_DOUBLE
+    m_coeff_buf = std::make_unique<double[]>( m_coeff_len );
+#else
+    m_coeff_buf = std::make_unique<float[]>( m_coeff_len );
+#endif
+    for( size_t i = 0; i < m_coeff_len; i++ )
+        m_coeff_buf[i] = 0.0f;
+    m_sign_array.assign( m_coeff_len, true );
 
     m_initialize_sets_lists();
     
     m_bit_idx = 0;
-    m_threshold = std::pow( 2.0, double(m_max_coefficient_bits) );
+    m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
     int rtn_val = 0;
     for( size_t bitplane = 0; bitplane < 128; bitplane++ )
     {
@@ -97,7 +101,7 @@ int speck::SPECK2D::decode()
         if( (rtn_val = m_refinement_pass()) )
             break;
 
-        m_threshold *= 0.5;
+        m_threshold *= 0.5f;
 
         m_clean_LIS();
     }
@@ -106,7 +110,7 @@ int speck::SPECK2D::decode()
     for( size_t i = 0; i < m_sign_array.size(); i++ )
     {
         if( !m_sign_array[i] )
-            m_coeff_buf[i] *= -1.0;
+            m_coeff_buf[i] *= -1.0f;
     }
 
     return rtn_val;
@@ -155,9 +159,8 @@ int speck::SPECK2D::m_sorting_pass( )
 
     if( m_encode_mode )
     {   // Update the significance map based on the current threshold
-        size_t num_of_vals = m_dim_x * m_dim_y;
-        m_significance_map.assign( num_of_vals, false );
-        for( size_t i = 0; i < num_of_vals; i++ )
+        m_significance_map.assign( m_coeff_len, false );
+        for( size_t i = 0; i < m_coeff_len; i++ )
         {
             if( m_coeff_buf[i] >= m_threshold )
                 m_significance_map[i] = true;
@@ -600,7 +603,7 @@ int speck::SPECK2D::m_input_pixel_sign( const SPECKSet2D& pixel )
     m_sign_array[ idx ] = m_bit_buffer[ m_bit_idx++ ];
 
     // Progressive quantization!
-    m_coeff_buf[ idx ] = 1.5 * m_threshold;
+    m_coeff_buf[ idx ] = 1.5f * m_threshold;
 
 #ifdef PRINT
     auto bit = m_sign_array[ idx ];
@@ -647,7 +650,7 @@ int speck::SPECK2D::m_input_refinement( const SPECKSet2D& pixel )
 
     auto bit = m_bit_buffer[ m_bit_idx++ ];
     auto idx = pixel.start_y * m_dim_x + pixel.start_x;
-    m_coeff_buf[ idx ] += bit ? m_threshold * 0.5 : m_threshold * -0.5;
+    m_coeff_buf[ idx ] += bit ? m_threshold * 0.5f : m_threshold * -0.5f;
 
 #ifdef PRINT
     if( bit )

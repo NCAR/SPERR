@@ -12,10 +12,11 @@
 namespace speck
 {
 
-#define SPECK_USE_DOUBLE
-
 class SPECK_Storage
 {
+// Use the following macro to direct SPECK use double type.
+// #define SPECK_USE_DOUBLE
+
 public:
     // memory management: input
     void take_coeffs( buffer_type_d, size_t );      // Take ownership of the incoming buffer 
