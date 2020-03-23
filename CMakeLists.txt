@@ -18,7 +18,7 @@ option( BUILD_UNIT_TESTS "Build unit tests using googletest?" OFF)
 option( EIGHT_BYTE_SPECK_SET "Use eight bytes for speck sets?" OFF)
 option( PRINT "Compile print statements for debug purpose?" OFF)
 option( TIME  "Compile timing code for debug purpose?" OFF)
-option( BUILD_QCC_TESTS "Build test utilities that link to QccPack?" OFF)
+option( BUILD_QCC_EXAMPLES "Build examples that link to QccPack?" OFF)
 
 # configure a header file to pass some of the CMake settings to the source code
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/SpeckConfig.h.in" "SpeckConfig.h")
@@ -40,7 +40,7 @@ add_executable( example_speck2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_s
 target_link_libraries(      example_speck2d PUBLIC ${SPECK_LIBS})
 target_include_directories( example_speck2d PUBLIC ${PROJECT_BINARY_DIR} )
 
-if( BUILD_QCC_TESTS )
+if( BUILD_QCC_EXAMPLES )
     set ( QCCPACK_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/QccPack-0.61-1/install/" 
                               CACHE STRING "Where QccPack is installed"             )
     find_library( QCCPACK_LIB QccPack      HINTS ${QCCPACK_INSTALL_DIR}/lib         )
@@ -49,18 +49,18 @@ if( BUILD_QCC_TESTS )
          DESTINATION ${PROJECT_BINARY_DIR}                                          )
 
     # Qcc Executable #1
-    add_executable( test_qcc_dwt2d  "${CMAKE_CURRENT_SOURCE_DIR}/utilities/test_qcc_dwt2d.c" )
-    target_link_libraries(      test_qcc_dwt2d  PUBLIC sam_helper
-                                                PUBLIC ${QCCPACK_LIB}      )
-    target_include_directories( test_qcc_dwt2d  PUBLIC ${PROJECT_BINARY_DIR}
-                                                PUBLIC ${QCCPACK_INC}      )
+    add_executable( example_qcc_dwt2d  "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_qcc_dwt2d.c" )
+    target_link_libraries(      example_qcc_dwt2d PUBLIC sam_helper
+                                                  PUBLIC ${QCCPACK_LIB}      )
+    target_include_directories( example_qcc_dwt2d PUBLIC ${PROJECT_BINARY_DIR}
+                                                  PUBLIC ${QCCPACK_INC}      )
 
     # Qcc Executable #2
-    add_executable( test_qcc_speck2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/test_qcc_speck2d.c" )
-    target_link_libraries(      test_qcc_speck2d  PUBLIC sam_helper
-                                                  PUBLIC ${QCCPACK_LIB}      )
-    target_include_directories( test_qcc_speck2d  PUBLIC ${PROJECT_BINARY_DIR}
-                                                  PUBLIC ${QCCPACK_INC}      )
+    add_executable( example_qcc_speck2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_qcc_speck2d.c" )
+    target_link_libraries(      example_qcc_speck2d PUBLIC sam_helper
+                                                    PUBLIC ${QCCPACK_LIB}      )
+    target_include_directories( example_qcc_speck2d PUBLIC ${PROJECT_BINARY_DIR}
+                                                    PUBLIC ${QCCPACK_INC}      )
 endif()
 
 
