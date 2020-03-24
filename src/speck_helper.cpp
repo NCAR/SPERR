@@ -150,10 +150,11 @@ int speck::input_speck2d( size_t& dim_x, size_t& dim_y, double& mean, uint16_t& 
     const uint64_t mask  = 0x8080808080808080;
     bool     a[8];
     uint64_t t;
+    uint8_t  b;
     for( size_t i = 0; i < num_bools; i += 8 )
     {
-        uint8_t b  = buf[ pos++ ];
-        t          = ((magic * b) & mask) >> 7;
+        b = buf[ pos++ ];
+        t = ((magic * b) & mask) >> 7;
         std::memcpy( a, &t, 8 );
         for( size_t j = 0; j < 8; j++ )
             bit_buffer[ i + j ] = a[j];

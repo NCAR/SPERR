@@ -1353,7 +1353,7 @@ static int QccSPECK3DEncodeDWT(QccWAVSubbandPyramid3D *image_subband_pyramid,
         }
     }
   else
-    {
+    { /*
       if (QccVolumeCopy(mask_subband_pyramid->volume,
                         mask->volume,
                         mask->num_frames,
@@ -1374,11 +1374,11 @@ static int QccSPECK3DEncodeDWT(QccWAVSubbandPyramid3D *image_subband_pyramid,
               image_subband_pyramid->volume[frame][row][col] = 0;
             else
               image_subband_pyramid->volume[frame][row][col] =
-                image_cube->volume[frame][row][col] - *image_mean;
+                image_cube->volume[frame][row][col] - *image_mean; */
     }
   
   if (mask != NULL)
-    {
+    { /*
       if (QccWAVSubbandPyramid3DShapeAdaptiveDWT(image_subband_pyramid,
                                                  mask_subband_pyramid,
                                                  transform_type,
@@ -1388,7 +1388,7 @@ static int QccSPECK3DEncodeDWT(QccWAVSubbandPyramid3D *image_subband_pyramid,
         {
           QccErrorAddMessage("(QccSPECK3DEncodeDWT): Error calling QccWAVSubbandPyramid3DShapeAdaptiveDWT()");
           return(1);
-        }
+        } */
     }
   else
     if (QccWAVSubbandPyramid3DDWT(image_subband_pyramid,

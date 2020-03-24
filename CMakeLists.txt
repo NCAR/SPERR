@@ -56,6 +56,13 @@ if( BUILD_QCC_EXAMPLES )
                                                   PUBLIC ${QCCPACK_INC}      )
 
     # Qcc Executable #2
+    add_executable( example_qcc_dwt3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_qcc_dwt3d.c" )
+    target_link_libraries(      example_qcc_dwt3d PUBLIC sam_helper
+                                                  PUBLIC ${QCCPACK_LIB}      )
+    target_include_directories( example_qcc_dwt3d PUBLIC ${PROJECT_BINARY_DIR}
+                                                  PUBLIC ${QCCPACK_INC}      )
+
+    # Qcc Executable #3
     add_executable( example_qcc_speck2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_qcc_speck2d.c" )
     target_link_libraries(      example_qcc_speck2d PUBLIC sam_helper
                                                     PUBLIC ${QCCPACK_LIB}      )
