@@ -106,13 +106,13 @@ if( BUILD_UNIT_TESTS )
                                              PUBLIC gtest_main          )
     add_test( NAME test_speck_helper COMMAND test_speck_helper          )
 
-    # unit tests for dwt2d
-    add_executable( test_dwt2d
-                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/dwt2d_unit_test.cpp" )
-    target_link_libraries( test_dwt2d PUBLIC sam_helper
-                                      PUBLIC ${SPECK_LIBS} 
-                                      PUBLIC gtest_main                 )
-    add_test( NAME test_dwt2d COMMAND test_dwt2d                        )
+    # unit tests for dwt
+    add_executable( test_dwt
+                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/dwt_unit_test.cpp" )
+    target_link_libraries( test_dwt PUBLIC sam_helper
+                                    PUBLIC ${SPECK_LIBS} 
+                                    PUBLIC gtest_main                 )
+    add_test( NAME test_dwt COMMAND test_dwt                        )
 
     # unit tests for speck2d
     add_executable( test_speck2d

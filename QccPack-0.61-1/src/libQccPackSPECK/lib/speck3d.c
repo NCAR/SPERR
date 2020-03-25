@@ -1353,7 +1353,7 @@ static int QccSPECK3DEncodeDWT(QccWAVSubbandPyramid3D *image_subband_pyramid,
         }
     }
   else
-    { /*
+    { 
       if (QccVolumeCopy(mask_subband_pyramid->volume,
                         mask->volume,
                         mask->num_frames,
@@ -1374,11 +1374,11 @@ static int QccSPECK3DEncodeDWT(QccWAVSubbandPyramid3D *image_subband_pyramid,
               image_subband_pyramid->volume[frame][row][col] = 0;
             else
               image_subband_pyramid->volume[frame][row][col] =
-                image_cube->volume[frame][row][col] - *image_mean; */
+                image_cube->volume[frame][row][col] - *image_mean; 
     }
   
   if (mask != NULL)
-    { /*
+    { 
       if (QccWAVSubbandPyramid3DShapeAdaptiveDWT(image_subband_pyramid,
                                                  mask_subband_pyramid,
                                                  transform_type,
@@ -1388,7 +1388,7 @@ static int QccSPECK3DEncodeDWT(QccWAVSubbandPyramid3D *image_subband_pyramid,
         {
           QccErrorAddMessage("(QccSPECK3DEncodeDWT): Error calling QccWAVSubbandPyramid3DShapeAdaptiveDWT()");
           return(1);
-        } */
+        }
     }
   else
     if (QccWAVSubbandPyramid3DDWT(image_subband_pyramid,
@@ -1396,7 +1396,8 @@ static int QccSPECK3DEncodeDWT(QccWAVSubbandPyramid3D *image_subband_pyramid,
                                   temporal_num_levels,
                                   spatial_num_levels,
                                   wavelet))
-      {
+      { /* When using "wavelet packet" transform type, 1D wavelet transforms along Z-direction
+           are performed first, and then 2D transforms along XY planes are performed.       */
         QccErrorAddMessage("(QccSPECK3DEncodeDWT): Error calling QccWAVSubbandPyramid3DDWT()");
         return(1);
       }
@@ -1498,7 +1499,7 @@ static int QccSPECK3DDecodeInverseDWT(QccWAVSubbandPyramid3D
   return(0);
 }
 
-
+/* Overall Encode procedure */
 int QccSPECK3DEncode(QccIMGImageCube *image_cube,
                      QccIMGImageCube *mask,
                      int transform_type,

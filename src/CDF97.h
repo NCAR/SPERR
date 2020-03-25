@@ -23,7 +23,7 @@ public:
     void copy_data( const T&, size_t len);
     void take_data( buffer_type_d );        // Take ownership
     void set_mean( double );
-    void set_dims( size_t x, size_t y, size_t z = 1 );
+    void set_dims( size_t x, size_t y = 1, size_t z = 1 );
     
     // Output
     const buffer_type_d& get_read_only_data() const;    // Others can read the data
@@ -32,22 +32,31 @@ public:
     void   get_dims( std::array<size_t, 2>& ) const;    // 2D case 
     void   get_dims( std::array<size_t, 3>& ) const;    // 3D case 
 
-    // Common methods
+    // Action items
     void reset();       // Reset this class to its initial state.
-    int  dwt2d();       // 1) calculates the number of levels of dwt,
+    void  dwt1d();
+    void idwt1d();
+    void  dwt2d();      // 1) calculates the number of levels of dwt,
                         // 2) subtract mean of the data,
                         // 3) perform the actual dwt.
-    int idwt2d();       // 1) calculates the number of levels of dwt,
+    void idwt2d();      // 1) calculates the number of levels of dwt,
                         // 2) perform the actual idwt
                         // 3) add the mean back to the data
+    void  dwt3d();
+    void idwt3d();
 private:
     //
     // Private methods helping DWT.
     //
     // Note: most of these methods operate on a partial array, i.e., not from the 
-    //       beginning of an array. Thus, raw pointers are used.
+    //       beginning of an array or not ending at the actual end. 
+    //       Thus, raw pointers are used here.
     //
     void m_calc_mean();     // Calculate m_data_mean from m_data_buf
+    void m_dwt1d(  double* array, size_t array_len, size_t num_of_xforms );
+                            // Multiple levels of 2D DWT on a given array of length len.
+    void m_idwt1d( double* array, size_t array_len, size_t num_of_xforms );
+                            // Multiple levels of 2D IDWT on a given array of length len.
     void m_dwt2d(  double* plane, size_t num_of_xforms );
                             // Multiple levels of 2D DWT on a given plane by repeatedly
                             // invoking m_dwt2d_one_level().
@@ -72,6 +81,7 @@ private:
                             // odd positions of the dest array. Note: sufficient memory 
                             // space should be allocated by the caller.
                             // Note 2: two versions for even and odd length input.
+
     void m_cut_transpose_XtoZ( double* dest, size_t x, size_t y, size_t z ) const;
                             // Cut a smaller cube (x, y, z) from the main buffer.
                             // It also transposes this cube from X-varying-fastest to

@@ -55,28 +55,108 @@ std::unique_ptr<double[]> speck::CDF97::release_data()
 }
 
 
-int speck::CDF97::dwt2d()
+void speck::CDF97::dwt1d()
 {
     m_calc_mean();
     for( size_t i = 0; i < m_buf_len; i++ )
         m_data_buf[i] -= m_data_mean;
 
-    auto num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
-    m_dwt2d( m_data_buf.get(), num_xforms_xy );
-
-    return 0;
+    size_t num_xforms = speck::calc_num_of_xforms( m_dim_x );
+    m_dwt1d( m_data_buf.get(), m_buf_len, num_xforms );
 }
 
 
-int speck::CDF97::idwt2d()
+void speck::CDF97::idwt1d()
+{
+    size_t num_xforms = speck::calc_num_of_xforms( m_dim_x );
+    m_idwt1d( m_data_buf.get(), m_buf_len, num_xforms );
+
+    for( size_t i = 0; i < m_buf_len; i++ )
+        m_data_buf[i] += m_data_mean;
+}
+
+
+void speck::CDF97::dwt2d()
+{
+    m_calc_mean();
+    for( size_t i = 0; i < m_buf_len; i++ )
+        m_data_buf[i] -= m_data_mean;
+
+    size_t num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
+    m_dwt2d( m_data_buf.get(), num_xforms_xy );
+}
+
+
+void speck::CDF97::idwt2d()
 {
     size_t num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
     m_idwt2d( m_data_buf.get(), num_xforms_xy );
 
     for( size_t i = 0; i < m_buf_len; i++ )
         m_data_buf[i] += m_data_mean;
+}
 
-    return 0;
+
+void speck::CDF97::dwt3d()
+{
+    m_calc_mean();
+    for( size_t i = 0; i < m_buf_len; i++ )
+        m_data_buf[i] -= m_data_mean;
+
+    auto num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
+    auto num_xforms_z  = speck::calc_num_of_xforms( m_dim_z );
+
+    // First transform along the Z dimension
+    const size_t plane_size = m_dim_x * m_dim_y;
+    buffer_type_d tmp  = std::make_unique< double[] >( m_dim_z * 2 );
+    double* const ptr  = tmp.get();
+    double* const ptr2 = ptr + m_dim_z;
+    for( size_t offset = 0; offset < plane_size; offset++ )
+    {
+#if 0
+        // Fill 1st half of the buffer
+        for( size_t i = 0; i < m_dim_z; i++ )
+            ptr[i] = m_data_buf[ offset + plane_size * i ];
+
+        // Perform 1D DWT
+        if( m_dim_z % 2 == 0 )
+        {
+            for( size_t i = 0; i < 
+            this->QccWAVCDF97AnalysisSymmetricEvenEven( buf_ptr, len_x );
+            m_gather_
+        }
+
+        
+// First, perform DWT along X for every row
+if( len_x % 2 == 0 )    // Even length
+{
+    for( size_t i = 0; i < len_y; i++ )
+    {
+        auto* pos = plane + i * m_dim_x;
+        std::memcpy( buf_ptr, pos, sizeof(double) * len_x );
+        this->QccWAVCDF97AnalysisSymmetricEvenEven( buf_ptr, len_x );
+        // pub back the resluts in low-pass and high-pass groups
+        m_gather_even( pos, buf_ptr, len_x );
+    }
+}
+else                    // Odd length
+{
+    for( size_t i = 0; i < len_y; i++ )
+    {
+        auto* pos = plane + i * m_dim_x;
+        std::memcpy( buf_ptr, pos, sizeof(double) * len_x );
+        this->QccWAVCDF97AnalysisSymmetricOddEven( buf_ptr, len_x );
+        // pub back the resluts in low-pass and high-pass groups
+        m_gather_odd( pos, buf_ptr, len_x );
+    }
+}
+#endif
+
+
+    }
+
+
+    m_dwt2d( m_data_buf.get(), num_xforms_xy );
 }
 
     
@@ -144,12 +224,58 @@ void speck::CDF97::m_idwt2d( double* plane, size_t num_of_lev )
         m_idwt2d_one_level( plane, len_x[0], len_y[0] );
     }
 }
+
+
+void speck::CDF97::m_dwt1d( double* array, size_t array_len, size_t num_of_lev )
+{
+    std::array<size_t, 2> approx;
+    buffer_type_d buf     = std::make_unique< double[] >( array_len );
+    double* const ptr     = buf.get();
+    
+    for( size_t lev = 0; lev < num_of_lev; lev++ )
+    {
+        speck::calc_approx_detail_len( array_len, lev, approx );
+        std::memcpy( ptr, array, sizeof(double) * approx[0] );
+        if( approx[0] % 2 == 0 )
+        {
+            this->QccWAVCDF97AnalysisSymmetricEvenEven( ptr, approx[0] );
+            m_gather_even( array, ptr, approx[0] );
+        }
+        else
+        {
+            this->QccWAVCDF97AnalysisSymmetricOddEven( ptr, approx[0] );
+            m_gather_odd( array, ptr, approx[0] );
+        }
+    }
+}
+
+
+void speck::CDF97::m_idwt1d( double* array, size_t array_len, size_t num_of_lev )
+{
+    std::array<size_t, 2> approx;
+    buffer_type_d buf     = std::make_unique< double[] >( array_len );
+    double* const ptr     = buf.get();
+    
+    for( size_t lev = num_of_lev; lev > 0; lev-- )
+    {
+        speck::calc_approx_detail_len( array_len, lev - 1, approx );
+        if( approx[0] % 2 == 0 )
+        {
+            m_scatter_even( ptr, array, approx[0] );
+            this->QccWAVCDF97SynthesisSymmetricEvenEven( ptr, approx[0] );
+        }
+        else
+        {
+            m_scatter_odd( ptr, array, approx[0] );
+            this->QccWAVCDF97SynthesisSymmetricOddEven( ptr, approx[0] );
+        }
+        std::memcpy( array, ptr, sizeof(double) * approx[0] );
+    }
+}
     
 
 void speck::CDF97::m_dwt2d_one_level( double* plane, size_t len_x, size_t len_y )
 {
-    assert( len_x <= m_dim_x && len_y <= m_dim_y );
-
     // Create temporary buffers to work on
     size_t len_xy = std::max( len_x, len_y );
     buffer_type_d buffer = std::make_unique<double[]>( len_xy * 2 );
@@ -216,8 +342,6 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, size_t len_x, size_t len_y 
 
 void speck::CDF97::m_idwt2d_one_level( double* plane, size_t len_x, size_t len_y )
 {
-    assert( len_x <= m_dim_x && len_y <= m_dim_y );
-
     // Create temporary buffers to work on
     size_t len_xy = std::max( len_x, len_y );
     buffer_type_d buffer = std::make_unique<double[]>( len_xy * 2 );
