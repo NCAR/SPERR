@@ -57,21 +57,12 @@ std::unique_ptr<double[]> speck::CDF97::release_data()
 
 int speck::CDF97::dwt2d()
 {
-    //
-    // Pre-process data
-    //
     m_calc_mean();
     for( size_t i = 0; i < m_buf_len; i++ )
         m_data_buf[i] -= m_data_mean;
 
     auto num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
-    for( size_t lev = 0; lev < num_xforms_xy; lev++ )
-    {
-        std::array<size_t, 2> len_x, len_y;
-        speck::calc_approx_detail_len( m_dim_x, lev, len_x );
-        speck::calc_approx_detail_len( m_dim_y, lev, len_y );
-        m_dwt2d_one_level( m_data_buf.get(), len_x[0], len_y[0] );
-    }
+    m_dwt2d( m_data_buf.get(), num_xforms_xy );
 
     return 0;
 }
@@ -80,16 +71,7 @@ int speck::CDF97::dwt2d()
 int speck::CDF97::idwt2d()
 {
     size_t num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
-    if( num_xforms_xy > 0 )
-    {
-        for( size_t lev = num_xforms_xy; lev > 0; lev-- )
-        {
-            std::array<size_t, 2> len_x, len_y;
-            speck::calc_approx_detail_len( m_dim_x, lev - 1, len_x );
-            speck::calc_approx_detail_len( m_dim_y, lev - 1, len_y );
-            m_idwt2d_one_level( m_data_buf.get(), len_x[0], len_y[0] );
-        }
-    }
+    m_idwt2d( m_data_buf.get(), num_xforms_xy );
 
     for( size_t i = 0; i < m_buf_len; i++ )
         m_data_buf[i] += m_data_mean;
@@ -139,7 +121,31 @@ void speck::CDF97::m_calc_mean()
     m_data_mean = sum / double(m_dim_z);
 }
 
+
+void speck::CDF97::m_dwt2d( double* plane, size_t num_of_lev )
+{
+    std::array<size_t, 2> len_x, len_y;
+    for( size_t lev = 0; lev < num_of_lev; lev++ )
+    {
+        speck::calc_approx_detail_len( m_dim_x, lev, len_x );
+        speck::calc_approx_detail_len( m_dim_y, lev, len_y );
+        m_dwt2d_one_level( plane, len_x[0], len_y[0] );
+    }
+}
+
+
+void speck::CDF97::m_idwt2d( double* plane, size_t num_of_lev )
+{
+    std::array<size_t, 2> len_x, len_y;
+    for( size_t lev = num_of_lev; lev > 0; lev-- )
+    {
+        speck::calc_approx_detail_len( m_dim_x, lev - 1, len_x );
+        speck::calc_approx_detail_len( m_dim_y, lev - 1, len_y );
+        m_idwt2d_one_level( plane, len_x[0], len_y[0] );
+    }
+}
     
+
 void speck::CDF97::m_dwt2d_one_level( double* plane, size_t len_x, size_t len_y )
 {
     assert( len_x <= m_dim_x && len_y <= m_dim_y );
@@ -533,4 +539,14 @@ void speck::CDF97::get_dims( std::array<size_t, 3>& dims ) const
     dims[0] = m_dim_x;
     dims[1] = m_dim_y;
     dims[2] = m_dim_z;
+}
+    
+void speck::CDF97::reset()
+{
+    m_dim_x     = 0;
+    m_dim_y     = 0;
+    m_dim_z     = 0;
+    m_buf_len   = 0;
+    m_data_mean = 0.0;
+    m_data_buf.reset();
 }

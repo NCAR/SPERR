@@ -33,12 +33,13 @@ public:
     void   get_dims( std::array<size_t, 3>& ) const;    // 3D case 
 
     // Common methods
-    int  dwt2d();           // 1) calculates the number of levels of dwt,
-                            // 2) subtract mean of the data,
-                            // 3) perform the actual dwt.
-    int idwt2d();           // 1) calculates the number of levels of dwt,
-                            // 2) perform the actual idwt
-                            // 3) add the mean back to the data
+    void reset();       // Reset this class to its initial state.
+    int  dwt2d();       // 1) calculates the number of levels of dwt,
+                        // 2) subtract mean of the data,
+                        // 3) perform the actual dwt.
+    int idwt2d();       // 1) calculates the number of levels of dwt,
+                        // 2) perform the actual idwt
+                        // 3) add the mean back to the data
 private:
     //
     // Private methods helping DWT.
@@ -46,7 +47,13 @@ private:
     // Note: most of these methods operate on a partial array, i.e., not from the 
     //       beginning of an array. Thus, raw pointers are used.
     //
-    void m_calc_mean();     // calculate m_data_mean from m_data_buf
+    void m_calc_mean();     // Calculate m_data_mean from m_data_buf
+    void m_dwt2d(  double* plane, size_t num_of_xforms );
+                            // Multiple levels of 2D DWT on a given plane by repeatedly
+                            // invoking m_dwt2d_one_level().
+    void m_idwt2d( double* plane, size_t num_of_xforms );
+                            // Multiple levels of 2D IDWT on a given plane by repeatedly
+                            // invoking m_idwt2d_one_level().
     void m_dwt2d_one_level( double* plane, size_t len_x, size_t len_y ); 
                             // Perform one level of 2D dwt on a given plane (dim_x, dim_y),
                             // specifically on its top left (len_x, len_y) subset.
