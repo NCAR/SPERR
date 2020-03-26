@@ -202,26 +202,28 @@ void speck::CDF97::m_calc_mean()
 }
 
 
-void speck::CDF97::m_dwt2d( double* plane, size_t dim_x, size_t dim_y, size_t num_of_lev )
+void speck::CDF97::m_dwt2d( double* plane, size_t len_x, size_t len_y, size_t num_of_lev,
+                            double* tmp_buf )
 {
-    std::array<size_t, 2> len_x, len_y;
+    std::array<size_t, 2> approx_x, approx_y;
     for( size_t lev = 0; lev < num_of_lev; lev++ )
     {
-        speck::calc_approx_detail_len( dim_x, lev, len_x );
-        speck::calc_approx_detail_len( dim_y, lev, len_y );
-        m_dwt2d_one_level( plane, len_x[0], len_y[0] );
+        speck::calc_approx_detail_len( len_x, lev, approx_x );
+        speck::calc_approx_detail_len( len_y, lev, approx_y );
+        m_dwt2d_one_level( plane, approx_x[0], approx_y[0], tmp_buf );
     }
 }
 
 
-void speck::CDF97::m_idwt2d( double* plane, size_t dim_x, size_t dim_y, size_t num_of_lev )
+void speck::CDF97::m_idwt2d( double* plane, size_t len_x, size_t len_y, size_t num_of_lev,
+                             double* tmp_buf )
 {
-    std::array<size_t, 2> len_x, len_y;
+    std::array<size_t, 2> approx_x, approx_y;
     for( size_t lev = num_of_lev; lev > 0; lev-- )
     {
-        speck::calc_approx_detail_len( dim_x, lev - 1, len_x );
-        speck::calc_approx_detail_len( dim_y, lev - 1, len_y );
-        m_idwt2d_one_level( plane, len_x[0], len_y[0] );
+        speck::calc_approx_detail_len( len_x, lev - 1, approx_x );
+        speck::calc_approx_detail_len( len_y, lev - 1, approx_y );
+        m_idwt2d_one_level( plane, approx_x[0], approx_y[0], tmp_buf );
     }
 }
 
@@ -290,13 +292,24 @@ void speck::CDF97::m_idwt1d( double* array, size_t array_len, size_t num_of_lev,
 }
     
 
-void speck::CDF97::m_dwt2d_one_level( double* plane, size_t len_x, size_t len_y )
+void speck::CDF97::m_dwt2d_one_level( double* plane, size_t len_x, size_t len_y,
+                                      double* tmp_buf )
 {
-    // Create temporary buffers to work on
+    // Create/specify temporary buffers to work on
     size_t len_xy = std::max( len_x, len_y );
-    buffer_type_d buffer = std::make_unique<double[]>( len_xy * 2 );
-    double *const buf_ptr  = buffer.get();       // First half of the array
-    double *const buf_ptr2 = buf_ptr + len_xy;   // Second half of the array
+    double *buf_ptr, *buf_ptr2;
+    buffer_type_d buffer;
+    if( tmp_buf != nullptr )
+    {
+        buf_ptr  = tmp_buf;            // First half of the array
+        buf_ptr2 = tmp_buf + len_xy;   // Second half of the array
+    }
+    else
+    {
+        buffer   = std::make_unique<double[]>( len_xy * 2 );
+        buf_ptr  = buffer.get();       // First half of the array
+        buf_ptr2 = buf_ptr + len_xy;   // Second half of the array
+    }
 
     // First, perform DWT along X for every row
     if( len_x % 2 == 0 )    // Even length
@@ -356,13 +369,24 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, size_t len_x, size_t len_y 
 }
     
 
-void speck::CDF97::m_idwt2d_one_level( double* plane, size_t len_x, size_t len_y )
+void speck::CDF97::m_idwt2d_one_level( double* plane, size_t len_x, size_t len_y,
+                                       double* tmp_buf )
 {
-    // Create temporary buffers to work on
+    // Create/specify temporary buffers to work on
     size_t len_xy = std::max( len_x, len_y );
-    buffer_type_d buffer = std::make_unique<double[]>( len_xy * 2 );
-    double *const buf_ptr  = buffer.get();       // First half of the array
-    double *const buf_ptr2 = buf_ptr + len_xy;   // Second half of the array
+    double *buf_ptr, *buf_ptr2;
+    buffer_type_d buffer;
+    if( tmp_buf != nullptr )
+    {
+        buf_ptr  = tmp_buf;            // First half of the array
+        buf_ptr2 = tmp_buf + len_xy;   // Second half of the array
+    }
+    else
+    {
+        buffer   = std::make_unique<double[]>( len_xy * 2 );
+        buf_ptr  = buffer.get();       // First half of the array
+        buf_ptr2 = buf_ptr + len_xy;   // Second half of the array
+    }
 
     // First, perform IDWT along Y for every column
     if( len_y % 2 == 0 )    // Even length
