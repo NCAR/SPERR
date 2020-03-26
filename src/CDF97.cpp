@@ -83,14 +83,14 @@ void speck::CDF97::dwt2d()
         m_data_buf[i] -= m_data_mean;
 
     size_t num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
-    m_dwt2d( m_data_buf.get(), num_xforms_xy );
+    m_dwt2d( m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy );
 }
 
 
 void speck::CDF97::idwt2d()
 {
     size_t num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
-    m_idwt2d( m_data_buf.get(), num_xforms_xy );
+    m_idwt2d( m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy );
 
     for( size_t i = 0; i < m_buf_len; i++ )
         m_data_buf[i] += m_data_mean;
@@ -156,7 +156,7 @@ else                    // Odd length
     }
 
 
-    m_dwt2d( m_data_buf.get(), num_xforms_xy );
+    //m_dwt2d( m_data_buf.get(), num_xforms_xy );
 }
 
     
@@ -202,25 +202,25 @@ void speck::CDF97::m_calc_mean()
 }
 
 
-void speck::CDF97::m_dwt2d( double* plane, size_t num_of_lev )
+void speck::CDF97::m_dwt2d( double* plane, size_t dim_x, size_t dim_y, size_t num_of_lev )
 {
     std::array<size_t, 2> len_x, len_y;
     for( size_t lev = 0; lev < num_of_lev; lev++ )
     {
-        speck::calc_approx_detail_len( m_dim_x, lev, len_x );
-        speck::calc_approx_detail_len( m_dim_y, lev, len_y );
+        speck::calc_approx_detail_len( dim_x, lev, len_x );
+        speck::calc_approx_detail_len( dim_y, lev, len_y );
         m_dwt2d_one_level( plane, len_x[0], len_y[0] );
     }
 }
 
 
-void speck::CDF97::m_idwt2d( double* plane, size_t num_of_lev )
+void speck::CDF97::m_idwt2d( double* plane, size_t dim_x, size_t dim_y, size_t num_of_lev )
 {
     std::array<size_t, 2> len_x, len_y;
     for( size_t lev = num_of_lev; lev > 0; lev-- )
     {
-        speck::calc_approx_detail_len( m_dim_x, lev - 1, len_x );
-        speck::calc_approx_detail_len( m_dim_y, lev - 1, len_y );
+        speck::calc_approx_detail_len( dim_x, lev - 1, len_x );
+        speck::calc_approx_detail_len( dim_y, lev - 1, len_y );
         m_idwt2d_one_level( plane, len_x[0], len_y[0] );
     }
 }

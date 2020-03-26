@@ -63,12 +63,14 @@ private:
                    double* tmp_buf = nullptr );
                             // Multiple levels of 2D IDWT on a given array of length len.
                             // Refer to m_dwt1d() for the requirement of tmp_buf.
-    void m_dwt2d(  double* plane, size_t num_of_xforms );
+    void m_dwt2d(  double* plane, size_t dim_x, size_t dim_y, size_t num_of_xforms );
                             // Multiple levels of 2D DWT on a given plane by repeatedly
                             // invoking m_dwt2d_one_level().
-    void m_idwt2d( double* plane, size_t num_of_xforms );
+                            // The plane has a dimension (dim_x, dim_y).
+    void m_idwt2d( double* plane, size_t dim_x, size_t dim_y, size_t num_of_xforms );
                             // Multiple levels of 2D IDWT on a given plane by repeatedly
                             // invoking m_idwt2d_one_level().
+                            // The plane has a dimension (dim_x, dim_y).
     void m_dwt2d_one_level( double* plane, size_t len_x, size_t len_y ); 
                             // Perform one level of 2D dwt on a given plane (dim_x, dim_y),
                             // specifically on its top left (len_x, len_y) subset.
