@@ -33,15 +33,15 @@ public:
     void   get_dims( std::array<size_t, 3>& ) const;    // 3D case 
 
     // Action items
-    void reset();       // Reset this class to its initial state.
-    void  dwt1d();
-    void idwt1d();
+    void  reset();      // Reset this class to its initial state.
     void  dwt2d();      // 1) calculates the number of levels of dwt,
                         // 2) subtract mean of the data,
                         // 3) perform the actual dwt.
     void idwt2d();      // 1) calculates the number of levels of dwt,
                         // 2) perform the actual idwt
                         // 3) add the mean back to the data
+    void  dwt1d();
+    void idwt1d();
     void  dwt3d();
     void idwt3d();
 private:
@@ -53,10 +53,16 @@ private:
     //       Thus, raw pointers are used here.
     //
     void m_calc_mean();     // Calculate m_data_mean from m_data_buf
-    void m_dwt1d(  double* array, size_t array_len, size_t num_of_xforms );
+    void m_dwt1d(  double* array, size_t array_len, size_t num_of_xforms,
+                   double* tmp_buf = nullptr );
                             // Multiple levels of 2D DWT on a given array of length len.
-    void m_idwt1d( double* array, size_t array_len, size_t num_of_xforms );
+                            // An optional buffer space (tmp_buf) could be passed in for
+                            // this method to work on. If so, its memory space should be
+                            // already allocated with at least array_len in size.
+    void m_idwt1d( double* array, size_t array_len, size_t num_of_xforms,
+                   double* tmp_buf = nullptr );
                             // Multiple levels of 2D IDWT on a given array of length len.
+                            // Refer to m_dwt1d() for the requirement of tmp_buf.
     void m_dwt2d(  double* plane, size_t num_of_xforms );
                             // Multiple levels of 2D DWT on a given plane by repeatedly
                             // invoking m_dwt2d_one_level().

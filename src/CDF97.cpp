@@ -104,10 +104,10 @@ void speck::CDF97::dwt3d()
         m_data_buf[i] -= m_data_mean;
 
     auto num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
-    auto num_xforms_z  = speck::calc_num_of_xforms( m_dim_z );
 
     // First transform along the Z dimension
     const size_t plane_size = m_dim_x * m_dim_y;
+    auto num_xforms_z  = speck::calc_num_of_xforms( m_dim_z );
     buffer_type_d tmp  = std::make_unique< double[] >( m_dim_z * 2 );
     double* const ptr  = tmp.get();
     double* const ptr2 = ptr + m_dim_z;
@@ -226,12 +226,20 @@ void speck::CDF97::m_idwt2d( double* plane, size_t num_of_lev )
 }
 
 
-void speck::CDF97::m_dwt1d( double* array, size_t array_len, size_t num_of_lev )
+void speck::CDF97::m_dwt1d( double* array, size_t array_len, size_t num_of_lev,
+                            double* tmp_buf                                   )
 {
-    std::array<size_t, 2> approx;
-    buffer_type_d buf     = std::make_unique< double[] >( array_len );
-    double* const ptr     = buf.get();
+    double* ptr;
+    buffer_type_d buf;
+    if( tmp_buf != nullptr )
+        ptr = tmp_buf;
+    else
+    {
+        buf = std::make_unique< double[] >( array_len );
+        ptr = buf.get();
+    }
     
+    std::array<size_t, 2> approx;
     for( size_t lev = 0; lev < num_of_lev; lev++ )
     {
         speck::calc_approx_detail_len( array_len, lev, approx );
@@ -250,12 +258,20 @@ void speck::CDF97::m_dwt1d( double* array, size_t array_len, size_t num_of_lev )
 }
 
 
-void speck::CDF97::m_idwt1d( double* array, size_t array_len, size_t num_of_lev )
+void speck::CDF97::m_idwt1d( double* array, size_t array_len, size_t num_of_lev,
+                             double* tmp_buf                                   )
 {
-    std::array<size_t, 2> approx;
-    buffer_type_d buf     = std::make_unique< double[] >( array_len );
-    double* const ptr     = buf.get();
+    double*       ptr;
+    buffer_type_d buf;
+    if( tmp_buf != nullptr )
+        ptr = tmp_buf;
+    else
+    {
+        buf = std::make_unique< double[] >( array_len );
+        ptr = buf.get();
+    }
     
+    std::array<size_t, 2> approx;
     for( size_t lev = num_of_lev; lev > 0; lev-- )
     {
         speck::calc_approx_detail_len( array_len, lev - 1, approx );
