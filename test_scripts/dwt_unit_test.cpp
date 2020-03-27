@@ -167,5 +167,83 @@ TEST( dwt2d, big_image_odd )
     }
 }
 
+TEST( dwt3d, small_even_cube )
+{
+    const char*   input = "../test_data/wmag16.float";
+    size_t  dim_x = 16, dim_y = 16, dim_z = 16;
+    const size_t  total_vals = dim_x * dim_y * dim_z;
+
+    // Let read in binaries as 4-byte floats
+    std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
+    if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
+        std::cerr << "Input read error!" << std::endl;
+
+    // Use a speck::CDF97 to perform DWT and IDWT.
+    speck::CDF97 cdf;
+    cdf.set_dims( dim_x, dim_y, dim_z );
+    cdf.copy_data( in_buf, total_vals );
+    cdf.dwt3d();
+    cdf.idwt3d();
+
+    // Claim that with single precision, the result is identical to the input
+    const auto& result = cdf.get_read_only_data();
+    for( size_t i = 0; i < total_vals; i++ )
+    {
+        EXPECT_EQ( in_buf[i], float(result[i]) );
+    }
+}
+
+TEST( dwt3d, big_odd_cube )
+{
+    const char*   input = "../test_data/wmag91.float";
+    size_t  dim_x = 91, dim_y = 91, dim_z = 91;
+    const size_t  total_vals = dim_x * dim_y * dim_z;
+
+    // Let read in binaries as 4-byte floats
+    std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
+    if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
+        std::cerr << "Input read error!" << std::endl;
+
+    // Use a speck::CDF97 to perform DWT and IDWT.
+    speck::CDF97 cdf;
+    cdf.set_dims( dim_x, dim_y, dim_z );
+    cdf.copy_data( in_buf, total_vals );
+    cdf.dwt3d();
+    cdf.idwt3d();
+
+    // Claim that with single precision, the result is identical to the input
+    const auto& result = cdf.get_read_only_data();
+    for( size_t i = 0; i < total_vals; i++ )
+    {
+        EXPECT_EQ( in_buf[i], float(result[i]) );
+    }
+}
+
+TEST( dwt3d, big_even_cube )
+{
+    const char*   input = "../test_data/wmag128.float";
+    size_t  dim_x = 128, dim_y = 128, dim_z = 128;
+    const size_t  total_vals = dim_x * dim_y * dim_z;
+
+    // Let read in binaries as 4-byte floats
+    std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
+    if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
+        std::cerr << "Input read error!" << std::endl;
+
+    // Use a speck::CDF97 to perform DWT and IDWT.
+    speck::CDF97 cdf;
+    cdf.set_dims( dim_x, dim_y, dim_z );
+    cdf.copy_data( in_buf, total_vals );
+    cdf.dwt3d();
+    cdf.idwt3d();
+
+    // Claim that with single precision, the result is identical to the input
+    const auto& result = cdf.get_read_only_data();
+    for( size_t i = 0; i < total_vals; i++ )
+    {
+        EXPECT_EQ( in_buf[i], float(result[i]) );
+    }
+}
+
 
 }

@@ -103,60 +103,92 @@ void speck::CDF97::dwt3d()
     for( size_t i = 0; i < m_buf_len; i++ )
         m_data_buf[i] -= m_data_mean;
 
-    auto num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
+    size_t max_dim = std::max( m_dim_x, m_dim_y );
+           max_dim = std::max( max_dim, m_dim_z );
+    buffer_type_d tmp_buf   = std::make_unique< double[] >( max_dim * 2 );
+    const size_t plane_size = m_dim_x * m_dim_y;
 
     // First transform along the Z dimension
-    const size_t plane_size = m_dim_x * m_dim_y;
-    auto num_xforms_z  = speck::calc_num_of_xforms( m_dim_z );
-    buffer_type_d tmp  = std::make_unique< double[] >( m_dim_z * 2 );
-    double* const ptr  = tmp.get();
-    double* const ptr2 = ptr + m_dim_z;
-    for( size_t offset = 0; offset < plane_size; offset++ )
-    {
-#if 0
-        // Fill 1st half of the buffer
+    buffer_type_d array_z = std::make_unique< double[] >( m_dim_z );
+    auto num_xforms_z     = speck::calc_num_of_xforms( m_dim_z );
+    {   // Fill the first Z array
         for( size_t i = 0; i < m_dim_z; i++ )
-            ptr[i] = m_data_buf[ offset + plane_size * i ];
+            array_z[i] = m_data_buf[ plane_size * i ];
+    }
+    for( size_t offset = 0; offset < plane_size - 1; offset++ )
+    {   // Iterate for every Z array except the last one
+        m_dwt1d( array_z.get(), m_dim_z, num_xforms_z, tmp_buf.get() );
 
-        // Perform 1D DWT
-        if( m_dim_z % 2 == 0 )
+        // Put back coefficients, and also retrieve the next array.
+        for( size_t i = 0; i < m_dim_z; i++ )
         {
-            for( size_t i = 0; i < 
-            this->QccWAVCDF97AnalysisSymmetricEvenEven( buf_ptr, len_x );
-            m_gather_
+            size_t idx = offset + plane_size * i;
+            m_data_buf[ idx ] = array_z[i];
+            array_z[i] = m_data_buf[ idx + 1 ];
         }
+    }
+    {   // Deal with the last Z array
+        size_t offset = plane_size - 1;
+        m_dwt1d( array_z.get(), m_dim_z, num_xforms_z, tmp_buf.get() );
+        for( size_t i = 0; i < m_dim_z; i++ )
+            m_data_buf[ offset + plane_size * i ] = array_z[i];
+    }
 
-        
-// First, perform DWT along X for every row
-if( len_x % 2 == 0 )    // Even length
-{
-    for( size_t i = 0; i < len_y; i++ )
+    // Second transform each plane
+    auto num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
+    for( size_t i = 0; i < m_dim_z; i++ )
     {
-        auto* pos = plane + i * m_dim_x;
-        std::memcpy( buf_ptr, pos, sizeof(double) * len_x );
-        this->QccWAVCDF97AnalysisSymmetricEvenEven( buf_ptr, len_x );
-        // pub back the resluts in low-pass and high-pass groups
-        m_gather_even( pos, buf_ptr, len_x );
-    }
+        size_t offset = plane_size * i;
+        m_dwt2d( m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, 
+                 tmp_buf.get() );
+    } 
 }
-else                    // Odd length
+
+
+void speck::CDF97::idwt3d()
 {
-    for( size_t i = 0; i < len_y; i++ )
+    size_t max_dim = std::max( m_dim_x, m_dim_y );
+           max_dim = std::max( max_dim, m_dim_z );
+    buffer_type_d tmp_buf   = std::make_unique< double[] >( max_dim * 2 );
+    const size_t plane_size = m_dim_x * m_dim_y;
+
+    // First, inverse transform each plane
+    auto num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
+    for( size_t i = 0; i < m_dim_z; i++ )
     {
-        auto* pos = plane + i * m_dim_x;
-        std::memcpy( buf_ptr, pos, sizeof(double) * len_x );
-        this->QccWAVCDF97AnalysisSymmetricOddEven( buf_ptr, len_x );
-        // pub back the resluts in low-pass and high-pass groups
-        m_gather_odd( pos, buf_ptr, len_x );
+        size_t offset = plane_size * i;
+        m_idwt2d( m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, 
+                  tmp_buf.get() );
+    } 
+
+    // Second, inverse transform along the Z dimension
+    buffer_type_d array_z = std::make_unique< double[] >( m_dim_z );
+    auto num_xforms_z     = speck::calc_num_of_xforms( m_dim_z );
+    {   // Fill the first Z array
+        for( size_t i = 0; i < m_dim_z; i++ )
+            array_z[i] = m_data_buf[ plane_size * i ];
     }
-}
-#endif
+    for( size_t offset = 0; offset < plane_size - 1; offset++ )
+    {   // Iterate for every Z array except the last one
+        m_idwt1d( array_z.get(), m_dim_z, num_xforms_z, tmp_buf.get() );
 
-
+        // Put back coefficients, and also retrieve the next array.
+        for( size_t i = 0; i < m_dim_z; i++ )
+        {
+            size_t idx = offset + plane_size * i;
+            m_data_buf[ idx ] = array_z[i];
+            array_z[i] = m_data_buf[ idx + 1 ];
+        }
+    }
+    {   // Deal with the last Z array
+        size_t offset = plane_size - 1;
+        m_idwt1d( array_z.get(), m_dim_z, num_xforms_z, tmp_buf.get() );
+        for( size_t i = 0; i < m_dim_z; i++ )
+            m_data_buf[ offset + plane_size * i ] = array_z[i];
     }
 
-
-    //m_dwt2d( m_data_buf.get(), num_xforms_xy );
+    for( size_t i = 0; i < m_buf_len; i++ )
+        m_data_buf[i] += m_data_mean;
 }
 
     
