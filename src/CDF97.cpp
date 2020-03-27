@@ -108,15 +108,25 @@ void speck::CDF97::dwt3d()
     buffer_type_d tmp_buf   = std::make_unique< double[] >( max_dim * 2 );
     const size_t plane_size = m_dim_x * m_dim_y;
 
+    /*
+     * Note on the order of performing transforms in 3 dimensions: 
+     * this implementation follows QccPack's example.
+     *
+     * Note on the choice to not transpose the volume: it is tested to be faster 
+     * this way on all platforms (a MacBook, a Linux desktop, and an Arm Cluster).
+     */
+
     // First transform along the Z dimension
     buffer_type_d array_z = std::make_unique< double[] >( m_dim_z );
     auto num_xforms_z     = speck::calc_num_of_xforms( m_dim_z );
-    {   // Fill the first Z array
+    {   
+        // Fill the first Z array
         for( size_t i = 0; i < m_dim_z; i++ )
             array_z[i] = m_data_buf[ plane_size * i ];
     }
     for( size_t offset = 0; offset < plane_size - 1; offset++ )
-    {   // Iterate for every Z array except the last one
+    {   
+        // Iterate for every Z array except the last one
         m_dwt1d( array_z.get(), m_dim_z, num_xforms_z, tmp_buf.get() );
 
         // Put back coefficients, and also retrieve the next array.
@@ -164,12 +174,14 @@ void speck::CDF97::idwt3d()
     // Second, inverse transform along the Z dimension
     buffer_type_d array_z = std::make_unique< double[] >( m_dim_z );
     auto num_xforms_z     = speck::calc_num_of_xforms( m_dim_z );
-    {   // Fill the first Z array
+    {   
+        // Fill the first Z array
         for( size_t i = 0; i < m_dim_z; i++ )
             array_z[i] = m_data_buf[ plane_size * i ];
     }
     for( size_t offset = 0; offset < plane_size - 1; offset++ )
-    {   // Iterate for every Z array except the last one
+    {   
+        // Iterate for every Z array except the last one
         m_idwt1d( array_z.get(), m_dim_z, num_xforms_z, tmp_buf.get() );
 
         // Put back coefficients, and also retrieve the next array.
@@ -261,7 +273,7 @@ void speck::CDF97::m_idwt2d( double* plane, size_t len_x, size_t len_y, size_t n
 
 
 void speck::CDF97::m_dwt1d( double* array, size_t array_len, size_t num_of_lev,
-                            double* tmp_buf                                   )
+                            double* tmp_buf )
 {
     double* ptr;
     buffer_type_d buf;
@@ -293,7 +305,7 @@ void speck::CDF97::m_dwt1d( double* array, size_t array_len, size_t num_of_lev,
 
 
 void speck::CDF97::m_idwt1d( double* array, size_t array_len, size_t num_of_lev,
-                             double* tmp_buf                                   )
+                             double* tmp_buf )
 {
     double*       ptr;
     buffer_type_d buf;
@@ -521,61 +533,6 @@ void speck::CDF97::m_scatter_odd( double* dest, const double* orig, size_t len )
         dest[i*2+1] = orig[counter++];
 }
 
-
-//                 Z
-//                /
-//               /
-//              /---------
-//       cut_z /        /|
-//            /        / |
-//            |-------|  |---------X
-//            |       |  /
-//      cut_y |       | /
-//            |       |/
-//            |--------
-//            |  cut_x
-//            |
-//            Y
-
-void speck::CDF97::m_cut_transpose_XtoZ( double* dest,     size_t cut_len_x, 
-                                         size_t cut_len_y, size_t cut_len_z ) const
-{
-    // This operation essentially swaps the X and Z indices, so we have
-    const size_t dest_len_x = cut_len_z;
-    const size_t dest_len_y = cut_len_y;
-    const size_t dest_len_z = cut_len_x;
-
-    const size_t plane_size = m_dim_x * m_dim_y;
-    size_t counter = 0;
-    for( size_t z = 0; z < dest_len_z; z++ )
-        for( size_t y = 0; y < dest_len_y; y++ )
-            for( size_t x = 0; x < dest_len_x; x++ )
-            {
-                size_t src_x   = z;
-                size_t src_y   = y;
-                size_t src_z   = x;
-                size_t src_idx = src_z * plane_size + src_y * m_dim_x + src_x;
-                dest[ counter++ ]  = m_data_buf[ src_idx ];
-            }
-}
-void speck::CDF97::m_transpose_put_back_ZtoX( const double* buf, size_t len_x, 
-                                              size_t len_y,      size_t len_z ) const
-{
-    // This operation essentially swaps the X and Z indices, so we have
-    const size_t plane_size = m_dim_x * m_dim_y;
-    size_t counter = 0;
-
-    for( size_t z = 0; z < len_z; z++ )
-        for( size_t y = 0; y < len_y; y++ )
-            for( size_t x = 0; x < len_x; x++ )
-            {
-                auto dest_x   = z;
-                auto dest_y   = y;
-                auto dest_z   = x;
-                auto dest_idx = dest_z * plane_size + dest_y * m_dim_x + dest_x;
-                m_data_buf[ dest_idx ] = buf[ counter++ ];
-            }
-}
 
 //
 // Methods from QccPack

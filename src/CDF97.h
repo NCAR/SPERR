@@ -102,15 +102,6 @@ private:
                             // space should be allocated by the caller.
                             // Note 2: two versions for even and odd length input.
 
-    void m_cut_transpose_XtoZ( double* dest, size_t x, size_t y, size_t z ) const;
-                            // Cut a smaller cube (x, y, z) from the main buffer.
-                            // It also transposes this cube from X-varying-fastest to
-                            // Z-varying fastest.
-                            // The destination buffer should already be allocated.
-    void m_transpose_put_back_ZtoX( const double* buf, size_t x, size_t y, size_t z ) const;
-                            // Transpose a cube of size (x, y, z) by swapping X and Z
-                            // indices, and then put back to the main buffer.
-
     //
     // Methods from QccPack, keep their original names.
     //
