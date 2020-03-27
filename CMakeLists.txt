@@ -15,9 +15,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 option( BUILD_UNIT_TESTS "Build unit tests using googletest?" OFF)
-option( EIGHT_BYTE_SPECK_SET "Use eight bytes for speck sets?" OFF)
-option( PRINT "Compile print statements for debug purpose?" OFF)
-option( TIME  "Compile timing code for debug purpose?" OFF)
+option( TIME_EXAMPLES  "Compile timing code for debug purpose?" OFF)
 option( BUILD_QCC_EXAMPLES "Build examples that link to QccPack?" OFF)
 
 # configure a header file to pass some of the CMake settings to the source code

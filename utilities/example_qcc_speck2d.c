@@ -4,7 +4,6 @@
  */
 
 #define HAVE_SPECK
-#define TIME
 
 #include "libQccPack.h"
 #include "sam_helper.h"
@@ -13,7 +12,7 @@
 
 #include "SpeckConfig.h"
 
-#ifdef TIME
+#ifdef TIME_EXAMPLES
 #include <sys/time.h>
 #endif
 
@@ -143,7 +142,7 @@ int main( int argc, char** argv )
     }
 
     /* Encode to a bitstream, and write to the bit stream. */
-#ifdef TIME
+#ifdef TIME_EXAMPLES
     struct timeval start, end;
     gettimeofday( &start, NULL );
 #endif
@@ -203,7 +202,7 @@ int main( int argc, char** argv )
         free( in_array );
         return 1;
     }
-#ifdef TIME
+#ifdef TIME_EXAMPLES
     gettimeofday( &end, NULL );
     long elapsed = (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec;
     printf("qcc takes milliseconds: %f\n", (float)elapsed / 1000.0f );

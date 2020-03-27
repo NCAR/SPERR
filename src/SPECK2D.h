@@ -19,15 +19,10 @@ enum class SetType : unsigned char
 class SPECKSet2D
 {
 public:
-#ifdef EIGHT_BYTE_SPECK_SET
-    using UINT = uint64_t;   // unsigned long
-#else
-    using UINT = uint32_t;   // unsigned int
-#endif
-    
     //
     // Member data
     //
+    using UINT          = uint32_t;   // unsigned int
     UINT  start_x       = 0;
     UINT  start_y       = 0;
     UINT  length_x      = 0;   
