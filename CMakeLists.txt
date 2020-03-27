@@ -40,6 +40,11 @@ add_executable( example_speck2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_s
 target_link_libraries(      example_speck2d PUBLIC ${SPECK_LIBS})
 target_include_directories( example_speck2d PUBLIC ${PROJECT_BINARY_DIR} )
 
+# Executable #3
+add_executable( example_dwt3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt3d.cpp" )
+target_link_libraries(      example_dwt3d PUBLIC ${SPECK_LIBS})
+target_include_directories( example_dwt3d PUBLIC ${PROJECT_BINARY_DIR} )
+
 if( BUILD_QCC_EXAMPLES )
     set ( QCCPACK_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/QccPack-0.61-1/install/" 
                               CACHE STRING "Where QccPack is installed"             )
