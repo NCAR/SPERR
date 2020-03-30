@@ -6,6 +6,12 @@
 #include <algorithm>
 
 
+// Constructor
+speck::SPECK2D::SPECK2D()
+{
+    m_I.type = SetType::TypeI;
+}
+
 void speck::SPECK2D::assign_dims( size_t dx, size_t dy )
 {
     m_dim_x = dx;
@@ -133,7 +139,7 @@ void speck::SPECK2D::m_initialize_sets_lists()
     m_LIS_garbage_cnt.assign( num_of_parts + 1, 0 );
 
     // prepare the root, S
-    SPECKSet2D S( SetType::TypeS );
+    SPECKSet2D S;
     S.part_level = num_of_xforms;
     m_calc_root_size( S );
     m_LIS[ S.part_level ].push_back( S );
@@ -249,12 +255,13 @@ int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool need_decide_sign
         }
         else
         {
+            // In decode mode, this function reads a bit.
             if( (rtn = m_decide_set_significance( set )) )
                 return rtn;
 #ifdef PRINT
-            auto bit = ( set.signif == Significance::Sig );
-            std::string str = bit ? "s1" : "s0";
-            std::cout << str << std::endl;
+    auto bit = ( set.signif == Significance::Sig );
+    std::string str = bit ? "s1" : "s0";
+    std::cout << str << std::endl;
 #endif
         }
     }
@@ -392,9 +399,9 @@ int speck::SPECK2D::m_process_I()
         if( (rtn = m_decide_set_significance( m_I )) )
             return rtn;
 #ifdef PRINT
-        auto bit = ( m_I.signif == Significance::Sig );
-        std::string str = bit ? "s1" : "s0";
-        std::cout << str << std::endl;
+    auto bit = ( m_I.signif == Significance::Sig );
+    std::string str = bit ? "s1" : "s0";
+    std::cout << str << std::endl;
 #endif
     }
 
@@ -768,8 +775,3 @@ bool speck::SPECKSet2D::is_empty() const
 {
     return ( length_x == 0 || length_y == 0 );
 }
-
-// Constructor
-speck::SPECKSet2D::SPECKSet2D( SetType t )
-                 : type( t )
-{ }

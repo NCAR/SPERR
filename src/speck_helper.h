@@ -27,6 +27,13 @@ namespace speck
         Empty
     };
 
+    enum class SetType : unsigned char
+    {
+        TypeS,
+        TypeI,
+        Garbage
+    };
+
 
     //
     // Helper functions

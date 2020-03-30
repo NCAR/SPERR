@@ -9,13 +9,6 @@ namespace speck
 //
 // Auxiliary class to hold a SPECK Set
 //
-enum class SetType : unsigned char
-{
-    TypeS,
-    TypeI,
-    Garbage
-};
-
 class SPECKSet2D
 {
 public:
@@ -35,10 +28,8 @@ public:
     //
     // Member functions
     //
-    SPECKSet2D() = default;
-    SPECKSet2D( SetType t );
-    bool         is_pixel() const;
-    bool         is_empty() const;
+    bool is_pixel() const;
+    bool is_empty() const;
 };
 
 
@@ -48,6 +39,9 @@ public:
 class SPECK2D : public SPECK_Storage
 {
 public:
+    // Constructor
+    SPECK2D();
+
     // trivial input
     void     assign_dims( size_t, size_t );     // Accepts plane dimension
     void     assign_max_coeff_bits( uint16_t ); // (Useful for reconstruction)
@@ -117,7 +111,7 @@ private:
     std::vector< SPECKSet2D >               m_LSP;
     std::vector< std::vector<SPECKSet2D> >  m_LIS;
     std::vector< size_t >                   m_LIS_garbage_cnt;
-    SPECKSet2D                              m_I  = SPECKSet2D( SetType::TypeI );
+    SPECKSet2D                              m_I; 
 };
 
 };
