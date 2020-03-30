@@ -562,7 +562,6 @@ int speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
 }
 
 
-// Output by printing it out
 int speck::SPECK2D::m_output_set_significance( const SPECKSet2D& set )
 {
 #ifdef PRINT
@@ -715,8 +714,8 @@ void speck::SPECK2D::m_clean_LIS()
     {
         // Only consolidate memory if the garbage amount is big enough, 
         // in both absolute and relative senses.
-        if( m_LIS_garbage_cnt[i] > m_vec_init_capacity && 
-            m_LIS_garbage_cnt[i] > m_LIS[i].size() / 2  )
+        if( m_LIS_garbage_cnt[i] >  m_vec_init_capacity && 
+            m_LIS_garbage_cnt[i] >= m_LIS[i].size() / 2  )
         {
             tmp.clear();
             tmp.reserve( m_vec_init_capacity );

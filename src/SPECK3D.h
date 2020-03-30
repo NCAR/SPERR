@@ -15,7 +15,6 @@ public:
     //
     // Member data
     //
-    using UINT          = uint32_t;   // unsigned int
     UINT  start_x       = 0;
     UINT  start_y       = 0;
     UINT  start_z       = 0;
@@ -56,11 +55,21 @@ public:
     //int decode();
 
 private:
-#if 0
     //
     // Note: for methods returning an integer, 0 means normal execution, and
     // 1 means bit budget met. 
     //
+    void m_clean_LIS();   // Clean garbage sets from m_LIS if too much garbage exists.
+    // In encoding mode, it examines the significance of "set," and store the information
+    //  of its 8 descendants in "sigs."
+    //  It always returns 0 in this mode.
+    // In decoding mode, it simply reads a bit from the bit buffer.
+    //  In this mode, it returns 1 to indicate bit budget met, 0 otherwise. 
+    int  m_decide_setS_significance( SPECKSet3D& set, std::array<speck::Significance, 8>& sigs );
+    int  m_decide_setI_significance( SPECKSet3D& set, std::array<speck::Significance, 7>& sigs );
+    int  m_output_set_significance( const SPECKSet3D& set );
+
+#if 0
     int  m_sorting_pass( );
     int  m_refinement_pass( );
     // For the following 2 methods, indices are used to locate which set to process from m_LIS,
@@ -72,17 +81,14 @@ private:
     void m_initialize_sets_lists();
     void m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D, 4>& subsets ) const;
     void m_partition_I( std::array<SPECKSet2D, 3>& subsets );
-    int  m_decide_set_significance( SPECKSet2D& set );  // both encoding and decoding
-    int  m_output_set_significance( const SPECKSet2D& set );
-    int  m_output_pixel_sign( const SPECKSet2D& pixel );
     int  m_input_pixel_sign(  const SPECKSet2D& pixel );
-    int  m_output_refinement( const SPECKSet2D& pixel );
+    int  m_output_pixel_sign( const SPECKSet2D& pixel );
     int  m_input_refinement(  const SPECKSet2D& pixel );
+    int  m_output_refinement( const SPECKSet2D& pixel );
 
     void m_calc_root_size( SPECKSet2D& root ) const;
     // How many partitions available to perform given the 2D dimensions?
     size_t m_num_of_partitions() const; 
-    void m_clean_LIS();   // Clean garbage sets from m_LIS if too much garbage exists.
     bool m_ready_to_encode() const;
     bool m_ready_to_decode() const;
 #endif

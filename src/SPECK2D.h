@@ -15,7 +15,6 @@ public:
     //
     // Member data
     //
-    using UINT          = uint32_t;   // unsigned int
     UINT  start_x       = 0;
     UINT  start_y       = 0;
     UINT  length_x      = 0;   
@@ -70,12 +69,12 @@ private:
     void m_initialize_sets_lists();
     void m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D, 4>& subsets ) const;
     void m_partition_I( std::array<SPECKSet2D, 3>& subsets );
-    int  m_decide_set_significance( SPECKSet2D& set );  // both encoding and decoding
+    int  m_decide_set_significance( SPECKSet2D& set );  // input when decoding
     int  m_output_set_significance( const SPECKSet2D& set );
-    int  m_output_pixel_sign( const SPECKSet2D& pixel );
     int  m_input_pixel_sign(  const SPECKSet2D& pixel );
-    int  m_output_refinement( const SPECKSet2D& pixel );
+    int  m_output_pixel_sign( const SPECKSet2D& pixel );
     int  m_input_refinement(  const SPECKSet2D& pixel );
+    int  m_output_refinement( const SPECKSet2D& pixel );
 
     void m_calc_root_size( SPECKSet2D& root ) const;
     // How many partitions available to perform given the 2D dimensions?
