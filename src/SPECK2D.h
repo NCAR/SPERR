@@ -99,7 +99,7 @@ private:
 #endif
     size_t      m_budget    = 0;            // What's the budget for num of bits?
     size_t      m_bit_idx   = 0;            // Used for decode. Which bit we're at?
-    size_t      m_max_coefficient_bits = 0; // = log2(max_coefficient)
+    uint16_t    m_max_coefficient_bits = 0; // = log2(max_coefficient)
     size_t      m_dim_x       = 0;          // 2D plane dims
     size_t      m_dim_y       = 0;
     bool        m_encode_mode = true;       // Encode (true) or Decode (false) mode?
