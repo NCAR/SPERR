@@ -40,23 +40,23 @@ public:
 //
 // Main SPECK3D class
 //
-#if 0
-class SPECK2D : public SPECK_Storage
+class SPECK3D : public SPECK_Storage
 {
 public:
     // trivial input
-    void     assign_dims( size_t, size_t );     // Accepts plane dimension
-    void     assign_max_coeff_bits( uint16_t ); // (Useful for reconstruction)
-    void     assign_bit_budget( size_t );       // How many bits does speck process? 
+    void assign_dims( size_t, size_t, size_t ); // Accepts volume dimension
+    void assign_max_coeff_bits( uint16_t );     // (Useful for reconstruction)
+    void assign_bit_budget( size_t );           // How many bits does speck process? 
 
     // trivial output
     uint16_t get_max_coeff_bits()   const;
 
     // core operations
-    int encode();
-    int decode();
+    //int encode();
+    //int decode();
 
 private:
+#if 0
     //
     // Note: for methods returning an integer, 0 means normal execution, and
     // 1 means bit budget met. 
@@ -85,6 +85,7 @@ private:
     void m_clean_LIS();   // Clean garbage sets from m_LIS if too much garbage exists.
     bool m_ready_to_encode() const;
     bool m_ready_to_decode() const;
+#endif
 
 #ifdef PRINT
     void m_print_set( const char*, const SPECKSet2D& set ) const;
@@ -101,7 +102,7 @@ private:
 #endif
     size_t      m_budget    = 0;            // What's the budget for num of bits?
     size_t      m_bit_idx   = 0;            // Used for decode. Which bit we're at?
-    size_t      m_max_coefficient_bits = 0; // = log2(max_coefficient)
+    uint16_t    m_max_coefficient_bits = 0; // = log2(max_coefficient)
     size_t      m_dim_x       = 0;          // 3D volume dims
     size_t      m_dim_y       = 0;
     size_t      m_dim_z       = 0;
@@ -111,12 +112,11 @@ private:
     std::vector<bool> m_significance_map;
     std::vector<bool> m_sign_array;
 
-    std::vector< SPECKSet2D >               m_LSP;
-    std::vector< std::vector<SPECKSet2D> >  m_LIS;
+    std::vector< SPECKSet3D >               m_LSP;
+    std::vector< std::vector<SPECKSet3D> >  m_LIS;
     std::vector< size_t >                   m_LIS_garbage_cnt;
-    SPECKSet2D                              m_I  = SPECKSet2D( SetType::TypeI );
+    SPECKSet3D                              m_I;
 };
-#endif
 
 };
 
