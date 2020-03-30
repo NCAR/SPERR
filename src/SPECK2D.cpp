@@ -233,13 +233,6 @@ int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool need_decide_sign
 {
     auto& set = m_LIS[idx1][idx2];
 
-    if( set.is_empty() ) // Skip empty sets 
-    {
-        set.type = SetType::Garbage;
-        m_LIS_garbage_cnt[ set.part_level ]++;
-        return 0;
-    }
-
 #ifdef PRINT
     m_print_set( "process_S", set );
 #endif
@@ -317,22 +310,28 @@ int speck::SPECK2D::m_code_S( size_t idx1, size_t idx2 )
     for( size_t i = 0; i < 3; i++ )
     {
         auto& s = subsets[i];
-        m_LIS[ s.part_level ].push_back( s );
-        size_t newidx1 = s.part_level;
-        size_t newidx2 = m_LIS[ newidx1 ].size() - 1;
-        if( (rtn = m_process_S( newidx1, newidx2, true )) )
-            return rtn;
+        if( !s.is_empty() )
+        {
+            m_LIS[ s.part_level ].push_back( s );
+            size_t newidx1 = s.part_level;
+            size_t newidx2 = m_LIS[ newidx1 ].size() - 1;
+            if( (rtn = m_process_S( newidx1, newidx2, true )) )
+                return rtn;
 
-        if( m_LIS[ newidx1 ][ newidx2 ].signif == Significance::Sig ||
-            m_LIS[ newidx1 ][ newidx2 ].signif == Significance::NewlySig )
-            already_sig++;
+            if( m_LIS[ newidx1 ][ newidx2 ].signif == Significance::Sig ||
+                m_LIS[ newidx1 ][ newidx2 ].signif == Significance::NewlySig )
+                already_sig++;
+        }
     }
 
     auto& s4 = subsets[3];
-    bool need_decide_sig = already_sig == 0 ? false : true;
-    m_LIS[ s4.part_level ].push_back( s4 );
-    if( (rtn = m_process_S( s4.part_level, m_LIS[s4.part_level].size() - 1, need_decide_sig )) )
-        return rtn;
+    if( !s4.is_empty() )
+    {
+        bool need_decide_sig = already_sig == 0 ? false : true;
+        m_LIS[ s4.part_level ].push_back( s4 );
+        if( (rtn = m_process_S( s4.part_level, m_LIS[s4.part_level].size() - 1, need_decide_sig )) )
+            return rtn;
+    }
 
     return 0;
 }
@@ -428,22 +427,28 @@ int speck::SPECK2D::m_code_I()
     for( size_t i = 0; i < 2; i++ )
     {
         auto& s = subsets[i];
-        m_LIS[ s.part_level ].push_back( s );
-        size_t newidx1 = s.part_level;
-        size_t newidx2 = m_LIS[ newidx1 ].size() - 1;
-        if( (rtn = m_process_S( newidx1, newidx2, true )) )
-            return rtn;
+        if( !s.is_empty() )
+        {
+            m_LIS[ s.part_level ].push_back( s );
+            size_t newidx1 = s.part_level;
+            size_t newidx2 = m_LIS[ newidx1 ].size() - 1;
+            if( (rtn = m_process_S( newidx1, newidx2, true )) )
+                return rtn;
 
-        if( m_LIS[ newidx1 ][ newidx2 ].signif == Significance::Sig ||
-            m_LIS[ newidx1 ][ newidx2 ].signif == Significance::NewlySig )
-            already_sig++;
+            if( m_LIS[ newidx1 ][ newidx2 ].signif == Significance::Sig ||
+                m_LIS[ newidx1 ][ newidx2 ].signif == Significance::NewlySig )
+                already_sig++;
+        }
     }
 
     auto& s3 = subsets[2];
-    bool need_decide_sig = already_sig == 0 ? false : true;
-    m_LIS[ s3.part_level ].push_back( s3 );
-    if( (rtn = m_process_S( s3.part_level, m_LIS[s3.part_level].size() - 1, need_decide_sig )) )
-        return rtn;
+    if( !s3.is_empty() )
+    {
+        bool need_decide_sig = already_sig == 0 ? false : true;
+        m_LIS[ s3.part_level ].push_back( s3 );
+        if( (rtn = m_process_S( s3.part_level, m_LIS[s3.part_level].size() - 1, need_decide_sig )) )
+            return rtn;
+    }
 
     if( (rtn = m_process_I()) )
         return rtn;
