@@ -14,12 +14,11 @@ speck::SPECK2D::SPECK2D()
 
 void speck::SPECK2D::assign_dims( size_t dx, size_t dy )
 {
+    // Sanity Check
+    assert( m_coeff_len == 0 || m_coeff_len == dx * dy );
     m_dim_x = dx;
     m_dim_y = dy;
-    if( m_coeff_len == 0 )
-        m_coeff_len = dx * dy;
-    else
-        assert( m_coeff_len == dx * dy );
+    m_coeff_len = dx * dy;
 }
 
 
