@@ -52,7 +52,7 @@ static const int QccSPECK3DNumSymbols[] =
 
 typedef struct
 {
-  char temporal_splits;
+  char temporal_splits;     /* splits here are xform levels */
   char horizontal_splits;
   char vertical_splits;
   int origin_frame;
@@ -269,7 +269,7 @@ static int QccSPECK3DSetSize(QccSPECK3DSet *set,
       return(1);
     }
   
-  return_value = QccSPECK3DSetShrink(set, mask);
+  return_value = QccSPECK3DSetShrink(set, mask); /* doesn't do anything when mask is empty */
   if (return_value == 2)
     return(2);
   else
@@ -317,8 +317,7 @@ static int QccSPECK3DInsertSet(QccList *LIS,
   
   current_list_node = LIS->start;
   
-  for (splits =
-         set->temporal_splits + set->horizontal_splits + set->vertical_splits;
+  for (splits = set->temporal_splits + set->horizontal_splits + set->vertical_splits;
        splits >= 0;
        splits--)
     {
@@ -367,6 +366,8 @@ static int QccSPECK3DInitialization(QccList *LIS,
       QccWAVSubbandPyramid3DNumLevelsToNumSubbandsPacket(coefficients->temporal_num_levels,
                                                          coefficients->spatial_num_levels);
   
+  /* Not sure what this function does. It seems to append LIS with a node which represents
+     a new list. */
   if (QccSPECK3DLengthenLIS(LIS))
     {
       QccErrorAddMessage("(QccSPECK3DInitialization): Error calling QccSPECK3DLengthenLIS()");
@@ -377,6 +378,7 @@ static int QccSPECK3DInitialization(QccList *LIS,
     {
       if (coefficients->transform_type == QCCWAVSUBBANDPYRAMID3D_PACKET)
         {
+          /* http://qccpack.sourceforge.net/Documentation/QccWAVSubbandPyramid3D.3.html */
           if (QccWAVSubbandPyramid3DCalcLevelFromSubbandPacket(subband,
                                                                coefficients->temporal_num_levels,
                                                                coefficients->spatial_num_levels,
@@ -391,15 +393,16 @@ static int QccSPECK3DInitialization(QccList *LIS,
           set.vertical_splits = set.horizontal_splits;
         }
       else
-        {
+        { /*
           set.horizontal_splits =
             QccWAVSubbandPyramid3DCalcLevelFromSubbandDyadic(subband,
                                                              coefficients->spatial_num_levels);
           set.temporal_splits = set.horizontal_splits;
-          set.vertical_splits = set.horizontal_splits;
+          set.vertical_splits = set.horizontal_splits; */
         }
       
       set.significance = QCCSPECK3D_INSIGNIFICANT;
+      /* this function simply calculates and writes other field of the set object. */
       return_value = QccSPECK3DSetSize(&set,
                                        coefficients,
                                        mask,
@@ -410,7 +413,7 @@ static int QccSPECK3DInitialization(QccList *LIS,
           return(1);
         }
       
-      if (return_value != 2)
+      if (return_value != 2) /* 2 means completely transparent set */
         {
           if ((set_node =
                QccListCreateNode(sizeof(QccSPECK3DSet), &set)) == NULL)
@@ -418,6 +421,8 @@ static int QccSPECK3DInitialization(QccList *LIS,
               QccErrorAddMessage("(QccSPECK3DInitialization): Error calling QccListCreateNode()");
               return(1);
             }
+          /* this method creates many sub-lists for LIS. Each sub-list contains many sets that
+             have the same value = temporal_splits + horizontal_splits + vertical_splits.   */
           if (QccSPECK3DInsertSet(LIS,
                                   set_node,
                                   NULL))
@@ -426,7 +431,7 @@ static int QccSPECK3DInitialization(QccList *LIS,
               return(1);
             }
         }
-    }
+    }  /* finish processing a subband */
   
   QccListInitialize(LSP);
   
@@ -451,8 +456,7 @@ static void QccSPECK3DFreeLIS(QccList *LIS)
 }
 
 
-static int QccSPECK3DSignificanceMap(const QccWAVSubbandPyramid3D
-                                     *coefficients,
+static int QccSPECK3DSignificanceMap(const QccWAVSubbandPyramid3D *coefficients,
                                      const QccWAVSubbandPyramid3D *mask,
                                      unsigned char ***state_array,
                                      double threshold)
@@ -466,15 +470,14 @@ static int QccSPECK3DSignificanceMap(const QccWAVSubbandPyramid3D
     for (row = 0; row < coefficients->num_rows; row++)
       for (col = 0; col < coefficients->num_cols; col++)
         if (!QccSPECK3DTransparent(mask, frame, row, col))
+        {
           if (coefficients->volume[frame][row][col] >= threshold)
-            QccSPECK3DPutSignificance(&state_array[frame][row][col],
-                                      QCCSPECK3D_SIGNIFICANT);
+            QccSPECK3DPutSignificance(&state_array[frame][row][col], QCCSPECK3D_SIGNIFICANT);
           else
-            QccSPECK3DPutSignificance(&state_array[frame][row][col],
-                                      QCCSPECK3D_INSIGNIFICANT);
+            QccSPECK3DPutSignificance(&state_array[frame][row][col], QCCSPECK3D_INSIGNIFICANT);
+        }
         else
-          QccSPECK3DPutSignificance(&state_array[frame][row][col],
-                                    QCCSPECK3D_INSIGNIFICANT);
+          QccSPECK3DPutSignificance(&state_array[frame][row][col], QCCSPECK3D_INSIGNIFICANT);
   
   return(0);
 }
@@ -997,7 +1000,7 @@ static int QccSPECK3DProcessSet(QccListNode *current_set_node,
       return(2);
   
   if (current_set->significance != QCCSPECK3D_INSIGNIFICANT)
-    {
+  {
       if (QccListRemoveNode(current_list, current_set_node))
         {
           QccErrorAddMessage("(QccSPECK3DProcessSet): Error calling QccListRemoveNode()");
@@ -1010,7 +1013,7 @@ static int QccSPECK3DProcessSet(QccListNode *current_set_node,
         }
       
       if (QccSPECK3DSetIsPixel(current_set))
-        {
+      {
           current_set->significance = QCCSPECK3D_NEWLY_SIGNIFICANT;
           return_value =
             QccSPECK3DInputOutputSign(&state_array
@@ -1043,9 +1046,9 @@ static int QccSPECK3DProcessSet(QccListNode *current_set_node,
               QccErrorAddMessage("(QccSPECK3DProcessSet): Error calling QccListAppendNode()");
               return(1);
             }
-        }
+      }
       else
-        {
+      {
           return_value =
             QccSPECK3DCodeSet(current_set_node,
                               current_list_node,
@@ -1066,8 +1069,8 @@ static int QccSPECK3DProcessSet(QccListNode *current_set_node,
           else
             if (return_value == 2)
               return(2);
-        }
-    }
+      }
+  }
   
   return(0);
 }
@@ -1091,6 +1094,7 @@ static int QccSPECK3DSortingPass(QccWAVSubbandPyramid3D *coefficients,
   
   QccListInitialize(&garbage);
   
+  /* compare the significance of all coefficients, and store the results in state_array */
   if (QccSPECK3DSignificanceMap(coefficients,
                                 mask,
                                 state_array,
@@ -1569,6 +1573,7 @@ int QccSPECK3DEncode(QccIMGImageCube *image_cube,
         }
     }
   
+  /* The state_array combines the sign_array and significance_array. */
   if ((state_array =
        (unsigned char ***)malloc(sizeof(unsigned char **) *
                                  (image_cube->num_frames))) == NULL)
@@ -1594,7 +1599,6 @@ int QccSPECK3DEncode(QccIMGImageCube *image_cube,
             goto Error;
           }
     }
-  
   for (frame = 0; frame < (image_cube->num_frames); frame++)
     for (row = 0; row < (image_cube->num_rows); row++)
       for (col = 0; col < (image_cube->num_cols); col++)

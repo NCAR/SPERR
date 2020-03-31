@@ -125,6 +125,14 @@ if( BUILD_UNIT_TESTS )
                                         PUBLIC ${SPECK_LIBS} 
                                         PUBLIC gtest_main                 )
     add_test( NAME test_speck2d COMMAND test_speck2d                    )
+
+    # unit tests for speck3d
+    add_executable( test_speck3d
+                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck3d_unit_test.cpp" )
+    target_link_libraries( test_speck3d PUBLIC sam_helper
+                                        PUBLIC ${SPECK_LIBS} 
+                                        PUBLIC gtest_main                 )
+    add_test( NAME test_speck3d COMMAND test_speck3d                    )
 endif()
 
 
