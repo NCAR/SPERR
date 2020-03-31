@@ -75,8 +75,8 @@ void speck::SPECK3D::m_clean_LIS()
 }
 
     
-int  speck::SPECK3D::m_decide_setS_significance( SPECKSet3D& set,
-                     std::array<speck::Significance, 8>& sigs )
+int  speck::SPECK3D::m_decide_set_S_significance( SPECKSet3D& set,
+                     std::array<Significance, 8>& sigs )
 {
     // If decoding, simply read a bit from the bit buffer.
     if( !m_encode_mode )
@@ -113,12 +113,22 @@ int  speck::SPECK3D::m_decide_setS_significance( SPECKSet3D& set,
     {
         for( size_t i = 0; i < sigs.size(); i++ )
             sigs[i] = speck::Significance::Insig;
+        const auto detail_start_x = set.start_x + set.length_x - set.length_x / 2;
+        const auto detail_start_y = set.start_y + set.length_y - set.length_y / 2;
+        const auto detail_start_z = set.start_z + set.length_z - set.length_z / 2;
         for( size_t i = 0; i < signif_idx.size(); i += 3 )
         {
             auto x = signif_idx[i];
             auto y = signif_idx[i + 1];
             auto z = signif_idx[i + 2];
-            // TODO: use (x, y, z) to decide which subband it lives in
+            size_t subband = 0;
+            if( x >= detail_start_x )
+                subband += 1;
+            if( y >= detail_start_y )
+                subband += 2;
+            if( z >= detail_start_z )
+                subband += 4;
+            sigs[ subband ] = speck::Significance::Sig;
         }
     }
 
@@ -126,8 +136,8 @@ int  speck::SPECK3D::m_decide_setS_significance( SPECKSet3D& set,
 }
 
     
-int  speck::SPECK3D::m_decide_setI_significance( SPECKSet3D& set,
-                     std::array<speck::Significance, 7>& sigs )
+int  speck::SPECK3D::m_decide_set_I_significance( SPECKSet3D& set,
+                     std::array<Significance, 7>& sigs )
 {
     // If decoding, simply read a bit from the bit buffer.
     if( !m_encode_mode )

@@ -65,8 +65,8 @@ private:
     //  It always returns 0 in this mode.
     // In decoding mode, it simply reads a bit from the bit buffer.
     //  In this mode, it returns 1 to indicate bit budget met, 0 otherwise. 
-    int  m_decide_setS_significance( SPECKSet3D& set, std::array<speck::Significance, 8>& sigs );
-    int  m_decide_setI_significance( SPECKSet3D& set, std::array<speck::Significance, 7>& sigs );
+    int  m_decide_set_S_significance( SPECKSet3D& set, std::array<Significance, 8>& sigs );
+    int  m_decide_set_I_significance( SPECKSet3D& set, std::array<Significance, 7>& sigs );
     int  m_output_set_significance( const SPECKSet3D& set );
 
 #if 0
