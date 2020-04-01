@@ -13,7 +13,7 @@ extern "C"  // C Function calls, and don't include the C header!
                         double* arr1min,    double* arr1max            );
 }
 
-// This function is part of speck::SPECK3D::m_decide_set_S_significance().
+// This function is part of speck::SPECK3D::m_decide_set_significance().
 void decide_subset_significance( const speck::SPECKSet3D&            set, 
                                  const std::vector< speck::UINT >&   signif_idx,
                                  std::array<speck::Significance, 8>& sigs )

@@ -25,7 +25,7 @@ public:
     uint16_t part_level_xy = 0;  
     uint16_t part_level_z  = 0;  
     Significance signif = Significance::Insig;
-    SetType type        = SetType::TypeS;
+    SetType type = SetType::TypeS;  // This field is only used to indicate garbage status
 
 public:
     //
@@ -61,12 +61,10 @@ private:
     //
     void m_clean_LIS();   // Clean garbage sets from m_LIS if too much garbage exists.
     // In encoding mode, it examines the significance of "set," and store the information
-    //  of its 8 descendants in "sigs."
-    //  It always returns 0 in this mode.
+    //   of its 8 descendants in "sigs." It always returns 0 in this mode.
     // In decoding mode, it simply reads a bit from the bit buffer.
-    //  In this mode, it returns 1 to indicate bit budget met, 0 otherwise. 
-    int  m_decide_set_S_significance( SPECKSet3D& set, std::array<Significance, 8>& sigs );
-    int  m_decide_set_I_significance( SPECKSet3D& set, std::array<Significance, 7>& sigs );
+    //   It returns 1 to indicate bit budget met, 0 otherwise. 
+    int  m_decide_set_significance( SPECKSet3D& set, std::array<Significance, 8>& sigs );
     int  m_output_set_significance( const SPECKSet3D& set );
 
 #if 0
@@ -102,8 +100,8 @@ private:
 #else
     float       m_threshold = 0.0f;
 #endif
-    size_t      m_budget    = 0;            // What's the budget for num of bits?
-    size_t      m_bit_idx   = 0;            // Used for decode. Which bit we're at?
+    size_t      m_budget      = 0;          // What's the budget for num of bits?
+    size_t      m_bit_idx     = 0;          // Used for decode. Which bit we're at?
     uint16_t    m_max_coefficient_bits = 0; // = log2(max_coefficient)
     size_t      m_dim_x       = 0;          // 3D volume dims
     size_t      m_dim_y       = 0;
@@ -117,7 +115,6 @@ private:
     std::vector< SPECKSet3D >               m_LSP;
     std::vector< std::vector<SPECKSet3D> >  m_LIS;
     std::vector< size_t >                   m_LIS_garbage_cnt;
-    SPECKSet3D                              m_I;
 };
 
 };
