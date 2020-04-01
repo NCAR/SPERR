@@ -64,7 +64,7 @@ private:
     // because of the choice to use vectors to represent lists, only indices are invariant. 
     int  m_process_S( size_t idx1, size_t idx2, bool ); // need to decide if it's signif?
     int  m_code_S   ( size_t idx1, size_t idx2 );
-    int  m_process_I( );
+    int  m_process_I( bool );   // Need to decide if m_I is significant? 
     int  m_code_I   ( );
     void m_initialize_sets_lists();
     void m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D, 4>& subsets ) const;

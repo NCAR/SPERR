@@ -191,7 +191,7 @@ int speck::SPECK2D::m_sorting_pass( )
         }
     }
 
-    if( (rtn = m_process_I()) )
+    if( (rtn = m_process_I( true )) )
         return rtn;
 
     return 0;
@@ -376,7 +376,7 @@ void speck::SPECK2D::m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D
 }
 
 
-int speck::SPECK2D::m_process_I()
+int speck::SPECK2D::m_process_I( bool need_decide_sig )
 {
     if( m_I.part_level == 0 )   // m_I is empty at this point
         return 0;
@@ -388,7 +388,10 @@ int speck::SPECK2D::m_process_I()
     int rtn = 0;
     if( m_encode_mode )
     {
-        m_decide_set_significance( m_I );
+        if( need_decide_sig )
+            m_decide_set_significance( m_I );
+        else
+            m_I.signif = Significance::Sig;
         if( (rtn = m_output_set_significance( m_I )) )
             return rtn;
     }
@@ -402,8 +405,6 @@ int speck::SPECK2D::m_process_I()
     std::cout << str << std::endl;
 #endif
     }
-
-
 
     if( m_I.signif == Significance::Sig )
     {
@@ -420,10 +421,11 @@ int speck::SPECK2D::m_code_I()
     std::array< SPECKSet2D, 3 > subsets;
     m_partition_I( subsets );
 
-    // We count how many subsets are significant, and if the first 2 subsets ain't,
-    // then the 3rd one must be significant.
+    // We count how many subsets are significant, and if the 3 subsets resulted from
+    // m_partition_I() are all insignificant, then it must be the remaining m_I to be
+    // significant.
     int already_sig = 0, rtn = 0;
-    for( size_t i = 0; i < 2; i++ )
+    for( size_t i = 0; i < 3; i++ )
     {
         auto& s = subsets[i];
         if( !s.is_empty() )
@@ -440,16 +442,8 @@ int speck::SPECK2D::m_code_I()
         }
     }
 
-    auto& s3 = subsets[2];
-    if( !s3.is_empty() )
-    {
-        bool need_decide_sig = already_sig == 0 ? false : true;
-        m_LIS[ s3.part_level ].push_back( s3 );
-        if( (rtn = m_process_S( s3.part_level, m_LIS[s3.part_level].size() - 1, need_decide_sig )) )
-            return rtn;
-    }
-
-    if( (rtn = m_process_I()) )
+    bool need_decide_sig = already_sig == 0 ? false : true;
+    if( (rtn = m_process_I( need_decide_sig )) )
         return rtn;
 
     return 0;
