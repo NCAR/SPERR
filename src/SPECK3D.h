@@ -93,10 +93,6 @@ private:
     bool m_ready_to_decode() const;
 #endif
 
-#ifdef PRINT
-    void m_print_set( const char*, const SPECKSet2D& set ) const;
-#endif
-
 
     //
     // Private data members

@@ -171,7 +171,7 @@ int  speck::SPECK3D::m_decide_set_I_significance( SPECKSet3D& set,
         return 0;
     }
 
-    // If encoding, we need to compare against the threshold
+    // If encoding, we need to check the significance map
     set.signif = Significance::Insig;
     const size_t slice_size = m_dim_x * m_dim_y;
     std::vector< UINT > signif_idx;     // keep indices of detected significant coeffs
