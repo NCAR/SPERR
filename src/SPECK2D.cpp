@@ -461,10 +461,10 @@ void speck::SPECK2D::m_partition_I( std::array<SPECKSet2D, 3>& subsets )
     std::array<size_t, 2> len_x, len_y;
     speck::calc_approx_detail_len( m_dim_x, m_I.part_level, len_x );
     speck::calc_approx_detail_len( m_dim_y, m_I.part_level, len_y );
-    auto approx_len_x = len_x[0];
-    auto detail_len_x = len_x[1];
-    auto approx_len_y = len_y[0];
-    auto detail_len_y = len_y[1];
+    const auto approx_len_x = len_x[0];
+    const auto detail_len_x = len_x[1];
+    const auto approx_len_y = len_y[0];
+    const auto detail_len_y = len_y[1];
 
     // specify the subsets following the same order in QccPack
     auto& BR      = subsets[0];         // Bottom right
