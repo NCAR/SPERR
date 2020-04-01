@@ -536,7 +536,7 @@ int speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
     {
         // First rectangle: directly to the right of the missing top-left corner
         for( size_t y = 0; y < set.start_y; y++ )
-            for( auto x = set.start_x; x < m_dim_x; x++ )
+            for( auto x = set.start_x; x < set.length_x; x++ )
             {
                 auto idx = y * m_dim_x + x;
                 if( m_significance_map[ idx ] )
@@ -548,7 +548,7 @@ int speck::SPECK2D::m_decide_set_significance( SPECKSet2D& set )
 
         // Second rectangle: the rest area at the bottom
         // Note: this rectangle is stored in a contiguous chunk of memory :)
-        for( auto i = set.start_y * m_dim_x; i < m_dim_x * m_dim_y; i++ )
+        for( auto i = set.start_y * set.length_x; i < set.length_x * set.length_y; i++ )
         {
             if( m_significance_map[ i ] )
             {

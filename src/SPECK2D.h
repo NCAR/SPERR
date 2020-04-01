@@ -17,8 +17,8 @@ public:
     //
     UINT  start_x       = 0;
     UINT  start_y       = 0;
-    UINT  length_x      = 0;   
-    UINT  length_y      = 0;
+    UINT  length_x      = 0;  // For typeI set, this value equals to m_dim_x
+    UINT  length_y      = 0;  // For typeI set, this value equals to m_dim_y
     uint16_t part_level = 0;  // which partition level is this set at (starting from zero).
     Significance signif = Significance::Insig;
     SetType type        = SetType::TypeS;
