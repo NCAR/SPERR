@@ -91,13 +91,13 @@ int  speck::SPECK3D::m_decide_set_S_significance( SPECKSet3D& set,
 
     // If encoding, we do some comparison work
     set.signif = Significance::Insig;
-    const auto slice_size = m_dim_x * m_dim_y;
+    const size_t slice_size = m_dim_x * m_dim_y;
     std::vector< UINT > signif_idx;     // keep indices of detected significant coeffs
     for( auto z = set.start_z; z < (set.start_z + set.length_z); z++ )
     for( auto y = set.start_y; y < (set.start_y + set.length_y); y++ )
     for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ )
     {
-        auto idx = z * slice_size + y * m_dim_x + x;
+        size_t idx = z * slice_size + y * m_dim_x + x;
         if( m_significance_map[ idx ] )
         {
             set.signif = Significance::Sig;
@@ -135,7 +135,28 @@ int  speck::SPECK3D::m_decide_set_S_significance( SPECKSet3D& set,
     return 0;
 }
 
-    
+
+//           Z
+//          /
+// m_dim_z /-----------------/|
+//        /                 / |
+//       /                 /  |
+//      /                 /   |
+//     /----/|           /    |
+// 0  /    / |          /     |
+//   |------------------------------X
+//   |     | /         |      /
+//   |     |/          |     /
+//   |------           |    /
+//   |                 |   /
+//   |                 |  /
+//   |                 | /
+//   |                 |/
+//   |------------------ m_dim_x
+//   | m_dim_y
+//   |
+//   Y
+//
 int  speck::SPECK3D::m_decide_set_I_significance( SPECKSet3D& set,
                      std::array<Significance, 7>& sigs )
 {
@@ -149,6 +170,33 @@ int  speck::SPECK3D::m_decide_set_I_significance( SPECKSet3D& set,
         set.signif = bit ? Significance::Sig : Significance::Insig;
         return 0;
     }
+
+    // If encoding, we need to compare against the threshold
+    set.signif = Significance::Insig;
+    const size_t slice_size = m_dim_x * m_dim_y;
+    std::vector< UINT > signif_idx;     // keep indices of detected significant coeffs
+    for( UINT z = 0; z <  set.length_z; z++ )
+    for( UINT y = 0; y <  set.length_y; y++ )
+    {
+        // X index begins from set.start_x if (y, z) falls inside of (start_y, start_z),
+        //   otherwise X starts from zero.
+        UINT x_begin = 0;
+        if( y < set.start_y && z < set.start_z )
+            x_begin = set.start_x;
+        for( UINT x = x_begin; x < set.length_x; x++ )
+        {
+            size_t idx = z * slice_size + y * m_dim_x + x;
+            if( m_significance_map[ idx ] )
+            {
+                set.signif = Significance::Sig;
+                signif_idx.push_back( x );
+                signif_idx.push_back( y );
+                signif_idx.push_back( z );
+            }
+        }
+    }
+
+    // TODO: record the subbands of significant coeffs
 
     return 0;
 }

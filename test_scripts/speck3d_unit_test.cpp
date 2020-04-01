@@ -121,7 +121,7 @@ TEST( speck3d, divide_in_2_or_1_axes )
     for( int i = 5; i < 5 + 3; i++ )
         EXPECT_EQ( sigs[i], speck::Significance::Insig );
 
-    // Test 1: a 1x2x1 cube starting from (0, 0, 0)
+    // Test 3: a 1x2x1 cube starting from (0, 0, 0)
     set.start_x  = 0;   set.start_y  = 0;    set.start_z  = 0;
     set.length_x = 1;   set.length_y = 2;    set.length_z = 1;
     idx.clear();
@@ -134,7 +134,7 @@ TEST( speck3d, divide_in_2_or_1_axes )
     for( int i = 3; i < 3 + 5; i++ )
         EXPECT_EQ( sigs[i], speck::Significance::Insig );
 
-    // Test 1: a 1x3x1 cube starting from (0, 0, 0)
+    // Test 4: a 1x3x1 cube starting from (0, 0, 0)
     set.start_x  = 0;   set.start_y  = 0;    set.start_z  = 0;
     set.length_x = 1;   set.length_y = 3;    set.length_z = 1;
     idx.clear();
@@ -144,7 +144,6 @@ TEST( speck3d, divide_in_2_or_1_axes )
     EXPECT_EQ( sigs[0], speck::Significance::Sig );
     for( int i = 1; i < 1 + 7; i++ )
         EXPECT_EQ( sigs[i], speck::Significance::Insig );
-
 }
 
 }
