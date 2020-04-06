@@ -70,6 +70,8 @@ private:
     void m_partition_S( const SPECKSet3D& set, std::array<SPECKSet3D, 8>& subsets ) const;
     int  m_input_pixel_sign(  const SPECKSet3D& pixel );
     int  m_output_pixel_sign( const SPECKSet3D& pixel );
+    int  m_input_refinement(  const SPECKSet3D& pixel );
+    int  m_output_refinement( const SPECKSet3D& pixel );
 
 #if 0
     int  m_sorting_pass( );
@@ -80,8 +82,6 @@ private:
     int  m_code_S   ( size_t idx1, size_t idx2 );
     int  m_process_I( );
     void m_initialize_sets_lists();
-    int  m_input_refinement(  const SPECKSet2D& pixel );
-    int  m_output_refinement( const SPECKSet2D& pixel );
 
     void m_calc_root_size( SPECKSet2D& root ) const;
     // How many partitions available to perform given the 2D dimensions?

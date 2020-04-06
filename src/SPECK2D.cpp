@@ -624,7 +624,7 @@ int speck::SPECK2D::m_input_pixel_sign( const SPECKSet2D& pixel )
 
 int speck::SPECK2D::m_output_refinement( const SPECKSet2D& pixel )
 {
-    auto idx = pixel.start_y * m_dim_x + pixel.start_x;
+    const auto idx = pixel.start_y * m_dim_x + pixel.start_x;
 
     if( m_coeff_buf[idx] >= m_threshold ) 
     {
@@ -655,8 +655,8 @@ int speck::SPECK2D::m_input_refinement( const SPECKSet2D& pixel )
     if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
         return 1;
 
-    auto bit = m_bit_buffer[ m_bit_idx++ ];
-    auto idx = pixel.start_y * m_dim_x + pixel.start_x;
+    const auto bit = m_bit_buffer[ m_bit_idx++ ];
+    const auto idx = pixel.start_y * m_dim_x + pixel.start_x;
     m_coeff_buf[ idx ] += bit ? m_threshold * 0.5f : m_threshold * -0.5f;
 
 #ifdef PRINT
