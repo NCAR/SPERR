@@ -21,8 +21,9 @@ public:
     UINT  length_x      = 0;    // For typeI set, this value equals to m_dim_x.
     UINT  length_y      = 0;    // For typeI set, this value equals to m_dim_y.
     UINT  length_z      = 0;    // For typeI set, this value equals to m_dim_z.
-    // which partition level is this set at (starting from zero, in both directions).
-    uint16_t part_level_xy = 0;  
+    // which partition level is this set at (starting from zero, in all 3 directions).
+    uint16_t part_level_x  = 0;  
+    uint16_t part_level_y  = 0;  
     uint16_t part_level_z  = 0;  
     Significance signif = Significance::Insig;
     SetType type = SetType::TypeS;  // This field is only used to indicate garbage status
@@ -65,6 +66,7 @@ private:
     // In decoding mode, it simply reads a bit from the bit buffer.
     //   It returns 1 to indicate bit budget met, 0 otherwise. 
     int  m_decide_set_significance( SPECKSet3D& set, std::array<Significance, 8>& sigs );
+    void m_partition_S( const SPECKSet3D& set, std::array<SPECKSet3D, 8>& subsets ) const;
     int  m_output_set_significance( const SPECKSet3D& set );
 
 #if 0
@@ -77,7 +79,6 @@ private:
     int  m_process_I( );
     int  m_code_I   ( );
     void m_initialize_sets_lists();
-    void m_partition_S( const SPECKSet2D& set, std::array<SPECKSet2D, 4>& subsets ) const;
     void m_partition_I( std::array<SPECKSet2D, 3>& subsets );
     int  m_input_pixel_sign(  const SPECKSet2D& pixel );
     int  m_output_pixel_sign( const SPECKSet2D& pixel );
