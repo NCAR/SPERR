@@ -60,7 +60,10 @@ private:
     // Note: for methods returning an integer, 0 means normal execution, and
     // 1 means bit budget met. 
     //
+    // How many partition operation could we perform in each direction?
+    void m_num_of_partitions( std::array<size_t, 3>& ) const; 
     void m_clean_LIS();   // Clean garbage sets from m_LIS if too much garbage exists.
+
     // In encoding mode, it examines the significance of "set," and store the information
     //   of its 8 descendants in "sigs." It always returns 0 in this mode.
     // In decoding mode, it simply reads a bit from the bit buffer.
@@ -83,9 +86,6 @@ private:
     int  m_process_I( );
     void m_initialize_sets_lists();
 
-    void m_calc_root_size( SPECKSet2D& root ) const;
-    // How many partitions available to perform given the 2D dimensions?
-    size_t m_num_of_partitions() const; 
     bool m_ready_to_encode() const;
     bool m_ready_to_decode() const;
 #endif

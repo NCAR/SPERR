@@ -75,6 +75,37 @@ void speck::SPECK3D::m_clean_LIS()
 }
 
     
+void speck::SPECK3D::m_num_of_partitions( std::array<size_t, 3>& parts ) const
+{
+    size_t num_of_parts = 0;    // Num. of partitions we can do along X
+    size_t dim = m_dim_x;
+    while( dim > 1 )
+    {
+        num_of_parts++;
+        dim -= dim / 2;
+    }
+    parts[0] = num_of_parts;
+
+    num_of_parts = 0;       // Num. of partitions we can do along Y
+    dim = m_dim_y;
+    while( dim > 1 )
+    {
+        num_of_parts++;
+        dim -= dim / 2;
+    }
+    parts[1] = num_of_parts;
+
+    num_of_parts = 0;       // Num. of partitions we can do along Z
+    dim = m_dim_z;
+    while( dim > 1 )
+    {
+        num_of_parts++;
+        dim -= dim / 2;
+    }
+    parts[2] = num_of_parts;
+}
+
+    
 int  speck::SPECK3D::m_decide_set_significance( SPECKSet3D& set,
                      std::array<Significance, 8>& sigs )
 {
