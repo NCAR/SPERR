@@ -218,6 +218,52 @@ void speck::SPECK3D::m_partition_S( const SPECKSet3D& set,
 }
 
 
+int speck::SPECK3D::m_output_pixel_sign( const SPECKSet3D& pixel )
+{
+    const auto idx = pixel.start_z * m_dim_x * m_dim_y + 
+                     pixel.start_y * m_dim_x + pixel.start_x;
+
+#ifdef PRINT
+    if( m_sign_array[ idx ] )
+        std::cout << "p1" << std::endl;
+    else
+        std::cout << "p0" << std::endl;
+#endif
+
+    m_bit_buffer.push_back( m_sign_array[idx] );
+
+    // Progressive quantization!
+    m_coeff_buf[ idx ] -= m_threshold;
+
+    // Let's also see if we're reached the bit budget
+    if( m_bit_buffer.size() >= m_budget )
+        return 1;
+    else
+        return 0;
+}
+
+
+int speck::SPECK3D::m_input_pixel_sign( const SPECKSet3D& pixel )
+{
+    if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
+        return 1;
+
+    const auto idx = pixel.start_z * m_dim_x * m_dim_y +
+                     pixel.start_y * m_dim_x + pixel.start_x;
+    m_sign_array[ idx ] = m_bit_buffer[ m_bit_idx++ ];
+
+    // Progressive quantization!
+    m_coeff_buf[ idx ] = 1.5f * m_threshold;
+
+#ifdef PRINT
+    auto bit = m_sign_array[ idx ];
+    std::string str = bit ? "p1" : "p0";
+    std::cout << str << std::endl;
+#endif
+
+    return 0;
+}
+
 int speck::SPECK3D::m_output_set_significance( const SPECKSet3D& set )
 {
 #ifdef PRINT

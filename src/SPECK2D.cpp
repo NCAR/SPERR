@@ -579,7 +579,7 @@ int speck::SPECK2D::m_output_set_significance( const SPECKSet2D& set )
 // It outputs by printing out the value at this point.
 int speck::SPECK2D::m_output_pixel_sign( const SPECKSet2D& pixel )
 {
-    auto idx = pixel.start_y * m_dim_x + pixel.start_x;
+    const auto idx = pixel.start_y * m_dim_x + pixel.start_x;
 
 #ifdef PRINT
     if( m_sign_array[ idx ] )
@@ -606,7 +606,7 @@ int speck::SPECK2D::m_input_pixel_sign( const SPECKSet2D& pixel )
     if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
         return 1;
 
-    auto idx = pixel.start_y * m_dim_x + pixel.start_x ;
+    const auto idx = pixel.start_y * m_dim_x + pixel.start_x ;
     m_sign_array[ idx ] = m_bit_buffer[ m_bit_idx++ ];
 
     // Progressive quantization!

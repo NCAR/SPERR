@@ -66,8 +66,10 @@ private:
     // In decoding mode, it simply reads a bit from the bit buffer.
     //   It returns 1 to indicate bit budget met, 0 otherwise. 
     int  m_decide_set_significance( SPECKSet3D& set, std::array<Significance, 8>& sigs );
-    void m_partition_S( const SPECKSet3D& set, std::array<SPECKSet3D, 8>& subsets ) const;
     int  m_output_set_significance( const SPECKSet3D& set );
+    void m_partition_S( const SPECKSet3D& set, std::array<SPECKSet3D, 8>& subsets ) const;
+    int  m_input_pixel_sign(  const SPECKSet3D& pixel );
+    int  m_output_pixel_sign( const SPECKSet3D& pixel );
 
 #if 0
     int  m_sorting_pass( );
@@ -77,11 +79,7 @@ private:
     int  m_process_S( size_t idx1, size_t idx2, bool ); // need to decide if it's signif?
     int  m_code_S   ( size_t idx1, size_t idx2 );
     int  m_process_I( );
-    int  m_code_I   ( );
     void m_initialize_sets_lists();
-    void m_partition_I( std::array<SPECKSet2D, 3>& subsets );
-    int  m_input_pixel_sign(  const SPECKSet2D& pixel );
-    int  m_output_pixel_sign( const SPECKSet2D& pixel );
     int  m_input_refinement(  const SPECKSet2D& pixel );
     int  m_output_refinement( const SPECKSet2D& pixel );
 
