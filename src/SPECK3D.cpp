@@ -308,6 +308,88 @@ void speck::SPECK3D::m_partition_S( const SPECKSet3D& set,
     sub.start_y   = set.start_y + split_y[0];   sub.length_y = split_y[1];
     sub.start_z   = set.start_z + split_z[0];   sub.length_z = split_z[1];
 }
+    
+
+void speck::SPECK3D::m_partition_S_XY( const SPECKSet3D& set, 
+                     std::array<SPECKSet3D, 4>& subsets ) const
+{
+    const UINT split_x[2]{ set.length_x - set.length_x / 2,  set.length_x / 2 };
+    const UINT split_y[2]{ set.length_y - set.length_y / 2,  set.length_y / 2 };
+
+    for( size_t i = 0; i < 4; i++ )
+    {
+        subsets[i].part_level_x = set.part_level_x;
+        if( split_x[1] > 0 )    
+            (subsets[i].part_level_x)++;
+        subsets[i].part_level_y = set.part_level_y;
+        if( split_y[1] > 0 )
+            (subsets[i].part_level_y)++;
+        subsets[i].part_level_z = set.part_level_z;
+    }
+
+    //
+    // The actual figuring out where it starts/ends part...
+    //
+    const size_t offsets[3]{ 1, 2, 4 };
+    // subset (0, 0, 0)
+    size_t sub_i  = 0 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
+    auto& sub     = subsets[sub_i];
+    sub.start_x   = set.start_x;                sub.length_x = split_x[0];
+    sub.start_y   = set.start_y;                sub.length_y = split_y[0];
+    sub.start_z   = set.start_z;                sub.length_z = set.length_z;
+
+    // subset (1, 0, 0)
+    sub_i         = 1 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
+    sub           = subsets[sub_i];
+    sub.start_x   = set.start_x + split_x[0];   sub.length_x = split_x[1];
+    sub.start_y   = set.start_y;                sub.length_y = split_y[0];
+    sub.start_z   = set.start_z;                sub.length_z = set.length_z;
+
+    // subset (0, 1, 0)
+    sub_i         = 0 * offsets[0] + 1 * offsets[1] + 0 * offsets[2];
+    sub           = subsets[sub_i];
+    sub.start_x   = set.start_x;                sub.length_x = split_x[0];
+    sub.start_y   = set.start_y + split_y[0];   sub.length_y = split_y[1];
+    sub.start_z   = set.start_z;                sub.length_z = set.length_z;
+
+    // subset (1, 1, 0)
+    sub_i         = 1 * offsets[0] + 1 * offsets[1] + 0 * offsets[2];
+    sub           = subsets[sub_i];
+    sub.start_x   = set.start_x + split_x[0];   sub.length_x = split_x[1];
+    sub.start_y   = set.start_y + split_y[0];   sub.length_y = split_y[1];
+    sub.start_z   = set.start_z;                sub.length_z = set.length_z;
+}
+    
+
+void speck::SPECK3D::m_partition_S_Z( const SPECKSet3D& set, 
+                     std::array<SPECKSet3D, 2>& subsets ) const
+{
+    const UINT split_z[2]{ set.length_z - set.length_z / 2,  set.length_z / 2 };
+
+    for( size_t i = 0; i < 2; i++ )
+    {
+        subsets[i].part_level_x = set.part_level_x;
+        subsets[i].part_level_y = set.part_level_y;
+        subsets[i].part_level_z = set.part_level_z;
+        if( split_z[1] > 0 )
+            (subsets[i].part_level_z)++;
+    }
+
+    //
+    // The actual figuring out where it starts/ends part...
+    //
+    // subset (0, 0, 0)
+    auto& sub     = subsets[0];
+    sub.start_x   = set.start_x;                sub.length_x = set.length_x;
+    sub.start_y   = set.start_y;                sub.length_y = set.length_y;
+    sub.start_z   = set.start_z;                sub.length_z = split_z[0];
+
+    // subset (0, 0, 1)
+    sub           = subsets[1];
+    sub.start_x   = set.start_x;                sub.length_x = set.length_x;
+    sub.start_y   = set.start_y;                sub.length_y = set.length_y;
+    sub.start_z   = set.start_z + split_z[0];   sub.length_z = split_z[1];
+}
 
 
 int speck::SPECK3D::m_output_pixel_sign( const SPECKSet3D& pixel )
