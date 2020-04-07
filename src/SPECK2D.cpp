@@ -127,8 +127,8 @@ int speck::SPECK2D::decode()
 
 void speck::SPECK2D::m_initialize_sets_lists()
 {
-    auto num_of_parts  = m_num_of_partitions();
-    auto num_of_xforms = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y) );
+    const auto num_of_parts  = m_num_of_partitions();
+    const auto num_of_xforms = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y) );
 
     // prepare m_LIS
     m_LIS.clear();

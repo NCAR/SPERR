@@ -19,6 +19,13 @@ bool speck::SPECKSet3D::is_empty() const
     return (length_z == 0 || length_y == 0 || length_x == 0);
 }
     
+
+size_t speck::SPECKSet3D::total_partitions() const
+{
+    return size_t(part_level_x) + size_t(part_level_y) + size_t(part_level_z); 
+}
+
+    
 //
 // Class SPECK3D
 //
@@ -72,6 +79,40 @@ void speck::SPECK3D::m_clean_LIS()
             m_LIS_garbage_cnt[i] = 0;
         }
     }
+}
+
+    
+void speck::SPECK3D::m_initialize_sets_lists()
+{
+    std::array<size_t, 3> num_of_parts; // how many times each dimension is partitioned?
+    m_num_of_partitions(  num_of_parts );
+    auto num_of_sizes = 3;
+    for( size_t i = 0; i < 3; i++ )
+        num_of_sizes += num_of_parts[i];
+
+    // initialize LIS
+    m_LIS.clear();
+    m_LIS.resize( num_of_sizes );
+    for( auto& v : m_LIS )
+        v.reserve( m_vec_init_capacity );
+    m_LIS_garbage_cnt.assign( num_of_sizes, 0 );
+
+    const auto num_of_xformx_xy = speck::calc_num_of_xforms( std::min(m_dim_x, m_dim_y) );
+    const auto num_of_xformx_z  = speck::calc_num_of_xforms( m_dim_z );
+
+    // Starting from a set representing the whole volume, identify the smaller sets
+    //   and put them in LIS accordingly.
+    SPECKSet3D vol;
+    vol.length_x = UINT( m_dim_x ); // Truncate 64-bit int to 32-bit, but should be OK.
+    vol.length_y = UINT( m_dim_y ); // Truncate 64-bit int to 32-bit, but should be OK.
+    vol.length_z = UINT( m_dim_z ); // Truncate 64-bit int to 32-bit, but should be OK.
+
+    // Need to look at QccPack: how does it initialize LIS if XY and Z directions have
+    // different number of xforms.
+
+    // initialize LSP
+    m_LSP.clear();
+    m_LSP.reserve( m_vec_init_capacity );
 }
 
     

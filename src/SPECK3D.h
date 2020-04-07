@@ -32,8 +32,9 @@ public:
     //
     // Member functions
     //
-    bool is_pixel() const;
-    bool is_empty() const;
+    bool   is_pixel() const;
+    bool   is_empty() const;
+    size_t total_partitions() const;
 };
 
 
@@ -63,7 +64,7 @@ private:
     // How many partition operation could we perform in each direction?
     void m_num_of_partitions( std::array<size_t, 3>& ) const; 
     void m_clean_LIS();   // Clean garbage sets from m_LIS if too much garbage exists.
-
+    void m_initialize_sets_lists();
     // In encoding mode, it examines the significance of "set," and store the information
     //   of its 8 descendants in "sigs." It always returns 0 in this mode.
     // In decoding mode, it simply reads a bit from the bit buffer.
@@ -84,7 +85,6 @@ private:
     int  m_process_S( size_t idx1, size_t idx2, bool ); // need to decide if it's signif?
     int  m_code_S   ( size_t idx1, size_t idx2 );
     int  m_process_I( );
-    void m_initialize_sets_lists();
 
     bool m_ready_to_encode() const;
     bool m_ready_to_decode() const;
