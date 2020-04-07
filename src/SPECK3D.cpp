@@ -97,18 +97,56 @@ void speck::SPECK3D::m_initialize_sets_lists()
         v.reserve( m_vec_init_capacity );
     m_LIS_garbage_cnt.assign( num_of_sizes, 0 );
 
-    const auto num_of_xformx_xy = speck::calc_num_of_xforms( std::min(m_dim_x, m_dim_y) );
-    const auto num_of_xformx_z  = speck::calc_num_of_xforms( m_dim_z );
-
     // Starting from a set representing the whole volume, identify the smaller sets
     //   and put them in LIS accordingly.
-    SPECKSet3D vol;
-    vol.length_x = UINT( m_dim_x ); // Truncate 64-bit int to 32-bit, but should be OK.
-    vol.length_y = UINT( m_dim_y ); // Truncate 64-bit int to 32-bit, but should be OK.
-    vol.length_z = UINT( m_dim_z ); // Truncate 64-bit int to 32-bit, but should be OK.
+    SPECKSet3D big;
+    big.length_x = UINT( m_dim_x ); // Truncate 64-bit int to 32-bit, but should be OK.
+    big.length_y = UINT( m_dim_y ); // Truncate 64-bit int to 32-bit, but should be OK.
+    big.length_z = UINT( m_dim_z ); // Truncate 64-bit int to 32-bit, but should be OK.
 
-    // Need to look at QccPack: how does it initialize LIS if XY and Z directions have
-    // different number of xforms.
+    const auto num_of_xforms_xy = speck::calc_num_of_xforms( std::min(m_dim_x, m_dim_y) );
+    const auto num_of_xforms_z  = speck::calc_num_of_xforms( m_dim_z );
+    size_t xf = 0;
+    std::array<SPECKSet3D, 8> subsets;
+    for( xf = 0; xf < num_of_xforms_xy && xf < num_of_xforms_z; xf++ )
+    {
+        m_partition_S_XYZ( big, subsets );
+        big = subsets[0];
+        for( size_t i = 1; i < 8; i++ )
+        {
+            auto   parts = subsets[i].total_partitions();
+            m_LIS[ parts ].push_back( subsets[i] );
+        }
+    }
+    // One of the follow two conditions could happen if 
+    //   num_of_xforms_xy != num_of_xforms_z
+    if( xf < num_of_xforms_xy )
+    {
+        std::array<SPECKSet3D, 4> sub4;
+        for( ; xf < num_of_xforms_xy; xf++ )
+        {
+            m_partition_S_XY( big, sub4 );
+            big = sub4[0];
+            for( size_t i = 1; i < 4; i++ )
+            {
+                auto   parts = sub4[i].total_partitions();
+                m_LIS[ parts ].push_back( sub4[i] );
+            }
+        }
+    }
+    else
+    {
+        std::array<SPECKSet3D, 2> sub2;
+        for( ; xf < num_of_xforms_z; xf++ )
+        {
+            m_partition_S_Z( big, sub2 );
+            big = sub2[0];
+            auto   parts = sub2[1].total_partitions();
+            m_LIS[ parts ].push_back( sub2[1] );
+        }
+    }
+    auto   parts = big.total_partitions();
+    m_LIS[ parts ].push_back( big );
 
     // initialize LSP
     m_LSP.clear();
@@ -228,7 +266,7 @@ int speck::SPECK3D::m_output_set_significance( const SPECKSet3D& set )
 }
     
 
-void speck::SPECK3D::m_partition_S( const SPECKSet3D& set, 
+void speck::SPECK3D::m_partition_S_XYZ( const SPECKSet3D& set, 
                      std::array<SPECKSet3D, 8>& subsets ) const
 {
     const UINT split_x[2]{ set.length_x - set.length_x / 2,  set.length_x / 2 };

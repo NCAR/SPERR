@@ -71,13 +71,14 @@ private:
     //   It returns 1 to indicate bit budget met, 0 otherwise. 
     int  m_decide_set_significance( SPECKSet3D& set, std::array<Significance, 8>& sigs );
     int  m_output_set_significance( const SPECKSet3D& set );
-    void m_partition_S(    const SPECKSet3D& set, std::array<SPECKSet3D, 8>& subsets ) const;
+    int  m_input_pixel_sign(        const SPECKSet3D& pixel );
+    int  m_output_pixel_sign(       const SPECKSet3D& pixel );
+    int  m_input_refinement(        const SPECKSet3D& pixel );
+    int  m_output_refinement(       const SPECKSet3D& pixel );
+
+    void m_partition_S_XYZ(const SPECKSet3D& set, std::array<SPECKSet3D, 8>& subsets ) const;
     void m_partition_S_XY( const SPECKSet3D& set, std::array<SPECKSet3D, 4>& subsets ) const;
     void m_partition_S_Z(  const SPECKSet3D& set, std::array<SPECKSet3D, 2>& subsets ) const;
-    int  m_input_pixel_sign(  const SPECKSet3D& pixel );
-    int  m_output_pixel_sign( const SPECKSet3D& pixel );
-    int  m_input_refinement(  const SPECKSet3D& pixel );
-    int  m_output_refinement( const SPECKSet3D& pixel );
 
 #if 0
     int  m_sorting_pass( );
