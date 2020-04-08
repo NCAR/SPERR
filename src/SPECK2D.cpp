@@ -182,7 +182,7 @@ int speck::SPECK2D::m_sorting_pass( )
         size_t idx1 = m_LIS.size() - 1 - tmp;
         for( size_t idx2  = 0; idx2 < m_LIS[idx1].size(); idx2++ )
         {
-            auto& s = m_LIS[idx1][idx2];
+            const auto& s = m_LIS[idx1][idx2];
             if( s.type != SetType::Garbage )
             {
                 if( (rtn = m_process_S( idx1, idx2, true )) )
@@ -308,7 +308,7 @@ int speck::SPECK2D::m_code_S( size_t idx1, size_t idx2 )
     int already_sig = 0, rtn = 0;
     for( size_t i = 0; i < 3; i++ )
     {
-        auto& s = subsets[i];
+        const auto& s = subsets[i];
         if( !s.is_empty() )
         {
             m_LIS[ s.part_level ].push_back( s );
@@ -323,7 +323,7 @@ int speck::SPECK2D::m_code_S( size_t idx1, size_t idx2 )
         }
     }
 
-    auto& s4 = subsets[3];
+    const auto& s4 = subsets[3];
     if( !s4.is_empty() )
     {
         bool need_decide_sig = already_sig == 0 ? false : true;
@@ -427,7 +427,7 @@ int speck::SPECK2D::m_code_I()
     int already_sig = 0, rtn = 0;
     for( size_t i = 0; i < 3; i++ )
     {
-        auto& s = subsets[i];
+        const auto& s = subsets[i];
         if( !s.is_empty() )
         {
             m_LIS[ s.part_level ].push_back( s );
