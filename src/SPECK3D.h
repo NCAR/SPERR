@@ -3,6 +3,8 @@
 
 #include "SPECK_Storage.h"
 
+#define PRINT
+
 namespace speck
 {
 
@@ -35,6 +37,9 @@ public:
     bool   is_pixel() const;
     bool   is_empty() const;
     size_t total_partitions() const;
+#ifdef PRINT
+    void print() const;
+#endif
 };
 
 
@@ -55,6 +60,9 @@ public:
     // core operations
     //int encode();
     //int decode();
+
+    // for development purpose only (debug, verification, etc.)
+    void action();
 
 private:
     //
