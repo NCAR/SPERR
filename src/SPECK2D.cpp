@@ -740,7 +740,7 @@ bool speck::SPECK2D::m_ready_to_decode() const
 {
     if( m_bit_buffer.empty() )
         return false;
-    if( m_dim_x <= 0 || m_dim_y <= 0 )
+    if( m_dim_x == 0 || m_dim_y == 0 )
         return false;
     if( m_max_coefficient_bits == 0 )
         return false;

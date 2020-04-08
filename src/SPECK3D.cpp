@@ -604,6 +604,34 @@ int speck::SPECK3D::m_input_refinement( const SPECKSet3D& pixel )
 
     return 0;
 }
+
+
+bool speck::SPECK3D::m_ready_to_encode() const
+{
+    if( m_coeff_buf == nullptr )
+        return false;
+    if( m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0)
+        return false;
+    if( m_budget == 0 )
+        return false;
+
+    return true;
+}
+
+
+bool speck::SPECK3D::m_ready_to_decode() const
+{
+    if( m_bit_buffer.empty() )
+        return false;
+    if( m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0 )
+        return false;
+    if( m_max_coefficient_bits == 0 )
+        return false;
+    if( m_budget == 0 )
+        return false;
+
+    return true;
+}
     
 
 void speck::SPECK3D::action()

@@ -69,6 +69,8 @@ private:
     // Note: for methods returning an integer, 0 means normal execution, and
     // 1 means bit budget met. 
     //
+    bool m_ready_to_encode() const;
+    bool m_ready_to_decode() const;
     // How many partition operation could we perform in each direction?
     void m_num_of_partitions( std::array<size_t, 3>& ) const; 
     void m_clean_LIS();   // Clean garbage sets from m_LIS if too much garbage exists.
@@ -96,10 +98,7 @@ private:
     // because of the choice to use vectors to represent lists, only indices are invariant. 
     int  m_process_S( size_t idx1, size_t idx2, bool ); // need to decide if it's signif?
     int  m_code_S   ( size_t idx1, size_t idx2 );
-    int  m_process_I( );
 
-    bool m_ready_to_encode() const;
-    bool m_ready_to_decode() const;
 #endif
 
 
