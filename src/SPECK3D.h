@@ -73,6 +73,8 @@ private:
     void m_num_of_partitions( std::array<size_t, 3>& ) const; 
     void m_clean_LIS();   // Clean garbage sets from m_LIS if too much garbage exists.
     void m_initialize_sets_lists();
+    int  m_sorting_pass( );
+
     // In encoding mode, it examines the significance of "set," and store the information
     //   of its 8 descendants in "sigs." It always returns 0 in this mode.
     // In decoding mode, it simply reads a bit from the bit buffer.
@@ -89,7 +91,6 @@ private:
     void m_partition_S_Z(  const SPECKSet3D& set, std::array<SPECKSet3D, 2>& subsets ) const;
 
 #if 0
-    int  m_sorting_pass( );
     int  m_refinement_pass( );
     // For the following 2 methods, indices are used to locate which set to process from m_LIS,
     // because of the choice to use vectors to represent lists, only indices are invariant. 

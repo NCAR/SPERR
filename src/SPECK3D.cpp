@@ -166,6 +166,42 @@ void speck::SPECK3D::m_initialize_sets_lists()
     m_LSP.reserve( m_vec_init_capacity );
 }
 
+
+int speck::SPECK3D::m_sorting_pass()
+{
+#ifdef PRINT
+    std::cout << "--> sorting pass, threshold = " << m_threshold << std::endl;
+#endif
+
+    if( m_encode_mode )
+    {   // Update the significance map based on the current threshold
+        m_significance_map.assign( m_coeff_len, false );
+        for( size_t i = 0; i < m_coeff_len; i++ )
+        {
+            if( m_coeff_buf[i] >= m_threshold )
+                m_significance_map[i] = true;
+        }
+    }
+
+    int rtn = 0;
+    for( size_t tmp = 0; tmp < m_LIS.size(); tmp++ )
+    {
+        // From the end of m_LIS to its front
+        size_t idx1 = m_LIS.size() - 1 - tmp;
+        for( size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++ )
+        {
+            const auto& s = m_LIS[idx1][idx2];
+            if( s.type != SetType::Garbage )
+            {
+                //if( (rtn = m_process_S( idx1, idx2, true )) )
+                //    return rtn;
+            }
+        }
+    }
+
+    return 0;
+}
+
     
 void speck::SPECK3D::m_num_of_partitions( std::array<size_t, 3>& parts ) const
 {
