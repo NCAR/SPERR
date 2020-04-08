@@ -202,6 +202,36 @@ int speck::SPECK3D::m_sorting_pass()
     return 0;
 }
 
+
+int speck::SPECK3D::m_refinement_pass()
+{
+#ifdef PRINT
+    std::cout << "--> refinement pass, threshold = " << m_threshold << std::endl;
+#endif
+
+    int rtn = 0;
+    for( auto& p : m_LSP )
+    {
+        if( p.signif == Significance::NewlySig )
+            p.signif  = Significance::Sig;
+        else
+        {
+            if( m_encode_mode )
+            {
+                if( (rtn = m_output_refinement( p )) )
+                    return rtn;
+            }
+            else
+            {
+                if( (rtn = m_input_refinement( p )) )
+                    return rtn;
+            }
+        }
+    }
+
+    return 0;
+}
+
     
 void speck::SPECK3D::m_num_of_partitions( std::array<size_t, 3>& parts ) const
 {
