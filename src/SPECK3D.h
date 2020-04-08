@@ -78,6 +78,10 @@ private:
     int  m_sorting_pass( );
     int  m_refinement_pass( );
 
+    // For the following 2 methods, indices are used to locate which set to process from m_LIS,
+    //int  m_process_S( size_t idx1, size_t idx2, bool ); // need to decide if it's signif?
+    int  m_code_S   ( size_t idx1, size_t idx2 );
+
     // In encoding mode, it examines the significance of "set," and store the information
     //   of its 8 descendants in "sigs." It always returns 0 in this mode.
     // In decoding mode, it simply reads a bit from the bit buffer.
@@ -92,15 +96,6 @@ private:
     void m_partition_S_XYZ(const SPECKSet3D& set, std::array<SPECKSet3D, 8>& subsets ) const;
     void m_partition_S_XY( const SPECKSet3D& set, std::array<SPECKSet3D, 4>& subsets ) const;
     void m_partition_S_Z(  const SPECKSet3D& set, std::array<SPECKSet3D, 2>& subsets ) const;
-
-#if 0
-    // For the following 2 methods, indices are used to locate which set to process from m_LIS,
-    // because of the choice to use vectors to represent lists, only indices are invariant. 
-    int  m_process_S( size_t idx1, size_t idx2, bool ); // need to decide if it's signif?
-    int  m_code_S   ( size_t idx1, size_t idx2 );
-
-#endif
-
 
     //
     // Private data members
