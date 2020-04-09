@@ -304,18 +304,6 @@ void speck::SPECK3D::m_num_of_partitions( std::array<size_t, 3>& parts ) const
 int  speck::SPECK3D::m_decide_set_significance( SPECKSet3D& set,
                      std::array<Significance, 8>& sigs )
 {
-    // If decoding, simply read a bit from the bit buffer.
-    if( !m_encode_mode )
-    {
-        if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
-            return 1;
-
-        auto bit   = m_bit_buffer[ m_bit_idx++ ];
-        set.signif = bit ? Significance::Sig : Significance::Insig;
-        return 0;
-    }
-
-    // If encoding, we do some comparison work
     set.signif = Significance::Insig;
     const size_t slice_size = m_dim_x * m_dim_y;
     std::vector< UINT > signif_idx;     // keep indices of detected significant coeffs
@@ -358,6 +346,17 @@ int  speck::SPECK3D::m_decide_set_significance( SPECKSet3D& set,
         }
     }
 
+    return 0;
+}
+
+    
+int speck::SPECK3D::m_input_set_significance( SPECKSet3D& set )
+{
+    if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
+        return 1;
+
+    auto bit   = m_bit_buffer[ m_bit_idx++ ];
+    set.signif = bit ? Significance::Sig : Significance::Insig;
     return 0;
 }
 

@@ -84,9 +84,8 @@ private:
 
     // In encoding mode, it examines the significance of "set," and store the information
     //   of its 8 descendants in "sigs." It always returns 0 in this mode.
-    // In decoding mode, it simply reads a bit from the bit buffer.
-    //   It returns 1 to indicate bit budget met, 0 otherwise. 
     int  m_decide_set_significance( SPECKSet3D& set, std::array<Significance, 8>& sigs );
+    int  m_input_set_significance(        SPECKSet3D& set );
     int  m_output_set_significance( const SPECKSet3D& set );
     int  m_input_pixel_sign(        const SPECKSet3D& pixel );
     int  m_output_pixel_sign(       const SPECKSet3D& pixel );
