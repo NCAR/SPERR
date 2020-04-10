@@ -82,9 +82,9 @@ private:
     int  m_process_S( size_t idx1, size_t idx2 );
     int  m_code_S   ( size_t idx1, size_t idx2 );
 
-    // In encoding mode, it examines the significance of "set," and store the information
-    //   of its 8 descendants in "sigs." It always returns 0 in this mode.
-    void m_decide_set_significance( SPECKSet3D& set, std::array<Significance, 8>& sigs );
+    // It decides the significance of "set" by looking up the significance map, and store the 
+    //   information of its 8 descendants in "sigs." 
+    //void m_lookup_significance_map( SPECKSet3D& set, std::array<Significance, 8>& sigs );
     int  m_input_set_significance(        SPECKSet3D& set );
     int  m_output_set_significance( const SPECKSet3D& set );
     int  m_input_pixel_sign(        const SPECKSet3D& pixel );

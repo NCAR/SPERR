@@ -194,8 +194,8 @@ int speck::SPECK3D::m_sorting_pass()
             const auto& s = m_LIS[idx1][idx2];
             if( s.type != SetType::Garbage )
             {
-                //if( (rtn = m_process_S( idx1, idx2 )) )
-                //    return rtn;
+                if( (rtn = m_process_S( idx1, idx2 )) )
+                    return rtn;
             }
         }
     }
@@ -233,6 +233,65 @@ int speck::SPECK3D::m_refinement_pass()
     return 0;
 }
 
+
+int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
+{
+    auto& set = m_LIS[idx1][idx2];
+    int rtn = 0;
+    std::array<Significance, 8> sigs;
+
+    if( m_encode_mode )
+    {
+        // decide the significance of this set
+        set.signif = Significance::Insig;
+        const size_t slice_size = m_dim_x * m_dim_y;
+        for( auto z = set.start_z; set.signif == Significance::Insig && 
+                                   z < (set.start_z + set.length_z); z++ )
+        for( auto y = set.start_y; set.signif == Significance::Insig &&
+                                   y < (set.start_y + set.length_y); y++ )
+        for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ )
+        {
+            size_t idx = z * slice_size + y * m_dim_x + x;
+            if( m_significance_map[ idx ] )
+            {
+                set.signif = Significance::Sig;
+                break;
+            }
+        }
+        // output the significance value 
+        if( (m_output_set_significance( set )) )
+            return rtn;
+    }
+    else    // decoding mode
+    {
+        if( (rtn = m_input_set_significance(set)) )
+            return rtn;
+    }
+
+    if( set.signif == Significance::Sig )
+    {
+        if( set.is_pixel() )
+        {
+            set.signif = Significance::NewlySig;
+            if( m_encode_mode )
+            {
+                if( (rtn = m_output_pixel_sign(set)) )
+                    return rtn;
+            }
+            else
+            {
+                if( (rtn = m_input_pixel_sign(set)) )
+                    return rtn;
+            }
+            m_LSP.push_back( set );         // a copy is saved to m_LSP
+            set.type = SetType::Garbage;    // this current one is gonna be discarded.
+            m_LIS_garbage_cnt[ set.total_partitions() ]++;
+        }
+    }
+
+    return 0;
+}
+
     
 int  speck::SPECK3D::m_code_S( size_t idx1, size_t idx2 )
 {
@@ -248,8 +307,8 @@ int  speck::SPECK3D::m_code_S( size_t idx1, size_t idx2 )
             auto   newidx1 = s.total_partitions();
             m_LIS[ newidx1 ].push_back( s );
             auto   newidx2 = m_LIS[ newidx1 ].size() - 1;
-            //if( (rtn = m_process_S( newidx1, newidx2 )) )
-            //    return rtn;
+            if( (rtn = m_process_S( newidx1, newidx2 )) )
+                return rtn;
         }
     }
 
@@ -284,53 +343,6 @@ void speck::SPECK3D::m_num_of_partitions( std::array<size_t, 3>& parts ) const
         dim -= dim / 2;
     }
     parts[2] = num_of_parts;
-}
-
-    
-void speck::SPECK3D::m_decide_set_significance( SPECKSet3D& set,
-                     std::array<Significance, 8>& sigs )
-{
-    set.signif = Significance::Insig;
-    const size_t slice_size = m_dim_x * m_dim_y;
-    std::vector< UINT > signif_idx;     // keep indices of detected significant coeffs
-    for( auto z = set.start_z; z < (set.start_z + set.length_z); z++ )
-    for( auto y = set.start_y; y < (set.start_y + set.length_y); y++ )
-    for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ )
-    {
-        size_t idx = z * slice_size + y * m_dim_x + x;
-        if( m_significance_map[ idx ] )
-        {
-            set.signif = Significance::Sig;
-            signif_idx.push_back( x );  
-            signif_idx.push_back( y ); 
-            signif_idx.push_back( z ); 
-        }
-    }
-
-    // If there are significant coefficients, we also calculate which subband they
-    // live in, and record that information in "sigs."
-    for( size_t i = 0; i < sigs.size(); i++ )
-        sigs[i] = speck::Significance::Insig;
-    if( !signif_idx.empty() )
-    {
-        const auto detail_start_x = set.start_x + set.length_x - set.length_x / 2;
-        const auto detail_start_y = set.start_y + set.length_y - set.length_y / 2;
-        const auto detail_start_z = set.start_z + set.length_z - set.length_z / 2;
-        for( size_t i = 0; i < signif_idx.size(); i += 3 )
-        {
-            auto x = signif_idx[i];
-            auto y = signif_idx[i + 1];
-            auto z = signif_idx[i + 2];
-            size_t subband = 0;
-            if( x >= detail_start_x )
-                subband += 1;
-            if( y >= detail_start_y )
-                subband += 2;
-            if( z >= detail_start_z )
-                subband += 4;
-            sigs[ subband ] = speck::Significance::Sig;
-        }
-    }
 }
 
     
@@ -624,6 +636,55 @@ int speck::SPECK3D::m_input_refinement( const SPECKSet3D& pixel )
 
     return 0;
 }
+
+    
+#if 0
+void speck::SPECK3D::m_lookup_significance_map( SPECKSet3D& set,
+                     std::array<Significance, 8>& sigs )
+{
+    set.signif = Significance::Insig;
+    const size_t slice_size = m_dim_x * m_dim_y;
+    std::vector< UINT > signif_idx;     // keep indices of detected significant coeffs
+    for( auto z = set.start_z; z < (set.start_z + set.length_z); z++ )
+    for( auto y = set.start_y; y < (set.start_y + set.length_y); y++ )
+    for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ )
+    {
+        size_t idx = z * slice_size + y * m_dim_x + x;
+        if( m_significance_map[ idx ] )
+        {
+            set.signif = Significance::Sig;
+            signif_idx.push_back( x );  
+            signif_idx.push_back( y ); 
+            signif_idx.push_back( z ); 
+        }
+    }
+
+    // If there are significant coefficients, we also calculate which subband they
+    // live in, and record that information in "sigs."
+    for( size_t i = 0; i < sigs.size(); i++ )
+        sigs[i] = speck::Significance::Insig;
+    if( !signif_idx.empty() )
+    {
+        const auto detail_start_x = set.start_x + set.length_x - set.length_x / 2;
+        const auto detail_start_y = set.start_y + set.length_y - set.length_y / 2;
+        const auto detail_start_z = set.start_z + set.length_z - set.length_z / 2;
+        for( size_t i = 0; i < signif_idx.size(); i += 3 )
+        {
+            auto x = signif_idx[i];
+            auto y = signif_idx[i + 1];
+            auto z = signif_idx[i + 2];
+            size_t subband = 0;
+            if( x >= detail_start_x )
+                subband += 1;
+            if( y >= detail_start_y )
+                subband += 2;
+            if( z >= detail_start_z )
+                subband += 4;
+            sigs[ subband ] = speck::Significance::Sig;
+        }
+    }
+}
+#endif
 
 
 bool speck::SPECK3D::m_ready_to_encode() const
