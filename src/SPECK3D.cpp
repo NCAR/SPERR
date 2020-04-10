@@ -194,7 +194,7 @@ int speck::SPECK3D::m_sorting_pass()
             const auto& s = m_LIS[idx1][idx2];
             if( s.type != SetType::Garbage )
             {
-                //if( (rtn = m_process_S( idx1, idx2, true )) )
+                //if( (rtn = m_process_S( idx1, idx2 )) )
                 //    return rtn;
             }
         }
@@ -239,8 +239,8 @@ int  speck::SPECK3D::m_code_S( size_t idx1, size_t idx2 )
     const auto& set = m_LIS[idx1][idx2];
     std::array< SPECKSet3D, 8 > subsets;
     m_partition_S_XYZ( set, subsets );
-    int already_sig = 0, rtn = 0;
-    for( size_t i = 0; i < 7; i++ )
+    int rtn = 0;
+    for( size_t i = 0; i < 8; i++ )
     {
         const auto& s = subsets[i];
         if( !s.is_empty() )
@@ -248,24 +248,9 @@ int  speck::SPECK3D::m_code_S( size_t idx1, size_t idx2 )
             auto   newidx1 = s.total_partitions();
             m_LIS[ newidx1 ].push_back( s );
             auto   newidx2 = m_LIS[ newidx1 ].size() - 1;
-            //if( (rtn = m_process_S( newidx1, newidx2, true )) )
+            //if( (rtn = m_process_S( newidx1, newidx2 )) )
             //    return rtn;
-    
-            if( m_LIS[ newidx1 ][ newidx2 ].signif == Significance::Sig ||
-                m_LIS[ newidx1 ][ newidx2 ].signif == Significance::NewlySig )
-                already_sig++;
         }
-    }
-
-    const auto& s8 = subsets[7];
-    if( !s8.is_empty() )
-    {
-        bool need_decide_sig = (already_sig ==0) ? false : true;
-        auto newidx1 = s8.total_partitions();
-        m_LIS[ newidx1 ].push_back( s8 );
-        auto newidx2 = m_LIS[ newidx1 ].size() - 1;
-        //if( (rtn = m_process_S( newidx1, newidx2, need_decide_sig )) )
-        //    return rtn;
     }
 
     return 0;

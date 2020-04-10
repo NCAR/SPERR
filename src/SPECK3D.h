@@ -79,7 +79,7 @@ private:
     int  m_refinement_pass( );
 
     // For the following 2 methods, indices are used to locate which set to process from m_LIS,
-    //int  m_process_S( size_t idx1, size_t idx2, bool ); // need to decide if it's signif?
+    int  m_process_S( size_t idx1, size_t idx2 );
     int  m_code_S   ( size_t idx1, size_t idx2 );
 
     // In encoding mode, it examines the significance of "set," and store the information
