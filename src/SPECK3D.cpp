@@ -127,8 +127,8 @@ void speck::SPECK3D::m_initialize_sets_lists()
             m_LIS[ parts ].push_back( subsets[i] );
         }
     }
-    // One of the follow two conditions could happen if 
-    //   num_of_xforms_xy != num_of_xforms_z
+
+    // One of these two conditions could happen if num_of_xforms_xy != num_of_xforms_z
     if( xf < num_of_xforms_xy )
     {
         std::array<SPECKSet3D, 4> sub4;
@@ -156,6 +156,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
             xf++;
         }
     }
+
     // Right now big is the set that's most likely to be significant, so insert
     //   it at the front of it's corresponding vector. One-time expense.
     auto   parts = big.total_partitions();
@@ -301,7 +302,7 @@ void speck::SPECK3D::m_num_of_partitions( std::array<size_t, 3>& parts ) const
 }
 
     
-int  speck::SPECK3D::m_decide_set_significance( SPECKSet3D& set,
+void speck::SPECK3D::m_decide_set_significance( SPECKSet3D& set,
                      std::array<Significance, 8>& sigs )
 {
     set.signif = Significance::Insig;
@@ -323,10 +324,10 @@ int  speck::SPECK3D::m_decide_set_significance( SPECKSet3D& set,
 
     // If there are significant coefficients, we also calculate which subband they
     // live in, and record that information in "sigs."
+    for( size_t i = 0; i < sigs.size(); i++ )
+        sigs[i] = speck::Significance::Insig;
     if( !signif_idx.empty() )
     {
-        for( size_t i = 0; i < sigs.size(); i++ )
-            sigs[i] = speck::Significance::Insig;
         const auto detail_start_x = set.start_x + set.length_x - set.length_x / 2;
         const auto detail_start_y = set.start_y + set.length_y - set.length_y / 2;
         const auto detail_start_z = set.start_z + set.length_z - set.length_z / 2;
@@ -345,8 +346,6 @@ int  speck::SPECK3D::m_decide_set_significance( SPECKSet3D& set,
             sigs[ subband ] = speck::Significance::Sig;
         }
     }
-
-    return 0;
 }
 
     
