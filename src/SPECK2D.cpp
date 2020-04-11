@@ -57,7 +57,8 @@ int speck::SPECK2D::encode()
     auto max_coeff = speck::make_coeff_positive( m_coeff_buf, m_coeff_len, m_sign_array );
 
     /* When max_coeff is less than 2, m_max_coefficient_bits would become zero.
-       We might consider always storing m_max_coefficient_bits as a float.   */
+       We might consider giving that situation a special treatment, or
+       we might consider always storing m_max_coefficient_bits as a float.   */
     m_max_coefficient_bits = uint16_t( std::log2(max_coeff) );
     assert( m_max_coefficient_bits > 0 );   
 
@@ -71,11 +72,10 @@ int speck::SPECK2D::encode()
             break;
 
         m_threshold *= 0.5f;
-
         m_clean_LIS();
     }
 
-    return rtn;
+    return 0;
 }
 
 
