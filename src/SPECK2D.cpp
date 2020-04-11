@@ -53,12 +53,12 @@ int speck::SPECK2D::encode()
 
     // Get ready for the quantization loop!
     m_bit_buffer.clear();
-    m_bit_buffer.reserve( m_budget + m_vec_init_capacity );
-    auto max_coeff = speck::make_coeff_positive( m_coeff_buf, m_dim_x * m_dim_y,
-                                                 m_sign_array );
+    m_bit_buffer.reserve( m_budget );
+    auto max_coeff = speck::make_coeff_positive( m_coeff_buf, m_coeff_len, m_sign_array );
+
     m_max_coefficient_bits = uint16_t( std::log2(max_coeff) );
-    /* When max_coeff is very close to zero, m_max_coefficient_bits could be zero.
-       I don't know how to deal with that situation yet...                      */
+    /* When max_coeff is less than 2, m_max_coefficient_bits would become zero.
+       I don't know how to deal with that situation yet...                   */
     assert( m_max_coefficient_bits > 0 );   
     m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
     int rtn = 0;
