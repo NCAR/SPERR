@@ -36,26 +36,30 @@ void speck::calc_approx_detail_len( size_t orig_len,  size_t lev,
 }
 
 
-template<typename T>
-double speck::make_coeff_positive( T& buf, size_t len, std::vector<bool>& sign_array )
+template<typename U >
+typename U::element_type speck::make_coeff_positive( U& buf, size_t len, std::vector<bool>& sign_array )
 {
     sign_array.assign( len, true );
     auto max = std::abs( buf[0] );
+    using element_type = typename U::element_type;
+    element_type zero = 0.0f;
     for( size_t i = 0; i < len; i++ )
     {
-        if( buf[i] < 0.0 )
+        if( buf[i] < zero )
         {
-            buf[i]       *= -1.0;
+            buf[i] = -buf[i];
             sign_array[i] = false;
         }
         if( buf[i] > max )
             max = buf[i];
     }
 
-    return double(max);
+    return max;
 }
-template double speck::make_coeff_positive( buffer_type_d&, size_t, std::vector<bool>& );
-template double speck::make_coeff_positive( buffer_type_f&, size_t, std::vector<bool>& );
+template speck::buffer_type_d::element_type 
+speck::make_coeff_positive( buffer_type_d&, size_t, std::vector<bool>& );
+template speck::buffer_type_f::element_type 
+speck::make_coeff_positive( buffer_type_f&, size_t, std::vector<bool>& );
 
 
 // Good solution to deal with bools and unsigned chars
