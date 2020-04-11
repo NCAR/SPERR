@@ -58,7 +58,7 @@ public:
     uint16_t get_max_coeff_bits()   const;
 
     // core operations
-    //int encode();
+    int encode();
     //int decode();
 
     // for development purpose only (debug, verification, etc.)

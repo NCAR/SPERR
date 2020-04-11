@@ -58,7 +58,7 @@ void speck::SPECK3D::assign_bit_budget( size_t budget )
     size_t mod = budget % 8;
     if( mod == 0 )
         m_budget = budget;
-        else    // we can fill up the last byte
+    else    // we can fill up the last byte
         m_budget = budget + 8 - mod;
 }
 
@@ -91,11 +91,42 @@ void speck::SPECK3D::m_clean_LIS()
 }
 
     
+int speck::SPECK3D::encode()
+{
+    assert( m_ready_to_encode() );
+    m_encode_mode = true;
+
+    m_initialize_sets_lists();
+
+    m_bit_buffer.clear();
+    m_bit_buffer.reserve( m_budget );
+    auto max_coeff = speck::make_coeff_positive( m_coeff_buf, m_coeff_len, m_sign_array );
+
+    m_max_coefficient_bits = uint16_t( std::log2(max_coeff) );
+    assert( m_max_coefficient_bits > 0 );
+
+    m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
+    int rtn = 0;
+    for( size_t bitplane = 0; bitplane < 128; bitplane++ )
+    {
+        if( (rtn = m_sorting_pass()) )
+            break;
+        if( (rtn = m_refinement_pass()) )
+            break;
+
+        m_threshold *= 0.5f;
+        m_clean_LIS();
+    }
+
+    return 0;
+}
+
+    
 void speck::SPECK3D::m_initialize_sets_lists()
 {
-    std::array<size_t, 3> num_of_parts; // how many times each dimension is partitioned?
+    std::array<size_t, 3> num_of_parts; // how many times each dimension could be partitioned?
     m_num_of_partitions(  num_of_parts );
-    size_t num_of_sizes = 3;
+    size_t num_of_sizes = 1;
     for( size_t i = 0; i < 3; i++ )
         num_of_sizes += num_of_parts[i];
 
@@ -238,7 +269,6 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
 {
     auto& set = m_LIS[idx1][idx2];
     int rtn = 0;
-    std::array<Significance, 8> sigs;
 
     if( m_encode_mode )
     {
