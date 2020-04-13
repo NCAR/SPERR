@@ -59,7 +59,7 @@ public:
 
     // core operations
     int encode();
-    //int decode();
+    int decode();
 
     // for development purpose only (debug, verification, etc.)
     void action();

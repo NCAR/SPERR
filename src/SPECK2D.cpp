@@ -114,10 +114,10 @@ int speck::SPECK2D::decode()
     }
 
     // Restore coefficient signs
-    for( size_t i = 0; i < m_sign_array.size(); i++ )
+    for( size_t i = 0; i < m_coeff_len; i++ )
     {
         if( !m_sign_array[i] )
-            m_coeff_buf[i] *= -1.0f;
+            m_coeff_buf[i] = -m_coeff_buf[i];
     }
 
     return rtn_val;

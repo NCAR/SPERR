@@ -122,6 +122,49 @@ int speck::SPECK3D::encode()
     return 0;
 }
 
+
+int speck::SPECK3D::decode()
+{
+    assert( m_ready_to_decode() );
+    m_encode_mode = false;
+
+    // initialize coefficients to be zero, and signs to be all positive
+#ifdef SPECK_USE_DOUBLE
+    m_coeff_buf = std::make_unique<double[]>( m_coeff_len );
+#else
+    m_coeff_buf = std::make_unique<float[]>( m_coeff_len );
+#endif
+    for( size_t i = 0; i < m_coeff_len; i++ )
+        m_coeff_buf[i] = 0.0f;
+    m_sign_array.assign( m_coeff_len, true );
+
+    m_initialize_sets_lists();
+
+    m_bit_idx = 0;
+    m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
+    int rtn = 0;
+    for( size_t bitplane = 0; bitplane < 128; bitplane++ )
+    {
+        if( (rtn = m_sorting_pass()) )
+            break;
+        if( (rtn = m_refinement_pass()) )
+            break;
+
+        m_threshold *= 0.5f;
+
+        m_clean_LIS();
+    }
+
+    // Restore coefficient signs
+    for( size_t i = 0; i < m_coeff_len; i++ )
+    {
+        if( !m_sign_array[i] )
+            m_coeff_buf[i] = -m_coeff_buf[i];
+    }
+
+    return rtn;
+}
+
     
 void speck::SPECK3D::m_initialize_sets_lists()
 {
@@ -149,7 +192,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
     const auto num_of_xforms_z  = speck::calc_num_of_xforms( m_dim_z );
     size_t xf = 0;
     std::array<SPECKSet3D, 8> subsets;
-    for( xf = 0; xf < num_of_xforms_xy && xf < num_of_xforms_z; xf++ )
+    while( xf < num_of_xforms_xy && xf < num_of_xforms_z )
     {
         m_partition_S_XYZ( big, subsets );
         big = subsets[0];
@@ -158,6 +201,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
             auto   parts = subsets[i].total_partitions();
             m_LIS[ parts ].push_back( subsets[i] );
         }
+        xf++;
     }
 
     // One of these two conditions could happen if num_of_xforms_xy != num_of_xforms_z
@@ -736,8 +780,6 @@ bool speck::SPECK3D::m_ready_to_decode() const
     if( m_bit_buffer.empty() )
         return false;
     if( m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0 )
-        return false;
-    if( m_max_coefficient_bits == 0 )
         return false;
     if( m_budget == 0 )
         return false;
