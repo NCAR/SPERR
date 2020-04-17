@@ -77,6 +77,13 @@ if( BUILD_QCC_EXAMPLES )
                                                     PUBLIC ${QCCPACK_LIB}      )
     target_include_directories( example_qcc_speck2d PUBLIC ${PROJECT_BINARY_DIR}
                                                     PUBLIC ${QCCPACK_INC}      )
+
+    # Qcc Executable #4
+    add_executable( example_qcc_speck3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_qcc_speck3d.c" )
+    target_link_libraries(      example_qcc_speck3d PUBLIC sam_helper
+                                                    PUBLIC ${QCCPACK_LIB}      )
+    target_include_directories( example_qcc_speck3d PUBLIC ${PROJECT_BINARY_DIR}
+                                                    PUBLIC ${QCCPACK_INC}      )
 endif()
 
 

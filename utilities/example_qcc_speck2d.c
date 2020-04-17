@@ -7,14 +7,13 @@
 
 #include "libQccPack.h"
 #include "sam_helper.h"
-
 #include "assert.h"
 
-#include "SpeckConfig.h"
-
 #ifdef TIME_EXAMPLES
-#include <sys/time.h>
+    #include <sys/time.h>
 #endif
+
+#include "SpeckConfig.h"
 
 
 int array_to_image( const float* array, QccIMGImageComponent* image )
