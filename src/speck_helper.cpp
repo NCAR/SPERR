@@ -37,7 +37,8 @@ void speck::calc_approx_detail_len( size_t orig_len,  size_t lev,
 
 
 template<typename U >
-typename U::element_type speck::make_coeff_positive( U& buf, size_t len, std::vector<bool>& sign_array )
+typename U::element_type speck::make_coeff_positive( U& buf, size_t len, 
+                                                     std::vector<bool>& sign_array )
 {
     sign_array.assign( len, true );
     auto max = std::abs( buf[0] );

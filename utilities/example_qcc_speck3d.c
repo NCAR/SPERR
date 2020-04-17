@@ -74,6 +74,7 @@ int main( int argc, char** argv )
     const size_t num_of_vals  = num_of_cols * num_of_rows * num_of_frames;
     const size_t num_of_bytes = sizeof(float) * num_of_vals;
 
+    const char* output_name   = "qcc.tmp";
     const int header_size     = 29;
     const int total_bits      = (int)(8.0f * num_of_bytes / cratio) + header_size * 8;
 
@@ -100,10 +101,9 @@ int main( int argc, char** argv )
     QccBitBuffer    output_buffer;
     if( QccBitBufferInitialize(&output_buffer) )
     {
-        fprintf( stderr, "QccBitBufferInitialize() failed\n" );
-        return 1;
+        fprintf( stderr, "QccBitBufferInitialize() failed\n" ); return 1;
     }    
-    QccStringCopy( output_buffer.filename, "qcc.tmp" );
+    QccStringCopy( output_buffer.filename, output_name );
     output_buffer.type = QCCBITBUFFER_OUTPUT;
     if (QccBitBufferStart(&output_buffer))
     {
@@ -146,129 +146,78 @@ int main( int argc, char** argv )
         return 1;
     }
 
-    /* Write bit buffer to disk */
+    /* Write bit buffer to disk, and free resources */
     if( QccBitBufferEnd( &output_buffer ) )
     {
         fprintf( stderr, "QccBitBufferEnd() failed.\n" );
         return 1;
     }
-}
 
 
-#if 0
-void myspeckdecode3d_64bit( const char*  inputFilename,
-                            double* dstBuf,
-                            int     outSize )
-{
-    QccBitBuffer InputBuffer;
-    QccBitBufferInitialize( &InputBuffer );
-    QccStringCopy( InputBuffer.filename, inputFilename );
-    InputBuffer.type = QCCBITBUFFER_INPUT;
+    /*
+     * Now start the decode procedures.
+     */
 
-    QccWAVWavelet Wavelet;
-    QccWAVWaveletInitialize( &Wavelet );
-    QccString WaveletFilename = QCCWAVWAVELET_DEFAULT_WAVELET;
-    QccString Boundary = "symmetric";
-    if (QccWAVWaveletCreate(&Wavelet, WaveletFilename, Boundary))
+    /* Prepare an input buffer */
+    QccBitBuffer    input_buffer;
+    QccBitBufferInitialize( &input_buffer );
+    QccStringCopy( input_buffer.filename, output_name );
+    input_buffer.type = QCCBITBUFFER_INPUT;
+    if (QccBitBufferStart(&input_buffer) ) 
     {
-      QccErrorAddMessage("Error calling QccWAVWaveletCreate()");
-      QccErrorExit();
-    }    
-    if (QccBitBufferStart(&InputBuffer)) 
-    {
-        QccErrorAddMessage("Error calling QccBitBufferStart()" );
-        QccErrorExit();
+        fprintf( stderr, "Error calling QccBitBufferStart()\n" );
+        return 1;
     }
 
-    int TransformType;
-    int TemporalNumLevels;
-    int SpatialNumLevels;
-    int NumFrames, NumRows, NumCols;
-    double ImageMean;
-    int MaxCoefficientBits;
-    if (QccSPECK3DDecodeHeader( &InputBuffer, 
-                                &TransformType, 
-                                &TemporalNumLevels, 
-                                &SpatialNumLevels,
-                                &NumFrames, 
-                                &NumRows, 
-                                &NumCols,
-                                &ImageMean, 
-                                &MaxCoefficientBits ))
+    /* Decode header */
+    double image_mean;
+    int max_coeff_bits;
+    if (QccSPECK3DDecodeHeader( &input_buffer,      &transform_type,    &num_of_levels_z, 
+                                &num_of_levels_xy,  &num_of_frames,     &num_of_rows, 
+                                &num_of_cols,       &image_mean,        &max_coeff_bits ))
     {
-      QccErrorAddMessage("Error calling QccSPECK3DDecodeHeader()");
-      QccErrorExit();
+        fprintf( stderr, "Error calling QccSPECK3DDecodeHeader()\n");
+        return 1;
     }
 
-    int NumPixels = NumFrames * NumRows * NumCols;
-    long long int pxlcount = (long long int)NumFrames * NumRows * NumCols;
-    if( pxlcount > INT_MAX ) 
-    {
-        QccErrorAddMessage("NumPixels overflow. Please try smaller data sets.");
-        QccErrorExit();
-    }
-    if( outSize != NumPixels ) 
-    {
-        QccErrorAddMessage("Decode output buffer size doesn't match signal length.");
-        QccErrorExit();
-    }    
-
-    QccIMGImageCube imagecube;
-    QccIMGImageCubeInitialize( &imagecube );
-    imagecube.num_frames = NumFrames;
-    imagecube.num_rows = NumRows;
-    imagecube.num_cols = NumCols;
-    if (QccIMGImageCubeAlloc(&imagecube) ) 
-    {
-      QccErrorAddMessage("Error calling QccIMGImageCubeAlloc()" );
-      QccErrorExit();
-    }
+    /* Do a SPECK decode. Note that we reuse the imagecube object */
     int TargetBitCnt = QCCENT_ANYNUMBITS;
-
-    if (QccSPECK3DDecode( &InputBuffer, 
-                          &imagecube, 
-                          NULL, 
-                          TransformType, 
-                          TemporalNumLevels, 
-                          SpatialNumLevels, 
-                          &Wavelet, 
-                          ImageMean,
-                          MaxCoefficientBits, 
+    if (QccSPECK3DDecode( &input_buffer,    &imagecube,         NULL, 
+                          transform_type,   num_of_levels_z,    num_of_levels_xy,
+                          &wavelet,         image_mean,         max_coeff_bits,
                           TargetBitCnt ))
     {
         QccErrorAddMessage("Error calling QccSPECK3DDecode()" );
         QccErrorExit();
     }
-    if (QccBitBufferEnd(&InputBuffer)) 
+    if (QccBitBufferEnd(&input_buffer) ) 
     {
-      QccErrorAddMessage("Error calling QccBitBufferEnd()" );
-      QccErrorExit();
+        fprintf( stderr, "Error calling QccBitBufferEnd()\n" );
+        return 1;
     }
 
-    int idx = 0;
-    int frame, row, col;
-    for( frame = 0; frame < imagecube.num_frames; frame++ )
-        for( row = 0; row < imagecube.num_rows; row++ )
-            for( col = 0; col < imagecube.num_cols; col++ )
-                dstBuf[ idx++ ] = imagecube.volume[frame][row][col];    
+    /* Collected the decoded array, and print out some statistics. */
+    float* out_array = (float*)malloc( num_of_bytes );
+    image_cube_to_array( &imagecube, out_array ); 
+    float  rmse, lmax, min, max, psnr;
+    if( sam_get_statsf( in_array, out_array, num_of_vals, &rmse, &lmax, &psnr, &min, &max ) )
+    {
+        fprintf( stderr, "get_rmse_max failed.\n" );
+        free( in_array );
+        free( out_array );
+        return 1;
+    }
+    printf("rmse = %f, lmax = %f, psnr = %fdB, orig_min = %f, orig_max = %f\n",
+            rmse, lmax, psnr, min, max );
 
+    /* cleanup */
+    QccWAVWaveletFree( &wavelet );
     QccIMGImageCubeFree( &imagecube );
-    QccWAVWaveletFree( &Wavelet );
+    free( in_array );
+    free( out_array );
 
+    return 0;
 }
-#endif
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
