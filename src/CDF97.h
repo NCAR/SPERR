@@ -1,5 +1,5 @@
-#ifndef SPECK_H
-#define SPECK_H
+#ifndef CDF97_H
+#define CDF97_H
 
 #include <memory>
 #include <cmath>
