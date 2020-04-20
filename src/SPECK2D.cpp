@@ -274,17 +274,15 @@ int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool need_decide_sign
                 if( (rtn = m_input_pixel_sign( set )) )
                     return rtn;
             }
-            m_LSP.push_back( set );         // A copy is saved to m_LSP.
-            set.type = SetType::Garbage ;   // This particular object will be discarded.
-            m_LIS_garbage_cnt[ set.part_level ]++;
+            m_LSP.push_back( set );     // A copy is saved to m_LSP.
         }
-        else
+        else // keep dividing this set
         {
             if( (rtn = m_code_S( idx1, idx2 )) )
                 return rtn;
-            set.type = SetType::Garbage;   // This particular object will be discarded.
-            m_LIS_garbage_cnt[ set.part_level ]++;
         }
+        set.type = SetType::Garbage;    // This particular object will be discarded.
+        m_LIS_garbage_cnt[ set.part_level ]++;
     }
 
     return 0;

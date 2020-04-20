@@ -3,7 +3,7 @@
 
 #include "SPECK_Storage.h"
 
-#define PRINT
+// #define PRINT
 
 namespace speck
 {
@@ -17,12 +17,12 @@ public:
     //
     // Member data
     //
-    UINT  start_x       = 0;
-    UINT  start_y       = 0;
-    UINT  start_z       = 0;
-    UINT  length_x      = 0;
-    UINT  length_y      = 0;
-    UINT  length_z      = 0;
+    uint32_t  start_x      = 0;
+    uint32_t  start_y      = 0;
+    uint32_t  start_z      = 0;
+    uint32_t  length_x     = 0;
+    uint32_t  length_y     = 0;
+    uint32_t  length_z     = 0;
     // which partition level is this set at (starting from zero, in all 3 directions).
     uint16_t part_level_x  = 0;  
     uint16_t part_level_y  = 0;  
@@ -60,9 +60,6 @@ public:
     // core operations
     int encode();
     int decode();
-
-    // for development purpose only (debug, verification, etc.)
-    void action();
 
 private:
     //

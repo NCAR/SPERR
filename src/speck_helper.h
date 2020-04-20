@@ -14,7 +14,6 @@ namespace speck
     using buffer_type_d = std::unique_ptr<double[]>;
     using buffer_type_f = std::unique_ptr<float[]>;
 #endif
-    using UINT          = uint32_t;   // unsigned int
 
     //
     // Helper classes

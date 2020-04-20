@@ -184,9 +184,9 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // Starting from a set representing the whole volume, identify the smaller sets
     //   and put them in LIS accordingly.
     SPECKSet3D big;
-    big.length_x = UINT( m_dim_x ); // Truncate 64-bit int to 32-bit, but should be OK.
-    big.length_y = UINT( m_dim_y ); // Truncate 64-bit int to 32-bit, but should be OK.
-    big.length_z = UINT( m_dim_z ); // Truncate 64-bit int to 32-bit, but should be OK.
+    big.length_x = uint32_t( m_dim_x ); // Truncate 64-bit int to 32-bit, but should be OK.
+    big.length_y = uint32_t( m_dim_y ); // Truncate 64-bit int to 32-bit, but should be OK.
+    big.length_z = uint32_t( m_dim_z ); // Truncate 64-bit int to 32-bit, but should be OK.
 
     const auto num_of_xforms_xy = speck::calc_num_of_xforms( std::min(m_dim_x, m_dim_y) );
     const auto num_of_xforms_z  = speck::calc_num_of_xforms( m_dim_z );
@@ -359,9 +359,14 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
                     return rtn;
             }
             m_LSP.push_back( set );         // a copy is saved to m_LSP
-            set.type = SetType::Garbage;    // this current one is gonna be discarded.
-            m_LIS_garbage_cnt[ set.total_partitions() ]++;
         }
+        else    // keep dividing the current set
+        {
+            if( (rtn = m_code_S( idx1, idx2 )) )
+                return rtn;
+        }
+        set.type = SetType::Garbage;    // this current one is gonna be discarded.
+        m_LIS_garbage_cnt[ set.total_partitions() ]++;
     }
 
     return 0;
@@ -441,6 +446,8 @@ int speck::SPECK3D::m_output_set_significance( const SPECKSet3D& set )
         std::cout << "s0" << std::endl;
 #endif
 
+    // set hasn't had a chance to be marked as NewlySig yet, so only need to
+    // compare with Sig.
     auto bit = (set.signif == Significance::Sig);
     m_bit_buffer.push_back( bit );
     
@@ -455,9 +462,9 @@ int speck::SPECK3D::m_output_set_significance( const SPECKSet3D& set )
 void speck::SPECK3D::m_partition_S_XYZ( const SPECKSet3D& set, 
                      std::array<SPECKSet3D, 8>& subsets ) const
 {
-    const UINT split_x[2]{ set.length_x - set.length_x / 2,  set.length_x / 2 };
-    const UINT split_y[2]{ set.length_y - set.length_y / 2,  set.length_y / 2 };
-    const UINT split_z[2]{ set.length_z - set.length_z / 2,  set.length_z / 2 };
+    const uint32_t split_x[2]{ set.length_x - set.length_x / 2,  set.length_x / 2 };
+    const uint32_t split_y[2]{ set.length_y - set.length_y / 2,  set.length_y / 2 };
+    const uint32_t split_z[2]{ set.length_z - set.length_z / 2,  set.length_z / 2 };
 
     for( size_t i = 0; i < 8; i++ )
     {
@@ -537,8 +544,8 @@ void speck::SPECK3D::m_partition_S_XYZ( const SPECKSet3D& set,
 void speck::SPECK3D::m_partition_S_XY( const SPECKSet3D& set, 
                      std::array<SPECKSet3D, 4>& subsets ) const
 {
-    const UINT split_x[2]{ set.length_x - set.length_x / 2,  set.length_x / 2 };
-    const UINT split_y[2]{ set.length_y - set.length_y / 2,  set.length_y / 2 };
+    const uint32_t split_x[2]{ set.length_x - set.length_x / 2,  set.length_x / 2 };
+    const uint32_t split_y[2]{ set.length_y - set.length_y / 2,  set.length_y / 2 };
 
     for( size_t i = 0; i < 4; i++ )
     {
@@ -588,7 +595,7 @@ void speck::SPECK3D::m_partition_S_XY( const SPECKSet3D& set,
 void speck::SPECK3D::m_partition_S_Z( const SPECKSet3D& set, 
                      std::array<SPECKSet3D, 2>& subsets ) const
 {
-    const UINT split_z[2]{ set.length_z - set.length_z / 2,  set.length_z / 2 };
+    const uint32_t split_z[2]{ set.length_z - set.length_z / 2,  set.length_z / 2 };
 
     for( size_t i = 0; i < 2; i++ )
     {
@@ -712,55 +719,6 @@ int speck::SPECK3D::m_input_refinement( const SPECKSet3D& pixel )
     return 0;
 }
 
-    
-#if 0
-void speck::SPECK3D::m_lookup_significance_map( SPECKSet3D& set,
-                     std::array<Significance, 8>& sigs )
-{
-    set.signif = Significance::Insig;
-    const size_t slice_size = m_dim_x * m_dim_y;
-    std::vector< UINT > signif_idx;     // keep indices of detected significant coeffs
-    for( auto z = set.start_z; z < (set.start_z + set.length_z); z++ )
-    for( auto y = set.start_y; y < (set.start_y + set.length_y); y++ )
-    for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ )
-    {
-        size_t idx = z * slice_size + y * m_dim_x + x;
-        if( m_significance_map[ idx ] )
-        {
-            set.signif = Significance::Sig;
-            signif_idx.push_back( x );  
-            signif_idx.push_back( y ); 
-            signif_idx.push_back( z ); 
-        }
-    }
-
-    // If there are significant coefficients, we also calculate which subband they
-    // live in, and record that information in "sigs."
-    for( size_t i = 0; i < sigs.size(); i++ )
-        sigs[i] = speck::Significance::Insig;
-    if( !signif_idx.empty() )
-    {
-        const auto detail_start_x = set.start_x + set.length_x - set.length_x / 2;
-        const auto detail_start_y = set.start_y + set.length_y - set.length_y / 2;
-        const auto detail_start_z = set.start_z + set.length_z - set.length_z / 2;
-        for( size_t i = 0; i < signif_idx.size(); i += 3 )
-        {
-            auto x = signif_idx[i];
-            auto y = signif_idx[i + 1];
-            auto z = signif_idx[i + 2];
-            size_t subband = 0;
-            if( x >= detail_start_x )
-                subband += 1;
-            if( y >= detail_start_y )
-                subband += 2;
-            if( z >= detail_start_z )
-                subband += 4;
-            sigs[ subband ] = speck::Significance::Sig;
-        }
-    }
-}
-#endif
-
 
 bool speck::SPECK3D::m_ready_to_encode() const
 {
@@ -785,25 +743,4 @@ bool speck::SPECK3D::m_ready_to_decode() const
         return false;
 
     return true;
-}
-    
-
-void speck::SPECK3D::action()
-{
-    m_initialize_sets_lists();
-    printf("m_LIS length: %lu\n", m_LIS.size() );
-    size_t num_of_sets = 0;
-    for( const auto& l : m_LIS )
-        num_of_sets += l.size();
-    printf("m_LIS contains set total number: %lu\n", num_of_sets );
-
-    for( const auto& l : m_LIS )
-    {
-        if( !l.empty() )
-        {
-            printf("new length:\n");
-            for( const auto& s : l )
-                s.print();
-        }
-    }
 }
