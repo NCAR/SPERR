@@ -20,9 +20,9 @@ public:
     UINT  start_x       = 0;
     UINT  start_y       = 0;
     UINT  start_z       = 0;
-    UINT  length_x      = 0;    // For typeI set, this value equals to m_dim_x.
-    UINT  length_y      = 0;    // For typeI set, this value equals to m_dim_y.
-    UINT  length_z      = 0;    // For typeI set, this value equals to m_dim_z.
+    UINT  length_x      = 0;
+    UINT  length_y      = 0;
+    UINT  length_z      = 0;
     // which partition level is this set at (starting from zero, in all 3 directions).
     uint16_t part_level_x  = 0;  
     uint16_t part_level_y  = 0;  

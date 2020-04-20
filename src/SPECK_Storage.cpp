@@ -83,6 +83,7 @@ std::vector<bool>& speck::SPECK_Storage::release_bitstream()
         buffer_type_f tmp = std::make_unique<float[]>( m_coeff_len );
         for( size_t i = 0; i < m_coeff_len; i++ )
             tmp[i] = m_coeff_buf[i];
+        m_coeff_buf = nullptr;      // also destroy the current buffer
         return std::move( tmp );
     }
 #else
@@ -92,6 +93,7 @@ std::vector<bool>& speck::SPECK_Storage::release_bitstream()
         buffer_type_d tmp = std::make_unique<double[]>( m_coeff_len );
         for( size_t i = 0; i < m_coeff_len; i++ )
             tmp[i] = m_coeff_buf[i];
+        m_coeff_buf = nullptr;      // also destroy the current buffer
         return std::move( tmp );
     }
     speck::buffer_type_f speck::SPECK_Storage::release_coeffs_float()
