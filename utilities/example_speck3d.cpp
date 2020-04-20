@@ -18,9 +18,9 @@ extern "C"  // C Function calls, and don't include the C header!
 
 int main( int argc, char* argv[] )
 {
-    if( argc != 5 )
+    if( argc != 6 )
     {
-        std::cerr << "Usage: ./a.out input_filename dim_x dim_y dim_z" << std::endl;
+        std::cerr << "Usage: ./a.out input_filename dim_x dim_y dim_z cratio" << std::endl;
         return 1;
     }
 
@@ -29,15 +29,11 @@ int main( int argc, char* argv[] )
     const size_t  dim_x  = std::atol( argv[2] );
     const size_t  dim_y  = std::atol( argv[3] );
     const size_t  dim_z  = std::atol( argv[4] );
-    const size_t  total_vals = dim_x * dim_y;
-    
-    speck::SPECK3D speck;
-    speck.assign_dims( dim_x, dim_y, dim_z );
-    speck.action();
+    const float   cratio = std::atof( argv[5] );
+    const size_t  total_vals = dim_x * dim_y * dim_z;
 
-#if 0
     // Let's read in binaries as 4-byte floats
-    std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
+    speck::buffer_type_f in_buf = std::make_unique<float[]>( total_vals );
     if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
     {
         std::cerr << "Input read error!" << std::endl;
@@ -46,43 +42,26 @@ int main( int argc, char* argv[] )
 
     // Take input to go through DWT.
     speck::CDF97 cdf;
-    cdf.set_dims( dim_x, dim_y );
-    cdf.copy_data( in_buf, dim_x * dim_y );
+    cdf.set_dims( dim_x, dim_y, dim_z );
+    cdf.copy_data( in_buf, total_vals );
     const auto startT = std::chrono::high_resolution_clock::now();
-    cdf.dwt2d();
+    cdf.dwt3d();
 
-    // Do a speck encoding
-    speck::SPECK2D encoder;
-    encoder.assign_dims( dim_x, dim_y );
-    encoder.copy_coeffs( cdf.get_read_only_data(), dim_x * dim_y );
-    const size_t header_size  = 18;
-    const float  cratio       = 8.0f;  /* compression ratio */
-    const size_t total_bits   = size_t(32.0f * total_vals / cratio) + header_size * 8;
+    // Do a speck encoding, and then decoding
+    speck::SPECK3D encoder;
+    encoder.assign_dims( dim_x, dim_y, dim_z );
+    encoder.copy_coeffs( cdf.get_read_only_data(), total_vals );
+    const size_t total_bits = size_t(32.0f * total_vals / cratio);
     encoder.assign_bit_budget( total_bits );
     encoder.encode();
+    encoder.decode();
 
-    // Write to file and read it back
-    speck::output_speck2d( dim_x, dim_y, cdf.get_mean(), encoder.get_max_coeff_bits(), 
-                           encoder.get_read_only_bitstream(), output );
-    size_t dim_x_r, dim_y_r;
-    double mean_r;
-    uint16_t max_bits_r;
-    std::vector<bool> bits_r;
-    speck::input_speck2d( dim_x_r, dim_y_r, mean_r, max_bits_r, bits_r, output );
-    
-    // Do a speck decoding
-    speck::SPECK2D decoder;
-    decoder.assign_dims( dim_x_r, dim_y_r );
-    decoder.assign_max_coeff_bits( max_bits_r );
-    decoder.take_bitstream( bits_r );
-    decoder.assign_bit_budget( total_bits );
-    decoder.decode();
-
+    // Do an inverse wavelet transform
     speck::CDF97 idwt;
-    idwt.set_dims( dim_x, dim_y );
+    idwt.set_dims( dim_x, dim_y, dim_z );
     idwt.set_mean( cdf.get_mean() );
-    idwt.take_data( decoder.release_coeffs_double() );
-    idwt.idwt2d();
+    idwt.take_data( encoder.release_coeffs_double() );
+    idwt.idwt3d();
 
     // Finish timer and print timing
     const auto endT   = std::chrono::high_resolution_clock::now();
@@ -98,5 +77,4 @@ int main( int argc, char* argv[] )
                     total_vals, &rmse, &lmax, &psnr, &arr1min, &arr1max );
     printf("Sam: rmse = %f, lmax = %f, psnr = %fdB, orig_min = %f, orig_max = %f\n", 
             rmse, lmax, psnr, arr1min, arr1max );
-#endif
 }

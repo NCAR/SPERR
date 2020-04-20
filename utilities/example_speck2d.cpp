@@ -31,7 +31,7 @@ int main( int argc, char* argv[] )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let's read in binaries as 4-byte floats
-    std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
+    speck::buffer_type_f in_buf = std::make_unique<float[]>( total_vals );
     if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
     {
         std::cerr << "Input read error!" << std::endl;
