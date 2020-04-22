@@ -116,6 +116,8 @@ double speck::SPECK_Storage::get_image_mean() const
 }
 
 
+// Good solution to deal with bools and unsigned chars
+// https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
 int speck::SPECK_Storage::m_write( const buffer_type_c& header, size_t header_size,
                                    const char* filename                     ) const
 {
