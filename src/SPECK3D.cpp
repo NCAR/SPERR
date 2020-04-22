@@ -744,3 +744,10 @@ bool speck::SPECK3D::m_ready_to_decode() const
 
     return true;
 }
+
+
+int speck::SPECK3D::write_to_disk( const std::string& filename ) const
+{
+
+    return 0;
+}

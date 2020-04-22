@@ -32,18 +32,33 @@ public:
     buffer_type_d            release_coeffs_double();   // Others take ownership of the data
     buffer_type_f            release_coeffs_float() ;   // Others take ownership of the data
 
+    // file operations
+    virtual int write_to_disk(  const std::string& filename ) const = 0;
+//    int read_from_disk( const std::string& filename );
 
 protected:
+    //
+    // Member functions
+    //
 
+    // Output to and input from disk
+    // They return 0 upon success, and 1 upon failure.
+    int m_write( const buffer_type_c& header,         size_t header_size, 
+                 const std::vector<bool>& bit_buffer, const char* filename ) const;
+    int m_read(  buffer_type_c& header,               size_t header_size, 
+                 std::vector<bool>& bit_buffer,       const char* filename ) const;
+
+
+    //
+    // Member variables
+    //
 #ifdef SPECK_USE_DOUBLE
     buffer_type_d  m_coeff_buf = nullptr;   // All coefficients are kept here
 #else
     buffer_type_f  m_coeff_buf = nullptr;   // All coefficients are kept here
 #endif
-
     size_t         m_coeff_len = 0;
     std::vector<bool> m_bit_buffer;         // Output/Input bit buffer
-
 };
 
 };

@@ -66,7 +66,7 @@ public:
 
         // Write to file and read it back
         if( speck::output_speck2d( m_dim_x, m_dim_y, cdf.get_mean(), encoder.get_max_coeff_bits(), 
-                                   encoder.get_read_only_bitstream(), m_output_name )            )
+                                   encoder.get_read_only_bitstream(), m_output_name.c_str() )   )
         {
             std::cerr << "Write bitstream to disk error!" << std::endl;
             return 1;
@@ -75,7 +75,7 @@ public:
         double mean_r;
         uint16_t max_bits_r;
         std::vector<bool> bits_r;
-        if( speck::input_speck2d( dim_x_r, dim_y_r, mean_r, max_bits_r, bits_r, m_output_name ) )
+        if( speck::input_speck2d( dim_x_r, dim_y_r, mean_r, max_bits_r, bits_r, m_output_name.c_str() ) )
         {
             std::cerr << "Read bitstream from disk error!" << std::endl;
             return 1;

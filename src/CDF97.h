@@ -3,15 +3,10 @@
 
 #include <memory>
 #include <cmath>
+#include "speck_helper.h"
 
 namespace speck
 {
-
-#ifndef BUFFER_TYPES
-#define BUFFER_TYPES
-    using buffer_type_d = std::unique_ptr<double[]>;
-    using buffer_type_f = std::unique_ptr<float[]>;
-#endif
 
 class CDF97
 {

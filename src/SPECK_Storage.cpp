@@ -1,6 +1,7 @@
 #include "SPECK_Storage.h"
-#include <type_traits>
+
 #include <cassert>
+#include <fstream>
 
 template<typename T>
 void speck::SPECK_Storage::copy_coeffs( const T& p, size_t len )
@@ -102,3 +103,91 @@ std::vector<bool>& speck::SPECK_Storage::release_bitstream()
         return std::move( m_coeff_buf );
     }
 #endif
+
+
+int speck::SPECK_Storage::m_write( const buffer_type_c& header, size_t header_size,
+                                   const std::vector<bool>& bit_buffer,
+                                   const char* filename                     ) const
+{
+    // Sanity check on the size of bit_buffer
+    assert( bit_buffer.size() % 8 == 0 );
+
+    // Allocate output buffer
+    size_t total_size  = header_size + bit_buffer.size() / 8;
+    buffer_type_c  buf = std::make_unique<char[]>( total_size );
+
+    // Copy over header
+    std::memcpy( buf.get(), header.get(), header_size );
+
+    // Pack booleans to buf!
+    const uint64_t magic = 0x8040201008040201;
+    size_t   pos = header_size;
+    bool     a[8];
+    uint64_t t;
+    for( size_t i = 0; i < bit_buffer.size(); i++ )
+    {
+        auto m = i % 8;
+        a[m]   = bit_buffer[i];
+        if( m == 7 )    // Need to pack 8 booleans!
+        {
+            std::memcpy( &t, a, 8 );
+            buf[ pos++ ] = (magic * t) >> 56;
+        }
+    }
+
+    // Write buf to a file.
+    // Good introduction here: http://www.cplusplus.com/doc/tutorial/files/
+    std::ofstream file( filename, std::ios::binary );
+    if( file.is_open() )
+    {
+        file.write( buf.get(), total_size );
+        file.close();
+        return 0;
+    }
+    else
+        return 1;
+}
+
+
+int speck::SPECK_Storage::m_read( buffer_type_c& header, size_t header_size,
+                                  std::vector<bool>&     bit_buffer, 
+                                  const char* filename )               const
+{
+    // Open a file and read its content
+    std::ifstream file( filename, std::ios::binary );
+    if( !file.is_open() )
+        return 1;    
+    file.seekg( 0, file.end );
+    size_t total_size = file.tellg();
+    file.seekg( 0, file.beg );
+    buffer_type_c buf = std::make_unique<char[]>( total_size );
+    file.read( buf.get(), total_size );
+    file.close();
+
+    // Copy over the header
+    std::memcpy( header.get(), buf.get(), header_size );
+
+    // Now interpret the booleans
+    size_t num_of_bools = (total_size - header_size) * 8;
+    bit_buffer.clear();
+    bit_buffer.resize( num_of_bools );
+    const uint64_t magic = 0x8040201008040201;
+    const uint64_t mask  = 0x8080808080808080;
+    size_t   pos = header_size;
+    bool     a[8];
+    uint64_t t;
+    uint8_t  b;
+    for( size_t i = 0; i < num_of_bools; i += 8 )
+    {
+        b = buf[ pos++ ];
+        t = ((magic * b) & mask) >> 7;
+        std::memcpy( a, &t, 8 );
+        for( size_t j = 0; j < 8; j++ )
+            bit_buffer[ i + j ] = a[j];
+    }
+
+    return 0;
+}
+
+
+

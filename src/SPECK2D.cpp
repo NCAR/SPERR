@@ -748,6 +748,13 @@ bool speck::SPECK2D::m_ready_to_decode() const
 }
 
 
+int speck::SPECK2D::write_to_disk( const std::string& filename ) const
+{
+
+    return 0;
+}
+
+
 #ifdef PRINT
 void speck::SPECK2D::m_print_set( const char* str, const SPECKSet2D& set ) const
 {
