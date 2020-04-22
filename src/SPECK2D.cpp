@@ -29,10 +29,10 @@ void speck::SPECK2D::assign_max_coeff_bits( uint16_t bits )
 }
 
 
-uint16_t speck::SPECK2D::get_max_coeff_bits() const
+/*uint16_t speck::SPECK2D::get_max_coeff_bits() const
 {
     return m_max_coefficient_bits;
-}
+}*/
 
 
 void speck::SPECK2D::assign_bit_budget( size_t budget )
@@ -42,6 +42,13 @@ void speck::SPECK2D::assign_bit_budget( size_t budget )
         m_budget = budget;
     else    // we can fill up that last byte!
         m_budget = budget + 8 - mod;
+}
+    
+
+void speck::SPECK2D::get_dims( size_t& x, size_t& y ) const
+{
+    x = m_dim_x;
+    y = m_dim_y;
 }
     
 
@@ -754,13 +761,14 @@ int speck::SPECK2D::write_to_disk( const std::string& filename ) const
     // Header definition:
     // information: dim_x,     dim_y,     image_mean,  max_coeff_bits, bitstream
     // format:      uint32_t,  uint32_t,  double       uint16_t,       packed_bytes
-    const size_t header_size = 19;
-    uint32_t dims[2]{ uint32_t(m_dim_x), uint32_t(m_dim_y) };
+    const size_t header_size = 18;
     
     // Create and fill header buffer
     size_t pos = 0;
+    uint32_t dims[2]{ uint32_t(m_dim_x), uint32_t(m_dim_y) };
     buffer_type_c header = std::make_unique<char[]>( header_size );
-    std::memcpy( header.get(), dims, sizeof(dims) );    pos += sizeof(dims);
+    std::memcpy( header.get(), dims, sizeof(dims) );    
+    pos += sizeof(dims);
     std::memcpy( header.get() + pos, &m_image_mean, sizeof(m_image_mean) );  
     pos += sizeof(m_image_mean);
     std::memcpy( header.get() + pos, &m_max_coefficient_bits, sizeof(m_max_coefficient_bits) );
@@ -778,9 +786,10 @@ int speck::SPECK2D::read_from_disk( const std::string& filename )
     // Header definition:
     // information: dim_x,     dim_y,     image_mean,  max_coeff_bits, bitstream
     // format:      uint32_t,  uint32_t,  double       uint16_t,       packed_bytes
-    const size_t header_size = 19;
+    const size_t header_size = 18;
 
     // Create the header buffer, and read from file
+    // Note that m_bit_buffer is filled by m_read().
     buffer_type_c header = std::make_unique<char[]>( header_size );
     int rtn = m_read( header, header_size, filename.c_str() );
     if( rtn )
@@ -789,12 +798,15 @@ int speck::SPECK2D::read_from_disk( const std::string& filename )
     // Parse the header
     uint32_t dims[2];
     size_t   pos = 0;
-    std::memcpy( dims, header.get(), sizeof(dims) );    pos += sizeof(dims);
+    std::memcpy( dims, header.get(), sizeof(dims) );    
+    pos += sizeof(dims);
     std::memcpy( &m_image_mean, header.get() + pos, sizeof(m_image_mean) );
     pos += sizeof(m_image_mean);
     std::memcpy( &m_max_coefficient_bits, header.get() + pos, sizeof(m_max_coefficient_bits) );
     pos += sizeof(m_max_coefficient_bits);
     assert( pos == header_size );
+
+    this->assign_dims( size_t(dims[0]), size_t(dims[1]) );
 
     return 0;
 }

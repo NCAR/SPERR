@@ -751,3 +751,10 @@ int speck::SPECK3D::write_to_disk( const std::string& filename ) const
 
     return 0;
 }
+
+
+int speck::SPECK3D::read_from_disk( const std::string& filename )
+{
+
+    return 0;
+}

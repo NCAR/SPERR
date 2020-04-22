@@ -42,12 +42,13 @@ public:
     SPECK2D();
 
     // trivial input
-    void     assign_dims( size_t, size_t );     // Accepts plane dimension
-    void     assign_max_coeff_bits( uint16_t ); // (Useful for reconstruction)
-    void     assign_bit_budget( size_t );       // How many bits does speck process? 
+    void  assign_dims( size_t, size_t );       // Accepts plane dimension
+    void  assign_max_coeff_bits( uint16_t );   // (Useful for reconstruction)
+    void  assign_bit_budget( size_t );         // How many bits does speck process? 
 
     // trivial output
-    uint16_t get_max_coeff_bits()   const;
+    //uint16_t get_max_coeff_bits()   const;
+    void  get_dims( size_t& , size_t& ) const; // Returns plane dimension
 
     // core operations
     int encode();

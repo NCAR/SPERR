@@ -58,40 +58,32 @@ public:
         // Do a speck encoding
         speck::SPECK2D encoder;
         encoder.assign_dims( m_dim_x, m_dim_y );
+        encoder.set_image_mean( cdf.get_mean() );
         encoder.copy_coeffs( cdf.get_read_only_data(), m_dim_x * m_dim_y );
         const size_t header_size  = 18;     // bytes
         const size_t total_bits   = size_t(32.0f * total_vals / cratio) + header_size * 8;
         encoder.assign_bit_budget( total_bits );
         encoder.encode();
-
-        // Write to file and read it back
-        if( speck::output_speck2d( m_dim_x, m_dim_y, cdf.get_mean(), encoder.get_max_coeff_bits(), 
-                                   encoder.get_read_only_bitstream(), m_output_name.c_str() )   )
+        if( encoder.write_to_disk( m_output_name ) )
         {
             std::cerr << "Write bitstream to disk error!" << std::endl;
             return 1;
         }
-        size_t dim_x_r, dim_y_r;
-        double mean_r;
-        uint16_t max_bits_r;
-        std::vector<bool> bits_r;
-        if( speck::input_speck2d( dim_x_r, dim_y_r, mean_r, max_bits_r, bits_r, m_output_name.c_str() ) )
+
+        speck::SPECK2D decoder;
+        if( decoder.read_from_disk( m_output_name ) )
         {
             std::cerr << "Read bitstream from disk error!" << std::endl;
             return 1;
         }
-        
-        // Do a speck decoding
-        speck::SPECK2D decoder;
-        decoder.assign_dims( dim_x_r, dim_y_r );
-        decoder.assign_max_coeff_bits( max_bits_r );
-        decoder.take_bitstream( bits_r );
         decoder.assign_bit_budget( total_bits );
         decoder.decode();
 
         speck::CDF97 idwt;
+        size_t dim_x_r, dim_y_r;
+        decoder.get_dims( dim_x_r, dim_y_r );
         idwt.set_dims( dim_x_r, dim_y_r );
-        idwt.set_mean( cdf.get_mean() );
+        idwt.set_mean( decoder.get_image_mean() );
         idwt.take_data( decoder.release_coeffs_double() );
         idwt.idwt2d();
 

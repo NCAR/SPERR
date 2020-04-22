@@ -18,17 +18,18 @@ extern "C"  // C Function calls, and don't include the C header!
 
 int main( int argc, char* argv[] )
 {
-    if( argc != 4 )
+    if( argc != 5 )
     {
-        std::cerr << "Usage: ./a.out input_filename dim_x dim_y" << std::endl;
+        std::cerr << "Usage: ./a.out input_filename dim_x dim_y comp_ratio" << std::endl;
         return 1;
     }
 
     const char*   input  = argv[1];
-    const char*   output = "sam.tmp";
     const size_t  dim_x  = std::atol( argv[2] );
     const size_t  dim_y  = std::atol( argv[3] );
+    const float   cratio = std::atof( argv[4] );
     const size_t  total_vals = dim_x * dim_y;
+    const std::string output("sam.tmp");
 
     // Let's read in binaries as 4-byte floats
     speck::buffer_type_f in_buf = std::make_unique<float[]>( total_vals );
@@ -48,33 +49,25 @@ int main( int argc, char* argv[] )
     // Do a speck encoding
     speck::SPECK2D encoder;
     encoder.assign_dims( dim_x, dim_y );
+    encoder.set_image_mean( cdf.get_mean() );
     encoder.copy_coeffs( cdf.get_read_only_data(), dim_x * dim_y );
     const size_t header_size  = 18;
-    const float  cratio       = 8.0f;  /* compression ratio */
     const size_t total_bits   = size_t(32.0f * total_vals / cratio) + header_size * 8;
     encoder.assign_bit_budget( total_bits );
     encoder.encode();
-
-    // Write to file and read it back
-    speck::output_speck2d( dim_x, dim_y, cdf.get_mean(), encoder.get_max_coeff_bits(), 
-                           encoder.get_read_only_bitstream(), output );
-    size_t dim_x_r, dim_y_r;
-    double mean_r;
-    uint16_t max_bits_r;
-    std::vector<bool> bits_r;
-    speck::input_speck2d( dim_x_r, dim_y_r, mean_r, max_bits_r, bits_r, output );
+    encoder.write_to_disk( output );
     
     // Do a speck decoding
     speck::SPECK2D decoder;
-    decoder.assign_dims( dim_x_r, dim_y_r );
-    decoder.assign_max_coeff_bits( max_bits_r );
-    decoder.take_bitstream( bits_r );
+    decoder.read_from_disk( output );
     decoder.assign_bit_budget( total_bits );
     decoder.decode();
 
     speck::CDF97 idwt;
-    idwt.set_dims( dim_x, dim_y );
-    idwt.set_mean( cdf.get_mean() );
+    size_t dim_x_r, dim_y_r;
+    decoder.get_dims( dim_x_r, dim_y_r );
+    idwt.set_dims( dim_x_r, dim_y_r );
+    idwt.set_mean( decoder.get_image_mean() );
     idwt.take_data( decoder.release_coeffs_double() );
     idwt.idwt2d();
 

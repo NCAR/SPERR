@@ -60,7 +60,8 @@ public:
     // core operations
     int encode();
     int decode();
-    virtual int write_to_disk( const std::string& filename ) const override;
+    int write_to_disk(  const std::string& filename ) const override;
+    int read_from_disk( const std::string& filename )       override;
 
 private:
     //
