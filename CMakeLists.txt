@@ -60,28 +60,32 @@ if( BUILD_QCC_EXAMPLES )
     # Qcc Executable #1
     add_executable( example_qcc_dwt2d  "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_qcc_dwt2d.c" )
     target_link_libraries(      example_qcc_dwt2d PUBLIC sam_helper
-                                                  PUBLIC ${QCCPACK_LIB}      )
+                                                  PUBLIC ${QCCPACK_LIB}
+                                                  PUBLIC m                   )
     target_include_directories( example_qcc_dwt2d PUBLIC ${PROJECT_BINARY_DIR}
                                                   PUBLIC ${QCCPACK_INC}      )
 
     # Qcc Executable #2
     add_executable( example_qcc_dwt3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_qcc_dwt3d.c" )
     target_link_libraries(      example_qcc_dwt3d PUBLIC sam_helper
-                                                  PUBLIC ${QCCPACK_LIB}      )
+                                                  PUBLIC ${QCCPACK_LIB}
+                                                  PUBLIC m                   )
     target_include_directories( example_qcc_dwt3d PUBLIC ${PROJECT_BINARY_DIR}
                                                   PUBLIC ${QCCPACK_INC}      )
 
     # Qcc Executable #3
     add_executable( example_qcc_speck2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_qcc_speck2d.c" )
     target_link_libraries(      example_qcc_speck2d PUBLIC sam_helper
-                                                    PUBLIC ${QCCPACK_LIB}      )
+                                                    PUBLIC ${QCCPACK_LIB}
+                                                    PUBLIC m                   )
     target_include_directories( example_qcc_speck2d PUBLIC ${PROJECT_BINARY_DIR}
                                                     PUBLIC ${QCCPACK_INC}      )
 
     # Qcc Executable #4
     add_executable( example_qcc_speck3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_qcc_speck3d.c" )
     target_link_libraries(      example_qcc_speck3d PUBLIC sam_helper
-                                                    PUBLIC ${QCCPACK_LIB}      )
+                                                    PUBLIC ${QCCPACK_LIB}
+                                                    PUBLIC m                   )
     target_include_directories( example_qcc_speck3d PUBLIC ${PROJECT_BINARY_DIR}
                                                     PUBLIC ${QCCPACK_INC}      )
 endif()
