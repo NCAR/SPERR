@@ -36,7 +36,7 @@
 #define QCCSPECK3D_SIGNIFICANCEMASK 0x03
 #define QCCSPECK3D_SIGNMASK 0x04
 
-#define QCCSPECK3D_MAXBITPLANES 128
+#define QCCSPECK3D_MAXBITPLANES 1
 
 #define QCCSPECK3D_CONTEXT_NOCODE -1
 #define QCCSPECK3D_CONTEXT_SIGNIFICANCE 0
@@ -49,6 +49,7 @@
 static const int QccSPECK3DNumSymbols[] =
   { 2, 2, 2, 2, 2, 2 };
 
+#define PRINT
 
 typedef struct
 {
@@ -555,6 +556,13 @@ static int QccSPECK3DInputOutputSetSignificance(QccSPECK3DSet *current_set,
       }
     else
       current_set->significance = QCCSPECK3D_SIGNIFICANT;
+
+#ifdef PRINT
+    if( current_set->significance == QCCSPECK3D_SIGNIFICANT )
+        printf("s1\n");
+    else
+        printf("s0\n");
+#endif
   
   return(0);
 }
@@ -599,6 +607,13 @@ static int QccSPECK3DInputOutputSign(unsigned char *state,
       
       *coefficient = 1.5 * threshold;
     }
+
+#ifdef PRINT
+    if( symbol )
+        printf("p1\n");
+    else
+        printf("p0\n");
+#endif
   
   return(0);
 }
@@ -1085,6 +1100,9 @@ static int QccSPECK3DSortingPass(QccWAVSubbandPyramid3D *coefficients,
                                  QccENTArithmeticModel *model,
                                  QccBitBuffer *buffer)
 {
+#ifdef PRINT
+  printf("--> sorting pass, threshold = %f\n", threshold );
+#endif
   int return_value;
   QccListNode *current_list_node;
   QccList *current_list;
@@ -1210,6 +1228,9 @@ static int QccSPECK3DRefinementPass(QccWAVSubbandPyramid3D *coefficients,
                                     QccENTArithmeticModel *model,
                                     QccBitBuffer *buffer)
 {
+#ifdef PRINT
+  printf("--> refinement pass, threshold = %f\n", threshold );
+#endif
   int return_value;
   QccListNode *current_set_node;
   QccSPECK3DSet *current_set;
@@ -1620,6 +1641,9 @@ int QccSPECK3DEncode(QccIMGImageCube *image_cube,
       goto Error;
     }
   
+#ifdef PRINT
+  printf("---- Now encoding ----\n");
+#endif
   if (QccSPECK3DEncodeHeader(output_buffer,
                              transform_type,
                              temporal_num_levels,
@@ -1930,6 +1954,10 @@ int QccSPECK3DDecode(QccBitBuffer *input_buffer,
           state_array[frame][row][col] = 0;
         }
   
+  
+#ifdef PRINT
+  printf("---- Now decoding ----\n");
+#endif
   if ((model = QccENTArithmeticDecodeStart(input_buffer,
                                            QccSPECK3DNumSymbols,
                                            QCCSPECK3D_NUM_CONTEXTS,

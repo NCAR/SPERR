@@ -3,7 +3,7 @@
 
 #include "SPECK_Storage.h"
 
-// #define PRINT
+#define PRINT
 
 namespace speck
 {

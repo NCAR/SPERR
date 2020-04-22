@@ -99,6 +99,10 @@ int speck::SPECK3D::encode()
     assert( m_ready_to_encode() );
     m_encode_mode = true;
 
+#ifdef PRINT
+    std::cout << "---- Now encoding ----" << std::endl;
+#endif
+
     m_initialize_sets_lists();
 
     m_bit_buffer.clear();
@@ -111,7 +115,7 @@ int speck::SPECK3D::encode()
     m_max_coefficient_bits = uint16_t( std::log2(max_coeff) );
     m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
     int rtn = 0;
-    for( size_t bitplane = 0; bitplane < 128; bitplane++ )
+    for( size_t bitplane = 0; bitplane < 1; bitplane++ )
     {
         if( (rtn = m_sorting_pass()) )
             break;
@@ -131,12 +135,17 @@ int speck::SPECK3D::decode()
     assert( m_ready_to_decode() );
     m_encode_mode = false;
 
-    // initialize coefficients to be zero, and signs to be all positive
+#ifdef PRINT
+    std::cout << "---- Now decoding ----" << std::endl;
+#endif
+
 #ifdef SPECK_USE_DOUBLE
     m_coeff_buf = std::make_unique<double[]>( m_coeff_len );
 #else
     m_coeff_buf = std::make_unique<float[]>( m_coeff_len );
 #endif
+
+    // initialize coefficients to be zero, and signs to be all positive
     for( size_t i = 0; i < m_coeff_len; i++ )
         m_coeff_buf[i] = 0.0f;
     m_sign_array.assign( m_coeff_len, true );
@@ -146,7 +155,7 @@ int speck::SPECK3D::decode()
     m_bit_idx = 0;
     m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
     int rtn = 0;
-    for( size_t bitplane = 0; bitplane < 128; bitplane++ )
+    for( size_t bitplane = 0; bitplane < 1; bitplane++ )
     {
         if( (rtn = m_sorting_pass()) )
             break;
@@ -436,6 +445,14 @@ int speck::SPECK3D::m_input_set_significance( SPECKSet3D& set )
 
     auto bit   = m_bit_buffer[ m_bit_idx++ ];
     set.signif = bit ? Significance::Sig : Significance::Insig;
+
+#ifdef PRINT
+    if( set.signif == Significance::Sig )
+        std::cout << "s1" << std::endl;
+    else
+        std::cout << "s0" << std::endl;
+#endif
+
     return 0;
 }
 
