@@ -34,7 +34,10 @@ public:
 
     // file operations
     virtual int write_to_disk(  const std::string& filename ) const = 0;
-//    int read_from_disk( const std::string& filename );
+    virtual int read_from_disk( const std::string& filename ) = 0;
+
+    void   set_image_mean( double mean );
+    double get_image_mean()       const;
 
 protected:
     //
@@ -43,22 +46,21 @@ protected:
 
     // Output to and input from disk
     // They return 0 upon success, and 1 upon failure.
-    int m_write( const buffer_type_c& header,         size_t header_size, 
-                 const std::vector<bool>& bit_buffer, const char* filename ) const;
-    int m_read(  buffer_type_c& header,               size_t header_size, 
-                 std::vector<bool>& bit_buffer,       const char* filename ) const;
+    int m_write( const buffer_type_c& header, size_t header_size, const char* filename ) const;
+    int m_read(        buffer_type_c& header, size_t header_size, const char* filename ) ;
 
 
     //
     // Member variables
     //
+    double              m_image_mean    = 0.0;  // Mean of the original data. Used by DWT/IDWT.
+    size_t              m_coeff_len     = 0;
+    std::vector<bool>   m_bit_buffer;           // Output/Input bit buffer
 #ifdef SPECK_USE_DOUBLE
-    buffer_type_d  m_coeff_buf = nullptr;   // All coefficients are kept here
+    buffer_type_d       m_coeff_buf = nullptr;  // All coefficients are kept here
 #else
-    buffer_type_f  m_coeff_buf = nullptr;   // All coefficients are kept here
+    buffer_type_f       m_coeff_buf = nullptr;  // All coefficients are kept here
 #endif
-    size_t         m_coeff_len = 0;
-    std::vector<bool> m_bit_buffer;         // Output/Input bit buffer
 };
 
 };

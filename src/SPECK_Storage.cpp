@@ -1,6 +1,7 @@
 #include "SPECK_Storage.h"
 
 #include <cassert>
+#include <cstring>
 #include <fstream>
 
 template<typename T>
@@ -105,15 +106,24 @@ std::vector<bool>& speck::SPECK_Storage::release_bitstream()
 #endif
 
 
+void speck::SPECK_Storage::set_image_mean( double mean )
+{
+    m_image_mean = mean;
+}
+double speck::SPECK_Storage::get_image_mean() const
+{
+    return m_image_mean;
+}
+
+
 int speck::SPECK_Storage::m_write( const buffer_type_c& header, size_t header_size,
-                                   const std::vector<bool>& bit_buffer,
                                    const char* filename                     ) const
 {
     // Sanity check on the size of bit_buffer
-    assert( bit_buffer.size() % 8 == 0 );
+    assert( m_bit_buffer.size() % 8 == 0 );
 
     // Allocate output buffer
-    size_t total_size  = header_size + bit_buffer.size() / 8;
+    size_t total_size  = header_size + m_bit_buffer.size() / 8;
     buffer_type_c  buf = std::make_unique<char[]>( total_size );
 
     // Copy over header
@@ -124,10 +134,10 @@ int speck::SPECK_Storage::m_write( const buffer_type_c& header, size_t header_si
     size_t   pos = header_size;
     bool     a[8];
     uint64_t t;
-    for( size_t i = 0; i < bit_buffer.size(); i++ )
+    for( size_t i = 0; i < m_bit_buffer.size(); i++ )
     {
         auto m = i % 8;
-        a[m]   = bit_buffer[i];
+        a[m]   = m_bit_buffer[i];
         if( m == 7 )    // Need to pack 8 booleans!
         {
             std::memcpy( &t, a, 8 );
@@ -150,8 +160,7 @@ int speck::SPECK_Storage::m_write( const buffer_type_c& header, size_t header_si
 
 
 int speck::SPECK_Storage::m_read( buffer_type_c& header, size_t header_size,
-                                  std::vector<bool>&     bit_buffer, 
-                                  const char* filename )               const
+                                  const char* filename )
 {
     // Open a file and read its content
     std::ifstream file( filename, std::ios::binary );
@@ -169,8 +178,8 @@ int speck::SPECK_Storage::m_read( buffer_type_c& header, size_t header_size,
 
     // Now interpret the booleans
     size_t num_of_bools = (total_size - header_size) * 8;
-    bit_buffer.clear();
-    bit_buffer.resize( num_of_bools );
+    m_bit_buffer.clear();
+    m_bit_buffer.resize( num_of_bools );
     const uint64_t magic = 0x8040201008040201;
     const uint64_t mask  = 0x8080808080808080;
     size_t   pos = header_size;
@@ -183,7 +192,7 @@ int speck::SPECK_Storage::m_read( buffer_type_c& header, size_t header_size,
         t = ((magic * b) & mask) >> 7;
         std::memcpy( a, &t, 8 );
         for( size_t j = 0; j < 8; j++ )
-            bit_buffer[ i + j ] = a[j];
+            m_bit_buffer[ i + j ] = a[j];
     }
 
     return 0;

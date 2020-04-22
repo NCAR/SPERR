@@ -1,6 +1,7 @@
 #include "SPECK2D.h"
 #include <cassert>
 #include <cmath>
+#include <cstring>
 #include <iostream>
 #include <array>
 #include <algorithm>
@@ -750,6 +751,50 @@ bool speck::SPECK2D::m_ready_to_decode() const
 
 int speck::SPECK2D::write_to_disk( const std::string& filename ) const
 {
+    // Header definition:
+    // information: dim_x,     dim_y,     image_mean,  max_coeff_bits, bitstream
+    // format:      uint32_t,  uint32_t,  double       uint16_t,       packed_bytes
+    const size_t header_size = 19;
+    uint32_t dims[2]{ uint32_t(m_dim_x), uint32_t(m_dim_y) };
+    
+    // Create and fill header buffer
+    size_t pos = 0;
+    buffer_type_c header = std::make_unique<char[]>( header_size );
+    std::memcpy( header.get(), dims, sizeof(dims) );    pos += sizeof(dims);
+    std::memcpy( header.get() + pos, &m_image_mean, sizeof(m_image_mean) );  
+    pos += sizeof(m_image_mean);
+    std::memcpy( header.get() + pos, &m_max_coefficient_bits, sizeof(m_max_coefficient_bits) );
+    pos += sizeof(m_max_coefficient_bits);
+    assert( pos == header_size );
+
+    // Call the actual write function
+    int rtn = m_write( header, header_size, filename.c_str() );
+    return rtn;
+}
+
+
+int speck::SPECK2D::read_from_disk( const std::string& filename )
+{
+    // Header definition:
+    // information: dim_x,     dim_y,     image_mean,  max_coeff_bits, bitstream
+    // format:      uint32_t,  uint32_t,  double       uint16_t,       packed_bytes
+    const size_t header_size = 19;
+
+    // Create the header buffer, and read from file
+    buffer_type_c header = std::make_unique<char[]>( header_size );
+    int rtn = m_read( header, header_size, filename.c_str() );
+    if( rtn )
+        return rtn;
+
+    // Parse the header
+    uint32_t dims[2];
+    size_t   pos = 0;
+    std::memcpy( dims, header.get(), sizeof(dims) );    pos += sizeof(dims);
+    std::memcpy( &m_image_mean, header.get() + pos, sizeof(m_image_mean) );
+    pos += sizeof(m_image_mean);
+    std::memcpy( &m_max_coefficient_bits, header.get() + pos, sizeof(m_max_coefficient_bits) );
+    pos += sizeof(m_max_coefficient_bits);
+    assert( pos == header_size );
 
     return 0;
 }
