@@ -29,12 +29,6 @@ void speck::SPECK2D::assign_max_coeff_bits( uint16_t bits )
 }
 
 
-/*uint16_t speck::SPECK2D::get_max_coeff_bits() const
-{
-    return m_max_coefficient_bits;
-}*/
-
-
 void speck::SPECK2D::assign_bit_budget( size_t budget )
 {
     size_t mod = budget % 8;

@@ -55,7 +55,7 @@ public:
     void assign_bit_budget( size_t );           // How many bits does speck process? 
 
     // trivial output
-    uint16_t get_max_coeff_bits()   const;
+    void get_dims( size_t&, size_t&, size_t& ) const;
 
     // core operations
     int encode();

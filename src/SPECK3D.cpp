@@ -1,5 +1,6 @@
 #include "SPECK3D.h"
 #include <cassert>
+#include <cstring>
 #include <cmath>
 #include <iostream>
 #include <array>
@@ -48,6 +49,13 @@ void speck::SPECK3D::assign_dims( size_t x, size_t y, size_t z)
     m_coeff_len = x * y * z;
 }
 
+void speck::SPECK3D::get_dims( size_t& x, size_t& y, size_t& z ) const
+{
+    x = m_dim_x;
+    y = m_dim_y;
+    z = m_dim_z;
+}
+
 void speck::SPECK3D::assign_max_coeff_bits( uint16_t bits )
 {
     m_max_coefficient_bits = bits;
@@ -60,11 +68,6 @@ void speck::SPECK3D::assign_bit_budget( size_t budget )
         m_budget = budget;
     else    // we can fill up the last byte
         m_budget = budget + 8 - mod;
-}
-
-uint16_t speck::SPECK3D::get_max_coeff_bits()   const
-{
-    return m_max_coefficient_bits;
 }
 
 
@@ -748,13 +751,55 @@ bool speck::SPECK3D::m_ready_to_decode() const
 
 int speck::SPECK3D::write_to_disk( const std::string& filename ) const
 {
+    // Header definition:
+    // information: dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  bitstream
+    // format:      uint32_t,  uint32_t,  uint32_t,  double       uint16_t,        packed_bytes
+    const size_t header_size = 22;
+    
+    // Create and fill header buffer
+    size_t pos = 0;
+    uint32_t dims[3]{ uint32_t(m_dim_x), uint32_t(m_dim_y), uint32_t(m_dim_z) };
+    buffer_type_c header = std::make_unique<char[]>( header_size );
+    std::memcpy( header.get(), dims, sizeof(dims) );    
+    pos += sizeof(dims);
+    std::memcpy( header.get() + pos, &m_image_mean, sizeof(m_image_mean) );  
+    pos += sizeof(m_image_mean);
+    std::memcpy( header.get() + pos, &m_max_coefficient_bits, sizeof(m_max_coefficient_bits) );
+    pos += sizeof(m_max_coefficient_bits);
+    assert( pos == header_size );
 
-    return 0;
+    // Call the actual write function
+    int rtn = m_write( header, header_size, filename.c_str() );
+    return rtn;
 }
 
 
 int speck::SPECK3D::read_from_disk( const std::string& filename )
 {
+    // Header definition:
+    // information: dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  bitstream
+    // format:      uint32_t,  uint32_t,  uint32_t,  double       uint16_t,        packed_bytes
+    const size_t header_size = 22;
+
+    // Create the header buffer, and read from file
+    // Note that m_bit_buffer is filled by m_read().
+    buffer_type_c header = std::make_unique<char[]>( header_size );
+    int rtn = m_read( header, header_size, filename.c_str() );
+    if( rtn )
+        return rtn;
+
+    // Parse the header
+    uint32_t dims[3];
+    size_t   pos = 0;
+    std::memcpy( dims, header.get(), sizeof(dims) );    
+    pos += sizeof(dims);
+    std::memcpy( &m_image_mean, header.get() + pos, sizeof(m_image_mean) );
+    pos += sizeof(m_image_mean);
+    std::memcpy( &m_max_coefficient_bits, header.get() + pos, sizeof(m_max_coefficient_bits) );
+    pos += sizeof(m_max_coefficient_bits);
+    assert( pos == header_size );
+
+    this->assign_dims( size_t(dims[0]), size_t(dims[1]), size_t(dims[2]) );
 
     return 0;
 }
