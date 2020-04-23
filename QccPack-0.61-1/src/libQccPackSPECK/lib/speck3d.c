@@ -36,7 +36,7 @@
 #define QCCSPECK3D_SIGNIFICANCEMASK 0x03
 #define QCCSPECK3D_SIGNMASK 0x04
 
-#define QCCSPECK3D_MAXBITPLANES 1
+#define QCCSPECK3D_MAXBITPLANES 128
 
 #define QCCSPECK3D_CONTEXT_NOCODE -1
 #define QCCSPECK3D_CONTEXT_SIGNIFICANCE 0
@@ -48,8 +48,6 @@
 #define QCCSPECK3D_NUM_CONTEXTS 6
 static const int QccSPECK3DNumSymbols[] =
   { 2, 2, 2, 2, 2, 2 };
-
-#define PRINT
 
 typedef struct
 {
@@ -134,17 +132,18 @@ static int QccSPECK3DSetIsPixel(QccSPECK3DSet *set)
 #if 0
 static void QccSPECK3DSetPrint(const QccSPECK3DSet *set)
 {
-  printf("<%c,%d,%d,%d,%d,%d,%d,%d,%d,%c>\n",
-         ((set->type == QCCSPECK3D_set) ? 'S' : 'I'),
-         set->temporal_splits,
-         set->horizontal_splits,
-         set->vertical_splits,
-         set->origin_frame,
-         set->origin_row,
+  /* printf("<%c,%d,%d,%d,%d,%d,%d,%d,%d,%c>\n",
+         ((set->type == QCCSPECK3D_set) ? 'S' : 'I'), */
+  printf("<%d,%d,%d, %d,%d,%d, %d,%d,%d, %c>\n",
          set->origin_col,
-         set->num_frames,
-         set->num_rows,
+         set->origin_row,
+         set->origin_frame,
          set->num_cols,
+         set->num_rows,
+         set->num_frames,
+         set->vertical_splits,
+         set->horizontal_splits,
+         set->temporal_splits,
          ((set->significance == QCCSPECK3D_INSIGNIFICANT) ? 'i' :
           ((set->significance == QCCSPECK3D_SIGNIFICANT) ? 's' : 'S')));
 }
@@ -156,7 +155,7 @@ static void QccSPECK3DLISPrint(const QccList *LIS)
   QccList *current_list;
   QccListNode *current_set_node;
   QccSPECK3DSet *current_set;
-  int temporal_splits, horizontal_splits, vertical_splits = 0;
+  int temporal_splits = 0, horizontal_splits = 0, vertical_splits = 0;
   printf("LIS:\n");
   current_list_node = LIS->start;
   while (current_list_node != NULL)
@@ -1217,6 +1216,11 @@ static int QccSPECK3DRefinementInputOutput(double *coefficient,
       *coefficient +=
         (symbol == 1) ? threshold / 2 : -threshold / 2;
     }
+
+#ifdef PRINT
+  if( symbol )  printf("r1\n");
+  else          printf("r0\n");
+#endif
   
   return(0);
 }
@@ -1679,6 +1683,10 @@ int QccSPECK3DEncode(QccIMGImageCube *image_cube,
       QccErrorAddMessage("(QccSPECK3DEncode): Error calling QccSPECK3DInitialization()");
       goto Error;
     }
+
+#ifdef PRINT
+  /* QccSPECK3DLISPrint( &LIS ); */
+#endif
   
   while (bitplane < QCCSPECK3D_MAXBITPLANES)
     {

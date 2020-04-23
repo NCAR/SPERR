@@ -115,7 +115,7 @@ int speck::SPECK3D::encode()
     m_max_coefficient_bits = uint16_t( std::log2(max_coeff) );
     m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
     int rtn = 0;
-    for( size_t bitplane = 0; bitplane < 1; bitplane++ )
+    for( size_t bitplane = 0; bitplane < 128; bitplane++ )
     {
         if( (rtn = m_sorting_pass()) )
             break;
@@ -155,7 +155,7 @@ int speck::SPECK3D::decode()
     m_bit_idx = 0;
     m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
     int rtn = 0;
-    for( size_t bitplane = 0; bitplane < 1; bitplane++ )
+    for( size_t bitplane = 0; bitplane < 128; bitplane++ )
     {
         if( (rtn = m_sorting_pass()) )
             break;
