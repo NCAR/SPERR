@@ -52,7 +52,7 @@ public:
         // Take input to go through DWT.
         speck::CDF97 cdf;
         cdf.set_dims( m_dim_x, m_dim_y );
-        cdf.copy_data( in_buf, m_dim_x * m_dim_y );
+        cdf.copy_data( in_buf, total_vals );
         cdf.dwt2d();
 
         // Do a speck encoding
@@ -60,8 +60,7 @@ public:
         encoder.set_dims( m_dim_x, m_dim_y );
         encoder.set_image_mean( cdf.get_mean() );
         encoder.copy_coeffs( cdf.get_read_only_data(), m_dim_x * m_dim_y );
-        const size_t header_size  = 18;     // bytes
-        const size_t total_bits   = size_t(32.0f * total_vals / cratio) + header_size * 8;
+        const size_t total_bits = size_t(32.0f * total_vals / cratio);
         encoder.set_bit_budget( total_bits );
         encoder.encode();
         if( encoder.write_to_disk( m_output_name ) )
@@ -70,6 +69,7 @@ public:
             return 1;
         }
 
+        // Do a speck decoding
         speck::SPECK2D decoder;
         if( decoder.read_from_disk( m_output_name ) )
         {
@@ -119,25 +119,25 @@ TEST( speck2d, lena )
     tester.execute( 8.0f );
     double psnr = tester.get_psnr();
     double lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 54.2861 );
+    EXPECT_GT( psnr, 54.2830 );
     EXPECT_LT( lmax,  2.2361 );
 
     tester.execute( 16.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 43.2886 );
+    EXPECT_GT( psnr, 43.2870 );
     EXPECT_LT( lmax,  7.1736 );
 
     tester.execute( 32.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 38.8037 );
+    EXPECT_GT( psnr, 38.8008 );
     EXPECT_LT( lmax, 14.4871 );
 
     tester.execute( 64.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 35.635284 );
+    EXPECT_GT( psnr, 35.6299 );
     EXPECT_LT( lmax, 37.109243 );
 }
 
@@ -149,25 +149,25 @@ TEST( speck2d, odd_dim_image )
     tester.execute( 8.0f );
     double psnr = tester.get_psnr();
     double lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 58.8545 );
+    EXPECT_GT( psnr, 58.7325 );
     EXPECT_LT( lmax,  0.7588 );
 
     tester.execute( 16.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 46.9387 );
+    EXPECT_GT( psnr, 46.7979 );
     EXPECT_LT( lmax,  2.9545 );
 
     tester.execute( 32.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 40.2515 );
-    EXPECT_LT( lmax,  5.8753 );
+    EXPECT_GT( psnr, 40.05257 );
+    EXPECT_LT( lmax,  6.25197 );
 
     tester.execute( 64.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 35.2209 );
+    EXPECT_GT( psnr, 34.9631 );
     EXPECT_LT( lmax, 18.644617 );
 }
 
