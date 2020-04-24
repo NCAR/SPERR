@@ -84,6 +84,10 @@ int speck::SPECK2D::decode()
     assert( m_ready_to_decode() );
     m_encode_mode = false;
 
+    // By default, decode all the available bits
+    if( m_budget == 0 )
+        m_budget = m_bit_buffer.size();
+
 #ifdef PRINT
     std::cout << "<-- start decoding -->" << std::endl;
 #endif
@@ -741,9 +745,6 @@ bool speck::SPECK2D::m_ready_to_decode() const
         return false;
     if( m_dim_x == 0 || m_dim_y == 0 )
         return false;
-
-    if( m_budget == 0 )
-        m_budget = m_bit_buffer.size();
 
     return true;
 }

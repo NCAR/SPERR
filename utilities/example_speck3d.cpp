@@ -47,20 +47,29 @@ int main( int argc, char* argv[] )
     const auto startT = std::chrono::high_resolution_clock::now();
     cdf.dwt3d();
 
-    // Do a speck encoding, and then decoding
+    // Do a speck encoding
     speck::SPECK3D encoder;
     encoder.set_dims( dim_x, dim_y, dim_z );
+    encoder.set_image_mean( cdf.get_mean() );
     encoder.copy_coeffs( cdf.get_read_only_data(), total_vals );
     const size_t total_bits = size_t(32.0f * total_vals / cratio);
     encoder.set_bit_budget( total_bits );
     encoder.encode();
-    encoder.decode();
+    encoder.write_to_disk( output );
+
+    // Do a speck decoding
+    speck::SPECK3D  decoder;
+    decoder.read_from_disk( output );
+    decoder.set_bit_budget( total_bits );
+    decoder.decode();
 
     // Do an inverse wavelet transform
     speck::CDF97 idwt;
-    idwt.set_dims( dim_x, dim_y, dim_z );
-    idwt.set_mean( cdf.get_mean() );
-    idwt.take_data( encoder.release_coeffs_double() );
+    size_t dim_x_r, dim_y_r, dim_z_r;
+    decoder.get_dims( dim_x_r, dim_y_r, dim_z_r );
+    idwt.set_dims( dim_x_r, dim_y_r, dim_z_r );
+    idwt.set_mean( decoder.get_image_mean() );
+    idwt.take_data( decoder.release_coeffs_double() );
     idwt.idwt3d();
 
     // Finish timer and print timing
