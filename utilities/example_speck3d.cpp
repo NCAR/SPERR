@@ -75,7 +75,7 @@ int main( int argc, char* argv[] )
     // Finish timer and print timing
     const auto endT   = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<double> diffT  = endT - startT;
-    std::cout << "Time for SPECK: " << diffT.count() * 1000.0f << std::endl;
+    std::cout << "Time for SPECK in milliseconds: " << diffT.count() * 1000.0f << std::endl;
 
     // Compare the result with the original input in double precision
     std::unique_ptr<double[]> in_bufd( new double[ total_vals ] );

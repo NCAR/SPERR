@@ -9,11 +9,11 @@
 #include "sam_helper.h"
 #include "assert.h"
 
+#include "SpeckConfig.h"
+
 #ifdef TIME_EXAMPLES
     #include <sys/time.h>
 #endif
-
-#include "SpeckConfig.h"
 
 
 void array_to_image_cube( const float* array, QccIMGImageCube* imagecube )
@@ -138,6 +138,10 @@ int main( int argc, char** argv )
     int transform_type   = QCCWAVSUBBANDPYRAMID3D_PACKET;
     int num_of_levels_xy = calc_num_of_xforms( num_of_cols );
     int num_of_levels_z  = calc_num_of_xforms( num_of_frames );
+#ifdef TIME_EXAMPLES
+    struct timeval start, end;
+    gettimeofday( &start, NULL );
+#endif
     if( QccSPECK3DEncode( &imagecube, NULL, transform_type,
                           num_of_levels_z, num_of_levels_xy,
                           &wavelet, &output_buffer, total_bits ) )
@@ -195,6 +199,11 @@ int main( int argc, char** argv )
         fprintf( stderr, "Error calling QccBitBufferEnd()\n" );
         return 1;
     }
+#ifdef TIME_EXAMPLES
+    gettimeofday( &end, NULL );
+    long elapsed = (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec;
+    printf("qcc takes milliseconds: %f\n", (float)elapsed / 1000.0f );
+#endif
 
     /* Collected the decoded array, and print out some statistics. */
     float* out_array = (float*)malloc( num_of_bytes );

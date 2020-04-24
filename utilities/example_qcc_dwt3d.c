@@ -4,6 +4,7 @@
 #include "libQccPack.h"
 #include "sam_helper.h"
 #include <stdlib.h>
+#include <assert.h>
 
 int main( int argc, char** argv )
 {
@@ -24,7 +25,8 @@ int main( int argc, char** argv )
 	float* buf = (float*)malloc( num_of_vals * sizeof(float) );
 
     FILE* f  = fopen( input_name, "r" );
-    fread( buf, sizeof(float), num_of_vals, f );
+    size_t rnt = fread( buf, sizeof(float), num_of_vals, f );
+    assert( rnt == num_of_vals );
     fclose( f );
 
 	/* allocate data structure to take in this 1D array */

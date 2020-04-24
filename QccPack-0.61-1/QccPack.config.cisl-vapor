@@ -92,7 +92,7 @@ XCOMM
 XCOMM  Set to the desired compiler flags
 XCOMM
 XCOMM  -- GNU Compiler Collection (gcc) --
-CFLAGS = -Wall -g
+CFLAGS = -Wall -O2
 XCOMM
 XCOMM  -- Intel C++ Compiler for Linux (icc) --
 XCOMM       The following optimizations are for Pentium II/III processors
