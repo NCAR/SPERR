@@ -57,12 +57,12 @@ public:
 
         // Do a speck encoding
         speck::SPECK2D encoder;
-        encoder.assign_dims( m_dim_x, m_dim_y );
+        encoder.set_dims( m_dim_x, m_dim_y );
         encoder.set_image_mean( cdf.get_mean() );
         encoder.copy_coeffs( cdf.get_read_only_data(), m_dim_x * m_dim_y );
         const size_t header_size  = 18;     // bytes
         const size_t total_bits   = size_t(32.0f * total_vals / cratio) + header_size * 8;
-        encoder.assign_bit_budget( total_bits );
+        encoder.set_bit_budget( total_bits );
         encoder.encode();
         if( encoder.write_to_disk( m_output_name ) )
         {
@@ -76,7 +76,7 @@ public:
             std::cerr << "Read bitstream from disk error!" << std::endl;
             return 1;
         }
-        decoder.assign_bit_budget( total_bits );
+        decoder.set_bit_budget( total_bits );
         decoder.decode();
 
         speck::CDF97 idwt;

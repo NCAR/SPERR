@@ -48,19 +48,19 @@ int main( int argc, char* argv[] )
 
     // Do a speck encoding
     speck::SPECK2D encoder;
-    encoder.assign_dims( dim_x, dim_y );
+    encoder.set_dims( dim_x, dim_y );
     encoder.set_image_mean( cdf.get_mean() );
     encoder.copy_coeffs( cdf.get_read_only_data(), dim_x * dim_y );
     const size_t header_size  = 18;
     const size_t total_bits   = size_t(32.0f * total_vals / cratio) + header_size * 8;
-    encoder.assign_bit_budget( total_bits );
+    encoder.set_bit_budget( total_bits );
     encoder.encode();
     encoder.write_to_disk( output );
     
     // Do a speck decoding
     speck::SPECK2D decoder;
     decoder.read_from_disk( output );
-    decoder.assign_bit_budget( total_bits );
+    decoder.set_bit_budget( total_bits );
     decoder.decode();
 
     speck::CDF97 idwt;

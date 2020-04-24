@@ -13,7 +13,7 @@ speck::SPECK2D::SPECK2D()
     m_I.type = SetType::TypeI;
 }
 
-void speck::SPECK2D::assign_dims( size_t dx, size_t dy )
+void speck::SPECK2D::set_dims( size_t dx, size_t dy )
 {
     // Sanity Check
     assert( m_coeff_len == 0 || m_coeff_len == dx * dy );
@@ -23,13 +23,13 @@ void speck::SPECK2D::assign_dims( size_t dx, size_t dy )
 }
 
 
-void speck::SPECK2D::assign_max_coeff_bits( uint16_t bits )
+void speck::SPECK2D::set_max_coeff_bits( uint16_t bits )
 {
     m_max_coefficient_bits = bits;
 }
 
 
-void speck::SPECK2D::assign_bit_budget( size_t budget )
+void speck::SPECK2D::set_bit_budget( size_t budget )
 {
     size_t mod = budget % 8;
     if( mod == 0 )
@@ -800,7 +800,7 @@ int speck::SPECK2D::read_from_disk( const std::string& filename )
     pos += sizeof(m_max_coefficient_bits);
     assert( pos == header_size );
 
-    this->assign_dims( size_t(dims[0]), size_t(dims[1]) );
+    this->set_dims( size_t(dims[0]), size_t(dims[1]) );
 
     return 0;
 }

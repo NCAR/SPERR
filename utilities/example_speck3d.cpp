@@ -49,10 +49,10 @@ int main( int argc, char* argv[] )
 
     // Do a speck encoding, and then decoding
     speck::SPECK3D encoder;
-    encoder.assign_dims( dim_x, dim_y, dim_z );
+    encoder.set_dims( dim_x, dim_y, dim_z );
     encoder.copy_coeffs( cdf.get_read_only_data(), total_vals );
     const size_t total_bits = size_t(32.0f * total_vals / cratio);
-    encoder.assign_bit_budget( total_bits );
+    encoder.set_bit_budget( total_bits );
     encoder.encode();
     encoder.decode();
 
