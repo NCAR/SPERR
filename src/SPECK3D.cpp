@@ -135,6 +135,10 @@ int speck::SPECK3D::decode()
     assert( m_ready_to_decode() );
     m_encode_mode = false;
 
+    // By default, decode all the available bits
+    if( m_budget == 0 )
+        m_budget = m_bit_buffer.size();
+
 #ifdef PRINT
     std::cout << "---- Now decoding ----" << std::endl;
 #endif
@@ -174,7 +178,7 @@ int speck::SPECK3D::decode()
             m_coeff_buf[i] = -m_coeff_buf[i];
     }
 
-    return rtn;
+    return 0;
 }
 
     
@@ -346,7 +350,7 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
             }
         }
         // output the significance value 
-        if( (m_output_set_significance( set )) )
+        if( (rtn = m_output_set_significance( set )) )
             return rtn;
     }
     else    // decoding mode
@@ -759,9 +763,6 @@ bool speck::SPECK3D::m_ready_to_decode() const
         return false;
     if( m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0 )
         return false;
-
-    if( m_budget == 0 )
-        m_budget = m_bit_buffer.size();
 
     return true;
 }
