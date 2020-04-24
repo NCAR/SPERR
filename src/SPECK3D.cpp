@@ -759,8 +759,9 @@ bool speck::SPECK3D::m_ready_to_decode() const
         return false;
     if( m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0 )
         return false;
+
     if( m_budget == 0 )
-        return false;
+        m_budget = m_bit_buffer.size();
 
     return true;
 }
