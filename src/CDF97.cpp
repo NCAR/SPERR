@@ -37,7 +37,7 @@ template void speck::CDF97::copy_data( const buffer_type_d&, size_t );
 template void speck::CDF97::copy_data( const buffer_type_f&, size_t );
 
 
-void speck::CDF97::take_data( std::unique_ptr<double[]> ptr )
+void speck::CDF97::take_data( buffer_type_d ptr )
 {
     m_data_buf = std::move( ptr );
 }
