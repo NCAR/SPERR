@@ -311,10 +311,8 @@ int speck::SPECK3D::m_refinement_pass()
         {
             if( m_encode_mode )
             {
-                //if( (rtn = m_output_refinement( p )) )
-                //    return rtn;
-                const auto idx = p.start_z * m_dim_x * m_dim_y + p.start_y * m_dim_x + p.start_x;
-
+                const auto idx = p.start_z * m_dim_x * m_dim_y + 
+                                 p.start_y * m_dim_x + p.start_x;
                 if( m_coeff_buf[idx] >= m_threshold ) 
                 {
                     m_bit_buffer.push_back( true );
@@ -323,19 +321,18 @@ int speck::SPECK3D::m_refinement_pass()
                 else
                     m_bit_buffer.push_back( false );
 
-                // Let's also see if we're reached the bit budget
+                // Let's also see if we've reached the bit budget
                 if( m_bit_buffer.size() >= m_budget )
                     return 1;
             }
             else
             {
-                //if( (rtn = m_input_refinement( p )) )
-                //    return rtn;
                 if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
                     return 1;
 
                 const auto bit = m_bit_buffer[ m_bit_idx++ ];
-                const auto idx = p.start_z * m_dim_x * m_dim_y + p.start_y * m_dim_x + p.start_x;
+                const auto idx = p.start_z * m_dim_x * m_dim_y + 
+                                 p.start_y * m_dim_x + p.start_x;
                 m_coeff_buf[ idx ] += bit ? m_threshold * 0.5f : m_threshold * -0.5f;
             }
         }
@@ -369,10 +366,7 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
             }
         }
         // output the significance value 
-        //if( (rtn = m_output_set_significance( set )) )
-        //    return rtn;
-
-        // set hasn't had a chance to be marked as NewlySig yet, so only need to
+        // "set" hasn't had a chance to be marked as NewlySig yet, so only need to
         // compare with Sig.
         auto bit = (set.signif == Significance::Sig);
         m_bit_buffer.push_back( bit );
@@ -383,8 +377,6 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
     }
     else    // decoding mode
     {
-        //if( (rtn = m_input_set_significance(set)) )
-        //    return rtn;
         if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
             return 1;
         auto bit   = m_bit_buffer[ m_bit_idx++ ];
@@ -398,8 +390,6 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
             set.signif = Significance::NewlySig;
             if( m_encode_mode )
             {
-                //if( (rtn = m_output_pixel_sign(set)) )
-                //    return rtn;
                 const auto idx = set.start_z * m_dim_x * m_dim_y + 
                                  set.start_y * m_dim_x + set.start_x;
                 m_bit_buffer.push_back( m_sign_array[idx] );
@@ -413,8 +403,6 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
             }
             else
             {
-                //if( (rtn = m_input_pixel_sign(set)) )
-                //    return rtn;
                 if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
                     return 1;
 
