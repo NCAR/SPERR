@@ -79,16 +79,6 @@ private:
     int  m_process_S( size_t idx1, size_t idx2 );
     int  m_code_S   ( size_t idx1, size_t idx2 );
 
-    // It decides the significance of "set" by looking up the significance map, and store the 
-    //   information of its 8 descendants in "sigs." 
-    //void m_lookup_significance_map( SPECKSet3D& set, std::array<Significance, 8>& sigs );
-    int  m_input_set_significance(        SPECKSet3D& set );
-    int  m_output_set_significance( const SPECKSet3D& set );
-    int  m_input_pixel_sign(        const SPECKSet3D& pixel );
-    int  m_output_pixel_sign(       const SPECKSet3D& pixel );
-    int  m_input_refinement(        const SPECKSet3D& pixel );
-    int  m_output_refinement(       const SPECKSet3D& pixel );
-
     void m_partition_S_XYZ(const SPECKSet3D& set, std::array<SPECKSet3D, 8>& subsets ) const;
     void m_partition_S_XY( const SPECKSet3D& set, std::array<SPECKSet3D, 4>& subsets ) const;
     void m_partition_S_Z(  const SPECKSet3D& set, std::array<SPECKSet3D, 2>& subsets ) const;

@@ -311,13 +311,32 @@ int speck::SPECK3D::m_refinement_pass()
         {
             if( m_encode_mode )
             {
-                if( (rtn = m_output_refinement( p )) )
-                    return rtn;
+                //if( (rtn = m_output_refinement( p )) )
+                //    return rtn;
+                const auto idx = p.start_z * m_dim_x * m_dim_y + p.start_y * m_dim_x + p.start_x;
+
+                if( m_coeff_buf[idx] >= m_threshold ) 
+                {
+                    m_bit_buffer.push_back( true );
+                    m_coeff_buf[idx] -= m_threshold;
+                }
+                else
+                    m_bit_buffer.push_back( false );
+
+                // Let's also see if we're reached the bit budget
+                if( m_bit_buffer.size() >= m_budget )
+                    return 1;
             }
             else
             {
-                if( (rtn = m_input_refinement( p )) )
-                    return rtn;
+                //if( (rtn = m_input_refinement( p )) )
+                //    return rtn;
+                if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
+                    return 1;
+
+                const auto bit = m_bit_buffer[ m_bit_idx++ ];
+                const auto idx = p.start_z * m_dim_x * m_dim_y + p.start_y * m_dim_x + p.start_x;
+                m_coeff_buf[ idx ] += bit ? m_threshold * 0.5f : m_threshold * -0.5f;
             }
         }
     }
@@ -350,13 +369,26 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
             }
         }
         // output the significance value 
-        if( (rtn = m_output_set_significance( set )) )
-            return rtn;
+        //if( (rtn = m_output_set_significance( set )) )
+        //    return rtn;
+
+        // set hasn't had a chance to be marked as NewlySig yet, so only need to
+        // compare with Sig.
+        auto bit = (set.signif == Significance::Sig);
+        m_bit_buffer.push_back( bit );
+        
+        // Let's also see if we're reached the bit budget
+        if( m_bit_buffer.size() >= m_budget )
+            return 1;
     }
     else    // decoding mode
     {
-        if( (rtn = m_input_set_significance(set)) )
-            return rtn;
+        //if( (rtn = m_input_set_significance(set)) )
+        //    return rtn;
+        if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
+            return 1;
+        auto bit   = m_bit_buffer[ m_bit_idx++ ];
+        set.signif = bit ? Significance::Sig : Significance::Insig;
     }
 
     if( set.signif == Significance::Sig )
@@ -366,13 +398,33 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
             set.signif = Significance::NewlySig;
             if( m_encode_mode )
             {
-                if( (rtn = m_output_pixel_sign(set)) )
-                    return rtn;
+                //if( (rtn = m_output_pixel_sign(set)) )
+                //    return rtn;
+                const auto idx = set.start_z * m_dim_x * m_dim_y + 
+                                 set.start_y * m_dim_x + set.start_x;
+                m_bit_buffer.push_back( m_sign_array[idx] );
+
+                // Progressive quantization!
+                m_coeff_buf[ idx ] -= m_threshold;
+
+                // Let's also see if we're reached the bit budget
+                if( m_bit_buffer.size() >= m_budget )
+                    return 1;
             }
             else
             {
-                if( (rtn = m_input_pixel_sign(set)) )
-                    return rtn;
+                //if( (rtn = m_input_pixel_sign(set)) )
+                //    return rtn;
+                if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
+                    return 1;
+
+                const auto idx = set.start_z * m_dim_x * m_dim_y + 
+                                 set.start_y * m_dim_x + set.start_x;
+                m_sign_array[ idx ] = m_bit_buffer[ m_bit_idx++ ];
+
+                // Progressive quantization!
+                m_coeff_buf[ idx ] = 1.5f * m_threshold;
+
             }
             m_LSP.push_back( set );         // a copy is saved to m_LSP
         }
@@ -441,47 +493,6 @@ void speck::SPECK3D::m_num_of_partitions( std::array<size_t, 3>& parts ) const
     parts[2] = num_of_parts;
 }
 
-    
-int speck::SPECK3D::m_input_set_significance( SPECKSet3D& set )
-{
-    if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
-        return 1;
-
-    auto bit   = m_bit_buffer[ m_bit_idx++ ];
-    set.signif = bit ? Significance::Sig : Significance::Insig;
-
-#ifdef PRINT
-    if( set.signif == Significance::Sig )
-        std::cout << "s1" << std::endl;
-    else
-        std::cout << "s0" << std::endl;
-#endif
-
-    return 0;
-}
-
-
-int speck::SPECK3D::m_output_set_significance( const SPECKSet3D& set )
-{
-#ifdef PRINT
-    if( set.signif == Significance::Sig )
-        std::cout << "s1" << std::endl;
-    else
-        std::cout << "s0" << std::endl;
-#endif
-
-    // set hasn't had a chance to be marked as NewlySig yet, so only need to
-    // compare with Sig.
-    auto bit = (set.signif == Significance::Sig);
-    m_bit_buffer.push_back( bit );
-    
-    // Let's also see if we're reached the bit budget
-    if( m_bit_buffer.size() >= m_budget )
-        return 1;
-    else
-        return 0;
-}
-    
 
 void speck::SPECK3D::m_partition_S_XYZ( const SPECKSet3D& set, 
                      std::array<SPECKSet3D, 8>& subsets ) const
@@ -644,103 +655,6 @@ void speck::SPECK3D::m_partition_S_Z( const SPECKSet3D& set,
     sub1.start_x  = set.start_x;                sub1.length_x = set.length_x;
     sub1.start_y  = set.start_y;                sub1.length_y = set.length_y;
     sub1.start_z  = set.start_z + split_z[0];   sub1.length_z = split_z[1];
-}
-
-
-int speck::SPECK3D::m_output_pixel_sign( const SPECKSet3D& pixel )
-{
-    const auto idx = pixel.start_z * m_dim_x * m_dim_y + 
-                     pixel.start_y * m_dim_x + pixel.start_x;
-
-#ifdef PRINT
-    if( m_sign_array[ idx ] )
-        std::cout << "p1" << std::endl;
-    else
-        std::cout << "p0" << std::endl;
-#endif
-
-    m_bit_buffer.push_back( m_sign_array[idx] );
-
-    // Progressive quantization!
-    m_coeff_buf[ idx ] -= m_threshold;
-
-    // Let's also see if we're reached the bit budget
-    if( m_bit_buffer.size() >= m_budget )
-        return 1;
-    else
-        return 0;
-}
-
-
-int speck::SPECK3D::m_input_pixel_sign( const SPECKSet3D& pixel )
-{
-    if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
-        return 1;
-
-    const auto idx = pixel.start_z * m_dim_x * m_dim_y +
-                     pixel.start_y * m_dim_x + pixel.start_x;
-    m_sign_array[ idx ] = m_bit_buffer[ m_bit_idx++ ];
-
-    // Progressive quantization!
-    m_coeff_buf[ idx ] = 1.5f * m_threshold;
-
-#ifdef PRINT
-    auto bit = m_sign_array[ idx ];
-    std::string str = bit ? "p1" : "p0";
-    std::cout << str << std::endl;
-#endif
-
-    return 0;
-}
-
-
-int speck::SPECK3D::m_output_refinement( const SPECKSet3D& pixel )
-{
-    const auto idx = pixel.start_z * m_dim_x * m_dim_y +
-                     pixel.start_y * m_dim_x + pixel.start_x;
-
-    if( m_coeff_buf[idx] >= m_threshold ) 
-    {
-        m_bit_buffer.push_back( true );
-#ifdef PRINT
-        std::cout << "r1" << std::endl;
-#endif
-        m_coeff_buf[idx] -= m_threshold;
-    }
-    else
-    {
-        m_bit_buffer.push_back( false );
-#ifdef PRINT
-        std::cout << "r0" << std::endl;
-#endif
-    }
-
-    // Let's also see if we're reached the bit budget
-    if( m_bit_buffer.size() >= m_budget )
-        return 1;
-    else
-        return 0;
-}
-
-
-int speck::SPECK3D::m_input_refinement( const SPECKSet3D& pixel )
-{
-    if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
-        return 1;
-
-    const auto bit = m_bit_buffer[ m_bit_idx++ ];
-    const auto idx = pixel.start_z * m_dim_x * m_dim_y + 
-                     pixel.start_y * m_dim_x + pixel.start_x;
-    m_coeff_buf[ idx ] += bit ? m_threshold * 0.5f : m_threshold * -0.5f;
-
-#ifdef PRINT
-    if( bit )
-        std::cout << "r1" << std::endl;
-    else
-        std::cout << "r0" << std::endl;
-#endif
-
-    return 0;
 }
 
 
