@@ -353,19 +353,24 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
         // decide the significance of this set
         set.signif = Significance::Insig;
         const size_t slice_size = m_dim_x * m_dim_y;
-        for( auto z = set.start_z; set.signif == Significance::Insig && 
-                                   z < (set.start_z + set.length_z); z++ )
-        for( auto y = set.start_y; set.signif == Significance::Insig &&
-                                   y < (set.start_y + set.length_y); y++ )
-        for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ )
+        for( auto z = set.start_z; z < (set.start_z + set.length_z); z++ )
         {
-            size_t idx = z * slice_size + y * m_dim_x + x;
-            if( m_significance_map[ idx ] )
+            const size_t slice_offset = z * slice_size;
+            for( auto y = set.start_y; y < (set.start_y + set.length_y); y++ )
             {
-                set.signif = Significance::Sig;
-                break;
+                const size_t col_offset = slice_offset + y * m_dim_x;
+                for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ )
+                {
+                    const size_t idx = col_offset + x;
+                    if( m_significance_map[ idx ] )
+                    {
+                        set.signif = Significance::Sig;
+                        goto end_loop_label;
+                    }
+                }
             }
         }
+        end_loop_label:
         // output the significance value 
         // "set" hasn't had a chance to be marked as NewlySig yet, so only need to
         // compare with Sig.
@@ -418,7 +423,7 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
             }
             m_LSP.push_back( set );         // a copy is saved to m_LSP
         }
-        else    // keep dividing the current set
+        else    // Not a pixel. Keep dividing it
         {
             if( (rtn = m_code_S( idx1, idx2 )) )
                 return rtn;
