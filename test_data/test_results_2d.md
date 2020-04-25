@@ -1,9 +1,9 @@
 # Accuracy Measures in Decibel
 
-Note: The reported accuracy difference between QccPack and Sam's implementation is due to 
+Note: The reported accuracy difference between QccPack and Sam's implementation is due to
 an arithmetic coding step that is employed by QccPack, but not in Sam's implementation.
 
-## Lena512
+## Lena512 (2D)
 
 *bpp*  |    *QccPack*    |  *Sam*
 -------| --------------- | ----------
@@ -14,7 +14,7 @@ an arithmetic coding step that is employed by QccPack, but not in Sam's implemen
 
 
 
-## Turbulence1024
+## Turbulence1024 (2D)
 
 *bpp*    |    *QccPack*    |     *Sam*
 ---------|-----------------|-----------
@@ -25,7 +25,7 @@ an arithmetic coding step that is employed by QccPack, but not in Sam's implemen
 
 
 
-## Turbulence128
+## Turbulence128 (2D)
 
 *bpp*     |   *QccPack*    |     *Sam*
 ----------|----------------|------------
@@ -55,7 +55,7 @@ While for Sam's implementation, there are no arithmetic coding steps ( i.e., 3 a
 Also note, these tests were performed on Sam's Chromebox with an Intel Celeron 1.4Ghz Haswell CPU.
 The compiler used was `gcc-9.2.1` with `-O2` optimization on.
 
-## Turbulence1024
+## Turbulence1024 (2D)
 
 *bpp*     |     *QccPack*     |    *Sam*
 ----------|-------------------|----------
@@ -65,7 +65,7 @@ The compiler used was `gcc-9.2.1` with `-O2` optimization on.
 
 
 
-## Turbulence128
+## Turbulence128 (2D)
 
 *bpp*      |      *QccPack*    |    *Sam*
 -----------|-------------------|--------------
