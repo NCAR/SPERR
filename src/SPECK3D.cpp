@@ -311,6 +311,7 @@ int speck::SPECK3D::m_refinement_pass()
         {
             if( m_encode_mode )
             {
+                // Output decision on refinement or not
                 const auto idx = p.start_z * m_dim_x * m_dim_y + 
                                  p.start_y * m_dim_x + p.start_x;
                 if( m_coeff_buf[idx] >= m_threshold ) 
@@ -390,6 +391,7 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
             set.signif = Significance::NewlySig;
             if( m_encode_mode )
             {
+                // Output pixel sign
                 const auto idx = set.start_z * m_dim_x * m_dim_y + 
                                  set.start_y * m_dim_x + set.start_x;
                 m_bit_buffer.push_back( m_sign_array[idx] );
