@@ -366,10 +366,11 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
             for( auto y = set.start_y; y < (set.start_y + set.length_y); y++ )
             {
                 const size_t col_offset = slice_offset + y * m_dim_x;
+
+                // Note: use std::any_of() isn't faster...
                 for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ )
                 {
-                    const size_t idx = col_offset + x;
-                    if( m_significance_map[ idx ] )
+                    if( m_significance_map[ col_offset + x ] )
                     {
                         set.signif = Significance::Sig;
                         goto end_loop_label;
