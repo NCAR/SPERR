@@ -449,9 +449,8 @@ int  speck::SPECK3D::m_code_S( size_t idx1, size_t idx2 )
     std::array< SPECKSet3D, 8 > subsets;
     m_partition_S_XYZ( set, subsets );
     int rtn = 0;
-    for( size_t i = 0; i < 8; i++ )
+    for( const auto& s : subsets )
     {
-        const auto& s = subsets[i];
         if( !s.is_empty() )
         {
             auto   newidx1 = s.total_partitions();
@@ -503,17 +502,17 @@ void speck::SPECK3D::m_partition_S_XYZ( const SPECKSet3D& set,
     const uint32_t split_y[2]{ set.length_y - set.length_y / 2,  set.length_y / 2 };
     const uint32_t split_z[2]{ set.length_z - set.length_z / 2,  set.length_z / 2 };
 
-    for( size_t i = 0; i < 8; i++ )
+    for( auto& s : subsets )
     {
-        subsets[i].part_level_x = set.part_level_x;
+        s.part_level_x = set.part_level_x;
         if( split_x[1] > 0 )    
-            (subsets[i].part_level_x)++;
-        subsets[i].part_level_y = set.part_level_y;
+            (s.part_level_x)++;
+        s.part_level_y = set.part_level_y;
         if( split_y[1] > 0 )
-            (subsets[i].part_level_y)++;
-        subsets[i].part_level_z = set.part_level_z;
+            (s.part_level_y)++;
+        s.part_level_z = set.part_level_z;
         if( split_z[1] > 0 )
-            (subsets[i].part_level_z)++;
+            (s.part_level_z)++;
     }
 
     //
@@ -584,15 +583,15 @@ void speck::SPECK3D::m_partition_S_XY( const SPECKSet3D& set,
     const uint32_t split_x[2]{ set.length_x - set.length_x / 2,  set.length_x / 2 };
     const uint32_t split_y[2]{ set.length_y - set.length_y / 2,  set.length_y / 2 };
 
-    for( size_t i = 0; i < 4; i++ )
+    for( auto& s : subsets )
     {
-        subsets[i].part_level_x = set.part_level_x;
+        s.part_level_x = set.part_level_x;
         if( split_x[1] > 0 )    
-            (subsets[i].part_level_x)++;
-        subsets[i].part_level_y = set.part_level_y;
+            (s.part_level_x)++;
+        s.part_level_y = set.part_level_y;
         if( split_y[1] > 0 )
-            (subsets[i].part_level_y)++;
-        subsets[i].part_level_z = set.part_level_z;
+            (s.part_level_y)++;
+        s.part_level_z = set.part_level_z;
     }
 
     //
@@ -634,13 +633,13 @@ void speck::SPECK3D::m_partition_S_Z( const SPECKSet3D& set,
 {
     const uint32_t split_z[2]{ set.length_z - set.length_z / 2,  set.length_z / 2 };
 
-    for( size_t i = 0; i < 2; i++ )
+    for( auto& s : subsets )
     {
-        subsets[i].part_level_x = set.part_level_x;
-        subsets[i].part_level_y = set.part_level_y;
-        subsets[i].part_level_z = set.part_level_z;
+        s.part_level_x = set.part_level_x;
+        s.part_level_y = set.part_level_y;
+        s.part_level_z = set.part_level_z;
         if( split_z[1] > 0 )
-            (subsets[i].part_level_z)++;
+            (s.part_level_z)++;
     }
 
     //
