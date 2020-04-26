@@ -119,29 +119,18 @@ void speck::CDF97::dwt3d()
     // First transform along the Z dimension
     buffer_type_d array_z = std::make_unique< double[] >( m_dim_z );
     auto num_xforms_z     = speck::calc_num_of_xforms( m_dim_z );
+    for( size_t offset = 0; offset < plane_size; offset++ )
     {   
-        // Fill the first Z array
-        for( size_t i = 0; i < m_dim_z; i++ )
-            array_z[i] = m_data_buf[ plane_size * i ];
-    }
-    for( size_t offset = 0; offset < plane_size - 1; offset++ )
-    {   
-        // Iterate for every Z array except the last one
+        // Fill the Z array
+        for( size_t i  = 0; i < m_dim_z; i++ )
+            array_z[i] = m_data_buf[ plane_size * i + offset ];
+
+        // 1D DWT along the Z direction
         m_dwt1d( array_z.get(), m_dim_z, num_xforms_z, tmp_buf.get() );
 
-        // Put back coefficients, and also retrieve the next array.
+        // Put back coefficients
         for( size_t i = 0; i < m_dim_z; i++ )
-        {
-            size_t idx = offset + plane_size * i;
-            m_data_buf[ idx ] = array_z[i];
-            array_z[i] = m_data_buf[ idx + 1 ];
-        }
-    }
-    {   // Deal with the last Z array
-        size_t offset = plane_size - 1;
-        m_dwt1d( array_z.get(), m_dim_z, num_xforms_z, tmp_buf.get() );
-        for( size_t i = 0; i < m_dim_z; i++ )
-            m_data_buf[ offset + plane_size * i ] = array_z[i];
+            m_data_buf[ plane_size * i + offset ] = array_z[i];
     }
 
     // Second transform each plane
@@ -174,29 +163,15 @@ void speck::CDF97::idwt3d()
     // Second, inverse transform along the Z dimension
     buffer_type_d array_z = std::make_unique< double[] >( m_dim_z );
     auto num_xforms_z     = speck::calc_num_of_xforms( m_dim_z );
+    for( size_t offset = 0; offset < plane_size; offset++ )
     {   
-        // Fill the first Z array
-        for( size_t i = 0; i < m_dim_z; i++ )
-            array_z[i] = m_data_buf[ plane_size * i ];
-    }
-    for( size_t offset = 0; offset < plane_size - 1; offset++ )
-    {   
-        // Iterate for every Z array except the last one
+        for( size_t i  = 0; i < m_dim_z; i++ )
+            array_z[i] = m_data_buf[ plane_size * i + offset ];
+
         m_idwt1d( array_z.get(), m_dim_z, num_xforms_z, tmp_buf.get() );
 
-        // Put back coefficients, and also retrieve the next array.
         for( size_t i = 0; i < m_dim_z; i++ )
-        {
-            size_t idx = offset + plane_size * i;
-            m_data_buf[ idx ] = array_z[i];
-            array_z[i] = m_data_buf[ idx + 1 ];
-        }
-    }
-    {   // Deal with the last Z array
-        size_t offset = plane_size - 1;
-        m_idwt1d( array_z.get(), m_dim_z, num_xforms_z, tmp_buf.get() );
-        for( size_t i = 0; i < m_dim_z; i++ )
-            m_data_buf[ offset + plane_size * i ] = array_z[i];
+            m_data_buf[ plane_size * i + offset ] = array_z[i];
     }
 
     for( size_t i = 0; i < m_buf_len; i++ )
