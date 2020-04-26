@@ -14,7 +14,7 @@ extern "C"  // C Function calls, and don't include the C header!
 TEST( dwt1d, big_image_even )
 {
     const char*   input = "../test_data/128x128.float";
-    size_t  dim_x = 128, dim_y = 128;
+    size_t  dim_x = 128;
     const size_t  total_vals = dim_x;
 
     // Let read in binaries as 4-byte floats
@@ -40,7 +40,7 @@ TEST( dwt1d, big_image_even )
 TEST( dwt1d, big_image_odd )
 {
     const char*   input = "../test_data/999x999.float";
-    size_t  dim_x = 999, dim_y = 999;
+    size_t  dim_x = 999;
     const size_t  total_vals = dim_x;
 
     // Let read in binaries as 4-byte floats

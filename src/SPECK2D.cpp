@@ -63,12 +63,11 @@ int speck::SPECK2D::encode()
     //   saved in the first few iterations are unnecessary.
     m_max_coefficient_bits = uint16_t( std::log2(max_coeff) );
     m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
-    int rtn = 0;
     for( size_t bitplane = 0; bitplane < 128; bitplane++ )
     {
-        if( (rtn = m_sorting_pass()) )
+        if( m_sorting_pass() )
             break;
-        if( (rtn = m_refinement_pass()) )
+        if( m_refinement_pass() )
             break;
 
         m_threshold *= 0.5f;
