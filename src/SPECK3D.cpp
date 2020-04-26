@@ -105,6 +105,9 @@ int speck::SPECK3D::encode()
 
     m_initialize_sets_lists();
 
+    // m_indices_to_refine is only used during encoding, but not decoding
+    m_indices_to_refine.reserve( m_vec_init_capacity );
+
     m_bit_buffer.clear();
     m_bit_buffer.reserve( m_budget );
     auto max_coeff = speck::make_coeff_positive( m_coeff_buf, m_coeff_len, m_sign_array );
@@ -123,15 +126,15 @@ int speck::SPECK3D::encode()
             break;
 
         // refine newly identified pixels
-        for( const auto& i : m_idx_to_refine )
+        for( const auto& i : m_indices_to_refine )
             m_coeff_buf[i] -= m_threshold;
-        m_idx_to_refine.clear();
+        m_indices_to_refine.clear();
 
         m_threshold *= 0.5f;
         m_clean_LIS();
     }
     // finish refinement before quites
-    for( const auto& i : m_idx_to_refine )
+    for( const auto& i : m_indices_to_refine )
         m_coeff_buf[i] -= m_threshold;
 
     return 0;
@@ -410,7 +413,7 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
                 m_bit_buffer.push_back( m_sign_array[idx] );
 
                 // Progressive quantization!
-                m_idx_to_refine.push_back( idx );
+                m_indices_to_refine.push_back( idx );
 
                 // Let's also see if we're reached the bit budget
                 if( m_bit_buffer.size() >= m_budget )

@@ -107,7 +107,7 @@ private:
     std::vector< std::vector<SPECKSet3D> >  m_LIS;
 
     std::vector< size_t >                   m_LIS_garbage_cnt;
-    std::vector< size_t >                   m_idx_to_refine;
+    std::vector< size_t >                   m_indices_to_refine;
 };
 
 };
