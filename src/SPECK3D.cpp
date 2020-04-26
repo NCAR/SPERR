@@ -426,7 +426,6 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
 
                 // Progressive quantization!
                 m_coeff_buf[ idx ] = 1.5f * m_threshold;
-
             }
             m_LSP.push_back( set );         // a copy is saved to m_LSP
         }
