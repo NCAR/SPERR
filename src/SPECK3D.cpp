@@ -159,12 +159,14 @@ int speck::SPECK3D::decode()
     m_coeff_buf = std::make_unique<float[]>( m_coeff_len );
 #endif
 
-    // initialize coefficients to be zero, and signs to be all positive
+    // initialize coefficients to be zero
     for( size_t i = 0; i < m_coeff_len; i++ )
         m_coeff_buf[i] = 0.0f;
-    m_sign_array.assign( m_coeff_len, true );
 
     m_initialize_sets_lists();
+
+    // m_indices_to_set_neg is only used when decoding, but not encoding
+    m_indices_to_set_neg.reserve( m_vec_init_capacity );
 
     m_bit_idx = 0;
     m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
@@ -180,12 +182,9 @@ int speck::SPECK3D::decode()
         m_clean_LIS();
     }
 
-    // Restore coefficient signs
-    for( size_t i = 0; i < m_coeff_len; i++ )
-    {
-        if( !m_sign_array[i] )
-            m_coeff_buf[i] = -m_coeff_buf[i];
-    }
+    // Restore coefficient signs but setting some of them negative
+    for( const auto& i : m_indices_to_set_neg )
+        m_coeff_buf[i] = -m_coeff_buf[i];
 
     return 0;
 }
@@ -423,7 +422,8 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
 
                 const auto idx = set.start_z * m_dim_x * m_dim_y + 
                                  set.start_y * m_dim_x + set.start_x;
-                m_sign_array[ idx ] = m_bit_buffer[ m_bit_idx++ ];
+                if( !m_bit_buffer[ m_bit_idx++ ] )
+                    m_indices_to_set_neg.push_back( idx );
 
                 // Progressive quantization!
                 m_coeff_buf[ idx ] = 1.5f * m_threshold;
