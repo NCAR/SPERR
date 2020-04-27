@@ -4,6 +4,9 @@
 #include <cstdlib>
 #include <iostream>
 #include <chrono>
+#include <cstring>
+
+#include "SpeckConfig.h"
 
 extern "C"  // C Function calls, and don't include the C header!
 {
@@ -57,45 +60,29 @@ int main( int argc, char* argv[] )
         in_buf = std::move( tmp );
     }
 
-#if 0
-    // Write back in the correct order
-    FILE* f = fopen( output, "w" );
-    if( f == NULL )
-    {
-        fprintf( stderr, "Error! Cannot open output file: %s\n", output );
-        return 1;
-    }
-    if( fwrite(in_buf.get(), sizeof(float), total_vals, f) != total_vals )
-    {
-        fprintf( stderr, "Error! Output file write error: %s\n", output );
-        fclose( f );
-        return 1;
-    }
-    fclose( f );
-    return 0;
-#endif
-
     // Take input to go through DWT.
+#ifdef TIME_EXAMPLES
+    const auto startT = std::chrono::high_resolution_clock::now();
+#endif
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y, dim_z );
     cdf.copy_data( in_buf, total_vals );
     cdf.dwt3d();
 
     // Do a speck encoding
-    const auto startT = std::chrono::high_resolution_clock::now();
-
     speck::SPECK3D encoder;
     encoder.set_dims( dim_x, dim_y, dim_z );
     encoder.set_image_mean( cdf.get_mean() );
     const size_t total_bits = size_t(bpp * total_vals);
     encoder.set_bit_budget( total_bits );
-    encoder.copy_coeffs( cdf.get_read_only_data(), total_vals );
-    cdf.release_data();
+    encoder.take_coeffs( cdf.release_data(), total_vals );
     encoder.encode();
 
+#ifdef TIME_EXAMPLES
     const auto endT   = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<double> diffT  = endT - startT;
     std::cout << "Time for SPECK in milliseconds: " << diffT.count() * 1000.0f << std::endl;
+#endif
 
     if( encoder.write_to_disk( output ) )
     {
