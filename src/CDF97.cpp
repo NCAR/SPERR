@@ -12,8 +12,7 @@ void speck::CDF97::copy_data( const T* data, size_t len )
                    "!! Only floating point values are supported !!" );
 
     assert( len > 0 );
-    size_t  tmp = m_dim_x * m_dim_y * m_dim_z;
-    assert( tmp == 0 || tmp == len );
+    assert( m_dim_x * m_dim_y * m_dim_z == 0 || m_dim_x * m_dim_y * m_dim_z == len );
     m_buf_len = len;
     m_data_buf = std::make_unique<double[]>( len );
     for( size_t i = 0; i < len; i++ )
@@ -26,8 +25,7 @@ template< typename T >
 void speck::CDF97::copy_data( const T& data, size_t len )
 {
     assert( len > 0 );
-    size_t  tmp = m_dim_x * m_dim_y * m_dim_z;
-    assert( tmp == 0 || tmp == len );
+    assert( m_dim_x * m_dim_y * m_dim_z == 0 || m_dim_x * m_dim_y * m_dim_z == len );
     m_buf_len = len;
     m_data_buf = std::make_unique<double[]>( len );
     for( size_t i = 0; i < len; i++ )
