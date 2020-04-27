@@ -534,7 +534,7 @@ void speck::CDF97::QccWAVCDF97AnalysisSymmetricEvenEven( double* signal, size_t 
                          DELTA * (signal[index + 1] + signal[index - 1]));
 
     for (index = 1; index < signal_length; index += 2)
-        signal[index] /= (-EPSILON);
+        signal[index] *= -INV_EPSILON;
 }
 
 
@@ -545,10 +545,10 @@ void speck::CDF97::QccWAVCDF97SynthesisSymmetricEvenEven( double* signal, size_t
     for (index = 1; index < signal_length; index += 2)
         signal[index] *= (-EPSILON);
 
-    signal[0] = signal[0]/EPSILON - 2.0 * DELTA * signal[1];
+    signal[0] = signal[0] * INV_EPSILON - 2.0 * DELTA * signal[1];
 
     for (index = 2; index < signal_length; index += 2)
-        signal[index] = signal[index]/EPSILON - 
+        signal[index] = signal[index] * INV_EPSILON - 
                         DELTA * (signal[index + 1] + signal[index - 1]);
 
     for (index = 1; index < signal_length - 2; index += 2)
@@ -574,13 +574,13 @@ void speck::CDF97::QccWAVCDF97SynthesisSymmetricOddEven( double* signal, size_t 
   for (index = 1; index < signal_length - 1; index += 2)
     signal[index] *= (-EPSILON);
 
-  signal[0] = signal[0] / EPSILON - 2.0 * DELTA * signal[1];
+  signal[0] = signal[0] * INV_EPSILON - 2.0 * DELTA * signal[1];
 
   for (index = 2; index < signal_length - 2; index += 2)
-    signal[index] = signal[index] / EPSILON - 
+    signal[index] = signal[index] * INV_EPSILON - 
                     DELTA * (signal[index + 1] + signal[index - 1]);
 
-  signal[signal_length - 1] = signal[signal_length - 1] / EPSILON - 
+  signal[signal_length - 1] = signal[signal_length - 1] * INV_EPSILON - 
                               2.0 * DELTA * signal[signal_length - 2];
 
   for (index = 1; index < signal_length - 1; index += 2)
@@ -625,7 +625,7 @@ void speck::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t si
                               2 * DELTA * signal[signal_length - 2]);
 
   for (index = 1; index < signal_length - 1; index += 2)
-    signal[index] /= (-EPSILON);
+    signal[index] *= (-INV_EPSILON);
 }
 
 
