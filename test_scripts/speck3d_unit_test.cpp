@@ -59,7 +59,7 @@ public:
         speck::SPECK3D encoder;
         encoder.set_dims( m_dim_x, m_dim_y, m_dim_z );
         encoder.set_image_mean( cdf.get_mean() );
-        encoder.copy_coeffs( cdf.get_read_only_data(), total_vals );
+        encoder.take_coeffs( cdf.release_data(), total_vals );
         const size_t total_bits = size_t(32.0f * total_vals / cratio);
         encoder.set_bit_budget( total_bits );
         encoder.encode();
