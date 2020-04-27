@@ -201,4 +201,8 @@ int speck::SPECK_Storage::m_read( buffer_type_c& header, size_t header_size,
 }
 
 
+size_t speck::SPECK_Storage::get_bit_buffer_size()  const
+{
+    return m_bit_buffer.size();
+}
 

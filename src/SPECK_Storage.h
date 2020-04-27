@@ -39,6 +39,7 @@ public:
 
     void   set_image_mean( double mean );
     double get_image_mean()       const;
+    size_t get_bit_buffer_size()  const;    // Report the available bits when decoding
 
 protected:
     //
