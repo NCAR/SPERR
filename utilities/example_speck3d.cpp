@@ -4,7 +4,6 @@
 #include <cstdlib>
 #include <iostream>
 #include <chrono>
-#include <array>
 
 extern "C"  // C Function calls, and don't include the C header!
 {

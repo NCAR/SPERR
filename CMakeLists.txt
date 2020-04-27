@@ -49,6 +49,11 @@ add_executable( example_speck3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_s
 target_link_libraries(      example_speck3d PUBLIC ${SPECK_LIBS})
 target_include_directories( example_speck3d PUBLIC ${PROJECT_BINARY_DIR} )
 
+# Executable #5
+add_executable( compressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_3d.cpp" )
+target_link_libraries(      compressor_3d PUBLIC ${SPECK_LIBS})
+target_include_directories( compressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
+
 if( BUILD_QCC_EXAMPLES )
     set ( QCCPACK_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/QccPack-0.61-1/install/" 
                               CACHE STRING "Where QccPack is installed"             )
