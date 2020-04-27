@@ -105,9 +105,6 @@ int speck::SPECK3D::encode()
 
     m_initialize_sets_lists();
 
-    // m_indices_to_refine is only used during encoding, but not decoding
-    m_indices_to_refine.reserve( m_vec_init_capacity );
-
     m_bit_buffer.clear();
     m_bit_buffer.reserve( m_budget );
     auto max_coeff = speck::make_coeff_positive( m_coeff_buf, m_coeff_len, m_sign_array );
@@ -132,7 +129,7 @@ int speck::SPECK3D::encode()
         m_threshold *= 0.5f;
         m_clean_LIS();
     }
-    // finish refinement before quites
+    // finish refinement before encode finishes
     for( const auto& i : m_indices_to_refine )
         m_coeff_buf[i] -= m_threshold;
 
@@ -159,14 +156,12 @@ int speck::SPECK3D::decode()
     m_coeff_buf = std::make_unique<float[]>( m_coeff_len );
 #endif
 
-    // initialize coefficients to be zero
+    // initialize coefficients to be zero, and sign array to be all positive
     for( size_t i = 0; i < m_coeff_len; i++ )
         m_coeff_buf[i] = 0.0f;
+    m_sign_array.assign( m_coeff_len, true );
 
     m_initialize_sets_lists();
-
-    // m_indices_to_set_neg is only used when decoding, but not encoding
-    m_indices_to_set_neg.reserve( m_vec_init_capacity );
 
     m_bit_idx = 0;
     m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
@@ -177,14 +172,27 @@ int speck::SPECK3D::decode()
         if( m_refinement_pass() )
             break;
 
+        // refine (initialize their values) newly identified pixels
+        for( const auto& i : m_indices_to_refine )
+            m_coeff_buf[i] = 1.5f * m_threshold;
+        m_indices_to_refine.clear();
+
         m_threshold *= 0.5f;
 
         m_clean_LIS();
     }
+    // finish refinement (initialize their values) decode finishes
+    for( const auto& i : m_indices_to_refine )
+        m_coeff_buf[i] = 1.5f * m_threshold;
 
     // Restore coefficient signs but setting some of them negative
-    for( const auto& i : m_indices_to_set_neg )
-        m_coeff_buf[i] = -m_coeff_buf[i];
+    size_t idx = 0;
+    for( const auto& b : m_sign_array )
+    {
+        if( !b )
+            m_coeff_buf[idx] = -m_coeff_buf[idx];
+        ++idx;
+    }
 
     return 0;
 }
@@ -265,6 +273,9 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // initialize LSP
     m_LSP.clear();
     m_LSP.reserve( m_vec_init_capacity );
+
+    // initialize an index buffer
+    m_indices_to_refine.reserve( m_vec_init_capacity );
 }
 
 
@@ -426,10 +437,10 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
                 const auto idx = set.start_z * m_dim_x * m_dim_y + 
                                  set.start_y * m_dim_x + set.start_x;
                 if( !m_bit_buffer[ m_bit_idx++ ] )
-                    m_indices_to_set_neg.push_back( idx );
+                    m_sign_array[ idx ] = false;
 
                 // Progressive quantization!
-                m_coeff_buf[ idx ] = 1.5f * m_threshold;
+                m_indices_to_refine.push_back( idx );
             }
             m_LSP.push_back( set );         // a copy is saved to m_LSP
         }

@@ -83,6 +83,7 @@ private:
     void m_partition_S_XY( const SPECKSet3D& set, std::array<SPECKSet3D, 4>& subsets ) const;
     void m_partition_S_Z(  const SPECKSet3D& set, std::array<SPECKSet3D, 2>& subsets ) const;
 
+
     //
     // Private data members
     //
@@ -104,9 +105,8 @@ private:
     std::vector< std::vector<SPECKSet3D> >  m_LIS;
 
     std::vector< bool >     m_significance_map;     // only used when encoding.
-    std::vector< bool >     m_sign_array;           // only used when encoding.
-    std::vector< size_t >   m_indices_to_refine;    // only used when encoding
-    std::vector< size_t >   m_indices_to_set_neg;   // only used when decoding
+    std::vector< bool >     m_sign_array;
+    std::vector< size_t >   m_indices_to_refine;
     std::vector< size_t >   m_LIS_garbage_cnt;
 };
 
