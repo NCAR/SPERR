@@ -77,11 +77,10 @@ int main( int argc, char* argv[] )
     encoder.set_bit_budget( total_bits );
     encoder.take_coeffs( cdf.release_data(), total_vals );
     encoder.encode();
-
 #ifdef TIME_EXAMPLES
     const auto endT   = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<double> diffT  = endT - startT;
-    std::cout << "Time for SPECK in milliseconds: " << diffT.count() * 1000.0f << std::endl;
+    std::cout << "Time for compression in milliseconds: " << diffT.count() * 1000.0f << std::endl;
 #endif
 
     if( encoder.write_to_disk( output ) )
