@@ -70,7 +70,7 @@ int speck::SPECK2D::encode()
         if( m_refinement_pass() )
             break;
 
-        m_threshold *= 0.5f;
+        m_threshold *= 0.5;
         m_clean_LIS();
     }
 
@@ -87,10 +87,6 @@ int speck::SPECK2D::decode()
     if( m_budget == 0 )
         m_budget = m_bit_buffer.size();
 
-#ifdef PRINT
-    std::cout << "<-- start decoding -->" << std::endl;
-#endif
-
     // initialize coefficients to be zero, and signs to be all positive
 #ifdef SPECK_USE_DOUBLE
     m_coeff_buf = std::make_unique<double[]>( m_coeff_len );
@@ -98,7 +94,7 @@ int speck::SPECK2D::decode()
     m_coeff_buf = std::make_unique<float[]>( m_coeff_len );
 #endif
     for( size_t i = 0; i < m_coeff_len; i++ )
-        m_coeff_buf[i] = 0.0f;
+        m_coeff_buf[i] = 0.0;
     m_sign_array.assign( m_coeff_len, true );
 
     m_initialize_sets_lists();
@@ -113,7 +109,7 @@ int speck::SPECK2D::decode()
         if( (rtn_val = m_refinement_pass()) )
             break;
 
-        m_threshold *= 0.5f;
+        m_threshold *= 0.5;
 
         m_clean_LIS();
     }
@@ -165,10 +161,6 @@ void speck::SPECK2D::m_initialize_sets_lists()
 //
 int speck::SPECK2D::m_sorting_pass( )
 {
-#ifdef PRINT
-    printf("--> sorting pass, threshold = %f\n", m_threshold );
-#endif
-
     if( m_encode_mode )
     {   // Update the significance map based on the current threshold
         m_significance_map.assign( m_coeff_len, false );
@@ -204,10 +196,6 @@ int speck::SPECK2D::m_sorting_pass( )
 
 int speck::SPECK2D::m_refinement_pass( )
 {
-#ifdef PRINT
-    printf("--> refinement pass, threshold = %f\n", m_threshold );
-#endif
-
     int rtn = 0;
     for( auto& p : m_LSP )
     {
@@ -235,10 +223,6 @@ int speck::SPECK2D::m_refinement_pass( )
 int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool need_decide_signif )
 {
     auto& set = m_LIS[idx1][idx2];
-
-#ifdef PRINT
-    m_print_set( "process_S", set );
-#endif
 
     int rtn = 0;
     if( need_decide_signif )
@@ -297,11 +281,6 @@ int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool need_decide_sign
 int speck::SPECK2D::m_code_S( size_t idx1, size_t idx2 )
 {
     const auto& set = m_LIS[idx1][idx2];
-    
-#ifdef PRINT
-    m_print_set( "code_S", set );
-#endif
-
     std::array< SPECKSet2D, 4 > subsets;
     m_partition_S( set, subsets );
 
@@ -382,10 +361,6 @@ int speck::SPECK2D::m_process_I( bool need_decide_sig )
 {
     if( m_I.part_level == 0 )   // m_I is empty at this point
         return 0;
-    
-#ifdef PRINT
-    m_print_set( "process_I", m_I );
-#endif
 
     int rtn = 0;
     if( m_encode_mode )
@@ -612,7 +587,7 @@ int speck::SPECK2D::m_input_pixel_sign( const SPECKSet2D& pixel )
     m_sign_array[ idx ] = m_bit_buffer[ m_bit_idx++ ];
 
     // Progressive quantization!
-    m_coeff_buf[ idx ] = 1.5f * m_threshold;
+    m_coeff_buf[ idx ] = 1.5 * m_threshold;
 
 #ifdef PRINT
     auto bit = m_sign_array[ idx ];
@@ -659,7 +634,7 @@ int speck::SPECK2D::m_input_refinement( const SPECKSet2D& pixel )
 
     const auto bit = m_bit_buffer[ m_bit_idx++ ];
     const auto idx = pixel.start_y * m_dim_x + pixel.start_x;
-    m_coeff_buf[ idx ] += bit ? m_threshold * 0.5f : m_threshold * -0.5f;
+    m_coeff_buf[ idx ] += bit ? m_threshold * 0.5 : m_threshold * -0.5;
 
 #ifdef PRINT
     if( bit )

@@ -99,10 +99,6 @@ int speck::SPECK3D::encode()
     assert( m_ready_to_encode() );
     m_encode_mode = true;
 
-#ifdef PRINT
-    std::cout << "---- Now encoding ----" << std::endl;
-#endif
-
     m_initialize_sets_lists();
 
     m_bit_buffer.clear();
@@ -126,7 +122,7 @@ int speck::SPECK3D::encode()
             m_coeff_buf[i] -= m_threshold;
         m_indices_to_refine.clear();
 
-        m_threshold *= 0.5f;
+        m_threshold *= 0.5;
         m_clean_LIS();
     }
     // finish refinement before encode finishes
@@ -146,10 +142,6 @@ int speck::SPECK3D::decode()
     if( m_budget == 0 )
         m_budget = m_bit_buffer.size();
 
-#ifdef PRINT
-    std::cout << "---- Now decoding ----" << std::endl;
-#endif
-
 #ifdef SPECK_USE_DOUBLE
     m_coeff_buf = std::make_unique<double[]>( m_coeff_len );
 #else
@@ -158,7 +150,7 @@ int speck::SPECK3D::decode()
 
     // initialize coefficients to be zero, and sign array to be all positive
     for( size_t i = 0; i < m_coeff_len; i++ )
-        m_coeff_buf[i] = 0.0f;
+        m_coeff_buf[i] = 0.0;
     m_sign_array.assign( m_coeff_len, true );
 
     m_initialize_sets_lists();
@@ -174,18 +166,18 @@ int speck::SPECK3D::decode()
 
         // refine (initialize their values) newly identified pixels
         for( const auto& i : m_indices_to_refine )
-            m_coeff_buf[i] = 1.5f * m_threshold;
+            m_coeff_buf[i] = 1.5 * m_threshold;
         m_indices_to_refine.clear();
 
-        m_threshold *= 0.5f;
+        m_threshold *= 0.5;
 
         m_clean_LIS();
     }
     // finish refinement (initialize their values) decode finishes
     for( const auto& i : m_indices_to_refine )
-        m_coeff_buf[i] = 1.5f * m_threshold;
+        m_coeff_buf[i] = 1.5 * m_threshold;
 
-    // Restore coefficient signs but setting some of them negative
+    // Restore coefficient signs by setting some of them negative
     size_t idx = 0;
     for( const auto& b : m_sign_array )
     {
@@ -281,10 +273,6 @@ void speck::SPECK3D::m_initialize_sets_lists()
 
 int speck::SPECK3D::m_sorting_pass()
 {
-#ifdef PRINT
-    std::cout << "--> sorting pass, threshold = " << m_threshold << std::endl;
-#endif
-
     if( m_encode_mode )
     {
         // Update the significance map based on the current threshold
@@ -319,10 +307,6 @@ int speck::SPECK3D::m_sorting_pass()
 
 int speck::SPECK3D::m_refinement_pass()
 {
-#ifdef PRINT
-    std::cout << "--> refinement pass, threshold = " << m_threshold << std::endl;
-#endif
-
     for( auto& p : m_LSP )
     {
         if( p.signif == Significance::NewlySig )
@@ -354,7 +338,7 @@ int speck::SPECK3D::m_refinement_pass()
                 const auto bit = m_bit_buffer[ m_bit_idx++ ];
                 const auto idx = p.start_z * m_dim_x * m_dim_y + 
                                  p.start_y * m_dim_x + p.start_x;
-                m_coeff_buf[ idx ] += bit ? m_threshold * 0.5f : m_threshold * -0.5f;
+                m_coeff_buf[ idx ] += bit ? m_threshold * 0.5 : m_threshold * -0.5;
             }
         }
     }
@@ -393,8 +377,8 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
         }
         end_loop_label:
         // output the significance value 
-        // "set" hasn't had a chance to be marked as NewlySig yet, so only need to
-        // compare with Sig.
+        //   "set" hasn't had a chance to be marked as NewlySig yet, so only need to
+        //   compare with Sig.
         auto bit = (set.signif == Significance::Sig);
         m_bit_buffer.push_back( bit );
         

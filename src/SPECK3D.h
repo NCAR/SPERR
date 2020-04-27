@@ -88,7 +88,7 @@ private:
     // Private data members
     //
 #ifdef SPECK_USE_DOUBLE
-    double      m_threshold = 0.0;          // Threshold that's used for an iteration
+    double      m_threshold = 0.0;          // Threshold that's used for quantization
 #else
     float       m_threshold = 0.0f;
 #endif

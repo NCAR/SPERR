@@ -14,8 +14,9 @@ namespace speck
 
 class SPECK_Storage
 {
+
 // Use the following macro to direct SPECK use double type.
-// #define SPECK_USE_DOUBLE
+#define SPECK_USE_DOUBLE
 
 public:
     // memory management: input
