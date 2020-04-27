@@ -277,9 +277,13 @@ int speck::SPECK3D::m_sorting_pass()
     if( m_encode_mode )
     {
         // Update the significance map based on the current threshold
-        m_significance_map.resize( m_coeff_len );
+        // Most of them are gonna be false, and only a handful to be true.
+        m_significance_map.assign( m_coeff_len, false );
         for( size_t i = 0; i < m_coeff_len; i++ )
-            m_significance_map[i] = ( m_coeff_buf[i] >= m_threshold );
+        {
+            if( m_coeff_buf[i] >= m_threshold )
+                m_significance_map[i] = true;
+        }
     }
 
     int rtn = 0;
