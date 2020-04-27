@@ -130,3 +130,22 @@ int sam_write_n_doubles( const char*   filename, size_t n_vals,
     fclose( f );
     return 0;
 }
+
+int sam_write_n_floats( const char*   filename, size_t n_vals,
+                        const float*  buffer              )
+{
+    FILE* f = fopen( filename, "w" );
+    if( f == NULL )
+    {
+        fprintf( stderr, "Error! Cannot open output file: %s\n", filename );
+        return 1;
+    }
+    if( fwrite(buffer, sizeof(float), n_vals, f) != n_vals )
+    {
+        fprintf( stderr, "Error! Output file write error: %s\n", filename );
+        fclose( f );
+        return 1;
+    }
+    fclose( f );
+    return 0;
+}

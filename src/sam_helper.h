@@ -23,5 +23,8 @@ int sam_read_n_bytes( const char* filename, size_t n_bytes,           /* input  
 int sam_write_n_doubles( const char*   filename, size_t n_vals,       /* input  */
                          const double* buffer              );         /* input  */
 
+int sam_write_n_floats(  const char*   filename, size_t n_vals,       /* input  */
+                         const float*  buffer              );         /* input  */
+
 
 #endif 
