@@ -396,7 +396,12 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
 
     if( set.signif == Significance::Sig )
     {
-        if( set.is_pixel() )
+        if( !set.is_pixel() )   // Not a pixel, keep dividing it!
+        {
+            if( (rtn = m_code_S( idx1, idx2 )) )
+                return rtn;
+        }
+        else    // Special treatment for pixels!
         {
             set.signif = Significance::NewlySig;
             if( m_encode_mode )
@@ -427,11 +432,6 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
                 m_indices_to_refine.push_back( idx );
             }
             m_LSP.push_back( set );         // a copy is saved to m_LSP
-        }
-        else    // Not a pixel. Keep dividing it
-        {
-            if( (rtn = m_code_S( idx1, idx2 )) )
-                return rtn;
         }
         set.type = SetType::Garbage;    // this current one is gonna be discarded.
         m_LIS_garbage_cnt[ set.total_partitions() ]++;

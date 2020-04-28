@@ -162,7 +162,8 @@ void speck::SPECK2D::m_initialize_sets_lists()
 int speck::SPECK2D::m_sorting_pass( )
 {
     if( m_encode_mode )
-    {   // Update the significance map based on the current threshold
+    {   
+        // Update the significance map based on the current threshold
         m_significance_map.assign( m_coeff_len, false );
         for( size_t i = 0; i < m_coeff_len; i++ )
         {

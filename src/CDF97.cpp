@@ -637,13 +637,12 @@ void speck::CDF97::set_mean( double m )
 
 void speck::CDF97::set_dims( size_t x, size_t y, size_t z )
 {
+    assert( m_buf_len == x * y * z || m_buf_len = 0 );
+
     m_dim_x = x;
     m_dim_y = y;
     m_dim_z = z;
-    if( m_buf_len == 0 )
-        m_buf_len = x * y * z;
-    else
-        assert( m_buf_len == x * y * z );
+    m_buf_len = x * y * z;
 }
 
 
