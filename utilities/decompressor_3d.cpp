@@ -71,5 +71,9 @@ int main( int argc, char* argv[] )
         return 1;
     }
 
+    // Print some basic info:
+    std::printf(" Decompress volume with dimensions (%u, %u, %u). BPP = %f\n", 
+                  dim_x, dim_y, dim_z, float(bit_budget)/float(total_vals)  );
+
     return 0;
 }
