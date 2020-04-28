@@ -6,8 +6,8 @@
 
 extern "C"  // C Function calls, and don't include the C header!
 {
-    int sam_read_n_bytes( const char*, size_t, void* );
-    int sam_write_n_doubles( const char*, size_t, const double* );
+    int sam_read_n_bytes(  const char*, size_t, void* );
+    int sam_write_n_bytes( const char*, size_t, const void* );
     int sam_get_statsd( const double* arr1, const double* arr2, size_t len,
                         double* rmse,       double* lmax,   double* psnr,
                         double* arr1min,    double* arr1max            );
@@ -51,7 +51,7 @@ int main( int argc, char* argv[] )
     // Write out the results after DWT.
     std::cout << "Mean is = " << cdf.get_mean() << std::endl;
     const auto& coeffs = cdf.get_read_only_data();
-    if( sam_write_n_doubles( output, total_vals, coeffs.get() ) )
+    if( sam_write_n_bytes( output, total_vals * sizeof(double), coeffs.get() ) )
     {
         std::cerr << "Output write error!" << std::endl;
         return 1;

@@ -20,11 +20,8 @@ int sam_get_statsd( const double* arr1, const double* arr2, size_t len,/* input 
 int sam_read_n_bytes( const char* filename, size_t n_bytes,           /* input  */
                       void*       buffer               );             /* output */
 
-int sam_write_n_doubles( const char*   filename, size_t n_vals,       /* input  */
-                         const double* buffer              );         /* input  */
-
-int sam_write_n_floats(  const char*   filename, size_t n_vals,       /* input  */
-                         const float*  buffer              );         /* input  */
+int sam_write_n_bytes( const char*  filename, size_t n_bytes,         /* input  */
+                       const void*  buffer              );            /* input  */
 
 
 #endif 

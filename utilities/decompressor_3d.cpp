@@ -11,7 +11,7 @@
 
 extern "C"  // C Function calls, and don't include the C header!
 {
-    int sam_write_n_floats( const char*, size_t, const float* );
+    int sam_write_n_bytes( const char*, size_t, const void* );
 }
 
 
@@ -65,7 +65,7 @@ int main( int argc, char* argv[] )
     const auto& reconstruct = idwt.get_read_only_data();
     for( size_t i  = 0; i < total_vals; i++ )
         out_buf[i] = reconstruct[i];
-    if( sam_write_n_floats( output, total_vals, out_buf.get() ) )
+    if( sam_write_n_bytes( output, total_vals * sizeof(float), out_buf.get() ) )
     {
         std::cerr << "output file write error: " << output << std::endl;
         return 1;
