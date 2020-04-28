@@ -17,8 +17,8 @@ int main( int argc, char* argv[] )
 {
     if( argc != 8 )
     {
-        std::cerr << "Usage: ./a.out input_filename dim_x dim_y dim_z XYZ(or ZYX) "
-                                << " output_filename bits_per_pixel " << std::endl;
+        std::cerr << "Usage: ./a.out input_filename dim_x dim_y dim_z  "
+                 << " ordering(XYZ or ZYX) output_filename bits_per_pixel " << std::endl;
         return 1;
     }
 
@@ -61,13 +61,18 @@ int main( int argc, char* argv[] )
     }
 
     // Take input to go through DWT.
-#ifdef TIME_EXAMPLES
-    const auto startT = std::chrono::high_resolution_clock::now();
-#endif
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y, dim_z );
     cdf.copy_data( in_buf, total_vals );
+#ifdef TIME_EXAMPLES
+    auto startT = std::chrono::high_resolution_clock::now();
+#endif
     cdf.dwt3d();
+#ifdef TIME_EXAMPLES
+    auto endT   = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diffT  = endT - startT;
+    std::cout << "Time for 3D Wavelet transform in milliseconds: " << diffT.count() * 1000.0f << std::endl;
+#endif
 
     // Do a speck encoding
     speck::SPECK3D encoder;
@@ -76,11 +81,14 @@ int main( int argc, char* argv[] )
     const size_t total_bits = size_t(bpp * total_vals);
     encoder.set_bit_budget( total_bits );
     encoder.take_coeffs( cdf.release_data(), total_vals );
+#ifdef TIME_EXAMPLES
+    startT = std::chrono::high_resolution_clock::now();
+#endif
     encoder.encode();
 #ifdef TIME_EXAMPLES
-    const auto endT   = std::chrono::high_resolution_clock::now();
-    const std::chrono::duration<double> diffT  = endT - startT;
-    std::cout << "Time for compression in milliseconds: " << diffT.count() * 1000.0f << std::endl;
+    endT   = std::chrono::high_resolution_clock::now();
+    diffT  = endT - startT;
+    std::cout << "Time for SPECK encoding in milliseconds: " << diffT.count() * 1000.0f << std::endl;
 #endif
 
     if( encoder.write_to_disk( output ) )
