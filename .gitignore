@@ -61,3 +61,8 @@ QccPack-0.61-1/install
 
 # build directory
 build*/
+
+# big test data
+test_data/wmag256.float
+test_data/wmag512.float
+test_data/wmag500.float
