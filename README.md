@@ -13,7 +13,7 @@ cmake ..
 make -j 4
 ```
 
-## Executables
+## Default Executables
 After building it, there will be 6 executable in the current directory:
 4 examples (`example_xxx`), 1 compressor (`compressor_3d`),
 and 1 decompressor (`compressor_3d`).
