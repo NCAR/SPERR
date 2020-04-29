@@ -43,7 +43,7 @@ typename U::element_type speck::make_coeff_positive( U& buf, size_t len,
     sign_array.assign( len, true );
     auto max = std::abs( buf[0] );
     using element_type = typename U::element_type;
-    element_type zero = 0.0;
+    const element_type zero = 0.0;
     for( size_t i = 0; i < len; i++ )
     {
         if( buf[i] < zero )
