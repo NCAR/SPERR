@@ -60,4 +60,4 @@ QccPack-0.61-1/include
 QccPack-0.61-1/install
 
 # build directory
-build/
+build*/

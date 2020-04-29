@@ -71,7 +71,9 @@ int main( int argc, char* argv[] )
 #ifdef TIME_EXAMPLES
     auto endT   = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diffT  = endT - startT;
-    std::cout << "Time for 3D Wavelet transform in milliseconds: " << diffT.count() * 1000.0f << std::endl;
+    std::cout << "# Encoding time in milliseconds: Bit-per-Pixel  XForm_Time  SPECK_Time" 
+              << std::endl; 
+    std::cout << bpp << "  " << diffT.count() * 1000.0f << "  ";
 #endif
 
     // Do a speck encoding
@@ -88,7 +90,7 @@ int main( int argc, char* argv[] )
 #ifdef TIME_EXAMPLES
     endT   = std::chrono::high_resolution_clock::now();
     diffT  = endT - startT;
-    std::cout << "Time for SPECK encoding in milliseconds: " << diffT.count() * 1000.0f << std::endl;
+    std::cout << diffT.count() * 1000.0f << std::endl;
 #endif
 
     if( encoder.write_to_disk( output ) )

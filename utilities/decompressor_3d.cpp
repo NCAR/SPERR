@@ -35,30 +35,41 @@ int main( int argc, char* argv[] )
         std::cerr << "input file read error: " << input << std::endl;
         return 1;
     }
-#ifdef TIME_EXAMPLES
-    const auto startT = std::chrono::high_resolution_clock::now();
-#endif
     size_t dim_x, dim_y, dim_z;
     decoder.get_dims( dim_x, dim_y, dim_z );
     size_t total_vals = dim_x * dim_y * dim_z;
     size_t bit_budget = size_t( total_vals * target_bpp );
            bit_budget = std::min( bit_budget, decoder.get_bit_buffer_size() );
     decoder.set_bit_budget( bit_budget );
+#ifdef TIME_EXAMPLES
+    auto startT = std::chrono::high_resolution_clock::now();
+#endif
     decoder.decode();
+#ifdef TIME_EXAMPLES
+    auto endT   = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diffT  = endT - startT;
+    auto speck_time = diffT.count() * 1000.0f;
+#endif
 
     // Do an inverse wavelet transform
     speck::CDF97 idwt;
     idwt.set_dims( dim_x, dim_y, dim_z );
     idwt.set_mean( decoder.get_image_mean() );
     idwt.take_data( decoder.release_coeffs_double() );
-    idwt.idwt3d();
-
 #ifdef TIME_EXAMPLES
-    // Finish timer and print timing
-    const auto endT   = std::chrono::high_resolution_clock::now();
-    const std::chrono::duration<double> diffT  = endT - startT;
-    std::cout << "Time for decompression in milliseconds: " << diffT.count() * 1000.0f << std::endl;
+    startT = std::chrono::high_resolution_clock::now();
 #endif
+    idwt.idwt3d();
+#ifdef TIME_EXAMPLES
+    endT   = std::chrono::high_resolution_clock::now();
+    diffT  = endT - startT;
+    auto idwt_time = diffT.count() * 1000.0f;
+    std::cout << "# Decoding time in milliseconds: Bit-per-Pixel  XForm_Time  SPECK_Time" 
+              << std::endl; 
+    std::cout << float(bit_budget)/float(total_vals) << "  " << idwt_time << "  " 
+              << speck_time << std::endl;
+#endif
+
 
     // Write the reconstructed data to disk in single-precision
     speck::buffer_type_f out_buf = std::make_unique<float[]>( total_vals );
@@ -72,7 +83,7 @@ int main( int argc, char* argv[] )
     }
 
     // Print some basic info:
-    std::printf("Decompress volume with dimensions (%lu, %lu, %lu). BPP = %f\n", 
+    std::printf("# Decompressed volume with dimensions (%lu, %lu, %lu). Actual BPP = %f\n", 
                  dim_x, dim_y, dim_z, float(bit_budget)/float(total_vals)  );
 
     return 0;
