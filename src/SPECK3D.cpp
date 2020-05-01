@@ -242,7 +242,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
             big = sub4[0];
             for( size_t i = 1; i < 4; i++ )
             {
-                const auto parts = subsets[i].part_level;
+                const auto parts = sub4[i].part_level;
                 m_LIS[ parts ].push_back( sub4[i] );
             }
             xf++;
