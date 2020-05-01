@@ -21,17 +21,11 @@ bool speck::SPECKSet3D::is_empty() const
 }
     
 
-size_t speck::SPECKSet3D::total_partitions() const
-{
-    return size_t(part_level_x) + size_t(part_level_y) + size_t(part_level_z); 
-}
-
 #ifdef PRINT
 void speck::SPECKSet3D::print() const
 {
-    printf("  start: (%d, %d, %d), length: (%d, %d, %d). Part: (%d, %d, %d)\n",
-            start_x, start_y, start_z, length_x, length_y, length_z,
-            part_level_x, part_level_y, part_level_z              );
+    printf("  start: (%d, %d, %d), length: (%d, %d, %d). Part_level: %d\n",
+           start_x, start_y, start_z, length_x, length_y, length_z, part_level );
 }
 #endif
 
@@ -84,7 +78,8 @@ void speck::SPECK3D::m_clean_LIS()
         {
             auto& list = m_LIS[i];
             tmp.clear();
-            tmp.reserve(  list.size() );    // make sure list won't see a capacity decrease
+            tmp.reserve(  list.size() );  // will leave half capacity unfilled, so the list
+                                          // won't need a memory re-allocation for a while.
             std::copy_if( list.cbegin(), list.cend(), std::back_inserter(tmp),
                           []( const SPECKSet3D& s ){ return s.type != SetType::Garbage; } );
             std::swap( list, tmp );
@@ -231,7 +226,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
         big = subsets[0];
         for( size_t i = 1; i < 8; i++ )
         {
-            auto   parts = subsets[i].total_partitions();
+            const auto parts = subsets[i].part_level;
             m_LIS[ parts ].push_back( subsets[i] );
         }
         xf++;
@@ -247,7 +242,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
             big = sub4[0];
             for( size_t i = 1; i < 4; i++ )
             {
-                auto   parts = sub4[i].total_partitions();
+                const auto parts = subsets[i].part_level;
                 m_LIS[ parts ].push_back( sub4[i] );
             }
             xf++;
@@ -260,7 +255,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
         {
             m_partition_S_Z( big, sub2 );
             big = sub2[0];
-            auto   parts = sub2[1].total_partitions();
+            const auto parts = sub2[1].part_level;
             m_LIS[ parts ].push_back( sub2[1] );
             xf++;
         }
@@ -268,7 +263,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
 
     // Right now big is the set that's most likely to be significant, so insert
     //   it at the front of it's corresponding vector. One-time expense.
-    auto   parts = big.total_partitions();
+    const auto parts = big.part_level;
     m_LIS[ parts ].insert( m_LIS[parts].cbegin(), big );
 
     // initialize LSP
@@ -428,10 +423,10 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
                 // Progressive quantization!
                 m_indices_to_refine.push_back( idx );
             }
-            m_LSP.push_back( set );         // a copy is saved to m_LSP
+            m_LSP.push_back( set );     // a copy is saved to m_LSP
         }
         set.type = SetType::Garbage;    // this current one is gonna be discarded.
-        m_LIS_garbage_cnt[ set.total_partitions() ]++;
+        m_LIS_garbage_cnt[ set.part_level ]++;
     }
 
     return 0;
@@ -448,9 +443,9 @@ int  speck::SPECK3D::m_code_S( size_t idx1, size_t idx2 )
     {
         if( !s.is_empty() )
         {
-            auto   newidx1 = s.total_partitions();
-            m_LIS[ newidx1 ].push_back( s );
-            auto   newidx2 = m_LIS[ newidx1 ].size() - 1;
+            const auto newidx1 = s.part_level;
+            m_LIS[     newidx1 ].push_back( s );
+            const auto newidx2 = m_LIS[ newidx1 ].size() - 1;
             if( (rtn = m_process_S( newidx1, newidx2 )) )
                 return rtn;
         }
@@ -496,18 +491,16 @@ void speck::SPECK3D::m_partition_S_XYZ( const SPECKSet3D& set,
     const uint32_t split_x[2]{ set.length_x - set.length_x / 2,  set.length_x / 2 };
     const uint32_t split_y[2]{ set.length_y - set.length_y / 2,  set.length_y / 2 };
     const uint32_t split_z[2]{ set.length_z - set.length_z / 2,  set.length_z / 2 };
-
+    
     for( auto& s : subsets )
     {
-        s.part_level_x = set.part_level_x;
+        s.part_level = set.part_level;
         if( split_x[1] > 0 )    
-            (s.part_level_x)++;
-        s.part_level_y = set.part_level_y;
+            s.part_level++;
         if( split_y[1] > 0 )
-            (s.part_level_y)++;
-        s.part_level_z = set.part_level_z;
+            s.part_level++;
         if( split_z[1] > 0 )
-            (s.part_level_z)++;
+            s.part_level++;
     }
 
     //
@@ -580,13 +573,11 @@ void speck::SPECK3D::m_partition_S_XY( const SPECKSet3D& set,
 
     for( auto& s : subsets )
     {
-        s.part_level_x = set.part_level_x;
+        s.part_level = set.part_level;
         if( split_x[1] > 0 )    
-            (s.part_level_x)++;
-        s.part_level_y = set.part_level_y;
+            s.part_level++;
         if( split_y[1] > 0 )
-            (s.part_level_y)++;
-        s.part_level_z = set.part_level_z;
+            s.part_level++;
     }
 
     //
@@ -630,11 +621,9 @@ void speck::SPECK3D::m_partition_S_Z( const SPECKSet3D& set,
 
     for( auto& s : subsets )
     {
-        s.part_level_x = set.part_level_x;
-        s.part_level_y = set.part_level_y;
-        s.part_level_z = set.part_level_z;
+        s.part_level = set.part_level;
         if( split_z[1] > 0 )
-            (s.part_level_z)++;
+            s.part_level++;
     }
 
     //
