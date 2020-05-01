@@ -112,6 +112,15 @@ int speck::SPECK3D::encode()
     m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
     for( size_t bitplane = 0; bitplane < 128; bitplane++ )
     {
+        // Update the significance map based on the current threshold
+        // Most of them are gonna be false, and only a handful to be true.
+        m_significance_map.assign( m_coeff_len, false );
+        for( size_t i = 0; i < m_coeff_len; i++ )
+        {
+            if( m_coeff_buf[i] >= m_threshold )
+                m_significance_map[i] = true;
+        }
+
         if( m_sorting_pass() )
             break;
         if( m_refinement_pass() )
@@ -273,18 +282,6 @@ void speck::SPECK3D::m_initialize_sets_lists()
 
 int speck::SPECK3D::m_sorting_pass()
 {
-    if( m_encode_mode )
-    {
-        // Update the significance map based on the current threshold
-        // Most of them are gonna be false, and only a handful to be true.
-        m_significance_map.assign( m_coeff_len, false );
-        for( size_t i = 0; i < m_coeff_len; i++ )
-        {
-            if( m_coeff_buf[i] >= m_threshold )
-                m_significance_map[i] = true;
-        }
-    }
-
     int rtn = 0;
     for( size_t tmp = 0; tmp < m_LIS.size(); tmp++ )
     {
