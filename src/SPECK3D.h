@@ -22,10 +22,9 @@ public:
     uint32_t  length_y     = 0;
     uint32_t  length_z     = 0;
     // which partition level is this set at (starting from zero, in all 3 directions).
-    uint16_t part_level_x  = 0;  
-    uint16_t part_level_y  = 0;  
-    uint16_t part_level_z  = 0;  
-    Significance signif = Significance::Insig;
+    // This data member is the sum of all 3 partition levels.
+    uint16_t part_level    = 0;  
+    Significance signif    = Significance::Insig;
     SetType type = SetType::TypeS;  // This field is only used to indicate garbage status
 
 public:
@@ -34,7 +33,6 @@ public:
     //
     bool   is_pixel() const;
     bool   is_empty() const;
-    size_t total_partitions() const;
 #ifdef PRINT
     void print() const;
 #endif
