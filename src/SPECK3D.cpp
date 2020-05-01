@@ -82,12 +82,12 @@ void speck::SPECK3D::m_clean_LIS()
         if( m_LIS_garbage_cnt[i] >  m_vec_init_capacity && 
             m_LIS_garbage_cnt[i] >= m_LIS[i].size() / 2  )
         {
+            auto& list = m_LIS[i];
             tmp.clear();
-            tmp.reserve( m_vec_init_capacity );
-            for( const auto& s : m_LIS[i] )
-                if( s.type != SetType::Garbage )
-                    tmp.push_back( s );
-            std::swap( m_LIS[i], tmp );
+            tmp.reserve(  list.size() );    // make sure list won't see a capacity decrease
+            std::copy_if( list.cbegin(), list.cend(), std::back_inserter(tmp),
+                          []( const SPECKSet3D& s ){ return s.type != SetType::Garbage; } );
+            std::swap( list, tmp );
             m_LIS_garbage_cnt[i] = 0;
         }
     }
