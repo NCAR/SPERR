@@ -129,9 +129,8 @@ int speck::SPECK3D::encode()
         m_threshold *= 0.5;
         m_clean_LIS();
     }
-    // finish refinement before encode finishes
-    for( const auto& i : m_indices_to_refine )
-        m_coeff_buf[i] -= m_threshold;
+    // Don't need to finish whatever left in m_indices_to_refine, since
+    // we've finished encoding!
 
     return 0;
 }
