@@ -118,7 +118,8 @@ int speck::SPECK3D::encode()
 
         if( m_sorting_pass() )
             break;
-        if( m_refinement_pass() )
+
+        if( m_refinement_pass_encode() )
             break;
 
         // refine newly identified pixels
@@ -164,7 +165,8 @@ int speck::SPECK3D::decode()
     {
         if( m_sorting_pass() )
             break;
-        if( m_refinement_pass() )
+
+        if( m_refinement_pass_decode() )
             break;
 
         // refine (initialize their values) newly identified pixels
@@ -286,8 +288,16 @@ int speck::SPECK3D::m_sorting_pass()
             const auto& s = m_LIS[idx1][idx2];
             if( s.type != SetType::Garbage )
             {
-                if( (rtn = m_process_S( idx1, idx2 )) )
-                    return rtn;
+                if( m_encode_mode )
+                {
+                    if( (rtn = m_process_S_encode( idx1, idx2 )) )
+                        return rtn;
+                }
+                else
+                {
+                    if( (rtn = m_process_S_decode( idx1, idx2 )) )
+                        return rtn;
+                }
             }
         }
     }
@@ -296,7 +306,7 @@ int speck::SPECK3D::m_sorting_pass()
 }
 
 
-int speck::SPECK3D::m_refinement_pass()
+int speck::SPECK3D::m_refinement_pass_encode()
 {
     for( auto& p : m_LSP )
     {
@@ -304,33 +314,20 @@ int speck::SPECK3D::m_refinement_pass()
             p.signif  = Significance::Sig;
         else
         {
-            if( m_encode_mode )
+            // Output decision on refinement or not
+            const auto idx = p.start_z * m_dim_x * m_dim_y + 
+                             p.start_y * m_dim_x + p.start_x;
+            if( m_coeff_buf[idx] >= m_threshold ) 
             {
-                // Output decision on refinement or not
-                const auto idx = p.start_z * m_dim_x * m_dim_y + 
-                                 p.start_y * m_dim_x + p.start_x;
-                if( m_coeff_buf[idx] >= m_threshold ) 
-                {
-                    m_bit_buffer.push_back( true );
-                    m_coeff_buf[idx] -= m_threshold;
-                }
-                else
-                    m_bit_buffer.push_back( false );
-
-                // Let's also see if we've reached the bit budget
-                if( m_bit_buffer.size() >= m_budget )
-                    return 1;
+                m_bit_buffer.push_back( true );
+                m_coeff_buf[idx] -= m_threshold;
             }
             else
-            {
-                if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
-                    return 1;
+                m_bit_buffer.push_back( false );
 
-                const auto bit = m_bit_buffer[ m_bit_idx++ ];
-                const auto idx = p.start_z * m_dim_x * m_dim_y + 
-                                 p.start_y * m_dim_x + p.start_x;
-                m_coeff_buf[ idx ] += bit ? m_threshold * 0.5 : m_threshold * -0.5;
-            }
+            // Let's also see if we've reached the bit budget
+            if( m_bit_buffer.size() >= m_budget )
+                return 1;
         }
     }
 
@@ -338,52 +335,64 @@ int speck::SPECK3D::m_refinement_pass()
 }
 
 
-int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
+int speck::SPECK3D::m_refinement_pass_decode()
+{
+    for( auto& p : m_LSP )
+    {
+        if( p.signif == Significance::NewlySig )
+            p.signif  = Significance::Sig;
+        else
+        {
+            if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
+                return 1;
+
+            const auto bit = m_bit_buffer[ m_bit_idx++ ];
+            const auto idx = p.start_z * m_dim_x * m_dim_y + 
+                             p.start_y * m_dim_x + p.start_x;
+            m_coeff_buf[ idx ] += bit ? m_threshold * 0.5 : m_threshold * -0.5;
+        }
+    }
+
+    return 0;
+}
+
+
+int speck::SPECK3D::m_process_S_encode( size_t idx1, size_t idx2 )
 {
     auto& set = m_LIS[idx1][idx2];
     int rtn = 0;
 
-    if( m_encode_mode )
+    // decide the significance of this set
+    set.signif = Significance::Insig;
+    const size_t slice_size = m_dim_x * m_dim_y;
+    for( auto z = set.start_z; z < (set.start_z + set.length_z); z++ )
     {
-        // decide the significance of this set
-        set.signif = Significance::Insig;
-        const size_t slice_size = m_dim_x * m_dim_y;
-        for( auto z = set.start_z; z < (set.start_z + set.length_z); z++ )
+        const size_t slice_offset = z * slice_size;
+        for( auto y = set.start_y; y < (set.start_y + set.length_y); y++ )
         {
-            const size_t slice_offset = z * slice_size;
-            for( auto y = set.start_y; y < (set.start_y + set.length_y); y++ )
-            {
-                const size_t col_offset = slice_offset + y * m_dim_x;
+            const size_t col_offset = slice_offset + y * m_dim_x;
 
-                // Note: use std::any_of() isn't faster...
-                for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ )
+            // Note: use std::any_of() isn't faster...
+            for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ )
+            {
+                if( m_significance_map[ col_offset + x ] )
                 {
-                    if( m_significance_map[ col_offset + x ] )
-                    {
-                        set.signif = Significance::Sig;
-                        goto end_loop_label;
-                    }
+                    set.signif = Significance::Sig;
+                    goto end_loop_label;
                 }
             }
         }
-        end_loop_label:
-        // output the significance value 
-        //   "set" hasn't had a chance to be marked as NewlySig yet, so only need to
-        //   compare with Sig.
-        auto bit = (set.signif == Significance::Sig);
-        m_bit_buffer.push_back( bit );
-        
-        // Let's also see if we're reached the bit budget
-        if( m_bit_buffer.size() >= m_budget )
-            return 1;
     }
-    else    // decoding mode
-    {
-        if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
-            return 1;
-        auto bit   = m_bit_buffer[ m_bit_idx++ ];
-        set.signif = bit ? Significance::Sig : Significance::Insig;
-    }
+    end_loop_label:
+    // output the significance value 
+    //   "set" hasn't had a chance to be marked as NewlySig yet, so only need to
+    //   compare with Sig.
+    auto bit = (set.signif == Significance::Sig);
+    m_bit_buffer.push_back( bit );
+    
+    // Let's also see if we're reached the bit budget
+    if( m_bit_buffer.size() >= m_budget )
+        return 1;
 
     if( set.signif == Significance::Sig )
     {
@@ -395,33 +404,57 @@ int speck::SPECK3D::m_process_S( size_t idx1, size_t idx2 )
         else    // Special treatment for pixels!
         {
             set.signif = Significance::NewlySig;
-            if( m_encode_mode )
-            {
-                // Output pixel sign
-                const auto idx = set.start_z * m_dim_x * m_dim_y + 
-                                 set.start_y * m_dim_x + set.start_x;
-                m_bit_buffer.push_back( m_sign_array[idx] );
+            // Output pixel sign
+            const auto idx = set.start_z * m_dim_x * m_dim_y + 
+                             set.start_y * m_dim_x + set.start_x;
+            m_bit_buffer.push_back( m_sign_array[idx] );
 
-                // Progressive quantization!
-                m_indices_to_refine.push_back( idx );
+            // Progressive quantization!
+            m_indices_to_refine.push_back( idx );
 
-                // Let's also see if we're reached the bit budget
-                if( m_bit_buffer.size() >= m_budget )
-                    return 1;
-            }
-            else
-            {
-                if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
-                    return 1;
+            // Let's also see if we're reached the bit budget
+            if( m_bit_buffer.size() >= m_budget )
+                return 1;
+            m_LSP.push_back( set );     // a copy is saved to m_LSP
+        }
+        set.type = SetType::Garbage;    // this current one is gonna be discarded.
+        m_LIS_garbage_cnt[ set.part_level ]++;
+    }
 
-                const auto idx = set.start_z * m_dim_x * m_dim_y + 
-                                 set.start_y * m_dim_x + set.start_x;
-                if( !m_bit_buffer[ m_bit_idx++ ] )
-                    m_sign_array[ idx ] = false;
+    return 0;
+}
 
-                // Progressive quantization!
-                m_indices_to_refine.push_back( idx );
-            }
+
+int speck::SPECK3D::m_process_S_decode( size_t idx1, size_t idx2 )
+{
+    auto& set = m_LIS[idx1][idx2];
+    int rtn = 0;
+
+    if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
+        return 1;
+    auto bit   = m_bit_buffer[ m_bit_idx++ ];
+    set.signif = bit ? Significance::Sig : Significance::Insig;
+
+    if( set.signif == Significance::Sig )
+    {
+        if( !set.is_pixel() )   // Not a pixel, keep dividing it!
+        {
+            if( (rtn = m_code_S( idx1, idx2 )) )
+                return rtn;
+        }
+        else    // Special treatment for pixels!
+        {
+            set.signif = Significance::NewlySig;
+            if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
+                return 1;
+
+            const auto idx = set.start_z * m_dim_x * m_dim_y + 
+                             set.start_y * m_dim_x + set.start_x;
+            if( !m_bit_buffer[ m_bit_idx++ ] )
+                m_sign_array[ idx ] = false;
+
+            // Progressive quantization!
+            m_indices_to_refine.push_back( idx );
             m_LSP.push_back( set );     // a copy is saved to m_LSP
         }
         set.type = SetType::Garbage;    // this current one is gonna be discarded.
@@ -445,8 +478,16 @@ int  speck::SPECK3D::m_code_S( size_t idx1, size_t idx2 )
             const auto newidx1 = s.part_level;
             m_LIS[     newidx1 ].push_back( s );
             const auto newidx2 = m_LIS[ newidx1 ].size() - 1;
-            if( (rtn = m_process_S( newidx1, newidx2 )) )
-                return rtn;
+            if( m_encode_mode )
+            {
+                if( (rtn = m_process_S_encode( newidx1, newidx2 )) )
+                    return rtn;
+            }
+            else 
+            {
+                if( (rtn = m_process_S_decode( newidx1, newidx2 )) )
+                    return rtn;
+            }
         }
     }
 

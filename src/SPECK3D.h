@@ -71,11 +71,13 @@ private:
     void m_clean_LIS();   // Clean garbage sets from m_LIS if too much garbage exists.
     void m_initialize_sets_lists();
     int  m_sorting_pass( );
-    int  m_refinement_pass( );
+    int  m_refinement_pass_encode( );
+    int  m_refinement_pass_decode( );
 
-    // For the following 2 methods, indices are used to locate which set to process from m_LIS,
-    int  m_process_S( size_t idx1, size_t idx2 );
-    int  m_code_S   ( size_t idx1, size_t idx2 );
+    // For the following 3 methods, indices are used to locate which set to process from m_LIS,
+    int  m_process_S_encode( size_t idx1, size_t idx2 );
+    int  m_process_S_decode( size_t idx1, size_t idx2 );
+    int  m_code_S          ( size_t idx1, size_t idx2 );
 
     void m_partition_S_XYZ(const SPECKSet3D& set, std::array<SPECKSet3D, 8>& subsets ) const;
     void m_partition_S_XY( const SPECKSet3D& set, std::array<SPECKSet3D, 4>& subsets ) const;
