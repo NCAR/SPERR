@@ -270,6 +270,8 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // initialize LSP
     m_LSP.clear();
     m_LSP.reserve( m_vec_init_capacity );
+    m_LSP_Newly.clear();
+    m_LSP_Newly.reserve( m_vec_init_capacity );
 
     // initialize an index buffer
     m_indices_to_refine.reserve( m_vec_init_capacity );
@@ -308,22 +310,22 @@ int speck::SPECK3D::m_sorting_pass()
 
 int speck::SPECK3D::m_refinement_pass_encode()
 {
-    for( auto& p : m_LSP )
+    for( size_t i = 0; i < m_LSP.size(); i++ )
     {
-        if( p.signif == Significance::NewlySig )
-            p.signif  = Significance::Sig;
+        if( m_LSP_Newly[i] )    // This is pixel is newly identified!
+            m_LSP_Newly[i] = false;
         else
         {
-            // Output decision on refinement or not
-            const auto idx = p.start_z * m_dim_x * m_dim_y + 
-                             p.start_y * m_dim_x + p.start_x;
-            if( m_coeff_buf[idx] >= m_threshold ) 
+            const auto pos = m_LSP[i];
+            if( m_coeff_buf[pos] >= m_threshold ) 
             {
                 m_bit_buffer.push_back( true );
-                m_coeff_buf[idx] -= m_threshold;
+                m_coeff_buf[pos] -= m_threshold;
             }
             else
+            {
                 m_bit_buffer.push_back( false );
+            }
 
             // Let's also see if we've reached the bit budget
             if( m_bit_buffer.size() >= m_budget )
@@ -337,19 +339,18 @@ int speck::SPECK3D::m_refinement_pass_encode()
 
 int speck::SPECK3D::m_refinement_pass_decode()
 {
-    for( auto& p : m_LSP )
+    for( size_t i = 0; i < m_LSP.size(); i++ )
     {
-        if( p.signif == Significance::NewlySig )
-            p.signif  = Significance::Sig;
+        if( m_LSP_Newly[ i ] )
+            m_LSP_Newly[ i ] = false;
         else
         {
             if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
                 return 1;
 
+            const auto pos = m_LSP[i];
             const auto bit = m_bit_buffer[ m_bit_idx++ ];
-            const auto idx = p.start_z * m_dim_x * m_dim_y + 
-                             p.start_y * m_dim_x + p.start_x;
-            m_coeff_buf[ idx ] += bit ? m_threshold * 0.5 : m_threshold * -0.5;
+            m_coeff_buf[ pos ] += bit ? m_threshold * 0.5 : m_threshold * -0.5;
         }
     }
 
@@ -401,9 +402,8 @@ int speck::SPECK3D::m_process_S_encode( size_t idx1, size_t idx2 )
             if( (rtn = m_code_S( idx1, idx2 )) )
                 return rtn;
         }
-        else    // Special treatment for pixels!
+        else
         {
-            set.signif = Significance::NewlySig;
             // Output pixel sign
             const auto idx = set.start_z * m_dim_x * m_dim_y + 
                              set.start_y * m_dim_x + set.start_x;
@@ -415,7 +415,9 @@ int speck::SPECK3D::m_process_S_encode( size_t idx1, size_t idx2 )
             // Let's also see if we're reached the bit budget
             if( m_bit_buffer.size() >= m_budget )
                 return 1;
-            m_LSP.push_back( set );     // a copy is saved to m_LSP
+
+            m_LSP.push_back( idx );
+            m_LSP_Newly.push_back( true );
         }
         set.type = SetType::Garbage;    // this current one is gonna be discarded.
         m_LIS_garbage_cnt[ set.part_level ]++;
@@ -442,9 +444,8 @@ int speck::SPECK3D::m_process_S_decode( size_t idx1, size_t idx2 )
             if( (rtn = m_code_S( idx1, idx2 )) )
                 return rtn;
         }
-        else    // Special treatment for pixels!
+        else
         {
-            set.signif = Significance::NewlySig;
             if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
                 return 1;
 
@@ -455,7 +456,8 @@ int speck::SPECK3D::m_process_S_decode( size_t idx1, size_t idx2 )
 
             // Progressive quantization!
             m_indices_to_refine.push_back( idx );
-            m_LSP.push_back( set );     // a copy is saved to m_LSP
+            m_LSP.push_back( idx );
+            m_LSP_Newly.push_back( true );
         }
         set.type = SetType::Garbage;    // this current one is gonna be discarded.
         m_LIS_garbage_cnt[ set.part_level ]++;

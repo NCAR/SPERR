@@ -101,13 +101,15 @@ private:
     bool        m_encode_mode = true;       // Encode (true) or Decode (false) mode?
     const size_t m_vec_init_capacity = 16;  // Vectors are initialized to have this capacity.
 
-    std::vector< SPECKSet3D >               m_LSP;
     std::vector< std::vector<SPECKSet3D> >  m_LIS;
 
     std::vector< bool >     m_significance_map;     // only used when encoding.
     std::vector< bool >     m_sign_array;
     std::vector< size_t >   m_indices_to_refine;
     std::vector< size_t >   m_LIS_garbage_cnt;
+
+    std::vector< size_t >   m_LSP;          // Records locations of significant pixels
+    std::vector< bool   >   m_LSP_Newly;    // Records if this pixel is newly significant or not.
 };
 
 };
