@@ -122,16 +122,9 @@ int speck::SPECK3D::encode()
         if( m_refinement_pass_encode() )
             break;
 
-        // refine newly identified pixels
-        for( const auto& i : m_indices_to_refine )
-            m_coeff_buf[i] -= m_threshold;
-        m_indices_to_refine.clear();
-
         m_threshold *= 0.5;
         m_clean_LIS();
     }
-    // Don't need to finish whatever left in m_indices_to_refine, since
-    // we've finished encoding!
 
     return 0;
 }
@@ -169,18 +162,18 @@ int speck::SPECK3D::decode()
         if( m_refinement_pass_decode() )
             break;
 
-        // refine (initialize their values) newly identified pixels
-        for( const auto& i : m_indices_to_refine )
-            m_coeff_buf[i] = 1.5 * m_threshold;
-        m_indices_to_refine.clear();
-
         m_threshold *= 0.5;
 
         m_clean_LIS();
     }
-    // finish refinement (initialize their values) decode finishes
-    for( const auto& i : m_indices_to_refine )
-        m_coeff_buf[i] = 1.5 * m_threshold;
+
+    // If the loop above aborted before all newly significant pixels are initialized,
+    // we finish them here!
+    for( size_t i = 0; i < m_LSP_Newly.size(); i++ )
+    {
+        if( m_LSP_Newly[i] )
+            m_coeff_buf[ m_LSP[i] ] = 1.5 * m_threshold;
+    }
 
     // Restore coefficient signs by setting some of them negative
     size_t idx = 0;
@@ -270,9 +263,8 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // initialize LSP
     m_LSP.clear();
     m_LSP.reserve( m_vec_init_capacity );
-
-    // initialize an index buffer
-    m_indices_to_refine.reserve( m_vec_init_capacity );
+    m_LSP_Newly.clear();
+    m_LSP_Newly.reserve( m_vec_init_capacity );
 }
 
 
@@ -308,22 +300,25 @@ int speck::SPECK3D::m_sorting_pass()
 
 int speck::SPECK3D::m_refinement_pass_encode()
 {
-    for( auto& p : m_LSP )
+    for( size_t i = 0; i < m_LSP.size(); i++ )
     {
-        if( p.signif == Significance::NewlySig )
-            p.signif  = Significance::Sig;
+        const auto pos = m_LSP[i];
+        if( m_LSP_Newly[i] )    // This is pixel is newly identified!
+        {
+            m_coeff_buf[ pos ] -= m_threshold;
+            m_LSP_Newly[  i  ]  = false;
+        }
         else
         {
-            // Output decision on refinement or not
-            const auto idx = p.start_z * m_dim_x * m_dim_y + 
-                             p.start_y * m_dim_x + p.start_x;
-            if( m_coeff_buf[idx] >= m_threshold ) 
+            if( m_coeff_buf[pos] >= m_threshold ) 
             {
                 m_bit_buffer.push_back( true );
-                m_coeff_buf[idx] -= m_threshold;
+                m_coeff_buf[pos] -= m_threshold;
             }
             else
+            {
                 m_bit_buffer.push_back( false );
+            }
 
             // Let's also see if we've reached the bit budget
             if( m_bit_buffer.size() >= m_budget )
@@ -337,19 +332,22 @@ int speck::SPECK3D::m_refinement_pass_encode()
 
 int speck::SPECK3D::m_refinement_pass_decode()
 {
-    for( auto& p : m_LSP )
+    for( size_t i = 0; i < m_LSP.size(); i++ )
     {
-        if( p.signif == Significance::NewlySig )
-            p.signif  = Significance::Sig;
+        const auto pos = m_LSP[i];
+        if( m_LSP_Newly[ i ] )
+        {
+            // Newly identified pixels are initialized.
+            m_coeff_buf[ pos ] = 1.5 * m_threshold;
+            m_LSP_Newly[  i  ] = false;
+        }
         else
         {
             if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
                 return 1;
 
-            const auto bit = m_bit_buffer[ m_bit_idx++ ];
-            const auto idx = p.start_z * m_dim_x * m_dim_y + 
-                             p.start_y * m_dim_x + p.start_x;
-            m_coeff_buf[ idx ] += bit ? m_threshold * 0.5 : m_threshold * -0.5;
+            m_coeff_buf[ pos ] += m_bit_buffer[ m_bit_idx++ ] ? 
+                                  m_threshold * 0.5 : m_threshold * -0.5;
         }
     }
 
@@ -384,11 +382,7 @@ int speck::SPECK3D::m_process_S_encode( size_t idx1, size_t idx2 )
         }
     }
     end_loop_label:
-    // output the significance value 
-    //   "set" hasn't had a chance to be marked as NewlySig yet, so only need to
-    //   compare with Sig.
-    auto bit = (set.signif == Significance::Sig);
-    m_bit_buffer.push_back( bit );
+    m_bit_buffer.push_back( set.signif == Significance::Sig ); // output the significance value 
     
     // Let's also see if we're reached the bit budget
     if( m_bit_buffer.size() >= m_budget )
@@ -401,23 +395,21 @@ int speck::SPECK3D::m_process_S_encode( size_t idx1, size_t idx2 )
             if( (rtn = m_code_S( idx1, idx2 )) )
                 return rtn;
         }
-        else    // Special treatment for pixels!
+        else
         {
-            set.signif = Significance::NewlySig;
             // Output pixel sign
             const auto idx = set.start_z * m_dim_x * m_dim_y + 
                              set.start_y * m_dim_x + set.start_x;
             m_bit_buffer.push_back( m_sign_array[idx] );
 
-            // Progressive quantization!
-            m_indices_to_refine.push_back( idx );
+            m_LSP.push_back( idx );
+            m_LSP_Newly.push_back( true );
 
             // Let's also see if we're reached the bit budget
             if( m_bit_buffer.size() >= m_budget )
                 return 1;
-            m_LSP.push_back( set );     // a copy is saved to m_LSP
         }
-        set.type = SetType::Garbage;    // this current one is gonna be discarded.
+        set.type = SetType::Garbage;    // this current set is gonna be discarded.
         m_LIS_garbage_cnt[ set.part_level ]++;
     }
 
@@ -432,8 +424,7 @@ int speck::SPECK3D::m_process_S_decode( size_t idx1, size_t idx2 )
 
     if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
         return 1;
-    auto bit   = m_bit_buffer[ m_bit_idx++ ];
-    set.signif = bit ? Significance::Sig : Significance::Insig;
+    set.signif = m_bit_buffer[ m_bit_idx++ ] ? Significance::Sig : Significance::Insig;
 
     if( set.signif == Significance::Sig )
     {
@@ -442,9 +433,8 @@ int speck::SPECK3D::m_process_S_decode( size_t idx1, size_t idx2 )
             if( (rtn = m_code_S( idx1, idx2 )) )
                 return rtn;
         }
-        else    // Special treatment for pixels!
+        else
         {
-            set.signif = Significance::NewlySig;
             if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
                 return 1;
 
@@ -453,11 +443,11 @@ int speck::SPECK3D::m_process_S_decode( size_t idx1, size_t idx2 )
             if( !m_bit_buffer[ m_bit_idx++ ] )
                 m_sign_array[ idx ] = false;
 
-            // Progressive quantization!
-            m_indices_to_refine.push_back( idx );
-            m_LSP.push_back( set );     // a copy is saved to m_LSP
+            // Record to be initialized
+            m_LSP.push_back( idx );
+            m_LSP_Newly.push_back( true );
         }
-        set.type = SetType::Garbage;    // this current one is gonna be discarded.
+        set.type = SetType::Garbage;    // this current set is gonna be discarded.
         m_LIS_garbage_cnt[ set.part_level ]++;
     }
 
