@@ -305,8 +305,8 @@ int speck::SPECK3D::m_refinement_pass_encode()
         const auto pos = m_LSP[i];
         if( m_LSP_Newly[i] )    // This is pixel is newly identified!
         {
-            m_LSP_Newly[  i  ]  = false;
             m_coeff_buf[ pos ] -= m_threshold;
+            m_LSP_Newly[  i  ]  = false;
         }
         else
         {
@@ -337,6 +337,7 @@ int speck::SPECK3D::m_refinement_pass_decode()
         const auto pos = m_LSP[i];
         if( m_LSP_Newly[ i ] )
         {
+            // Newly identified pixels are initialized.
             m_coeff_buf[ pos ] = 1.5 * m_threshold;
             m_LSP_Newly[  i  ] = false;
         }
@@ -405,12 +406,12 @@ int speck::SPECK3D::m_process_S_encode( size_t idx1, size_t idx2 )
                              set.start_y * m_dim_x + set.start_x;
             m_bit_buffer.push_back( m_sign_array[idx] );
 
+            m_LSP.push_back( idx );
+            m_LSP_Newly.push_back( true );
+
             // Let's also see if we're reached the bit budget
             if( m_bit_buffer.size() >= m_budget )
                 return 1;
-
-            m_LSP.push_back( idx );
-            m_LSP_Newly.push_back( true );
         }
         set.type = SetType::Garbage;    // this current one is gonna be discarded.
         m_LIS_garbage_cnt[ set.part_level ]++;
