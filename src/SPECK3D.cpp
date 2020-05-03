@@ -346,8 +346,8 @@ int speck::SPECK3D::m_refinement_pass_decode()
             if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
                 return 1;
 
-            const auto bit = m_bit_buffer[ m_bit_idx++ ];
-            m_coeff_buf[ pos ] += bit ? m_threshold * 0.5 : m_threshold * -0.5;
+            m_coeff_buf[ pos ] += m_bit_buffer[ m_bit_idx++ ] ? 
+                                  m_threshold * 0.5 : m_threshold * -0.5;
         }
     }
 
@@ -382,11 +382,7 @@ int speck::SPECK3D::m_process_S_encode( size_t idx1, size_t idx2 )
         }
     }
     end_loop_label:
-    // output the significance value 
-    //   "set" hasn't had a chance to be marked as NewlySig yet, so only need to
-    //   compare with Sig.
-    auto bit = (set.signif == Significance::Sig);
-    m_bit_buffer.push_back( bit );
+    m_bit_buffer.push_back( set.signif == Significance::Sig ); // output the significance value 
     
     // Let's also see if we're reached the bit budget
     if( m_bit_buffer.size() >= m_budget )
@@ -428,8 +424,7 @@ int speck::SPECK3D::m_process_S_decode( size_t idx1, size_t idx2 )
 
     if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
         return 1;
-    auto bit   = m_bit_buffer[ m_bit_idx++ ];
-    set.signif = bit ? Significance::Sig : Significance::Insig;
+    set.signif = m_bit_buffer[ m_bit_idx++ ] ? Significance::Sig : Significance::Insig;
 
     if( set.signif == Significance::Sig )
     {
