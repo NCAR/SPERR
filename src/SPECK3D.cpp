@@ -169,7 +169,7 @@ int speck::SPECK3D::decode()
 
     // If the loop above aborted before all newly significant pixels are initialized,
     // we finish them here!
-    for( size_t i = 0; i < m_LSP.size(); i++ )
+    for( size_t i = 0; i < m_LSP_Newly.size(); i++ )
     {
         if( m_LSP_Newly[i] )
             m_coeff_buf[ m_LSP[i] ] = 1.5 * m_threshold;
