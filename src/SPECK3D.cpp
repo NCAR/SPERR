@@ -122,16 +122,9 @@ int speck::SPECK3D::encode()
         if( m_refinement_pass_encode() )
             break;
 
-        // refine newly identified pixels
-        for( const auto& i : m_indices_to_refine )
-            m_coeff_buf[i] -= m_threshold;
-        m_indices_to_refine.clear();
-
         m_threshold *= 0.5;
         m_clean_LIS();
     }
-    // Don't need to finish whatever left in m_indices_to_refine, since
-    // we've finished encoding!
 
     return 0;
 }
@@ -169,18 +162,18 @@ int speck::SPECK3D::decode()
         if( m_refinement_pass_decode() )
             break;
 
-        // refine (initialize their values) newly identified pixels
-        for( const auto& i : m_indices_to_refine )
-            m_coeff_buf[i] = 1.5 * m_threshold;
-        m_indices_to_refine.clear();
-
         m_threshold *= 0.5;
 
         m_clean_LIS();
     }
-    // finish refinement (initialize their values) decode finishes
-    for( const auto& i : m_indices_to_refine )
-        m_coeff_buf[i] = 1.5 * m_threshold;
+
+    // If the loop above aborted before all newly significant pixels are initialized,
+    // we finish them here!
+    for( size_t i = 0; i < m_LSP.size(); i++ )
+    {
+        if( m_LSP_Newly[i] )
+            m_coeff_buf[ m_LSP[i] ] = 1.5 * m_threshold;
+    }
 
     // Restore coefficient signs by setting some of them negative
     size_t idx = 0;
@@ -272,9 +265,6 @@ void speck::SPECK3D::m_initialize_sets_lists()
     m_LSP.reserve( m_vec_init_capacity );
     m_LSP_Newly.clear();
     m_LSP_Newly.reserve( m_vec_init_capacity );
-
-    // initialize an index buffer
-    m_indices_to_refine.reserve( m_vec_init_capacity );
 }
 
 
@@ -312,11 +302,14 @@ int speck::SPECK3D::m_refinement_pass_encode()
 {
     for( size_t i = 0; i < m_LSP.size(); i++ )
     {
+        const auto pos = m_LSP[i];
         if( m_LSP_Newly[i] )    // This is pixel is newly identified!
-            m_LSP_Newly[i] = false;
+        {
+            m_LSP_Newly[  i  ]  = false;
+            m_coeff_buf[ pos ] -= m_threshold;
+        }
         else
         {
-            const auto pos = m_LSP[i];
             if( m_coeff_buf[pos] >= m_threshold ) 
             {
                 m_bit_buffer.push_back( true );
@@ -341,14 +334,17 @@ int speck::SPECK3D::m_refinement_pass_decode()
 {
     for( size_t i = 0; i < m_LSP.size(); i++ )
     {
+        const auto pos = m_LSP[i];
         if( m_LSP_Newly[ i ] )
-            m_LSP_Newly[ i ] = false;
+        {
+            m_coeff_buf[ pos ] = 1.5 * m_threshold;
+            m_LSP_Newly[  i  ] = false;
+        }
         else
         {
             if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
                 return 1;
 
-            const auto pos = m_LSP[i];
             const auto bit = m_bit_buffer[ m_bit_idx++ ];
             m_coeff_buf[ pos ] += bit ? m_threshold * 0.5 : m_threshold * -0.5;
         }
@@ -409,9 +405,6 @@ int speck::SPECK3D::m_process_S_encode( size_t idx1, size_t idx2 )
                              set.start_y * m_dim_x + set.start_x;
             m_bit_buffer.push_back( m_sign_array[idx] );
 
-            // Progressive quantization!
-            m_indices_to_refine.push_back( idx );
-
             // Let's also see if we're reached the bit budget
             if( m_bit_buffer.size() >= m_budget )
                 return 1;
@@ -454,8 +447,7 @@ int speck::SPECK3D::m_process_S_decode( size_t idx1, size_t idx2 )
             if( !m_bit_buffer[ m_bit_idx++ ] )
                 m_sign_array[ idx ] = false;
 
-            // Progressive quantization!
-            m_indices_to_refine.push_back( idx );
+            // Recorded to be refined
             m_LSP.push_back( idx );
             m_LSP_Newly.push_back( true );
         }

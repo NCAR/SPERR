@@ -105,7 +105,6 @@ private:
 
     std::vector< bool >     m_significance_map;     // only used when encoding.
     std::vector< bool >     m_sign_array;
-    std::vector< size_t >   m_indices_to_refine;
     std::vector< size_t >   m_LIS_garbage_cnt;
 
     std::vector< size_t >   m_LSP;          // Records locations of significant pixels
