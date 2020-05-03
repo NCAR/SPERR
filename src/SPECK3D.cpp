@@ -409,7 +409,7 @@ int speck::SPECK3D::m_process_S_encode( size_t idx1, size_t idx2 )
             if( m_bit_buffer.size() >= m_budget )
                 return 1;
         }
-        set.type = SetType::Garbage;    // this current one is gonna be discarded.
+        set.type = SetType::Garbage;    // this current set is gonna be discarded.
         m_LIS_garbage_cnt[ set.part_level ]++;
     }
 
@@ -443,11 +443,11 @@ int speck::SPECK3D::m_process_S_decode( size_t idx1, size_t idx2 )
             if( !m_bit_buffer[ m_bit_idx++ ] )
                 m_sign_array[ idx ] = false;
 
-            // Recorded to be refined
+            // Record to be initialized
             m_LSP.push_back( idx );
             m_LSP_Newly.push_back( true );
         }
-        set.type = SetType::Garbage;    // this current one is gonna be discarded.
+        set.type = SetType::Garbage;    // this current set is gonna be discarded.
         m_LIS_garbage_cnt[ set.part_level ]++;
     }
 
