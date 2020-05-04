@@ -50,9 +50,9 @@ void speck::SPECK3D::get_dims( size_t& x, size_t& y, size_t& z ) const
     z = m_dim_z;
 }
 
-void speck::SPECK3D::set_max_coeff_bits( uint16_t bits )
+void speck::SPECK3D::set_max_coeff_bits( int32_t bits )
 {
-    m_max_coefficient_bits = bits;
+    m_max_coeff_bits = bits;
 }
 
 void speck::SPECK3D::set_bit_budget( size_t budget )
@@ -100,11 +100,13 @@ int speck::SPECK3D::encode()
     m_bit_buffer.reserve( m_budget );
     auto max_coeff = speck::make_coeff_positive( m_coeff_buf, m_coeff_len, m_sign_array );
 
-    // Even if m_max_coefficient_bit == 0, the quantization step would start from 1.0,
-    //   then 0.5, then 0.25, etc. The algorithm will carry on just fine, just the bits
-    //   saved in the first few iterations are unnecessary.
-    m_max_coefficient_bits = uint16_t( std::log2(max_coeff) );
-    m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
+    // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
+    // negative value. std::floor() will always find the smaller integer value, 
+    // which will always reconstruct to a bitplane value that is smaller than
+    // max_coeff. Also, when max_coeff is close to 0.0, std::log2(max_coeff) can
+    // have a pretty big magnitude, so we use int32_T here.
+    m_max_coeff_bits = int32_t(std::floor( std::log2(max_coeff) ));
+    m_threshold = std::pow( 2.0, double(m_max_coeff_bits) );
     for( size_t bitplane = 0; bitplane < 128; bitplane++ )
     {
         // Update the significance map based on the current threshold
@@ -153,7 +155,7 @@ int speck::SPECK3D::decode()
     m_initialize_sets_lists();
 
     m_bit_idx = 0;
-    m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
+    m_threshold = std::pow( 2.0, float(m_max_coeff_bits) );
     for( size_t bitplane = 0; bitplane < 128; bitplane++ )
     {
         if( m_sorting_pass() )
@@ -701,8 +703,8 @@ int speck::SPECK3D::write_to_disk( const std::string& filename ) const
 {
     // Header definition:
     // information: dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  bitstream
-    // format:      uint32_t,  uint32_t,  uint32_t,  double       uint16_t,        packed_bytes
-    const size_t header_size = 22;
+    // format:      uint32_t,  uint32_t,  uint32_t,  double       int32_t,         packed_bytes
+    const size_t header_size = 24;
     
     // Create and fill header buffer
     size_t pos = 0;
@@ -712,8 +714,8 @@ int speck::SPECK3D::write_to_disk( const std::string& filename ) const
     pos += sizeof(dims);
     std::memcpy( header.get() + pos, &m_image_mean, sizeof(m_image_mean) );  
     pos += sizeof(m_image_mean);
-    std::memcpy( header.get() + pos, &m_max_coefficient_bits, sizeof(m_max_coefficient_bits) );
-    pos += sizeof(m_max_coefficient_bits);
+    std::memcpy( header.get() + pos, &m_max_coeff_bits, sizeof(m_max_coeff_bits) );
+    pos += sizeof(m_max_coeff_bits);
     assert( pos == header_size );
 
     // Call the actual write function
@@ -726,8 +728,8 @@ int speck::SPECK3D::read_from_disk( const std::string& filename )
 {
     // Header definition:
     // information: dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  bitstream
-    // format:      uint32_t,  uint32_t,  uint32_t,  double       uint16_t,        packed_bytes
-    const size_t header_size = 22;
+    // format:      uint32_t,  uint32_t,  uint32_t,  double       int32_t,         packed_bytes
+    const size_t header_size = 24;
 
     // Create the header buffer, and read from file
     // Note that m_bit_buffer is filled by m_read().
@@ -743,8 +745,8 @@ int speck::SPECK3D::read_from_disk( const std::string& filename )
     pos += sizeof(dims);
     std::memcpy( &m_image_mean, header.get() + pos, sizeof(m_image_mean) );
     pos += sizeof(m_image_mean);
-    std::memcpy( &m_max_coefficient_bits, header.get() + pos, sizeof(m_max_coefficient_bits) );
-    pos += sizeof(m_max_coefficient_bits);
+    std::memcpy( &m_max_coeff_bits, header.get() + pos, sizeof(m_max_coeff_bits) );
+    pos += sizeof(m_max_coeff_bits);
     assert( pos == header_size );
 
     this->set_dims( size_t(dims[0]), size_t(dims[1]), size_t(dims[2]) );

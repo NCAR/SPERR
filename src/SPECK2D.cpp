@@ -23,9 +23,9 @@ void speck::SPECK2D::set_dims( size_t dx, size_t dy )
 }
 
 
-void speck::SPECK2D::set_max_coeff_bits( uint16_t bits )
+void speck::SPECK2D::set_max_coeff_bits( int32_t bits )
 {
-    m_max_coefficient_bits = bits;
+    m_max_coeff_bits = bits;
 }
 
 
@@ -58,11 +58,8 @@ int speck::SPECK2D::encode()
     m_bit_buffer.reserve( m_budget );
     auto max_coeff = speck::make_coeff_positive( m_coeff_buf, m_coeff_len, m_sign_array );
 
-    // Even if m_max_coefficient_bit == 0, the quantization step would start from 1.0,
-    //   then 0.5, then 0.25, etc. The algorithm will carry on just fine, just the bits
-    //   saved in the first few iterations are unnecessary.
-    m_max_coefficient_bits = uint16_t( std::log2(max_coeff) );
-    m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
+    m_max_coeff_bits = int32_t( std::floor( std::log2(max_coeff) ) );
+    m_threshold = std::pow( 2.0, double(m_max_coeff_bits) );
     for( size_t bitplane = 0; bitplane < 128; bitplane++ )
     {
         if( m_sorting_pass() )
@@ -100,7 +97,7 @@ int speck::SPECK2D::decode()
     m_initialize_sets_lists();
     
     m_bit_idx = 0;
-    m_threshold = std::pow( 2.0f, float(m_max_coefficient_bits) );
+    m_threshold = std::pow( 2.0, double(m_max_coeff_bits) );
     int rtn_val = 0;
     for( size_t bitplane = 0; bitplane < 128; bitplane++ )
     {
@@ -729,8 +726,8 @@ int speck::SPECK2D::write_to_disk( const std::string& filename ) const
 {
     // Header definition:
     // information: dim_x,     dim_y,     image_mean,  max_coeff_bits, bitstream
-    // format:      uint32_t,  uint32_t,  double       uint16_t,       packed_bytes
-    const size_t header_size = 18;
+    // format:      uint32_t,  uint32_t,  double       int32_t,        packed_bytes
+    const size_t header_size = 20;
     
     // Create and fill header buffer
     size_t pos = 0;
@@ -740,8 +737,8 @@ int speck::SPECK2D::write_to_disk( const std::string& filename ) const
     pos += sizeof(dims);
     std::memcpy( header.get() + pos, &m_image_mean, sizeof(m_image_mean) );  
     pos += sizeof(m_image_mean);
-    std::memcpy( header.get() + pos, &m_max_coefficient_bits, sizeof(m_max_coefficient_bits) );
-    pos += sizeof(m_max_coefficient_bits);
+    std::memcpy( header.get() + pos, &m_max_coeff_bits, sizeof(m_max_coeff_bits) );
+    pos += sizeof(m_max_coeff_bits);
     assert( pos == header_size );
 
     // Call the actual write function
@@ -754,8 +751,8 @@ int speck::SPECK2D::read_from_disk( const std::string& filename )
 {
     // Header definition:
     // information: dim_x,     dim_y,     image_mean,  max_coeff_bits, bitstream
-    // format:      uint32_t,  uint32_t,  double       uint16_t,       packed_bytes
-    const size_t header_size = 18;
+    // format:      uint32_t,  uint32_t,  double       int32_t,        packed_bytes
+    const size_t header_size = 20;
 
     // Create the header buffer, and read from file
     // Note that m_bit_buffer is filled by m_read().
@@ -771,8 +768,8 @@ int speck::SPECK2D::read_from_disk( const std::string& filename )
     pos += sizeof(dims);
     std::memcpy( &m_image_mean, header.get() + pos, sizeof(m_image_mean) );
     pos += sizeof(m_image_mean);
-    std::memcpy( &m_max_coefficient_bits, header.get() + pos, sizeof(m_max_coefficient_bits) );
-    pos += sizeof(m_max_coefficient_bits);
+    std::memcpy( &m_max_coeff_bits, header.get() + pos, sizeof(m_max_coeff_bits) );
+    pos += sizeof(m_max_coeff_bits);
     assert( pos == header_size );
 
     this->set_dims( size_t(dims[0]), size_t(dims[1]) );

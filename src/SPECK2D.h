@@ -43,7 +43,7 @@ public:
 
     // trivial input
     void  set_dims( size_t, size_t );       // Accepts plane dimension
-    void  set_max_coeff_bits( uint16_t );   // (Useful for reconstruction)
+    void  set_max_coeff_bits( int32_t );    // (Useful for reconstruction)
     void  set_bit_budget( size_t );         // How many bits does speck process? 
 
     // trivial output
@@ -100,11 +100,11 @@ private:
 #endif
     size_t      m_budget    = 0;            // What's the budget for num of bits?
     size_t      m_bit_idx   = 0;            // Used for decode. Which bit we're at?
-    uint16_t    m_max_coefficient_bits = 0; // = log2(max_coefficient)
     size_t      m_dim_x       = 0;          // 2D plane dims
     size_t      m_dim_y       = 0;
     bool        m_encode_mode = true;       // Encode (true) or Decode (false) mode?
     const size_t m_vec_init_capacity = 16;  // Vectors are initialized to have this capacity.
+    int32_t     m_max_coeff_bits     = 0;   // = log2(max_coefficient)
 
     std::vector<bool> m_significance_map;
     std::vector<bool> m_sign_array;
