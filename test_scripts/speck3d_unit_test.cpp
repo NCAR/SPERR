@@ -140,6 +140,7 @@ TEST( speck3d, small )
     EXPECT_LT( lmax, 36.11478 );
 }
 
+
 TEST( speck3d, big )
 {
     speck_tester tester( "../test_data/wmag128.float", 128, 128, 128 );
@@ -167,6 +168,42 @@ TEST( speck3d, big )
     lmax = tester.get_lmax();
     EXPECT_GT( psnr, 39.19998 );
     EXPECT_LT( lmax, 44.29733 );
+}
+
+
+TEST( speck3d, narrow_data_range )
+{
+    speck_tester tester( "../test_data/vorticity.128_128_41", 128, 128, 41 );
+
+    tester.execute( 8.0f );
+    double psnr = tester.get_psnr();
+    double lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 68.791297 );
+    EXPECT_LT( lmax, 0.000001 );
+
+    tester.execute( 16.0f );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 56.628458 );
+    EXPECT_LT( lmax, 0.000005 );
+
+    tester.execute( 32.0f );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 49.660499 );
+    EXPECT_LT( lmax, 0.0000104 );
+
+    tester.execute( 64.0f );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 45.122822 );
+    EXPECT_LT( lmax, 0.000024 );
+
+    tester.execute( 128.0f );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 41.702355 );
+    EXPECT_LT( lmax, 0.0000375 );
 }
 
 
