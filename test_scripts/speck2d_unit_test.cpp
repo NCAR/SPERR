@@ -172,4 +172,34 @@ TEST( speck2d, odd_dim_image )
 }
 
 
+TEST( speck2d, small_data_range )
+{
+    speck_tester tester( "../test_data/vorticity.512_512", 512, 512 );
+
+    tester.execute( 8.0f );
+    double psnr = tester.get_psnr();
+    double lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 71.289441 );
+    EXPECT_LT( lmax, 0.000002  );
+
+    tester.execute( 16.0f );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 59.666803 );
+    EXPECT_LT( lmax, 0.0000084 );
+
+    tester.execute( 32.0f );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 52.396355 );
+    EXPECT_LT( lmax, 0.0000213 );
+
+    tester.execute( 64.0f );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 46.906873 );
+    EXPECT_LT( lmax, 0.0000475  );
+}
+
+
 }
