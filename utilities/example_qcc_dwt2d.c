@@ -99,7 +99,7 @@ int main( int argc, char* argv[] )
     printf("mean = %lf\n", image_mean );
     double* out_buf = (double*)malloc( sizeof(double) * num_of_vals );
     pyramid_to_array( &pyramid, out_buf );
-    if( sam_write_n_doubles( output_name, num_of_vals, out_buf ) )
+    if( sam_write_n_bytes( output_name, sizeof(double) * num_of_vals, out_buf ) )
     {
         printf("Output write error!\n");
         return 1;

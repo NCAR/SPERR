@@ -61,9 +61,9 @@ int calc_num_of_xforms( int len )
 
 int main( int argc, char** argv )
 {
-    if( argc != 4 )
+    if( argc != 5 )
     {
-        fprintf( stderr, "Usage: ./a.out input_raw_file num_of_cols(DimX) num_of_rows(DimY)\n" );
+        fprintf( stderr, "Usage: ./a.out input_raw_file dim_X, dim_Y, comp_ratio\n" );
         return 1;
     }
     const char* input_name    = argv[1];
@@ -74,7 +74,7 @@ int main( int argc, char** argv )
     const size_t num_of_bytes = sizeof(float) * num_of_vals;
     int         num_of_levels = calc_num_of_xforms( num_of_cols );
 
-    const float cratio        = 16.0f;                     /* compression ratio */
+    const float cratio        = atof( argv[4] );
     const int   header_size   = 21;                         /* bytes */
     /* Allocate bit budget for the header too */
     const int   total_bits    = (int)(8.0f * num_of_bytes / cratio) + 8 * header_size;
