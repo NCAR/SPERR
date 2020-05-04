@@ -102,13 +102,12 @@ private:
     const size_t m_vec_init_capacity = 16;  // Vectors are initialized to have this capacity.
 
     std::vector< std::vector<SPECKSet3D> >  m_LIS;
+    std::vector<size_t>                     m_LIS_garbage_cnt;
 
-    std::vector< bool >     m_significance_map;     // only used when encoding.
-    std::vector< bool >     m_sign_array;
-    std::vector< size_t >   m_LIS_garbage_cnt;
-
-    std::vector< size_t >   m_LSP;          // Records locations of significant pixels
-    std::vector< bool   >   m_LSP_Newly;    // Records if this pixel is newly significant or not.
+    std::vector<bool  >  m_significance_map;// only used when encoding.
+    std::vector<bool  >  m_sign_array;
+    std::vector<size_t>  m_LSP;             // Records locations of significant pixels
+    std::vector<bool  >  m_LSP_Newly;       // Records if this pixel is newly significant or not.
 };
 
 };
