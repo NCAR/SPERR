@@ -103,7 +103,7 @@ int main( int argc, char* argv[] )
 
     float rmse, lmax, psnr, arr1min, arr1max;
     sam_get_statsf( buf1, buf2, n_vals, &rmse, &lmax, &psnr, &arr1min, &arr1max );
-    printf("rmse = %f, lmax = %f, psnr = %fdB, orig_min = %f, orig_max = %f\n", 
+    printf("rmse = %e, lmax = %e, psnr = %f dB, orig_min = %f, orig_max = %f\n", 
             rmse, lmax, psnr, arr1min, arr1max );
 
     free( buf2 );
