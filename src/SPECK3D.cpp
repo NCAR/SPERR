@@ -71,10 +71,8 @@ void speck::SPECK3D::m_clean_LIS()
 
     for( size_t i = 0; i < m_LIS_garbage_cnt.size() - 1; i++ )
     {
-        // Only consolidate memory if the garbage amount is big enough, 
-        // in both absolute and relative senses.
-        if( m_LIS_garbage_cnt[i] > m_vec_init_capacity && 
-            m_LIS_garbage_cnt[i] > m_LIS[i].size() / 2  )
+        // Only consolidate memory if the garbage count is more than half
+        if( m_LIS_garbage_cnt[i] > m_LIS[i].size() / 2  )
         {
             auto& list = m_LIS[i];
             tmp.clear();
@@ -91,9 +89,8 @@ void speck::SPECK3D::m_clean_LIS()
 
     // Since the last element of m_LIS is represented separately as m_LIP, 
     //   let's also clean up that list.
-    const auto last_i = m_LIS_garbage_cnt.size() - 1;
-    if( m_LIS_garbage_cnt[ last_i ] > m_vec_init_capacity &&
-        m_LIS_garbage_cnt[ last_i ] > m_LIP.size() / 2     )
+    const auto last_i = m_LIS_garbage_cnt.size()   - 1;
+    if( m_LIS_garbage_cnt[ last_i ] > m_LIP.size() / 2 )
     {
         std::vector< size_t > tmp_LIP;
         tmp_LIP.reserve( m_LIP.size() );
@@ -138,7 +135,7 @@ int speck::SPECK3D::encode()
                 m_significance_map[i] = true;
         }
 
-        if( m_sorting_pass() )
+        if( m_sorting_pass_encode() )
             break;
 
         if( m_refinement_pass_encode() )
@@ -178,7 +175,7 @@ int speck::SPECK3D::decode()
     m_threshold = std::pow( 2.0, float(m_max_coeff_bits) );
     for( size_t bitplane = 0; bitplane < 128; bitplane++ )
     {
-        if( m_sorting_pass() )
+        if( m_sorting_pass_decode() )
             break;
 
         if( m_refinement_pass_decode() )
@@ -222,6 +219,8 @@ void speck::SPECK3D::m_initialize_sets_lists()
     m_LIS.clear();
     m_LIS.resize( num_of_sizes );
     m_LIS_garbage_cnt.assign( num_of_sizes, 0 );
+    m_LIP.clear();
+    m_LIP_Garbage.clear();
 
     // Starting from a set representing the whole volume, identify the smaller sets
     //   and put them in LIS accordingly.
@@ -282,13 +281,11 @@ void speck::SPECK3D::m_initialize_sets_lists()
 
     // initialize LSP
     m_LSP.clear();
-    m_LSP.reserve( m_vec_init_capacity );
     m_LSP_Newly.clear();
-    m_LSP_Newly.reserve( m_vec_init_capacity );
 }
 
 
-int speck::SPECK3D::m_sorting_pass()
+int speck::SPECK3D::m_sorting_pass_encode()
 {
     int rtn = 0;
     // Since we have a separate representation of LIP, let's process that list first!
@@ -302,16 +299,32 @@ int speck::SPECK3D::m_sorting_pass()
             const auto& s = m_LIS[idx1][idx2];
             if( s.type != SetType::Garbage )
             {
-                if( m_encode_mode )
-                {
-                    if( (rtn = m_process_S_encode( idx1, idx2 )) )
-                        return rtn;
-                }
-                else
-                {
-                    if( (rtn = m_process_S_decode( idx1, idx2 )) )
-                        return rtn;
-                }
+                if( (rtn = m_process_S_encode( idx1, idx2 )) )
+                    return rtn;
+            }
+        }
+    }
+
+    return 0;
+}
+
+
+int speck::SPECK3D::m_sorting_pass_decode()
+{
+    int rtn = 0;
+    // Since we have a separate representation of LIP, let's process that list first!
+
+    for( size_t tmp = 0; tmp < m_LIS.size(); tmp++ )
+    {
+        // From the end of m_LIS to its front
+        size_t idx1 = m_LIS.size() - 1 - tmp;
+        for( size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++ )
+        {
+            const auto& s = m_LIS[idx1][idx2];
+            if( s.type != SetType::Garbage )
+            {
+                if( (rtn = m_process_S_decode( idx1, idx2 )) )
+                    return rtn;
             }
         }
     }
