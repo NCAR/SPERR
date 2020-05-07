@@ -69,12 +69,12 @@ void speck::SPECK3D::m_clean_LIS()
 {
     std::vector<SPECKSet3D> tmp;
 
-    for( size_t i = 0; i < m_LIS_garbage_cnt.size(); i++ )
+    for( size_t i = 0; i < m_LIS_garbage_cnt.size() - 1; i++ )
     {
         // Only consolidate memory if the garbage amount is big enough, 
         // in both absolute and relative senses.
-        if( m_LIS_garbage_cnt[i] >  m_vec_init_capacity && 
-            m_LIS_garbage_cnt[i] >= m_LIS[i].size() / 2  )
+        if( m_LIS_garbage_cnt[i] > m_vec_init_capacity && 
+            m_LIS_garbage_cnt[i] > m_LIS[i].size() / 2  )
         {
             auto& list = m_LIS[i];
             tmp.clear();
@@ -85,6 +85,26 @@ void speck::SPECK3D::m_clean_LIS()
             std::swap( list, tmp );
             m_LIS_garbage_cnt[i] = 0;
         }
+    }
+    tmp.clear();
+    tmp.shrink_to_fit();
+
+    // Since the last element of m_LIS is represented separately as m_LIP, 
+    //   let's also clean up that list.
+    const auto last_i = m_LIS_garbage_cnt.size() - 1;
+    if( m_LIS_garbage_cnt[ last_i ] > m_vec_init_capacity &&
+        m_LIS_garbage_cnt[ last_i ] > m_LIP.size() / 2     )
+    {
+        std::vector< size_t > tmp_LIP;
+        tmp_LIP.reserve( m_LIP.size() );
+        for( size_t i = 0; i < m_LIP.size(); i++ )
+        {
+            if( !m_LIP_Garbage[i] )
+                tmp_LIP.push_back( m_LIP[i] );
+        }
+        std::swap( m_LIP, tmp_LIP );
+        m_LIS_garbage_cnt[ last_i ] = 0;
+        m_LIP_Garbage.assign( m_LIP.size(), false );
     }
 }
 
@@ -201,8 +221,6 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // initialize LIS
     m_LIS.clear();
     m_LIS.resize( num_of_sizes );
-    for( auto& v : m_LIS )
-        v.reserve( m_vec_init_capacity );
     m_LIS_garbage_cnt.assign( num_of_sizes, 0 );
 
     // Starting from a set representing the whole volume, identify the smaller sets
@@ -273,6 +291,8 @@ void speck::SPECK3D::m_initialize_sets_lists()
 int speck::SPECK3D::m_sorting_pass()
 {
     int rtn = 0;
+    // Since we have a separate representation of LIP, let's process that list first!
+
     for( size_t tmp = 0; tmp < m_LIS.size(); tmp++ )
     {
         // From the end of m_LIS to its front

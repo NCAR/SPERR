@@ -106,8 +106,14 @@ private:
 
     std::vector<bool  >  m_significance_map;// only used when encoding.
     std::vector<bool  >  m_sign_array;
-    std::vector<size_t>  m_LSP;             // Records locations of significant pixels
-    std::vector<bool  >  m_LSP_Newly;       // Records if this pixel is newly significant or not.
+
+    std::vector<size_t>  m_LSP;         // Records locations of significant pixels
+    std::vector<bool  >  m_LSP_Newly;   // Records if this pixel is newly significant or not.
+
+    // Now we use a vector of indices to serve the same funcationality of the last LIS,
+    //   which would contain all insignificant pixels.
+    std::vector<size_t>  m_LIP;         // List of insignificant pixels. 
+    std::vector<bool  >  m_LIP_Garbage; // If this insignificant pixel is considered garbage.
 };
 
 };
