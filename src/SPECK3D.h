@@ -79,8 +79,8 @@ private:
     int  m_process_S_encode( size_t idx1, size_t idx2 );
     int  m_process_S_decode( size_t idx1, size_t idx2 );
     int  m_code_S          ( size_t idx1, size_t idx2 );
-    int  m_process_p_encode( size_t idx );  // Same functionality as process_S, but specifically
-    int  m_process_p_decode( size_t idx );  // designed for the list of insignificant pixels.
+    int  m_process_P_encode( size_t idx );  // Same functionality as process_S, but specifically
+    int  m_process_P_decode( size_t idx );  // designed for the list of insignificant pixels.
 
     void m_partition_S_XYZ(const SPECKSet3D& set, std::array<SPECKSet3D, 8>& subsets ) const;
     void m_partition_S_XY( const SPECKSet3D& set, std::array<SPECKSet3D, 4>& subsets ) const;
@@ -110,12 +110,13 @@ private:
     std::vector<bool  >  m_sign_array;
 
     std::vector<size_t>  m_LSP;         // Records locations of significant pixels
-    std::vector<bool  >  m_LSP_Newly;   // Records if this pixel is newly significant or not.
+    std::vector<bool  >  m_LSP_newly;   // Records if this pixel is newly significant or not.
 
     // Now we use a vector of indices to serve the same funcationality of the last LIS,
     //   which would contain all insignificant pixels.
     std::vector<size_t>  m_LIP;         // List of insignificant pixels. 
-    std::vector<bool  >  m_LIP_Garbage; // If this insignificant pixel is considered garbage.
+    std::vector<bool  >  m_LIP_garbage; // If this insignificant pixel is considered garbage.
+    size_t               m_LIP_garbage_cnt = 0;
 };
 
 };
