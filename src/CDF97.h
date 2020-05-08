@@ -13,10 +13,11 @@ class CDF97
 public:
     // Input
     template< typename T >
-    void copy_data( const T*, size_t len);
+    void copy_data( const T*,       size_t len);
     template< typename T >
-    void copy_data( const T&, size_t len);
-    void take_data( buffer_type_d );        // Take ownership
+    void copy_data( const T&,       size_t len);
+    void take_data( buffer_type_d,  size_t len );       // Take ownership
+    void take_data( buffer_type_f,  size_t len );       // Take ownership
     void set_mean( double );
     void set_dims( size_t x, size_t y = 1, size_t z = 1 );
     

@@ -55,7 +55,7 @@ int main( int argc, char* argv[] )
     speck::CDF97 idwt;
     idwt.set_dims( dim_x, dim_y, dim_z );
     idwt.set_mean( decoder.get_image_mean() );
-    idwt.take_data( decoder.release_coeffs_double() );
+    idwt.take_data( decoder.release_coeffs_double(), dim_x * dim_y * dim_z );
 #ifdef TIME_EXAMPLES
     startT = std::chrono::high_resolution_clock::now();
 #endif

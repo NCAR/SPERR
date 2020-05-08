@@ -11,7 +11,6 @@ void speck::CDF97::copy_data( const T* data, size_t len )
     static_assert( std::is_floating_point<T>::value, 
                    "!! Only floating point values are supported !!" );
 
-    assert( len > 0 );
     assert( m_dim_x * m_dim_y * m_dim_z == 0 || m_dim_x * m_dim_y * m_dim_z == len );
     m_buf_len = len;
     m_data_buf = std::make_unique<double[]>( len );
@@ -24,7 +23,6 @@ template void speck::CDF97::copy_data( const double*, size_t );
 template< typename T >
 void speck::CDF97::copy_data( const T& data, size_t len )
 {
-    assert( len > 0 );
     assert( m_dim_x * m_dim_y * m_dim_z == 0 || m_dim_x * m_dim_y * m_dim_z == len );
     m_buf_len = len;
     m_data_buf = std::make_unique<double[]>( len );
@@ -35,9 +33,20 @@ template void speck::CDF97::copy_data( const buffer_type_d&, size_t );
 template void speck::CDF97::copy_data( const buffer_type_f&, size_t );
 
 
-void speck::CDF97::take_data( buffer_type_d ptr )
+void speck::CDF97::take_data( buffer_type_d ptr, size_t len )
 {
+    assert( m_dim_x * m_dim_y * m_dim_z == 0 || m_dim_x * m_dim_y * m_dim_z == len );
+    m_buf_len = len;
     m_data_buf = std::move( ptr );
+}
+
+
+void speck::CDF97::take_data( buffer_type_f ptr, size_t len )
+{
+    // Because CDF uses double and passed in data type is float, we'll
+    // need to make a copy, and then destroy the passed in unique_ptr.
+    this->copy_data( ptr, len );
+    ptr.reset();    // destroy the memory held by this ptr.
 }
 
 
