@@ -467,6 +467,8 @@ int speck::SPECK3D::m_process_P_encode( size_t loc )
 
 int speck::SPECK3D::m_process_S_encode( size_t idx1, size_t idx2 )
 {
+    assert( !set.is_pixel() );
+
     auto& set = m_LIS[idx1][idx2];
     int rtn = 0;
 
@@ -507,8 +509,6 @@ int speck::SPECK3D::m_process_S_encode( size_t idx1, size_t idx2 )
 
     if( set.signif == Significance::Sig )
     {
-        assert( !set.is_pixel() );
-
         if( (rtn = m_code_S( idx1, idx2 )) )
             return rtn;
 
@@ -551,17 +551,17 @@ int speck::SPECK3D::m_process_P_decode( size_t loc )
 
 int speck::SPECK3D::m_process_S_decode( size_t idx1, size_t idx2 )
 {
-    auto& set = m_LIS[idx1][idx2];
-    int rtn = 0;
+    assert( !m_LIS[idx1][idx2].is_pixel() );
 
     if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
         return 1;
+
+    auto& set = m_LIS[idx1][idx2];
     set.signif = m_bit_buffer[ m_bit_idx++ ] ? Significance::Sig : Significance::Insig;
+    int rtn = 0;
 
     if( set.signif == Significance::Sig )
     {
-        assert( !set.is_pixel() );
-
         if( (rtn = m_code_S( idx1, idx2 )) )
             return rtn;
 
