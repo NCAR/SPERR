@@ -385,7 +385,7 @@ int speck::SPECK3D::m_process_S_encode( size_t idx1, size_t idx2 )
     }
     end_loop_label:
     m_bit_buffer.push_back( set.signif == Significance::Sig ); // output the significance value 
-    
+
     // Let's also see if we're reached the bit budget
     if( m_bit_buffer.size() >= m_budget )
         return 1;

@@ -67,7 +67,7 @@ int main( int argc, char* argv[] )
     decoder.get_dims( dim_x_r, dim_y_r );
     idwt.set_dims( dim_x_r, dim_y_r );
     idwt.set_mean( decoder.get_image_mean() );
-    idwt.take_data( decoder.release_coeffs_double() );
+    idwt.take_data( decoder.release_coeffs_double(), dim_x_r * dim_y_r );
     idwt.idwt2d();
 
     // Finish timer and print timing
