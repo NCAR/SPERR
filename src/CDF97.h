@@ -5,6 +5,7 @@
 #include <cmath>
 #include "speck_helper.h"
 
+
 namespace speck
 {
 
