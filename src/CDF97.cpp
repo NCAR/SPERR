@@ -429,6 +429,9 @@ void speck::CDF97::m_dwt2d_one_level( double* plane, size_t len_x, size_t len_y,
     // Note, I've tested that up to 1024^2 planes it is actually slightly slower to 
     // transpose the plane and then perform the transforms.
     // This was consistent on both a MacBook and a RaspberryPi 3.
+    // Note2, I've tested transpose again on an X86 linux machine using gcc, clang, and pgi.
+    // Again the difference is either indistinguishable, or the current implementation
+    // has a slight edge.
 
     if( len_y % 2 == 0 )    // Even length
     {
