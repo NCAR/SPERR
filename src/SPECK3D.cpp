@@ -463,9 +463,8 @@ int speck::SPECK3D::m_process_P_encode( size_t loc )
 
 int speck::SPECK3D::m_process_S_encode( size_t idx1, size_t idx2 )
 {
-    assert( !set.is_pixel() );      // helps debug
-
     auto& set = m_LIS[idx1][idx2];
+    assert( !set.is_pixel() );      // helps debug
     int rtn = 0;
 
     // decide the significance of this set
