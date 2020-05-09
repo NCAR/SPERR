@@ -139,10 +139,9 @@ void speck::CDF97::dwt3d()
      *       Y
      */
 
+    // Process one XZ slice at a time
     buffer_type_d z_columns= std::make_unique< double[] >( m_dim_x * m_dim_z );
     const auto num_xforms_z = speck::calc_num_of_xforms( m_dim_z );
-
-    // Process one XZ slice at a time
     for( size_t y = 0; y < m_dim_y; y++ )
     {
         const auto y_offset = y * m_dim_x;
@@ -214,10 +213,9 @@ void speck::CDF97::idwt3d()
      *       Y
      */
 
+    // Process one XZ slice at a time
     buffer_type_d z_columns= std::make_unique< double[] >( m_dim_x * m_dim_z );
     const auto num_xforms_z = speck::calc_num_of_xforms( m_dim_z );
-
-    // Process one XZ slice at a time
     for( size_t y = 0; y < m_dim_y; y++ )
     {
         const auto y_offset = y * m_dim_x;
