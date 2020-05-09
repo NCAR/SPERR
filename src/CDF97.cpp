@@ -113,38 +113,66 @@ void speck::CDF97::dwt3d()
     size_t max_dim = std::max( m_dim_x, m_dim_y );
            max_dim = std::max( max_dim, m_dim_z );
     buffer_type_d tmp_buf   = std::make_unique< double[] >( max_dim * 2 );
-    const size_t plane_size = m_dim_x * m_dim_y;
+    const size_t plane_size_xy = m_dim_x * m_dim_y;
 
     /*
      * Note on the order of performing transforms in 3 dimensions: 
      * this implementation follows QccPack's example.
      *
-     * Note on the choice to not transpose the volume: it is tested to be faster 
-     * this way on all platforms (a MacBook, a Linux desktop, and an Arm Cluster).
+     * First transform along the Z dimension
      */
 
-    // First transform along the Z dimension
-    buffer_type_d array_z = std::make_unique< double[] >( m_dim_z );
-    auto num_xforms_z     = speck::calc_num_of_xforms( m_dim_z );
-    for( size_t offset = 0; offset < plane_size; offset++ )
-    {   
-        // Fill the Z array
-        for( size_t i  = 0; i < m_dim_z; i++ )
-            array_z[i] = m_data_buf[ plane_size * i + offset ];
+    /*
+     *             Z
+     *            /
+     *           /
+     *          /________
+     *         /       /|
+     *        /       / |
+     *     0 |-------/-------> X
+     *       |       |  |
+     *       |       |  /
+     *       |       | /
+     *       |_______|/
+     *       |
+     *       |
+     *       Y
+     */
 
-        // 1D DWT along the Z direction
-        m_dwt1d( array_z.get(), m_dim_z, num_xforms_z, tmp_buf.get() );
+    buffer_type_d z_columns= std::make_unique< double[] >( m_dim_x * m_dim_z );
+    const auto num_xforms_z = speck::calc_num_of_xforms( m_dim_z );
 
-        // Put back coefficients
-        for( size_t i = 0; i < m_dim_z; i++ )
-            m_data_buf[ plane_size * i + offset ] = array_z[i];
+    // Process one XZ slice at a time
+    for( size_t y = 0; y < m_dim_y; y++ )
+    {
+        const auto y_offset = y * m_dim_x;
+
+        // Re-arrange values of one XZ slice so that they form many z_columns
+        for( size_t z = 0; z < m_dim_z; z++ )
+        {
+            const auto cube_start_idx  = z * plane_size_xy + y_offset;
+            for( size_t x = 0; x < m_dim_x; x++ )
+                z_columns[ z + x * m_dim_z ] = m_data_buf[ cube_start_idx + x ];
+        }
+
+        // DWT1D on every z_column
+        for( size_t x = 0; x < m_dim_x; x++ )
+            m_dwt1d( z_columns.get() + x * m_dim_z, m_dim_z, num_xforms_z, tmp_buf.get() );
+
+        // Put back values of the many z_columns to the cube
+        for( size_t z = 0; z < m_dim_z; z++ )
+        {
+            const auto cube_start_idx  = z * plane_size_xy + y_offset;
+            for( size_t x = 0; x < m_dim_x; x++ )
+                m_data_buf[ cube_start_idx + x ] = z_columns[ z + x * m_dim_z ];
+        }
     }
 
     // Second transform each plane
-    auto num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
+    const auto num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
     for( size_t i = 0; i < m_dim_z; i++ )
     {
-        size_t offset = plane_size * i;
+        size_t offset = plane_size_xy * i;
         m_dwt2d( m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, 
                  tmp_buf.get() );
     } 
@@ -156,31 +184,66 @@ void speck::CDF97::idwt3d()
     size_t max_dim = std::max( m_dim_x, m_dim_y );
            max_dim = std::max( max_dim, m_dim_z );
     buffer_type_d tmp_buf   = std::make_unique< double[] >( max_dim * 2 );
-    const size_t plane_size = m_dim_x * m_dim_y;
+    const size_t plane_size_xy = m_dim_x * m_dim_y;
 
     // First, inverse transform each plane
     auto num_xforms_xy = speck::calc_num_of_xforms( std::min( m_dim_x, m_dim_y ) );
     for( size_t i = 0; i < m_dim_z; i++ )
     {
-        size_t offset = plane_size * i;
+        size_t offset = plane_size_xy * i;
         m_idwt2d( m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, 
                   tmp_buf.get() );
     } 
 
-    // Second, inverse transform along the Z dimension
-    buffer_type_d array_z = std::make_unique< double[] >( m_dim_z );
-    auto num_xforms_z     = speck::calc_num_of_xforms( m_dim_z );
-    for( size_t offset = 0; offset < plane_size; offset++ )
-    {   
-        for( size_t i  = 0; i < m_dim_z; i++ )
-            array_z[i] = m_data_buf[ plane_size * i + offset ];
+    /* 
+     * Second, inverse transform along the Z dimension
+     *
+     *             Z
+     *            /
+     *           /
+     *          /________
+     *         /       /|
+     *        /       / |
+     *     0 |-------/-------> X
+     *       |       |  |
+     *       |       |  /
+     *       |       | /
+     *       |_______|/
+     *       |
+     *       |
+     *       Y
+     */
 
-        m_idwt1d( array_z.get(), m_dim_z, num_xforms_z, tmp_buf.get() );
+    buffer_type_d z_columns= std::make_unique< double[] >( m_dim_x * m_dim_z );
+    const auto num_xforms_z = speck::calc_num_of_xforms( m_dim_z );
 
-        for( size_t i = 0; i < m_dim_z; i++ )
-            m_data_buf[ plane_size * i + offset ] = array_z[i];
+    // Process one XZ slice at a time
+    for( size_t y = 0; y < m_dim_y; y++ )
+    {
+        const auto y_offset = y * m_dim_x;
+
+        // Re-arrange values on one slice so that they form many z_columns
+        for( size_t z = 0; z < m_dim_z; z++ )
+        {
+            const auto cube_start_idx = z * plane_size_xy + y_offset;
+            for( size_t x = 0; x < m_dim_x; x++ )
+                z_columns[ z + x * m_dim_z ] = m_data_buf[ cube_start_idx + x ];
+        }
+
+        // IDWT1D on every z_column
+        for( size_t x = 0; x < m_dim_x; x++ )
+            m_idwt1d( z_columns.get() + x * m_dim_z, m_dim_z, num_xforms_z, tmp_buf.get() );
+
+        // Put back values from the many z_clumns to the cube
+        for( size_t z = 0; z < m_dim_z; z++ )
+        {
+            const auto cube_start_idx = z * plane_size_xy + y_offset;
+            for( size_t x = 0; x < m_dim_x; x++ )
+                m_data_buf[ cube_start_idx + x ] = z_columns[ z + x * m_dim_z ];
+        }
     }
 
+    // Finally, add back the mean which was subtracted earlier.
     for( size_t i = 0; i < m_buf_len; i++ )
         m_data_buf[i] += m_data_mean;
 }
@@ -193,10 +256,11 @@ void speck::CDF97::m_calc_mean()
 {
     assert( m_dim_x > 0 && m_dim_y > 0 && m_dim_z > 0 );
 
-    //
-    // Here we calculate mean row by row to avoid too big numbers.
-    // (Not using kahan summation because that's hard to vectorize.)
-    //
+    /*
+     * Here we calculate mean row by row to avoid too big numbers.
+     *   Not using Kahan summation because that's hard to vectorize.
+     *   Also, one test shows that this implementation is 4X faster than Kahan.
+     */
     buffer_type_d row_means = std::make_unique<double[]>( m_dim_y * m_dim_z );
     const double dim_x1 = 1.0 / double(m_dim_x);
     size_t counter1 = 0, counter2 = 0;
