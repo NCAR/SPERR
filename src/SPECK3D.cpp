@@ -194,12 +194,10 @@ int speck::SPECK3D::decode()
     }
 
     // Restore coefficient signs by setting some of them negative
-    size_t idx = 0;
-    for( const auto& b : m_sign_array )
+    for( size_t i = 0; i < m_sign_array.size(); i++ )
     {
-        if( !b )
-            m_coeff_buf[idx] = -m_coeff_buf[idx];
-        ++idx;
+        if( !m_sign_array[i] )
+            m_coeff_buf[ i ] = -m_coeff_buf[ i ];
     }
 
     return 0;
@@ -290,7 +288,6 @@ int speck::SPECK3D::m_sorting_pass_encode()
 #ifdef PRINT
     std::cout << "--> Sorting Pass " << std::endl;
 #endif
-
     int rtn = 0;
 
     // Since we have a separate representation of LIP, let's process that list first!
@@ -298,7 +295,7 @@ int speck::SPECK3D::m_sorting_pass_encode()
     {
         if( !m_LIP_garbage[i] )
         {
-            if(  (rtn = m_process_P_encode(i) ) )
+            if( (rtn = m_process_P_encode(i) ) )
                 return rtn;
         }
     }
@@ -330,7 +327,7 @@ int speck::SPECK3D::m_sorting_pass_decode()
     {
         if( !m_LIP_garbage[i] )
         {
-            if(  (rtn = m_process_P_decode(i) ) )
+            if( (rtn = m_process_P_decode(i) ) )
                 return rtn;
         }
     }
@@ -432,7 +429,7 @@ int speck::SPECK3D::m_process_P_encode( size_t loc )
         std::cout << "s0" << std::endl;
 #endif
     
-    // Let's also see if we're reached the bit budget
+    // When encoding, check bit budget after outputing a bit
     if( m_bit_buffer.size() >= m_budget )
         return 1;
 
@@ -447,18 +444,17 @@ int speck::SPECK3D::m_process_P_encode( size_t loc )
     else
         std::cout << "p0" << std::endl;
 #endif
-
         // Note that after outputing two bits this pixel got put in LSP.
         // The same is reversed when decoding.
         m_LSP.push_back( pixel_idx );
         m_LSP_newly.push_back( true );
 
-        // Let's also see if we've reached the bit budget
-        if( m_bit_buffer.size() >= m_budget )
-            return 1;
-
         m_LIP_garbage[ loc ] = true;
         m_LIP_garbage_cnt++;
+
+        // When encoding, check bit budget after outputing a bit
+        if( m_bit_buffer.size() >= m_budget )
+            return 1;
     }
 
     return 0;
@@ -467,7 +463,7 @@ int speck::SPECK3D::m_process_P_encode( size_t loc )
 
 int speck::SPECK3D::m_process_S_encode( size_t idx1, size_t idx2 )
 {
-    assert( !set.is_pixel() );
+    assert( !set.is_pixel() );      // helps debug
 
     auto& set = m_LIS[idx1][idx2];
     int rtn = 0;
@@ -495,17 +491,15 @@ int speck::SPECK3D::m_process_S_encode( size_t idx1, size_t idx2 )
     }
     end_loop_label:
     m_bit_buffer.push_back( set.signif == Significance::Sig ); // output the significance value 
+    if( m_bit_buffer.size() >= m_budget )
+        return 1;
 
 #ifdef PRINT
-    if(m_bit_buffer.back() )
+    if( m_bit_buffer.back() )
         std::cout << "s1" << std::endl;
     else
         std::cout << "s0" << std::endl;
 #endif
-    
-    // Let's also see if we're reached the bit budget
-    if( m_bit_buffer.size() >= m_budget )
-        return 1;
 
     if( set.signif == Significance::Sig )
     {
@@ -522,18 +516,18 @@ int speck::SPECK3D::m_process_S_encode( size_t idx1, size_t idx2 )
 
 int speck::SPECK3D::m_process_P_decode( size_t loc )
 {
+    // When decoding, check bit budget before attempting to read a bit
     if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
         return 1;
-
     const bool this_pixel_is_sig = m_bit_buffer[ m_bit_idx++ ];
 
     if( this_pixel_is_sig )
     {
         const auto pixel_idx = m_LIP[ loc ];
 
+        // When decoding, check bit budget before attempting to read a bit
         if( m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size() )
             return 1;
-
         if( !m_bit_buffer[ m_bit_idx++ ] )
             m_sign_array[ pixel_idx ] = false;
 
@@ -583,9 +577,8 @@ int  speck::SPECK3D::m_code_S( size_t idx1, size_t idx2 )
     {
         if( s.is_pixel() )
         {
-            const auto pixel_idx = s.start_z * m_dim_x * m_dim_y + 
-                                   s.start_y * m_dim_x + s.start_x;
-            m_LIP.push_back( pixel_idx );
+            m_LIP.push_back( s.start_z * m_dim_x * m_dim_y + 
+                             s.start_y * m_dim_x + s.start_x );
             m_LIP_garbage.push_back(false);
             if( m_encode_mode )
             {

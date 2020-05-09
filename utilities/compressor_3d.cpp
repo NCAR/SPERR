@@ -17,7 +17,7 @@ int main( int argc, char* argv[] )
 {
     if( argc != 8 )
     {
-        std::cerr << "Usage: ./a.out input_filename dim_x dim_y dim_z  "
+        std::cerr << "Usage: ./a.out input_filename dim_x dim_y dim_z "
                   << "ordering(XYZ or ZYX) output_filename bits_per_pixel " << std::endl;
         return 1;
     }
