@@ -68,16 +68,19 @@ private:
     bool m_ready_to_decode() const;
     // How many partition operation could we perform in each direction?
     void m_num_of_partitions( std::array<size_t, 3>& ) const; 
-    void m_clean_LIS();   // Clean garbage sets from m_LIS if too much garbage exists.
+    void m_clean_LIS();             // Clean garbage sets from m_LIS if too much garbage exists.
     void m_initialize_sets_lists();
-    int  m_sorting_pass( );
+    int  m_sorting_pass_encode( );
+    int  m_sorting_pass_decode( );
     int  m_refinement_pass_encode( );
     int  m_refinement_pass_decode( );
 
-    // For the following 3 methods, indices are used to locate which set to process from m_LIS,
+    // For the following 5 methods, indices are used to locate which set to process from m_LIS,
     int  m_process_S_encode( size_t idx1, size_t idx2 );
     int  m_process_S_decode( size_t idx1, size_t idx2 );
     int  m_code_S          ( size_t idx1, size_t idx2 );
+    int  m_process_P_encode( size_t idx );  // Same functionality as process_S, but specifically
+    int  m_process_P_decode( size_t idx );  // designed for sets that are essentially pixels.
 
     void m_partition_S_XYZ(const SPECKSet3D& set, std::array<SPECKSet3D, 8>& subsets ) const;
     void m_partition_S_XY( const SPECKSet3D& set, std::array<SPECKSet3D, 4>& subsets ) const;
@@ -88,26 +91,32 @@ private:
     // Private data members
     //
 #ifdef SPECK_USE_DOUBLE
-    double      m_threshold = 0.0;          // Threshold that's used for quantization
+    double      m_threshold   = 0.0;    // Threshold that's used for quantization
 #else
-    float       m_threshold = 0.0f;
+    float       m_threshold   = 0.0f;
 #endif
-    size_t      m_budget      = 0;          // What's the budget for num of bits?
-    size_t      m_bit_idx     = 0;          // Used for decode. Which bit we're at?
-    size_t      m_dim_x       = 0;          // 3D volume dims
+    size_t      m_budget      = 0;      // What's the budget for num of bits?
+    size_t      m_bit_idx     = 0;      // Used for decode. Which bit we're at?
+    size_t      m_dim_x       = 0;      // 3D volume dims
     size_t      m_dim_y       = 0;
     size_t      m_dim_z       = 0;
-    bool        m_encode_mode = true;       // Encode (true) or Decode (false) mode?
-    const size_t m_vec_init_capacity = 16;  // Vectors are initialized to have this capacity.
-    int32_t     m_max_coeff_bits     = 0;   // = log2(max_coefficient)
+    bool        m_encode_mode = true;   // Encode (true) or Decode (false) mode?
+    int32_t     m_max_coeff_bits = 0;   // = log2(max_coefficient)
 
     std::vector< std::vector<SPECKSet3D> >  m_LIS;
     std::vector<size_t>                     m_LIS_garbage_cnt;
 
-    std::vector<bool  >  m_significance_map;// only used when encoding.
+    std::vector<bool  >  m_significance_map;    // only used when encoding.
     std::vector<bool  >  m_sign_array;
-    std::vector<size_t>  m_LSP;             // Records locations of significant pixels
-    std::vector<bool  >  m_LSP_Newly;       // Records if this pixel is newly significant or not.
+
+    std::vector<size_t>  m_LSP;         // Records locations of significant pixels
+    std::vector<bool  >  m_LSP_newly;   // Records if this pixel is newly significant or not.
+
+    // Now we use a vector of indices to serve the same funcationality of the last LIS,
+    //   which would contain all insignificant pixels.
+    std::vector<size_t>  m_LIP;         // List of insignificant pixels. 
+    std::vector<bool  >  m_LIP_garbage; // If this insignificant pixel is considered garbage.
+    size_t               m_LIP_garbage_cnt = 0;
 };
 
 };
