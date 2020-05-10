@@ -156,11 +156,18 @@ int speck::SPECK3D::decode()
     // By default, decode all the available bits
     if( m_budget == 0 )
         m_budget = m_bit_buffer.size();
-
-#ifdef SPECK_USE_DOUBLE
-    m_coeff_buf = std::make_unique<double[]>( m_coeff_len );
+#ifdef NO_CPP14
+    #ifdef SPECK_USE_DOUBLE
+        m_coeff_buf.reset( new double[ m_coeff_len ] );
+    #else
+        m_coeff_buf.reset( new float[ m_coeff_len ] );
+    #endif
 #else
-    m_coeff_buf = std::make_unique<float[]>( m_coeff_len );
+    #ifdef SPECK_USE_DOUBLE
+        m_coeff_buf = std::make_unique<double[]>( m_coeff_len );
+    #else
+        m_coeff_buf = std::make_unique<float[]>( m_coeff_len );
+    #endif
 #endif
 
     // initialize coefficients to be zero, and sign array to be all positive
@@ -275,7 +282,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // Right now big is the set that's most likely to be significant, so insert
     //   it at the front of it's corresponding vector. One-time expense.
     const auto parts = big.part_level;
-    m_LIS[ parts ].insert( m_LIS[parts].cbegin(), big );
+    m_LIS[ parts ].insert( m_LIS[parts].begin(), big );
 
     // initialize LSP
     m_LSP.clear();
@@ -834,7 +841,11 @@ int speck::SPECK3D::write_to_disk( const std::string& filename ) const
     // Create and fill header buffer
     size_t pos = 0;
     uint32_t dims[3]{ uint32_t(m_dim_x), uint32_t(m_dim_y), uint32_t(m_dim_z) };
+#ifdef NO_CPP14
+    buffer_type_c header( new char[ header_size ] );
+#else
     buffer_type_c header = std::make_unique<char[]>( header_size );
+#endif
     std::memcpy( header.get(), dims, sizeof(dims) );    
     pos += sizeof(dims);
     std::memcpy( header.get() + pos, &m_image_mean, sizeof(m_image_mean) );  
@@ -858,7 +869,11 @@ int speck::SPECK3D::read_from_disk( const std::string& filename )
 
     // Create the header buffer, and read from file
     // Note that m_bit_buffer is filled by m_read().
+#ifdef NO_CPP14
+    buffer_type_c header( new char[ header_size ] );
+#else
     buffer_type_c header = std::make_unique<char[]>( header_size );
+#endif
     int rtn = m_read( header, header_size, filename.c_str() );
     if( rtn )
         return rtn;
