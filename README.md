@@ -25,3 +25,6 @@ A user could use `ccmake` to toggle optional configurations.
 1. `BUILD_UNIT_TESTS`: If set to be `ON`, then a set of unit tests are built.
 2. `TIME_EXAMPLES`: If set to be `ON`, then some of the executables will print
 out execution time numbers.
+3. Compiler flag `NO_CPP14`. This flag is not exposed as a cmake option, but one
+can pass it to cmake by specifying `-DNO_CPP14`. It is useful when your compiler
+complains not able to find `std::make_unique<>()`. 

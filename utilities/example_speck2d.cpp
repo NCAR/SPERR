@@ -32,7 +32,11 @@ int main( int argc, char* argv[] )
     const std::string output("sam.tmp");
 
     // Let's read in binaries as 4-byte floats
+#ifdef NO_CPP14
+    speck::buffer_type_f in_buf( new float[total_vals] );
+#else
     speck::buffer_type_f in_buf = std::make_unique<float[]>( total_vals );
+#endif
     if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
     {
         std::cerr << "Input read error!" << std::endl;

@@ -37,7 +37,11 @@ int main( int argc, char* argv[] )
     }
 
     // Let's read in binaries as 4-byte floats
+#ifdef NO_CPP14
+    speck::buffer_type_f in_buf( new float[total_vals] );
+#else
     speck::buffer_type_f in_buf = std::make_unique<float[]>( total_vals );
+#endif
     if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
     {
         std::cerr << "Input read error!" << std::endl;
@@ -47,7 +51,11 @@ int main( int argc, char* argv[] )
     // Re-organize values if ZYX ordering is specified
     if( std::strcmp( fastest, "ZYX" ) == 0 )
     {
+#ifdef NO_CPP14
+        speck::buffer_type_f tmp( new float[total_vals] );
+#else
         speck::buffer_type_f tmp = std::make_unique<float[]>( total_vals );
+#endif
         size_t idx = 0;
         for( size_t z = 0; z < dim_z; z++ )
             for( size_t y = 0; y < dim_y; y++ )

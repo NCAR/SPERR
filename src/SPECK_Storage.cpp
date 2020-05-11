@@ -10,10 +10,18 @@ void speck::SPECK_Storage::copy_coeffs( const T& p, size_t len )
     assert( len > 0 );
     assert( m_coeff_len == 0 || m_coeff_len == len );
     m_coeff_len = len;
-#ifdef SPECK_USE_DOUBLE
-    m_coeff_buf = std::make_unique<double[]>( len );
+#ifdef NO_CPP14
+    #ifdef SPECK_USE_DOUBLE
+        m_coeff_buf.reset( new double[len] );
+    #else
+        m_coeff_buf.reset( new float[len] );
+    #endif
 #else
-    m_coeff_buf = std::make_unique<float[]>( len );
+    #ifdef SPECK_USE_DOUBLE
+        m_coeff_buf = std::make_unique<double[]>( len );
+    #else
+        m_coeff_buf = std::make_unique<float[]>( len );
+    #endif
 #endif
     for( size_t i = 0; i < len; i++ )
         m_coeff_buf[i] = p[i];
@@ -82,7 +90,11 @@ std::vector<bool>& speck::SPECK_Storage::release_bitstream()
     speck::buffer_type_f speck::SPECK_Storage::release_coeffs_float()
     {
         assert( m_coeff_len > 0 );
+    #ifdef NO_CPP14
+        buffer_type_f tmp( new float[ m_coeff_len ] );
+    #else
         buffer_type_f tmp = std::make_unique<float[]>( m_coeff_len );
+    #endif
         for( size_t i = 0; i < m_coeff_len; i++ )
             tmp[i] = m_coeff_buf[i];
         m_coeff_buf = nullptr;      // also destroy the current buffer
@@ -92,7 +104,11 @@ std::vector<bool>& speck::SPECK_Storage::release_bitstream()
     speck::buffer_type_d speck::SPECK_Storage::release_coeffs_double()
     {
         assert( m_coeff_len > 0 );
+    #ifdef NO_CPP14
+        buffer_type_d tmp( new double[ m_coeff_len ] );
+    #else
         buffer_type_d tmp = std::make_unique<double[]>( m_coeff_len );
+    #endif
         for( size_t i = 0; i < m_coeff_len; i++ )
             tmp[i] = m_coeff_buf[i];
         m_coeff_buf = nullptr;      // also destroy the current buffer
@@ -126,7 +142,11 @@ int speck::SPECK_Storage::m_write( const buffer_type_c& header, size_t header_si
 
     // Allocate output buffer
     size_t total_size  = header_size + m_bit_buffer.size() / 8;
+#ifdef NO_CPP14
+    buffer_type_c  buf( new char[ total_size ] );
+#else
     buffer_type_c  buf = std::make_unique<char[]>( total_size );
+#endif
 
     // Copy over header
     std::memcpy( buf.get(), header.get(), header_size );
@@ -171,7 +191,11 @@ int speck::SPECK_Storage::m_read( buffer_type_c& header, size_t header_size,
     file.seekg( 0, file.end );
     size_t total_size = file.tellg();
     file.seekg( 0, file.beg );
+#ifdef NO_CPP14
+    buffer_type_c buf( new char[ total_size ] );
+#else
     buffer_type_c buf = std::make_unique<char[]>( total_size );
+#endif
     file.read( buf.get(), total_size );
     file.close();
 
