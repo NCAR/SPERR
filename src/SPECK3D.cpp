@@ -282,9 +282,11 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // Right now big is the set that's most likely to be significant, so insert
     // it at the front of it's corresponding vector. One-time expense.
     const auto parts = big.part_level;
-    // m_LIS[parts].insert( m_LIS[parts].cbegin(), big );
-    // Stupid Intel Compiler doesn't like cbegin() here...
+#ifdef NO_CPP14
     m_LIS[parts].insert( m_LIS[parts].begin(), big );
+#else
+    m_LIS[parts].insert( m_LIS[parts].cbegin(), big );
+#endif
 
     // initialize LSP
     m_LSP.clear();
