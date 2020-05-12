@@ -93,11 +93,7 @@ private:
     //
     // Private data members
     //
-#ifdef SPECK_USE_DOUBLE
     double      m_threshold = 0.0;          // Threshold that's used for an iteration
-#else
-    float       m_threshold = 0.0f;
-#endif
     size_t      m_budget    = 0;            // What's the budget for num of bits?
     size_t      m_bit_idx   = 0;            // Used for decode. Which bit we're at?
     size_t      m_dim_x       = 0;          // 2D plane dims

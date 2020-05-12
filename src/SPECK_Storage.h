@@ -15,9 +15,6 @@ namespace speck
 class SPECK_Storage
 {
 
-// Use the following macro to direct SPECK use double type.
-#define SPECK_USE_DOUBLE
-
 public:
     // memory management: input
     void take_coeffs( buffer_type_d, size_t );      // Take ownership of the incoming buffer 
@@ -58,11 +55,7 @@ protected:
     double              m_image_mean    = 0.0;  // Mean of the original data. Used by DWT/IDWT.
     size_t              m_coeff_len     = 0;
     std::vector<bool>   m_bit_buffer;           // Output/Input bit buffer
-#ifdef SPECK_USE_DOUBLE
     buffer_type_d       m_coeff_buf = nullptr;  // All coefficients are kept here
-#else
-    buffer_type_f       m_coeff_buf = nullptr;  // All coefficients are kept here
-#endif
 };
 
 };

@@ -157,17 +157,9 @@ int speck::SPECK3D::decode()
     if( m_budget == 0 )
         m_budget = m_bit_buffer.size();
 #ifdef NO_CPP14
-    #ifdef SPECK_USE_DOUBLE
-        m_coeff_buf.reset( new double[ m_coeff_len ] );
-    #else
-        m_coeff_buf.reset( new float[ m_coeff_len ] );
-    #endif
+    m_coeff_buf.reset( new double[ m_coeff_len ] );
 #else
-    #ifdef SPECK_USE_DOUBLE
-        m_coeff_buf = std::make_unique<double[]>( m_coeff_len );
-    #else
-        m_coeff_buf = std::make_unique<float[]>( m_coeff_len );
-    #endif
+    m_coeff_buf = std::make_unique<double[]>( m_coeff_len );
 #endif
 
     // initialize coefficients to be zero, and sign array to be all positive
