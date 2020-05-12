@@ -86,17 +86,9 @@ int speck::SPECK2D::decode()
 
     // initialize coefficients to be zero, and signs to be all positive
 #ifdef NO_CPP14
-    #ifdef SPECK_USE_DOUBLE
-        m_coeff_buf.reset( new double[ m_coeff_len ] );
-    #else
-        m_coeff_buf.reset( new float[ m_coeff_len ] );
-    #endif
+    m_coeff_buf.reset( new double[ m_coeff_len ] );
 #else
-    #ifdef SPECK_USE_DOUBLE
-        m_coeff_buf = std::make_unique<double[]>( m_coeff_len );
-    #else
-        m_coeff_buf = std::make_unique<float[]>( m_coeff_len );
-    #endif
+    m_coeff_buf = std::make_unique<double[]>( m_coeff_len );
 #endif
     for( size_t i = 0; i < m_coeff_len; i++ )
         m_coeff_buf[i] = 0.0;
