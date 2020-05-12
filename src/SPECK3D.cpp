@@ -142,7 +142,6 @@ int speck::SPECK3D::encode()
 
         m_threshold *= 0.5;
         m_clean_LIS();
-//printf("bitplane = %ld, bpp = %f\n", bitplane, float(m_bit_buffer.size()) / float(m_coeff_len) );
     }
 
     return 0;
