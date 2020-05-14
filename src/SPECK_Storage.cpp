@@ -21,6 +21,22 @@ void speck::SPECK_Storage::copy_coeffs( const T& p, size_t len )
 template void speck::SPECK_Storage::copy_coeffs( const buffer_type_d&, size_t);
 template void speck::SPECK_Storage::copy_coeffs( const buffer_type_f&, size_t);
 
+template<typename T>
+void speck::SPECK_Storage::copy_coeffs( const T* p, size_t len )
+{
+    assert( len > 0 );
+    assert( m_coeff_len == 0 || m_coeff_len == len );
+    m_coeff_len = len;
+#ifdef SPECK_USE_DOUBLE
+    m_coeff_buf = std::make_unique<double[]>( len );
+#else
+    m_coeff_buf = std::make_unique<float[]>( len );
+#endif
+    for( size_t i = 0; i < len; i++ )
+        m_coeff_buf[i] = p[i];
+}
+template void speck::SPECK_Storage::copy_coeffs( const double *, size_t);
+template void speck::SPECK_Storage::copy_coeffs( const float *, size_t);
 
 #ifdef SPECK_USE_DOUBLE
     void speck::SPECK_Storage::take_coeffs( buffer_type_d coeffs, size_t len )
