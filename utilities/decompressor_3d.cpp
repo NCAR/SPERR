@@ -72,7 +72,11 @@ int main( int argc, char* argv[] )
 
 
     // Write the reconstructed data to disk in single-precision
+#ifdef NO_CPP14
+    speck::buffer_type_f out_buf( new float[total_vals] );
+#else
     speck::buffer_type_f out_buf = std::make_unique<float[]>( total_vals );
+#endif
     const auto& reconstruct = idwt.get_read_only_data();
     for( size_t i  = 0; i < total_vals; i++ )
         out_buf[i] = reconstruct[i];

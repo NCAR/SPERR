@@ -121,11 +121,17 @@ TEST( speck3d, small )
     EXPECT_GT( psnr, 52.559024 );
     EXPECT_LT( lmax,  1.432911 );
 
+    tester.execute( 16.0f );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 41.48256 );
+    EXPECT_LT( lmax, 5.468170 );
+
     tester.execute( 32.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 34.71057 );
-    EXPECT_LT( lmax, 12.45794 );
+    EXPECT_GT( psnr, 34.713616 );
+    EXPECT_LT( lmax, 12.496039 );
 
     tester.execute( 64.0f );
     psnr = tester.get_psnr();

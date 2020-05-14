@@ -85,10 +85,10 @@ int speck::SPECK2D::decode()
         m_budget = m_bit_buffer.size();
 
     // initialize coefficients to be zero, and signs to be all positive
-#ifdef SPECK_USE_DOUBLE
-    m_coeff_buf = std::make_unique<double[]>( m_coeff_len );
+#ifdef NO_CPP14
+    m_coeff_buf.reset( new double[ m_coeff_len ] );
 #else
-    m_coeff_buf = std::make_unique<float[]>( m_coeff_len );
+    m_coeff_buf = std::make_unique<double[]>( m_coeff_len );
 #endif
     for( size_t i = 0; i < m_coeff_len; i++ )
         m_coeff_buf[i] = 0.0;
@@ -732,7 +732,11 @@ int speck::SPECK2D::write_to_disk( const std::string& filename ) const
     // Create and fill header buffer
     size_t pos = 0;
     uint32_t dims[2]{ uint32_t(m_dim_x), uint32_t(m_dim_y) };
+#ifdef NO_CPP14
+    buffer_type_c header( new char[header_size] );
+#else
     buffer_type_c header = std::make_unique<char[]>( header_size );
+#endif
     std::memcpy( header.get(), dims, sizeof(dims) );    
     pos += sizeof(dims);
     std::memcpy( header.get() + pos, &m_image_mean, sizeof(m_image_mean) );  
@@ -756,7 +760,11 @@ int speck::SPECK2D::read_from_disk( const std::string& filename )
 
     // Create the header buffer, and read from file
     // Note that m_bit_buffer is filled by m_read().
+#ifdef NO_CPP14
+    buffer_type_c header( new char[header_size] );
+#else
     buffer_type_c header = std::make_unique<char[]>( header_size );
+#endif
     int rtn = m_read( header, header_size, filename.c_str() );
     if( rtn )
         return rtn;
