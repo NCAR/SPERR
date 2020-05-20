@@ -138,7 +138,7 @@ void speck::SPECK2D::m_initialize_sets_lists()
     SPECKSet2D S;
     S.part_level = num_of_xforms;
     m_calc_root_size( S );
-    m_LIS[ S.part_level ].push_back( S );
+    m_LIS[ S.part_level ].emplace_back( S );
 
     // clear m_LSP
     m_LSP.clear();
@@ -261,7 +261,7 @@ int speck::SPECK2D::m_process_S( size_t idx1, size_t idx2, bool need_decide_sign
                 if( (rtn = m_input_pixel_sign( set )) )
                     return rtn;
             }
-            m_LSP.push_back( set );     // A copy is saved to m_LSP.
+            m_LSP.emplace_back( set );  // A copy is saved to m_LSP.
         }
         else // keep dividing this set
         {
@@ -290,7 +290,7 @@ int speck::SPECK2D::m_code_S( size_t idx1, size_t idx2 )
         const auto& s = subsets[i];
         if( !s.is_empty() )
         {
-            m_LIS[ s.part_level ].push_back( s );
+            m_LIS[ s.part_level ].emplace_back( s );
             size_t newidx1 = s.part_level;
             size_t newidx2 = m_LIS[ newidx1 ].size() - 1;
             if( (rtn = m_process_S( newidx1, newidx2, true )) )
@@ -306,7 +306,7 @@ int speck::SPECK2D::m_code_S( size_t idx1, size_t idx2 )
     if( !s4.is_empty() )
     {
         bool need_decide_sig = already_sig == 0 ? false : true;
-        m_LIS[ s4.part_level ].push_back( s4 );
+        m_LIS[ s4.part_level ].emplace_back( s4 );
         if( (rtn = m_process_S( s4.part_level, m_LIS[s4.part_level].size() - 1, need_decide_sig )) )
             return rtn;
     }
@@ -405,7 +405,7 @@ int speck::SPECK2D::m_code_I()
         const auto& s = subsets[i];
         if( !s.is_empty() )
         {
-            m_LIS[ s.part_level ].push_back( s );
+            m_LIS[ s.part_level ].emplace_back( s );
             size_t newidx1 = s.part_level;
             size_t newidx2 = m_LIS[ newidx1 ].size() - 1;
             if( (rtn = m_process_S( newidx1, newidx2, true )) )
@@ -690,7 +690,7 @@ void speck::SPECK2D::m_clean_LIS()
             tmp.reserve( m_vec_init_capacity );
             for( const auto& s : m_LIS[i] )
                 if( s.type != SetType::Garbage )
-                    tmp.push_back( s );
+                    tmp.emplace_back( s );
             std::swap( m_LIS[i], tmp );
             m_LIS_garbage_cnt[i] = 0;
         }

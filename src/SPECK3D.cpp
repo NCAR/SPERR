@@ -96,7 +96,7 @@ void speck::SPECK3D::m_clean_LIS()
         for( size_t i = 0; i < m_LIP.size(); i++ )
         {
             if( !m_LIP_garbage[i] )
-                tmp_LIP.push_back( m_LIP[i] );
+                tmp_LIP.emplace_back( m_LIP[i] );
         }
         std::swap( m_LIP, tmp_LIP );
         m_LIP_garbage_cnt = 0;
@@ -237,7 +237,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
         for( size_t i = 1; i < 8; i++ )
         {
             const auto parts = subsets[i].part_level;
-            m_LIS[ parts ].push_back( subsets[i] );
+            m_LIS[ parts ].emplace_back( subsets[i] );
         }
         xf++;
     }
@@ -253,7 +253,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
             for( size_t i = 1; i < 4; i++ )
             {
                 const auto parts = sub4[i].part_level;
-                m_LIS[ parts ].push_back( sub4[i] );
+                m_LIS[ parts ].emplace_back( sub4[i] );
             }
             xf++;
         }
@@ -266,7 +266,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
             m_partition_S_Z( big, sub2 );
             big = sub2[0];
             const auto parts = sub2[1].part_level;
-            m_LIS[ parts ].push_back( sub2[1] );
+            m_LIS[ parts ].emplace_back( sub2[1] );
             xf++;
         }
     }
@@ -596,7 +596,7 @@ int  speck::SPECK3D::m_code_S( size_t idx1, size_t idx2 )
         else if( !s.is_empty() )
         {
             const auto newidx1 = s.part_level;
-            m_LIS[     newidx1 ].push_back( s );
+            m_LIS[     newidx1 ].emplace_back( s );
             const auto newidx2 = m_LIS[ newidx1 ].size() - 1;
             if( m_encode_mode )
             {
