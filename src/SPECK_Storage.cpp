@@ -27,10 +27,10 @@ void speck::SPECK_Storage::copy_coeffs( const T* p, size_t len )
     assert( len > 0 );
     assert( m_coeff_len == 0 || m_coeff_len == len );
     m_coeff_len = len;
-#ifdef SPECK_USE_DOUBLE
-    m_coeff_buf = std::make_unique<double[]>( len );
+#ifdef NO_CPP14
+    m_coeff_buf.reset( new double[len] );
 #else
-    m_coeff_buf = std::make_unique<float[]>( len );
+    m_coeff_buf = std::make_unique<double[]>( len );
 #endif
     for( size_t i = 0; i < len; i++ )
         m_coeff_buf[i] = p[i];
