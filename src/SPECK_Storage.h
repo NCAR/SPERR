@@ -21,11 +21,14 @@ public:
     void take_coeffs( buffer_type_f, size_t );      // Take ownership of the incoming buffer 
     template <typename T>
     void copy_coeffs( const T&, size_t len );       // Make a copy of the incoming data.
+    template <typename T>
+    void copy_coeffs( const T*, size_t len );       // Make a copy of the incoming data.
     void take_bitstream( std::vector<bool>& );      // Take ownership of the bitstream.
     void copy_bitstream( const std::vector<bool>& );  // Make a copy of the bitstream.
 
     // memory management: output
     const std::vector<bool>& get_read_only_bitstream() const;
+    const buffer_type_d&     get_read_only_coeffs()    const;
     std::vector<bool>&       release_bitstream();       // The bitstream will be up to changes.
     buffer_type_d            release_coeffs_double();   // Others take ownership of the data
     buffer_type_f            release_coeffs_float() ;   // Others take ownership of the data
