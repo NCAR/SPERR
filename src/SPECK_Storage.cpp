@@ -24,6 +24,9 @@ template void speck::SPECK_Storage::copy_coeffs( const buffer_type_f&, size_t);
 template<typename T>
 void speck::SPECK_Storage::copy_coeffs( const T* p, size_t len )
 {
+    static_assert( std::is_floating_point<T>::value, 
+                   "!! Only floating point values are supported !!" );
+
     assert( len > 0 );
     assert( m_coeff_len == 0 || m_coeff_len == len );
     m_coeff_len = len;
@@ -70,6 +73,10 @@ const std::vector<bool>& speck::SPECK_Storage::get_read_only_bitstream() const
     return m_bit_buffer;
 }
 
+const speck::buffer_type_d& speck::SPECK_Storage::get_read_only_coeffs() const
+{
+    return m_coeff_buf;
+}
 
 std::vector<bool>& speck::SPECK_Storage::release_bitstream()
 {
