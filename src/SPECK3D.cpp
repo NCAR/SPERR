@@ -67,25 +67,30 @@ void speck::SPECK3D::set_bit_budget( size_t budget )
 
 void speck::SPECK3D::m_clean_LIS()
 {
-    std::vector<SPECKSet3D> tmp;
+    std::vector<SPECKSet3D> tmpv;
 
-    for( size_t i = 0; i < m_LIS_garbage_cnt.size(); i++ )
+    for( size_t tmpi = 1; tmpi <= m_LIS_garbage_cnt.size(); tmpi++ )
     {
+        // Because lists towards the end tend to have bigger sizes, we look at
+        // them first. This practices should reduce the number of memory allocations.
+        const auto i = m_LIS_garbage_cnt.size() - tmpi;
+
         // Only consolidate memory if the garbage count is more than half
         if( m_LIS_garbage_cnt[i] > m_LIS[i].size() / 2  )
         {
             auto& list = m_LIS[i];
-            tmp.clear();
-            tmp.reserve(  list.size() );  // will leave half capacity unfilled, so the list
+            tmpv.clear();
+            tmpv.reserve( list.size() );  // will leave half capacity unfilled, so the list
                                           // won't need a memory re-allocation for a while.
-            std::copy_if( list.cbegin(), list.cend(), std::back_inserter(tmp),
+            std::copy_if( list.cbegin(), list.cend(), std::back_inserter(tmpv),
                           []( const SPECKSet3D& s ){ return s.type != SetType::Garbage; } );
-            std::swap( list, tmp );
+            std::swap( list, tmpv );
             m_LIS_garbage_cnt[i] = 0;
         }
     }
-    tmp.clear();
-    tmp.shrink_to_fit();
+    // Re-claim memory held by tmpv
+    tmpv.clear();
+    tmpv.shrink_to_fit();
 
     // Since the last element of m_LIS is represented separately as m_LIP, 
     //   let's also clean up that list.
