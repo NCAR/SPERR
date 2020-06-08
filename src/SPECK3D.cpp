@@ -9,12 +9,12 @@
 //
 // Class SPECKSet3D
 //
-bool speck::SPECKSet3D::is_pixel() const
+auto speck::SPECKSet3D::is_pixel() const -> bool
 {
     return (length_x == 1 && length_y == 1 && length_z == 1);
 }
 
-bool speck::SPECKSet3D::is_empty() const
+auto speck::SPECKSet3D::is_empty() const -> bool
 {
     return (length_z == 0 || length_y == 0 || length_x == 0);
 }
@@ -101,7 +101,7 @@ void speck::SPECK3D::m_clean_LIS()
     }
 }
 
-int speck::SPECK3D::encode()
+auto speck::SPECK3D::encode() -> int
 {
     assert(m_ready_to_encode());
     m_encode_mode = true;
@@ -141,7 +141,7 @@ int speck::SPECK3D::encode()
     return 0;
 }
 
-int speck::SPECK3D::decode()
+auto speck::SPECK3D::decode() -> int
 {
     assert(m_ready_to_decode());
     m_encode_mode = false;
@@ -215,9 +215,11 @@ void speck::SPECK3D::m_initialize_sets_lists()
     big.length_y = uint32_t(m_dim_y); // Truncate 64-bit int to 32-bit, but should be OK.
     big.length_z = uint32_t(m_dim_z); // Truncate 64-bit int to 32-bit, but should be OK.
 
+    // clang-format off
     const auto num_of_xforms_xy = speck::calc_num_of_xforms(std::min(m_dim_x, m_dim_y));
     const auto num_of_xforms_z  = speck::calc_num_of_xforms(m_dim_z);
     size_t     xf               = 0;
+    // clang-format on
     std::array<SPECKSet3D, 8> subsets;
     while (xf < num_of_xforms_xy && xf < num_of_xforms_z) {
         m_partition_S_XYZ(big, subsets);
@@ -266,7 +268,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
     m_LSP_newly.clear();
 }
 
-int speck::SPECK3D::m_sorting_pass_encode()
+auto speck::SPECK3D::m_sorting_pass_encode() -> int
 {
 #ifdef PRINT
     std::cout << "--> Sorting Pass " << std::endl;
@@ -296,7 +298,7 @@ int speck::SPECK3D::m_sorting_pass_encode()
     return 0;
 }
 
-int speck::SPECK3D::m_sorting_pass_decode()
+auto speck::SPECK3D::m_sorting_pass_decode() -> int
 {
     int rtn = 0;
     // Since we have a separate representation of LIP, let's process that list first!
@@ -322,7 +324,7 @@ int speck::SPECK3D::m_sorting_pass_decode()
     return 0;
 }
 
-int speck::SPECK3D::m_refinement_pass_encode()
+auto speck::SPECK3D::m_refinement_pass_encode() -> int
 {
     for (size_t i = 0; i < m_LSP.size(); i++) {
         const auto pos = m_LSP[i];
@@ -353,7 +355,7 @@ int speck::SPECK3D::m_refinement_pass_encode()
     return 0;
 }
 
-int speck::SPECK3D::m_refinement_pass_decode()
+auto speck::SPECK3D::m_refinement_pass_decode() -> int
 {
     for (size_t i = 0; i < m_LSP.size(); i++) {
         const auto pos = m_LSP[i];
@@ -365,15 +367,14 @@ int speck::SPECK3D::m_refinement_pass_decode()
             if (m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size())
                 return 1;
 
-            m_coeff_buf[pos] += m_bit_buffer[m_bit_idx++] ? 
-                                m_threshold * 0.5 : m_threshold * -0.5;
+            m_coeff_buf[pos] += m_bit_buffer[m_bit_idx++] ? m_threshold * 0.5 : m_threshold * -0.5;
         }
     }
 
     return 0;
 }
 
-int speck::SPECK3D::m_process_P_encode(size_t loc)
+auto speck::SPECK3D::m_process_P_encode(size_t loc) -> int
 {
     const auto pixel_idx = m_LIP[loc];
 
@@ -418,7 +419,7 @@ int speck::SPECK3D::m_process_P_encode(size_t loc)
     return 0;
 }
 
-int speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2)
+auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> int
 {
     auto& set = m_LIS[idx1][idx2];
     assert(!set.is_pixel()); // helps debug
@@ -464,7 +465,7 @@ end_loop_label:
     return 0;
 }
 
-int speck::SPECK3D::m_process_P_decode(size_t loc)
+auto speck::SPECK3D::m_process_P_decode(size_t loc) -> int
 {
     // When decoding, check bit budget before attempting to read a bit
     if (m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size())
@@ -491,7 +492,7 @@ int speck::SPECK3D::m_process_P_decode(size_t loc)
     return 0;
 }
 
-int speck::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2)
+auto speck::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2) -> int
 {
     assert(!m_LIS[idx1][idx2].is_pixel());
 
@@ -513,7 +514,7 @@ int speck::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2)
     return 0;
 }
 
-int speck::SPECK3D::m_code_S(size_t idx1, size_t idx2)
+auto speck::SPECK3D::m_code_S(size_t idx1, size_t idx2) -> int
 {
     const auto&               set = m_LIS[idx1][idx2];
     std::array<SPECKSet3D, 8> subsets;
@@ -768,7 +769,7 @@ void speck::SPECK3D::m_partition_S_Z(const SPECKSet3D&          set,
     sub1.length_z = split_z[1];
 }
 
-bool speck::SPECK3D::m_ready_to_encode() const
+auto speck::SPECK3D::m_ready_to_encode() const -> bool
 {
     if (m_coeff_buf == nullptr)
         return false;
@@ -780,7 +781,7 @@ bool speck::SPECK3D::m_ready_to_encode() const
     return true;
 }
 
-bool speck::SPECK3D::m_ready_to_decode() const
+auto speck::SPECK3D::m_ready_to_decode() const -> bool
 {
     if (m_bit_buffer.empty())
         return false;
@@ -790,7 +791,7 @@ bool speck::SPECK3D::m_ready_to_decode() const
     return true;
 }
 
-int speck::SPECK3D::write_to_disk(const std::string& filename) const
+auto speck::SPECK3D::write_to_disk(const std::string& filename) const -> int
 {
     // Header definition:
     // information: dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  bitstream
@@ -818,7 +819,7 @@ int speck::SPECK3D::write_to_disk(const std::string& filename) const
     return rtn;
 }
 
-int speck::SPECK3D::read_from_disk(const std::string& filename)
+auto speck::SPECK3D::read_from_disk(const std::string& filename) -> int
 {
     // Header definition:
     // information: dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  bitstream

@@ -29,8 +29,8 @@ public:
     //
     // Member functions
     //
-    bool is_pixel() const;
-    bool is_empty() const;
+    auto is_pixel() const -> bool;
+    auto is_empty() const -> bool;
 #ifdef PRINT
     void print() const;
 #endif
@@ -50,33 +50,33 @@ public:
     void get_dims(size_t&, size_t&, size_t&) const;
 
     // core operations
-    int encode();
-    int decode();
-    int write_to_disk(const std::string& filename) const override;
-    int read_from_disk(const std::string& filename) override;
+    auto encode() -> int;
+    auto decode() -> int;
+    auto write_to_disk(const std::string& filename) const -> int override;
+    auto read_from_disk(const std::string& filename) -> int override;
 
 private:
     //
     // Note: for methods returning an integer, 0 means normal execution, and
     // 1 means bit budget met.
     //
-    bool m_ready_to_encode() const;
-    bool m_ready_to_decode() const;
+    auto m_ready_to_encode() const -> bool;
+    auto m_ready_to_decode() const -> bool;
     // How many partition operation could we perform in each direction?
     void m_num_of_partitions(std::array<size_t, 3>&) const;
     void m_clean_LIS(); // Clean garbage sets from m_LIS if too much garbage exists.
     void m_initialize_sets_lists();
-    int  m_sorting_pass_encode();
-    int  m_sorting_pass_decode();
-    int  m_refinement_pass_encode();
-    int  m_refinement_pass_decode();
+    auto m_sorting_pass_encode() -> int;
+    auto m_sorting_pass_decode() -> int;
+    auto m_refinement_pass_encode() -> int;
+    auto m_refinement_pass_decode() -> int;
 
     // For the following 5 methods, indices are used to locate which set to process from m_LIS,
-    int m_process_S_encode(size_t idx1, size_t idx2);
-    int m_process_S_decode(size_t idx1, size_t idx2);
-    int m_code_S(size_t idx1, size_t idx2);
-    int m_process_P_encode(size_t idx); // Same functionality as process_S, but specifically
-    int m_process_P_decode(size_t idx); // designed for sets that are essentially pixels.
+    auto m_process_S_encode(size_t idx1, size_t idx2) -> int;
+    auto m_process_S_decode(size_t idx1, size_t idx2) -> int;
+    auto m_code_S(size_t idx1, size_t idx2) -> int;
+    auto m_process_P_encode(size_t idx) -> int; // Same functionality as process_S, but specifically
+    auto m_process_P_decode(size_t idx) -> int; // designed for sets that are essentially pixels.
 
     void m_partition_S_XYZ(const SPECKSet3D& set, std::array<SPECKSet3D, 8>& subsets) const;
     void m_partition_S_XY(const SPECKSet3D& set, std::array<SPECKSet3D, 4>& subsets) const;
@@ -104,7 +104,7 @@ private:
     std::vector<bool>   m_LSP_newly; // Records if this pixel is newly significant or not.
 
     // Now we use a vector of indices to serve the same funcationality of the last LIS,
-    //   which would contain all insignificant pixels.
+    // which would contain all insignificant pixels.
     std::vector<size_t> m_LIP;         // List of insignificant pixels.
     std::vector<bool>   m_LIP_garbage; // If this insignificant pixel is considered garbage.
     size_t              m_LIP_garbage_cnt = 0;
