@@ -35,7 +35,7 @@ enum class SetType : unsigned char {
 // Helper functions
 //
 // Given a certain length, how many transforms to be performed?
-size_t calc_num_of_xforms(size_t len);
+auto calc_num_of_xforms(size_t len) -> size_t;
 
 // Determine the approximation and detail signal length at a certain
 // transformation level lev: 0 <= lev < num_of_xforms.
@@ -48,7 +48,7 @@ void calc_approx_detail_len(size_t orig_len, size_t lev, // input
 // 2) make coeff_buffer containing all positive values.
 // 3) returns the maximum magnitude of all encountered values.
 template <typename U>
-typename U::element_type make_coeff_positive(U& buf, size_t len, std::vector<bool>&);
+auto make_coeff_positive(U& buf, size_t len, std::vector<bool>&) -> typename U::element_type;
 
 };
 

@@ -50,8 +50,11 @@ void speck::SPECK_Storage::take_coeffs(buffer_type_d coeffs, size_t len)
 }
 
 void speck::SPECK_Storage::take_coeffs(buffer_type_f coeffs, size_t len)
-{ // cannot really take the coeffs if the data type doesn't match...
-    copy_coeffs(std::move(coeffs), len);
+{ 
+    // Cannot really take the coeffs if the data type doesn't match.
+    // So we make a copy and destroy the old memory block.
+    copy_coeffs(coeffs, len);
+    coeffs.reset();
 }
 
 void speck::SPECK_Storage::copy_bitstream(const std::vector<bool>& stream)

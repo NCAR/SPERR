@@ -6,7 +6,7 @@
 #include <cstring>
 #include <fstream>
 
-size_t speck::calc_num_of_xforms(size_t len)
+auto speck::calc_num_of_xforms(size_t len) -> size_t
 {
     assert(len > 0);
     // I decide 8 is the minimal length to do one level of xform.
@@ -33,8 +33,8 @@ void speck::calc_approx_detail_len(size_t orig_len, size_t lev,
 }
 
 template <typename U>
-typename U::element_type speck::make_coeff_positive(U& buf, size_t len,
-                                                    std::vector<bool>& sign_array)
+auto speck::make_coeff_positive(U& buf, size_t len, std::vector<bool>& sign_array) 
+     -> typename U::element_type
 {
     sign_array.assign(len, true);
     auto max                = std::abs(buf[0]);
