@@ -32,10 +32,46 @@ enum class SetType : unsigned char {
 };
 
 //
+// Auxiliary class to hold a 3D SPECK Set
+//
+class SPECKSet3D {
+public:
+    //
+    // Member data
+    //
+    uint32_t start_x  = 0;
+    uint32_t start_y  = 0;
+    uint32_t start_z  = 0;
+    uint32_t length_x = 0;
+    uint32_t length_y = 0;
+    uint32_t length_z = 0;
+    // which partition level is this set at (starting from zero, in all 3 directions).
+    // This data member is the sum of all 3 partition levels.
+    uint16_t     part_level = 0;
+    Significance signif     = Significance::Insig;
+    SetType      type       = SetType::TypeS; // This field is only used to indicate garbage status
+
+public:
+    //
+    // Member functions
+    //
+    auto is_pixel() const -> bool;
+    auto is_empty() const -> bool;
+#ifdef PRINT
+    void print() const;
+#endif
+};
+
+
+//
 // Helper functions
 //
 // Given a certain length, how many transforms to be performed?
-auto calc_num_of_xforms(size_t len) -> size_t;
+auto num_of_xforms(size_t len) -> size_t;
+    
+// How many partition operation could we perform given a length?
+// Length 0 and 1 can do 0 partitions; len=2 can do 1; len=3 can do 2, len=4 can do 2, etc.
+auto num_of_partitions(size_t len) -> size_t;
 
 // Determine the approximation and detail signal length at a certain
 // transformation level lev: 0 <= lev < num_of_xforms.
@@ -50,6 +86,10 @@ void calc_approx_detail_len(size_t orig_len, size_t lev, // input
 template <typename U>
 auto make_coeff_positive(U& buf, size_t len, std::vector<bool>&) -> typename U::element_type;
 
+// Divide a SPECKSet3D into 8, 4, or 2 smaller subsets.
+void partition_S_XYZ(const SPECKSet3D& set, std::array<SPECKSet3D, 8>& subsets);
+void partition_S_XY(const SPECKSet3D& set, std::array<SPECKSet3D, 4>& subsets);
+void partition_S_Z(const SPECKSet3D& set, std::array<SPECKSet3D, 2>& subsets);
 };
 
 #endif

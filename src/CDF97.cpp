@@ -75,13 +75,13 @@ void speck::CDF97::dwt1d()
     for (size_t i = 0; i < m_buf_len; i++)
         m_data_buf[i] -= m_data_mean;
 
-    size_t num_xforms = speck::calc_num_of_xforms(m_dim_x);
+    size_t num_xforms = speck::num_of_xforms(m_dim_x);
     m_dwt1d(m_data_buf.get(), m_buf_len, num_xforms);
 }
 
 void speck::CDF97::idwt1d()
 {
-    size_t num_xforms = speck::calc_num_of_xforms(m_dim_x);
+    size_t num_xforms = speck::num_of_xforms(m_dim_x);
     m_idwt1d(m_data_buf.get(), m_buf_len, num_xforms);
 
     for (size_t i = 0; i < m_buf_len; i++)
@@ -94,13 +94,13 @@ void speck::CDF97::dwt2d()
     for (size_t i = 0; i < m_buf_len; i++)
         m_data_buf[i] -= m_data_mean;
 
-    size_t num_xforms_xy = speck::calc_num_of_xforms(std::min(m_dim_x, m_dim_y));
+    size_t num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
     m_dwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy);
 }
 
 void speck::CDF97::idwt2d()
 {
-    size_t num_xforms_xy = speck::calc_num_of_xforms(std::min(m_dim_x, m_dim_y));
+    size_t num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
     m_idwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy);
 
     for (size_t i = 0; i < m_buf_len; i++)
@@ -152,7 +152,7 @@ void speck::CDF97::dwt3d()
 #else
     buffer_type_d z_columns   = std::make_unique<double[]>(m_dim_x * m_dim_z);
 #endif
-    const auto num_xforms_z = speck::calc_num_of_xforms(m_dim_z);
+    const auto num_xforms_z = speck::num_of_xforms(m_dim_z);
     for (size_t y = 0; y < m_dim_y; y++) {
         const auto y_offset = y * m_dim_x;
 
@@ -176,7 +176,7 @@ void speck::CDF97::dwt3d()
     }
 
     // Second transform each plane
-    const auto num_xforms_xy = speck::calc_num_of_xforms(std::min(m_dim_x, m_dim_y));
+    const auto num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
     for (size_t i = 0; i < m_dim_z; i++) {
         size_t offset = plane_size_xy * i;
         m_dwt2d(m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, tmp_buf.get());
@@ -195,7 +195,7 @@ void speck::CDF97::idwt3d()
     const size_t plane_size_xy = m_dim_x * m_dim_y;
 
     // First, inverse transform each plane
-    auto num_xforms_xy = speck::calc_num_of_xforms(std::min(m_dim_x, m_dim_y));
+    auto num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
     for (size_t i = 0; i < m_dim_z; i++) {
         size_t offset = plane_size_xy * i;
         m_idwt2d(m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, tmp_buf.get());
@@ -226,7 +226,7 @@ void speck::CDF97::idwt3d()
 #else
     buffer_type_d z_columns   = std::make_unique<double[]>(m_dim_x * m_dim_z);
 #endif
-    const auto num_xforms_z = speck::calc_num_of_xforms(m_dim_z);
+    const auto num_xforms_z = speck::num_of_xforms(m_dim_z);
     for (size_t y = 0; y < m_dim_y; y++) {
         const auto y_offset = y * m_dim_x;
 
