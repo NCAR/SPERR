@@ -59,14 +59,12 @@ void speck::CDF97::take_data(buffer_type_f ptr, size_t len)
     ptr.reset(); // destroy the memory held by this ptr.
 }
 
-const speck::buffer_type_d&
-speck::CDF97::get_read_only_data() const
+auto speck::CDF97::get_read_only_data() const -> const buffer_type_d&
 {
     return m_data_buf;
 }
 
-std::unique_ptr<double[]>
-speck::CDF97::release_data()
+auto speck::CDF97::release_data() -> buffer_type_d
 {
     return std::move(m_data_buf);
 }
@@ -275,10 +273,10 @@ void speck::CDF97::m_calc_mean()
 #endif
     const double dim_x1   = 1.0 / double(m_dim_x);
     size_t       counter1 = 0, counter2 = 0;
-    for (size_t z = 0; z < m_dim_z; z++){
+    for (size_t z = 0; z < m_dim_z; z++) {
         for (size_t y = 0; y < m_dim_y; y++) {
             double sum = 0.0;
-            for (size_t x = 0; x < m_dim_x; x++){
+            for (size_t x = 0; x < m_dim_x; x++) {
                 sum += m_data_buf[counter1++];
             }
             row_means[counter2++] = sum * dim_x1;
@@ -295,7 +293,7 @@ void speck::CDF97::m_calc_mean()
     counter2            = 0;
     for (size_t z = 0; z < m_dim_z; z++) {
         double sum = 0.0;
-        for (size_t y = 0; y < m_dim_y; y++){
+        for (size_t y = 0; y < m_dim_y; y++) {
             sum += row_means[counter1++];
         }
         layer_means[counter2++] = sum * dim_y1;
@@ -721,8 +719,7 @@ void speck::CDF97::set_dims(size_t x, size_t y, size_t z)
     m_buf_len = x * y * z;
 }
 
-double
-speck::CDF97::get_mean() const
+auto speck::CDF97::get_mean() const -> double
 {
     return m_data_mean;
 }

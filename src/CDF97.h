@@ -21,11 +21,11 @@ public:
     void set_dims(size_t x, size_t y = 1, size_t z = 1);
 
     // Output
-    const buffer_type_d& get_read_only_data() const; // Others can read the data
-    buffer_type_d        release_data();             // Others take ownership of the data
-    double               get_mean() const;
-    void                 get_dims(std::array<size_t, 2>&) const; // 2D case
-    void                 get_dims(std::array<size_t, 3>&) const; // 3D case
+    auto get_read_only_data() const -> const buffer_type_d&; // Others can read the data
+    auto release_data() -> buffer_type_d;                    // Others take ownership of the data
+    auto get_mean() const -> double;
+    void get_dims(std::array<size_t, 2>&) const; // 2D case
+    void get_dims(std::array<size_t, 3>&) const; // 3D case
 
     // Action items
     void reset(); // Reset this class to its initial state.
