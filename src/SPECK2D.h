@@ -25,8 +25,8 @@ public:
     //
     // Member functions
     //
-    bool is_pixel() const;
-    bool is_empty() const;
+    auto is_pixel() const -> bool;
+    auto is_empty() const -> bool;
 };
 
 //
@@ -46,40 +46,40 @@ public:
     void get_dims(size_t&, size_t&) const; // Returns plane dimension
 
     // core operations
-    int encode();
-    int decode();
-    int write_to_disk(const std::string& filename) const override;
-    int read_from_disk(const std::string& filename) override;
+    auto encode() -> int;
+    auto decode() -> int;
+    auto write_to_disk(const std::string& filename) const -> int override;
+    auto read_from_disk(const std::string& filename) -> int override;
 
 private:
     //
     // Note: for methods returning an integer, 0 means normal execution, and
     // 1 means bit budget met.
     //
-    int m_sorting_pass();
-    int m_refinement_pass();
+    auto m_sorting_pass() -> int;
+    auto m_refinement_pass() -> int;
     // For the following 2 methods, indices are used to locate which set to process from m_LIS,
     // because of the choice to use vectors to represent lists, only indices are invariant.
-    int  m_process_S(size_t idx1, size_t idx2, bool); // need to decide if it's signif?
-    int  m_code_S(size_t idx1, size_t idx2);
-    int  m_process_I(bool); // Need to decide if m_I is significant?
-    int  m_code_I();
+    auto m_process_S(size_t idx1, size_t idx2, bool) -> int; // need to decide if it's signif?
+    auto m_code_S(size_t idx1, size_t idx2) -> int;
+    auto m_process_I(bool) -> int; // Need to decide if m_I is significant?
+    auto m_code_I() -> int;
     void m_initialize_sets_lists();
     void m_partition_S(const SPECKSet2D& set, std::array<SPECKSet2D, 4>& subsets) const;
     void m_partition_I(std::array<SPECKSet2D, 3>& subsets);
-    int  m_decide_set_significance(SPECKSet2D& set); // input when decoding
-    int  m_output_set_significance(const SPECKSet2D& set);
-    int  m_input_pixel_sign(const SPECKSet2D& pixel);
-    int  m_output_pixel_sign(const SPECKSet2D& pixel);
-    int  m_input_refinement(const SPECKSet2D& pixel);
-    int  m_output_refinement(const SPECKSet2D& pixel);
+    auto m_decide_set_significance(SPECKSet2D& set) -> int; // input when decoding
+    auto m_output_set_significance(const SPECKSet2D& set) -> int;
+    auto m_input_pixel_sign(const SPECKSet2D& pixel) -> int;
+    auto m_output_pixel_sign(const SPECKSet2D& pixel) -> int;
+    auto m_input_refinement(const SPECKSet2D& pixel) -> int;
+    auto m_output_refinement(const SPECKSet2D& pixel) -> int;
 
     void m_calc_root_size(SPECKSet2D& root) const;
     // How many partitions available to perform given the 2D dimensions?
-    size_t m_num_of_partitions() const;
-    void   m_clean_LIS(); // Clean garbage sets from m_LIS if too much garbage exists.
-    bool   m_ready_to_encode() const;
-    bool   m_ready_to_decode() const;
+    auto m_num_of_partitions() const -> size_t;
+    void m_clean_LIS(); // Clean garbage sets from m_LIS if too much garbage exists.
+    auto m_ready_to_encode() const -> bool;
+    auto m_ready_to_decode() const -> bool;
 
 #ifdef PRINT
     void m_print_set(const char*, const SPECKSet2D& set) const;

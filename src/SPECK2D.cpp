@@ -41,7 +41,7 @@ void speck::SPECK2D::get_dims(size_t& x, size_t& y) const
     y = m_dim_y;
 }
 
-int speck::SPECK2D::encode()
+auto speck::SPECK2D::encode() -> int
 {
     assert(m_ready_to_encode());
     m_encode_mode = true;
@@ -68,7 +68,7 @@ int speck::SPECK2D::encode()
     return 0;
 }
 
-int speck::SPECK2D::decode()
+auto speck::SPECK2D::decode() -> int
 {
     assert(m_ready_to_decode());
     m_encode_mode = false;
@@ -145,7 +145,7 @@ void speck::SPECK2D::m_initialize_sets_lists()
 //
 // Private methods
 //
-int speck::SPECK2D::m_sorting_pass()
+auto speck::SPECK2D::m_sorting_pass() -> int
 {
     if (m_encode_mode) {
         // Update the significance map based on the current threshold
@@ -175,7 +175,7 @@ int speck::SPECK2D::m_sorting_pass()
     return 0;
 }
 
-int speck::SPECK2D::m_refinement_pass()
+auto speck::SPECK2D::m_refinement_pass() -> int
 {
     int rtn = 0;
     for (auto& p : m_LSP) {
@@ -195,7 +195,7 @@ int speck::SPECK2D::m_refinement_pass()
     return 0;
 }
 
-int speck::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_signif)
+auto speck::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_signif) -> int
 {
     auto& set = m_LIS[idx1][idx2];
 
@@ -241,7 +241,7 @@ int speck::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_signi
     return 0;
 }
 
-int speck::SPECK2D::m_code_S(size_t idx1, size_t idx2)
+auto speck::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> int
 {
     const auto&               set = m_LIS[idx1][idx2];
     std::array<SPECKSet2D, 4> subsets;
@@ -259,10 +259,12 @@ int speck::SPECK2D::m_code_S(size_t idx1, size_t idx2)
             if ((rtn = m_process_S(newidx1, newidx2, true)))
                 return rtn;
 
+            // clang-format off
             if (m_LIS[newidx1][newidx2].signif == Significance::Sig || 
-                m_LIS[newidx1][newidx2].signif == Significance::NewlySig){
+                m_LIS[newidx1][newidx2].signif == Significance::NewlySig) {
                 already_sig++;
             }
+            // clang-format on
         }
     }
 
@@ -270,8 +272,8 @@ int speck::SPECK2D::m_code_S(size_t idx1, size_t idx2)
     if (!s4.is_empty()) {
         bool need_decide_sig = already_sig == 0 ? false : true;
         m_LIS[s4.part_level].emplace_back(s4);
-        if ((rtn = m_process_S(s4.part_level, 
-                               m_LIS[s4.part_level].size() - 1, 
+        if ((rtn = m_process_S(s4.part_level,
+                               m_LIS[s4.part_level].size() - 1,
                                need_decide_sig))) {
             return rtn;
         }
@@ -319,7 +321,7 @@ void speck::SPECK2D::m_partition_S(const SPECKSet2D& set, std::array<SPECKSet2D,
     TL.length_y   = approx_len_y;
 }
 
-int speck::SPECK2D::m_process_I(bool need_decide_sig)
+auto speck::SPECK2D::m_process_I(bool need_decide_sig) -> int
 {
     if (m_I.part_level == 0) // m_I is empty at this point
         return 0;
@@ -350,7 +352,7 @@ int speck::SPECK2D::m_process_I(bool need_decide_sig)
     return 0;
 }
 
-int speck::SPECK2D::m_code_I()
+auto speck::SPECK2D::m_code_I() -> int
 {
     std::array<SPECKSet2D, 3> subsets;
     m_partition_I(subsets);
@@ -368,10 +370,12 @@ int speck::SPECK2D::m_code_I()
             if ((rtn = m_process_S(newidx1, newidx2, true)))
                 return rtn;
 
+            // clang-format off
             if (m_LIS[newidx1][newidx2].signif == Significance::Sig || 
-                m_LIS[newidx1][newidx2].signif == Significance::NewlySig){
+                m_LIS[newidx1][newidx2].signif == Significance::NewlySig) {
                 already_sig++;
             }
+            // clang-format on
         }
     }
 
@@ -420,7 +424,7 @@ void speck::SPECK2D::m_partition_I(std::array<SPECKSet2D, 3>& subsets)
     m_I.start_y += detail_len_y;
 }
 
-int speck::SPECK2D::m_decide_set_significance(SPECKSet2D& set)
+auto speck::SPECK2D::m_decide_set_significance(SPECKSet2D& set) -> int
 {
     // Note: the only case this method returns 1 is when decoding and we have
     //       already decoded enough number of bits.
@@ -477,7 +481,7 @@ int speck::SPECK2D::m_decide_set_significance(SPECKSet2D& set)
     return 0;
 }
 
-int speck::SPECK2D::m_output_set_significance(const SPECKSet2D& set)
+auto speck::SPECK2D::m_output_set_significance(const SPECKSet2D& set) -> int
 {
 #ifdef PRINT
     if (set.signif == Significance::Sig)
@@ -497,7 +501,7 @@ int speck::SPECK2D::m_output_set_significance(const SPECKSet2D& set)
 }
 
 // It outputs by printing out the value at this point.
-int speck::SPECK2D::m_output_pixel_sign(const SPECKSet2D& pixel)
+auto speck::SPECK2D::m_output_pixel_sign(const SPECKSet2D& pixel) -> int
 {
     const auto idx = pixel.start_y * m_dim_x + pixel.start_x;
 
@@ -520,7 +524,7 @@ int speck::SPECK2D::m_output_pixel_sign(const SPECKSet2D& pixel)
         return 0;
 }
 
-int speck::SPECK2D::m_input_pixel_sign(const SPECKSet2D& pixel)
+auto speck::SPECK2D::m_input_pixel_sign(const SPECKSet2D& pixel) -> int
 {
     if (m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size())
         return 1;
@@ -540,7 +544,7 @@ int speck::SPECK2D::m_input_pixel_sign(const SPECKSet2D& pixel)
     return 0;
 }
 
-int speck::SPECK2D::m_output_refinement(const SPECKSet2D& pixel)
+auto speck::SPECK2D::m_output_refinement(const SPECKSet2D& pixel) -> int
 {
     const auto idx = pixel.start_y * m_dim_x + pixel.start_x;
 
@@ -564,7 +568,7 @@ int speck::SPECK2D::m_output_refinement(const SPECKSet2D& pixel)
         return 0;
 }
 
-int speck::SPECK2D::m_input_refinement(const SPECKSet2D& pixel)
+auto speck::SPECK2D::m_input_refinement(const SPECKSet2D& pixel) -> int
 {
     if (m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size())
         return 1;
@@ -584,7 +588,7 @@ int speck::SPECK2D::m_input_refinement(const SPECKSet2D& pixel)
 }
 
 // Calculate the number of partitions able to be performed
-size_t speck::SPECK2D::m_num_of_partitions() const
+auto speck::SPECK2D::m_num_of_partitions() const -> size_t
 {
     size_t num_of_parts = 0;
     size_t dim_x = m_dim_x, dim_y = m_dim_y;
@@ -613,24 +617,26 @@ void speck::SPECK2D::m_clean_LIS()
 {
     std::vector<SPECKSet2D> tmp;
 
+    // Only consolidate memory if the garbage amount is big enough,
+    // in both absolute and relative senses.
     for (size_t i = 0; i < m_LIS_garbage_cnt.size(); i++) {
-        // Only consolidate memory if the garbage amount is big enough,
-        // in both absolute and relative senses.
+        // clang-format off
         if ((m_LIS_garbage_cnt[i] > m_vec_init_capacity) && 
             (m_LIS_garbage_cnt[i] >= m_LIS[i].size() / 2)) {
             tmp.clear();
             tmp.reserve(m_vec_init_capacity);
-            for (const auto& s : m_LIS[i]){
+            for (const auto& s : m_LIS[i]) {
                 if (s.type != SetType::Garbage)
                     tmp.emplace_back(s);
             }
             std::swap(m_LIS[i], tmp);
             m_LIS_garbage_cnt[i] = 0;
         }
+        // clang-format on
     }
 }
 
-bool speck::SPECK2D::m_ready_to_encode() const
+auto speck::SPECK2D::m_ready_to_encode() const -> bool
 {
     if (m_coeff_buf == nullptr)
         return false;
@@ -642,7 +648,7 @@ bool speck::SPECK2D::m_ready_to_encode() const
     return true;
 }
 
-bool speck::SPECK2D::m_ready_to_decode() const
+auto speck::SPECK2D::m_ready_to_decode() const -> bool
 {
     if (m_bit_buffer.empty())
         return false;
@@ -652,7 +658,7 @@ bool speck::SPECK2D::m_ready_to_decode() const
     return true;
 }
 
-int speck::SPECK2D::write_to_disk(const std::string& filename) const
+auto speck::SPECK2D::write_to_disk(const std::string& filename) const -> int
 {
     // Header definition:
     // information: dim_x,     dim_y,     image_mean,  max_coeff_bits, bitstream
@@ -680,7 +686,7 @@ int speck::SPECK2D::write_to_disk(const std::string& filename) const
     return rtn;
 }
 
-int speck::SPECK2D::read_from_disk(const std::string& filename)
+auto speck::SPECK2D::read_from_disk(const std::string& filename) -> int
 {
     // Header definition:
     // information: dim_x,     dim_y,     image_mean,  max_coeff_bits, bitstream
@@ -725,12 +731,12 @@ void speck::SPECK2D::m_print_set(const char* str, const SPECKSet2D& set) const
 //
 // Class SPECKSet2D
 //
-bool speck::SPECKSet2D::is_pixel() const
+auto speck::SPECKSet2D::is_pixel() const -> bool
 {
     return (length_x == 1 && length_y == 1);
 }
 
-bool speck::SPECKSet2D::is_empty() const
+auto speck::SPECKSet2D::is_empty() const -> bool
 {
     return (length_x == 0 || length_y == 0);
 }
