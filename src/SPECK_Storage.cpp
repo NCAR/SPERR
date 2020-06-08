@@ -50,7 +50,7 @@ void speck::SPECK_Storage::take_coeffs(buffer_type_d coeffs, size_t len)
 }
 
 void speck::SPECK_Storage::take_coeffs(buffer_type_f coeffs, size_t len)
-{ 
+{
     // Cannot really take the coeffs if the data type doesn't match.
     // So we make a copy and destroy the old memory block.
     copy_coeffs(coeffs, len);
@@ -68,28 +68,28 @@ void speck::SPECK_Storage::take_bitstream(std::vector<bool>& stream)
     std::swap(m_bit_buffer, stream);
 }
 
-const std::vector<bool>& speck::SPECK_Storage::get_read_only_bitstream() const
+auto speck::SPECK_Storage::get_read_only_bitstream() const -> const std::vector<bool>&
 {
     return m_bit_buffer;
 }
 
-const speck::buffer_type_d& speck::SPECK_Storage::get_read_only_coeffs() const
+auto speck::SPECK_Storage::get_read_only_coeffs() const -> const speck::buffer_type_d&
 {
     return m_coeff_buf;
 }
 
-std::vector<bool>& speck::SPECK_Storage::release_bitstream()
+auto speck::SPECK_Storage::release_bitstream() -> std::vector<bool>&
 {
     return m_bit_buffer;
 }
 
-speck::buffer_type_d speck::SPECK_Storage::release_coeffs_double()
+auto speck::SPECK_Storage::release_coeffs_double() -> speck::buffer_type_d
 {
     m_coeff_len = 0;
     return std::move(m_coeff_buf);
 }
 
-speck::buffer_type_f speck::SPECK_Storage::release_coeffs_float()
+auto speck::SPECK_Storage::release_coeffs_float() -> speck::buffer_type_f
 {
     assert(m_coeff_len > 0);
 #ifdef NO_CPP14
@@ -107,15 +107,15 @@ void speck::SPECK_Storage::set_image_mean(double mean)
 {
     m_image_mean = mean;
 }
-double speck::SPECK_Storage::get_image_mean() const
+auto speck::SPECK_Storage::get_image_mean() const -> double
 {
     return m_image_mean;
 }
 
 // Good solution to deal with bools and unsigned chars
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
-int speck::SPECK_Storage::m_write(const buffer_type_c& header, size_t header_size,
-                                  const char* filename) const
+auto speck::SPECK_Storage::m_write(const buffer_type_c& header, size_t header_size,
+                                   const char* filename) const -> int
 {
     // Sanity check on the size of bit_buffer
     assert(m_bit_buffer.size() % 8 == 0);
@@ -157,8 +157,8 @@ int speck::SPECK_Storage::m_write(const buffer_type_c& header, size_t header_siz
         return 1;
 }
 
-int speck::SPECK_Storage::m_read(buffer_type_c& header, size_t header_size,
-                                 const char* filename)
+auto speck::SPECK_Storage::m_read(buffer_type_c& header, size_t header_size,
+                                  const char* filename) -> int
 {
     // Open a file and read its content
     std::ifstream file(filename, std::ios::binary);
@@ -199,7 +199,7 @@ int speck::SPECK_Storage::m_read(buffer_type_c& header, size_t header_size,
     return 0;
 }
 
-size_t speck::SPECK_Storage::get_bit_buffer_size() const
+auto speck::SPECK_Storage::get_bit_buffer_size() const -> size_t
 {
     return m_bit_buffer.size();
 }
