@@ -54,7 +54,7 @@ int main( int argc, char* argv[] )
     speck::SPECK2D encoder;
     encoder.set_dims( dim_x, dim_y );
     encoder.set_image_mean( cdf.get_mean() );
-    encoder.copy_coeffs( cdf.get_read_only_data(), dim_x * dim_y );
+    encoder.take_coeffs( cdf.release_data(), dim_x * dim_y );
     const size_t total_bits   = size_t(32.0f * total_vals / cratio);
     encoder.set_bit_budget( total_bits );
     encoder.encode();
