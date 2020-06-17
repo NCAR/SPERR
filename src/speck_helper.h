@@ -1,13 +1,16 @@
 #ifndef SPECK_HELPER_H
 #define SPECK_HELPER_H
 
-/* We put common functions that are used across the speck encoder here. */
+//
+// We put common functions that are used across the speck encoder here.
+//
 
 #include <array>
 #include <memory>
 #include <vector>
 
 namespace speck {
+
 #ifndef BUFFER_TYPES
 #define BUFFER_TYPES
 using buffer_type_d = std::unique_ptr<double[]>;
@@ -29,6 +32,21 @@ enum class SetType : unsigned char {
     TypeS,
     TypeI,
     Garbage
+};
+
+class Outlier {
+public:
+    //
+    // Member data
+    //
+    uint32_t x   = 0;
+    uint32_t y   = 0;
+    uint32_t z   = 0;
+    float    err = 0.0;
+
+    // Constructors
+    Outlier() = default;
+    Outlier(uint32_t x, uint32_t y, uint32_t z, float err);
 };
 
 //
