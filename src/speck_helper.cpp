@@ -288,3 +288,55 @@ void speck::partition_S_Z(const SPECKSet3D& set, std::array<SPECKSet3D, 2>& subs
     sub1.start_z  = set.start_z + split_z[0];
     sub1.length_z = split_z[1];
 }
+
+auto speck::pack_booleans( buffer_type_c&           dest,
+                           const std::vector<bool>& src,
+                           size_t                   offset ) -> int
+{
+    if( src.size() % 8 != 0 )
+        return 1;
+
+    const uint64_t magic = 0x8040201008040201;
+    size_t         pos   = offset;
+    bool           a[8];
+    uint64_t       t;
+    for (size_t i = 0; i < src.size(); i++) {
+        auto m = i % 8;
+        a[m]   = src[i];
+        if (m == 7) // Need to pack 8 booleans!
+        {
+            std::memcpy(&t, a, 8);
+            dest[pos++] = (magic * t) >> 56;
+        }
+    }
+
+    return 0;
+}
+
+auto speck::unpack_booleans( std::vector<bool>&    dest,
+                             const buffer_type_c&  src,
+                             size_t                src_len,
+                             size_t                char_offset ) -> int
+{
+    if( src_len < char_offset )
+        return 1;
+
+    size_t num_of_bools = (src_len - char_offset) * 8;
+    dest.clear();
+    dest.resize(num_of_bools);
+    const uint64_t magic = 0x8040201008040201;
+    const uint64_t mask  = 0x8080808080808080;
+    size_t         pos   = char_offset;
+    bool           a[8];
+    uint64_t       t;
+    uint8_t        b;
+    for (size_t i = 0; i < num_of_bools; i += 8) {
+        b = src[pos++];
+        t = ((magic * b) & mask) >> 7;
+        std::memcpy(a, &t, 8);
+        for (size_t j = 0; j < 8; j++)
+            dest[i + j] = a[j];
+    }
+
+    return 0;
+}
