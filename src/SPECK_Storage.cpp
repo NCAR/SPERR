@@ -132,19 +132,9 @@ auto speck::SPECK_Storage::m_write(const buffer_type_c& header, size_t header_si
     std::memcpy(buf.get(), header.get(), header_size);
 
     // Pack booleans to buf!
-    const uint64_t magic = 0x8040201008040201;
-    size_t         pos   = header_size;
-    bool           a[8];
-    uint64_t       t;
-    for (size_t i = 0; i < m_bit_buffer.size(); i++) {
-        auto m = i % 8;
-        a[m]   = m_bit_buffer[i];
-        if (m == 7) // Need to pack 8 booleans!
-        {
-            std::memcpy(&t, a, 8);
-            buf[pos++] = (magic * t) >> 56;
-        }
-    }
+    int rv = speck::pack_booleans( buf, m_bit_buffer, header_size );
+    if( rv != 0 )
+        return rv;
 
     // Write buf to a file.
     // Good introduction here: http://www.cplusplus.com/doc/tutorial/files/
@@ -179,22 +169,7 @@ auto speck::SPECK_Storage::m_read(buffer_type_c& header, size_t header_size,
     std::memcpy(header.get(), buf.get(), header_size);
 
     // Now interpret the booleans
-    size_t num_of_bools = (total_size - header_size) * 8;
-    m_bit_buffer.clear();
-    m_bit_buffer.resize(num_of_bools);
-    const uint64_t magic = 0x8040201008040201;
-    const uint64_t mask  = 0x8080808080808080;
-    size_t         pos   = header_size;
-    bool           a[8];
-    uint64_t       t;
-    uint8_t        b;
-    for (size_t i = 0; i < num_of_bools; i += 8) {
-        b = buf[pos++];
-        t = ((magic * b) & mask) >> 7;
-        std::memcpy(a, &t, 8);
-        for (size_t j = 0; j < 8; j++)
-            m_bit_buffer[i + j] = a[j];
-    }
+    speck::unpack_booleans( m_bit_buffer, buf, total_size, header_size );
 
     return 0;
 }
