@@ -27,7 +27,7 @@ public:
     // memory management: output
     auto get_read_only_bitstream() const -> const std::vector<bool>&;
     auto get_read_only_coeffs() const -> const buffer_type_d&;
-    auto release_bitstream() -> std::vector<bool>&; // The bitstream will be up to changes.
+    auto release_bitstream() -> std::vector<bool>;  // Give up ownership of the bitstream
     auto release_coeffs_double() -> buffer_type_d;  // Others take ownership of the data
     auto release_coeffs_float() -> buffer_type_f;   // Others take ownership of the data
 
