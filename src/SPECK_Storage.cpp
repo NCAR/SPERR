@@ -78,9 +78,9 @@ auto speck::SPECK_Storage::get_read_only_coeffs() const -> const speck::buffer_t
     return m_coeff_buf;
 }
 
-auto speck::SPECK_Storage::release_bitstream() -> std::vector<bool>&
+auto speck::SPECK_Storage::release_bitstream() -> std::vector<bool>
 {
-    return m_bit_buffer;
+    return std::move( m_bit_buffer );
 }
 
 auto speck::SPECK_Storage::release_coeffs_double() -> speck::buffer_type_d
