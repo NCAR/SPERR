@@ -18,9 +18,9 @@ void speck::SPECK3D_Err::add_outlier(uint32_t x, uint32_t y, uint32_t z, float e
     m_LOS.emplace_back(x, y, z, e);
 }
 
-void speck::SPECK3D_Err::add_outlier_list( std::vector<Outlier> list )
+void speck::SPECK3D_Err::add_outlier_list(std::vector<Outlier> list)
 {
-    m_LOS = std::move( list );
+    m_LOS = std::move(list);
 }
 
 void speck::SPECK3D_Err::set_dims(size_t x, size_t y, size_t z)
@@ -38,9 +38,9 @@ void speck::SPECK3D_Err::set_tolerance(float t)
 void speck::SPECK3D_Err::m_initialize_LIS()
 {
     std::array<size_t, 3> num_of_parts; // how many times each dimension could be partitioned?
-    num_of_parts[0] = speck::num_of_partitions( m_dim_x );
-    num_of_parts[1] = speck::num_of_partitions( m_dim_y );
-    num_of_parts[2] = speck::num_of_partitions( m_dim_z );
+    num_of_parts[0]     = speck::num_of_partitions(m_dim_x);
+    num_of_parts[1]     = speck::num_of_partitions(m_dim_y);
+    num_of_parts[2]     = speck::num_of_partitions(m_dim_z);
     size_t num_of_sizes = 1;
     for (size_t i = 0; i < 3; i++)
         num_of_sizes += num_of_parts[i];
@@ -57,11 +57,11 @@ void speck::SPECK3D_Err::m_initialize_LIS()
     big.length_y = uint32_t(m_dim_y); // Truncate 64-bit int to 32-bit, but should be OK.
     big.length_z = uint32_t(m_dim_z); // Truncate 64-bit int to 32-bit, but should be OK.
 
-// clang-format off
+    // clang-format off
     const auto num_of_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
     const auto num_of_xforms_z  = speck::num_of_xforms(m_dim_z);
     size_t     xf               = 0;
-// clang-format on
+    // clang-format on
     std::array<SPECKSet3D, 8> subsets;
     while (xf < num_of_xforms_xy && xf < num_of_xforms_z) {
         speck::partition_S_XYZ(big, subsets);
@@ -134,93 +134,91 @@ auto speck::SPECK3D_Err::m_ready_to_encode() const -> bool
 {
     if (m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0)
         return false;
-    if( m_tolerance <= 0.0f )
+    if (m_tolerance <= 0.0f)
         return false;
-    if( m_LOS.empty() )
+    if (m_LOS.empty())
         return false;
 
     return true;
-
 }
 
 auto speck::SPECK3D_Err::encode() -> int
 {
     int rv;
-    if( (rv = m_ready_to_encode()) != 0 )
+    if ((rv = m_ready_to_encode()) != 0)
         return rv;
     m_encode_mode = true;
 
     // initialize other data structures
     m_initialize_LIS();
-    m_outlier_cnt = m_LOS.size();   // Initially everyone in LOS is an outlier
-    m_q.reserve( m_outlier_cnt );
-    for( const auto& o : m_LOS )
-        m_q.push_back( std::abs( o.err ) );
-    m_err_hat.assign( m_outlier_cnt, 0.0f );
-    m_pixel_types.assign( m_outlier_cnt, PixelType::Insig );
+    m_outlier_cnt = m_LOS.size(); // Initially everyone in LOS is an outlier
+    m_q.reserve(m_outlier_cnt);
+    for (const auto& o : m_LOS)
+        m_q.push_back(std::abs(o.err));
+    m_err_hat.assign(m_outlier_cnt, 0.0f);
+    m_pixel_types.assign(m_outlier_cnt, PixelType::Insig);
 
     // Find the maximum q, and decide m_max_coeff_bits
-    auto max_q       = *std::max_element( m_q.cbegin(), m_q.cend() );
-    auto max_bits_f  = std::floor( std::log2(max_q) );
-    m_max_coeff_bits = int32_t( max_bits_f );
-    // Start the iterations! 
-    for( size_t bitplane = 0; bitplane < 128; bitplane++ ) {
+    auto max_q       = *(std::max_element(m_q.cbegin(), m_q.cend()));
+    auto max_bits_f  = std::floor(std::log2(max_q));
+    m_max_coeff_bits = int32_t(max_bits_f);
 
-    // details...
+    // Start the iterations!
+    for (size_t bitplane = 0; bitplane < 128; bitplane++) {
 
+        // details...
     }
-    
-    return 0;    
+
+    return 0;
 }
 
-auto speck::SPECK3D_Err::m_decide_significance( const SPECKSet3D& set ) const -> bool
+auto speck::SPECK3D_Err::m_decide_significance(const SPECKSet3D& set) const -> bool
 {
-    // Strategy: 
-    // Iterate all outliers: if 
-    // 1) its type is PixelType::Insig, 
-    // 2) its q value is above the current threshold, and 
-    // 3) its location falls inside this set, 
+    // Strategy:
+    // Iterate all outliers: if
+    // 1) its type is PixelType::Insig,
+    // 2) its q value is above the current threshold, and
+    // 3) its location falls inside this set,
     // then this set is significant. Otherwise its insignificant.
-    
-    for( size_t i = 0; i < m_pixel_types.size(); i++ ) {
+
+    for (size_t i = 0; i < m_pixel_types.size(); i++) {
         // Testing condition 1) and 2)
-        if( m_pixel_types[i] == PixelType::Insig && m_q[i] >= m_threshold ) {
+        if (m_pixel_types[i] == PixelType::Insig && m_q[i] >= m_threshold) {
             const auto& olr = m_LOS[i];
 
             // Testing condition 3)
-// clang-format off
+            // clang-format off
             if( set.start_x <= olr.x && olr.x < set.start_x + set.length_x &&
                 set.start_y <= olr.y && olr.y < set.start_y + set.length_y &&
-                set.start_z <= olr.z && olr.z < set.start_z + set.length_z )
-// clang-format on
+                set.start_z <= olr.z && olr.z < set.start_z + set.length_z ) {
                 return true;
+            } // clang-format on
         }
-    } 
+    }
 
     return false;
 }
 
-void speck::SPECK3D_Err::m_process_S( size_t i1, size_t i2 )
+void speck::SPECK3D_Err::m_process_S(size_t i1, size_t i2)
 {
-    auto& set = m_LIS[i1][i2];
-    bool is_sig = m_decide_significance( set );
-    m_bit_buffer.push_back( is_sig );
- 
-    if( is_sig ) {
-        if( set.is_pixel() ) {
+    auto& set    = m_LIS[i1][i2];
+    bool  is_sig = m_decide_significance(set);
+    m_bit_buffer.push_back(is_sig);
+
+    if (is_sig) {
+        if (set.is_pixel()) {
 
             // Need to first find the index of this pixel in m_LOS
             int64_t idx = -1;
-            for( int64_t i = 0; i < m_LOS.size(); i++ ) {
-// clang-format off
+            for (int64_t i = 0; i < m_LOS.size(); i++) {
+                // clang-format off
                 if( m_pixel_types[i] == PixelType::Insig && 
                     m_LOS[i].x       == set.start_x      && 
                     m_LOS[i].y       == set.start_y      && 
                     m_LOS[i].z       == set.start_z       ) {
-// clang-format off
                     idx = i;
                     break;
-                }
+                } // clang-format off
                 assert( idx != -1 );
             }
             m_bit_buffer.push_back( m_LOS[idx].err >= 0.0f );
