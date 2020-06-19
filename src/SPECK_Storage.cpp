@@ -118,7 +118,8 @@ auto speck::SPECK_Storage::m_write(const buffer_type_c& header, size_t header_si
                                    const char* filename) const -> int
 {
     // Sanity check on the size of bit_buffer
-    assert(m_bit_buffer.size() % 8 == 0);
+    if(m_bit_buffer.size() % 8 != 0)
+        return 1;
 
     // Allocate output buffer
     size_t total_size = header_size + m_bit_buffer.size() / 8;
