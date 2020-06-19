@@ -10,8 +10,7 @@ void speck::SPECK3D_Err::reserve(size_t num)
     m_LOS.reserve(num);
     m_q.reserve(num);
     m_err_hat.reserve(num);
-    m_LSP.reserve(num);
-    m_LSP_newly.reserve(num);
+    m_pixel_types.reserve(num);
 }
 
 void speck::SPECK3D_Err::add_outlier(uint32_t x, uint32_t y, uint32_t z, float e)
@@ -58,11 +57,11 @@ void speck::SPECK3D_Err::m_initialize_LIS()
     big.length_y = uint32_t(m_dim_y); // Truncate 64-bit int to 32-bit, but should be OK.
     big.length_z = uint32_t(m_dim_z); // Truncate 64-bit int to 32-bit, but should be OK.
 
-    // clang-format off
+// clang-format off
     const auto num_of_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
     const auto num_of_xforms_z  = speck::num_of_xforms(m_dim_z);
     size_t     xf               = 0;
-    // clang-format on
+// clang-format on
     std::array<SPECKSet3D, 8> subsets;
     while (xf < num_of_xforms_xy && xf < num_of_xforms_z) {
         speck::partition_S_XYZ(big, subsets);
@@ -158,22 +157,82 @@ auto speck::SPECK3D_Err::encode() -> int
     for( const auto& o : m_LOS )
         m_q.push_back( std::abs( o.err ) );
     m_err_hat.assign( m_outlier_cnt, 0.0f );
-    m_LSP.reserve( m_outlier_cnt ); // Every outlier will end up in m_LSP
-    m_LSP_newly.reserve( m_outlier_cnt );
+    m_pixel_types.assign( m_outlier_cnt, PixelType::Insig );
 
     // Find the maximum q, and decide m_max_coeff_bits
     auto max_q       = *std::max_element( m_q.cbegin(), m_q.cend() );
     auto max_bits_f  = std::floor( std::log2(max_q) );
     m_max_coeff_bits = int32_t( max_bits_f );
-    m_threshold      = std::pow(2.0f, max_bits_f);
-
     // Start the iterations! 
     for( size_t bitplane = 0; bitplane < 128; bitplane++ ) {
 
+    // details...
 
     }
     
     return 0;    
+}
+
+auto speck::SPECK3D_Err::m_decide_significance( const SPECKSet3D& set ) const -> bool
+{
+    // Strategy: 
+    // Iterate all outliers: if 
+    // 1) its type is PixelType::Insig, 
+    // 2) its q value is above the current threshold, and 
+    // 3) its location falls inside this set, 
+    // then this set is significant. Otherwise its insignificant.
+    
+    for( size_t i = 0; i < m_pixel_types.size(); i++ ) {
+        // Testing condition 1) and 2)
+        if( m_pixel_types[i] == PixelType::Insig && m_q[i] >= m_threshold ) {
+            const auto& olr = m_LOS[i];
+
+            // Testing condition 3)
+// clang-format off
+            if( set.start_x <= olr.x && olr.x < set.start_x + set.length_x &&
+                set.start_y <= olr.y && olr.y < set.start_y + set.length_y &&
+                set.start_z <= olr.z && olr.z < set.start_z + set.length_z )
+// clang-format on
+                return true;
+        }
+    } 
+
+    return false;
+}
+
+void speck::SPECK3D_Err::m_process_S( size_t i1, size_t i2 )
+{
+    auto& set = m_LIS[i1][i2];
+    bool is_sig = m_decide_significance( set );
+    m_bit_buffer.push_back( is_sig );
+ 
+    if( is_sig ) {
+        if( set.is_pixel() ) {
+
+            // Need to first find the index of this pixel in m_LOS
+            int64_t idx = -1;
+            for( int64_t i = 0; i < m_LOS.size(); i++ ) {
+// clang-format off
+                if( m_pixel_types[i] == PixelType::Insig && 
+                    m_LOS[i].x       == set.start_x      && 
+                    m_LOS[i].y       == set.start_y      && 
+                    m_LOS[i].z       == set.start_z       ) {
+// clang-format off
+                    idx = i;
+                    break;
+                }
+                assert( idx != -1 );
+            }
+            m_bit_buffer.push_back( m_LOS[idx].err >= 0.0f );
+            m_pixel_types[ idx ] = PixelType::NewlySig;
+        }
+        else {
+            //m_code_S( i1, i2 );
+        }
+
+        set.type = SetType::Garbage;
+        m_LIS_garbage_cnt[i1]++;
+    }
 }
 
 

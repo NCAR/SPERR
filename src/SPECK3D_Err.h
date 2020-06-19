@@ -9,6 +9,17 @@
 
 namespace speck {
 
+//
+// Helper enum class that represents the status of a pixel.
+// Every pixel starts as Insignificant. It is moved to LSP as a NewlySignificant Pixel.
+// In the next iteration, it will be a Significant pixel.
+//
+enum class PixelType : char {
+    Insig,
+    NewlySig,
+    Sig
+};
+
 class SPECK3D_Err {
 public:
     //
@@ -37,6 +48,8 @@ private:
     void m_initialize_LIS();
     void m_clean_LIS();
     auto m_ready_to_encode() const -> bool;
+    auto m_decide_significance( const SPECKSet3D& ) const -> bool;
+    void m_process_S( size_t, size_t );
 
 
     //
@@ -55,15 +68,15 @@ private:
     float   m_threshold      = 0.0;  // Threshold that's used for quantization
     size_t  m_bit_idx        = 0;    // Used for decode. Which bit we're at?
 
-    std::vector<bool>    m_bit_buffer;
     std::vector<Outlier> m_LOS;      // List of OutlierS. This list is not altered by encoding.
     std::vector<float>   m_q;        // Q list in the algorithm description. This list is
                                      // constantly refined by the refinement pass.
-    std::vector<float>  m_err_hat;   // err_hat list in the algorithm description. This list
+    std::vector<float>   m_err_hat;  // err_hat list in the algorithm description. This list
                                      // contains the values that would be reconstructed.
-    std::vector<size_t> m_LSP;       // Records locations of significant pixels
-    std::vector<bool>   m_LSP_newly; // Records if this pixel is newly significant or not.
 
+    // Records the type of every pixel. It also essentially serves the functionality of LSP.
+    std::vector<PixelType>               m_pixel_types;
+    std::vector<bool>                    m_bit_buffer;
     std::vector<std::vector<SPECKSet3D>> m_LIS;
     std::vector<size_t>                  m_LIS_garbage_cnt;
 };
