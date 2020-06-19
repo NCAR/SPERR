@@ -82,7 +82,8 @@ void speck::SPECK3D::m_clean_LIS()
 
 auto speck::SPECK3D::encode() -> int
 {
-    assert(m_ready_to_encode());
+    if( m_ready_to_encode() == false )
+        return 1;
     m_encode_mode = true;
 
     m_initialize_sets_lists();
@@ -122,7 +123,8 @@ auto speck::SPECK3D::encode() -> int
 
 auto speck::SPECK3D::decode() -> int
 {
-    assert(m_ready_to_decode());
+    if( m_ready_to_decode() == false )
+        return 1;
     m_encode_mode = false;
 
     // By default, decode all the available bits
@@ -572,7 +574,8 @@ auto speck::SPECK3D::write_to_disk(const std::string& filename) const -> int
     pos += sizeof(m_image_mean);
     std::memcpy(header.get() + pos, &m_max_coeff_bits, sizeof(m_max_coeff_bits));
     pos += sizeof(m_max_coeff_bits);
-    assert(pos == header_size);
+    if(pos != header_size)
+        return 1;
 
     // Call the actual write function
     int rtn = m_write(header, header_size, filename.c_str());
@@ -606,7 +609,8 @@ auto speck::SPECK3D::read_from_disk(const std::string& filename) -> int
     pos += sizeof(m_image_mean);
     std::memcpy(&m_max_coeff_bits, header.get() + pos, sizeof(m_max_coeff_bits));
     pos += sizeof(m_max_coeff_bits);
-    assert(pos == header_size);
+    if(pos != header_size)
+        return 1;
 
     this->set_dims(size_t(dims[0]), size_t(dims[1]), size_t(dims[2]));
 
