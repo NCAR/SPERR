@@ -265,9 +265,9 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> int
         }
     }
 
-    for (size_t tmp = 0; tmp < m_LIS.size(); tmp++) {
+    for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
         // From the end of m_LIS to its front
-        size_t idx1 = m_LIS.size() - 1 - tmp;
+        size_t idx1 = m_LIS.size() - tmp;
         for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
             const auto& s = m_LIS[idx1][idx2];
             if (s.type != SetType::Garbage) {
@@ -291,9 +291,9 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> int
         }
     }
 
-    for (size_t tmp = 0; tmp < m_LIS.size(); tmp++) {
+    for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
         // From the end of m_LIS to its front
-        size_t idx1 = m_LIS.size() - 1 - tmp;
+        size_t idx1 = m_LIS.size() - tmp;
         for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
             const auto& s = m_LIS[idx1][idx2];
             if (s.type != SetType::Garbage) {
