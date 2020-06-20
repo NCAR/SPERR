@@ -50,7 +50,9 @@ private:
     auto m_ready_to_encode() const -> bool;
     auto m_decide_significance( const SPECKSet3D& ) const -> bool;
     void m_process_S( size_t, size_t );
-
+    void m_code_S( size_t, size_t );
+    void m_sorting_pass();
+    auto m_refinement_pass() -> bool; // Returns if all reconstructions fall below threshold.
 
     //
     // Private data members
