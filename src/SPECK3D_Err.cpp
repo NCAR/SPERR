@@ -114,18 +114,18 @@ void speck::SPECK3D_Err::m_clean_LIS()
 
         // Because lists towards the end tend to have bigger sizes, we look at
         // them first. This practices should reduce the number of memory allocations.
-        const auto i = m_LIS_garbage_cnt.size() - tmpi;
+        const auto idx = m_LIS_garbage_cnt.size() - tmpi;
 
         // Only consolidate memory if the garbage count is more than half
-        if (m_LIS_garbage_cnt[i] > m_LIS[i].size() / 2) {
-            auto& list = m_LIS[i];
+        if (m_LIS_garbage_cnt[idx] > m_LIS[idx].size() / 2) {
+            auto& list = m_LIS[idx];
             tmpv.clear();
             tmpv.reserve(list.size()); // will leave half capacity unfilled, so the list
                                        // won't need a memory re-allocation for a while.
             std::copy_if(list.cbegin(), list.cend(), std::back_inserter(tmpv),
                          [](const SPECKSet3D& s) { return s.type != SetType::Garbage; });
             std::swap(list, tmpv);
-            m_LIS_garbage_cnt[i] = 0;
+            m_LIS_garbage_cnt[idx] = 0;
         }
     }
 }
