@@ -70,6 +70,11 @@ add_executable( decompressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/decompres
 target_link_libraries(      decompressor_2d PUBLIC ${SPECK_LIBS})
 target_include_directories( decompressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
 
+# Executable #9
+add_executable( example_speck3d_err "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck3d_err.cpp" )
+target_link_libraries(      example_speck3d_err PUBLIC ${SPECK_LIBS})
+target_include_directories( example_speck3d_err PUBLIC ${PROJECT_BINARY_DIR} )
+
 if( BUILD_QCC_EXAMPLES )
     set ( QCCPACK_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/QccPack-0.61-1/install/" 
                               CACHE STRING "Where QccPack is installed"             )

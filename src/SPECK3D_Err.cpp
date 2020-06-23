@@ -4,6 +4,9 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
+#include <iostream>
+
+#define PRINT
 
 void speck::SPECK3D_Err::reserve(size_t num)
 {
@@ -144,10 +147,19 @@ auto speck::SPECK3D_Err::m_ready_to_encode() const -> bool
 
 auto speck::SPECK3D_Err::encode() -> int
 {
-    int rv;
-    if ((rv = m_ready_to_encode()) != 0)
-        return rv;
+    if ( !m_ready_to_encode() ) 
+        return 1;
     m_encode_mode = true;
+
+    // Process all outliers by subtracting m_tolerance.
+    // The result is that all outliers are closer to the origin, while 
+    // still maintaining their signs.
+    for (auto& o : m_LOS) {
+        if( o.err > 0.0f )
+            o.err -= m_tolerance;
+        else
+            o.err += m_tolerance;
+    }
 
     // initialize other data structures
     m_initialize_LIS();
@@ -162,11 +174,16 @@ auto speck::SPECK3D_Err::encode() -> int
     auto max_q       = *(std::max_element(m_q.cbegin(), m_q.cend()));
     auto max_bits_f  = std::floor(std::log2(max_q));
     m_max_coeff_bits = int32_t(max_bits_f);
+    m_threshold      = std::pow(2.0f, float(m_max_coeff_bits));
 
     // Start the iterations!
     for (size_t bitplane = 0; bitplane < 128; bitplane++) {
 
-        // details...
+        m_sorting_pass();
+        if( m_refinement_pass() )
+            break;
+
+        m_threshold *= 0.5f;
     }
 
     return 0;
@@ -204,6 +221,9 @@ void speck::SPECK3D_Err::m_process_S(size_t idx1, size_t idx2)
     auto& set    = m_LIS[idx1][idx2];
     bool  is_sig = m_decide_significance(set);
     m_bit_buffer.push_back(is_sig);
+#ifdef PRINT
+    std::cout << "threshold = " << m_threshold << ",  p" << is_sig << std::endl;
+#endif
 
     if (is_sig) {
         if (set.is_pixel()) {
@@ -223,6 +243,9 @@ void speck::SPECK3D_Err::m_process_S(size_t idx1, size_t idx2)
             }
             m_bit_buffer.push_back( m_LOS[idx].err >= 0.0f );
             m_pixel_types[ idx ] = PixelType::NewlySig;
+#ifdef PRINT
+    std::cout << "threshold = " << m_threshold << ",  s" << m_bit_buffer.back() << std::endl;
+#endif
         }
         else {
             m_code_S( idx1, idx2 );
@@ -270,6 +293,9 @@ auto speck::SPECK3D_Err::m_refinement_pass() -> bool
             auto was_outlier = (std::abs( m_err_hat[idx] - m_LOS[idx].err ) > m_tolerance);
             auto need_refine = (m_q[idx] >= m_threshold);
             m_bit_buffer.push_back( need_refine );
+#ifdef PRINT
+    std::cout << "threshold = " << m_threshold << ",  r" << m_bit_buffer.back() << std::endl;
+#endif
             if (need_refine) {
                 m_q[idx] -= m_threshold;
                 m_err_hat[idx] += m_threshold * 0.5f;
