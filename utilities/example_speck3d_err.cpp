@@ -7,6 +7,7 @@ int main( int argc, char* argv[] )
     se.set_tolerance( 0.1 );
 
     se.add_outlier( 0, 0, 0, 0.3f );
+    se.add_outlier( 3, 3, 3, -0.4f );
     
     se.encode();
 }

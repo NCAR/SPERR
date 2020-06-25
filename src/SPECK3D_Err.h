@@ -49,10 +49,14 @@ private:
     void m_clean_LIS();
     auto m_ready_to_encode() const -> bool;
     auto m_decide_significance(const SPECKSet3D&) const -> bool;
-    void m_process_S(size_t, size_t);
-    void m_code_S(size_t, size_t);
-    void m_sorting_pass();
-    auto m_refinement_pass() -> bool; // Returns if all reconstructions fall below threshold.
+    // For the following encoding methods that return a boolean, 
+    // True means that all outliers are refined to be within the tolerance
+    // False means otherwise.
+    auto m_process_S(size_t, size_t) -> bool;
+    auto m_code_S(size_t, size_t) -> bool;
+    auto m_sorting_pass() -> bool;
+    auto m_refine_Sig() -> bool;
+    auto m_refine_NewlySig( size_t ) -> bool;
 
     //
     // Private data members

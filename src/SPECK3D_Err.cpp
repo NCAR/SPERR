@@ -179,8 +179,9 @@ auto speck::SPECK3D_Err::encode() -> int
     // Start the iterations!
     for (size_t bitplane = 0; bitplane < 128; bitplane++) {
 
-        m_sorting_pass();
-        if( m_refinement_pass() )
+        if( m_sorting_pass() )
+            break;
+        if( m_refine_Sig() )
             break;
 
         m_threshold *= 0.5f;
@@ -216,13 +217,13 @@ auto speck::SPECK3D_Err::m_decide_significance(const SPECKSet3D& set) const -> b
     return false;
 }
 
-void speck::SPECK3D_Err::m_process_S(size_t idx1, size_t idx2)
+auto speck::SPECK3D_Err::m_process_S(size_t idx1, size_t idx2) -> bool
 {
     auto& set    = m_LIS[idx1][idx2];
     bool  is_sig = m_decide_significance(set);
     m_bit_buffer.push_back(is_sig);
 #ifdef PRINT
-    std::cout << "threshold = " << m_threshold << ",  p" << is_sig << std::endl;
+    std::cout << "threshold = " << m_threshold << ",  set_" << is_sig << std::endl;
 #endif
 
     if (is_sig) {
@@ -231,6 +232,7 @@ void speck::SPECK3D_Err::m_process_S(size_t idx1, size_t idx2)
             // Need to first find the index of this pixel in m_LOS
             int64_t idx = -1;
             for (int64_t i = 0; i < m_LOS.size(); i++) {
+
                 // clang-format off
                 if( m_pixel_types[i] == PixelType::Insig && 
                     m_LOS[i].x       == set.start_x      && 
@@ -239,24 +241,32 @@ void speck::SPECK3D_Err::m_process_S(size_t idx1, size_t idx2)
                     idx = i;
                     break;
                 } // clang-format off
-                assert( idx != -1 );
             }
+            assert( idx != -1 );
+
             m_bit_buffer.push_back( m_LOS[idx].err >= 0.0f );
             m_pixel_types[ idx ] = PixelType::NewlySig;
+
 #ifdef PRINT
-    std::cout << "threshold = " << m_threshold << ",  s" << m_bit_buffer.back() << std::endl;
+    std::cout << "threshold = " << m_threshold << ",  sign_" << m_bit_buffer.back() << std::endl;
 #endif
+            // Refine this pixel!
+            if( m_refine_NewlySig( idx ) )
+                return true;
         }
         else {
-            m_code_S( idx1, idx2 );
+            if( m_code_S( idx1, idx2 ) )
+                return true;
         }
 
         set.type = SetType::Garbage;
         m_LIS_garbage_cnt[idx1]++;
     }
+
+    return false;
 }
 
-void speck::SPECK3D_Err::m_code_S( size_t idx1, size_t idx2 )
+auto speck::SPECK3D_Err::m_code_S( size_t idx1, size_t idx2 ) -> bool
 {
     const auto& set = m_LIS[idx1][idx2];
     std::array<SPECKSet3D, 8> subsets;
@@ -266,35 +276,42 @@ void speck::SPECK3D_Err::m_code_S( size_t idx1, size_t idx2 )
             const auto newi1 = ss.part_level;
             m_LIS[newi1].emplace_back( ss );
             const auto newi2 = m_LIS[newi1].size() - 1;
-            m_process_S( newi1, newi2 );
+            if( m_process_S( newi1, newi2 ) )
+                return true;
         }
     }
+
+    return false;
 }
 
-void speck::SPECK3D_Err::m_sorting_pass()
+auto speck::SPECK3D_Err::m_sorting_pass() -> bool
 {
     for( size_t tmp = 1; tmp <= m_LIS.size(); tmp++ ) {
         size_t idx1 = m_LIS.size() - tmp;
         for( size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++ ) {
             const auto& set = m_LIS[idx1][idx2];
-            if( set.type != SetType::Garbage ) {
-                m_process_S( idx1, idx2 );
-            }
+            if( set.type != SetType::Garbage && m_process_S(idx1, idx2) ) 
+                return true;
         }
     }
+
+    return false;
 }
 
-auto speck::SPECK3D_Err::m_refinement_pass() -> bool
+auto speck::SPECK3D_Err::m_refine_Sig() -> bool
 {
     for( size_t idx = 0; idx < m_pixel_types.size(); idx++ ) {
 
         // LSP is implicitly indicated by m_pixel_types
         if (m_pixel_types[idx] == PixelType::Sig) {
-            auto was_outlier = (std::abs( m_err_hat[idx] - m_LOS[idx].err ) > m_tolerance);
+
+            // First test if this pixel is still an outlier
+            auto diff        = m_err_hat[idx] - std::abs(m_LOS[idx].err);
+            auto was_outlier = std::abs(diff) > m_tolerance;
             auto need_refine = (m_q[idx] >= m_threshold);
             m_bit_buffer.push_back( need_refine );
 #ifdef PRINT
-    std::cout << "threshold = " << m_threshold << ",  r" << m_bit_buffer.back() << std::endl;
+    std::cout << "threshold = " << m_threshold << ",  ref_" << m_bit_buffer.back() << std::endl;
 #endif
             if (need_refine) {
                 m_q[idx] -= m_threshold;
@@ -304,29 +321,42 @@ auto speck::SPECK3D_Err::m_refinement_pass() -> bool
                 m_err_hat[idx] += m_threshold * -0.5f;
             }
 
-            auto is_outlier = (std::abs( m_err_hat[idx] - m_LOS[idx].err ) > m_tolerance);
-            // If error at this idx is reduced by this iteration of refinement,
-            // we can decrease m_outlier_cnt.
-            if ( was_outlier && !is_outlier )
-                m_outlier_cnt--;
+            // If this pixel was an outlier, we might have alreayd eliminated it.
+            // Let's test to find out! 
+            if( was_outlier ) {
+                diff = m_err_hat[idx] - std::abs(m_LOS[idx].err);
+                auto is_outlier = std::abs(diff) > m_tolerance;
+                if ( !is_outlier ) {
+                    m_outlier_cnt--;
+                    if (m_outlier_cnt == 0 )
+                        return true;
+                }
+            }
         }
         else if( m_pixel_types[idx] == PixelType::NewlySig ) {
-            m_q[idx] -= m_threshold;
+            // Simply remove the NewlySig mark
             m_pixel_types[idx] = PixelType::Sig;
-
-            m_err_hat[idx] = m_threshold * 1.5f;
-            auto is_outlier = (std::abs( m_err_hat[idx] - m_LOS[idx].err ) > m_tolerance);
-            // Because a NewlySig pixel must be an outlier previously, so we only need to test 
-            // if it is currently an outlier.
-            if (!is_outlier)
-                m_outlier_cnt--;
         }
-
-        if (m_outlier_cnt == 0 )
-            return true;
     }
 
     return false;
+}
+
+auto speck::SPECK3D_Err::m_refine_NewlySig( size_t idx ) -> bool
+{
+    m_q[idx] -= m_threshold;
+
+    m_err_hat[idx] = m_threshold * 1.5f;
+    auto diff = m_err_hat[idx] - std::abs(m_LOS[idx].err);
+    auto is_outlier = std::abs(diff) > m_tolerance;
+    // Because a NewlySig pixel must be an outlier previously, so we only need to test 
+    // if it is currently an outlier.
+    if (!is_outlier)
+        m_outlier_cnt--;
+    if (m_outlier_cnt == 0 )
+        return true;
+    else
+        return false;
 }
 
 
