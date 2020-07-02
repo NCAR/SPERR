@@ -28,18 +28,23 @@ public:
     // Input
     // Reserve space for a certain number of outliers. This is optional though.
     void reserve(size_t);
+
+    // Note on the outliers: each one must live at a unique location.
     void add_outlier(uint32_t, uint32_t, uint32_t, float); // add a single outlier.
     void add_outlier_list(std::vector<Outlier>);           // add an entire list of outliers
     void set_dims(size_t, size_t, size_t);                 // set the volume dimensions
     void set_tolerance(float);                             // set error tolerance
 
     // Output
-    //std::vector<Outlier> release_outliers();        // Release ownership of decoded outliers
-    //auto get_num_of_outliers() const -> size_t;     // How many outliers are decided?
-    //auto get_ith_outlier(size_t) const -> Outlier;  // Return a single outlier
+    auto release_outliers() -> std::vector<Outlier>;// Release ownership of decoded outliers
+    auto get_num_of_outliers() const -> size_t;     // How many outliers are decided?
+    // This method does NOT perform range check. Seg fault will occur if idx is out of bound.
+    auto get_ith_outlier(size_t) const -> Outlier;  // Return a single outlier.  
 
     // Action methods
+    // Returns 0 upon success, 1 upon failure.
     auto encode() -> int;
+    auto decode() -> int;
 
 private:
     //
@@ -47,16 +52,25 @@ private:
     //
     void m_initialize_LIS();
     void m_clean_LIS();
-    auto m_ready_to_encode() const -> bool;
     auto m_decide_significance(const SPECKSet3D&) const -> bool;
+    auto m_ready_to_encode() const -> bool;
+    auto m_ready_to_decode() const -> bool;
+
     // For the following encoding methods that return a boolean, 
     // True means that all outliers are refined to be within the tolerance
     // False means otherwise.
-    auto m_process_S(size_t, size_t) -> bool;
-    auto m_code_S(size_t, size_t) -> bool;
-    auto m_sorting_pass() -> bool;
-    auto m_refine_Sig() -> bool;
-    auto m_refine_NewlySig( size_t ) -> bool;
+    auto m_process_S_encoding(size_t, size_t) -> bool;
+    auto m_code_S_encoding(size_t, size_t) -> bool;
+    auto m_sorting_pass() -> bool;                  // Used in both encoding and decoding
+    auto m_refinement_Sig() -> bool;                // Used in encoding only
+    auto m_refinement_NewlySig( size_t ) -> bool;   // Used in encoding only
+
+    // For the following decoding methods that return a boolean, 
+    // True means that all bits are processed and decoding finishes,
+    // False means otherwise.
+    auto m_process_S_decoding(size_t, size_t) -> bool;
+    auto m_code_S_decoding(size_t, size_t) -> bool;
+    auto m_refinement_decoding() -> bool;
 
     //
     // Private data members
@@ -65,7 +79,7 @@ private:
     size_t  m_dim_x          = 0; // 3D volume dims
     size_t  m_dim_y          = 0;
     size_t  m_dim_z          = 0;
-    float   m_tolerance      = 0.01; // Gamma in the algorithm description
+    float   m_tolerance      = 0.0f; // Gamma in the algorithm description
     bool    m_encode_mode    = true; // Encode (true) or Decode (false) mode?
     int32_t m_max_coeff_bits = 0;    // = log2(max_coefficient)
 
