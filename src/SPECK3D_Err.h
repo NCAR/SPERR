@@ -52,9 +52,11 @@ private:
     //
     void m_initialize_LIS();
     void m_clean_LIS();
-    auto m_decide_significance(const SPECKSet3D&) const -> bool;
     auto m_ready_to_encode() const -> bool;
     auto m_ready_to_decode() const -> bool;
+    // If the set to be decided is significant, return the index that makes it significant.
+    // If not, return -1
+    auto m_decide_significance(const SPECKSet3D&) const -> int64_t;
 
     // For the following encoding methods that return a boolean, 
     // True means that all outliers are refined to be within the tolerance
@@ -94,9 +96,9 @@ private:
     std::vector<float> m_err_hat; // err_hat list in the algorithm description. This list
                                   // contains the values that would be reconstructed.
 
-    // Records the type of every pixel. It also essentially serves the functionality of LSP.
-    std::vector<PixelType>               m_pixel_types;
+    std::vector<PixelType>               m_pixel_types; // Records the type of every pixel.
     std::vector<bool>                    m_bit_buffer;
+    std::vector<size_t>                  m_LSP;
     std::vector<std::vector<SPECKSet3D>> m_LIS;
     std::vector<size_t>                  m_LIS_garbage_cnt;
 };

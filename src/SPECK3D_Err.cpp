@@ -102,11 +102,7 @@ void speck::SPECK3D_Err::m_initialize_LIS()
     // Right now big is the set that's most likely to be significant, so insert
     // it at the front of it's corresponding vector. One-time expense.
     const auto parts = big.part_level;
-#ifdef NO_CPP14
     m_LIS[parts].insert(m_LIS[parts].begin(), big);
-#else
-    m_LIS[parts].insert(m_LIS[parts].cbegin(), big);
-#endif
 }
 
 void speck::SPECK3D_Err::m_clean_LIS()
@@ -168,11 +164,14 @@ auto speck::SPECK3D_Err::encode() -> int
     // initialize other data structures
     m_initialize_LIS();
     m_outlier_cnt = m_LOS.size(); // Initially everyone in LOS is an outlier
-    m_q.reserve(m_outlier_cnt);
+    m_q.clear();
+    m_q.reserve(m_LOS.size());
     for (const auto& o : m_LOS)
         m_q.push_back(std::abs(o.err));
-    m_err_hat.assign(m_outlier_cnt, 0.0f);
-    m_pixel_types.assign(m_outlier_cnt, PixelType::Insig);
+    m_err_hat.assign(m_LOS.size(), 0.0f);
+    m_pixel_types.assign(m_LOS.size(), PixelType::Insig);
+    m_LSP.clear();
+    m_LSP.reserve( m_LOS.size() );
 
     // Find the maximum q, and decide m_max_coeff_bits
     auto max_q       = *(std::max_element(m_q.cbegin(), m_q.cend()));
@@ -181,7 +180,7 @@ auto speck::SPECK3D_Err::encode() -> int
     m_threshold      = std::pow(2.0f, float(m_max_coeff_bits));
 
     // Start the iterations!
-    for (size_t bitplane = 0; bitplane < 128; bitplane++) {
+    for (size_t bitplane = 0; bitplane < 64; bitplane++) {
 
         if( m_sorting_pass() )
             break;
@@ -189,6 +188,7 @@ auto speck::SPECK3D_Err::encode() -> int
             break;
 
         m_threshold *= 0.5f;
+    }
 
 #ifdef PRINT
         for( size_t i = 0; i < m_LOS.size(); i++ ) {
@@ -198,8 +198,6 @@ auto speck::SPECK3D_Err::encode() -> int
             }
         }
 #endif
-
-    }
 
     return 0;
 }
@@ -212,6 +210,7 @@ auto speck::SPECK3D_Err::decode() -> int
 
     // Clear/initialize data structures
     m_LOS.clear();
+    m_LSP.clear();
     m_q.clear();
     m_err_hat.clear();
     m_pixel_types.clear();
@@ -221,7 +220,7 @@ auto speck::SPECK3D_Err::decode() -> int
     // Since we already have m_max_coeff_bits from the bit stream, 
     // we can go straight into quantization!
     m_threshold = std::pow(2.0f, float(m_max_coeff_bits));
-    for( size_t bitplane = 0; bitplane < 128; bitplane++ ) {
+    for( size_t bitplane = 0; bitplane < 64; bitplane++ ) {
 
         if( m_sorting_pass() )
             break;
@@ -229,15 +228,6 @@ auto speck::SPECK3D_Err::decode() -> int
             break;
 
         m_threshold *= 0.5f;
-
-#ifdef PRINT
-        for( size_t i = 0; i < m_LOS.size(); i++ ) {
-            if( m_pixel_types[i] != PixelType::Insig ) {
-                auto& out = m_LOS[i];
-                printf("  outlier: (%d, %d, %d, %f)\n", out.x, out.y, out.z, m_err_hat[i] );
-            }
-        }
-#endif
     }
 
     // Put restored values in m_LOS with proper signs
@@ -245,10 +235,19 @@ auto speck::SPECK3D_Err::decode() -> int
         m_LOS[idx].err *= m_err_hat[idx];
     }
 
+#ifdef PRINT
+        for( size_t i = 0; i < m_LOS.size(); i++ ) {
+            if( m_pixel_types[i] != PixelType::Insig ) {
+                auto& out = m_LOS[i];
+                printf("  outlier: (%d, %d, %d, %f)\n", out.x, out.y, out.z, out.err );
+            }
+        }
+#endif
+
     return 0;
 }
 
-auto speck::SPECK3D_Err::m_decide_significance(const SPECKSet3D& set) const -> bool
+auto speck::SPECK3D_Err::m_decide_significance(const SPECKSet3D& set) const -> int64_t
 {
     // Strategy:
     // Iterate all outliers: if
@@ -257,7 +256,7 @@ auto speck::SPECK3D_Err::m_decide_significance(const SPECKSet3D& set) const -> b
     // 3) its location falls inside this set,
     // then this set is significant. Otherwise its insignificant.
 
-    for (size_t i = 0; i < m_pixel_types.size(); i++) {
+    for (size_t i = 0; i < m_LOS.size(); i++) {
 
         // Testing condition 1) and 2)
         if (m_pixel_types[i] == PixelType::Insig && m_q[i] >= m_threshold) {
@@ -269,49 +268,36 @@ auto speck::SPECK3D_Err::m_decide_significance(const SPECKSet3D& set) const -> b
             if( set.start_x <= olr.x && olr.x < set.start_x + set.length_x &&
                 set.start_y <= olr.y && olr.y < set.start_y + set.length_y &&
                 set.start_z <= olr.z && olr.z < set.start_z + set.length_z ) {
-                return true;
+                return i;
             } // clang-format on
         }
     }
 
-    return false;
+    return -1;
 }
 
 auto speck::SPECK3D_Err::m_process_S_encoding(size_t idx1, size_t idx2) -> bool
 {
-    auto& set    = m_LIS[idx1][idx2];
-    bool  is_sig = m_decide_significance(set);
+    auto& set     = m_LIS[idx1][idx2];
+    auto  sig_idx = m_decide_significance(set);
+    bool  is_sig  = sig_idx >= 0;
     m_bit_buffer.push_back(is_sig);
+
 #ifdef PRINT
     std::cout << "threshold = " << m_threshold << ",  set_" << is_sig << std::endl;
 #endif
 
     if (is_sig) {
-
         if (set.is_pixel()) {
-            // Need to first find the index of this pixel in m_LOS
-            int64_t idx = -1;
-            for (int64_t i = 0; i < m_LOS.size(); i++) {
-
-                // clang-format off
-                if( m_pixel_types[i] == PixelType::Insig && 
-                    m_LOS[i].x       == set.start_x      && 
-                    m_LOS[i].y       == set.start_y      && 
-                    m_LOS[i].z       == set.start_z       ) {
-                    idx = i;
-                    break;
-                } // clang-format off
-            }
-            assert( idx != -1 );
-
-            // Record the sign of this newly identify outlier
-            m_bit_buffer.push_back( m_LOS[idx].err > 0.0f );
-            m_pixel_types[ idx ] = PixelType::NewlySig;
+            // Record the sign of this newly identify outlier, and put it in LSP
+            m_bit_buffer.push_back( m_LOS[sig_idx].err > 0.0f );
+            m_pixel_types[ sig_idx ] = PixelType::NewlySig;
+            m_LSP.push_back( sig_idx );
 #ifdef PRINT
     std::cout << "threshold = " << m_threshold << ",  sign_" << m_bit_buffer.back() << std::endl;
 #endif
             // Refine this pixel!
-            if( m_refinement_NewlySig( idx ) )
+            if( m_refinement_NewlySig( sig_idx ) )
                 return true;
         }
         else {
@@ -386,14 +372,13 @@ auto speck::SPECK3D_Err::m_sorting_pass() -> bool
 
 auto speck::SPECK3D_Err::m_refinement_Sig() -> bool
 {
-    for( size_t idx = 0; idx < m_LOS.size(); idx++ ) {
+    for( auto idx : m_LSP ) {
 
-        // LSP is implicitly indicated by m_pixel_types
         if (m_pixel_types[idx] == PixelType::Sig) {
 
             // First test if this pixel is still an outlier
             auto diff        = m_err_hat[idx] - std::abs(m_LOS[idx].err);
-            auto was_outlier = std::abs(diff) >= m_tolerance;
+            auto was_outlier = std::abs(diff) > m_tolerance;
             auto need_refine = m_q[idx] >= m_threshold;
             m_bit_buffer.push_back( need_refine );
 #ifdef PRINT
@@ -402,20 +387,12 @@ auto speck::SPECK3D_Err::m_refinement_Sig() -> bool
             if (need_refine)
                 m_q[idx] -= m_threshold;
 
-//            if (need_refine) {
-//                m_q[idx] -= m_threshold;
-//                m_err_hat[idx] += m_threshold * 0.5f;
-//            }
-//            else {
-//                m_err_hat[idx] -= m_threshold * 0.5f;
-//            }
-
             // If this pixel was an outlier, we might have alreayd eliminated it.
             // Let's test to find out! 
             if( was_outlier ) {
                 m_err_hat[idx] += need_refine ? m_threshold * 0.5f : m_threshold * -0.5f;
                 diff = m_err_hat[idx] - std::abs(m_LOS[idx].err);
-                auto is_outlier = std::abs(diff) >= m_tolerance;
+                auto is_outlier = std::abs(diff) > m_tolerance;
                 if ( !is_outlier ) {
                     m_outlier_cnt--;
                     if (m_outlier_cnt == 0 )
@@ -438,7 +415,7 @@ auto speck::SPECK3D_Err::m_refinement_NewlySig( size_t idx ) -> bool
 
     m_err_hat[idx] = m_threshold * 1.5f;
     auto diff = m_err_hat[idx] - std::abs(m_LOS[idx].err);
-    auto is_outlier = std::abs(diff) >= m_tolerance;
+    auto is_outlier = std::abs(diff) > m_tolerance;
     // Because a NewlySig pixel must be an outlier previously, so we only need to test 
     // if it is currently an outlier.
     if (!is_outlier)
@@ -470,6 +447,8 @@ auto speck::SPECK3D_Err::m_process_S_decoding( size_t idx1, size_t idx2 ) -> boo
             m_LOS.emplace_back( set.start_x, set.start_y, set.start_z, sign );
             m_err_hat.push_back( 1.5f * m_threshold );
             m_pixel_types.push_back( PixelType::NewlySig );
+            // Also put this pixel in LSP.
+            m_LSP.push_back( m_LOS.size() - 1 );
 
 #ifdef PRINT
     std::cout << "threshold = " << m_threshold << ",  sign_" << m_bit_buffer[m_bit_idx-1] << std::endl;
@@ -496,7 +475,8 @@ auto speck::SPECK3D_Err::m_refinement_decoding() -> bool
     assert( m_LOS.size() == m_err_hat.size() );
     assert( m_LOS.size() == m_pixel_types.size() );
 
-    for( size_t idx = 0; idx < m_LOS.size(); idx++ ) {
+    //for( size_t idx = 0; idx < m_LOS.size(); idx++ ) {
+    for( auto idx : m_LSP ) {
 
         if( m_pixel_types[idx] == PixelType::Sig ) {
 
