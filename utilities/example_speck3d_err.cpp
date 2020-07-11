@@ -59,7 +59,7 @@ int main( int argc, char* argv[] )
     assign_outliers( LOS, dim_x, dim_y, dim_z, tol );
 
     // Sort these outliers
-    std::sort( LOS.begin(), LOS.end(), [](speck::Outlier& a, speck::Outlier& b) {
+    std::sort( LOS.begin(), LOS.end(), [](const auto& a, const auto& b) {
                 if( a.x < b.x )         return true;
                 else if( a.x > b.x )    return false;
                 else if( a.y < b.y )    return true;
@@ -72,7 +72,7 @@ int main( int argc, char* argv[] )
 
     // Remove duplicates
     auto it = std::unique( LOS.begin(), LOS.end(), 
-                    [](speck::Outlier& a, speck::Outlier& b) {
+                    [](const auto& a, const auto& b) {
                     return (a.x == b.x && a.y == b.y && a.z == b.z );
                     } );
     LOS.erase( it, LOS.end() );
@@ -99,10 +99,11 @@ std::cout << "-- decoding -- " << std::endl;
     auto recovered = se.release_outliers();
 
     // Now see if every element in LOS is successfully recovered
-    for( auto& orig : LOS ) {
+    for( const auto& orig : LOS ) {
         if( !std::any_of( recovered.cbegin(), recovered.cend(), 
-            [&orig, tol](auto recov) { return (recov.x == orig.x && recov.y == orig.y && 
-            recov.z == orig.z && std::abs( recov.err - orig.err ) < tol ); } ) )
+            [&orig, tol](const auto& recov) { return (recov.x == orig.x && recov.y == orig.y && 
+            recov.z == orig.z && std::abs( recov.err - orig.err ) < tol ); } ) ) {
             printf("failed to recover: (%d, %d, %d, %f)\n", orig.x, orig.y, orig.z, orig.err );
+        }
     }
 }
