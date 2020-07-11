@@ -37,9 +37,10 @@ public:
 
     // Output
     auto release_outliers() -> std::vector<Outlier>;// Release ownership of decoded outliers
-    auto get_num_of_outliers() const -> size_t;     // How many outliers are decided?
+    auto get_num_of_outliers() const -> size_t;     // How many outliers are decoded?
     // This method does NOT perform range check. Seg fault will occur if idx is out of bound.
     auto get_ith_outlier(size_t) const -> Outlier;  // Return a single outlier.  
+    auto get_bit_buffer_size() const -> size_t;     // How many bits are generated?
 
     // Action methods
     // Returns 0 upon success, 1 upon failure.

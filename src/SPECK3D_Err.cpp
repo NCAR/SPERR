@@ -6,7 +6,7 @@
 #include <cstring>
 #include <iostream>
 
-#define PRINT
+// #define PRINT
 
 void speck::SPECK3D_Err::reserve(size_t num)
 {
@@ -507,6 +507,11 @@ auto speck::SPECK3D_Err::m_refinement_decoding() -> bool
 auto speck::SPECK3D_Err::get_num_of_outliers() const -> size_t
 {
     return m_LOS.size();
+}
+
+auto speck::SPECK3D_Err::get_bit_buffer_size() const -> size_t
+{
+    return m_bit_buffer.size();
 }
 
 auto speck::SPECK3D_Err::get_ith_outlier( size_t idx ) const -> Outlier
