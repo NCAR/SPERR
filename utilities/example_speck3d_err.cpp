@@ -25,8 +25,8 @@ void assign_outliers( std::vector<speck::Outlier>&  list,
     std::uniform_int_distribution<size_t> distrib_y (0, dim_y-1);
     std::uniform_int_distribution<size_t> distrib_z (0, dim_z-1);
 
-    // mean = 0.0, stddev = tolerance / 2
-    std::normal_distribution<float> distrib_err (0.0f, tolerance * 0.5f);
+    // mean = 0.0, stddev = tolerance
+    std::normal_distribution<float> distrib_err (0.0f, tolerance);
 
     for( auto& e : list ) {
         e.x = distrib_x( gen );
@@ -68,7 +68,6 @@ int main( int argc, char* argv[] )
                 else if( a.z > b.z )    return false;
                 else                    return false; } );
 
-    std::cout << "Before cleaning num of outliers: " << LOS.size() << std::endl;
 
     // Remove duplicates
     auto it = std::unique( LOS.begin(), LOS.end(), 
@@ -77,28 +76,23 @@ int main( int argc, char* argv[] )
                     } );
     LOS.erase( it, LOS.end() );
 
-    std::cout << "After cleaning num of outliers: " << LOS.size() << std::endl;
-    //for( auto& e : LOS )
-    //    printf("(%d, %d, %d, %f)\n", e.x, e.y, e.z, e.err );   // Print this outlier
-    
 
     // Create an encoder
     speck::SPECK3D_Err se;
     se.set_dims( dim_x, dim_y, dim_z );
     se.set_tolerance( tol );
-
     se.add_outlier_list( LOS );
-    //se.add_outlier( 4, 2, 9, -0.158822 );
 
+    std::cout << "encoding -- " << std::endl;
     se.encode();
-
-std::cout << "-- decoding -- " << std::endl;
-
+    std::cout << "decoding -- " << std::endl;
     se.decode();
-
-    auto recovered = se.release_outliers();
+    std::cout << "num of outliers: " << LOS.size() << std::endl;
+    std::cout << "average bpp:     " << float(se.num_of_bits()) / float(LOS.size()) << std::endl;
 
     // Now see if every element in LOS is successfully recovered
+    std::cout << "checking correctness -- " << std::endl;
+    auto recovered = se.release_outliers();
     for( const auto& orig : LOS ) {
         if( !std::any_of( recovered.cbegin(), recovered.cend(), 
             [&orig, tol](const auto& recov) { return (recov.x == orig.x && recov.y == orig.y && 

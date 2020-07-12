@@ -509,7 +509,7 @@ auto speck::SPECK3D_Err::get_num_of_outliers() const -> size_t
     return m_LOS.size();
 }
 
-auto speck::SPECK3D_Err::get_bit_buffer_size() const -> size_t
+auto speck::SPECK3D_Err::num_of_bits() const -> size_t
 {
     return m_bit_buffer.size();
 }

@@ -29,8 +29,8 @@ void assign_outliers( std::vector<speck::Outlier>&  list,
     std::uniform_int_distribution<size_t> distrib_y (0, dim_y-1);
     std::uniform_int_distribution<size_t> distrib_z (0, dim_z-1);
 
-    // mean = 0.0, stddev = tolerance / 2
-    std::normal_distribution<float> distrib_err (0.0f, tolerance * 0.5f);
+    // mean = 0.0, stddev = tolerance
+    std::normal_distribution<float> distrib_err (0.0f, tolerance);
 
     for( auto& e : list ) {
         e.x = distrib_x( gen );
