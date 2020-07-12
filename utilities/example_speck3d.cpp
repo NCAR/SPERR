@@ -81,9 +81,14 @@ int main( int argc, char* argv[] )
     std::cout << "Time for SPECK in milliseconds: " << diffT.count() * 1000.0f << std::endl;
 
     // Compare the result with the original input in double precision
-    std::unique_ptr<double[]> in_bufd( new double[ total_vals ] );
+#ifdef NO_CPP14
+    speck::buffer_type_d in_bufd( new double[ total_vals ] );
+#else
+    speck::buffer_type_d in_bufd = std::make_unique<double[]>( total_vals );
+#endif
     for( size_t i = 0; i < total_vals; i++ )
         in_bufd[i] = in_buf[i];
+
     double rmse, lmax, psnr, arr1min, arr1max;
     sam_get_statsd( in_bufd.get(), idwt.get_read_only_data().get(), 
                     total_vals, &rmse, &lmax, &psnr, &arr1min, &arr1max );
