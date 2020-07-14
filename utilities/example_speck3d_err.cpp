@@ -3,6 +3,7 @@
 #include <cassert>
 #include <random>
 #include <iostream>
+#include <fstream>
 #include <string>
 
 //
@@ -37,6 +38,39 @@ void assign_outliers( std::vector<speck::Outlier>&  list,
     }
 }
 
+//
+// Read the list of outliers from a file.
+// This function will resize the list and fill it up with data read from the file.
+//
+void read_outliers( std::vector<speck::Outlier>&  list, 
+                    const char*                   filename )
+{
+    std::ifstream file( filename, std::ios::binary | std::ios::ate );
+    if( file.is_open() ) {
+        auto len_char = file.tellg();
+        assert( len_char % sizeof(speck::Outlier) == 0 );
+        std::unique_ptr<char[]> buf = std::make_unique<char[]>( len_char );
+        file.seekg(0);
+        file.read( buf.get(), len_char );
+        file.close();
+
+        auto len_out = len_char / sizeof(speck::Outlier);
+        list.clear();
+        list.assign( len_out, speck::Outlier{} );
+        size_t idx = 0;
+        for( auto& e : list ) {
+            e.x    = *(reinterpret_cast<uint32_t*>(buf.get() + idx));
+            idx   +=   sizeof(uint32_t);
+            e.y    = *(reinterpret_cast<uint32_t*>(buf.get() + idx));
+            idx   +=   sizeof(uint32_t);
+            e.z    = *(reinterpret_cast<uint32_t*>(buf.get() + idx));
+            idx   +=   sizeof(uint32_t);
+            e.err  = *(reinterpret_cast<float*>(buf.get() + idx));
+            idx   +=   sizeof(float);
+        }
+    }
+}
+
 int main( int argc, char* argv[] )
 {
     if( argc != 6 ) {
@@ -48,11 +82,15 @@ int main( int argc, char* argv[] )
     const size_t dim_x = std::stoi( argv[1] );
     const size_t dim_y = std::stoi( argv[2] );
     const size_t dim_z = std::stoi( argv[3] );
-    const float  tol   = std::stof( argv[4] );
-
+    float        tol   = std::stof( argv[4] );
+    size_t num_of_outs = std::stol( argv[5] );
     const size_t num_of_vals = dim_x * dim_y * dim_z;
-    const size_t num_of_outs = std::stol( argv[5] );
 
+
+#if 0
+    //
+    // This chunk of code generates random outliers
+    //
     // Create a list of outliers
     std::vector<speck::Outlier> LOS;
     LOS.assign( num_of_outs, speck::Outlier{} );  // default constructor of Outlier
@@ -82,6 +120,26 @@ int main( int argc, char* argv[] )
     se.set_dims( dim_x, dim_y, dim_z );
     se.set_tolerance( tol );
     se.add_outlier_list( LOS );
+#endif
+
+
+    // 
+    // This chunk of code reads in outliers from a file.
+    //
+    std::vector<speck::Outlier> LOS;
+    read_outliers( LOS, "top_outliers" );
+    for( size_t i = 0; i < 10; i++ )
+        printf("outliers: (%d, %d, %d, %f)\n", LOS[i].x, LOS[i].y, LOS[i].z, LOS[i].err );
+
+    assert( num_of_outs < LOS.size() );
+    tol = std::abs( LOS.at( num_of_outs ).err );
+    LOS.resize( num_of_outs );
+
+    // Create an encoder
+    speck::SPECK3D_Err se;
+    se.set_dims( dim_x, dim_y, dim_z );
+    se.set_tolerance( tol );
+    se.add_outlier_list( LOS );
 
     std::cout << "encoding -- " << std::endl;
     se.encode();
@@ -100,4 +158,5 @@ int main( int argc, char* argv[] )
             printf("failed to recover: (%d, %d, %d, %f)\n", orig.x, orig.y, orig.z, orig.err );
         }
     }
+
 }
