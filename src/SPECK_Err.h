@@ -50,12 +50,12 @@ private:
     // If the set to be decided is significant, return the index that makes it significant.
     // If not, return -1
     auto m_decide_significance(const SPECKSet1D&) const -> int64_t;
+    auto m_code_S(size_t, size_t) -> bool;
 
     // For the following encoding methods that return a boolean, 
     // True means that all outliers are refined to be within the tolerance
     // False means otherwise.
     auto m_process_S_encoding(size_t, size_t) -> bool;
-    auto m_code_S(size_t, size_t) -> bool;
     auto m_sorting_pass() -> bool;                  // Used in both encoding and decoding
     auto m_refinement_Sig() -> bool;                // Used in encoding only
     auto m_refinement_NewlySig( size_t ) -> bool;   // Used in encoding only
@@ -64,7 +64,6 @@ private:
     // True means that all bits are processed and decoding finishes,
     // False means otherwise.
     auto m_process_S_decoding(size_t, size_t) -> bool;
-    //auto m_code_S_decoding(size_t, size_t) -> bool;
     auto m_refinement_decoding() -> bool;
 
     //

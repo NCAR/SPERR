@@ -297,13 +297,10 @@ auto speck::SPECK_Err::m_sorting_pass() -> bool
 
             const auto& set = m_LIS[idx1][idx2];
             if( set.type != SetType::Garbage ) {
-                if( m_encode_mode ) {
-                    if( m_process_S_encoding(idx1, idx2) ) 
-                        return true;
-                } else {
-                    if( m_process_S_decoding( idx1, idx2 ) )
-                        return true;
-                }
+                if( m_encode_mode && m_process_S_encoding(idx1, idx2) ) 
+                    return true;
+                else if (!m_encode_mode && m_process_S_decoding( idx1, idx2 ) )
+                    return true;
             }
         }
     }
@@ -328,7 +325,7 @@ auto speck::SPECK_Err::m_refinement_Sig() -> bool
             if (need_refine)
                 m_q[idx] -= m_threshold;
 
-            // If this pixel was an outlier, we refine it, and test again!
+            // If this pixel was an outlier, we test again!
             if( was_outlier ) {
                 m_err_hat[idx] += need_refine ? m_threshold * 0.5f : m_threshold * -0.5f;
                 diff = m_err_hat[idx] - std::abs(m_LOS[idx].error);
@@ -380,17 +377,13 @@ auto speck::SPECK_Err::m_process_S_decoding( size_t idx1, size_t idx2 ) -> bool
 
     if( is_sig ) {
 
-        if( set.length == 1 ) // This is a pixel
-        {
+        if( set.length == 1 ) { // This is a pixel
             // We recovered the location of another outlier! 
             // Is this pixel positive or negative? Keep that info in m_LOS.
             auto sign = m_bit_buffer[m_bit_idx++] ? 1.0f : -1.0f;
             m_LOS.emplace_back( set.start, sign );
             m_err_hat.push_back( 1.5f * m_threshold );
             m_pixel_types.push_back( Significance::NewlySig );
-            // Also put this pixel in LSP.
-            // TODO: m_LSP seems unnecessary when decoding. 
-            m_LSP.push_back( m_LOS.size() - 1 );
 
 #ifdef PRINT
     std::cout << "threshold = " << m_threshold << ",  sign_" << m_bit_buffer[m_bit_idx-1] << std::endl;
@@ -417,20 +410,18 @@ auto speck::SPECK_Err::m_refinement_decoding() -> bool
     assert( m_LOS.size() == m_err_hat.size() );
     assert( m_LOS.size() == m_pixel_types.size() );
 
-    for( auto idx : m_LSP ) {
+    // Refine existing identified significant pixels. 
+    for( size_t idx = 0; idx < m_err_hat.size(); idx++ ) {
 
         if( m_pixel_types[idx] == Significance::Sig ) {
 
-            // Existing significant pixels are further refined
             if( m_bit_buffer[m_bit_idx++] )
                 m_err_hat[idx] += m_threshold * 0.5f;
             else
                 m_err_hat[idx] -= m_threshold * 0.5f;
-
 #ifdef PRINT
     std::cout << "threshold = " << m_threshold << ",  ref_" << m_bit_buffer[m_bit_idx-1] << std::endl;
 #endif
-
             if( m_bit_idx == m_bit_buffer.size() )
                 return true;
 
