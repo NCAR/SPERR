@@ -8,10 +8,6 @@
 
 // #define PRINT
 
-speck::SPECKSet1D::SPECKSet1D( size_t s, size_t l, uint32_t p )
-                 : start(s), length(l), part_level(p)
-{ }
-
 void speck::SPECK_Err::reserve(size_t num)
 {
     m_LOS.reserve(num);
@@ -20,7 +16,7 @@ void speck::SPECK_Err::reserve(size_t num)
     m_pixel_types.reserve(num);
 }
 
-void speck::SPECK_Err::add_outlier(uint32_t pos, float e)
+void speck::SPECK_Err::add_outlier(size_t pos, float e)
 {
     m_LOS.emplace_back(pos, e);
 }
@@ -57,7 +53,7 @@ auto speck::SPECK_Err::m_part_set( const SPECKSet1D& set ) const -> TwoSets
 
 void speck::SPECK_Err::m_initialize_LIS()
 {
-    // To initialize this 1D array, just calculate how many partitions can be,
+    // To initialize this 1D array, just calculate how many partitions can be performed,
     // and partition this long array to 2 parts.
 
     // Initialize LIS with possible length values
@@ -70,8 +66,8 @@ void speck::SPECK_Err::m_initialize_LIS()
     // Put in two sets, each representing a half of the long array.
     SPECKSet1D set{ 0, m_total_len, 0 };    // the whole 1D array
     auto set01 = m_part_set( set );
-    m_LIS[ set01[0].part_level ].push_back( set01[0] );
-    m_LIS[ set01[1].part_level ].push_back( set01[1] );
+    m_LIS[ 1 ].push_back( set01[0] );
+    m_LIS[ 1 ].push_back( set01[1] );
 }
 
 void speck::SPECK_Err::m_clean_LIS()
@@ -107,7 +103,7 @@ auto speck::SPECK_Err::m_ready_to_encode() const -> bool
     if (m_LOS.empty())
         return false;
     for( const auto& o : m_LOS ) {
-        if( std::abs( o.second ) < m_tolerance )
+        if( std::abs( o.error ) <= m_tolerance )
             return false;
     }
 
@@ -136,7 +132,7 @@ auto speck::SPECK_Err::encode() -> int
     m_q.clear();
     m_q.reserve(m_LOS.size());
     for (const auto& o : m_LOS)
-        m_q.push_back(std::abs(o.second));
+        m_q.push_back(std::abs(o.error));
     m_err_hat.assign(m_LOS.size(), 0.0f);
     m_pixel_types.assign(m_LOS.size(), Significance::Insig);
     m_LSP.clear();
@@ -160,13 +156,13 @@ auto speck::SPECK_Err::encode() -> int
     }
 
 #ifdef PRINT
-        for( size_t i = 0; i < m_LOS.size(); i++ ) {
-            if( m_pixel_types[i] == Significance::Sig || 
-                m_pixel_types[i] == Significance::NewlySig ) {
-                auto& out = m_LOS[i];
-                printf("  outlier: (%d, %d, %d, %f)\n", out.x, out.y, out.z, m_err_hat[i] );
-            }
+    for( size_t i = 0; i < m_LOS.size(); i++ ) {
+        if( m_pixel_types[i] == Significance::Sig || 
+            m_pixel_types[i] == Significance::NewlySig ) {
+            auto& out = m_LOS[i];
+            printf("  outlier: (%ld, %f)\n", out.location, m_err_hat[i] );
         }
+    }
 #endif
 
     return 0;
@@ -187,7 +183,7 @@ auto speck::SPECK_Err::decode() -> int
     m_initialize_LIS();
     m_bit_idx = 0;
 
-    // Since we already have m_max_coeff_bits from the bit stream, 
+    // Since we already have m_max_coeff_bits from the bit stream when decoding header,
     // we can go straight into quantization!
     m_threshold = std::pow(2.0f, float(m_max_coeff_bits));
     for( size_t bitplane = 0; bitplane < 64; bitplane++ ) {
@@ -202,17 +198,17 @@ auto speck::SPECK_Err::decode() -> int
 
     // Put restored values in m_LOS with proper signs
     for( size_t idx = 0; idx < m_LOS.size(); idx++ ) {
-        m_LOS[idx].second *= m_err_hat[idx];
+        m_LOS[idx].error *= m_err_hat[idx];
     }
 
 #ifdef PRINT
-        for( size_t i = 0; i < m_LOS.size(); i++ ) {
-            if( m_pixel_types[i] == Significance::Sig || 
-                m_pixel_types[i] == Significance::NewlySig ) {
-                auto& out = m_LOS[i];
-                printf("  outlier: (%d, %d, %d, %f)\n", out.x, out.y, out.z, out.err );
-            }
+    for( size_t i = 0; i < m_LOS.size(); i++ ) {
+        if( m_pixel_types[i] == Significance::Sig || 
+            m_pixel_types[i] == Significance::NewlySig ) {
+            auto& out = m_LOS[i];
+            printf("  outlier: (%ld, %f)\n", out.location, out.error );
         }
+    }
 #endif
 
     return 0;
@@ -230,7 +226,7 @@ auto speck::SPECK_Err::m_decide_significance(const SPECKSet1D& set) const -> int
     for (size_t i = 0; i < m_LOS.size(); i++) {
 
         if (m_pixel_types[i] == Significance::Insig && m_q[i] >= m_threshold &&
-            set.start <= m_LOS[i].first && m_LOS[i].first < set.start + set.length )
+            set.start <= m_LOS[i].location && m_LOS[i].location < set.start + set.length )
                 return i;
     }
 
@@ -249,10 +245,9 @@ auto speck::SPECK_Err::m_process_S_encoding(size_t idx1, size_t idx2) -> bool
 #endif
 
     if (is_sig) {
-        if (set.length == 1) // Is a pixel
-        {
+        if (set.length == 1) { // Is a pixel
             // Record the sign of this newly identify outlier, and put it in LSP
-            m_bit_buffer.push_back( m_LOS[sig_idx].second > 0.0f );
+            m_bit_buffer.push_back( m_LOS[sig_idx].error > 0.0f );
             m_pixel_types[ sig_idx ] = Significance::NewlySig;
             m_LSP.push_back( sig_idx );
 #ifdef PRINT
@@ -263,7 +258,7 @@ auto speck::SPECK_Err::m_process_S_encoding(size_t idx1, size_t idx2) -> bool
                 return true;
         }
         else {
-            if( m_code_S_encoding( idx1, idx2 ) )
+            if( m_code_S( idx1, idx2 ) )
                 return true;
         }
 
@@ -274,7 +269,7 @@ auto speck::SPECK_Err::m_process_S_encoding(size_t idx1, size_t idx2) -> bool
     return false;
 }
 
-auto speck::SPECK_Err::m_code_S_encoding( size_t idx1, size_t idx2 ) -> bool
+auto speck::SPECK_Err::m_code_S( size_t idx1, size_t idx2 ) -> bool
 {
     const auto& set = m_LIS[idx1][idx2];
 
@@ -284,25 +279,9 @@ auto speck::SPECK_Err::m_code_S_encoding( size_t idx1, size_t idx2 ) -> bool
             auto newi1 = ss.part_level;
             m_LIS[newi1].emplace_back( ss );
             auto newi2 = m_LIS[newi1].size() - 1;
-            if( m_process_S_encoding( newi1, newi2 ) )
+            if( m_encode_mode && m_process_S_encoding( newi1, newi2 ) )
                 return true;
-        }
-    }
-
-    return false;
-}
-
-auto speck::SPECK_Err::m_code_S_decoding( size_t idx1, size_t idx2 ) -> bool
-{
-    const auto& set = m_LIS[idx1][idx2];
-
-    auto set01 = m_part_set( set );
-    for (const auto& ss : set01 ) {
-        if( ss.length > 0 ) {
-            auto newi1 = ss.part_level;
-            m_LIS[newi1].emplace_back( ss );
-            auto newi2 = m_LIS[newi1].size() - 1;
-            if( m_process_S_decoding( newi1, newi2 ) )
+            else if( !m_encode_mode && m_process_S_decoding( newi1, newi2 ) )
                 return true;
         }
     }
@@ -339,7 +318,7 @@ auto speck::SPECK_Err::m_refinement_Sig() -> bool
         if (m_pixel_types[idx] == Significance::Sig) {
 
             // First test if this pixel is still an outlier
-            auto diff        = m_err_hat[idx] - std::abs(m_LOS[idx].second);
+            auto diff        = m_err_hat[idx] - std::abs(m_LOS[idx].error);
             auto was_outlier = std::abs(diff) > m_tolerance;
             auto need_refine = m_q[idx] >= m_threshold;
             m_bit_buffer.push_back( need_refine );
@@ -352,7 +331,7 @@ auto speck::SPECK_Err::m_refinement_Sig() -> bool
             // If this pixel was an outlier, we refine it, and test again!
             if( was_outlier ) {
                 m_err_hat[idx] += need_refine ? m_threshold * 0.5f : m_threshold * -0.5f;
-                diff = m_err_hat[idx] - std::abs(m_LOS[idx].second);
+                diff = m_err_hat[idx] - std::abs(m_LOS[idx].error);
                 auto is_outlier = std::abs(diff) > m_tolerance;
                 if ( !is_outlier ) {
                     m_outlier_cnt--;
@@ -375,7 +354,7 @@ auto speck::SPECK_Err::m_refinement_NewlySig( size_t idx ) -> bool
     m_q[idx] -= m_threshold;
 
     m_err_hat[idx] = m_threshold * 1.5f;
-    auto diff = m_err_hat[idx] - std::abs(m_LOS[idx].second);
+    auto diff = m_err_hat[idx] - std::abs(m_LOS[idx].error);
     auto is_outlier = std::abs(diff) > m_tolerance;
     // Because a NewlySig pixel must be an outlier previously, so we only need to test 
     // if it is currently an outlier.
@@ -421,7 +400,7 @@ auto speck::SPECK_Err::m_process_S_decoding( size_t idx1, size_t idx2 ) -> bool
             if( m_bit_idx == m_bit_buffer.size() )
                 return true;
         } else {
-            if( m_code_S_decoding( idx1, idx2 ) )
+            if( m_code_S( idx1, idx2 ) )
                 return true;
         }
 

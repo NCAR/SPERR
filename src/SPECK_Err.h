@@ -9,20 +9,7 @@
 
 namespace speck {
 
-class SPECKSet1D {
-public:
-    size_t        start      = 0;
-    size_t        length     = 0;
-    uint32_t      part_level = 0;
-    Significance  signif     = Significance::Insig;
-    SetType       type       = SetType::TypeS;    // only to indicate if it's garbage
-
-    SPECKSet1D() = default;
-    SPECKSet1D( size_t, size_t, uint32_t );
-};
-
 using TwoSets = std::array<SPECKSet1D, 2>;
-using Outlier = std::pair<uint32_t, float>;
 
 
 class SPECK_Err {
@@ -30,12 +17,11 @@ public:
     //
     // Trival input/output functions
     //
+    // Important note on the outliers: each one must live at a unique location.
+    //
     // Input
-    // Reserve space for a certain number of outliers. This is optional though.
-    void reserve(size_t);
-
-    // Note on the outliers: each one must live at a unique location.
-    void add_outlier(uint32_t, float);              // add a single outlier.
+    void reserve(size_t);                           // Optionally pre-allocate spaces
+    void add_outlier(size_t, float);                // add a single outlier.
     void add_outlier_list(std::vector<Outlier>);    // add an entire list of outliers
     void set_length(size_t);                        // set 1D array length
     void set_tolerance(float);                      // set error tolerance
@@ -43,8 +29,7 @@ public:
     // Output
     auto release_outliers() -> std::vector<Outlier>;// Release ownership of decoded outliers
     auto get_num_of_outliers() const -> size_t;     // How many outliers are decoded?
-    // This method does NOT perform range check. Seg fault will occur if idx is out of bound.
-    auto get_ith_outlier(size_t) const -> Outlier;  // Return a single outlier.  
+    auto get_ith_outlier(size_t) const -> Outlier;  // Get a single outlier (No range check here!)
     auto num_of_bits() const -> size_t;             // How many bits are generated?
 
     // Action methods
@@ -61,6 +46,7 @@ private:
     void m_clean_LIS();
     auto m_ready_to_encode() const -> bool;
     auto m_ready_to_decode() const -> bool;
+
     // If the set to be decided is significant, return the index that makes it significant.
     // If not, return -1
     auto m_decide_significance(const SPECKSet1D&) const -> int64_t;
@@ -69,7 +55,7 @@ private:
     // True means that all outliers are refined to be within the tolerance
     // False means otherwise.
     auto m_process_S_encoding(size_t, size_t) -> bool;
-    auto m_code_S_encoding(size_t, size_t) -> bool;
+    auto m_code_S(size_t, size_t) -> bool;
     auto m_sorting_pass() -> bool;                  // Used in both encoding and decoding
     auto m_refinement_Sig() -> bool;                // Used in encoding only
     auto m_refinement_NewlySig( size_t ) -> bool;   // Used in encoding only
@@ -78,7 +64,7 @@ private:
     // True means that all bits are processed and decoding finishes,
     // False means otherwise.
     auto m_process_S_decoding(size_t, size_t) -> bool;
-    auto m_code_S_decoding(size_t, size_t) -> bool;
+    //auto m_code_S_decoding(size_t, size_t) -> bool;
     auto m_refinement_decoding() -> bool;
 
     //

@@ -25,8 +25,7 @@ using buffer_type_c = std::unique_ptr<char[]>;
 enum class Significance : unsigned char {
     Insig,
     Sig,
-    NewlySig,
-    Empty
+    NewlySig
 };
 
 enum class SetType : unsigned char {
@@ -34,21 +33,6 @@ enum class SetType : unsigned char {
     TypeI,
     Garbage
 };
-
-//class Outlier {
-//public:
-//    //
-//    // Member data
-//    //
-//    uint32_t x   = 0;
-//    uint32_t y   = 0;
-//    uint32_t z   = 0;
-//    float    err = 0.0;
-//
-//    // Constructors
-//    Outlier() = default;
-//    Outlier(uint32_t x, uint32_t y, uint32_t z, float err);
-//};
 
 //
 // Auxiliary class to hold a 3D SPECK Set
@@ -68,7 +52,7 @@ public:
     // This data member is the sum of all 3 partition levels.
     uint16_t     part_level = 0;
     Significance signif     = Significance::Insig;
-    SetType      type       = SetType::TypeS; // This field is only used to indicate garbage status
+    SetType      type       = SetType::TypeS; // Only used to indicate garbage status
 
 public:
     //
@@ -79,6 +63,32 @@ public:
 #ifdef PRINT
     void print() const;
 #endif
+};
+
+//
+// Auxiliary class to hold a 1D SPECK Set
+//
+class SPECKSet1D {
+public:
+    size_t        start      = 0;
+    size_t        length     = 0;
+    uint32_t      part_level = 0;
+    Significance  signif     = Significance::Insig;
+    SetType       type       = SetType::TypeS;    // only to indicate if it's garbage
+
+    SPECKSet1D() = default;
+    SPECKSet1D( size_t, size_t, uint32_t );
+};
+
+//
+// Auxiliary struct to hold represent an outlier
+//
+struct Outlier {
+    size_t location = 0;
+    float  error    = 0.0f;
+
+    Outlier() = default;
+    Outlier( size_t, float );
 };
 
 

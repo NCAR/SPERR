@@ -6,17 +6,6 @@
 #include <cstring>
 #include <fstream>
 
-#if 0
-//
-// Class Outlier
-//
-speck::Outlier::Outlier(uint32_t x_, uint32_t y_, uint32_t z_, float err_)
-    : x(x_)
-    , y(y_)
-    , z(z_)
-    , err(err_)
-{ }
-#endif
 
 //
 // Class SPECKSet3D
@@ -30,6 +19,22 @@ auto speck::SPECKSet3D::is_empty() const -> bool
 {
     return (length_z == 0 || length_y == 0 || length_x == 0);
 }
+
+
+//
+// Class SPECKSet1D
+//
+speck::SPECKSet1D::SPECKSet1D( size_t s, size_t l, uint32_t p )
+                 : start(s), length(l), part_level(p)
+{ }
+
+
+//
+// Struct Outlier
+//
+speck::Outlier::Outlier( size_t loc, float e )
+              : location(loc), error(e)
+{ }
 
 #ifdef PRINT
 void speck::SPECKSet3D::print() const
