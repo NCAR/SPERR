@@ -1,5 +1,4 @@
 #include "SPECK3D.h"
-#include "SPECK_Err.h"
 #include "CDF97.h"
 
 #include <algorithm>
@@ -103,16 +102,16 @@ int main( int argc, char* argv[] )
     // Sort the differences and then write a tenth of it to disk.
     std::vector<speck::Outlier> LOS( total_vals, speck::Outlier{} );
     for( size_t i = 0; i < total_vals; i++ ) {
-        LOS[i].first  = i;
-        LOS[i].second = in_buf[i] - float(idwt.get_read_only_data()[i]);
+        LOS[i].location  = i;
+        LOS[i].error = in_buf[i] - float(idwt.get_read_only_data()[i]);
     }
     
     const size_t num_of_outliers = total_vals / 10;
     std::partial_sort( LOS.begin(), LOS.begin() + num_of_outliers, LOS.end(), 
-        [](auto& a, auto& b) { return (std::abs(a.second) > std::abs(b.second)); } );
+        [](auto& a, auto& b) { return (std::abs(a.error) > std::abs(b.error)); } );
 
     for( size_t i = 0; i < 10; i++ )
-        printf("outliers: (%d, %f)\n", LOS[i].first, LOS[i].second );
+        printf("outliers: (%ld, %f)\n", LOS[i].location, LOS[i].error );
 
     std::ofstream file( "top_outliers", std::ios::binary );
     if( file.is_open() ) {

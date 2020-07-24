@@ -71,10 +71,10 @@ void read_outliers( std::vector<speck::Outlier>&  list,
             e.err  = *(reinterpret_cast<float*>(buf.get() + idx));
             idx   +=   sizeof(float);
 #endif
-            e.first  = *(reinterpret_cast<uint32_t*>(buf.get() + idx));
-            idx     +=   sizeof(uint32_t);
-            e.second = *(reinterpret_cast<float*>(buf.get() + idx));
-            idx     +=   sizeof(float);
+            e.location  = *(reinterpret_cast<size_t*>(buf.get() + idx));
+            idx     +=   sizeof(size_t);
+            e.error = *(reinterpret_cast<float*>(buf.get() + idx));
+            idx     +=   sizeof(size_t);    // because of alignment requirements...
         }
     }
 }
@@ -115,10 +115,10 @@ int main( int argc, char* argv[] )
     std::vector<speck::Outlier> LOS;
     read_outliers( LOS, "top_outliers" );
     for( size_t i = 0; i < 10; i++ )
-        printf("outliers: (%d, %f)\n", LOS[i].first, LOS[i].second );
+        printf("outliers: (%ld, %f)\n", LOS[i].location, LOS[i].error );
 
     assert( num_of_outs < LOS.size() );
-    tol = std::abs( LOS[num_of_outs].second );
+    tol = std::abs( LOS[num_of_outs].error );
     std::cout << "tolerance = " << tol << std::endl;
     LOS.resize( num_of_outs );
 
@@ -140,13 +140,13 @@ int main( int argc, char* argv[] )
     auto recovered = se.release_outliers();
 
     //for( auto& recv : recovered )
-    //        printf("recovered: (%d, %f)\n", recv.first, recv.second );
+    //        printf("recovered: (%d, %f)\n", recv.location, recv.error );
 
     for( const auto& orig : LOS ) {
         if( !std::any_of( recovered.cbegin(), recovered.cend(), 
-            [&orig, tol](const auto& recov) { return (recov.first == orig.first &&
-            std::abs( recov.second - orig.second ) < tol ); } ) ) {
-            printf("failed to recover: (%d, %f)\n", orig.first, orig.second );
+            [&orig, tol](const auto& recov) { return (recov.location == orig.location &&
+            std::abs( recov.error - orig.error ) < tol ); } ) ) {
+            printf("failed to recover: (%ld, %f)\n", orig.location, orig.error );
         }
     }
 
