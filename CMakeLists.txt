@@ -176,13 +176,6 @@ if( BUILD_UNIT_TESTS )
                                         PUBLIC gtest_main                 )
     add_test( NAME test_speck3d COMMAND test_speck3d                    )
 
-    # unit tests for speck3d_err
-#    add_executable( test_speck3d_err
-#                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck3d_err_unit_test.cpp" )
-#    target_link_libraries( test_speck3d_err PUBLIC sam_helper
-#                                            PUBLIC ${SPECK_LIBS} 
-#                                            PUBLIC gtest_main                 )
-#    add_test( NAME test_speck3d_err COMMAND test_speck3d_err                    )
 endif()
 
 
