@@ -11,7 +11,6 @@ namespace speck {
 
 using TwoSets = std::array<SPECKSet1D, 2>;
 
-
 class SPECK_Err {
 public:
     //
@@ -20,17 +19,17 @@ public:
     // Important note on the outliers: each one must live at a unique location.
     //
     // Input
-    void reserve(size_t);                           // Optionally pre-allocate spaces
-    void add_outlier(size_t, float);                // add a single outlier.
-    void add_outlier_list(std::vector<Outlier>);    // add an entire list of outliers
-    void set_length(size_t);                        // set 1D array length
-    void set_tolerance(float);                      // set error tolerance
+    void reserve(size_t);                        // Optionally pre-allocate spaces
+    void add_outlier(size_t, float);             // add a single outlier.
+    void add_outlier_list(std::vector<Outlier>); // add an entire list of outliers
+    void set_length(size_t);                     // set 1D array length
+    void set_tolerance(float);                   // set error tolerance
 
     // Output
-    auto release_outliers() -> std::vector<Outlier>;// Release ownership of decoded outliers
-    auto get_num_of_outliers() const -> size_t;     // How many outliers are decoded?
-    auto get_ith_outlier(size_t) const -> Outlier;  // Get a single outlier (No range check here!)
-    auto num_of_bits() const -> size_t;             // How many bits are generated?
+    auto release_outliers() -> std::vector<Outlier>; // Release ownership of decoded outliers
+    auto get_num_of_outliers() const -> size_t;      // How many outliers are decoded?
+    auto get_ith_outlier(size_t) const -> Outlier;   // Get a single outlier (No range check here!)
+    auto num_of_bits() const -> size_t;              // How many bits are generated?
 
     // Action methods
     // Returns 0 upon success, 1 upon failure.
@@ -41,7 +40,7 @@ private:
     //
     // Private methods
     //
-    auto m_part_set( const SPECKSet1D& ) const -> TwoSets;
+    auto m_part_set(const SPECKSet1D&) const -> TwoSets;
     void m_initialize_LIS();
     void m_clean_LIS();
     auto m_ready_to_encode() const -> bool;
@@ -51,16 +50,16 @@ private:
     // If not, return -1
     auto m_decide_significance(const SPECKSet1D&) const -> int64_t;
 
-    // For the following encoding methods that return a boolean, 
+    // For the following encoding methods that return a boolean,
     // True means that all outliers are refined to be within the tolerance
     // False means otherwise.
     auto m_process_S_encoding(size_t, size_t) -> bool;
     auto m_code_S(size_t, size_t) -> bool;
-    auto m_sorting_pass() -> bool;                  // Used in both encoding and decoding
-    auto m_refinement_Sig() -> bool;                // Used in encoding only
-    auto m_refinement_NewlySig( size_t ) -> bool;   // Used in encoding only
+    auto m_sorting_pass() -> bool;              // Used in both encoding and decoding
+    auto m_refinement_Sig() -> bool;            // Used in encoding only
+    auto m_refinement_NewlySig(size_t) -> bool; // Used in encoding only
 
-    // For the following decoding methods that return a boolean, 
+    // For the following decoding methods that return a boolean,
     // True means that all bits are processed and decoding finishes,
     // False means otherwise.
     auto m_process_S_decoding(size_t, size_t) -> bool;
