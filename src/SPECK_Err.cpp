@@ -153,6 +153,7 @@ auto speck::SPECK_Err::encode() -> int
             break;
 
         m_threshold *= 0.5f;
+        m_clean_LIS();
     }
 
 #ifdef PRINT
@@ -176,8 +177,8 @@ auto speck::SPECK_Err::decode() -> int
 
     // Clear/initialize data structures
     m_LOS.clear();
-    m_LSP.clear();
-    m_q.clear();
+    m_LSP.clear();  // Not used when decoding
+    m_q.clear();    // Not used when decoding
     m_err_hat.clear();
     m_pixel_types.clear();
     m_initialize_LIS();
@@ -194,6 +195,7 @@ auto speck::SPECK_Err::decode() -> int
             break;
 
         m_threshold *= 0.5f;
+        m_clean_LIS();
     }
 
     // Put restored values in m_LOS with proper signs
@@ -245,19 +247,22 @@ auto speck::SPECK_Err::m_process_S_encoding(size_t idx1, size_t idx2) -> bool
 #endif
 
     if (is_sig) {
+
         if (set.length == 1) { // Is a pixel
             // Record the sign of this newly identify outlier, and put it in LSP
             m_bit_buffer.push_back( m_LOS[sig_idx].error > 0.0f );
             m_pixel_types[ sig_idx ] = Significance::NewlySig;
             m_LSP.push_back( sig_idx );
+
 #ifdef PRINT
     std::cout << "threshold = " << m_threshold << ",  sign_" << m_bit_buffer.back() << std::endl;
 #endif
+
             // Refine this pixel!
             if( m_refinement_NewlySig( sig_idx ) )
                 return true;
         }
-        else {
+        else {  // Not a pixel
             if( m_code_S( idx1, idx2 ) )
                 return true;
         }
@@ -319,11 +324,12 @@ auto speck::SPECK_Err::m_refinement_Sig() -> bool
             auto was_outlier = std::abs(diff) > m_tolerance;
             auto need_refine = m_q[idx] >= m_threshold;
             m_bit_buffer.push_back( need_refine );
+            if (need_refine)
+                m_q[idx] -= m_threshold;
+
 #ifdef PRINT
     std::cout << "threshold = " << m_threshold << ",  ref_" << m_bit_buffer.back() << std::endl;
 #endif
-            if (need_refine)
-                m_q[idx] -= m_threshold;
 
             // If this pixel was an outlier, we test again!
             if( was_outlier ) {
@@ -351,12 +357,14 @@ auto speck::SPECK_Err::m_refinement_NewlySig( size_t idx ) -> bool
     m_q[idx] -= m_threshold;
 
     m_err_hat[idx] = m_threshold * 1.5f;
-    auto diff = m_err_hat[idx] - std::abs(m_LOS[idx].error);
-    auto is_outlier = std::abs(diff) > m_tolerance;
+
     // Because a NewlySig pixel must be an outlier previously, so we only need to test 
     // if it is currently an outlier.
+    auto diff = m_err_hat[idx] - std::abs(m_LOS[idx].error);
+    auto is_outlier = std::abs(diff) > m_tolerance;
     if (!is_outlier)
         m_outlier_cnt--;
+
     if (m_outlier_cnt == 0 )
         return true;
     else
@@ -372,7 +380,7 @@ auto speck::SPECK_Err::m_process_S_decoding( size_t idx1, size_t idx2 ) -> bool
     std::cout << "threshold = " << m_threshold << ",  set_" << is_sig << std::endl;
 #endif
     
-    // The bit buffer should NOT be depleted at this point
+    // Sanity check: the bit buffer should NOT be depleted at this point
     assert( m_bit_idx < m_bit_buffer.size() );
 
     if( is_sig ) {
@@ -419,9 +427,11 @@ auto speck::SPECK_Err::m_refinement_decoding() -> bool
                 m_err_hat[idx] += m_threshold * 0.5f;
             else
                 m_err_hat[idx] -= m_threshold * 0.5f;
+
 #ifdef PRINT
     std::cout << "threshold = " << m_threshold << ",  ref_" << m_bit_buffer[m_bit_idx-1] << std::endl;
 #endif
+
             if( m_bit_idx == m_bit_buffer.size() )
                 return true;
 
