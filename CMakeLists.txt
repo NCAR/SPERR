@@ -25,6 +25,7 @@ add_subdirectory( src )
 list( APPEND SPECK_LIBS sam_helper      )
 list( APPEND SPECK_LIBS SPECK2D         )
 list( APPEND SPECK_LIBS SPECK3D         )
+list( APPEND SPECK_LIBS SPECK_Err     )
 list( APPEND SPECK_LIBS SPECK_Storage   )
 list( APPEND SPECK_LIBS CDF97           )
 list( APPEND SPECK_LIBS speck_helper    )
@@ -68,6 +69,11 @@ target_include_directories( compressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
 add_executable( decompressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/decompressor_2d.cpp" )
 target_link_libraries(      decompressor_2d PUBLIC ${SPECK_LIBS})
 target_include_directories( decompressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
+
+# Executable #9
+add_executable( example_speck_err "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck_err.cpp" )
+target_link_libraries(      example_speck_err PUBLIC ${SPECK_LIBS})
+target_include_directories( example_speck_err PUBLIC ${PROJECT_BINARY_DIR} )
 
 if( BUILD_QCC_EXAMPLES )
     set ( QCCPACK_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/QccPack-0.61-1/install/" 
@@ -169,6 +175,15 @@ if( BUILD_UNIT_TESTS )
                                         PUBLIC ${SPECK_LIBS} 
                                         PUBLIC gtest_main                 )
     add_test( NAME test_speck3d COMMAND test_speck3d                    )
+
+    # unit tests for speck_err
+    add_executable( test_speck_err
+                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck_err_unit_test.cpp" )
+    target_link_libraries( test_speck_err PUBLIC sam_helper
+                                        PUBLIC ${SPECK_LIBS} 
+                                        PUBLIC gtest_main                 )
+    add_test( NAME test_speck_err COMMAND test_speck_err                    )
+
 endif()
 
 

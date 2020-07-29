@@ -6,6 +6,7 @@
 #include <cstring>
 #include <fstream>
 
+
 //
 // Class SPECKSet3D
 //
@@ -18,6 +19,22 @@ auto speck::SPECKSet3D::is_empty() const -> bool
 {
     return (length_z == 0 || length_y == 0 || length_x == 0);
 }
+
+
+//
+// Class SPECKSet1D
+//
+speck::SPECKSet1D::SPECKSet1D( size_t s, size_t l, uint32_t p )
+                 : start(s), length(l), part_level(p)
+{ }
+
+
+//
+// Struct Outlier
+//
+speck::Outlier::Outlier( size_t loc, float e )
+              : location(loc), error(e)
+{ }
 
 #ifdef PRINT
 void speck::SPECKSet3D::print() const
