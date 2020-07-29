@@ -98,6 +98,7 @@ int main( int argc, char* argv[] )
             rmse, lmax, psnr, arr1min, arr1max );
 
 
+#ifdef EXPERIMENT
     // Experiment: 
     // Sort the differences and then write a tenth of it to disk.
     std::vector<speck::Outlier> LOS( total_vals, speck::Outlier{} );
@@ -118,5 +119,6 @@ int main( int argc, char* argv[] )
         file.write( reinterpret_cast<char*>(LOS.data()), sizeof(speck::Outlier) * num_of_outliers );
         file.close();
     }
+#endif
 
 }
