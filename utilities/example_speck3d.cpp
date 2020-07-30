@@ -127,7 +127,7 @@ int main( int argc, char* argv[] )
 
 #ifdef QZ_TERM
     float bpp = float(encoder.get_num_of_bits()) / float(total_vals);
-    printf("With %d levels of quantization, average bit-per-pixel = %f\n",
+    printf("With %d levels of quantization, average BPP = %f\n",
             qz_levels, bpp );
 #endif
 
