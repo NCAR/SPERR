@@ -18,6 +18,7 @@ option( BUILD_UNIT_TESTS "Build unit tests using googletest?" OFF)
 option( TIME_EXAMPLES  "Compile timing code for debug purpose?" OFF)
 option( BUILD_QCC_EXAMPLES "Build examples that link to QccPack?" OFF)
 option( NO_CPP14 "Forbid using CPP14 features" OFF)
+option( QZ_TERM  "Operational mode which terminates by quantization level" OFF)
 
 # configure a header file to pass some of the CMake settings to the source code
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/SpeckConfig.h.in" "SpeckConfig.h")

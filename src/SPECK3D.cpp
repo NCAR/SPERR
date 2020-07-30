@@ -39,6 +39,13 @@ void speck::SPECK3D::set_bit_budget(size_t budget)
         m_budget = budget + 8 - mod;
 }
 
+#ifdef QZ_TERM
+    void speck::SPECK3D::set_quantization_levels( int lev )
+    {
+        m_qz_levels = lev;
+    }
+#endif
+
 void speck::SPECK3D::m_clean_LIS()
 {
     std::vector<SPECKSet3D> tmpv;
@@ -98,7 +105,14 @@ auto speck::SPECK3D::encode() -> int
     // have a pretty big magnitude, so we use int32_T here.
     m_max_coeff_bits = int32_t(std::floor(std::log2(max_coeff)));
     m_threshold      = std::pow(2.0, double(m_max_coeff_bits));
-    for (size_t bitplane = 0; bitplane < 128; bitplane++) {
+
+#ifdef QZ_TERM
+    size_t total_qz_levels = m_qz_levels;
+#else
+    size_t total_qz_levels = 128;   // 128 is big enough
+#endif
+
+    for (size_t bitplane = 0; bitplane < total_qz_levels; bitplane++) {
         // Update the significance map based on the current threshold
         // Most of them are gonna be false, and only a handful to be true.
         m_significance_map.assign(m_coeff_len, false);
@@ -107,11 +121,15 @@ auto speck::SPECK3D::encode() -> int
                 m_significance_map[i] = true;
         }
 
+#ifdef QZ_TERM
+        m_sorting_pass_encode();
+        m_refinement_pass_encode();
+#else
         if (m_sorting_pass_encode())
             break;
-
         if (m_refinement_pass_encode())
             break;
+#endif
 
         m_threshold *= 0.5;
         m_clean_LIS();
@@ -129,6 +147,7 @@ auto speck::SPECK3D::decode() -> int
     // By default, decode all the available bits
     if (m_budget == 0)
         m_budget = m_bit_buffer.size();
+
 #ifdef NO_CPP14
     m_coeff_buf.reset(new double[m_coeff_len]);
 #else
@@ -239,6 +258,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // Right now big is the set that's most likely to be significant, so insert
     // it at the front of it's corresponding vector. One-time expense.
     const auto parts = big.part_level;
+
 #ifdef NO_CPP14
     m_LIS[parts].insert(m_LIS[parts].begin(), big);
 #else
@@ -252,6 +272,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
 
 auto speck::SPECK3D::m_sorting_pass_encode() -> int
 {
+
 #ifdef PRINT
     std::cout << "--> Sorting Pass " << std::endl;
 #endif
@@ -260,8 +281,13 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> int
     // Since we have a separate representation of LIP, let's process that list first!
     for (size_t i = 0; i < m_LIP.size(); i++) {
         if (!m_LIP_garbage[i]) {
+
+#ifdef QZ_TERM
+            m_process_P_encode(i);
+#else
             if ((rtn = m_process_P_encode(i)))
                 return rtn;
+#endif
         }
     }
 
@@ -271,8 +297,13 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> int
         for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
             const auto& s = m_LIS[idx1][idx2];
             if (s.type != SetType::Garbage) {
+
+#ifdef QZ_TERM
+                m_process_S_encode(idx1, idx2);
+#else
                 if ((rtn = m_process_S_encode(idx1, idx2)))
                     return rtn;
+#endif
             }
         }
     }
@@ -328,9 +359,11 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> int
 #endif
             }
 
+#ifndef QZ_TERM
             // Let's also see if we've reached the bit budget
             if (m_bit_buffer.size() >= m_budget)
                 return 1;
+#endif
         }
     }
 
@@ -371,9 +404,11 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> int
         std::cout << "s0" << std::endl;
 #endif
 
+#ifndef QZ_TERM
     // When encoding, check bit budget after outputing a bit
     if (m_bit_buffer.size() >= m_budget)
         return 1;
+#endif
 
     if (this_pixel_is_sig) {
         // Output pixel sign
@@ -386,16 +421,18 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> int
             std::cout << "p0" << std::endl;
 #endif
         // Note that after outputing two bits this pixel got put in LSP.
-        // The same is reversed when decoding.
+        // The same logic is reversed when decoding.
         m_LSP.push_back(pixel_idx);
         m_LSP_newly.push_back(true);
 
         m_LIP_garbage[loc] = true;
         m_LIP_garbage_cnt++;
 
+#ifndef QZ_TERM
         // When encoding, check bit budget after outputing a bit
         if (m_bit_buffer.size() >= m_budget)
             return 1;
+#endif
     }
 
     return 0;
@@ -426,8 +463,11 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> int
     }
 end_loop_label:
     m_bit_buffer.push_back(set.signif == Significance::Sig); // output the significance value
+
+#ifndef QZ_TERM
     if (m_bit_buffer.size() >= m_budget)
         return 1;
+#endif
 
 #ifdef PRINT
     if (m_bit_buffer.back())
@@ -437,8 +477,13 @@ end_loop_label:
 #endif
 
     if (set.signif == Significance::Sig) {
+
+#ifdef QZ_TERM
+        m_code_S(idx1, idx2);
+#else
         if ((rtn = m_code_S(idx1, idx2)))
             return rtn;
+#endif
 
         set.type = SetType::Garbage; // this current set is gonna be discarded.
         m_LIS_garbage_cnt[set.part_level]++;
@@ -506,24 +551,35 @@ auto speck::SPECK3D::m_code_S(size_t idx1, size_t idx2) -> int
         if (s.is_pixel()) {
             m_LIP.push_back(s.start_z * m_dim_x * m_dim_y + s.start_y * m_dim_x + s.start_x);
             m_LIP_garbage.push_back(false);
-            if (m_encode_mode) {
-                if ((rtn = m_process_P_encode(m_LIP.size() - 1)))
-                    return rtn;
-            } else {
-                if ((rtn = m_process_P_decode(m_LIP.size() - 1)))
-                    return rtn;
-            }
+
+#ifdef QZ_TERM
+            if (m_encode_mode)
+                m_process_P_encode(m_LIP.size() - 1);
+            else
+                m_process_P_decode(m_LIP.size() - 1);
+#else
+            if (m_encode_mode && (rtn = m_process_P_encode(m_LIP.size() - 1)))
+                return rtn;
+            else if( !m_encode_mode && (rtn = m_process_P_decode(m_LIP.size() - 1)))
+                return rtn;
+#endif
+
         } else if (!s.is_empty()) {
             const auto newidx1 = s.part_level;
             m_LIS[newidx1].emplace_back(s);
             const auto newidx2 = m_LIS[newidx1].size() - 1;
-            if (m_encode_mode) {
-                if ((rtn = m_process_S_encode(newidx1, newidx2)))
-                    return rtn;
-            } else {
-                if ((rtn = m_process_S_decode(newidx1, newidx2)))
-                    return rtn;
-            }
+
+#ifdef QZ_TERM
+            if (m_encode_mode)
+                m_process_S_encode(newidx1, newidx2);
+            else
+                m_process_S_decode(newidx1, newidx2);
+#else 
+            if (m_encode_mode && (rtn = m_process_S_encode(newidx1, newidx2)))
+                return rtn;
+            else if( !m_encode_mode && (rtn = m_process_S_decode(newidx1, newidx2)))
+                return rtn;
+#endif
         }
     }
 
@@ -538,6 +594,11 @@ auto speck::SPECK3D::m_ready_to_encode() const -> bool
         return false;
     if (m_budget == 0)
         return false;
+
+#ifdef QZ_TERM
+    if( m_qz_levels <= 0 )
+        return false;
+#endif
 
     return true;
 }
@@ -562,11 +623,13 @@ auto speck::SPECK3D::write_to_disk(const std::string& filename) const -> int
     // Create and fill header buffer
     size_t   pos = 0;
     uint32_t dims[3] { uint32_t(m_dim_x), uint32_t(m_dim_y), uint32_t(m_dim_z) };
+
 #ifdef NO_CPP14
     buffer_type_c header(new char[header_size]);
 #else
     buffer_type_c header = std::make_unique<char[]>(header_size);
 #endif
+
     std::memcpy(header.get(), dims, sizeof(dims));
     pos += sizeof(dims);
     std::memcpy(header.get() + pos, &m_image_mean, sizeof(m_image_mean));
@@ -590,11 +653,13 @@ auto speck::SPECK3D::read_from_disk(const std::string& filename) -> int
 
     // Create the header buffer, and read from file
     // Note that m_bit_buffer is filled by m_read().
+
 #ifdef NO_CPP14
     buffer_type_c header(new char[header_size]);
 #else
     buffer_type_c header = std::make_unique<char[]>(header_size);
 #endif
+
     int rtn = m_read(header, header_size, filename.c_str());
     if (rtn)
         return rtn;

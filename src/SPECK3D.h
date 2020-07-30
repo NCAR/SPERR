@@ -15,6 +15,11 @@ public:
     void set_max_coeff_bits(int32_t);      // (Useful for reconstruction)
     void set_bit_budget(size_t);           // How many bits does speck process?
 
+#ifdef QZ_TERM
+    // How many levels of quantization before terminating encoding?
+    void set_quantization_levels( int );
+#endif
+
     // trivial output
     void get_dims(size_t&, size_t&, size_t&) const;
 
@@ -71,6 +76,11 @@ private:
     std::vector<size_t> m_LIP;         // List of insignificant pixels.
     std::vector<bool>   m_LIP_garbage; // If this insignificant pixel is considered garbage.
     size_t              m_LIP_garbage_cnt = 0;
+
+#ifdef QZ_TERM
+    int m_qz_levels = 0;
+#endif
+
 };
 
 };
