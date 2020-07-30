@@ -55,7 +55,7 @@ TEST( speck_helper, bit_packing )
                              false, false, true,  true,  false, false, true,  true };// 6th byte
     const size_t byte_offset = 1;
 #ifdef NO_CPP14
-    speck::buffer_type_c bytes (new float[num_of_bytes + byte_offset]);
+    speck::buffer_type_c bytes (new char[num_of_bytes + byte_offset]);
 #else
     speck::buffer_type_c bytes = std::make_unique<char[]>(num_of_bytes + byte_offset);
 #endif

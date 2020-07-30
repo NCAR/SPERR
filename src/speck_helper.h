@@ -9,6 +9,7 @@
 #include <cstddef> // size_t
 #include <memory>
 #include <vector>
+#include "SpeckConfig.h"
 
 namespace speck {
 

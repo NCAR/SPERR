@@ -3,6 +3,8 @@
 
 #define Speck_VERSION_MAJOR @Speck_VERSION_MAJOR@
 #define Speck_VERSION_MINOR @Speck_VERSION_MINOR@
+
 #cmakedefine TIME_EXAMPLES
+#cmakedefine NO_CPP14
 
 #endif
