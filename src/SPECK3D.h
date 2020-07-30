@@ -13,11 +13,15 @@ public:
     // trivial input
     void set_dims(size_t, size_t, size_t); // Accepts volume dimension
     void set_max_coeff_bits(int32_t);      // (Useful for reconstruction)
-    void set_bit_budget(size_t);           // How many bits does speck process?
+
+    // How many bits does speck process?
+    // If set to zero during decoding, then all bits in the bitstream will be processed.
+    void set_bit_budget(size_t);           
 
 #ifdef QZ_TERM
     // How many levels of quantization before terminating encoding?
     void set_quantization_levels( int );
+    auto get_num_of_bits() const -> size_t;
 #endif
 
     // trivial output

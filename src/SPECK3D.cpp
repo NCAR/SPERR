@@ -44,6 +44,11 @@ void speck::SPECK3D::set_bit_budget(size_t budget)
     {
         m_qz_levels = lev;
     }
+
+    auto speck::SPECK3D::get_num_of_bits() const -> size_t
+    {
+        return m_bit_buffer.size();
+    }
 #endif
 
 void speck::SPECK3D::m_clean_LIS()
@@ -134,6 +139,12 @@ auto speck::SPECK3D::encode() -> int
         m_threshold *= 0.5;
         m_clean_LIS();
     }
+
+#ifdef QZ_TERM
+    // If the bit buffer has the last byte empty, let's fill in zero's.
+    while( m_bit_buffer.size() % 8 != 0 )
+        m_bit_buffer.push_back( false );
+#endif
 
     return 0;
 }
@@ -592,11 +603,12 @@ auto speck::SPECK3D::m_ready_to_encode() const -> bool
         return false;
     if (m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0)
         return false;
-    if (m_budget == 0)
-        return false;
 
 #ifdef QZ_TERM
     if( m_qz_levels <= 0 )
+        return false;
+#else
+    if (m_budget == 0)
         return false;
 #endif
 

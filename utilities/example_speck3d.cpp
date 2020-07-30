@@ -7,6 +7,7 @@
 #include <iostream>
 #include <chrono>
 
+
 extern "C"  // C Function calls, and don't include the C header!
 {
     int sam_read_n_bytes( const char*, size_t, void* );
@@ -19,9 +20,16 @@ extern "C"  // C Function calls, and don't include the C header!
 
 int main( int argc, char* argv[] )
 {
+
     if( argc != 6 )
     {
+
+#ifdef QZ_TERM
+        std::cerr << "Usage: ./a.out input_filename dim_x dim_y dim_z qz_levels" << std::endl;
+#else
         std::cerr << "Usage: ./a.out input_filename dim_x dim_y dim_z cratio" << std::endl;
+#endif
+
         return 1;
     }
 
@@ -30,15 +38,21 @@ int main( int argc, char* argv[] )
     const size_t  dim_x  = std::atol( argv[2] );
     const size_t  dim_y  = std::atol( argv[3] );
     const size_t  dim_z  = std::atol( argv[4] );
-    const float   cratio = std::atof( argv[5] );
     const size_t  total_vals = dim_x * dim_y * dim_z;
 
-    // Let's read in binaries as 4-byte floats
+#ifdef QZ_TERM
+    const int     qz_levels = std::atoi( argv[5] );
+#else
+    const float   cratio = std::atof( argv[5] );
+#endif
+
 #ifdef NO_CPP14
     speck::buffer_type_f in_buf( new float[total_vals] );
 #else
     speck::buffer_type_f in_buf = std::make_unique<float[]>( total_vals );
 #endif
+
+    // Let's read in binaries as 4-byte floats
     if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
     {
         std::cerr << "Input read error!" << std::endl;
@@ -57,15 +71,27 @@ int main( int argc, char* argv[] )
     encoder.set_dims( dim_x, dim_y, dim_z );
     encoder.set_image_mean( cdf.get_mean() );
     encoder.take_coeffs( cdf.release_data(), total_vals );
+
+#ifdef QZ_TERM
+    encoder.set_quantization_levels( qz_levels );
+#else
     const size_t total_bits = size_t(32.0f * total_vals / cratio);
     encoder.set_bit_budget( total_bits );
+#endif
+
     encoder.encode();
     encoder.write_to_disk( output );
 
     // Do a speck decoding
     speck::SPECK3D  decoder;
     decoder.read_from_disk( output );
+
+#ifdef QZ_TERM
+    decoder.set_bit_budget( 0 );
+#else
     decoder.set_bit_budget( total_bits );
+#endif
+
     decoder.decode();
 
     // Do an inverse wavelet transform
@@ -83,11 +109,13 @@ int main( int argc, char* argv[] )
     std::cout << "Time for SPECK in milliseconds: " << diffT.count() * 1000.0f << std::endl;
 
     // Compare the result with the original input in double precision
+
 #ifdef NO_CPP14
     speck::buffer_type_d in_bufd( new double[ total_vals ] );
 #else
     speck::buffer_type_d in_bufd = std::make_unique<double[]>( total_vals );
 #endif
+
     for( size_t i = 0; i < total_vals; i++ )
         in_bufd[i] = in_buf[i];
 
@@ -97,9 +125,15 @@ int main( int argc, char* argv[] )
     printf("Sam: rmse = %f, lmax = %f, psnr = %fdB, orig_min = %f, orig_max = %f\n", 
             rmse, lmax, psnr, arr1min, arr1max );
 
+#ifdef QZ_TERM
+    float bpp = float(encoder.get_num_of_bits()) / float(total_vals);
+    printf("With %d levels of quantization, average bit-per-pixel = %f\n",
+            qz_levels, bpp );
+#endif
+
 
 #ifdef EXPERIMENT
-    // Experiment: 
+    // Experiment 1: 
     // Sort the differences and then write a tenth of it to disk.
     std::vector<speck::Outlier> LOS( total_vals, speck::Outlier{} );
     for( size_t i = 0; i < total_vals; i++ ) {
