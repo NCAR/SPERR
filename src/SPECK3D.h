@@ -19,9 +19,23 @@ public:
     void set_bit_budget(size_t);           
 
 #ifdef QZ_TERM
-    // How many levels of quantization before terminating encoding?
-    void set_quantization_levels( int );
+    //
+    // Notes for QZ_TERM mode:
+    // It changes the behavior of encoding, so encoding terminates at a particular
+    // quantization level. It does NOT change the behavior of decoding, though.
+    //
+    // There are two approaches to specify the quantization level to terminate at.
+    // 1) A user specifies how many quantization iterations to perform, by calling
+    //    set_quantization_iterations() with a positive value. 
+    // 2) A user specifies EXACTLY the quantization level to terminate, by calling
+    //    set_quantization_term_level() with a positive or negative value.
+    //
+    // Internally, the encoding algorithm prioritizes approach 1), and then approach 2).
+    //
+    void set_quantization_term_level( int32_t );
+    void set_quantization_iterations( int32_t );
     auto get_num_of_bits() const -> size_t;
+    auto get_quantization_term_level() const -> int32_t;
 #endif
 
     // trivial output
@@ -50,8 +64,8 @@ private:
     // For the following 5 methods, indices are used to locate which set to process from m_LIS,
     auto m_process_S_encode(size_t idx1, size_t idx2) -> int;
     auto m_process_S_decode(size_t idx1, size_t idx2) -> int;
-    auto m_process_P_encode(size_t idx) -> int; // Same functionality as process_S, but specifically
-    auto m_process_P_decode(size_t idx) -> int; // designed for sets that are essentially pixels.
+    auto m_process_P_encode(size_t idx) -> int; // Similar to process_S, but for pixels.
+    auto m_process_P_decode(size_t idx) -> int; // Similar to process_S, but for pixels.
     auto m_code_S(size_t idx1, size_t idx2) -> int;
 
     //
@@ -82,9 +96,9 @@ private:
     size_t              m_LIP_garbage_cnt = 0;
 
 #ifdef QZ_TERM
-    int m_qz_levels = 0;
+    int32_t m_qz_term_lev   = 0;  // At which quantization level does encoding terminate?
+    int32_t m_qz_iterations = 0;  // How many quantization iterations to perform? 
 #endif
-
 };
 
 };

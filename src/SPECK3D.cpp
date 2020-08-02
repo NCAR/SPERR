@@ -40,14 +40,26 @@ void speck::SPECK3D::set_bit_budget(size_t budget)
 }
 
 #ifdef QZ_TERM
-    void speck::SPECK3D::set_quantization_levels( int lev )
+    void speck::SPECK3D::set_quantization_term_level( int32_t lev )
     {
-        m_qz_levels = lev;
+        m_qz_term_lev   = lev;
+        m_qz_iterations = -1;    // Set to negative so m_qz_term_lev will be used.
+    }
+
+    void speck::SPECK3D::set_quantization_iterations( int32_t itr )
+    {
+        assert( itr > 0 );
+        m_qz_iterations = itr;
     }
 
     auto speck::SPECK3D::get_num_of_bits() const -> size_t
     {
         return m_bit_buffer.size();
+    }
+
+    auto speck::SPECK3D::get_quantization_term_level() const -> int32_t
+    {
+        return m_qz_term_lev;
     }
 #endif
 
@@ -105,19 +117,22 @@ auto speck::SPECK3D::encode() -> int
 
     // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
     // negative value. std::floor() will always find the smaller integer value,
-    // which will always reconstruct to a bitplane value that is smaller than
-    // max_coeff. Also, when max_coeff is close to 0.0, std::log2(max_coeff) can
-    // have a pretty big magnitude, so we use int32_T here.
+    // which will always reconstruct to a bitplane value that is smaller than max_coeff. 
+    // Also, when max_coeff is close to 0.0, std::log2(max_coeff) can
+    // have a pretty big magnitude, so we use int32_t here.
     m_max_coeff_bits = int32_t(std::floor(std::log2(max_coeff)));
     m_threshold      = std::pow(2.0, double(m_max_coeff_bits));
 
 #ifdef QZ_TERM
-    size_t total_qz_levels = m_qz_levels;
-#else
-    size_t total_qz_levels = 128;   // 128 is big enough
+    int32_t num_of_iterations = 1;
+    if( m_qz_iterations <= 0 ) { // terminate after reaching a specific quantization level
+        if( m_qz_term_lev > m_max_coeff_bits ) // make sure m_qz_term_lev is valid.
+            return 1;
+    }
 #endif
 
-    for (size_t bitplane = 0; bitplane < total_qz_levels; bitplane++) {
+    for( int i = 0; i < 128; i++ ) {    // This is the upper limit of num of iterations.
+
         // Update the significance map based on the current threshold
         // Most of them are gonna be false, and only a handful to be true.
         m_significance_map.assign(m_coeff_len, false);
@@ -127,8 +142,19 @@ auto speck::SPECK3D::encode() -> int
         }
 
 #ifdef QZ_TERM
+        // The actual encoding procedures
         m_sorting_pass_encode();
         m_refinement_pass_encode();
+        
+        // Let's test if we need to terminate
+        if( m_qz_iterations > 0 && num_of_iterations >= m_qz_iterations ) {
+            m_qz_term_lev = m_max_coeff_bits - num_of_iterations + 1;
+            break;
+        }
+        else if ( m_qz_iterations <= 0 && m_max_coeff_bits - num_of_iterations + 1 <= m_qz_term_lev )
+            break;
+
+        num_of_iterations++;
 #else
         if (m_sorting_pass_encode())
             break;
@@ -604,10 +630,7 @@ auto speck::SPECK3D::m_ready_to_encode() const -> bool
     if (m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0)
         return false;
 
-#ifdef QZ_TERM
-    if( m_qz_levels <= 0 )
-        return false;
-#else
+#ifndef QZ_TERM
     if (m_budget == 0)
         return false;
 #endif
