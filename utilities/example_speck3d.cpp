@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <chrono>
@@ -21,29 +22,46 @@ extern "C"  // C Function calls, and don't include the C header!
 int main( int argc, char* argv[] )
 {
 
-    if( argc != 6 )
-    {
 
 #ifdef QZ_TERM
-        std::cerr << "Usage: ./a.out input_filename dim_x dim_y dim_z qz_levels" << std::endl;
+    if( argc != 7 ) {
+        std::cerr << "Usage: ./a.out input_filename dim_x dim_y dim_z " <<
+                     "absolute/n_iterations qz_levels" << std::endl;
 #else
-        std::cerr << "Usage: ./a.out input_filename dim_x dim_y dim_z cratio" << std::endl;
+    if( argc != 6 ) {
+        std::cerr << "Usage: ./a.out input_filename dim_x dim_y dim_z bit-per-pixel" << std::endl;
 #endif
-
         return 1;
     }
-
+    
     const char*   input  = argv[1];
-    const char*   output = "sam.tmp";
     const size_t  dim_x  = std::atol( argv[2] );
     const size_t  dim_y  = std::atol( argv[3] );
     const size_t  dim_z  = std::atol( argv[4] );
     const size_t  total_vals = dim_x * dim_y * dim_z;
 
+    char output[256];
+    std::strcpy( output, argv[0] );
+    std::strcat( output, ".tmp" );
+
 #ifdef QZ_TERM
-    const int     qz_levels = std::atoi( argv[5] );
+    bool absolute_qz_level;
+    if( std::strcmp( argv[5], "absolute" ) == 0 )
+        absolute_qz_level = true;
+    else if( std::strcmp( argv[5], "n_iterations" ) == 0 )
+        absolute_qz_level = false;
+    else {
+        std::cerr << "EITHER *absolute* or *n_iterations* needs to be specified!" << std::endl;
+        return 1;
+    }
+    const int qz_levels = std::atoi( argv[6] );
+    if( absolute_qz_level == false && qz_levels <= 0 ) {
+        std::cerr << "A positive value must be used for *n_iterations* quantization levels!" 
+                  << std::endl;
+        return 1;
+    }
 #else
-    const float   cratio = std::atof( argv[5] );
+    const float bpp = std::atof( argv[5] );
 #endif
 
 #ifdef NO_CPP14
@@ -73,11 +91,12 @@ int main( int argc, char* argv[] )
     encoder.take_coeffs( cdf.release_data(), total_vals );
 
 #ifdef QZ_TERM
-    encoder.set_quantization_iterations( qz_levels );
-    //encoder.set_quantization_term_level( qz_levels );
+    if( absolute_qz_level )
+        encoder.set_quantization_term_level( qz_levels );
+    else
+        encoder.set_quantization_iterations( qz_levels );
 #else
-    const size_t total_bits = size_t(32.0f * total_vals / cratio);
-    encoder.set_bit_budget( total_bits );
+    encoder.set_bit_budget( total_vals * bpp );
 #endif
 
     encoder.encode();
@@ -86,13 +105,7 @@ int main( int argc, char* argv[] )
     // Do a speck decoding
     speck::SPECK3D  decoder;
     decoder.read_from_disk( output );
-
-#ifdef QZ_TERM
-    decoder.set_bit_budget( 0 );
-#else
-    decoder.set_bit_budget( total_bits );
-#endif
-
+    decoder.set_bit_budget( 0 );    // decode all available bits
     decoder.decode();
 
     // Do an inverse wavelet transform
@@ -110,50 +123,25 @@ int main( int argc, char* argv[] )
     std::cout << "Time for SPECK in milliseconds: " << diffT.count() * 1000.0f << std::endl;
 
     // Compare the result with the original input in double precision
-
-#ifdef NO_CPP14
-    speck::buffer_type_d in_bufd( new double[ total_vals ] );
-#else
     speck::buffer_type_d in_bufd = std::make_unique<double[]>( total_vals );
-#endif
-
     for( size_t i = 0; i < total_vals; i++ )
         in_bufd[i] = in_buf[i];
 
     double rmse, lmax, psnr, arr1min, arr1max;
     sam_get_statsd( in_bufd.get(), idwt.get_read_only_data().get(), 
                     total_vals, &rmse, &lmax, &psnr, &arr1min, &arr1max );
-    printf("Sam: rmse = %f, lmax = %f, psnr = %fdB, orig_min = %f, orig_max = %f\n", 
+    printf("Sam stats: rmse = %f, lmax = %f, psnr = %fdB, orig_min = %f, orig_max = %f\n", 
             rmse, lmax, psnr, arr1min, arr1max );
+    in_bufd.reset( nullptr );
 
 #ifdef QZ_TERM
     float bpp = float(encoder.get_num_of_bits()) / float(total_vals);
-    printf("With %d levels of quantization, average BPP = %f, and qz terminates at level %d\n",
-            qz_levels, bpp, encoder.get_quantization_term_level() );
-#endif
 
-
-#ifdef EXPERIMENT
-    // Experiment 1: 
-    // Sort the differences and then write a tenth of it to disk.
-    std::vector<speck::Outlier> LOS( total_vals, speck::Outlier{} );
-    for( size_t i = 0; i < total_vals; i++ ) {
-        LOS[i].location  = i;
-        LOS[i].error = in_buf[i] - float(idwt.get_read_only_data()[i]);
-    }
-    
-    const size_t num_of_outliers = total_vals / 10;
-    std::partial_sort( LOS.begin(), LOS.begin() + num_of_outliers, LOS.end(), 
-        [](auto& a, auto& b) { return (std::abs(a.error) > std::abs(b.error)); } );
-
-    for( size_t i = 0; i < 10; i++ )
-        printf("outliers: (%ld, %f)\n", LOS[i].location, LOS[i].error );
-
-    std::ofstream file( "top_outliers", std::ios::binary );
-    if( file.is_open() ) {
-        file.write( reinterpret_cast<char*>(LOS.data()), sizeof(speck::Outlier) * num_of_outliers );
-        file.close();
-    }
+    if( !absolute_qz_level )
+        printf("With %d levels of quantization, average BPP = %f, and qz terminates at level %d\n",
+                qz_levels, bpp, encoder.get_quantization_term_level() );
+    else
+        printf("Quantization terminates at level %d with average BPP = %f\n", qz_levels, bpp );
 #endif
 
 }
