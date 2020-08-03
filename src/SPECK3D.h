@@ -12,7 +12,7 @@ class SPECK3D : public SPECK_Storage {
 public:
     // trivial input
     void set_dims(size_t, size_t, size_t); // Accepts volume dimension
-    void set_max_coeff_bits(int32_t);      // (Useful for reconstruction)
+    void set_max_coeff_bits(int32_t);
 
     // How many bits does speck process?
     // If set to zero during decoding, then all bits in the bitstream will be processed.

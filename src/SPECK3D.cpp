@@ -68,6 +68,7 @@ void speck::SPECK3D::m_clean_LIS()
     std::vector<SPECKSet3D> tmpv;
 
     for (size_t tmpi = 1; tmpi <= m_LIS_garbage_cnt.size(); tmpi++) {
+
         // Because lists towards the end tend to have bigger sizes, we look at
         // them first. This practices should reduce the number of memory allocations.
         const auto i = m_LIS_garbage_cnt.size() - tmpi;
@@ -125,7 +126,8 @@ auto speck::SPECK3D::encode() -> int
 
 #ifdef QZ_TERM
     int32_t num_of_iterations = 1;
-    if( m_qz_iterations <= 0 ) { // terminate after reaching a specific quantization level
+    int32_t current_qz_level  = m_max_coeff_bits;
+    if( m_qz_iterations <= 0 ) { // terminate after reaching an absolute quantization level
         if( m_qz_term_lev > m_max_coeff_bits ) // make sure m_qz_term_lev is valid.
             return 1;
     }
@@ -142,19 +144,20 @@ auto speck::SPECK3D::encode() -> int
         }
 
 #ifdef QZ_TERM
-        // The actual encoding procedures
+        // The actual encoding steps
         m_sorting_pass_encode();
         m_refinement_pass_encode();
         
         // Let's test if we need to terminate
         if( m_qz_iterations > 0 && num_of_iterations >= m_qz_iterations ) {
-            m_qz_term_lev = m_max_coeff_bits - num_of_iterations + 1;
+            m_qz_term_lev = current_qz_level;   // Record the terminating quantization level.
             break;
         }
-        else if ( m_qz_iterations <= 0 && m_max_coeff_bits - num_of_iterations + 1 <= m_qz_term_lev )
+        else if ( m_qz_iterations <= 0 && current_qz_level <= m_qz_term_lev )
             break;
 
         num_of_iterations++;
+        current_qz_level--;
 #else
         if (m_sorting_pass_encode())
             break;
@@ -401,6 +404,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> int
             if (m_bit_buffer.size() >= m_budget)
                 return 1;
 #endif
+
         }
     }
 
@@ -442,7 +446,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> int
 #endif
 
 #ifndef QZ_TERM
-    // When encoding, check bit budget after outputing a bit
+    // Check bit budget after outputing a bit
     if (m_bit_buffer.size() >= m_budget)
         return 1;
 #endif
@@ -466,10 +470,11 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> int
         m_LIP_garbage_cnt++;
 
 #ifndef QZ_TERM
-        // When encoding, check bit budget after outputing a bit
+        // Check bit budget after outputing a bit
         if (m_bit_buffer.size() >= m_budget)
             return 1;
 #endif
+
     }
 
     return 0;
@@ -589,34 +594,33 @@ auto speck::SPECK3D::m_code_S(size_t idx1, size_t idx2) -> int
             m_LIP.push_back(s.start_z * m_dim_x * m_dim_y + s.start_y * m_dim_x + s.start_x);
             m_LIP_garbage.push_back(false);
 
+            if (m_encode_mode) {
 #ifdef QZ_TERM
-            if (m_encode_mode)
                 m_process_P_encode(m_LIP.size() - 1);
-            else
-                m_process_P_decode(m_LIP.size() - 1);
 #else
-            if (m_encode_mode && (rtn = m_process_P_encode(m_LIP.size() - 1)))
-                return rtn;
-            else if( !m_encode_mode && (rtn = m_process_P_decode(m_LIP.size() - 1)))
-                return rtn;
+                if( (rtn = m_process_P_encode(m_LIP.size() - 1)) )
+                    return rtn;
 #endif
-
+            } else {    // decoding mode
+                if( (rtn = m_process_P_decode(m_LIP.size() - 1)) )
+                    return rtn;
+            }
         } else if (!s.is_empty()) {
             const auto newidx1 = s.part_level;
             m_LIS[newidx1].emplace_back(s);
             const auto newidx2 = m_LIS[newidx1].size() - 1;
 
+            if (m_encode_mode) {
 #ifdef QZ_TERM
-            if (m_encode_mode)
                 m_process_S_encode(newidx1, newidx2);
-            else
-                m_process_S_decode(newidx1, newidx2);
-#else 
-            if (m_encode_mode && (rtn = m_process_S_encode(newidx1, newidx2)))
-                return rtn;
-            else if( !m_encode_mode && (rtn = m_process_S_decode(newidx1, newidx2)))
-                return rtn;
+#else
+                if( (rtn = m_process_S_encode(newidx1, newidx2)) )
+                    return rtn;
 #endif
+            } else {    // decoding mode
+                if( (rtn = m_process_S_decode(newidx1, newidx2)) )
+                    return rtn;
+            }
         }
     }
 

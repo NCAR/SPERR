@@ -137,11 +137,11 @@ int main( int argc, char* argv[] )
 #ifdef QZ_TERM
     float bpp = float(encoder.get_num_of_bits()) / float(total_vals);
 
-    if( !absolute_qz_level )
-        printf("With %d levels of quantization, average BPP = %f, and qz terminates at level %d\n",
-                qz_levels, bpp, encoder.get_quantization_term_level() );
-    else
+    if( absolute_qz_level )
         printf("Quantization terminates at level %d with average BPP = %f\n", qz_levels, bpp );
+    else
+        printf("With %d iterations of quantization, average BPP = %f, and qz terminates at"
+               "level %d\n", qz_levels, bpp, encoder.get_quantization_term_level() );
 #endif
 
 }
