@@ -159,9 +159,9 @@ auto speck::SPECK3D::encode() -> int
         num_of_iterations++;
         current_qz_level--;
 #else
-        if (m_sorting_pass_encode())
+        if (m_sorting_pass_encode() != 0)
             break;
-        if (m_refinement_pass_encode())
+        if (m_refinement_pass_encode() != 0)
             break;
 #endif
 
@@ -204,10 +204,11 @@ auto speck::SPECK3D::decode() -> int
     m_bit_idx   = 0;
     m_threshold = std::pow(2.0, float(m_max_coeff_bits));
     for (size_t bitplane = 0; bitplane < 128; bitplane++) {
-        if (m_sorting_pass_decode())
+
+        if (m_sorting_pass_decode() != 0)
             break;
 
-        if (m_refinement_pass_decode())
+        if (m_refinement_pass_decode() != 0)
             break;
 
         m_threshold *= 0.5;
