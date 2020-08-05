@@ -1,6 +1,7 @@
 
 #include "SPECK3D.h"
 #include "CDF97.h"
+#include <cstring>
 #include "gtest/gtest.h"
 
 namespace
@@ -26,6 +27,14 @@ public:
         m_dim_z      = z;
     }
 
+    void reset( const char* in, size_t x, size_t y, size_t z )
+    {
+        m_input_name = in;
+        m_dim_x      = x;
+        m_dim_y      = y;
+        m_dim_z      = z;
+    }
+
     double get_psnr() const
     {
         return m_psnr;
@@ -37,7 +46,13 @@ public:
     }
 
     // Execute the compression/decompression pipeline. Return 0 on success
+
+#ifdef QZ_TERM
+    int execute( const char* mode, int32_t qz_level )
+#else
     int execute( float cratio )
+#endif
+
     {
         const size_t  total_vals = m_dim_x * m_dim_y * m_dim_z;
 
@@ -60,8 +75,21 @@ public:
         encoder.set_dims( m_dim_x, m_dim_y, m_dim_z );
         encoder.set_image_mean( cdf.get_mean() );
         encoder.take_coeffs( cdf.release_data(), total_vals );
-        const size_t total_bits = size_t(32.0f * total_vals / cratio);
-        encoder.set_bit_budget( total_bits );
+
+#ifdef QZ_TERM
+        if( std::strcmp( mode, "n_iterations" ) == 0 )
+            encoder.set_quantization_iterations( qz_level );
+        else if( std::strcmp( mode, "absolute" ) == 0 )
+            encoder.set_quantization_term_level( qz_level );
+        else {
+            m_psnr = 0.0f;
+            m_lmax = 0.0f;
+            return 1;
+        }
+#else
+        encoder.set_bit_budget( size_t(32.0f * total_vals / cratio) );
+#endif
+
         encoder.encode();
         if( encoder.write_to_disk( m_output_name ) )
         {
@@ -76,7 +104,7 @@ public:
             std::cerr << "Read bitstream from disk error!" << std::endl;
             return 1;
         }
-        decoder.set_bit_budget( total_bits );
+        decoder.set_bit_budget( 0 );    // 0 means decode all available bits
         decoder.decode();
 
         speck::CDF97 idwt;
@@ -94,9 +122,6 @@ public:
         double rmse, lmax, psnr, arr1min, arr1max;
         sam_get_statsd( in_bufd.get(), idwt.get_read_only_data().get(), 
                         total_vals, &rmse, &lmax, &psnr, &arr1min, &arr1max );
-        // Uncomment the following lines to have these statistics printed.
-        //printf("Sam: rmse = %f, lmax = %f, psnr = %fdB, orig_min = %f, orig_max = %f\n", 
-        //        rmse, lmax, psnr, arr1min, arr1max );
         m_psnr = psnr;
         m_lmax = lmax;
 
@@ -111,7 +136,95 @@ private:
     double m_psnr, m_lmax;
 };
 
-TEST( speck3d, small )
+
+#ifdef QZ_TERM
+TEST( speck3d_qz_term, big )
+{
+    speck_tester tester( "../test_data/wmag128.float", 128, 128, 128 );
+    tester.execute( "n_iterations", 8 );
+    double psnr = tester.get_psnr();
+    double lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 40.241936 );
+    EXPECT_LT( lmax, 29.461008 );
+
+    tester.execute( "n_iterations", 10 );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 48.605482 );
+    EXPECT_LT( lmax,  9.535521 );
+
+    tester.execute( "n_iterations", 13 );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 65.496590 );
+    EXPECT_LT( lmax,  1.376005 );
+
+    tester.execute( "n_iterations", 15 );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 78.661909 );
+    EXPECT_LT( lmax,  0.257962 );
+}
+
+TEST( speck3d_qz_term, narrow_data_range)
+{
+    speck_tester tester( "../test_data/vorticity.128_128_41", 128, 128, 41 );
+    tester.execute( "n_iterations", 8 );
+    double psnr = tester.get_psnr();
+    double lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 42.292308 );
+    EXPECT_LT( lmax, 0.000032 );
+
+    tester.execute( "n_iterations", 10 );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 50.513602 );
+    EXPECT_LT( lmax,  0.000009 );
+}
+
+TEST( speck3d_qz_term, n_iteration_and_absolute_qz_level)
+{
+    speck_tester tester( "../test_data/vorticity.128_128_41", 128, 128, 41 );
+    tester.execute( "n_iterations", 8 );
+    double psnr1 = tester.get_psnr();
+    double lmax1 = tester.get_lmax();
+    tester.execute( "absolute", -16 );
+    double psnr2 = tester.get_psnr();
+    double lmax2 = tester.get_lmax();
+    EXPECT_EQ( psnr1, psnr2 );
+    EXPECT_EQ( lmax1, lmax2 );
+
+    tester.execute( "n_iterations", 10 );
+    psnr1 = tester.get_psnr();
+    lmax1 = tester.get_lmax();
+    tester.execute( "absolute", -18 );
+    psnr2 = tester.get_psnr();
+    lmax2 = tester.get_lmax();
+    EXPECT_EQ( psnr1, psnr2 );
+    EXPECT_EQ( lmax1, lmax2 );
+
+    tester.reset( "../test_data/wmag128.float", 128, 128, 128 );
+
+    tester.execute( "n_iterations", 8 );
+    psnr1 = tester.get_psnr();
+    lmax1 = tester.get_lmax();
+    tester.execute( "absolute", 4 );
+    psnr2 = tester.get_psnr();
+    lmax2 = tester.get_lmax();
+    EXPECT_EQ( psnr1, psnr2 );
+    EXPECT_EQ( lmax1, lmax2 );
+
+    tester.execute( "n_iterations", 15 );
+    psnr1 = tester.get_psnr();
+    lmax1 = tester.get_lmax();
+    tester.execute( "absolute", -3 );
+    psnr2 = tester.get_psnr();
+    lmax2 = tester.get_lmax();
+    EXPECT_EQ( psnr1, psnr2 );
+    EXPECT_EQ( lmax1, lmax2 );
+}
+#else
+TEST( speck3d_bit_rate, small )
 {
     speck_tester tester( "../test_data/wmag17.float", 17, 17, 17 );
 
@@ -147,7 +260,7 @@ TEST( speck3d, small )
 }
 
 
-TEST( speck3d, big )
+TEST( speck3d_bit_rate, big )
 {
     speck_tester tester( "../test_data/wmag128.float", 128, 128, 128 );
 
@@ -177,7 +290,7 @@ TEST( speck3d, big )
 }
 
 
-TEST( speck3d, narrow_data_range )
+TEST( speck3d_bit_rate, narrow_data_range )
 {
     speck_tester tester( "../test_data/vorticity.128_128_41", 128, 128, 41 );
 
@@ -211,6 +324,6 @@ TEST( speck3d, narrow_data_range )
     EXPECT_GT( psnr, 41.702355 );
     EXPECT_LT( lmax, 0.0000375 );
 }
-
+#endif
 
 }
