@@ -39,7 +39,7 @@ public:
 
     // trivial input
     void set_dims(size_t, size_t);    // Accepts plane dimension
-    void set_max_coeff_bits(int32_t); // (Useful for reconstruction)
+    void set_max_coeff_bits(int32_t);
     void set_bit_budget(size_t);      // How many bits does speck process?
 
     // trivial output

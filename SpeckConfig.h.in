@@ -6,5 +6,6 @@
 
 #cmakedefine TIME_EXAMPLES
 #cmakedefine NO_CPP14
+#cmakedefine QZ_TERM
 
 #endif
