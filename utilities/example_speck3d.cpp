@@ -42,7 +42,7 @@ int main( int argc, char* argv[] )
 
     char output[256];
     std::strcpy( output, argv[0] );
-    std::strcat( output, ".tmp" );
+    std::strcat( output, ".speck" );
 
 #ifdef QZ_TERM
     bool absolute_qz_level;
