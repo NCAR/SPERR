@@ -15,6 +15,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 option( BUILD_UNIT_TESTS "Build unit tests using googletest?" OFF)
+option( BUILD_ZSTD "Incorporate zstd to achieve further 5% compression?" OFF)
 option( TIME_EXAMPLES  "Compile timing code for debug purpose?" OFF)
 option( BUILD_QCC_EXAMPLES "Build examples that link to QccPack?" OFF)
 option( NO_CPP14 "Forbid using CPP14 features" OFF)
@@ -191,3 +192,48 @@ endif()
 
 
 
+if( BUILD_ZSTD )
+    # Download and unpack zstd at configure time
+    project(zstd-download NONE)
+
+    include(ExternalProject)
+    ExternalProject_Add(zstd
+      GIT_REPOSITORY    git@github.com:facebook/zstd.git
+      GIT_TAG           master
+      SOURCE_DIR        "${CMAKE_CURRENT_BINARY_DIR}/zstd-src"
+      BINARY_DIR        "${CMAKE_CURRENT_BINARY_DIR}/zstd-build"
+    )
+    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .  RESULT_VARIABLE result
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download
+                    OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest.stdout
+                    ERROR_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest.stderr        )
+    if(result)
+      message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+    endif()
+
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .  RESULT_VARIABLE result
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download
+                    OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest.stdout
+                    ERROR_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest.stderr        )
+    if(result)
+      message(FATAL_ERROR "Build step for googletest failed: ${result}")
+    endif()
+
+    # Prevent overriding the parent project's compiler/linker settings on Windows
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+    # Add googletest directly to our build. This defines the gtest and gtest_main targets.
+    add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
+                     ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
+                     EXCLUDE_FROM_ALL)
+
+    # Now we have all the tests! 
+    # unit tests for speck_helper
+    add_executable( test_speck_helper 
+                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck_helper_unit_test.cpp" )
+    target_link_libraries( test_speck_helper PUBLIC speck_helper 
+                                             PUBLIC gtest_main          )
+    add_test( NAME test_speck_helper COMMAND test_speck_helper          )
+
+
+endif()
