@@ -15,15 +15,18 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 option( BUILD_UNIT_TESTS "Build unit tests using googletest?" OFF)
-option( BUILD_ZSTD "Incorporate zstd to achieve further 5% compression?" OFF)
+option( USE_ZSTD "Incorporate zstd to achieve further 5% compression?" OFF)
 option( TIME_EXAMPLES  "Compile timing code for debug purpose?" OFF)
 option( BUILD_QCC_EXAMPLES "Build examples that link to QccPack?" OFF)
 option( NO_CPP14 "Forbid using CPP14 features" OFF)
 option( QZ_TERM  "Operational mode which terminates by quantization level" OFF)
 
-if( BUILD_ZSTD )
-    # Download and unpack zstd at configure time
-    project(zstd-download NONE)
+# configure a header file to pass some of the CMake settings to the source code
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/SpeckConfig.h.in" "SpeckConfig.h")
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+if( USE_ZSTD )
+    project(zstd NONE)
 
     include(ExternalProject)
     ExternalProject_Add(zstd
@@ -31,15 +34,13 @@ if( BUILD_ZSTD )
       GIT_TAG           master
       PREFIX            "${CMAKE_CURRENT_BINARY_DIR}/zstd"
       INSTALL_DIR       "${CMAKE_CURRENT_BINARY_DIR}/zstd-install"
-      SOURCE_SUBDIR     "build/cmake/"
+      # Specifies where the CMakeLists.txt file is
+      SOURCE_SUBDIR     "build/cmake/"                      
       CMAKE_ARGS        "-DZSTD_MULTITHREAD_SUPPORT=False"
+      # Note: CMAKE_INSTALL_PREFIX must be set to have the same value as INSTALL_DIR
       CMAKE_ARGS        "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/zstd-install"
     )
 endif()
-
-# configure a header file to pass some of the CMake settings to the source code
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/SpeckConfig.h.in" "SpeckConfig.h")
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_subdirectory( src )
 list( APPEND SPECK_LIBS sam_helper      )
