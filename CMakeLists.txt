@@ -38,7 +38,10 @@ if( USE_ZSTD )
       CMAKE_ARGS        "-DZSTD_MULTITHREAD_SUPPORT=False"
       CMAKE_ARGS        "-DZSTD_BUILD_PROGRAMS=False"   # Don't build zstd command line utilities
       CMAKE_ARGS        "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/zstd-install"
-        # Note: CMAKE_INSTALL_PREFIX must be set to have the same value as INSTALL_DIR
+        # !! Note: CMAKE_INSTALL_PREFIX must be set to have the same value as INSTALL_DIR
+      LOG_CONFIGURE     "True"      # Save output in a file, instead of the terminal.
+      LOG_BUILD         "True"      # Save output in a file, instead of the terminal.
+      LOG_INSTALL       "True"      # Save output in a file, instead of the terminal.
     )
 endif()
 
