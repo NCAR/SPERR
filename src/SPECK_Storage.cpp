@@ -4,6 +4,10 @@
 #include <cstring>
 #include <fstream>
 
+#ifdef USE_ZSTD
+    #include "zstd.h"
+#endif
+
 template <typename T>
 void speck::SPECK_Storage::copy_coeffs(const T& p, size_t len)
 {
@@ -126,7 +130,7 @@ auto speck::SPECK_Storage::m_write(const buffer_type_c& header, size_t header_si
         return 1;
 
     // Allocate output buffer
-    size_t total_size = header_size + m_bit_buffer.size() / 8;
+    const size_t total_size = header_size + m_bit_buffer.size() / 8;
 
 #ifdef NO_CPP14
     buffer_type_c buf(new char[total_size]);
@@ -142,11 +146,32 @@ auto speck::SPECK_Storage::m_write(const buffer_type_c& header, size_t header_si
     if( rv != 0 )
         return rv;
 
-    // Write buf to a file.
+#ifdef USE_ZSTD
+    const size_t comp_buf_size = ZSTD_compressBound( total_size );
+
+#ifdef NO_CPP14
+    buffer_type_c comp_buf(new char[comp_buf_size]);
+#else
+    buffer_type_c comp_buf = std::make_unique<char[]>(comp_buf_size);
+#endif
+
+    const size_t comp_size = ZSTD_compress( comp_buf.get(), comp_buf_size, 
+                             buf.get(), total_size, ZSTD_CLEVEL_DEFAULT );
+    if( ZSTD_isError( comp_size ) )
+        return 1;
+#endif
+
+    // Write buffer to a file.
     // Good introduction here: http://www.cplusplus.com/doc/tutorial/files/
     std::ofstream file(filename, std::ios::binary);
     if (file.is_open()) {
+
+#ifdef USE_ZSTD
+        file.write(comp_buf.get(), comp_size);
+#else
         file.write(buf.get(), total_size);
+#endif
+
         file.close();
         return 0;
     } else
