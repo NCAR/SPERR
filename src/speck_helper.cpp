@@ -296,8 +296,9 @@ void speck::partition_S_Z(const SPECKSet3D& set, std::array<SPECKSet3D, 2>& subs
     sub1.length_z = split_z[1];
 }
 
-auto speck::pack_booleans( buffer_type_c&           dest,
-                           const std::vector<bool>& src,
+template <typename char_array_type, typename bool_array_type >
+auto speck::pack_booleans( char_array_type&         dest,
+                           const bool_array_type&   src,
                            size_t                   offset ) -> int
 {
     if( src.size() % 8 != 0 )
@@ -319,11 +320,20 @@ auto speck::pack_booleans( buffer_type_c&           dest,
 
     return 0;
 }
+template
+auto speck::pack_booleans( buffer_type_c&           dest,
+                           const std::vector<bool>& src,
+                           size_t                   offset ) -> int;
+template
+auto speck::pack_booleans( std::array<char, 1>&         dest,
+                           const std::array<bool, 8>&   src,
+                           size_t                       offset ) -> int;
 
-auto speck::unpack_booleans( std::vector<bool>&    dest,
-                             const buffer_type_c&  src,
-                             size_t                src_len,
-                             size_t                char_offset ) -> int
+template< typename char_array_type, typename bool_array_type >
+auto speck::unpack_booleans( bool_array_type&       dest,
+                             const char_array_type& src,
+                             size_t                 src_len,
+                             size_t                 char_offset ) -> int
 {
     if( src_len < char_offset )
         return 1;
@@ -347,3 +357,13 @@ auto speck::unpack_booleans( std::vector<bool>&    dest,
 
     return 0;
 }
+template 
+auto speck::unpack_booleans( std::vector<bool>&    dest,
+                             const buffer_type_c&  src,
+                             size_t                src_len,
+                             size_t                char_offset ) -> int;
+//template
+//auto speck::unpack_booleans( std::array<bool, 8>&       dest,
+//                             const std::array<char, 1>& src,
+//                             size_t                     src_len,
+//                             size_t                     char_offset ) -> int;
