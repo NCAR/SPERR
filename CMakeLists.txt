@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # set the project name and version
-project(Speck VERSION 0.1)
+project(SPECK VERSION 0.1)
 
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 14)
@@ -15,6 +15,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 option( BUILD_UNIT_TESTS "Build unit tests using googletest?" OFF)
+option( USE_ZSTD "Incorporate zstd to achieve further 5% compression?" OFF)
 option( TIME_EXAMPLES  "Compile timing code for debug purpose?" OFF)
 option( BUILD_QCC_EXAMPLES "Build examples that link to QccPack?" OFF)
 option( NO_CPP14 "Forbid using CPP14 features" OFF)
@@ -24,57 +25,82 @@ option( QZ_TERM  "Operational mode which terminates by quantization level" OFF)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/SpeckConfig.h.in" "SpeckConfig.h")
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
+if( USE_ZSTD )
+    project(zstd-download NONE)
+    include(ExternalProject)
+    ExternalProject_Add( zstd-download
+      GIT_REPOSITORY    git@github.com:facebook/zstd.git
+      GIT_TAG           master
+      PREFIX            "${CMAKE_CURRENT_BINARY_DIR}/zstd"
+      INSTALL_DIR       "${CMAKE_CURRENT_BINARY_DIR}/zstd-install"
+      UPDATE_DISCONNECTED "True"                        # Skip update from git step
+      SOURCE_SUBDIR     "build/cmake/"                  # Specifies where the CMakeLists.txt file is
+      CMAKE_ARGS        "-DZSTD_MULTITHREAD_SUPPORT=False"
+      CMAKE_ARGS        "-DZSTD_BUILD_PROGRAMS=False"   # Don't build zstd command line utilities
+      CMAKE_ARGS        "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/zstd-install"
+        # !! Note: CMAKE_INSTALL_PREFIX must be set to have the same value as INSTALL_DIR
+      LOG_CONFIGURE     "True"      # Save output in a file, instead of the terminal.
+      LOG_BUILD         "True"      # Save output in a file, instead of the terminal.
+      LOG_INSTALL       "True"      # Save output in a file, instead of the terminal.
+    )
+endif()
+
 add_subdirectory( src )
 list( APPEND SPECK_LIBS sam_helper      )
 list( APPEND SPECK_LIBS SPECK2D         )
 list( APPEND SPECK_LIBS SPECK3D         )
-list( APPEND SPECK_LIBS SPECK_Err     )
+list( APPEND SPECK_LIBS SPECK_Err       )
 list( APPEND SPECK_LIBS SPECK_Storage   )
 list( APPEND SPECK_LIBS CDF97           )
 list( APPEND SPECK_LIBS speck_helper    )
+if( USE_ZSTD )
+    ExternalProject_Get_Property( zstd-download INSTALL_DIR )
+    link_directories( "${INSTALL_DIR}/lib" )
+    list( APPEND SPECK_LIBS zstd )
+endif()
 
 # Executable #1
-add_executable( example_dwt2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt2d.cpp" )
-target_link_libraries(      example_dwt2d PUBLIC ${SPECK_LIBS})
+add_executable(             example_dwt2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt2d.cpp" )
+target_link_libraries(      example_dwt2d PUBLIC ${SPECK_LIBS} )
 target_include_directories( example_dwt2d PUBLIC ${PROJECT_BINARY_DIR} )
 
 # Executable #2
-add_executable( example_speck2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck2d.cpp" )
+add_executable(             example_speck2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck2d.cpp" )
 target_link_libraries(      example_speck2d PUBLIC ${SPECK_LIBS})
 target_include_directories( example_speck2d PUBLIC ${PROJECT_BINARY_DIR} )
 
 # Executable #3
-add_executable( example_dwt3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt3d.cpp" )
+add_executable(             example_dwt3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt3d.cpp" )
 target_link_libraries(      example_dwt3d PUBLIC ${SPECK_LIBS})
 target_include_directories( example_dwt3d PUBLIC ${PROJECT_BINARY_DIR} )
 
 # Executable #4
-add_executable( example_speck3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck3d.cpp" )
+add_executable(             example_speck3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck3d.cpp" )
 target_link_libraries(      example_speck3d PUBLIC ${SPECK_LIBS})
 target_include_directories( example_speck3d PUBLIC ${PROJECT_BINARY_DIR} )
 
 # Executable #5
-add_executable( compressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_3d.cpp" )
+add_executable(             compressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_3d.cpp" )
 target_link_libraries(      compressor_3d PUBLIC ${SPECK_LIBS})
 target_include_directories( compressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
 
 # Executable #6
-add_executable( decompressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/decompressor_3d.cpp" )
+add_executable(             decompressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/decompressor_3d.cpp" )
 target_link_libraries(      decompressor_3d PUBLIC ${SPECK_LIBS})
 target_include_directories( decompressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
 
 # Executable #7
-add_executable( compressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_2d.cpp" )
+add_executable(             compressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_2d.cpp" )
 target_link_libraries(      compressor_2d PUBLIC ${SPECK_LIBS})
 target_include_directories( compressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
 
 # Executable #8
-add_executable( decompressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/decompressor_2d.cpp" )
+add_executable(             decompressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/decompressor_2d.cpp" )
 target_link_libraries(      decompressor_2d PUBLIC ${SPECK_LIBS})
 target_include_directories( decompressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
 
 # Executable #9
-add_executable( example_speck_err "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck_err.cpp" )
+add_executable(             example_speck_err "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck_err.cpp" )
 target_link_libraries(      example_speck_err PUBLIC ${SPECK_LIBS})
 target_include_directories( example_speck_err PUBLIC ${PROJECT_BINARY_DIR} )
 
@@ -188,6 +214,4 @@ if( BUILD_UNIT_TESTS )
     add_test( NAME test_speck_err COMMAND test_speck_err                    )
 
 endif()
-
-
 
