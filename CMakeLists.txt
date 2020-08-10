@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # set the project name and version
-project(Speck VERSION 0.1)
+project(SPECK VERSION 0.1)
 
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 14)
