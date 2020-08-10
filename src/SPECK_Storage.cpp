@@ -186,23 +186,40 @@ auto speck::SPECK_Storage::m_read(buffer_type_c& header, size_t header_size,
     if (!file.is_open())
         return 1;
     file.seekg(0, file.end);
-    size_t total_size = file.tellg();
+    size_t file_size = file.tellg();
     file.seekg(0, file.beg);
 
 #ifdef NO_CPP14
-    buffer_type_c buf(new char[total_size]);
+    buffer_type_c file_buf(new char[file_size]);
 #else
-    buffer_type_c buf = std::make_unique<char[]>(total_size);
+    buffer_type_c file_buf = std::make_unique<char[]>(file_size);
 #endif
 
-    file.read(buf.get(), total_size);
+    file.read(file_buf.get(), file_size);
     file.close();
 
-    // Copy over the header
-    std::memcpy(header.get(), buf.get(), header_size);
+#ifdef USE_ZSTD
+    const unsigned long long content_size = ZSTD_getFrameContentSize( file_buf.get(), file_size );
+    if( content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN )
+        return 1;
+#ifdef NO_CPP14
+    buffer_type_c content_buf(new char[content_size]);
+#else
+    buffer_type_c content_buf = std::make_unique<char[]>(content_size);
+#endif
+    const size_t decomp_size = ZSTD_decompress( content_buf.get(), content_size, 
+                               file_buf.get(), file_size );
+    if( ZSTD_isError( decomp_size ) || decomp_size != content_size )
+        return 1;
 
+    // Copy over the header
+    std::memcpy(header.get(), content_buf.get(), header_size);
     // Now interpret the booleans
-    speck::unpack_booleans( m_bit_buffer, buf, total_size, header_size );
+    speck::unpack_booleans( m_bit_buffer, content_buf, content_size, header_size );
+#else
+    std::memcpy(header.get(), file_buf.get(), header_size);
+    speck::unpack_booleans( m_bit_buffer, file_buf, file_size, header_size );
+#endif
 
     return 0;
 }
