@@ -148,13 +148,11 @@ auto speck::SPECK_Storage::m_write(const buffer_type_c& header, size_t header_si
 
 #ifdef USE_ZSTD
     const size_t comp_buf_size = ZSTD_compressBound( total_size );
-
 #ifdef NO_CPP14
     buffer_type_c comp_buf(new char[comp_buf_size]);
 #else
     buffer_type_c comp_buf = std::make_unique<char[]>(comp_buf_size);
 #endif
-
     const size_t comp_size = ZSTD_compress( comp_buf.get(), comp_buf_size, 
                              buf.get(), total_size, ZSTD_CLEVEL_DEFAULT );
     if( ZSTD_isError( comp_size ) )
