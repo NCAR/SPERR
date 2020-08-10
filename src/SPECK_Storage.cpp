@@ -125,21 +125,28 @@ auto speck::SPECK_Storage::get_image_mean() const -> double
 auto speck::SPECK_Storage::m_write(const buffer_type_c& header, size_t header_size,
                                    const char* filename) const -> int
 {
+    // This function writes 3 pieces of information to disk:
+    // 1) Major version of SPECK and if the output is compressed by zstd, in 1 byte.
+    // 2) SPECK header which is passed in
+    // 3) SPECK bit buffer which is a data member of this class.
+    // Note: 1) is always stored in plain binary form, whereas 2) and 3) can go through 
+    // zstd compression, which is indicated by the first byte.
+
     // Sanity check on the size of bit_buffer
     if(m_bit_buffer.size() % 8 != 0)
         return 1;
 
     // Allocate output buffer
-    const size_t total_size = header_size + m_bit_buffer.size() / 8;
+    const size_t speck_size = header_size + m_bit_buffer.size() / 8;
 
 #ifdef NO_CPP14
-    buffer_type_c buf(new char[total_size]);
+    buffer_type_c buf(new char[speck_size]);
 #else
-    buffer_type_c buf = std::make_unique<char[]>(total_size);
+    buffer_type_c buf = std::make_unique<char[]>(speck_size);
 #endif
 
-    // Copy over header
-    std::memcpy(buf.get(), header.get(), header_size);
+    // Copy over the header
+    std::memcpy( buf.get(), header.get(), header_size);
 
     // Pack booleans to buf!
     int rv = speck::pack_booleans( buf, m_bit_buffer, header_size );
@@ -147,27 +154,36 @@ auto speck::SPECK_Storage::m_write(const buffer_type_c& header, size_t header_si
         return rv;
 
 #ifdef USE_ZSTD
-    const size_t comp_buf_size = ZSTD_compressBound( total_size );
-#ifdef NO_CPP14
-    buffer_type_c comp_buf(new char[comp_buf_size]);
-#else
-    buffer_type_c comp_buf = std::make_unique<char[]>(comp_buf_size);
-#endif
+    const size_t comp_buf_size = ZSTD_compressBound( speck_size );
+    #ifdef NO_CPP14
+        buffer_type_c comp_buf(new char[comp_buf_size]);
+    #else
+        buffer_type_c comp_buf = std::make_unique<char[]>(comp_buf_size);
+    #endif
     const size_t comp_size = ZSTD_compress( comp_buf.get(), comp_buf_size, 
-                             buf.get(), total_size, ZSTD_CLEVEL_DEFAULT );
+                             buf.get(), speck_size, ZSTD_CLEVEL_DEFAULT );
     if( ZSTD_isError( comp_size ) )
         return 1;
 #endif
 
-    // Write buffer to a file.
-    // Good introduction here: http://www.cplusplus.com/doc/tutorial/files/
+    // Write all the information to a file.
+    //
+    // Note on the scheme for information 1): if the value >= 128, then it's zstd compressed, 
+    // and its major version == value - 128.
+    // Otherwise, it's not zstd compressed, and its major version == value.
+    //
+    // Good introduction on file operators here: http://www.cplusplus.com/doc/tutorial/files/
     std::ofstream file(filename, std::ios::binary);
     if (file.is_open()) {
 
 #ifdef USE_ZSTD
+        std::uint8_t meta = std::uint8_t(SPECK_VERSION_MAJOR) + 128;
+        file.write( reinterpret_cast<char*>(&meta), sizeof(meta) );
         file.write(comp_buf.get(), comp_size);
 #else
-        file.write(buf.get(), total_size);
+        std::uint8_t meta = std::uint8_t(SPECK_VERSION_MAJOR);
+        file.write( reinterpret_cast<char*>(&meta), sizeof(meta) );
+        file.write(buf.get(), speck_size);
 #endif
 
         file.close();
