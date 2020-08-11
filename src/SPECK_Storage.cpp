@@ -143,8 +143,6 @@ auto speck::SPECK_Storage::m_write(const buffer_type_c& header, size_t header_si
 
     // Pack booleans to buf!
     int rv = speck::pack_booleans( buf, m_bit_buffer, header_size );
-    if( rv != 0 )
-        return rv;
 
 #ifdef USE_ZSTD
     const size_t comp_buf_size = ZSTD_compressBound( total_size );
@@ -213,9 +211,11 @@ auto speck::SPECK_Storage::m_read(buffer_type_c& header, size_t header_size,
     // Copy over the header
     std::memcpy(header.get(), content_buf.get(), header_size);
     // Now interpret the booleans
+    m_bit_buffer.resize( 8 * (content_size - header_size) );
     speck::unpack_booleans( m_bit_buffer, content_buf, content_size, header_size );
 #else
     std::memcpy(header.get(), file_buf.get(), header_size);
+    m_bit_buffer.resize( 8 * (file_size - header_size) );
     speck::unpack_booleans( m_bit_buffer, file_buf, file_size, header_size );
 #endif
 
