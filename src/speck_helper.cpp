@@ -339,9 +339,8 @@ auto speck::unpack_booleans( bool_array_type&       dest,
         return 1;
 
     size_t num_of_bools = (src_len - char_offset) * 8;
-    if( dest.size() != num_of_bools )
-        return 1;
-
+    dest.clear();
+    dest.resize(num_of_bools);
     const uint64_t magic = 0x8040201008040201;
     const uint64_t mask  = 0x8080808080808080;
     size_t         pos   = char_offset;
@@ -363,8 +362,8 @@ auto speck::unpack_booleans( std::vector<bool>&    dest,
                              const buffer_type_c&  src,
                              size_t                src_len,
                              size_t                char_offset ) -> int;
-template
-auto speck::unpack_booleans( std::array<bool, 8>&       dest,
-                             const std::array<char, 1>& src,
-                             size_t                     src_len,
-                             size_t                     char_offset ) -> int;
+//template
+//auto speck::unpack_booleans( std::array<bool, 8>&       dest,
+//                             const std::array<char, 1>& src,
+//                             size_t                     src_len,
+//                             size_t                     char_offset ) -> int;
