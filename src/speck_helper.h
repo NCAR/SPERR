@@ -126,14 +126,12 @@ void partition_S_Z(const SPECKSet3D& set, std::array<SPECKSet3D, 2>& subsets);
 // The caller should have allocated sufficient amount of memory for the char array.
 // When packing, the caller should also make sure the number of booleans is a multiplier of 8.
 // It optionally takes in an offset that specifies where to start writing/reading the char array.
-template< typename char_array_type, typename bool_array_type >
-auto pack_booleans( char_array_type&           dest,
-                    const bool_array_type&     src,
-                    size_t                     char_offset = 0 ) -> int;
-template< typename char_array_type, typename bool_array_type >
-auto unpack_booleans( bool_array_type&        dest,
-                      const char_array_type&  src,
-                      size_t                  src_len, // total length of char array
+auto pack_booleans( buffer_type_c&           dest,
+                    const std::vector<bool>& src,
+                    size_t char_offset = 0 ) -> int;
+auto unpack_booleans( std::vector<bool>&    dest,
+                      const buffer_type_c&  src,
+                      size_t                src_len, // total length of char array
                       size_t char_offset = 0 ) -> int;
 };
 
