@@ -348,3 +348,20 @@ auto speck::unpack_booleans( std::vector<bool>&    dest,
 
     return 0;
 }
+
+void speck::pack_8_booleans( uint8_t& dest, const std::array<bool, 8>& src )
+{
+    const uint64_t magic = 0x8040201008040201;
+    uint64_t       t;
+    std::memcpy(&t, src.data(), 8);
+    dest = (magic * t) >> 56;
+}
+
+void speck::unpack_8_booleans( std::array<bool, 8>& dest, uint8_t src )
+{
+    const uint64_t magic = 0x8040201008040201;
+    const uint64_t mask  = 0x8080808080808080;
+    uint64_t t = ((magic * src) & mask) >> 7;
+    std::memcpy( dest.data(), &t, 8 );
+}
+
