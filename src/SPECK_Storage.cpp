@@ -146,11 +146,11 @@ auto speck::SPECK_Storage::m_write(const buffer_type_c& header, size_t header_si
 
 #ifdef USE_ZSTD
     const size_t comp_buf_size = ZSTD_compressBound( total_size );
-#ifdef NO_CPP14
-    buffer_type_c comp_buf(new char[comp_buf_size]);
-#else
-    buffer_type_c comp_buf = std::make_unique<char[]>(comp_buf_size);
-#endif
+    #ifdef NO_CPP14
+        buffer_type_c comp_buf(new char[comp_buf_size]);
+    #else
+        buffer_type_c comp_buf = std::make_unique<char[]>(comp_buf_size);
+    #endif
     const size_t comp_size = ZSTD_compress( comp_buf.get(), comp_buf_size, 
                              buf.get(), total_size, ZSTD_CLEVEL_DEFAULT );
     if( ZSTD_isError( comp_size ) )
@@ -198,11 +198,11 @@ auto speck::SPECK_Storage::m_read(buffer_type_c& header, size_t header_size,
     const unsigned long long content_size = ZSTD_getFrameContentSize( file_buf.get(), file_size );
     if( content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN )
         return 1;
-#ifdef NO_CPP14
-    buffer_type_c content_buf(new char[content_size]);
-#else
-    buffer_type_c content_buf = std::make_unique<char[]>(content_size);
-#endif
+    #ifdef NO_CPP14
+        buffer_type_c content_buf(new char[content_size]);
+    #else
+        buffer_type_c content_buf = std::make_unique<char[]>(content_size);
+    #endif
     const size_t decomp_size = ZSTD_decompress( content_buf.get(), content_size, 
                                file_buf.get(), file_size );
     if( ZSTD_isError( decomp_size ) || decomp_size != content_size )

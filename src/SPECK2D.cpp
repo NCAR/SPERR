@@ -661,13 +661,18 @@ auto speck::SPECK2D::m_ready_to_decode() const -> bool
 auto speck::SPECK2D::write_to_disk(const std::string& filename) const -> int
 {
     // Header definition:
-    // information: dim_x,     dim_y,     image_mean,  max_coeff_bits, bitstream
-    // format:      uint32_t,  uint32_t,  double       int32_t,        packed_bytes
-    const size_t header_size = 20;
+    // information: dim_x,    dim_y,    dim_z,    image_mean, max_coeff_bits, bitstream
+    // format:      uint32_t, uint32_t, uint32_t, double      int32_t,        packed_bytes
+    //
+    // Note 1: The dim_z field must be strictly be 1.
+    // Note 2: This header definition is essentially the same as the header for SPECK3D. 
+    //         The dim_z field can then be used to distinguish the two.
+    //
+    const size_t header_size = 24;
 
     // Create and fill header buffer
     size_t   pos = 0;
-    uint32_t dims[2] { uint32_t(m_dim_x), uint32_t(m_dim_y) };
+    uint32_t dims[3] { uint32_t(m_dim_x), uint32_t(m_dim_y), 1 };
 #ifdef NO_CPP14
     buffer_type_c header(new char[header_size]);
 #else
@@ -688,10 +693,8 @@ auto speck::SPECK2D::write_to_disk(const std::string& filename) const -> int
 
 auto speck::SPECK2D::read_from_disk(const std::string& filename) -> int
 {
-    // Header definition:
-    // information: dim_x,     dim_y,     image_mean,  max_coeff_bits, bitstream
-    // format:      uint32_t,  uint32_t,  double       int32_t,        packed_bytes
-    const size_t header_size = 20;
+    // Header definition is documented in the `write_to_disk()` function.
+    const size_t header_size = 24;
 
     // Create the header buffer, and read from file
     // Note that m_bit_buffer is filled by m_read().
@@ -705,7 +708,7 @@ auto speck::SPECK2D::read_from_disk(const std::string& filename) -> int
         return rtn;
 
     // Parse the header
-    uint32_t dims[2];
+    uint32_t dims[3] = {0, 0, 0};
     size_t   pos = 0;
     std::memcpy(dims, header.get(), sizeof(dims));
     pos += sizeof(dims);
@@ -714,6 +717,10 @@ auto speck::SPECK2D::read_from_disk(const std::string& filename) -> int
     std::memcpy(&m_max_coeff_bits, header.get() + pos, sizeof(m_max_coeff_bits));
     pos += sizeof(m_max_coeff_bits);
     assert(pos == header_size);
+
+    // It is the header definition that this element must be 1.
+    if( dims[2] != 1 )
+        return 1;
 
     this->set_dims(size_t(dims[0]), size_t(dims[1]));
 
