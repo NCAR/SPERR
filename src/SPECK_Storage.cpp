@@ -122,7 +122,7 @@ auto speck::SPECK_Storage::get_image_mean() const -> double
 
 // Good solution to deal with bools and unsigned chars
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
-auto speck::SPECK_Storage::m_write(const buffer_type_c& header, size_t header_size,
+auto speck::SPECK_Storage::m_write(const void* header, size_t header_size,
                                    const char* filename) const -> int
 {
     // Sanity check on the size of bit_buffer
@@ -139,7 +139,7 @@ auto speck::SPECK_Storage::m_write(const buffer_type_c& header, size_t header_si
 #endif
 
     // Copy over header
-    std::memcpy(buf.get(), header.get(), header_size);
+    std::memcpy(buf.get(), header, header_size);
 
     // Pack booleans to buf!
     int rv = speck::pack_booleans( buf, m_bit_buffer, header_size );
@@ -174,8 +174,7 @@ auto speck::SPECK_Storage::m_write(const buffer_type_c& header, size_t header_si
         return 1;
 }
 
-auto speck::SPECK_Storage::m_read(buffer_type_c& header, size_t header_size,
-                                  const char* filename) -> int
+auto speck::SPECK_Storage::m_read(void* header, size_t header_size, const char* filename) -> int
 {
     // Open a file and read its content
     std::ifstream file(filename, std::ios::binary);
@@ -209,12 +208,12 @@ auto speck::SPECK_Storage::m_read(buffer_type_c& header, size_t header_size,
         return 1;
 
     // Copy over the header
-    std::memcpy(header.get(), content_buf.get(), header_size);
+    std::memcpy(header, content_buf.get(), header_size);
     // Now interpret the booleans
     m_bit_buffer.resize( 8 * (content_size - header_size) );
     speck::unpack_booleans( m_bit_buffer, content_buf, content_size, header_size );
 #else
-    std::memcpy(header.get(), file_buf.get(), header_size);
+    std::memcpy(header, file_buf.get(), header_size);
     m_bit_buffer.resize( 8 * (file_size - header_size) );
     speck::unpack_booleans( m_bit_buffer, file_buf, file_size, header_size );
 #endif

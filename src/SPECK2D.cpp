@@ -669,20 +669,17 @@ auto speck::SPECK2D::write_to_disk(const std::string& filename) const -> int
     //         The dim_z field can then be used to distinguish the two.
     //
     const size_t header_size = 24;
+    uint32_t dims[3] { uint32_t(m_dim_x), uint32_t(m_dim_y), 1 };
+    size_t   pos = 0;
 
     // Create and fill header buffer
-    size_t   pos = 0;
-    uint32_t dims[3] { uint32_t(m_dim_x), uint32_t(m_dim_y), 1 };
-#ifdef NO_CPP14
-    buffer_type_c header(new char[header_size]);
-#else
-    buffer_type_c header = std::make_unique<char[]>(header_size);
-#endif
-    std::memcpy(header.get(), dims, sizeof(dims));
+    char header[header_size];
+
+    std::memcpy(header, dims, sizeof(dims));
     pos += sizeof(dims);
-    std::memcpy(header.get() + pos, &m_image_mean, sizeof(m_image_mean));
+    std::memcpy(header + pos, &m_image_mean, sizeof(m_image_mean));
     pos += sizeof(m_image_mean);
-    std::memcpy(header.get() + pos, &m_max_coeff_bits, sizeof(m_max_coeff_bits));
+    std::memcpy(header + pos, &m_max_coeff_bits, sizeof(m_max_coeff_bits));
     pos += sizeof(m_max_coeff_bits);
     assert(pos == header_size);
 
@@ -698,11 +695,7 @@ auto speck::SPECK2D::read_from_disk(const std::string& filename) -> int
 
     // Create the header buffer, and read from file
     // Note that m_bit_buffer is filled by m_read().
-#ifdef NO_CPP14
-    buffer_type_c header(new char[header_size]);
-#else
-    buffer_type_c header = std::make_unique<char[]>(header_size);
-#endif
+    char header[header_size];
     int rtn = m_read(header, header_size, filename.c_str());
     if (rtn)
         return rtn;
@@ -710,11 +703,11 @@ auto speck::SPECK2D::read_from_disk(const std::string& filename) -> int
     // Parse the header
     uint32_t dims[3] = {0, 0, 0};
     size_t   pos = 0;
-    std::memcpy(dims, header.get(), sizeof(dims));
+    std::memcpy(dims, header, sizeof(dims));
     pos += sizeof(dims);
-    std::memcpy(&m_image_mean, header.get() + pos, sizeof(m_image_mean));
+    std::memcpy(&m_image_mean, header + pos, sizeof(m_image_mean));
     pos += sizeof(m_image_mean);
-    std::memcpy(&m_max_coeff_bits, header.get() + pos, sizeof(m_max_coeff_bits));
+    std::memcpy(&m_max_coeff_bits, header + pos, sizeof(m_max_coeff_bits));
     pos += sizeof(m_max_coeff_bits);
     assert(pos == header_size);
 

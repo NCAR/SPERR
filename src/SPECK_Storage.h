@@ -46,8 +46,8 @@ protected:
 
     // Output to and input from disk
     // They return 0 upon success, and 1 upon failure.
-    auto m_write(const buffer_type_c& header, size_t header_size, const char* filename) const -> int;
-    auto m_read(buffer_type_c& header, size_t header_size, const char* filename) -> int;
+    auto m_write(const void* header, size_t header_size, const char* filename) const -> int;
+    auto m_read(       void* header, size_t header_size, const char* filename) -> int;
 
     //
     // Member variables

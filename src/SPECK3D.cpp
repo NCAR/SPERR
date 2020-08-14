@@ -659,25 +659,19 @@ auto speck::SPECK3D::write_to_disk(const std::string& filename) const -> int
     // information: dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  bitstream
     // format:      uint32_t,  uint32_t,  uint32_t,  double       int32_t,         packed_bytes
     const size_t header_size = 24;
-
-    // Create and fill header buffer
-    size_t   pos = 0;
     uint32_t dims[3] { uint32_t(m_dim_x), uint32_t(m_dim_y), uint32_t(m_dim_z) };
 
-#ifdef NO_CPP14
-    buffer_type_c header(new char[header_size]);
-#else
-    buffer_type_c header = std::make_unique<char[]>(header_size);
-#endif
+    // Create and fill header buffer
+    char header[header_size];
 
-    std::memcpy(header.get(), dims, sizeof(dims));
+    size_t pos = 0;
+    std::memcpy(header, dims, sizeof(dims));
     pos += sizeof(dims);
-    std::memcpy(header.get() + pos, &m_image_mean, sizeof(m_image_mean));
+    std::memcpy(header + pos, &m_image_mean, sizeof(m_image_mean));
     pos += sizeof(m_image_mean);
-    std::memcpy(header.get() + pos, &m_max_coeff_bits, sizeof(m_max_coeff_bits));
+    std::memcpy(header + pos, &m_max_coeff_bits, sizeof(m_max_coeff_bits));
     pos += sizeof(m_max_coeff_bits);
-    if(pos != header_size)
-        return 1;
+    assert(pos == header_size);
 
     // Call the actual write function
     int rtn = m_write(header, header_size, filename.c_str());
@@ -693,27 +687,25 @@ auto speck::SPECK3D::read_from_disk(const std::string& filename) -> int
 
     // Create the header buffer, and read from file
     // Note that m_bit_buffer is filled by m_read().
-
-#ifdef NO_CPP14
-    buffer_type_c header(new char[header_size]);
-#else
-    buffer_type_c header = std::make_unique<char[]>(header_size);
-#endif
+    char header[header_size];
 
     int rtn = m_read(header, header_size, filename.c_str());
     if (rtn)
         return rtn;
 
     // Parse the header
-    uint32_t dims[3];
+    uint32_t dims[3] = {0, 0, 1};
     size_t   pos = 0;
-    std::memcpy(dims, header.get(), sizeof(dims));
+    std::memcpy(dims, header, sizeof(dims));
     pos += sizeof(dims);
-    std::memcpy(&m_image_mean, header.get() + pos, sizeof(m_image_mean));
+    std::memcpy(&m_image_mean, header + pos, sizeof(m_image_mean));
     pos += sizeof(m_image_mean);
-    std::memcpy(&m_max_coeff_bits, header.get() + pos, sizeof(m_max_coeff_bits));
+    std::memcpy(&m_max_coeff_bits, header + pos, sizeof(m_max_coeff_bits));
     pos += sizeof(m_max_coeff_bits);
-    if(pos != header_size)
+    assert(pos == header_size);
+
+    // If dims[2] is 1, then this file is for 2D planes!
+    if( dims[2] == 1 )
         return 1;
 
     this->set_dims(size_t(dims[0]), size_t(dims[1]), size_t(dims[2]));
