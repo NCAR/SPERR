@@ -14,11 +14,7 @@ void speck::SPECK_Storage::copy_coeffs(const T& p, size_t len)
     assert(len > 0);
     assert(m_coeff_len == 0 || m_coeff_len == len);
     m_coeff_len = len;
-#ifdef NO_CPP14
-    m_coeff_buf.reset(new double[len]);
-#else
-    m_coeff_buf       = std::make_unique<double[]>(len);
-#endif
+    m_coeff_buf = speck::unique_malloc<double>(len);
     for (size_t i = 0; i < len; i++)
         m_coeff_buf[i] = p[i];
 }
@@ -34,13 +30,7 @@ void speck::SPECK_Storage::copy_coeffs(const T* p, size_t len)
     assert(len > 0);
     assert(m_coeff_len == 0 || m_coeff_len == len);
     m_coeff_len = len;
-
-#ifdef NO_CPP14
-    m_coeff_buf.reset(new double[len]);
-#else
-    m_coeff_buf       = std::make_unique<double[]>(len);
-#endif
-
+    m_coeff_buf = unique_malloc<double>(len);
     for (size_t i = 0; i < len; i++)
         m_coeff_buf[i] = p[i];
 }
@@ -99,11 +89,7 @@ auto speck::SPECK_Storage::release_coeffs_float() -> speck::buffer_type_f
 {
     assert(m_coeff_len > 0);
 
-#ifdef NO_CPP14
-    buffer_type_f tmp(new float[m_coeff_len]);
-#else
-    buffer_type_f tmp = std::make_unique<float[]>(m_coeff_len);
-#endif
+    buffer_type_f tmp = speck::unique_malloc<float>( m_coeff_len );
 
     for (size_t i = 0; i < m_coeff_len; i++)
         tmp[i] = m_coeff_buf[i];
@@ -141,12 +127,7 @@ auto speck::SPECK_Storage::m_write(const void* header, size_t header_size,
     const size_t meta_size   = 2;
     const size_t stream_size = m_bit_buffer.size() / 8;
     const size_t total_size  = meta_size + header_size + stream_size;
-
-#ifdef NO_CPP14
-    buffer_type_c buf(new char[total_size]);
-#else
-    buffer_type_c buf = std::make_unique<char[]>(total_size);
-#endif
+    buffer_type_c buf        = speck::unique_malloc<char>( total_size );
 
     // Fill in metadata as defined above
     buf[0] = char(SPECK_VERSION_MAJOR);
@@ -169,13 +150,7 @@ auto speck::SPECK_Storage::m_write(const void* header, size_t header_size,
     const size_t comp_buf_size = ZSTD_compressBound( header_size + stream_size );
 
     // We prepend metadata to the new buffer, so allocate space accordingly
-
-    #ifdef NO_CPP14
-        buffer_type_c comp_buf(new char[meta_size + comp_buf_size]);
-    #else
-        buffer_type_c comp_buf = std::make_unique<char[]>(meta_size + comp_buf_size);
-    #endif
-
+    buffer_type_c comp_buf = speck::unique_malloc<char>( meta_size + comp_buf_size ); 
     std::memcpy( comp_buf.get(), buf.get(), meta_size );
 
     const size_t comp_size = ZSTD_compress( comp_buf.get() + meta_size, comp_buf_size, 
@@ -215,12 +190,7 @@ auto speck::SPECK_Storage::m_read(void* header, size_t header_size, const char* 
     const size_t meta_size  = 2;    // See m_write() for the definition of metadata and meta_size
     file.seekg(0, file.beg);
 
-#ifdef NO_CPP14
-    buffer_type_c file_buf(new char[total_size]);
-#else
-    buffer_type_c file_buf = std::make_unique<char[]>(total_size);
-#endif
-
+    buffer_type_c file_buf = speck::unique_malloc<char>( total_size );
     file.read(file_buf.get(), total_size);
     file.close();
 
@@ -247,11 +217,7 @@ auto speck::SPECK_Storage::m_read(void* header, size_t header_size, const char* 
     if( content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN )
         return 1;
 
-    #ifdef NO_CPP14
-        buffer_type_c content_buf(new char[content_size]);
-    #else
-        buffer_type_c content_buf = std::make_unique<char[]>(content_size);
-    #endif
+    buffer_type_c content_buf = speck::unique_malloc<char>(content_size);
 
     const size_t decomp_size = ZSTD_decompress( content_buf.get(), content_size, 
                                file_buf.get() + meta_size, total_size - meta_size);
