@@ -368,3 +368,20 @@ void speck::unpack_8_booleans( std::array<bool, 8>& dest, void* src )
     std::memcpy( dest.data(), &t, 8 );
 }
 
+template< typename T >
+auto speck::unique_malloc( size_t size ) -> std::unique_ptr<T[]>
+{
+#ifdef NO_CPP14
+    std::unique_ptr<T[]> buf(new T[size]);
+#else
+    std::unique_ptr<T[]> buf = std::make_unique<T[]>(size);
+#endif
+
+    return std::move( buf );
+}
+template
+auto speck::unique_malloc( size_t ) -> buffer_type_c;
+template
+auto speck::unique_malloc( size_t ) -> buffer_type_f;
+template
+auto speck::unique_malloc( size_t ) -> buffer_type_d;

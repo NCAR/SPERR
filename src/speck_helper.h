@@ -138,6 +138,10 @@ auto unpack_booleans( std::vector<bool>&    dest,
 void pack_8_booleans( void* dest, const std::array<bool, 8>& src );
 void unpack_8_booleans( std::array<bool, 8>& dest, void* src );
 
+// Allocate an array of a certain type, and return as a unique pointer.
+template <typename T>
+auto unique_malloc( size_t size ) -> std::unique_ptr<T[]>;
+
 };  // End of speck namespace.
 
 #endif
