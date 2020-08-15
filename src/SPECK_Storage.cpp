@@ -130,7 +130,17 @@ auto speck::SPECK_Storage::m_write(const void* header, size_t header_size,
         return 1;
 
     // Allocate output buffer
-    const size_t total_size = header_size + m_bit_buffer.size() / 8;
+    //
+    // Note that there is metadata prepended for each output in the form of two plain bytes:
+    // the 1st byte records the current major version of SPECK, and
+    // the 2nd byte records 8 booleans, with their meanings documented below:
+    // 
+    // bool_byte[0]  : if the rest of the stream is zstd compressed.
+    // bool_byte[1-7]: undefined.
+    //
+    const size_t meta_size   = 2;
+    const size_t stream_size = m_bit_buffer.size() / 8;
+    const size_t total_size  = meta_size + header_size + stream_size;
 
 #ifdef NO_CPP14
     buffer_type_c buf(new char[total_size]);
@@ -138,21 +148,39 @@ auto speck::SPECK_Storage::m_write(const void* header, size_t header_size,
     buffer_type_c buf = std::make_unique<char[]>(total_size);
 #endif
 
-    // Copy over header
-    std::memcpy(buf.get(), header, header_size);
-
-    // Pack booleans to buf!
-    int rv = speck::pack_booleans( buf, m_bit_buffer, header_size );
+    // Fill in metadata as defined above
+    buf[0] = char(SPECK_VERSION_MAJOR);
+    std::array<bool, 8> meta_bools;
+    meta_bools.fill( false );
 
 #ifdef USE_ZSTD
-    const size_t comp_buf_size = ZSTD_compressBound( total_size );
+    meta_bools[0] = true;
+#endif
+
+    speck::pack_8_booleans( buf.get() + 1, meta_bools );  // pack the bools to the 2nd byte of buf.
+
+    // Copy over header
+    std::memcpy(buf.get() + meta_size, header, header_size);
+
+    // Pack booleans to buf!
+    speck::pack_booleans( buf, m_bit_buffer, meta_size + header_size );
+
+#ifdef USE_ZSTD
+    const size_t comp_buf_size = ZSTD_compressBound( header_size + stream_size );
+
+    // We prepend metadata to the new buffer, so allocate space accordingly
+
     #ifdef NO_CPP14
-        buffer_type_c comp_buf(new char[comp_buf_size]);
+        buffer_type_c comp_buf(new char[meta_size + comp_buf_size]);
     #else
-        buffer_type_c comp_buf = std::make_unique<char[]>(comp_buf_size);
+        buffer_type_c comp_buf = std::make_unique<char[]>(meta_size + comp_buf_size);
     #endif
-    const size_t comp_size = ZSTD_compress( comp_buf.get(), comp_buf_size, 
-                             buf.get(), total_size, ZSTD_CLEVEL_DEFAULT );
+
+    std::memcpy( comp_buf.get(), buf.get(), meta_size );
+
+    const size_t comp_size = ZSTD_compress( comp_buf.get() + meta_size, comp_buf_size, 
+                             buf.get() + meta_size, header_size + stream_size, 
+                             ZSTD_CLEVEL_DEFAULT );     // Just use the default compression level.
     if( ZSTD_isError( comp_size ) )
         return 1;
 #endif
@@ -162,16 +190,18 @@ auto speck::SPECK_Storage::m_write(const void* header, size_t header_size,
     std::ofstream file(filename, std::ios::binary);
     if (file.is_open()) {
 
-#ifdef USE_ZSTD
-        file.write(comp_buf.get(), comp_size);
-#else
+    #ifdef USE_ZSTD
+        file.write(comp_buf.get(), meta_size + comp_size);
+    #else
         file.write(buf.get(), total_size);
-#endif
+    #endif
 
         file.close();
         return 0;
-    } else
+    } 
+    else {
         return 1;
+    }
 }
 
 auto speck::SPECK_Storage::m_read(void* header, size_t header_size, const char* filename) -> int
@@ -181,29 +211,50 @@ auto speck::SPECK_Storage::m_read(void* header, size_t header_size, const char* 
     if (!file.is_open())
         return 1;
     file.seekg(0, file.end);
-    size_t file_size = file.tellg();
+    const size_t total_size = file.tellg();
+    const size_t meta_size  = 2;    // See m_write() for the definition of metadata and meta_size
     file.seekg(0, file.beg);
 
 #ifdef NO_CPP14
-    buffer_type_c file_buf(new char[file_size]);
+    buffer_type_c file_buf(new char[total_size]);
 #else
-    buffer_type_c file_buf = std::make_unique<char[]>(file_size);
+    buffer_type_c file_buf = std::make_unique<char[]>(total_size);
 #endif
 
-    file.read(file_buf.get(), file_size);
+    file.read(file_buf.get(), total_size);
     file.close();
 
+    // Sanity check: if the major version the same between compression and decompression?
+    if( file_buf[0] != char(SPECK_VERSION_MAJOR) )
+        return 0;
+    
+    // Sanity check: if ZSTD is used consistantly between compression and decompression?
+    std::array<bool, 8> meta_bools;
+    speck::unpack_8_booleans( meta_bools, file_buf.get() + 1 );
+
 #ifdef USE_ZSTD
-    const unsigned long long content_size = ZSTD_getFrameContentSize( file_buf.get(), file_size );
+    if( meta_bools[0] == false )
+        return 1;
+#else
+    if( meta_bools[0] == true )
+        return 1;
+#endif
+
+
+#ifdef USE_ZSTD
+    const unsigned long long content_size = ZSTD_getFrameContentSize( file_buf.get() + meta_size,
+                                                                      total_size - meta_size );
     if( content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN )
         return 1;
+
     #ifdef NO_CPP14
         buffer_type_c content_buf(new char[content_size]);
     #else
         buffer_type_c content_buf = std::make_unique<char[]>(content_size);
     #endif
+
     const size_t decomp_size = ZSTD_decompress( content_buf.get(), content_size, 
-                               file_buf.get(), file_size );
+                               file_buf.get() + meta_size, total_size - meta_size);
     if( ZSTD_isError( decomp_size ) || decomp_size != content_size )
         return 1;
 
@@ -213,9 +264,9 @@ auto speck::SPECK_Storage::m_read(void* header, size_t header_size, const char* 
     m_bit_buffer.resize( 8 * (content_size - header_size) );
     speck::unpack_booleans( m_bit_buffer, content_buf, content_size, header_size );
 #else
-    std::memcpy(header, file_buf.get(), header_size);
-    m_bit_buffer.resize( 8 * (file_size - header_size) );
-    speck::unpack_booleans( m_bit_buffer, file_buf, file_size, header_size );
+    std::memcpy(header, file_buf.get() + meta_size, header_size);
+    m_bit_buffer.resize( 8 * (total_size - header_size - meta_size) );
+    speck::unpack_booleans( m_bit_buffer, file_buf, total_size, meta_size + header_size );
 #endif
 
     return 0;

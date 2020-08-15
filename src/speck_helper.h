@@ -134,8 +134,9 @@ auto unpack_booleans( std::vector<bool>&    dest,
                       size_t char_offset = 0 ) -> int;
 
 // Pack and unpack exactly 8 booleans to/from a single byte
-void pack_8_booleans(   uint8_t& dest, const std::array<bool, 8>& src );
-void unpack_8_booleans( std::array<bool, 8>& dest, uint8_t src );
+// Note that memory for the single byte should already be allocated!
+void pack_8_booleans( void* dest, const std::array<bool, 8>& src );
+void unpack_8_booleans( std::array<bool, 8>& dest, void* src );
 
 };  // End of speck namespace.
 
