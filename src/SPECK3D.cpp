@@ -188,13 +188,8 @@ auto speck::SPECK3D::decode() -> int
     if (m_budget == 0)
         m_budget = m_bit_buffer.size();
 
-#ifdef NO_CPP14
-    m_coeff_buf.reset(new double[m_coeff_len]);
-#else
-    m_coeff_buf = std::make_unique<double[]>(m_coeff_len);
-#endif
-
     // initialize coefficients to be zero, and sign array to be all positive
+    m_coeff_buf = speck::unique_malloc<double>(m_coeff_len);
     for (size_t i = 0; i < m_coeff_len; i++)
         m_coeff_buf[i] = 0.0;
     m_sign_array.assign(m_coeff_len, true);
@@ -299,12 +294,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // Right now big is the set that's most likely to be significant, so insert
     // it at the front of it's corresponding vector. One-time expense.
     const auto parts = big.part_level;
-
-#ifdef NO_CPP14
     m_LIS[parts].insert(m_LIS[parts].begin(), big);
-#else
-    m_LIS[parts].insert(m_LIS[parts].cbegin(), big);
-#endif
 
     // initialize LSP
     m_LSP.clear();

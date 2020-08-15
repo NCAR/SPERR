@@ -77,12 +77,8 @@ auto speck::SPECK2D::decode() -> int
     if (m_budget == 0)
         m_budget = m_bit_buffer.size();
 
-        // initialize coefficients to be zero, and signs to be all positive
-#ifdef NO_CPP14
-    m_coeff_buf.reset(new double[m_coeff_len]);
-#else
-    m_coeff_buf          = std::make_unique<double[]>(m_coeff_len);
-#endif
+    // initialize coefficients to be zero, and signs to be all positive
+    m_coeff_buf = speck::unique_malloc<double>(m_coeff_len);
     for (size_t i = 0; i < m_coeff_len; i++)
         m_coeff_buf[i] = 0.0;
     m_sign_array.assign(m_coeff_len, true);
