@@ -32,11 +32,7 @@ int main( int argc, char* argv[] )
     //
     // Let's read in binaries as 4-byte floats
     //
-#ifdef NO_CPP14
-    speck::buffer_type_f in_buf( new float[total_vals] );
-#else
-    speck::buffer_type_f in_buf = std::make_unique<float[]>( total_vals );
-#endif
+    auto in_buf = speck::unique_malloc<float>( total_vals );
     if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
     {
         std::cerr << "Input read error!" << std::endl;
