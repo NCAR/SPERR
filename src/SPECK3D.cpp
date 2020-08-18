@@ -643,7 +643,9 @@ auto speck::SPECK3D::m_ready_to_decode() const -> bool
     return true;
 }
 
-auto speck::SPECK3D::write_to_disk(const std::string& filename) const -> int
+
+auto speck::SPECK3D::get_compressed_buffer( buffer_type_uc& out_buf, 
+                                            size_t&         out_size ) const -> int
 {
     // Header definition:
     // information: dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  bitstream
@@ -652,7 +654,7 @@ auto speck::SPECK3D::write_to_disk(const std::string& filename) const -> int
     uint32_t dims[3] { uint32_t(m_dim_x), uint32_t(m_dim_y), uint32_t(m_dim_z) };
 
     // Create and fill header buffer
-    char header[header_size];
+    unsigned char header[header_size];
 
     size_t pos = 0;
     std::memcpy(header, dims, sizeof(dims));
@@ -663,10 +665,34 @@ auto speck::SPECK3D::write_to_disk(const std::string& filename) const -> int
     pos += sizeof(m_max_coeff_bits);
     assert(pos == header_size);
 
-    // Call the actual write function
-    int rtn = m_write(header, header_size, filename.c_str());
+    int rtn = m_prepare_compressed_buffer( header, header_size, out_buf, out_size);
     return rtn;
 }
+
+auto speck::SPECK3D::write_to_disk(const std::string& filename) const -> int
+{
+    buffer_type_uc out_buf;
+    size_t         out_size;
+    int rtn;
+    if( (rtn = get_compressed_buffer( out_buf, out_size )) != 0 )
+        return rtn;
+
+    // Write buffer to a file.
+    // It turns out std::fstream isn't as easy to use as c-style file operations, 
+    // so let's still use c-style file operations.
+    std::FILE* file = std::fopen( filename.c_str(), "wb" );
+    if( file ) {
+
+        std::fwrite( out_buf.get(), 1, out_size, file );
+        std::fclose( file );
+        return 0;
+    }
+    else {
+        return 1;
+    }
+}
+
+
 
 auto speck::SPECK3D::read_from_disk(const std::string& filename) -> int
 {
@@ -677,7 +703,7 @@ auto speck::SPECK3D::read_from_disk(const std::string& filename) -> int
 
     // Create the header buffer, and read from file
     // Note that m_bit_buffer is filled by m_read().
-    char header[header_size];
+    unsigned char header[header_size];
 
     int rtn = m_read(header, header_size, filename.c_str());
     if (rtn)

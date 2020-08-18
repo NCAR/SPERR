@@ -29,6 +29,12 @@ public:
     virtual auto write_to_disk(const std::string& filename) const -> int = 0;
     virtual auto read_from_disk(const std::string& filename) -> int      = 0;
 
+    // Get the compressed form in the memory. 
+    // The returned memory block could be written to disk by other programs.
+    // This memory block would contain exactly the same content as what is written to disk
+    // by write_to_disk() .
+    virtual auto get_compressed_buffer( buffer_type_uc& , size_t& ) const -> int = 0;
+
     void set_image_mean(double mean);
     auto get_image_mean() const -> double;
     auto get_bit_buffer_size() const -> size_t; // Report the available bits when decoding
@@ -40,8 +46,19 @@ protected:
 
     // Output to and input from disk
     // They return 0 upon success, and 1 upon failure.
-    auto m_write(const void* header, size_t header_size, const char* filename) const -> int;
     auto m_read(       void* header, size_t header_size, const char* filename) -> int;
+
+    // Prepare the compressed memory, which includes metadata, header, and the bitstream. 
+    // It compacts the bitstream, prepends a header, prepends metadata, and optionally
+    //   applies zstd compression.
+    // The resulting memory block, out_buf, could be directly written to disk.
+    // Any content that's already in out_buf will be destroyed.
+    //
+    // Note: Here we use raw pointer for header because we want to address stack addresses.
+    auto m_prepare_compressed_buffer( const void* header,      size_t  header_size,
+                                      buffer_type_uc& out_buf, size_t& out_size ) const -> int;
+    //auto m_parse_compressed_buffer( void* header, size_t header_size, 
+    //                                const buffer_type_
 
     //
     // Member variables

@@ -73,8 +73,10 @@ auto speck::SPECK_Storage::get_image_mean() const -> double
     return m_image_mean;
 }
 
-auto speck::SPECK_Storage::m_write(const void* header, size_t header_size,
-                                   const char* filename) const -> int
+auto speck::SPECK_Storage::m_prepare_compressed_buffer( const void* header, 
+                                                        size_t header_size,
+                                                        buffer_type_uc& out_buf, 
+                                                        size_t& out_size) const -> int
 {
     // Sanity check on the size of bit_buffer
     if(m_bit_buffer.size() % 8 != 0)
@@ -92,10 +94,10 @@ auto speck::SPECK_Storage::m_write(const void* header, size_t header_size,
     const size_t meta_size   = 2;
     const size_t stream_size = m_bit_buffer.size() / 8;
     const size_t total_size  = meta_size + header_size + stream_size;
-    auto buf                 = speck::unique_malloc<unsigned char>( total_size );
+    auto local_buf           = speck::unique_malloc<unsigned char>( total_size );
 
     // Fill in metadata as defined above
-    buf[0] = (unsigned char)(SPECK_VERSION_MAJOR);
+    local_buf[0] = (unsigned char)(SPECK_VERSION_MAJOR);
     std::array<bool, 8> meta_bools;
     meta_bools.fill( false );
 
@@ -103,46 +105,36 @@ auto speck::SPECK_Storage::m_write(const void* header, size_t header_size,
     meta_bools[0] = true;
 #endif
 
-    speck::pack_8_booleans( buf[1], meta_bools );  // pack the bools to the 2nd byte of buf.
+    speck::pack_8_booleans( local_buf[1], meta_bools );  // pack the bools to the 2nd byte of buf.
 
     // Copy over header
-    std::memcpy(buf.get() + meta_size, header, header_size);
+    std::memcpy(local_buf.get() + meta_size, header, header_size);
 
     // Pack booleans to buf!
-    speck::pack_booleans( buf, m_bit_buffer, meta_size + header_size );
+    speck::pack_booleans( local_buf, m_bit_buffer, meta_size + header_size );
 
 #ifdef USE_ZSTD
     const size_t comp_buf_size = ZSTD_compressBound( header_size + stream_size );
 
     // We prepend metadata to the new buffer, so allocate space accordingly
     auto comp_buf = speck::unique_malloc<unsigned char>( meta_size + comp_buf_size ); 
-    std::memcpy( comp_buf.get(), buf.get(), meta_size );
+    std::memcpy( comp_buf.get(), local_buf.get(), meta_size );
 
     const size_t comp_size = ZSTD_compress( comp_buf.get() + meta_size, comp_buf_size, 
-                             buf.get() + meta_size, header_size + stream_size, 
+                             local_buf.get() + meta_size, header_size + stream_size, 
                              ZSTD_CLEVEL_DEFAULT );     // Just use the default compression level.
     if( ZSTD_isError( comp_size ) )
         return 1;
+
+    out_buf  = std::move( comp_buf );
+    out_size = meta_size + comp_size;
+    
+    return 0;
 #endif
 
-    // Write buffer to a file.
-    // It turns out std::fstream isn't as easy to use as c-style file operations, 
-    // so let's still use c-style file operations.
-    std::FILE* file = std::fopen( filename, "wb" );
-    if( file ) {
-
-    #ifdef USE_ZSTD
-        std::fwrite( comp_buf.get(), 1, meta_size + comp_size, file );
-    #else
-        std::fwrite( buf.get(), 1, total_size, file);
-    #endif
-
-        std::fclose( file );
-        return 0;
-    }
-    else {
-        return 1;
-    }
+    out_buf  = std::move( local_buf );
+    out_size = total_size;
+    return 0;
 }
 
 
@@ -157,8 +149,9 @@ auto speck::SPECK_Storage::m_read(void* header, size_t header_size, const char* 
 
     std::fseek( file, 0, SEEK_END );
     const size_t total_size = std::ftell( file );
-    const size_t meta_size  = 2;    // See m_write() for the definition of metadata and meta_size
     std::fseek( file, 0, SEEK_SET );
+    const size_t meta_size  = 2;    // See m_prepare_compressed_buffer() for the definition 
+                                    // of metadata and meta_size
 
     auto file_buf = speck::unique_malloc<unsigned char>( total_size );
     if( total_size != std::fread( file_buf.get(), 1, total_size, file ) ) {
