@@ -55,7 +55,7 @@ TEST( speck_helper, bit_packing )
                              true,  true,  false, false, true,  true,  false, false, // 5th byte
                              false, false, true,  true,  false, false, true,  true };// 6th byte
 
-    auto bytes = speck::unique_malloc<char>(num_of_bytes + byte_offset);
+    auto bytes = speck::unique_malloc<unsigned char>(num_of_bytes + byte_offset);
 
     // Pack booleans
     int rtn = speck::pack_booleans( bytes, input, byte_offset );
@@ -67,6 +67,45 @@ TEST( speck_helper, bit_packing )
     EXPECT_EQ( rtn, 0 );
     EXPECT_EQ( input.size(), output.size() );
 
+    for( size_t i = 0; i < input.size(); i++ )
+        EXPECT_EQ( input[i], output[i] );
+}
+
+
+TEST( speck_helper, bit_packing_one_byte )
+{
+    unsigned char byte;
+    std::array<bool, 8> input {true,  true,  true,  true,  true,  true,  true,  true };
+    std::array<bool, 8> output;
+
+    // Pack booleans
+    speck::pack_8_booleans( byte, input );
+    // Unpack booleans
+    speck::unpack_8_booleans( output, byte );
+    for( size_t i = 0; i < input.size(); i++ )
+        EXPECT_EQ( input[i], output[i] );
+
+    input = { false, false, false, false, false, false, false, false };
+    // Pack booleans
+    speck::pack_8_booleans( byte, input );
+    // Unpack booleans
+    speck::unpack_8_booleans( output, byte );
+    for( size_t i = 0; i < input.size(); i++ )
+        EXPECT_EQ( input[i], output[i] );
+
+    input = { true,  false, true,  false, true,  false, true,  false };
+    // Pack booleans
+    speck::pack_8_booleans( byte, input );
+    // Unpack booleans
+    speck::unpack_8_booleans( output, byte );
+    for( size_t i = 0; i < input.size(); i++ )
+        EXPECT_EQ( input[i], output[i] );
+
+    input = { false, true,  false, true,  false, true,  false, true };
+    // Pack booleans
+    speck::pack_8_booleans( byte, input );
+    // Unpack booleans
+    speck::unpack_8_booleans( output, byte );
     for( size_t i = 0; i < input.size(); i++ )
         EXPECT_EQ( input[i], output[i] );
 }

@@ -15,9 +15,10 @@ namespace speck {
 
 #ifndef BUFFER_TYPES
 #define BUFFER_TYPES
-using buffer_type_d = std::unique_ptr<double[]>;
-using buffer_type_f = std::unique_ptr<float[]>;
-using buffer_type_c = std::unique_ptr<char[]>;
+using buffer_type_d  = std::unique_ptr<double[]>;
+using buffer_type_f  = std::unique_ptr<float[]>;
+using buffer_type_c  = std::unique_ptr<char[]>;
+using buffer_type_uc = std::unique_ptr<unsigned char[]>;
 #endif
 
 //
@@ -125,18 +126,18 @@ void partition_S_Z(const SPECKSet3D& set, std::array<SPECKSet3D, 2>& subsets);
 // The caller should have allocated the right amount of memory for the `dest` array.
 // When packing, the caller should also make sure the number of booleans is a multiplier of 8.
 // It optionally takes in an offset that specifies where to start writing/reading the char array.
-auto pack_booleans( buffer_type_c&           dest,
+auto pack_booleans( buffer_type_uc&          dest,
                     const std::vector<bool>& src,
                     size_t char_offset = 0 ) -> int;
 auto unpack_booleans( std::vector<bool>&    dest,
-                      const buffer_type_c&  src,
+                      const buffer_type_uc& src,
                       size_t                src_len, // total length of char array
                       size_t char_offset = 0 ) -> int;
 
 // Pack and unpack exactly 8 booleans to/from a single byte
 // Note that memory for the single byte should already be allocated!
-void pack_8_booleans( void* dest, const std::array<bool, 8>& src );
-void unpack_8_booleans( std::array<bool, 8>& dest, void* src );
+void pack_8_booleans( unsigned char& dest, const std::array<bool, 8>& src );
+void unpack_8_booleans( std::array<bool, 8>& dest, unsigned char src );
 
 // Allocate an array of a certain type, and return as a unique pointer.
 template <typename T>

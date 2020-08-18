@@ -296,7 +296,9 @@ void speck::partition_S_Z(const SPECKSet3D& set, std::array<SPECKSet3D, 2>& subs
     sub1.length_z = split_z[1];
 }
 
-auto speck::pack_booleans( buffer_type_c&           dest,
+// Good solution to deal with bools and unsigned chars
+// https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
+auto speck::pack_booleans( buffer_type_uc&          dest,
                            const std::vector<bool>& src,
                            size_t                   offset ) -> int
 {
@@ -321,7 +323,7 @@ auto speck::pack_booleans( buffer_type_c&           dest,
 }
 
 auto speck::unpack_booleans( std::vector<bool>&    dest,
-                             const buffer_type_c&  src,
+                             const buffer_type_uc& src,
                              size_t                src_len,
                              size_t                char_offset ) -> int
 {
@@ -349,22 +351,19 @@ auto speck::unpack_booleans( std::vector<bool>&    dest,
     return 0;
 }
 
-void speck::pack_8_booleans( void* dest, const std::array<bool, 8>& src )
+void speck::pack_8_booleans( unsigned char& dest, const std::array<bool, 8>& src )
 {
     const uint64_t magic = 0x8040201008040201;
     uint64_t       t;
     std::memcpy(&t, src.data(), 8);
-    uint8_t tmp = (magic * t) >> 56;
-    std::memcpy( dest, &tmp, 1 );
+    dest = (magic * t) >> 56;
 }
 
-void speck::unpack_8_booleans( std::array<bool, 8>& dest, void* src )
+void speck::unpack_8_booleans( std::array<bool, 8>& dest, unsigned char src )
 {
     const uint64_t magic = 0x8040201008040201;
     const uint64_t mask  = 0x8080808080808080;
-    uint8_t tmp;
-    std::memcpy( &tmp, src, 1 );
-    uint64_t t = ((magic * tmp) & mask) >> 7;
+    uint64_t t = ((magic * src) & mask) >> 7;
     std::memcpy( dest.data(), &t, 8 );
 }
 
@@ -379,9 +378,7 @@ auto speck::unique_malloc( size_t size ) -> std::unique_ptr<T[]>
 
     return std::move( buf );
 }
-template
-auto speck::unique_malloc( size_t ) -> buffer_type_c;
-template
-auto speck::unique_malloc( size_t ) -> buffer_type_f;
-template
-auto speck::unique_malloc( size_t ) -> buffer_type_d;
+template auto speck::unique_malloc( size_t ) -> buffer_type_c;
+template auto speck::unique_malloc( size_t ) -> buffer_type_d;
+template auto speck::unique_malloc( size_t ) -> buffer_type_f;
+template auto speck::unique_malloc( size_t ) -> buffer_type_uc;
