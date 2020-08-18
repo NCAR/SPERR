@@ -18,14 +18,14 @@ TEST( dwt1d, big_image_even )
     const size_t  total_vals = dim_x;
 
     // Let read in binaries as 4-byte floats
-    std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
+    auto in_buf = speck::unique_malloc<float>( total_vals );
     if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
     cdf.set_dims( dim_x );
-    cdf.copy_data( in_buf, total_vals );
+    cdf.copy_data( in_buf.get(), total_vals );
     cdf.dwt1d();
     cdf.idwt1d();
 
@@ -44,14 +44,14 @@ TEST( dwt1d, big_image_odd )
     const size_t  total_vals = dim_x;
 
     // Let read in binaries as 4-byte floats
-    std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
+    auto in_buf = speck::unique_malloc<float>( total_vals );
     if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
     cdf.set_dims( dim_x );
-    cdf.copy_data( in_buf, total_vals );
+    cdf.copy_data( in_buf.get(), total_vals );
     cdf.dwt1d();
     cdf.idwt1d();
 
@@ -70,14 +70,14 @@ TEST( dwt2d, small_image_even )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
-    std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
+    auto in_buf = speck::unique_malloc<float>( total_vals );
     if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y );
-    cdf.copy_data( in_buf, dim_x * dim_y );
+    cdf.copy_data( in_buf.get(), dim_x * dim_y );
     cdf.dwt2d();
     cdf.idwt2d();
 
@@ -96,14 +96,14 @@ TEST( dwt2d, small_image_odd )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
-    std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
+    auto in_buf = speck::unique_malloc<float>( total_vals );
     if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y );
-    cdf.copy_data( in_buf, dim_x * dim_y );
+    cdf.copy_data( in_buf.get(), dim_x * dim_y );
     cdf.dwt2d();
     cdf.idwt2d();
 
@@ -122,14 +122,14 @@ TEST( dwt2d, big_image_even )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
-    std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
+    auto in_buf = speck::unique_malloc<float>( total_vals );
     if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y );
-    cdf.copy_data( in_buf, dim_x * dim_y );
+    cdf.copy_data( in_buf.get(), dim_x * dim_y );
     cdf.dwt2d();
     cdf.idwt2d();
 
@@ -148,14 +148,14 @@ TEST( dwt2d, big_image_odd )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
-    std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
+    auto in_buf = speck::unique_malloc<float>( total_vals );
     if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y );
-    cdf.copy_data( in_buf, dim_x * dim_y );
+    cdf.copy_data( in_buf.get(), dim_x * dim_y );
     cdf.dwt2d();
     cdf.idwt2d();
 
@@ -174,14 +174,14 @@ TEST( dwt3d, small_even_cube )
     const size_t  total_vals = dim_x * dim_y * dim_z;
 
     // Let read in binaries as 4-byte floats
-    std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
+    auto in_buf = speck::unique_malloc<float>( total_vals );
     if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y, dim_z );
-    cdf.copy_data( in_buf, total_vals );
+    cdf.copy_data( in_buf.get(), total_vals );
     cdf.dwt3d();
     cdf.idwt3d();
 
@@ -200,14 +200,14 @@ TEST( dwt3d, big_odd_cube )
     const size_t  total_vals = dim_x * dim_y * dim_z;
 
     // Let read in binaries as 4-byte floats
-    std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
+    auto in_buf = speck::unique_malloc<float>( total_vals );
     if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y, dim_z );
-    cdf.copy_data( in_buf, total_vals );
+    cdf.copy_data( in_buf.get(), total_vals );
     cdf.dwt3d();
     cdf.idwt3d();
 
@@ -226,14 +226,14 @@ TEST( dwt3d, big_even_cube )
     const size_t  total_vals = dim_x * dim_y * dim_z;
 
     // Let read in binaries as 4-byte floats
-    std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
+    auto in_buf = speck::unique_malloc<float>( total_vals );
     if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y, dim_z );
-    cdf.copy_data( in_buf, total_vals );
+    cdf.copy_data( in_buf.get(), total_vals );
     cdf.dwt3d();
     cdf.idwt3d();
 

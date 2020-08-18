@@ -47,23 +47,26 @@ TEST( speck_helper, approx_detail_len )
 TEST( speck_helper, bit_packing )
 {
     const size_t num_of_bytes = 6;
+    const size_t byte_offset  = 1;
     std::vector<bool> input {true,  true,  true,  true,  true,  true,  true,  true,  // 1st byte
                              false, false, false, false, false, false, false, false, // 2nd byte
                              true,  false, true,  false, true,  false, true,  false, // 3rd byte
                              false, true,  false, true,  false, true,  false, true,  // 4th byte
                              true,  true,  false, false, true,  true,  false, false, // 5th byte
                              false, false, true,  true,  false, false, true,  true };// 6th byte
-    const size_t byte_offset = 1;
+
     auto bytes = speck::unique_malloc<char>(num_of_bytes + byte_offset);
 
     // Pack booleans
     int rtn = speck::pack_booleans( bytes, input, byte_offset );
     EXPECT_EQ( rtn, 0 );
     // Unpack booleans
-    std::vector<bool> output;
+    std::vector<bool> output( num_of_bytes * 8 );
     rtn = speck::unpack_booleans( output, bytes, num_of_bytes + byte_offset, byte_offset );
 
+    EXPECT_EQ( rtn, 0 );
     EXPECT_EQ( input.size(), output.size() );
+
     for( size_t i = 0; i < input.size(); i++ )
         EXPECT_EQ( input[i], output[i] );
 }

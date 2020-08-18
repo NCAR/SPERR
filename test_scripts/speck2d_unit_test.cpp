@@ -52,14 +52,14 @@ public:
         // Take input to go through DWT.
         speck::CDF97 cdf;
         cdf.set_dims( m_dim_x, m_dim_y );
-        cdf.copy_data( in_buf, total_vals );
+        cdf.copy_data( in_buf.get(), total_vals );
         cdf.dwt2d();
 
         // Do a speck encoding
         speck::SPECK2D encoder;
         encoder.set_dims( m_dim_x, m_dim_y );
         encoder.set_image_mean( cdf.get_mean() );
-        encoder.copy_coeffs( cdf.get_read_only_data(), m_dim_x * m_dim_y );
+        encoder.take_coeffs( cdf.release_data(), m_dim_x * m_dim_y );
         const size_t total_bits = size_t(32.0f * total_vals / cratio);
         encoder.set_bit_budget( total_bits );
         encoder.encode();

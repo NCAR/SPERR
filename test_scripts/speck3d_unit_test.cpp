@@ -67,7 +67,7 @@ public:
         // Take input to go through DWT.
         speck::CDF97 cdf;
         cdf.set_dims( m_dim_x, m_dim_y, m_dim_z );
-        cdf.copy_data( in_buf, total_vals );
+        cdf.copy_data( in_buf.get(), total_vals );
         cdf.dwt3d();
 
         // Do a speck encoding

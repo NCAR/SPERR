@@ -17,24 +17,9 @@ void speck::CDF97::copy_data(const T* data, size_t len)
     for (size_t i = 0; i < len; i++)
         m_data_buf[i] = data[i];
 }
-template void
-speck::CDF97::copy_data(const float*, size_t);
-template void
-speck::CDF97::copy_data(const double*, size_t);
+template void speck::CDF97::copy_data(const float*, size_t);
+template void speck::CDF97::copy_data(const double*, size_t);
 
-template <typename T>
-void speck::CDF97::copy_data(const T& data, size_t len)
-{
-    assert(m_dim_x * m_dim_y * m_dim_z == 0 || m_dim_x * m_dim_y * m_dim_z == len);
-    m_buf_len = len;
-    m_data_buf = speck::unique_malloc<double>(len);
-    for (size_t i = 0; i < len; i++)
-        m_data_buf[i] = data[i];
-}
-template void
-speck::CDF97::copy_data(const buffer_type_d&, size_t);
-template void
-speck::CDF97::copy_data(const buffer_type_f&, size_t);
 
 void speck::CDF97::take_data(buffer_type_d ptr, size_t len)
 {
@@ -47,7 +32,7 @@ void speck::CDF97::take_data(buffer_type_f ptr, size_t len)
 {
     // Because CDF uses double and passed in data type is float, we'll
     // need to make a copy, and then destroy the passed in unique_ptr.
-    this->copy_data(ptr, len);
+    this->copy_data(ptr.get(), len);
     ptr.reset(); // destroy the memory held by this ptr.
 }
 
