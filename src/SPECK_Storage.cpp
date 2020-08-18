@@ -115,7 +115,7 @@ auto speck::SPECK_Storage::m_write(const void* header, size_t header_size,
     const size_t comp_buf_size = ZSTD_compressBound( header_size + stream_size );
 
     // We prepend metadata to the new buffer, so allocate space accordingly
-    buffer_type_c comp_buf = speck::unique_malloc<char>( meta_size + comp_buf_size ); 
+    auto comp_buf = speck::unique_malloc<unsigned char>( meta_size + comp_buf_size ); 
     std::memcpy( comp_buf.get(), buf.get(), meta_size );
 
     const size_t comp_size = ZSTD_compress( comp_buf.get() + meta_size, comp_buf_size, 
