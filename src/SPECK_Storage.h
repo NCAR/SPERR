@@ -25,10 +25,6 @@ public:
     auto release_coeffs_double() -> buffer_type_d;  // Others take ownership of the data
     auto release_coeffs_float() -> buffer_type_f;   // Others take ownership of the data
 
-    // file operations
-    virtual auto write_to_disk(const std::string& filename) const -> int = 0;
-    virtual auto read_from_disk(const std::string& filename) -> int      = 0;
-
     // Get the compressed form in the memory. 
     // The returned memory block could be written to disk by other programs.
     // This memory block would contain exactly the same content as what is written to disk
@@ -36,6 +32,18 @@ public:
     //
     // Note: the caller is supposed to take ownership of the block of memory.
     virtual auto get_compressed_buffer( buffer_type_raw& , size_t& ) const -> int = 0;
+
+    // Prepare internal states for a decompression operation from a compressed buffer.
+    //
+    // Note: it takes a raw pointer because it accesses memory provided by others,
+    //       and others most likely provide a raw pointer.
+    virtual auto read_compressed_buffer( const void*, size_t ) -> int = 0;
+
+    // File operations;
+    // They write a buffer provided by get_compressed_buffer() to disk, or
+    // read a file and hand its content to be processed by read_compressed_buffer().
+    virtual auto write_to_disk(const std::string& filename) const -> int = 0;
+    virtual auto read_from_disk(const std::string& filename) -> int      = 0;
 
     void set_image_mean(double mean);
     auto get_image_mean() const -> double;
@@ -45,10 +53,6 @@ protected:
     //
     // Member functions
     //
-
-    // Output to and input from disk
-    // They return 0 upon success, and 1 upon failure.
-    auto m_read(       void* header, size_t header_size, const char* filename) -> int;
 
     // Prepare the compressed memory, which includes metadata, header, and the bitstream. 
     // It compacts the bitstream, prepends a header, prepends metadata, and optionally

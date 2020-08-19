@@ -14,6 +14,9 @@ public:
     void set_dims(size_t, size_t, size_t); // Accepts volume dimension
     void set_max_coeff_bits(int32_t);
 
+    // trivial output
+    void get_dims(size_t&, size_t&, size_t&) const;
+
     // How many bits does speck process?
     // If set to zero during decoding, then all bits in the bitstream will be processed.
     void set_bit_budget(size_t);           
@@ -38,16 +41,13 @@ public:
     auto get_quantization_term_level() const -> int32_t;
 #endif
 
-    // trivial output
-    void get_dims(size_t&, size_t&, size_t&) const;
-
     // core operations
     auto encode() -> int;
     auto decode() -> int;
-    auto write_to_disk(const std::string& filename) const -> int override;
-    auto read_from_disk(const std::string& filename) -> int override;
-
     auto get_compressed_buffer( buffer_type_raw& , size_t& ) const -> int override;
+    auto read_compressed_buffer( const void* ,     size_t )        -> int override;
+    auto write_to_disk(const std::string& filename) const          -> int override;
+    auto read_from_disk(const std::string& filename)               -> int override;
 
 private:
     //

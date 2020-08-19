@@ -149,7 +149,7 @@ auto speck::SPECK_Storage::m_disassemble_compressed_buffer( void*  header,
 
     // Let's parse the metadata
     uint8_t meta[2];
-    std::memcpy( meta, comp_buf, 2 );
+    std::memcpy( meta, comp_buf, sizeof(meta) );
 
     // Sanity check: if the major version the same between compression and decompression?
     if( meta[0] != (uint8_t)(SPECK_VERSION_MAJOR) )
@@ -195,71 +195,6 @@ auto speck::SPECK_Storage::m_disassemble_compressed_buffer( void*  header,
     return 0;
 }
 
-auto speck::SPECK_Storage::m_read(void* header, size_t header_size, const char* filename) -> int
-{
-    // Open a file and read its content
-    // It turns out std::fstream isn't as easy to use as c-style file operations, namely it
-    // requires the memory to be of type char*. Let's still use c-style file operations.
-    std::FILE* file = std::fopen( filename, "rb" );
-    if (!file)
-        return 1;
-
-    std::fseek( file, 0, SEEK_END );
-    const size_t total_size = std::ftell( file );
-    std::fseek( file, 0, SEEK_SET );
-    const size_t meta_size  = 2;    // See m_assemble_compressed_buffer() for the definition 
-                                    // of metadata and meta_size
-
-    auto file_buf = speck::unique_malloc<uint8_t>( total_size );
-    if( total_size != std::fread( file_buf.get(), 1, total_size, file ) ) {
-        std::fclose( file );
-        return 1;
-    }
-    std::fclose( file );
-
-    // Sanity check: if the major version the same between compression and decompression?
-    if( file_buf[0] != (uint8_t)(SPECK_VERSION_MAJOR) )
-        return 0;
-    
-    // Sanity check: if ZSTD is used consistantly between compression and decompression?
-    std::array<bool, 8> meta_bools;
-    speck::unpack_8_booleans( meta_bools, file_buf[1] );
-
-#ifdef USE_ZSTD
-    if( meta_bools[0] == false )
-        return 1;
-#else
-    if( meta_bools[0] == true )
-        return 1;
-#endif
-
-
-#ifdef USE_ZSTD
-    const unsigned long long content_size = ZSTD_getFrameContentSize( file_buf.get() + meta_size,
-                                                                      total_size - meta_size );
-    if( content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN )
-        return 1;
-
-    auto content_buf = speck::unique_malloc<uint8_t>(content_size);
-
-    const size_t decomp_size = ZSTD_decompress( content_buf.get(), content_size, 
-                               file_buf.get() + meta_size, total_size - meta_size);
-    if( ZSTD_isError( decomp_size ) || decomp_size != content_size )
-        return 1;
-
-    // Copy over the header
-    std::memcpy(header, content_buf.get(), header_size);
-    // Now interpret the booleans
-    m_bit_buffer.resize( 8 * (content_size - header_size) );
-    speck::unpack_booleans( m_bit_buffer, content_buf.get(), content_size, header_size );
-#else
-    std::memcpy(header, file_buf.get() + meta_size, header_size);
-    m_bit_buffer.resize( 8 * (total_size - header_size - meta_size) );
-    speck::unpack_booleans( m_bit_buffer, file_buf, total_size, meta_size + header_size );
-#endif
-
-    return 0;
-}
 
 auto speck::SPECK_Storage::get_bit_buffer_size() const -> size_t
 {
