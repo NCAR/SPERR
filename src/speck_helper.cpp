@@ -298,7 +298,7 @@ void speck::partition_S_Z(const SPECKSet3D& set, std::array<SPECKSet3D, 2>& subs
 
 // Good solution to deal with bools and unsigned chars
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
-auto speck::pack_booleans( buffer_type_uc&          dest,
+auto speck::pack_booleans( buffer_type_raw&         dest,
                            const std::vector<bool>& src,
                            size_t                   offset ) -> int
 {
@@ -323,12 +323,14 @@ auto speck::pack_booleans( buffer_type_uc&          dest,
 }
 
 auto speck::unpack_booleans( std::vector<bool>&    dest,
-                             const buffer_type_uc& src,
+                             const void*           src,
                              size_t                src_len,
                              size_t                char_offset ) -> int
 {
     if( src_len < char_offset )
         return 1;
+
+    const uint8_t* src_ptr = static_cast<const uint8_t*>(src);
 
     size_t num_of_bools = (src_len - char_offset) * 8;
     if( num_of_bools != dest.size() )
@@ -341,7 +343,7 @@ auto speck::unpack_booleans( std::vector<bool>&    dest,
     uint64_t       t;
     uint8_t        b;
     for (size_t i = 0; i < num_of_bools; i += 8) {
-        b = src[pos++];
+        std::memcpy( &b, src_ptr + pos++, 1 );
         t = ((magic * b) & mask) >> 7;
         std::memcpy(a, &t, 8);
         for (size_t j = 0; j < 8; j++)
@@ -351,7 +353,7 @@ auto speck::unpack_booleans( std::vector<bool>&    dest,
     return 0;
 }
 
-void speck::pack_8_booleans( unsigned char& dest, const std::array<bool, 8>& src )
+void speck::pack_8_booleans( uint8_t& dest, const std::array<bool, 8>& src )
 {
     const uint64_t magic = 0x8040201008040201;
     uint64_t       t;
@@ -359,7 +361,7 @@ void speck::pack_8_booleans( unsigned char& dest, const std::array<bool, 8>& src
     dest = (magic * t) >> 56;
 }
 
-void speck::unpack_8_booleans( std::array<bool, 8>& dest, unsigned char src )
+void speck::unpack_8_booleans( std::array<bool, 8>& dest, uint8_t src )
 {
     const uint64_t magic = 0x8040201008040201;
     const uint64_t mask  = 0x8080808080808080;
@@ -381,4 +383,4 @@ auto speck::unique_malloc( size_t size ) -> std::unique_ptr<T[]>
 template auto speck::unique_malloc( size_t ) -> buffer_type_c;
 template auto speck::unique_malloc( size_t ) -> buffer_type_d;
 template auto speck::unique_malloc( size_t ) -> buffer_type_f;
-template auto speck::unique_malloc( size_t ) -> buffer_type_uc;
+template auto speck::unique_malloc( size_t ) -> buffer_type_raw;

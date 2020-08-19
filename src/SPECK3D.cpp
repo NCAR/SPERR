@@ -643,7 +643,9 @@ auto speck::SPECK3D::m_ready_to_decode() const -> bool
     return true;
 }
 
-auto speck::SPECK3D::write_to_disk(const std::string& filename) const -> int
+
+auto speck::SPECK3D::get_compressed_buffer( buffer_type_raw& out_buf, 
+                                            size_t&          out_size ) const -> int
 {
     // Header definition:
     // information: dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  bitstream
@@ -652,7 +654,7 @@ auto speck::SPECK3D::write_to_disk(const std::string& filename) const -> int
     uint32_t dims[3] { uint32_t(m_dim_x), uint32_t(m_dim_y), uint32_t(m_dim_z) };
 
     // Create and fill header buffer
-    char header[header_size];
+    uint8_t header[header_size];
 
     size_t pos = 0;
     std::memcpy(header, dims, sizeof(dims));
@@ -663,24 +665,20 @@ auto speck::SPECK3D::write_to_disk(const std::string& filename) const -> int
     pos += sizeof(m_max_coeff_bits);
     assert(pos == header_size);
 
-    // Call the actual write function
-    int rtn = m_write(header, header_size, filename.c_str());
+    int rtn = m_assemble_compressed_buffer( header, header_size, out_buf, out_size);
     return rtn;
 }
 
-auto speck::SPECK3D::read_from_disk(const std::string& filename) -> int
+
+auto speck::SPECK3D::read_compressed_buffer( const void* comp_buf, size_t comp_size) -> int 
 {
-    // Header definition:
-    // information: dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  bitstream
-    // format:      uint32_t,  uint32_t,  uint32_t,  double       int32_t,         packed_bytes
+    // See method get_compressed_buffer for header definitions
     const size_t header_size = 24;
+    uint8_t header[ header_size ];
 
-    // Create the header buffer, and read from file
-    // Note that m_bit_buffer is filled by m_read().
-    char header[header_size];
-
-    int rtn = m_read(header, header_size, filename.c_str());
-    if (rtn)
+    // break down the compressed buffer
+    int rtn = m_disassemble_compressed_buffer( header, header_size, comp_buf, comp_size );
+    if( rtn != 0 )
         return rtn;
 
     // Parse the header
@@ -694,7 +692,7 @@ auto speck::SPECK3D::read_from_disk(const std::string& filename) -> int
     pos += sizeof(m_max_coeff_bits);
     assert(pos == header_size);
 
-    // If dims[2] is 1, then this file is for 2D planes!
+    // If dims[2] is 1, then this file is for 2D planes! We abort immediately.
     if( dims[2] == 1 )
         return 1;
 

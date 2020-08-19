@@ -55,14 +55,14 @@ TEST( speck_helper, bit_packing )
                              true,  true,  false, false, true,  true,  false, false, // 5th byte
                              false, false, true,  true,  false, false, true,  true };// 6th byte
 
-    auto bytes = speck::unique_malloc<unsigned char>(num_of_bytes + byte_offset);
+    auto bytes = speck::unique_malloc<uint8_t>(num_of_bytes + byte_offset);
 
     // Pack booleans
     int rtn = speck::pack_booleans( bytes, input, byte_offset );
     EXPECT_EQ( rtn, 0 );
     // Unpack booleans
     std::vector<bool> output( num_of_bytes * 8 );
-    rtn = speck::unpack_booleans( output, bytes, num_of_bytes + byte_offset, byte_offset );
+    rtn = speck::unpack_booleans( output, bytes.get(), num_of_bytes + byte_offset, byte_offset );
 
     EXPECT_EQ( rtn, 0 );
     EXPECT_EQ( input.size(), output.size() );
