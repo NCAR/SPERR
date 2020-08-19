@@ -33,7 +33,9 @@ public:
     // The returned memory block could be written to disk by other programs.
     // This memory block would contain exactly the same content as what is written to disk
     // by write_to_disk() .
-    virtual auto get_compressed_buffer( buffer_type_uc& , size_t& ) const -> int = 0;
+    //
+    // Note: the caller is supposed to take ownership of the block of memory.
+    virtual auto get_compressed_buffer( buffer_type_raw& , size_t& ) const -> int = 0;
 
     void set_image_mean(double mean);
     auto get_image_mean() const -> double;
@@ -54,11 +56,20 @@ protected:
     // The resulting memory block, out_buf, could be directly written to disk.
     // Any content that's already in out_buf will be destroyed.
     //
+    // Note: The caller is supposed to hold ownership of the resulting memory block.
+    //
     // Note: Here we use raw pointer for header because we want to address stack addresses.
-    auto m_prepare_compressed_buffer( const void* header,      size_t  header_size,
-                                      buffer_type_uc& out_buf, size_t& out_size ) const -> int;
-    //auto m_parse_compressed_buffer( void* header, size_t header_size, 
-    //                                const buffer_type_
+    auto m_assemble_compressed_buffer( const void* header,       size_t  header_size,
+                                       buffer_type_raw& out_buf, size_t& out_size ) const -> int;
+
+    // Parse a compressed buffer, and extract the metadata, header, and bitstream from it.
+    //
+    // Note: `header` should already have memory allocated with `header_size` in size.
+    // Note: Here we use raw pointer for header because we want to address stack addresses.
+    // Note: Here we use raw pointer for comp_buf because we're accessing memory provided
+    //       by others, and others most likely provide a raw pointer. 
+    auto m_disassemble_compressed_buffer( void* header,         size_t header_size, 
+                                          const void* comp_buf, size_t comp_size ) -> int;
 
     //
     // Member variables

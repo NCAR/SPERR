@@ -644,8 +644,8 @@ auto speck::SPECK3D::m_ready_to_decode() const -> bool
 }
 
 
-auto speck::SPECK3D::get_compressed_buffer( buffer_type_uc& out_buf, 
-                                            size_t&         out_size ) const -> int
+auto speck::SPECK3D::get_compressed_buffer( buffer_type_raw& out_buf, 
+                                            size_t&          out_size ) const -> int
 {
     // Header definition:
     // information: dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  bitstream
@@ -654,7 +654,7 @@ auto speck::SPECK3D::get_compressed_buffer( buffer_type_uc& out_buf,
     uint32_t dims[3] { uint32_t(m_dim_x), uint32_t(m_dim_y), uint32_t(m_dim_z) };
 
     // Create and fill header buffer
-    unsigned char header[header_size];
+    uint8_t header[header_size];
 
     size_t pos = 0;
     std::memcpy(header, dims, sizeof(dims));
@@ -665,14 +665,14 @@ auto speck::SPECK3D::get_compressed_buffer( buffer_type_uc& out_buf,
     pos += sizeof(m_max_coeff_bits);
     assert(pos == header_size);
 
-    int rtn = m_prepare_compressed_buffer( header, header_size, out_buf, out_size);
+    int rtn = m_assemble_compressed_buffer( header, header_size, out_buf, out_size);
     return rtn;
 }
 
 auto speck::SPECK3D::write_to_disk(const std::string& filename) const -> int
 {
-    buffer_type_uc out_buf;
-    size_t         out_size;
+    buffer_type_raw out_buf;
+    size_t          out_size;
     int rtn;
     if( (rtn = get_compressed_buffer( out_buf, out_size )) != 0 )
         return rtn;
@@ -703,7 +703,7 @@ auto speck::SPECK3D::read_from_disk(const std::string& filename) -> int
 
     // Create the header buffer, and read from file
     // Note that m_bit_buffer is filled by m_read().
-    unsigned char header[header_size];
+    uint8_t header[header_size];
 
     int rtn = m_read(header, header_size, filename.c_str());
     if (rtn)
