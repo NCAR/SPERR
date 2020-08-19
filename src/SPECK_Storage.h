@@ -42,8 +42,8 @@ public:
     // File operations;
     // They write a buffer provided by get_compressed_buffer() to disk, or
     // read a file and hand its content to be processed by read_compressed_buffer().
-    virtual auto write_to_disk(const std::string& filename) const -> int = 0;
-    virtual auto read_from_disk(const std::string& filename) -> int      = 0;
+    auto write_to_disk(const std::string& filename) const -> int;
+    auto read_from_disk(const std::string& filename)      -> int;
 
     void set_image_mean(double mean);
     auto get_image_mean() const -> double;

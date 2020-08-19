@@ -669,55 +669,6 @@ auto speck::SPECK3D::get_compressed_buffer( buffer_type_raw& out_buf,
     return rtn;
 }
 
-auto speck::SPECK3D::write_to_disk(const std::string& filename) const -> int
-{
-    buffer_type_raw out_buf;
-    size_t          out_size;
-    int rtn = get_compressed_buffer( out_buf, out_size );
-    if( rtn != 0 )
-        return rtn;
-
-    // Write buffer to a file.
-    // It turns out std::fstream isn't as easy to use as c-style file operations, 
-    // so let's still use c-style file operations.
-    std::FILE* file = std::fopen( filename.c_str(), "wb" );
-    if( file ) {
-
-        std::fwrite( out_buf.get(), 1, out_size, file );
-        std::fclose( file );
-        return 0;
-    }
-    else {
-        return 1;
-    }
-}
-
-
-
-auto speck::SPECK3D::read_from_disk(const std::string& filename) -> int
-{
-    // Open a file and read its content
-    // It turns out std::fstream isn't as easy to use as c-style file operations, namely it
-    // requires the memory to be of type char*. Let's still use c-style file operations.
-    std::FILE* file = std::fopen( filename.c_str(), "rb" );
-    if (!file)
-        return 1;
-
-    std::fseek( file, 0, SEEK_END );
-    const size_t total_size = std::ftell( file );
-    std::fseek( file, 0, SEEK_SET );
-    const size_t meta_size  = 2;    // See m_assemble_compressed_buffer() for the definition 
-                                    // of metadata and meta_size
-
-    auto file_buf = speck::unique_malloc<uint8_t>( total_size );
-    size_t nread  = std::fread( file_buf.get(), 1, total_size, file );
-    std::fclose( file );
-    
-    if( total_size != nread )
-        return 1;
-
-    return ( this->read_compressed_buffer( file_buf.get(), total_size ) );
-}
 
 auto speck::SPECK3D::read_compressed_buffer( const void* comp_buf, size_t comp_size) -> int 
 {

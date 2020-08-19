@@ -654,13 +654,14 @@ auto speck::SPECK2D::m_ready_to_decode() const -> bool
     return true;
 }
 
-auto speck::SPECK2D::write_to_disk(const std::string& filename) const -> int
+
+auto speck::SPECK2D::get_compressed_buffer( buffer_type_raw& out_buf, size_t& out_size) const -> int
 {
     // Header definition:
     // information: dim_x,    dim_y,    dim_z,    image_mean, max_coeff_bits, bitstream
     // format:      uint32_t, uint32_t, uint32_t, double      int32_t,        packed_bytes
     //
-    // Note 1: The dim_z field must be strictly be 1.
+    // Note 1: The dim_z field must strictly be 1.
     // Note 2: This header definition is essentially the same as the header for SPECK3D. 
     //         The dim_z field can then be used to distinguish the two.
     //
@@ -669,8 +670,7 @@ auto speck::SPECK2D::write_to_disk(const std::string& filename) const -> int
     size_t   pos = 0;
 
     // Create and fill header buffer
-    char header[header_size];
-
+    uint8_t header[header_size];
     std::memcpy(header, dims, sizeof(dims));
     pos += sizeof(dims);
     std::memcpy(header + pos, &m_image_mean, sizeof(m_image_mean));
@@ -679,20 +679,16 @@ auto speck::SPECK2D::write_to_disk(const std::string& filename) const -> int
     pos += sizeof(m_max_coeff_bits);
     assert(pos == header_size);
 
-    // Call the actual write function
-    int rtn = m_write(header, header_size, filename.c_str());
+    int rtn = m_assemble_compressed_buffer( header, header_size, out_buf, out_size );
     return rtn;
 }
 
-auto speck::SPECK2D::read_from_disk(const std::string& filename) -> int
+auto speck::SPECK2D::read_compressed_buffer(const void* buf, size_t buf_size) -> int
 {
     // Header definition is documented in the `write_to_disk()` function.
     const size_t header_size = 24;
-
-    // Create the header buffer, and read from file
-    // Note that m_bit_buffer is filled by m_read().
-    char header[header_size];
-    int rtn = m_read(header, header_size, filename.c_str());
+    uint8_t header[header_size];
+    int rtn = m_disassemble_compressed_buffer( header, header_size, buf, buf_size );
     if (rtn)
         return rtn;
 
@@ -707,14 +703,15 @@ auto speck::SPECK2D::read_from_disk(const std::string& filename) -> int
     pos += sizeof(m_max_coeff_bits);
     assert(pos == header_size);
 
-    // It is the header definition that this element must be 1.
+    // It is from the header definition that this element must be 1.
     if( dims[2] != 1 )
         return 1;
 
-    this->set_dims(size_t(dims[0]), size_t(dims[1]));
+    set_dims(size_t(dims[0]), size_t(dims[1]));
 
     return 0;
 }
+
 
 #ifdef PRINT
 void speck::SPECK2D::m_print_set(const char* str, const SPECKSet2D& set) const

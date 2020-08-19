@@ -46,8 +46,6 @@ public:
     auto decode() -> int;
     auto get_compressed_buffer( buffer_type_raw& , size_t& ) const -> int override;
     auto read_compressed_buffer( const void* ,     size_t )        -> int override;
-    auto write_to_disk(const std::string& filename) const          -> int override;
-    auto read_from_disk(const std::string& filename)               -> int override;
 
 private:
     //
