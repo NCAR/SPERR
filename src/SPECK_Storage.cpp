@@ -209,7 +209,6 @@ auto speck::SPECK_Storage::write_to_disk(const std::string& filename) const -> i
     // so let's still use c-style file operations.
     std::FILE* file = std::fopen( filename.c_str(), "wb" );
     if( file ) {
-
         std::fwrite( out_buf.get(), 1, out_size, file );
         std::fclose( file );
         return 0;
