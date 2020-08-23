@@ -28,14 +28,6 @@ void speck::CDF97::take_data(buffer_type_d ptr, size_t len)
     m_data_buf = std::move(ptr);
 }
 
-void speck::CDF97::take_data(buffer_type_f ptr, size_t len)
-{
-    // Because CDF uses double and passed in data type is float, we'll
-    // need to make a copy, and then destroy the passed in unique_ptr.
-    this->copy_data(ptr.get(), len);
-    ptr.reset(); // destroy the memory held by this ptr.
-}
-
 auto speck::CDF97::get_read_only_data() const -> const buffer_type_d&
 {
     return m_data_buf;

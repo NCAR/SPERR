@@ -63,7 +63,7 @@ int main( int argc, char* argv[] )
     // Take input to go through DWT.
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y, dim_z );
-    cdf.take_data( std::move(in_buf), total_vals );
+    cdf.copy_data( in_buf.get(), total_vals );
     auto startT = std::chrono::high_resolution_clock::now();
     cdf.dwt3d();
     auto endT   = std::chrono::high_resolution_clock::now();

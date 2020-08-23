@@ -17,7 +17,6 @@ class SPECK_Storage {
 public:
     // memory management: input
     void take_coeffs(buffer_type_d, size_t);       // Take ownership of the incoming buffer
-    void take_coeffs(buffer_type_f, size_t);       // Take ownership of the incoming buffer
     template <typename T>
     void copy_coeffs(const T*, size_t len);        // Make a copy of the incoming data.
 

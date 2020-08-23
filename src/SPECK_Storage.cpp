@@ -33,14 +33,6 @@ void speck::SPECK_Storage::take_coeffs(buffer_type_d coeffs, size_t len)
     m_coeff_buf = std::move(coeffs);
 }
 
-void speck::SPECK_Storage::take_coeffs(buffer_type_f coeffs, size_t len)
-{
-    // Cannot really take the coeffs if the data type doesn't match.
-    // So we make a copy and destroy the old memory block.
-    copy_coeffs(coeffs.get(), len);
-    coeffs.reset();
-}
-
 auto speck::SPECK_Storage::get_read_only_coeffs() const -> const speck::buffer_type_d&
 {
     return m_coeff_buf;

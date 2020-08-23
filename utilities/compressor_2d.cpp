@@ -44,7 +44,7 @@ int main( int argc, char* argv[] )
     //
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y );
-    cdf.take_data( std::move(in_buf), total_vals );
+    cdf.copy_data( in_buf.get(), total_vals );
 
     auto startT = std::chrono::high_resolution_clock::now();
     cdf.dwt2d();
