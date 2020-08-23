@@ -64,17 +64,13 @@ int main( int argc, char* argv[] )
     speck::CDF97 cdf;
     cdf.set_dims( dim_x, dim_y, dim_z );
     cdf.take_data( std::move(in_buf), total_vals );
-#ifdef TIME_EXAMPLES
     auto startT = std::chrono::high_resolution_clock::now();
-#endif
     cdf.dwt3d();
-#ifdef TIME_EXAMPLES
     auto endT   = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diffT  = endT - startT;
     std::cout << "# Encoding time in milliseconds: Bit-per-Pixel  XForm_Time  SPECK_Time" 
               << std::endl; 
     std::cout << bpp << "  " << diffT.count() * 1000.0f << "  ";
-#endif
 
     // Do a speck encoding
     speck::SPECK3D encoder;
@@ -83,15 +79,11 @@ int main( int argc, char* argv[] )
     const size_t total_bits = size_t(bpp * total_vals);
     encoder.set_bit_budget( total_bits );
     encoder.take_coeffs( cdf.release_data(), total_vals );
-#ifdef TIME_EXAMPLES
     startT = std::chrono::high_resolution_clock::now();
-#endif
     encoder.encode();
-#ifdef TIME_EXAMPLES
     endT   = std::chrono::high_resolution_clock::now();
     diffT  = endT - startT;
     std::cout << diffT.count() * 1000.0f << std::endl;
-#endif
 
     if( encoder.write_to_disk( output ) )
     {

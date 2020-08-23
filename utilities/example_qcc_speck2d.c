@@ -5,15 +5,13 @@
 
 #define HAVE_SPECK
 
+#include <sys/time.h>
+
 #include "libQccPack.h"
 #include "sam_helper.h"
 #include "assert.h"
 
 #include "SpeckConfig.h"
-
-#ifdef TIME_EXAMPLES
-    #include <sys/time.h>
-#endif
 
 
 int array_to_image( const float* array, QccIMGImageComponent* image )
@@ -141,10 +139,8 @@ int main( int argc, char** argv )
     }
 
     /* Encode to a bitstream, and write to the bit stream. */
-#ifdef TIME_EXAMPLES
     struct timeval start, end;
     gettimeofday( &start, NULL );
-#endif
     if( QccSPECKEncode( &Image, NULL, num_of_levels, 
                         total_bits, &Wavelet, &OutputBuffer ) )
     {
@@ -201,11 +197,9 @@ int main( int argc, char** argv )
         free( in_array );
         return 1;
     }
-#ifdef TIME_EXAMPLES
     gettimeofday( &end, NULL );
     long elapsed = (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec;
     printf("qcc takes milliseconds: %f\n", (float)elapsed / 1000.0f );
-#endif
 
     /* Evaluate the encoding and decoding process! */
     float* out_array = (float*)malloc( num_of_bytes );

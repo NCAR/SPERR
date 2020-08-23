@@ -16,7 +16,6 @@ endif()
 
 option( BUILD_UNIT_TESTS "Build unit tests using googletest?" OFF)
 option( USE_ZSTD "Incorporate zstd to achieve further 5% compression?" OFF)
-option( TIME_EXAMPLES  "Compile timing code for debug purpose?" OFF)
 option( BUILD_QCC_EXAMPLES "Build examples that link to QccPack?" OFF)
 option( NO_CPP14 "Forbid using CPP14 features" OFF)
 option( QZ_TERM  "Operational mode which terminates by quantization level" OFF)

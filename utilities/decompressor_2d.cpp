@@ -42,17 +42,12 @@ int main( int argc, char* argv[] )
            bit_budget = std::min( bit_budget, decoder.get_bit_buffer_size() );
     decoder.set_bit_budget( bit_budget );
 
-#ifdef TIME_EXAMPLES
     auto startT = std::chrono::high_resolution_clock::now();
-#endif
-
     decoder.decode();
 
-#ifdef TIME_EXAMPLES
     auto endT   = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diffT  = endT - startT;
     auto speck_time = diffT.count() * 1000.0f;
-#endif
 
     // Do an inverse wavelet transform
     speck::CDF97 idwt;
@@ -60,13 +55,8 @@ int main( int argc, char* argv[] )
     idwt.set_mean( decoder.get_image_mean() );
     idwt.take_data( decoder.release_coeffs_double(), total_vals );
 
-#ifdef TIME_EXAMPLES
     startT = std::chrono::high_resolution_clock::now();
-#endif
-
     idwt.idwt3d();
-
-#ifdef TIME_EXAMPLES
     endT   = std::chrono::high_resolution_clock::now();
     diffT  = endT - startT;
     auto idwt_time = diffT.count() * 1000.0f;
@@ -74,7 +64,6 @@ int main( int argc, char* argv[] )
               << std::endl; 
     std::cout << float(bit_budget)/float(total_vals) << "  " << idwt_time << "  " 
               << speck_time << std::endl;
-#endif
 
 
     // Write the reconstructed data to disk in single-precision

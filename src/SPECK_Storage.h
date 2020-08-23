@@ -6,8 +6,9 @@
  * manage storage of coefficients and bitstreams.
  */
 
-#include "speck_helper.h"
 #include <vector>
+#include <string>
+#include "speck_helper.h"
 
 namespace speck {
 
