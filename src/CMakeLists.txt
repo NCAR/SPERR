@@ -6,6 +6,9 @@ add_library( SPECK2D        SPECK2D.cpp       )
 add_library( SPECK3D        SPECK3D.cpp       ) 
 add_library( SPECK_Err      SPECK_Err.cpp   ) 
 
+add_library( SPECK3D_Compressor   SPECK3D_Compressor.cpp   ) 
+add_library( SPECK3D_Decompressor SPECK3D_Decompressor.cpp   ) 
+
 target_include_directories( speck_helper  INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( sam_helper    INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( CDF97         INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
@@ -14,6 +17,9 @@ target_include_directories( SPECK2D       INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} 
 target_include_directories( SPECK3D       INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( SPECK_Err     INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 
+target_include_directories( SPECK3D_Compressor INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
+target_include_directories( SPECK3D_Decompressor INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
+    
 if( USE_ZSTD )
     add_dependencies( SPECK_Storage zstd-download )
     ExternalProject_Get_Property( zstd-download INSTALL_DIR )
