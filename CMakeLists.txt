@@ -30,6 +30,7 @@ if( USE_ZSTD )
     ExternalProject_Add( zstd-download
       GIT_REPOSITORY    git@github.com:facebook/zstd.git
       GIT_TAG           master
+      GIT_SHALLOW "True"
       PREFIX            "${CMAKE_CURRENT_BINARY_DIR}/zstd"
       INSTALL_DIR       "${CMAKE_CURRENT_BINARY_DIR}/zstd-install"
       UPDATE_DISCONNECTED "True"                        # Skip update from git step
@@ -43,6 +44,31 @@ if( USE_ZSTD )
       LOG_INSTALL       "True"      # Save output in a file, instead of the terminal.
     )
 endif()
+
+#
+# Add cxxopt
+#
+#project(cxxopt-download NONE)
+#include(ExternalProject)
+#ExternalProject_Add( cxxopt-download
+#  GIT_REPOSITORY        git@github.com:jarro2783/cxxopts.git
+#  GIT_TAG               v2.2.1
+#  GIT_SHALLOW           "True"
+#  PREFIX                "${CMAKE_CURRENT_BINARY_DIR}/cxxopt"
+#  UPDATE_DISCONNECTED   "True"  # Skip update from git step
+#  CONFIGURE_COMMAND     ""      # Configure nothing
+#  BUILD_COMMAND         ""      # Build nothing
+#  INSTALL_COMMAND       ""      # Install nothing
+#  LOG_DOWNLOAD          "True"
+#)
+#ExternalProject_Get_Property( cxxopt-download SOURCE_DIR )
+#configure_file("${SOURCE_DIR}/include/cxxopts.hpp" "cxxopts.hpp" COPYONLY)
+
+#
+# Download CLI11
+#
+file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/download/v1.9.1/CLI11.hpp 
+              "${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp" )
 
 add_subdirectory( src )
 list( APPEND SPECK_LIBS SPECK3D_Compressor )

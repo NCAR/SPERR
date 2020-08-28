@@ -32,10 +32,12 @@ public:
 #ifdef QZ_TERM
     void set_qz_level( int );
 #else
-    void set_bpp( float );
+    auto set_bpp( float ) -> int;
 #endif
 
     auto compress() -> int;
+    // Provide a copy of the compressed buffer to the caller.
+    // The caller will take over the ownership.
     auto get_compressed_buffer( speck::buffer_type_raw&, size_t& ) const -> int;
     auto write_bitstream( const char* filename ) const -> int;
 

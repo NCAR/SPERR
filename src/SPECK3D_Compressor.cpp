@@ -116,8 +116,13 @@ auto SPECK3D_Compressor::write_bitstream( const char* filename ) const -> int
 #ifdef QZ_TERM
     // comment
 #else
-void SPECK3D_Compressor::set_bpp( float bpp )
+auto SPECK3D_Compressor::set_bpp( float bpp ) -> int
 {
-    m_bpp = bpp;
+    if( bpp < 0.0 || bpp > 64.0 )
+        return 1;
+    else {
+        m_bpp = bpp;
+        return 0;
+    }
 }
 #endif
