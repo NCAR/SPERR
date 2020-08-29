@@ -23,7 +23,7 @@ public:
     // Accept incoming data by reading a file from disk.
     auto read_bitstream( const char* filename ) -> int;
 
-    void set_bpp( float );
+    auto set_bpp( float ) -> int;
 
     auto decompress() -> int;
 

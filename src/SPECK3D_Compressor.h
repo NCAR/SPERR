@@ -30,7 +30,7 @@ public:
     auto read_floats( const char* filename ) -> int;
 
 #ifdef QZ_TERM
-    void set_qz_level( int );
+    void set_qz_level( int32_t );
 #else
     auto set_bpp( float ) -> int;
 #endif
@@ -49,7 +49,7 @@ private:
     speck::SPECK3D  m_encoder;
 
 #ifdef QZ_TERM
-    int qz_lev;
+    int32_t m_qz_lev = 0;
 #else
     float m_bpp = 0.0;
 #endif

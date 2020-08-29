@@ -133,9 +133,14 @@ return 0;
 }
 
 
-void SPECK3D_Decompressor::set_bpp( float bpp )
+auto SPECK3D_Decompressor::set_bpp( float bpp ) -> int
 {
-    m_bpp = bpp;
+    if( bpp < 0.0 || bpp > 64.0 )
+        return 1;
+    else {
+        m_bpp = bpp;
+        return 0;
+    }
 }
 
 

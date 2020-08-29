@@ -75,7 +75,7 @@ auto SPECK3D_Compressor::compress() -> int
     m_encoder.take_coeffs( m_cdf.release_data(), m_total_vals );
 
 #ifdef QZ_TERM
-    // comment
+    m_encoder.set_quantization_term_level( m_qz_lev );
 #else
     m_encoder.set_bit_budget( m_bpp * m_total_vals );
 #endif
@@ -114,7 +114,10 @@ auto SPECK3D_Compressor::write_bitstream( const char* filename ) const -> int
 
 
 #ifdef QZ_TERM
-    // comment
+void SPECK3D_Compressor::set_qz_level( int32_t q )
+{
+    m_qz_lev = q;
+}
 #else
 auto SPECK3D_Compressor::set_bpp( float bpp ) -> int
 {
