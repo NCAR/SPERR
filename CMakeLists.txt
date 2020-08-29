@@ -106,11 +106,6 @@ add_executable(             compressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities
 target_link_libraries(      compressor_3d PUBLIC ${SPECK_LIBS})
 target_include_directories( compressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
 
-# Executable #6
-add_executable(             decompressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/decompressor_3d.cpp" )
-target_link_libraries(      decompressor_3d PUBLIC ${SPECK_LIBS})
-target_include_directories( decompressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
-
 # Executable #7
 add_executable(             compressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_2d.cpp" )
 target_link_libraries(      compressor_2d PUBLIC ${SPECK_LIBS})
