@@ -71,8 +71,9 @@ file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/download/v1.9.1/CLI11.h
               "${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp" )
 
 add_subdirectory( src )
-list( APPEND SPECK_LIBS SPECK3D_Compressor )
+list( APPEND SPECK_LIBS SPECK3D_Compressor   )
 list( APPEND SPECK_LIBS SPECK3D_Decompressor )
+list( APPEND SPECK_LIBS SPECK2D_Compressor   )
 list( APPEND SPECK_LIBS SPECK2D         )
 list( APPEND SPECK_LIBS SPECK3D         )
 list( APPEND SPECK_LIBS SPECK_Err       )
