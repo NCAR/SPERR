@@ -85,12 +85,14 @@ int main( int argc, char* argv[] )
         SPECK3D_Compressor compressor ( dims[0], dims[1], dims[2] );
         if( (rtn = compressor.read_floats( input_file.c_str() ) ) )
             return rtn;
+
 #ifdef QZ_TERM
         compressor.set_qz_level( qz_level );
 #else
         if( (rtn = compressor.set_bpp( bpp ) ) )
             return rtn;
 #endif
+
         if( (rtn = compressor.compress() ) )
             return rtn;
 

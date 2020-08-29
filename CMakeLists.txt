@@ -101,11 +101,6 @@ add_executable(             example_dwt3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities
 target_link_libraries(      example_dwt3d PUBLIC ${SPECK_LIBS})
 target_include_directories( example_dwt3d PUBLIC ${PROJECT_BINARY_DIR} )
 
-# Executable #4
-add_executable(             example_speck3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck3d.cpp" )
-target_link_libraries(      example_speck3d PUBLIC ${SPECK_LIBS})
-target_include_directories( example_speck3d PUBLIC ${PROJECT_BINARY_DIR} )
-
 # Executable #5
 add_executable(             compressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_3d.cpp" )
 target_link_libraries(      compressor_3d PUBLIC ${SPECK_LIBS})
