@@ -24,18 +24,22 @@ int main( int argc, char* argv[] )
 
     std::string input_file;
     app.add_option("filename", input_file, "Input file to the compressor")
-        ->required()->check(CLI::ExistingFile);
+            ->required()->check(CLI::ExistingFile);
 
     bool decomp = false;
-    auto* decomp_ptr = app.add_flag("-d", decomp, "Perform decompression (compression by default)");
+    auto* decomp_ptr = app.add_flag("-d", decomp, "Perform decompression. \n"
+            "If not specified, the program performs compression.");
 
     std::vector<size_t> dims;
-    app.add_option("--dims", dims, "Dimensions of the volume")->expected(3)
+    app.add_option("--dims", dims, "Dimensions of the input volume. \n"
+            "For example, `--dims 128 128 128`.")->expected(3)
             ->group("Compression Options");
 
 #ifdef QZ_TERM
     int32_t qz_level = 0;
-    auto* qz_level_ptr = app.add_option("--qz_level", qz_level, "Quantization level to encode")
+    auto* qz_level_ptr = app.add_option("--qz_level", qz_level, 
+            "Quantization level to stop encoding. For example, \n"
+            "if `--qz_level n`, then the last quantization level will be 2^n.")
             ->group("Compression Options");
 #else
     float bpp = 0.0;
@@ -47,12 +51,13 @@ int main( int argc, char* argv[] )
     app.add_option("-o,--ofile", output_file, "Output filename.");
 
     bool print_stats = false;
-    app.add_flag("--print_stats", print_stats, "Print stats (RMSE and L-Infinity)")
-        ->group("Compression Options");
+    app.add_flag("--print_stats", print_stats, "Print statistics (RMSE and L-Infinity)")
+            ->group("Compression Options");
 
     float decomp_bpp = 0.0;
     auto* decomp_bpp_ptr = app.add_option("--partial_bpp", decomp_bpp,
-            "Partially decode the bitstream up to a certain bit-per-pixel budget")
+            "Partially decode the bitstream up to a certain bit-per-pixel. \n"
+            "If not specified, the entire bitstream will be decoded.")
             ->group("Decompression Options");
     
     CLI11_PARSE(app, argc, argv);
@@ -135,7 +140,11 @@ int main( int argc, char* argv[] )
                 return rtn;
         }
     }
-    else {  // Decompression mode
+
+    //
+    // Compression mode
+    //
+    else {
         SPECK3D_Decompressor decompressor;
         decompressor.read_bitstream( input_file.c_str() );
         decompressor.set_bpp( decomp_bpp );
