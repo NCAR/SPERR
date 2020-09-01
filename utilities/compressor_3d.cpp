@@ -110,14 +110,10 @@ int main( int argc, char* argv[] )
             SPECK3D_Decompressor decompressor;
             decompressor.take_bitstream( std::move(comp_buf), comp_buf_size );
             decompressor.decompress();
-            decompressor.write_volume_f( "reconstructed.vol" );
     
             speck::buffer_type_f decomp_buf;
             size_t decomp_buf_size;
             if( (rtn = decompressor.get_decompressed_volume_f( decomp_buf, decomp_buf_size )) )
-                return rtn;
-
-            if( decomp_buf_size != total_vals )
                 return rtn;
 
             // Read the original input data again
@@ -142,17 +138,20 @@ int main( int argc, char* argv[] )
     }
 
     //
-    // Compression mode
+    // Decompression mode
     //
     else {
+        if( output_file.empty() ) {
+            std::cerr << "Please specify output filename!" << std::endl;
+            return 1;
+        }
         SPECK3D_Decompressor decompressor;
         decompressor.read_bitstream( input_file.c_str() );
         decompressor.set_bpp( decomp_bpp );
-        decompressor.decompress();
-        if( !output_file.empty() ) {
-            if( (rtn = decompressor.write_volume_f( output_file.c_str() )) )
-                return rtn;
-        }
+        if( (rtn = decompressor.decompress()) )
+            return rtn;
+        if( (rtn = decompressor.write_volume_f( output_file.c_str() )) )
+            return rtn;
     }
 
     return 0;

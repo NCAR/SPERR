@@ -105,7 +105,7 @@ auto speck::SPECK2D::decode() -> int
             m_coeff_buf[i] = -m_coeff_buf[i];
     }
 
-    return rtn_val;
+    return 0;   // Need to better use return code. See issue #34
 }
 
 void speck::SPECK2D::m_initialize_sets_lists()

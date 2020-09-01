@@ -19,6 +19,7 @@ public:
     void set_dims(size_t x, size_t y = 1, size_t z = 1);
 
     // Output
+    // TODO: unify I/O interface with SPECK2D and SPECK3D classes.
     auto get_read_only_data() const -> const buffer_type_d&; // Others can read the data
     auto release_data() -> buffer_type_d;                    // Others take ownership of the data
     auto get_mean() const -> double;

@@ -74,6 +74,7 @@ add_subdirectory( src )
 list( APPEND SPECK_LIBS SPECK3D_Compressor   )
 list( APPEND SPECK_LIBS SPECK3D_Decompressor )
 list( APPEND SPECK_LIBS SPECK2D_Compressor   )
+list( APPEND SPECK_LIBS SPECK2D_Decompressor )
 list( APPEND SPECK_LIBS SPECK2D         )
 list( APPEND SPECK_LIBS SPECK3D         )
 list( APPEND SPECK_LIBS SPECK_Err       )
@@ -92,11 +93,6 @@ add_executable(             example_dwt2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities
 target_link_libraries(      example_dwt2d PUBLIC ${SPECK_LIBS} )
 target_include_directories( example_dwt2d PUBLIC ${PROJECT_BINARY_DIR} )
 
-# Executable #2
-add_executable(             example_speck2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck2d.cpp" )
-target_link_libraries(      example_speck2d PUBLIC ${SPECK_LIBS})
-target_include_directories( example_speck2d PUBLIC ${PROJECT_BINARY_DIR} )
-
 # Executable #3
 add_executable(             example_dwt3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt3d.cpp" )
 target_link_libraries(      example_dwt3d PUBLIC ${SPECK_LIBS})
@@ -111,11 +107,6 @@ target_include_directories( compressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
 add_executable(             compressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_2d.cpp" )
 target_link_libraries(      compressor_2d PUBLIC ${SPECK_LIBS})
 target_include_directories( compressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
-
-# Executable #8
-add_executable(             decompressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/decompressor_2d.cpp" )
-target_link_libraries(      decompressor_2d PUBLIC ${SPECK_LIBS})
-target_include_directories( decompressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
 
 # Executable #9
 add_executable(             example_speck_err "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck_err.cpp" )
