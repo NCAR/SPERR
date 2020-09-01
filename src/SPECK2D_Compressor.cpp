@@ -73,11 +73,11 @@ auto SPECK2D_Compressor::compress() -> int
     m_encoder.set_image_mean( m_cdf.get_mean() );
     m_encoder.take_coeffs( m_cdf.release_data(), m_total_vals );
 
-#ifdef QZ_TERM
+//#ifdef QZ_TERM
     // m_encoder.set_quantization_term_level( m_qz_lev );
-#else
+//#else
     m_encoder.set_bit_budget( m_bpp * m_total_vals );
-#endif
+//#endif
 
     int rtn = m_encoder.encode();
     return rtn;
@@ -112,12 +112,12 @@ auto SPECK2D_Compressor::write_bitstream( const char* filename ) const -> int
 }
 
 
-#ifdef QZ_TERM
+//#ifdef QZ_TERM
 // void SPECK2D_Compressor::set_qz_level( int32_t q )
 // {
 //     m_qz_lev = q;
 // }
-#else
+//#else
 auto SPECK2D_Compressor::set_bpp( float bpp ) -> int
 {
     if( bpp < 0.0 || bpp > 64.0 )
@@ -127,4 +127,4 @@ auto SPECK2D_Compressor::set_bpp( float bpp ) -> int
         return 0;
     }
 }
-#endif
+//#endif

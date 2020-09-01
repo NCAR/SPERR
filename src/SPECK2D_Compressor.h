@@ -29,11 +29,11 @@ public:
     // X direction varying fastest, and Y direction varying slowest.
     auto read_floats( const char* filename ) -> int;
 
-#ifdef QZ_TERM
+//#ifdef QZ_TERM
     //void set_qz_level( int32_t );
-#else
+//#else
     auto set_bpp( float ) -> int;
-#endif
+//#endif
 
     auto compress() -> int;
     // Provide a copy of the compressed buffer to the caller.
@@ -48,11 +48,11 @@ private:
     speck::CDF97    m_cdf;
     speck::SPECK2D  m_encoder;
 
-#ifdef QZ_TERM
+//#ifdef QZ_TERM
     //int32_t m_qz_lev = 0;
-#else
+//#else
     float m_bpp = 0.0;
-#endif
+//#endif
 };
 
 
