@@ -27,8 +27,6 @@ public:
 
     // Get the compressed form in the memory. 
     // The returned memory block could be written to disk by other programs.
-    // This memory block would contain exactly the same content as what is written to disk
-    // by write_to_disk() .
     //
     // Note: the caller does NOT need to allocate memory for the returned buffer. 
     //       However, it is supposed to take ownership of the returned block of memory.
@@ -39,12 +37,6 @@ public:
     // Note: it takes a raw pointer because it accesses memory provided by others,
     //       and others most likely provide a raw pointer.
     virtual auto read_compressed_buffer( const void*, size_t ) -> int = 0;
-
-    // File operations;
-    // They write a buffer provided by get_compressed_buffer() to disk, or
-    // read a file and hand its content to be processed by read_compressed_buffer().
-    auto write_to_disk(const std::string& filename) const -> int;
-    auto read_from_disk(const std::string& filename)      -> int;
 
     void set_image_mean(double mean);
     auto get_image_mean() const -> double;
