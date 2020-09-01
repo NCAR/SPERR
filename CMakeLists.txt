@@ -30,6 +30,7 @@ if( USE_ZSTD )
     ExternalProject_Add( zstd-download
       GIT_REPOSITORY    git@github.com:facebook/zstd.git
       GIT_TAG           master
+      GIT_SHALLOW "True"
       PREFIX            "${CMAKE_CURRENT_BINARY_DIR}/zstd"
       INSTALL_DIR       "${CMAKE_CURRENT_BINARY_DIR}/zstd-install"
       UPDATE_DISCONNECTED "True"                        # Skip update from git step
@@ -44,14 +45,43 @@ if( USE_ZSTD )
     )
 endif()
 
+#
+# Add cxxopt
+#
+#project(cxxopt-download NONE)
+#include(ExternalProject)
+#ExternalProject_Add( cxxopt-download
+#  GIT_REPOSITORY        git@github.com:jarro2783/cxxopts.git
+#  GIT_TAG               v2.2.1
+#  GIT_SHALLOW           "True"
+#  PREFIX                "${CMAKE_CURRENT_BINARY_DIR}/cxxopt"
+#  UPDATE_DISCONNECTED   "True"  # Skip update from git step
+#  CONFIGURE_COMMAND     ""      # Configure nothing
+#  BUILD_COMMAND         ""      # Build nothing
+#  INSTALL_COMMAND       ""      # Install nothing
+#  LOG_DOWNLOAD          "True"
+#)
+#ExternalProject_Get_Property( cxxopt-download SOURCE_DIR )
+#configure_file("${SOURCE_DIR}/include/cxxopts.hpp" "cxxopts.hpp" COPYONLY)
+
+#
+# Download CLI11
+#
+file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/download/v1.9.1/CLI11.hpp 
+              "${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp" )
+
 add_subdirectory( src )
-list( APPEND SPECK_LIBS sam_helper      )
+list( APPEND SPECK_LIBS SPECK3D_Compressor   )
+list( APPEND SPECK_LIBS SPECK3D_Decompressor )
+list( APPEND SPECK_LIBS SPECK2D_Compressor   )
+list( APPEND SPECK_LIBS SPECK2D_Decompressor )
 list( APPEND SPECK_LIBS SPECK2D         )
 list( APPEND SPECK_LIBS SPECK3D         )
 list( APPEND SPECK_LIBS SPECK_Err       )
 list( APPEND SPECK_LIBS SPECK_Storage   )
 list( APPEND SPECK_LIBS CDF97           )
 list( APPEND SPECK_LIBS speck_helper    )
+list( APPEND SPECK_LIBS sam_helper      )
 if( USE_ZSTD )
     ExternalProject_Get_Property( zstd-download INSTALL_DIR )
     link_directories( "${INSTALL_DIR}/lib" )
@@ -63,40 +93,20 @@ add_executable(             example_dwt2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities
 target_link_libraries(      example_dwt2d PUBLIC ${SPECK_LIBS} )
 target_include_directories( example_dwt2d PUBLIC ${PROJECT_BINARY_DIR} )
 
-# Executable #2
-add_executable(             example_speck2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck2d.cpp" )
-target_link_libraries(      example_speck2d PUBLIC ${SPECK_LIBS})
-target_include_directories( example_speck2d PUBLIC ${PROJECT_BINARY_DIR} )
-
 # Executable #3
 add_executable(             example_dwt3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt3d.cpp" )
 target_link_libraries(      example_dwt3d PUBLIC ${SPECK_LIBS})
 target_include_directories( example_dwt3d PUBLIC ${PROJECT_BINARY_DIR} )
-
-# Executable #4
-add_executable(             example_speck3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck3d.cpp" )
-target_link_libraries(      example_speck3d PUBLIC ${SPECK_LIBS})
-target_include_directories( example_speck3d PUBLIC ${PROJECT_BINARY_DIR} )
 
 # Executable #5
 add_executable(             compressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_3d.cpp" )
 target_link_libraries(      compressor_3d PUBLIC ${SPECK_LIBS})
 target_include_directories( compressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
 
-# Executable #6
-add_executable(             decompressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/decompressor_3d.cpp" )
-target_link_libraries(      decompressor_3d PUBLIC ${SPECK_LIBS})
-target_include_directories( decompressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
-
 # Executable #7
 add_executable(             compressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_2d.cpp" )
 target_link_libraries(      compressor_2d PUBLIC ${SPECK_LIBS})
 target_include_directories( compressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
-
-# Executable #8
-add_executable(             decompressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/decompressor_2d.cpp" )
-target_link_libraries(      decompressor_2d PUBLIC ${SPECK_LIBS})
-target_include_directories( decompressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
 
 # Executable #9
 add_executable(             example_speck_err "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck_err.cpp" )

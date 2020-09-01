@@ -30,7 +30,8 @@ public:
     // This memory block would contain exactly the same content as what is written to disk
     // by write_to_disk() .
     //
-    // Note: the caller is supposed to take ownership of the block of memory.
+    // Note: the caller does NOT need to allocate memory for the returned buffer. 
+    //       However, it is supposed to take ownership of the returned block of memory.
     virtual auto get_compressed_buffer( buffer_type_raw& , size_t& ) const -> int = 0;
 
     // Prepare internal states for a decompression operation from a compressed buffer.

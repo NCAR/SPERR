@@ -1,94 +1,157 @@
-#include "SPECK3D.h"
-#include "CDF97.h"
+#include "SPECK3D_Compressor.h"
+#include "SPECK3D_Decompressor.h"
+
+#include "CLI11.hpp"
 
 #include <cstdlib>
 #include <iostream>
 #include <chrono>
 #include <cstring>
 
-#include "SpeckConfig.h"
-
 extern "C"  // C Function calls, and don't include the C header!
 {
-    int sam_read_n_bytes( const char*, size_t, void* );
+    int sam_get_statsf( const float* arr1, const float* arr2, size_t len,
+                        float* rmse,       float* lmax,       float* psnr,
+                        float* arr1min,    float* arr1max            );
+    int sam_read_n_bytes( const char* filename, size_t n_bytes,
+                          void*       buffer               );
 }
 
 int main( int argc, char* argv[] )
 {
-    if( argc != 8 )
-    {
-        std::cerr << "Usage: ./a.out input_filename dim_x dim_y dim_z "
-                  << "ordering(XYZ or ZYX) output_filename bits_per_pixel " << std::endl;
-        return 1;
+    // Parse command line options
+    CLI::App app("Parse CLI options to compressor_3d");
+
+    std::string input_file;
+    app.add_option("filename", input_file, "Input file to the compressor")
+            ->required()->check(CLI::ExistingFile);
+
+    bool decomp = false;
+    auto* decomp_ptr = app.add_flag("-d", decomp, "Perform decompression. \n"
+            "If not specified, the program performs compression.");
+
+    std::vector<size_t> dims;
+    app.add_option("--dims", dims, "Dimensions of the input volume. \n"
+            "For example, `--dims 128 128 128`.")->expected(3)
+            ->group("Compression Options");
+
+#ifdef QZ_TERM
+    int32_t qz_level = 0;
+    auto* qz_level_ptr = app.add_option("--qz_level", qz_level, 
+            "Quantization level to stop encoding. For example, \n"
+            "if `--qz_level n`, then the last quantization level will be 2^n.")
+            ->group("Compression Options");
+#else
+    float bpp = 0.0;
+    auto* bpp_ptr = app.add_option("--bpp", bpp, "Average bit-per-pixel")
+            ->group("Compression Options");
+#endif
+
+    std::string output_file;
+    app.add_option("-o,--ofile", output_file, "Output filename.");
+
+    bool print_stats = false;
+    app.add_flag("--print_stats", print_stats, "Print statistics (RMSE and L-Infinity)")
+            ->group("Compression Options");
+
+    float decomp_bpp = 0.0;
+    auto* decomp_bpp_ptr = app.add_option("--partial_bpp", decomp_bpp,
+            "Partially decode the bitstream up to a certain bit-per-pixel. \n"
+            "If not specified, the entire bitstream will be decoded.")
+            ->group("Decompression Options");
+    
+    CLI11_PARSE(app, argc, argv);
+
+    int rtn;
+
+    //
+    // Compression mode
+    //
+    if( !decomp ) {
+
+        if( dims.empty() ) {
+            std::cerr << "Please specify the input dimensions" << std::endl;
+            return 1;
+        }
+
+#ifdef QZ_TERM
+        if( !(*qz_level_ptr) ) {
+            std::cerr << "Please specify the quantization level to encode" << std::endl;
+            return 1;
+        }
+#else
+        if( !(*bpp_ptr) ) {
+            std::cerr << "Please specify the target bit-per-pixel rate" << std::endl;
+            return 1;
+        }
+#endif        
+
+        const size_t total_vals = dims[0] * dims[1] * dims[2];
+        SPECK3D_Compressor compressor ( dims[0], dims[1], dims[2] );
+        if( (rtn = compressor.read_floats( input_file.c_str() ) ) )
+            return rtn;
+
+#ifdef QZ_TERM
+        compressor.set_qz_level( qz_level );
+#else
+        if( (rtn = compressor.set_bpp( bpp ) ) )
+            return rtn;
+#endif
+
+        if( (rtn = compressor.compress() ) )
+            return rtn;
+
+        if( print_stats ) {
+            // Need to do a decompression anyway
+            speck::buffer_type_raw   comp_buf;
+            size_t comp_buf_size;
+            if( (rtn = compressor.get_compressed_buffer( comp_buf, comp_buf_size )) )
+                return rtn;
+            SPECK3D_Decompressor decompressor;
+            decompressor.take_bitstream( std::move(comp_buf), comp_buf_size );
+            decompressor.decompress();
+    
+            speck::buffer_type_f decomp_buf;
+            size_t decomp_buf_size;
+            if( (rtn = decompressor.get_decompressed_volume_f( decomp_buf, decomp_buf_size )) )
+                return rtn;
+
+            // Read the original input data again
+            const size_t nbytes = sizeof(float) * total_vals;
+            auto orig = speck::unique_malloc<float>(total_vals);
+            if( (rtn = sam_read_n_bytes( input_file.c_str(), nbytes, orig.get() )) )
+                return rtn;
+            
+            float rmse, lmax, psnr, arr1min, arr1max;
+            if( (rtn = sam_get_statsf( orig.get(), decomp_buf.get(), total_vals,
+                       &rmse, &lmax, &psnr, &arr1min, &arr1max )) )
+                return rtn;
+
+            printf("RMSE = %f, L-Infty = %f, PSNR = %f\n", rmse, lmax, psnr);
+            printf("The original data range is: (%f, %f)\n", arr1min, arr1max);
+        }
+    
+        if( !output_file.empty() ) {
+            if( (rtn = compressor.write_bitstream( output_file.c_str() ) ) )
+                return rtn;
+        }
     }
 
-    const char*   input   = argv[1];
-    const size_t  dim_x   = std::atol( argv[2] );
-    const size_t  dim_y   = std::atol( argv[3] );
-    const size_t  dim_z   = std::atol( argv[4] );
-    const char*   fastest = argv[5];
-    const char*   output  = argv[6];
-    const float   bpp     = std::atof( argv[7] );
-    const size_t  total_vals = dim_x * dim_y * dim_z;
-    if( std::strcmp( fastest, "XYZ" ) != 0 && std::strcmp( fastest, "ZYX" ) != 0 )
-    {
-        std::cerr << "Must specify one of the two orderings: XYZ or ZYX!" << std::endl;
-        return 1;
-    }
-
-    // Let's read in binaries as 4-byte floats
-    auto in_buf = speck::unique_malloc<float>( total_vals );
-    if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
-    {
-        std::cerr << "Input read error!" << std::endl;
-        return 1;
-    }
-
-    // Re-organize values if ZYX ordering is specified
-    if( std::strcmp( fastest, "ZYX" ) == 0 )
-    {
-        auto tmp   = speck::unique_malloc<float>( total_vals );
-        size_t idx = 0;
-        for( size_t z = 0; z < dim_z; z++ )
-            for( size_t y = 0; y < dim_y; y++ )
-                for( size_t x = 0; x < dim_x; x++ )
-                {
-                    size_t zyx_idx = x * dim_y * dim_z + y * dim_z + z;
-                    tmp[ idx++ ] = in_buf[ zyx_idx ];
-                }
-        in_buf.reset();
-        in_buf = std::move( tmp );
-    }
-
-    // Take input to go through DWT.
-    speck::CDF97 cdf;
-    cdf.set_dims( dim_x, dim_y, dim_z );
-    cdf.copy_data( in_buf.get(), total_vals );
-    auto startT = std::chrono::high_resolution_clock::now();
-    cdf.dwt3d();
-    auto endT   = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> diffT  = endT - startT;
-    std::cout << "# Encoding time in milliseconds: Bit-per-Pixel  XForm_Time  SPECK_Time" 
-              << std::endl; 
-    std::cout << bpp << "  " << diffT.count() * 1000.0f << "  ";
-
-    // Do a speck encoding
-    speck::SPECK3D encoder;
-    encoder.set_dims( dim_x, dim_y, dim_z );
-    encoder.set_image_mean( cdf.get_mean() );
-    const size_t total_bits = size_t(bpp * total_vals);
-    encoder.set_bit_budget( total_bits );
-    encoder.take_coeffs( cdf.release_data(), total_vals );
-    startT = std::chrono::high_resolution_clock::now();
-    encoder.encode();
-    endT   = std::chrono::high_resolution_clock::now();
-    diffT  = endT - startT;
-    std::cout << diffT.count() * 1000.0f << std::endl;
-
-    if( encoder.write_to_disk( output ) )
-    {
-        std::cerr << "Output write error!" << std::endl;
-        return 1;
+    //
+    // Decompression mode
+    //
+    else {
+        if( output_file.empty() ) {
+            std::cerr << "Please specify output filename!" << std::endl;
+            return 1;
+        }
+        SPECK3D_Decompressor decompressor;
+        decompressor.read_bitstream( input_file.c_str() );
+        decompressor.set_bpp( decomp_bpp );
+        if( (rtn = decompressor.decompress()) )
+            return rtn;
+        if( (rtn = decompressor.write_volume_f( output_file.c_str() )) )
+            return rtn;
     }
 
     return 0;
