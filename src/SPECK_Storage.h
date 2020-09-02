@@ -24,18 +24,18 @@ public:
     auto get_read_only_coeffs() const -> const buffer_type_d&; // Keep ownership.
     auto release_coeffs() -> buffer_type_d;                    // Transfer ownership
 
-    // Get the compressed form in the memory. 
+    // Get the encoded bitstream.
     // The returned memory block could be written to disk by other programs.
     //
     // Note: the caller does NOT need to allocate memory for the returned buffer. 
     //       However, it is supposed to take ownership of the returned block of memory.
-    virtual auto get_compressed_buffer( buffer_type_raw& , size_t& ) const -> int = 0;
+    virtual auto get_encoded_bitstream( buffer_type_raw& , size_t& ) const -> int = 0;
 
-    // Prepare internal states for a decompression operation from a compressed buffer.
+    // Prepare internal states for a decompression operation from an encoded bitstream
     //
     // Note: it takes a raw pointer because it accesses memory provided by others,
     //       and others most likely provide a raw pointer.
-    virtual auto read_compressed_buffer( const void*, size_t ) -> int = 0;
+    virtual auto read_encoded_bitstream( const void*, size_t ) -> int = 0;
 
     void set_image_mean(double mean);
     auto get_image_mean() const -> double;
@@ -55,7 +55,7 @@ protected:
     // Note: The caller is supposed to hold ownership of the resulting memory block.
     //
     // Note: Here we use raw pointer for header because we want to address stack addresses.
-    auto m_assemble_compressed_buffer( const void* header,       size_t  header_size,
+    auto m_assemble_encoded_bitstream( const void* header,       size_t  header_size,
                                        buffer_type_raw& out_buf, size_t& out_size ) const -> int;
 
     // Parse a compressed buffer, and extract the metadata, header, and bitstream from it.
@@ -64,7 +64,7 @@ protected:
     // Note: Here we use raw pointer for header because we want to address stack addresses.
     // Note: Here we use raw pointer for comp_buf because we're accessing memory provided
     //       by others, and others most likely provide a raw pointer. 
-    auto m_disassemble_compressed_buffer( void* header,         size_t header_size, 
+    auto m_disassemble_encoded_bitstream( void* header,         size_t header_size, 
                                           const void* comp_buf, size_t comp_size ) -> int;
 
     //

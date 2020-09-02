@@ -53,7 +53,7 @@ auto speck::SPECK_Storage::get_image_mean() const -> double
     return m_image_mean;
 }
 
-auto speck::SPECK_Storage::m_assemble_compressed_buffer( const void* header, 
+auto speck::SPECK_Storage::m_assemble_encoded_bitstream( const void* header, 
                                                          size_t header_size,
                                                          buffer_type_raw& out_buf, 
                                                          size_t& out_size) const -> int
@@ -118,12 +118,12 @@ auto speck::SPECK_Storage::m_assemble_compressed_buffer( const void* header,
 }
 
 
-auto speck::SPECK_Storage::m_disassemble_compressed_buffer( void*  header, 
+auto speck::SPECK_Storage::m_disassemble_encoded_bitstream( void*  header, 
                                                             size_t header_size, 
                                                             const void* comp_buf,
                                                             size_t comp_size) -> int
 {
-    const size_t meta_size  = 2;    // See m_prepare_compressed_buffer() for the definition 
+    const size_t meta_size  = 2;    // See m_assemble_encoded_bitstream() for the definition 
                                     // of metadata and meta_size
     const uint8_t* comp_buf_ptr = static_cast<const uint8_t*>(comp_buf);
 

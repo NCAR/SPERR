@@ -47,7 +47,7 @@ auto SPECK2D_Decompressor::decompress() -> int
     if( m_stream_buf == nullptr )
         return 1;
 
-    m_decoder.read_compressed_buffer( m_stream_buf.get(), m_stream_buf_size );
+    m_decoder.read_encoded_bitstream( m_stream_buf.get(), m_stream_buf_size );
     m_decoder.get_dims( m_dim_x, m_dim_y );
     m_total_vals = m_dim_x * m_dim_y;
     m_decoder.set_bit_budget( size_t(m_bpp * m_total_vals) );

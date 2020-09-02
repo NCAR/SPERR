@@ -655,7 +655,7 @@ auto speck::SPECK2D::m_ready_to_decode() const -> bool
 }
 
 
-auto speck::SPECK2D::get_compressed_buffer( buffer_type_raw& out_buf, size_t& out_size) const -> int
+auto speck::SPECK2D::get_encoded_bitstream( buffer_type_raw& out_buf, size_t& out_size) const -> int
 {
     // Header definition:
     // information: dim_x,    dim_y,    dim_z,    image_mean, max_coeff_bits, bitstream
@@ -679,16 +679,16 @@ auto speck::SPECK2D::get_compressed_buffer( buffer_type_raw& out_buf, size_t& ou
     pos += sizeof(m_max_coeff_bits);
     assert(pos == header_size);
 
-    int rtn = m_assemble_compressed_buffer( header, header_size, out_buf, out_size );
+    int rtn = m_assemble_encoded_bitstream( header, header_size, out_buf, out_size );
     return rtn;
 }
 
-auto speck::SPECK2D::read_compressed_buffer(const void* buf, size_t buf_size) -> int
+auto speck::SPECK2D::read_encoded_bitstream(const void* buf, size_t buf_size) -> int
 {
     // Header definition is documented in the `write_to_disk()` function.
     const size_t header_size = 24;
     uint8_t header[header_size];
-    int rtn = m_disassemble_compressed_buffer( header, header_size, buf, buf_size );
+    int rtn = m_disassemble_encoded_bitstream( header, header_size, buf, buf_size );
     if (rtn)
         return rtn;
 

@@ -11,7 +11,9 @@ namespace speck {
 
 class CDF97 {
 public:
+    //
     // Input
+    //
     template <typename T>
     void copy_data(const T*, size_t len);
     void take_data(buffer_type_d, size_t len); // Take ownership

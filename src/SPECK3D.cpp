@@ -644,7 +644,7 @@ auto speck::SPECK3D::m_ready_to_decode() const -> bool
 }
 
 
-auto speck::SPECK3D::get_compressed_buffer( buffer_type_raw& out_buf, 
+auto speck::SPECK3D::get_encoded_bitstream( buffer_type_raw& out_buf, 
                                             size_t&          out_size ) const -> int
 {
     // Header definition:
@@ -665,19 +665,19 @@ auto speck::SPECK3D::get_compressed_buffer( buffer_type_raw& out_buf,
     pos += sizeof(m_max_coeff_bits);
     assert(pos == header_size);
 
-    int rtn = m_assemble_compressed_buffer( header, header_size, out_buf, out_size);
+    int rtn = m_assemble_encoded_bitstream( header, header_size, out_buf, out_size);
     return rtn;
 }
 
 
-auto speck::SPECK3D::read_compressed_buffer( const void* comp_buf, size_t comp_size) -> int 
+auto speck::SPECK3D::read_encoded_bitstream( const void* comp_buf, size_t comp_size) -> int 
 {
-    // See method get_compressed_buffer for header definitions
+    // See method get_encoded_bitstream() for header definitions
     const size_t header_size = 24;
     uint8_t header[ header_size ];
 
     // break down the compressed buffer
-    int rtn = m_disassemble_compressed_buffer( header, header_size, comp_buf, comp_size );
+    int rtn = m_disassemble_encoded_bitstream( header, header_size, comp_buf, comp_size );
     if( rtn != 0 )
         return rtn;
 

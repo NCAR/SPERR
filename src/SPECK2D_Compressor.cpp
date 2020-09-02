@@ -89,10 +89,10 @@ auto SPECK2D_Compressor::compress() -> int
 }
 
 
-auto SPECK2D_Compressor::get_compressed_buffer( speck::buffer_type_raw& out_buf, 
+auto SPECK2D_Compressor::get_encoded_bitstream( speck::buffer_type_raw& out_buf, 
                                                 size_t& out_size ) const -> int
 {
-    int rtn = m_encoder.get_compressed_buffer( out_buf, out_size );
+    int rtn = m_encoder.get_encoded_bitstream( out_buf, out_size );
     return rtn;
 }
     
@@ -101,7 +101,7 @@ auto SPECK2D_Compressor::write_bitstream( const char* filename ) const -> int
 {
     speck::buffer_type_raw out_buf;
     size_t out_size;
-    int rtn = this->get_compressed_buffer( out_buf, out_size );
+    int rtn = this->get_encoded_bitstream( out_buf, out_size );
     if( rtn != 0 )
         return rtn;
 

@@ -105,7 +105,7 @@ int main( int argc, char* argv[] )
             // Need to do a decompression anyway
             speck::buffer_type_raw   comp_buf;
             size_t comp_buf_size;
-            if( (rtn = compressor.get_compressed_buffer( comp_buf, comp_buf_size )) )
+            if( (rtn = compressor.get_encoded_bitstream( comp_buf, comp_buf_size )) )
                 return rtn;
             SPECK2D_Decompressor decompressor;
             decompressor.take_bitstream( std::move(comp_buf), comp_buf_size );

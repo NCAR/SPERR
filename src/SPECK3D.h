@@ -44,8 +44,8 @@ public:
     // core operations
     auto encode() -> int;
     auto decode() -> int;
-    auto get_compressed_buffer( buffer_type_raw& , size_t& ) const -> int override;
-    auto read_compressed_buffer( const void* ,     size_t )        -> int override;
+    auto get_encoded_bitstream( buffer_type_raw& , size_t& ) const -> int override;
+    auto read_encoded_bitstream( const void* ,     size_t )        -> int override;
 
 private:
     //

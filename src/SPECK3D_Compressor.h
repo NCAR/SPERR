@@ -36,9 +36,9 @@ public:
 #endif
 
     auto compress() -> int;
-    // Provide a copy of the compressed buffer to the caller.
+    // Provide a copy of the encoded bitstream to the caller.
     // The caller will take over the ownership.
-    auto get_compressed_buffer( speck::buffer_type_raw&, size_t& ) const -> int;
+    auto get_encoded_bitstream( speck::buffer_type_raw&, size_t& ) const -> int;
     auto write_bitstream( const char* filename ) const -> int;
 
 private:
