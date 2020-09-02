@@ -43,23 +43,11 @@ void speck::SPECK3D::set_bit_budget(size_t budget)
     void speck::SPECK3D::set_quantization_term_level( int32_t lev )
     {
         m_qz_term_lev   = lev;
-        m_qz_iterations = -1;    // Set to negative so m_qz_term_lev will be used.
-    }
-
-    void speck::SPECK3D::set_quantization_iterations( int32_t itr )
-    {
-        assert( itr > 0 );
-        m_qz_iterations = itr;
     }
 
     auto speck::SPECK3D::get_num_of_bits() const -> size_t
     {
         return m_bit_buffer.size();
-    }
-
-    auto speck::SPECK3D::get_quantization_term_level() const -> int32_t
-    {
-        return m_qz_term_lev;
     }
 #endif
 
@@ -125,12 +113,12 @@ auto speck::SPECK3D::encode() -> int
     m_threshold      = std::pow(2.0, double(m_max_coeff_bits));
 
 #ifdef QZ_TERM
-    int32_t num_of_iterations = 1;
-    int32_t current_qz_level  = m_max_coeff_bits;
-    if( m_qz_iterations <= 0 ) { // terminate after reaching an absolute quantization level
-        if( m_qz_term_lev > m_max_coeff_bits ) // make sure m_qz_term_lev is valid.
-            return 1;
-    }
+    // If the requested termination level is already above max_coeff_bits, 
+    // directly return. TODO: use a better return value.
+    if( m_qz_term_lev > m_max_coeff_bits )
+        return 1;
+
+    int32_t current_qz_level = m_max_coeff_bits;
 #endif
 
     for( int i = 0; i < 128; i++ ) {    // This is the upper limit of num of iterations.
@@ -149,14 +137,9 @@ auto speck::SPECK3D::encode() -> int
         m_refinement_pass_encode();
         
         // Let's test if we need to terminate
-        if( m_qz_iterations > 0 && num_of_iterations >= m_qz_iterations ) {
-            m_qz_term_lev = current_qz_level;   // Record the terminating quantization level.
-            break;
-        }
-        else if ( m_qz_iterations <= 0 && current_qz_level <= m_qz_term_lev )
+        if ( current_qz_level <= m_qz_term_lev )
             break;
 
-        num_of_iterations++;
         current_qz_level--;
 #else
         if (m_sorting_pass_encode() != 0)

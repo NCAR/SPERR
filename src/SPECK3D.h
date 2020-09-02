@@ -25,20 +25,11 @@ public:
     //
     // Notes for QZ_TERM mode:
     // It changes the behavior of encoding, so encoding terminates at a particular
-    // quantization level. It does NOT change the behavior of decoding, though.
+    // quantization level (2^lev).
+    // It does NOT change the behavior of decoding, though.
     //
-    // There are two approaches to specify the quantization level to terminate at.
-    // 1) A user specifies how many quantization iterations to perform, by calling
-    //    set_quantization_iterations() with a positive value. 
-    // 2) A user specifies EXACTLY the quantization level to terminate, by calling
-    //    set_quantization_term_level() with a positive or negative value.
-    //
-    // Internally, the encoding algorithm prioritizes approach 1), and then approach 2).
-    //
-    void set_quantization_term_level( int32_t );
-    void set_quantization_iterations( int32_t );
+    void set_quantization_term_level( int32_t lev );
     auto get_num_of_bits() const -> size_t;
-    auto get_quantization_term_level() const -> int32_t;
 #endif
 
     // core operations
@@ -97,7 +88,6 @@ private:
 
 #ifdef QZ_TERM
     int32_t m_qz_term_lev   = 0;  // At which quantization level does encoding terminate?
-    int32_t m_qz_iterations = 0;  // How many quantization iterations to perform? 
 #endif
 };
 
