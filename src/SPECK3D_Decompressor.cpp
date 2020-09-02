@@ -57,7 +57,7 @@ auto SPECK3D_Decompressor::decompress() -> int
 
     m_cdf.set_dims( m_dim_x, m_dim_y, m_dim_z );
     m_cdf.set_mean( m_decoder.get_image_mean() );
-    m_cdf.take_data( m_decoder.release_coeffs_double(), m_total_vals );
+    m_cdf.take_data( m_decoder.release_coeffs(), m_total_vals );
     m_cdf.idwt3d();
 
     return 0;
@@ -70,7 +70,9 @@ auto SPECK3D_Decompressor::get_decompressed_volume_f(
     out_buf  = speck::unique_malloc<float>(m_total_vals);
     out_size = m_total_vals;
 
-    const auto& vol = m_cdf.get_read_only_data();
+    size_t cdf_out_len;
+    const auto& vol = m_cdf.get_read_only_data( cdf_out_len );
+    assert( cdf_out_len = m_total_vals );
     for( size_t i = 0; i < m_total_vals; i++ )
         out_buf[i] = vol[i];
 
@@ -84,8 +86,10 @@ auto SPECK3D_Decompressor::get_decompressed_volume_d(
     out_buf  = speck::unique_malloc<double>(m_total_vals);
     out_size = m_total_vals;
 
-    std::memcpy( m_cdf.get_read_only_data().get(), out_buf.get(), 
-                 sizeof(double) * m_total_vals );
+    size_t cdf_out_len;
+    const auto& vol = m_cdf.get_read_only_data( cdf_out_len );
+    assert( cdf_out_len == m_total_vals );
+    std::memcpy( vol.get(), out_buf.get(), sizeof(double) * m_total_vals );
     return 0;
 }
 
@@ -93,8 +97,9 @@ auto SPECK3D_Decompressor::get_decompressed_volume_d(
 auto SPECK3D_Decompressor::write_volume_d( const char* filename ) const -> int
 {
     // Get a read-only handle of the volume from m_cdf, and then write it to disk.
-    const auto& vol = m_cdf.get_read_only_data();
-    if( vol == nullptr )
+    size_t cdf_out_len;
+    const auto& vol = m_cdf.get_read_only_data( cdf_out_len );
+    if( vol == nullptr || cdf_out_len != m_total_vals )
         return 1;
 
     std::FILE* file = std::fopen( filename, "wb" );

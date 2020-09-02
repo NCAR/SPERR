@@ -38,22 +38,10 @@ auto speck::SPECK_Storage::get_read_only_coeffs() const -> const speck::buffer_t
     return m_coeff_buf;
 }
 
-auto speck::SPECK_Storage::release_coeffs_double() -> speck::buffer_type_d
+auto speck::SPECK_Storage::release_coeffs() -> speck::buffer_type_d
 {
     m_coeff_len = 0;
     return std::move(m_coeff_buf);
-}
-
-auto speck::SPECK_Storage::release_coeffs_float() -> speck::buffer_type_f
-{
-    assert(m_coeff_len > 0);
-
-    buffer_type_f tmp = speck::unique_malloc<float>( m_coeff_len );
-
-    for (size_t i = 0; i < m_coeff_len; i++)
-        tmp[i] = m_coeff_buf[i];
-    m_coeff_buf = nullptr; // also destroy the current buffer
-    return std::move(tmp);
 }
 
 void speck::SPECK_Storage::set_image_mean(double mean)

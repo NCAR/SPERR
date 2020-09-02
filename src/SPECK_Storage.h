@@ -21,9 +21,8 @@ public:
     void copy_coeffs(const T*, size_t len);        // Make a copy of the incoming data.
 
     // memory management: output
-    auto get_read_only_coeffs() const -> const buffer_type_d&;
-    auto release_coeffs_double() -> buffer_type_d;  // Others take ownership of the data
-    auto release_coeffs_float() -> buffer_type_f;   // Others take ownership of the data
+    auto get_read_only_coeffs() const -> const buffer_type_d&; // Keep ownership.
+    auto release_coeffs() -> buffer_type_d;                    // Transfer ownership
 
     // Get the compressed form in the memory. 
     // The returned memory block could be written to disk by other programs.

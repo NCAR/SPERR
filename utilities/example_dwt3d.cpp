@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <chrono>
+#include <cassert>
 
 extern "C"  // C Function calls, and don't include the C header!
 {
@@ -49,12 +50,16 @@ int main( int argc, char* argv[] )
     std::cout << "Time for transforms: " << diffT.count() << std::endl;
     std::cout << "Mean is = " << cdf.get_mean() << std::endl;
 
+    size_t cdf_out_len;
+    const auto& coeffs = cdf.get_read_only_data( cdf_out_len );
+    assert( cdf_out_len == total_vals && coeffs != nullptr );
+
     // Compare the result with the original input in double precision
     std::unique_ptr<double[]> in_bufd( new double[ total_vals ] );
     for( size_t i = 0; i < total_vals; i++ )
         in_bufd[i] = in_buf[i];
     double rmse, lmax, psnr, arr1min, arr1max;
-    sam_get_statsd( in_bufd.get(), cdf.get_read_only_data().get(), 
+    sam_get_statsd( in_bufd.get(), coeffs.get(), 
                     total_vals, &rmse, &lmax, &psnr, &arr1min, &arr1max );
     printf("Sam: rmse = %f, lmax = %f, psnr = %fdB, orig_min = %f, orig_max = %f\n", 
             rmse, lmax, psnr, arr1min, arr1max );

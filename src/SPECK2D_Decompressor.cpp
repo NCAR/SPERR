@@ -57,7 +57,7 @@ auto SPECK2D_Decompressor::decompress() -> int
 
     m_cdf.set_dims( m_dim_x, m_dim_y );
     m_cdf.set_mean( m_decoder.get_image_mean() );
-    m_cdf.take_data( m_decoder.release_coeffs_double(), m_total_vals );
+    m_cdf.take_data( m_decoder.release_coeffs(), m_total_vals );
     m_cdf.idwt3d();
 
     return 0;
@@ -67,10 +67,12 @@ auto SPECK2D_Decompressor::decompress() -> int
 auto SPECK2D_Decompressor::get_decompressed_slice_f( 
                            speck::buffer_type_f& out_buf, size_t& out_size ) const -> int
 {
+    size_t cdf_out_len;
+    const auto& slice = m_cdf.get_read_only_data( cdf_out_len );
+    assert( cdf_out_len == m_total_vals );
+
     out_buf  = speck::unique_malloc<float>(m_total_vals);
     out_size = m_total_vals;
-
-    const auto& slice = m_cdf.get_read_only_data();
     for( size_t i = 0; i < m_total_vals; i++ )
         out_buf[i] = slice[i];
 
@@ -81,11 +83,15 @@ auto SPECK2D_Decompressor::get_decompressed_slice_f(
 auto SPECK2D_Decompressor::get_decompressed_slice_d( 
                            speck::buffer_type_d& out_buf, size_t& out_size ) const -> int
 {
+    size_t cdf_out_len;
+    const auto& cdf_out_buf = m_cdf.get_read_only_data( cdf_out_len );
+    assert( cdf_out_len == m_total_vals );
+    assert( cdf_out_buf != nullptr );
+
     out_buf  = speck::unique_malloc<double>(m_total_vals);
     out_size = m_total_vals;
+    std::memcpy( cdf_out_buf.get(), out_buf.get(), sizeof(double) * m_total_vals );
 
-    std::memcpy( m_cdf.get_read_only_data().get(), out_buf.get(), 
-                 sizeof(double) * m_total_vals );
     return 0;
 }
 
@@ -93,8 +99,9 @@ auto SPECK2D_Decompressor::get_decompressed_slice_d(
 auto SPECK2D_Decompressor::write_slice_d( const char* filename ) const -> int
 {
     // Get a read-only handle of the slice from m_cdf, and then write it to disk.
-    const auto& slice = m_cdf.get_read_only_data();
-    if( slice == nullptr )
+    size_t cdf_out_len;
+    const auto& slice = m_cdf.get_read_only_data( cdf_out_len );
+    if( slice == nullptr || cdf_out_len != m_total_vals )
         return 1;
 
     std::FILE* file = std::fopen( filename, "wb" );

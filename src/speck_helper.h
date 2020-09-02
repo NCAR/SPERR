@@ -18,8 +18,7 @@ namespace speck {
 using buffer_type_d   = std::unique_ptr<double[]>;
 using buffer_type_f   = std::unique_ptr<float[]>;
 using buffer_type_c   = std::unique_ptr<char[]>;
-// buffer_type_raw is supposed to be used to manage a block of raw memory.
-using buffer_type_raw = std::unique_ptr<uint8_t[]>;
+using buffer_type_raw = std::unique_ptr<uint8_t[]>; // for blocks of raw memory
 #endif
 
 //
@@ -63,9 +62,6 @@ public:
     //
     auto is_pixel() const -> bool;
     auto is_empty() const -> bool;
-#ifdef PRINT
-    void print() const;
-#endif
 };
 
 //
@@ -80,7 +76,7 @@ public:
     SetType       type       = SetType::TypeS;    // only to indicate if it's garbage
 
     SPECKSet1D() = default;
-    SPECKSet1D( size_t, size_t, uint32_t );
+    SPECKSet1D( size_t start, size_t len, uint32_t part_lev );
 };
 
 //

@@ -18,22 +18,23 @@ public:
     void set_mean(double);
     void set_dims(size_t x, size_t y = 1, size_t z = 1);
 
+    //
     // Output
-    // TODO: unify I/O interface with SPECK2D and SPECK3D classes.
-    auto get_read_only_data() const -> const buffer_type_d&; // Others can read the data
-    auto release_data() -> buffer_type_d;                    // Others take ownership of the data
+    //
+    auto get_read_only_data( size_t& len) const -> const buffer_type_d&; // Keep ownership.
+    auto release_data( size_t& len ) -> buffer_type_d;  // Transfers ownership.
     auto get_mean() const -> double;
     void get_dims(std::array<size_t, 2>&) const; // 2D case
     void get_dims(std::array<size_t, 3>&) const; // 3D case
 
     // Action items
-    void reset(); // Reset this class to its initial state.
-    void dwt2d(); // 1) calculates the number of levels of dwt,
-        // 2) subtract mean of the data,
-        // 3) perform the actual dwt.
+    void reset();  // Reset this class to its initial state.
+    void dwt2d();  // 1) calculates the number of levels of dwt,
+                   // 2) subtract mean of the data,
+                   // 3) perform the actual dwt.
     void idwt2d(); // 1) calculates the number of levels of dwt,
-        // 2) perform the actual idwt
-        // 3) add the mean back to the data
+                   // 2) perform the actual idwt
+                   // 3) add the mean back to the data
     void dwt1d();
     void idwt1d();
     void dwt3d();

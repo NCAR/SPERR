@@ -28,13 +28,15 @@ void speck::CDF97::take_data(buffer_type_d ptr, size_t len)
     m_data_buf = std::move(ptr);
 }
 
-auto speck::CDF97::get_read_only_data() const -> const buffer_type_d&
+auto speck::CDF97::get_read_only_data( size_t& len ) const -> const buffer_type_d&
 {
+    len = m_buf_len;
     return m_data_buf;
 }
 
-auto speck::CDF97::release_data() -> buffer_type_d
+auto speck::CDF97::release_data( size_t& len ) -> buffer_type_d
 {
+    len = m_buf_len;
     return std::move(m_data_buf);
 }
 
