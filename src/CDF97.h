@@ -26,8 +26,8 @@ public:
     auto get_read_only_data( size_t& len) const -> const buffer_type_d&; // Keep ownership.
     auto release_data( size_t& len ) -> buffer_type_d;  // Transfers ownership.
     auto get_mean() const -> double;
-    void get_dims(std::array<size_t, 2>&) const; // 2D case
-    void get_dims(std::array<size_t, 3>&) const; // 3D case
+    void get_dims(size_t&, size_t& )          const; // 2D case
+    void get_dims(size_t&, size_t&, size_t& ) const; // 3D case
 
     // Action items
     void reset();  // Reset this class to its initial state.
