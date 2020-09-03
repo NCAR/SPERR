@@ -39,7 +39,10 @@ enum class SetType : unsigned char {
 enum class RTNType {
     Good,
     WrongSize,
-    BitBudgetMet
+    BitBudgetMet,
+    VersionMismatch,
+    ZSTDMismatch,
+    ZSTDError
 };
 
 //
@@ -141,9 +144,11 @@ auto unpack_booleans( std::vector<bool>&  dest,
                       size_t char_offset = 0 ) -> RTNType;
 
 // Pack and unpack exactly 8 booleans to/from a single byte
-// Note that memory for the single byte should already be allocated!
-void pack_8_booleans( uint8_t& dest, const std::array<bool, 8>& src );
-void unpack_8_booleans( std::array<bool, 8>& dest, uint8_t src );
+// Note that memory for the single byte and 8 booleans should already be allocated!
+// Note on the choice of using bool* instead of std::array<bool, 8>: it's less pixie dust
+//      in the former, though the latter also works.
+void pack_8_booleans(   uint8_t& dest,  const bool* src );
+void unpack_8_booleans( bool* dest,     uint8_t src );
 
 // Allocate an array of a certain type, and return as a unique pointer.
 template <typename T>

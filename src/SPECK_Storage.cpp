@@ -10,7 +10,7 @@
 
 
 template <typename T>
-void speck::SPECK_Storage::copy_coeffs(const T* p, size_t len)
+void speck::SPECK_Storage::copy_data(const T* p, size_t len)
 {
     static_assert(std::is_floating_point<T>::value,
                   "!! Only floating point values are supported !!");
@@ -22,10 +22,10 @@ void speck::SPECK_Storage::copy_coeffs(const T* p, size_t len)
     for (size_t i = 0; i < len; i++)
         m_coeff_buf[i] = p[i];
 }
-template void speck::SPECK_Storage::copy_coeffs(const double*, size_t);
-template void speck::SPECK_Storage::copy_coeffs(const float*, size_t);
+template void speck::SPECK_Storage::copy_data(const double*, size_t);
+template void speck::SPECK_Storage::copy_data(const float*, size_t);
 
-void speck::SPECK_Storage::take_coeffs(buffer_type_d coeffs, size_t len)
+void speck::SPECK_Storage::take_data(buffer_type_d coeffs, size_t len)
 {
     assert(len > 0);
     assert(m_coeff_len == 0 || m_coeff_len == len);
@@ -33,15 +33,16 @@ void speck::SPECK_Storage::take_coeffs(buffer_type_d coeffs, size_t len)
     m_coeff_buf = std::move(coeffs);
 }
 
-auto speck::SPECK_Storage::get_read_only_coeffs() const -> const speck::buffer_type_d&
+auto speck::SPECK_Storage::get_read_only_data() const -> std::pair<const buffer_type_d&, size_t>
 {
-    return m_coeff_buf;
+    return {m_coeff_buf, m_coeff_len};
 }
 
-auto speck::SPECK_Storage::release_coeffs() -> speck::buffer_type_d
+auto speck::SPECK_Storage::release_data() -> std::pair<buffer_type_d, size_t>
 {
+    const auto tmp = m_coeff_len;
     m_coeff_len = 0;
-    return std::move(m_coeff_buf);
+    return {std::move(m_coeff_buf), tmp};
 }
 
 void speck::SPECK_Storage::set_image_mean(double mean)
@@ -54,13 +55,12 @@ auto speck::SPECK_Storage::get_image_mean() const -> double
 }
 
 auto speck::SPECK_Storage::m_assemble_encoded_bitstream( const void* header, 
-                                                         size_t header_size,
-                                                         buffer_type_raw& out_buf, 
-                                                         size_t& out_size) const -> int
+                                                         size_t header_size ) const
+                           -> std::pair<buffer_type_raw, size_t>
 {
     // Sanity check on the size of bit_buffer
     if(m_bit_buffer.size() % 8 != 0)
-        return 1;
+        return {nullptr, 0};
 
     // Allocate output buffer
     //
@@ -77,9 +77,8 @@ auto speck::SPECK_Storage::m_assemble_encoded_bitstream( const void* header,
     auto local_buf           = speck::unique_malloc<uint8_t>( total_size );
 
     // Fill in metadata as defined above
-    local_buf[0] = (uint8_t)(SPECK_VERSION_MAJOR);
-    std::array<bool, 8> meta_bools;
-    meta_bools.fill( false );
+    local_buf[0] = uint8_t(SPECK_VERSION_MAJOR);
+    bool meta_bools[8] = {false, false, false, false, false, false, false, false};
 
 #ifdef USE_ZSTD
     meta_bools[0] = true;
@@ -91,7 +90,9 @@ auto speck::SPECK_Storage::m_assemble_encoded_bitstream( const void* header,
     std::memcpy(local_buf.get() + meta_size, header, header_size);
 
     // Pack booleans to buf!
-    speck::pack_booleans( local_buf, m_bit_buffer, meta_size + header_size );
+    RTNType rtn = pack_booleans( local_buf, m_bit_buffer, meta_size + header_size );
+    if( rtn != RTNType::Good )
+        return {nullptr, 0};
 
 #ifdef USE_ZSTD
     const size_t comp_buf_size = ZSTD_compressBound( header_size + stream_size );
@@ -100,31 +101,30 @@ auto speck::SPECK_Storage::m_assemble_encoded_bitstream( const void* header,
     auto comp_buf = speck::unique_malloc<uint8_t>( meta_size + comp_buf_size ); 
     std::memcpy( comp_buf.get(), local_buf.get(), meta_size );
 
+    // Use ZSTD to compress `local_buf` and store the result in `comp_buf`.
     const size_t comp_size = ZSTD_compress( comp_buf.get() + meta_size, comp_buf_size, 
                              local_buf.get() + meta_size, header_size + stream_size, 
                              ZSTD_CLEVEL_DEFAULT );     // Just use the default compression level.
     if( ZSTD_isError( comp_size ) )
-        return 1;
-
-    out_buf  = std::move( comp_buf );
-    out_size = meta_size + comp_size;
-    
-    return 0;
+        return {nullptr, 0};
+    else
+        return {std::move(comp_buf), meta_size + comp_size};   
+        // Note that `comp_buf` could be longer than `meta_size + comp_size`, 
+        //      but `meta_size + comp_size` is the length of useful data.
+#else
+    return {std::move(local_buf), total_size};
 #endif
-
-    out_buf  = std::move( local_buf );
-    out_size = total_size;
-    return 0;
 }
 
 
 auto speck::SPECK_Storage::m_disassemble_encoded_bitstream( void*  header, 
                                                             size_t header_size, 
                                                             const void* comp_buf,
-                                                            size_t comp_size) -> int
+                                                            size_t comp_size) -> RTNType
 {
     const size_t meta_size  = 2;    // See m_assemble_encoded_bitstream() for the definition 
                                     // of metadata and meta_size
+    // Give an alias to comp_buf so we can do pointer arithmetic
     const uint8_t* comp_buf_ptr = static_cast<const uint8_t*>(comp_buf);
 
     // Let's parse the metadata
@@ -132,47 +132,47 @@ auto speck::SPECK_Storage::m_disassemble_encoded_bitstream( void*  header,
     std::memcpy( meta, comp_buf, sizeof(meta) );
 
     // Sanity check: if the major version the same between compression and decompression?
-    if( meta[0] != (uint8_t)(SPECK_VERSION_MAJOR) )
-        return 1;
+    if( meta[0] != uint8_t(SPECK_VERSION_MAJOR) )
+        return RTNType::VersionMismatch;
     
     // Sanity check: if ZSTD is used consistantly between compression and decompression?
-    std::array<bool, 8> meta_bools;
+    bool meta_bools[8];
     speck::unpack_8_booleans( meta_bools, meta[1] );
 
 #ifdef USE_ZSTD
     if( meta_bools[0] == false )
-        return 1;
+        return RTNType::ZSTDMismatch;
 #else
     if( meta_bools[0] == true )
-        return 1;
+        return RTNType::ZSTDMismatch;
 #endif
 
 #ifdef USE_ZSTD
     const auto content_size = ZSTD_getFrameContentSize( comp_buf_ptr + meta_size,
                                                         comp_size - meta_size );
     if( content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN )
-        return 1;
+        return RTNType::ZSTDError;
 
     auto content_buf = speck::unique_malloc<uint8_t>(content_size);
 
     const size_t decomp_size = ZSTD_decompress( content_buf.get(), content_size, 
                                comp_buf_ptr + meta_size, comp_size - meta_size);
     if( ZSTD_isError( decomp_size ) || decomp_size != content_size )
-        return 1;
+        return RTNType::ZSTDError;
 
     // Copy over the header
     std::memcpy(header, content_buf.get(), header_size);
 
     // Now interpret the booleans
     m_bit_buffer.resize( 8 * (content_size - header_size) );
-    speck::unpack_booleans( m_bit_buffer, content_buf.get(), content_size, header_size );
+    auto rtn = unpack_booleans( m_bit_buffer, content_buf.get(), content_size, header_size );
+    return rtn;
 #else
     std::memcpy(header, comp_buf_ptr + meta_size, header_size);
     m_bit_buffer.resize( 8 * (comp_size - header_size - meta_size) );
-    speck::unpack_booleans( m_bit_buffer, comp_buf, comp_size, meta_size + header_size );
+    auto rtn = unpack_booleans( m_bit_buffer, comp_buf, comp_size, meta_size + header_size );
+    return rtn;
 #endif
-
-    return 0;
 }
 
 

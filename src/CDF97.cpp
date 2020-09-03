@@ -36,7 +36,9 @@ auto speck::CDF97::get_read_only_data() const -> std::pair<const buffer_type_d&,
 
 auto speck::CDF97::release_data() -> std::pair<buffer_type_d, size_t>
 {
-    return {std::move(m_data_buf), m_buf_len};
+    const tmp = m_buf_len;
+    m_buf_len = 0;
+    return {std::move(m_data_buf), tmp};
 }
 
 void speck::CDF97::dwt1d()

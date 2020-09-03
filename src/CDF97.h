@@ -25,7 +25,7 @@ public:
     // Output
     //
     auto get_read_only_data() const -> std::pair<const buffer_type_d&, size_t>; // Keep ownership
-    auto release_data() -> std::pair<buffer_type_d, size_t>;    // Release ownership
+    auto release_data()             -> std::pair<buffer_type_d, size_t>;     // Release ownership
     auto get_mean() const -> double;
     void get_dims(size_t&, size_t& )          const; // 2D case
     void get_dims(size_t&, size_t&, size_t& ) const; // 3D case
