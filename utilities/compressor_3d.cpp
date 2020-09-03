@@ -51,7 +51,7 @@ int main( int argc, char* argv[] )
     app.add_option("-o,--ofile", output_file, "Output filename.");
 
     bool print_stats = false;
-    app.add_flag("--print_stats", print_stats, "Print statistics (RMSE and L-Infinity)")
+    app.add_flag("-p,--print_stats", print_stats, "Print statistics (RMSE and L-Infinity)")
             ->group("Compression Options");
 
     float decomp_bpp = 0.0;
