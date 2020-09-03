@@ -58,7 +58,7 @@ auto SPECK2D_Decompressor::decompress() -> int
     m_cdf.set_dims( m_dim_x, m_dim_y );
     m_cdf.set_mean( m_decoder.get_image_mean() );
     m_cdf.take_data( m_decoder.release_coeffs(), m_total_vals );
-    m_cdf.idwt3d();
+    m_cdf.idwt2d();
 
     return 0;
 }
