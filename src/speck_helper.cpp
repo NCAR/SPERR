@@ -300,10 +300,10 @@ void speck::partition_S_Z(const SPECKSet3D& set, std::array<SPECKSet3D, 2>& subs
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
 auto speck::pack_booleans( buffer_type_raw&         dest,
                            const std::vector<bool>& src,
-                           size_t                   offset ) -> int
+                           size_t                   offset ) -> RTNType
 {
     if( src.size() % 8 != 0 )
-        return 1;
+        return RTNType::WrongSize;
 
     const uint64_t magic = 0x8040201008040201;
     size_t         pos   = offset;
@@ -319,22 +319,22 @@ auto speck::pack_booleans( buffer_type_raw&         dest,
         }
     }
 
-    return 0;
+    return RTNType::Good;
 }
 
 auto speck::unpack_booleans( std::vector<bool>&    dest,
                              const void*           src,
                              size_t                src_len,
-                             size_t                char_offset ) -> int
+                             size_t                char_offset ) -> RTNType
 {
     if( src_len < char_offset )
-        return 1;
+        return RTNType::WrongSize;
 
     const uint8_t* src_ptr = static_cast<const uint8_t*>(src);
 
     size_t num_of_bools = (src_len - char_offset) * 8;
     if( num_of_bools != dest.size() )
-        return 1;
+        return RTNType::WrongSize;
 
     const uint64_t magic = 0x8040201008040201;
     const uint64_t mask  = 0x8080808080808080;
@@ -350,7 +350,7 @@ auto speck::unpack_booleans( std::vector<bool>&    dest,
             dest[i + j] = a[j];
     }
 
-    return 0;
+    return RTNType::Good;
 }
 
 void speck::pack_8_booleans( uint8_t& dest, const std::array<bool, 8>& src )

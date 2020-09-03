@@ -58,13 +58,13 @@ TEST( speck_helper, bit_packing )
     auto bytes = speck::unique_malloc<uint8_t>(num_of_bytes + byte_offset);
 
     // Pack booleans
-    int rtn = speck::pack_booleans( bytes, input, byte_offset );
-    EXPECT_EQ( rtn, 0 );
+    auto rtn = speck::pack_booleans( bytes, input, byte_offset );
+    EXPECT_EQ( rtn, speck::RTNType::Good );
     // Unpack booleans
     std::vector<bool> output( num_of_bytes * 8 );
     rtn = speck::unpack_booleans( output, bytes.get(), num_of_bytes + byte_offset, byte_offset );
 
-    EXPECT_EQ( rtn, 0 );
+    EXPECT_EQ( rtn, speck::RTNType::Good );
     EXPECT_EQ( input.size(), output.size() );
 
     for( size_t i = 0; i < input.size(); i++ )

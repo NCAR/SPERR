@@ -36,6 +36,12 @@ enum class SetType : unsigned char {
     Garbage
 };
 
+enum class RTNType {
+    Good,
+    WrongSize,
+    BitBudgetMet
+};
+
 //
 // Auxiliary class to hold a 3D SPECK Set
 //
@@ -128,11 +134,11 @@ void partition_S_Z(const SPECKSet3D& set, std::array<SPECKSet3D, 2>& subsets);
 //       and others most likely provide it by raw pointers.
 auto pack_booleans( buffer_type_raw&         dest,
                     const std::vector<bool>& src,
-                    size_t char_offset = 0 ) -> int;
+                    size_t char_offset = 0 ) -> RTNType;
 auto unpack_booleans( std::vector<bool>&  dest,
                       const void*         src,
                       size_t              src_len, // total length of char array
-                      size_t char_offset = 0 ) -> int;
+                      size_t char_offset = 0 ) -> RTNType;
 
 // Pack and unpack exactly 8 booleans to/from a single byte
 // Note that memory for the single byte should already be allocated!
