@@ -12,14 +12,13 @@ void speck::CDF97::copy_data(const T* data, size_t len)
                   "!! Only floating point values are supported !!");
 
     assert(m_dim_x * m_dim_y * m_dim_z == 0 || m_dim_x * m_dim_y * m_dim_z == len);
-    m_buf_len = len;
-    m_data_buf = speck::unique_malloc<double>( len );
+    m_buf_len  = len;
+    m_data_buf = speck::unique_malloc<double>(len);
     for (size_t i = 0; i < len; i++)
         m_data_buf[i] = data[i];
 }
 template void speck::CDF97::copy_data(const float*, size_t);
 template void speck::CDF97::copy_data(const double*, size_t);
-
 
 void speck::CDF97::take_data(buffer_type_d ptr, size_t len)
 {
@@ -28,13 +27,13 @@ void speck::CDF97::take_data(buffer_type_d ptr, size_t len)
     m_data_buf = std::move(ptr);
 }
 
-auto speck::CDF97::get_read_only_data( size_t& len ) const -> const buffer_type_d&
+auto speck::CDF97::get_read_only_data(size_t& len) const -> const buffer_type_d&
 {
     len = m_buf_len;
     return m_data_buf;
 }
 
-auto speck::CDF97::release_data( size_t& len ) -> buffer_type_d
+auto speck::CDF97::release_data(size_t& len) -> buffer_type_d
 {
     len = m_buf_len;
     return std::move(m_data_buf);
@@ -65,14 +64,18 @@ void speck::CDF97::dwt2d()
     for (size_t i = 0; i < m_buf_len; i++)
         m_data_buf[i] -= m_data_mean;
 
-    size_t num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
-    m_dwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy);
+    size_t     num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
+    const auto max_dim       = std::max(m_dim_x, m_dim_y);
+    auto       tmp_buf       = speck::unique_malloc<double>(max_dim * 2);
+    m_dwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, tmp_buf.get());
 }
 
 void speck::CDF97::idwt2d()
 {
-    size_t num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
-    m_idwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy);
+    const auto max_dim       = std::max(m_dim_x, m_dim_y);
+    auto       tmp_buf       = speck::unique_malloc<double>(max_dim * 2);
+    size_t     num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
+    m_idwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, tmp_buf.get());
 
     for (size_t i = 0; i < m_buf_len; i++)
         m_data_buf[i] += m_data_mean;
@@ -84,10 +87,10 @@ void speck::CDF97::dwt3d()
     for (size_t i = 0; i < m_buf_len; i++)
         m_data_buf[i] -= m_data_mean;
 
-    size_t max_dim             = std::max(m_dim_x, m_dim_y);
-    max_dim                    = std::max(max_dim, m_dim_z);
-    buffer_type_d tmp_buf      = speck::unique_malloc<double>( max_dim * 2 );
-    const size_t plane_size_xy = m_dim_x * m_dim_y;
+    size_t max_dim              = std::max(m_dim_x, m_dim_y);
+    max_dim                     = std::max(max_dim, m_dim_z);
+    buffer_type_d tmp_buf       = speck::unique_malloc<double>(max_dim * 2);
+    const size_t  plane_size_xy = m_dim_x * m_dim_y;
 
     /*
      * Note on the order of performing transforms in 3 dimensions:
@@ -114,8 +117,8 @@ void speck::CDF97::dwt3d()
      */
 
     // Process one XZ slice at a time
-    buffer_type_d z_columns = speck::unique_malloc<double>(m_dim_x * m_dim_z);
-    const auto num_xforms_z = speck::num_of_xforms(m_dim_z);
+    buffer_type_d z_columns    = speck::unique_malloc<double>(m_dim_x * m_dim_z);
+    const auto    num_xforms_z = speck::num_of_xforms(m_dim_z);
     for (size_t y = 0; y < m_dim_y; y++) {
         const auto y_offset = y * m_dim_x;
 
@@ -148,10 +151,10 @@ void speck::CDF97::dwt3d()
 
 void speck::CDF97::idwt3d()
 {
-    size_t max_dim             = std::max(m_dim_x, m_dim_y);
-    max_dim                    = std::max(max_dim, m_dim_z);
-    buffer_type_d tmp_buf      = speck::unique_malloc<double>(max_dim * 2);
-    const size_t plane_size_xy = m_dim_x * m_dim_y;
+    size_t max_dim              = std::max(m_dim_x, m_dim_y);
+    max_dim                     = std::max(max_dim, m_dim_z);
+    buffer_type_d tmp_buf       = speck::unique_malloc<double>(max_dim * 2);
+    const size_t  plane_size_xy = m_dim_x * m_dim_y;
 
     // First, inverse transform each plane
     auto num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
@@ -180,8 +183,8 @@ void speck::CDF97::idwt3d()
      */
 
     // Process one XZ slice at a time
-    buffer_type_d z_columns = speck::unique_malloc<double>(m_dim_x * m_dim_z);
-    const auto num_xforms_z = speck::num_of_xforms(m_dim_z);
+    buffer_type_d z_columns    = speck::unique_malloc<double>(m_dim_x * m_dim_z);
+    const auto    num_xforms_z = speck::num_of_xforms(m_dim_z);
     for (size_t y = 0; y < m_dim_y; y++) {
         const auto y_offset = y * m_dim_x;
 
@@ -222,8 +225,8 @@ void speck::CDF97::m_calc_mean()
      *   Also, one test shows that this implementation is 4X faster than Kahan.
      */
     buffer_type_d row_means = speck::unique_malloc<double>(m_dim_y * m_dim_z);
-    const double dim_x1     = 1.0 / double(m_dim_x);
-    size_t       counter1   = 0, counter2 = 0;
+    const double  dim_x1    = 1.0 / double(m_dim_x);
+    size_t        counter1 = 0, counter2 = 0;
     for (size_t z = 0; z < m_dim_z; z++) {
         for (size_t y = 0; y < m_dim_y; y++) {
             double sum = 0.0;
@@ -235,7 +238,7 @@ void speck::CDF97::m_calc_mean()
     }
 
     buffer_type_d layer_means = speck::unique_malloc<double>(m_dim_z);
-    const double dim_y1       = 1.0 / double(m_dim_y);
+    const double  dim_y1      = 1.0 / double(m_dim_y);
     counter1                  = 0;
     counter2                  = 0;
     for (size_t z = 0; z < m_dim_z; z++) {
@@ -290,8 +293,7 @@ void speck::CDF97::m_dwt1d(double* array,
     buffer_type_d buf;
     if (tmp_buf != nullptr) {
         ptr = tmp_buf;
-    }
-    else {
+    } else {
         buf = speck::unique_malloc<double>(array_len);
         ptr = buf.get();
     }
@@ -319,8 +321,7 @@ void speck::CDF97::m_idwt1d(double* array,
     buffer_type_d buf;
     if (tmp_buf != nullptr) {
         ptr = tmp_buf;
-    }
-    else {
+    } else {
         buf = speck::unique_malloc<double>(array_len);
         ptr = buf.get();
     }
@@ -351,8 +352,7 @@ void speck::CDF97::m_dwt2d_one_level(double* plane,
     if (tmp_buf != nullptr) {
         buf_ptr  = tmp_buf;          // First half of the array
         buf_ptr2 = tmp_buf + len_xy; // Second half of the array
-    } 
-    else {
+    } else {
         buffer   = speck::unique_malloc<double>(len_xy * 2);
         buf_ptr  = buffer.get();     // First half of the array
         buf_ptr2 = buf_ptr + len_xy; // Second half of the array
@@ -423,8 +423,7 @@ void speck::CDF97::m_idwt2d_one_level(double* plane,
     if (tmp_buf != nullptr) {
         buf_ptr  = tmp_buf;          // First half of the array
         buf_ptr2 = tmp_buf + len_xy; // Second half of the array
-    } 
-    else {
+    } else {
         buffer   = speck::unique_malloc<double>(len_xy * 2);
         buf_ptr  = buffer.get();     // First half of the array
         buf_ptr2 = buf_ptr + len_xy; // Second half of the array
