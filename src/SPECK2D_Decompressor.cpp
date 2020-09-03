@@ -67,14 +67,13 @@ auto SPECK2D_Decompressor::decompress() -> int
 auto SPECK2D_Decompressor::get_decompressed_slice_f( 
                            speck::buffer_type_f& out_buf, size_t& out_size ) const -> int
 {
-    size_t cdf_out_len;
-    const auto& slice = m_cdf.get_read_only_data( cdf_out_len );
-    assert( cdf_out_len == m_total_vals );
+    auto slice = m_cdf.get_read_only_data( );
+    assert( slice.first != nullptr && slice.second == m_total_vals );
 
     out_buf  = speck::unique_malloc<float>(m_total_vals);
     out_size = m_total_vals;
     for( size_t i = 0; i < m_total_vals; i++ )
-        out_buf[i] = slice[i];
+        out_buf[i] = slice.first[i];
 
     return 0;
 }
@@ -83,14 +82,12 @@ auto SPECK2D_Decompressor::get_decompressed_slice_f(
 auto SPECK2D_Decompressor::get_decompressed_slice_d( 
                            speck::buffer_type_d& out_buf, size_t& out_size ) const -> int
 {
-    size_t cdf_out_len;
-    const auto& cdf_out_buf = m_cdf.get_read_only_data( cdf_out_len );
-    assert( cdf_out_len == m_total_vals );
-    assert( cdf_out_buf != nullptr );
+    auto slice = m_cdf.get_read_only_data( );
+    assert( slice.first != nullptr && slice.second == m_total_vals );
 
     out_buf  = speck::unique_malloc<double>(m_total_vals);
     out_size = m_total_vals;
-    std::memcpy( cdf_out_buf.get(), out_buf.get(), sizeof(double) * m_total_vals );
+    std::memcpy( out_buf.get(), slice.first.get(), sizeof(double) * m_total_vals );
 
     return 0;
 }
@@ -99,14 +96,13 @@ auto SPECK2D_Decompressor::get_decompressed_slice_d(
 auto SPECK2D_Decompressor::write_slice_d( const char* filename ) const -> int
 {
     // Get a read-only handle of the slice from m_cdf, and then write it to disk.
-    size_t cdf_out_len;
-    const auto& slice = m_cdf.get_read_only_data( cdf_out_len );
-    if( slice == nullptr || cdf_out_len != m_total_vals )
+    auto slice = m_cdf.get_read_only_data( );
+    if( slice.first == nullptr || slice.second != m_total_vals )
         return 1;
 
     std::FILE* file = std::fopen( filename, "wb" );
     if( file ) {
-        std::fwrite( slice.get(), sizeof(double), m_total_vals, file );
+        std::fwrite( slice.first.get(), sizeof(double), m_total_vals, file );
         std::fclose( file );
         return 0;
     }

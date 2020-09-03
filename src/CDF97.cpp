@@ -27,16 +27,16 @@ void speck::CDF97::take_data(buffer_type_d ptr, size_t len)
     m_data_buf = std::move(ptr);
 }
 
-auto speck::CDF97::get_read_only_data(size_t& len) const -> const buffer_type_d&
+auto speck::CDF97::get_read_only_data() const -> std::pair<const buffer_type_d&, size_t>
 {
-    len = m_buf_len;
-    return m_data_buf;
+    return {m_data_buf, m_buf_len};
+    // Note: the following syntax would also work, but it seems cumbersome. 
+    // return std::make_pair(std::cref(m_data_buf), m_buf_len);
 }
 
-auto speck::CDF97::release_data(size_t& len) -> buffer_type_d
+auto speck::CDF97::release_data() -> std::pair<buffer_type_d, size_t>
 {
-    len = m_buf_len;
-    return std::move(m_data_buf);
+    return {std::move(m_data_buf), m_buf_len};
 }
 
 void speck::CDF97::dwt1d()

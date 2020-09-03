@@ -72,12 +72,11 @@ auto SPECK3D_Compressor::compress() -> int
 
     m_cdf.take_data( std::move(m_val_buf), m_total_vals );
     m_cdf.dwt3d();
-    size_t cdf_out_len;
-    auto cdf_out_buf = m_cdf.release_data( cdf_out_len );
-    assert( cdf_out_len == m_total_vals );
+    auto cdf_out = m_cdf.release_data();
+    assert( cdf_out.first != nullptr || cdf_out.second == m_total_vals );
 
     m_encoder.set_image_mean( m_cdf.get_mean() );
-    m_encoder.take_coeffs( std::move(cdf_out_buf), cdf_out_len );
+    m_encoder.take_coeffs( std::move(cdf_out.first), cdf_out.second );
 
 #ifdef QZ_TERM
     m_encoder.set_quantization_term_level( m_qz_lev );
