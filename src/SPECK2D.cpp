@@ -41,9 +41,11 @@ void speck::SPECK2D::get_dims(size_t& x, size_t& y) const
     y = m_dim_y;
 }
 
-auto speck::SPECK2D::encode() -> int
+auto speck::SPECK2D::encode() -> RTNType
 {
-    assert(m_ready_to_encode());
+    if( !m_ready_to_encode() )
+        return RTNType::Error;
+
     m_encode_mode = true;
 
     m_initialize_sets_lists();
@@ -56,25 +58,30 @@ auto speck::SPECK2D::encode() -> int
     m_max_coeff_bits = int32_t(std::floor(std::log2(max_coeff)));
     m_threshold      = std::pow(2.0, double(m_max_coeff_bits));
     for (size_t bitplane = 0; bitplane < 128; bitplane++) {
-        if (m_sorting_pass())
+        auto rtn = m_sorting_pass();
+        if( rtn == RTNType::BitBudgetMet )
             break;
-        if (m_refinement_pass())
+
+        rtn = m_refinement_pass();
+        if( rtn == RTNType::BitBudgetMet )
             break;
 
         m_threshold *= 0.5;
         m_clean_LIS();
     }
 
-    return 0;
+    return RTN::Good;
 }
 
-auto speck::SPECK2D::decode() -> int
+auto speck::SPECK2D::decode() -> RTNType
 {
-    assert(m_ready_to_decode());
+    if( !m_ready_to_decode() )
+        return RTNType::Error;
+
     m_encode_mode = false;
 
     // By default, decode all the available bits
-    if (m_budget == 0)
+    if (m_budget == 0 || m_budget > m_bit_buffer.size())
         m_budget = m_bit_buffer.size();
 
     // initialize coefficients to be zero, and signs to be all positive
@@ -87,11 +94,13 @@ auto speck::SPECK2D::decode() -> int
 
     m_bit_idx   = 0;
     m_threshold = std::pow(2.0, double(m_max_coeff_bits));
-    int rtn_val = 0;
     for (size_t bitplane = 0; bitplane < 128; bitplane++) {
-        if ((rtn_val = m_sorting_pass()))
+        auto rtn = m_sorting_pass();
+        if( rtn == RTNType::BitBudgetMet )
             break;
-        if ((rtn_val = m_refinement_pass()))
+
+        rtn = m_refinement_pass();
+        if( rtn == RTNType::BitBudgetMet )
             break;
 
         m_threshold *= 0.5;
@@ -105,7 +114,7 @@ auto speck::SPECK2D::decode() -> int
             m_coeff_buf[i] = -m_coeff_buf[i];
     }
 
-    return 0;   // Need to better use return code. See issue #34
+    return RTNType::Good;
 }
 
 void speck::SPECK2D::m_initialize_sets_lists()
@@ -116,8 +125,6 @@ void speck::SPECK2D::m_initialize_sets_lists()
     // prepare m_LIS
     m_LIS.clear();
     m_LIS.resize(num_of_parts + 1);
-    for (auto& v : m_LIS) // Avoid frequent memory allocations.
-        v.reserve(m_vec_init_capacity);
     m_LIS_garbage_cnt.assign(num_of_parts + 1, 0);
 
     // prepare the root, S
@@ -126,9 +133,7 @@ void speck::SPECK2D::m_initialize_sets_lists()
     m_calc_root_size(S);
     m_LIS[S.part_level].emplace_back(S);
 
-    // clear m_LSP
     m_LSP.clear();
-    m_LSP.reserve(m_vec_init_capacity);
 
     // prepare m_I
     m_I.part_level = num_of_xforms;
@@ -141,7 +146,7 @@ void speck::SPECK2D::m_initialize_sets_lists()
 //
 // Private methods
 //
-auto speck::SPECK2D::m_sorting_pass() -> int
+auto speck::SPECK2D::m_sorting_pass() -> RTNType
 {
     if (m_encode_mode) {
         // Update the significance map based on the current threshold
@@ -152,59 +157,67 @@ auto speck::SPECK2D::m_sorting_pass() -> int
         }
     }
 
-    int rtn = 0;
     for (size_t tmp = 0; tmp < m_LIS.size(); tmp++) {
         // From the end to the front of m_LIS, smaller sets first.
         size_t idx1 = m_LIS.size() - 1 - tmp;
         for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
             const auto& s = m_LIS[idx1][idx2];
             if (s.type != SetType::Garbage) {
-                if ((rtn = m_process_S(idx1, idx2, true)))
+                auto rtn = m_process_S(idx1, idx2, true);
+                if( rtn == RTNType::BitBudgetMet )
                     return rtn;
+                // The only other return value is RTNType::Good
             }
         }
     }
 
-    if ((rtn = m_process_I(true)))
+    auto rtn = m_process_I(true);
+    if( rtn == RTNType::BitBudgetMet )
         return rtn;
+    // The only other return value is RTNType::Good
 
-    return 0;
+    return RTNType::Good;
 }
 
-auto speck::SPECK2D::m_refinement_pass() -> int
+auto speck::SPECK2D::m_refinement_pass() -> RTNType
 {
-    int rtn = 0;
     for (auto& p : m_LSP) {
         if (p.signif == Significance::NewlySig)
             p.signif = Significance::Sig;
         else {
             if (m_encode_mode) {
-                if ((rtn = m_output_refinement(p)))
+                auto rtn = m_output_refinement(p);
+                if( rtn == RTNType::BitBudgetMet )
                     return rtn;
+                // The only other return value is RTNType::Good
             } else {
-                if ((rtn = m_input_refinement(p)))
+                auto rtn = m_input_refinement(p);
+                if( rtn == RTNType::BitBudgetMet )
                     return rtn;
+                // The only other return value is RTNType::Good
             }
         }
     }
 
-    return 0;
+    return RTNType::Good;
 }
 
-auto speck::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_signif) -> int
+auto speck::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_signif) -> RTNType
 {
     auto& set = m_LIS[idx1][idx2];
 
-    int rtn = 0;
     if (need_decide_signif) {
         if (m_encode_mode) {
-            m_decide_set_significance(set);
-            if ((rtn = m_output_set_significance(set)))
+            m_decide_set_significance(set); // Always returns RTNType::Good when encoding.
+            auto rtn = m_output_set_significance(set);
+            if( rtn == RTNType::BitBudgetMet )
                 return rtn;
+            // The only other return value is RTNType::Good
         } else {
-            // In decode mode, this function reads a bit.
-            if ((rtn = m_decide_set_significance(set)))
+            auto rtn = m_decide_set_significance(set);
+            if( rtn == RTNType::BitBudgetMet )
                 return rtn;
+            // The only other return value is RTNType::Good
 #ifdef PRINT
             auto        bit = (set.signif == Significance::Sig);
             std::string str = bit ? "s1" : "s0";
@@ -218,26 +231,32 @@ auto speck::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
         if (set.is_pixel()) {
             set.signif = Significance::NewlySig;
             if (m_encode_mode) {
-                if ((rtn = m_output_pixel_sign(set)))
+                auto rtn = m_output_pixel_sign(set);
+                if( rtn == RTNType::BitBudgetMet )
                     return rtn;
+                // The only other return value is RTNType::Good
             } else {
-                if ((rtn = m_input_pixel_sign(set)))
+                auto rtn = m_input_pixel_sign(set);
+                if( rtn == RTNType::BitBudgetMet )
                     return rtn;
+                // The only other return value is RTNType::Good
             }
             m_LSP.emplace_back(set); // A copy is saved to m_LSP.
-        } else                       // keep dividing this set
-        {
-            if ((rtn = m_code_S(idx1, idx2)))
+        } 
+        else {                       // keep dividing this set
+            auto rtn = m_code_S(idx1, idx2);
+            if( rtn == RTNType::BitBudgetMet )
                 return rtn;
+            // The only other return value is RTNType::Good
         }
         set.type = SetType::Garbage; // This particular object will be discarded.
         m_LIS_garbage_cnt[set.part_level]++;
     }
 
-    return 0;
+    return RTNType::Good;
 }
 
-auto speck::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> int
+auto speck::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> RTNType
 {
     const auto&               set = m_LIS[idx1][idx2];
     std::array<SPECKSet2D, 4> subsets;
@@ -252,8 +271,10 @@ auto speck::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> int
             m_LIS[s.part_level].emplace_back(s);
             size_t newidx1 = s.part_level;
             size_t newidx2 = m_LIS[newidx1].size() - 1;
-            if ((rtn = m_process_S(newidx1, newidx2, true)))
+            auto rtn = m_process_S(newidx1, newidx2, true);
+            if( rtn == RTNType::BitBudgetMet )
                 return rtn;
+            // The only other return value is RTNType::Good
 
             // clang-format off
             if (m_LIS[newidx1][newidx2].signif == Significance::Sig || 
@@ -268,14 +289,16 @@ auto speck::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> int
     if (!s4.is_empty()) {
         bool need_decide_sig = already_sig == 0 ? false : true;
         m_LIS[s4.part_level].emplace_back(s4);
-        if ((rtn = m_process_S(s4.part_level,
+        auto rtn = m_process_S(s4.part_level,
                                m_LIS[s4.part_level].size() - 1,
-                               need_decide_sig))) {
+                               need_decide_sig);
+        if( rtn == RTNType::BitBudgetMet )
             return rtn;
+        // The only other return value is RTNType::Good
         }
     }
 
-    return 0;
+    return RTNType::Good;
 }
 
 void speck::SPECK2D::m_partition_S(const SPECKSet2D& set, std::array<SPECKSet2D, 4>& list) const
@@ -317,38 +340,46 @@ void speck::SPECK2D::m_partition_S(const SPECKSet2D& set, std::array<SPECKSet2D,
     TL.length_y   = approx_len_y;
 }
 
-auto speck::SPECK2D::m_process_I(bool need_decide_sig) -> int
+auto speck::SPECK2D::m_process_I(bool need_decide_sig) -> RTNType
 {
     if (m_I.part_level == 0) // m_I is empty at this point
-        return 0;
+        return RTNType::Good;
 
-    int rtn = 0;
     if (m_encode_mode) {
         if (need_decide_sig)
             m_decide_set_significance(m_I);
         else
             m_I.signif = Significance::Sig;
-        if ((rtn = m_output_set_significance(m_I)))
+
+        auto rtn = m_output_set_significance(m_I);
+        if( rtn == RTNType::BitBudgetMet )
             return rtn;
+        // The only other return value is RTNType::Good
     } else {
-        if ((rtn = m_decide_set_significance(m_I)))
+        auto rtn = m_decide_set_significance(m_I);
+        if( rtn == RTNType::BitBudgetMet )
             return rtn;
+        // The only other return value is RTNType::Good
+
 #ifdef PRINT
         auto        bit = (m_I.signif == Significance::Sig);
         std::string str = bit ? "s1" : "s0";
         std::cout << str << std::endl;
 #endif
+
     }
 
     if (m_I.signif == Significance::Sig) {
-        if ((rtn = m_code_I()))
+        auto rtn = m_code_I();
+        if( rtn == RTNType::BitBudgetMet )
             return rtn;
+        // The only other return value is RTNType::Good
     }
 
-    return 0;
+    return RTNType::Good;
 }
 
-auto speck::SPECK2D::m_code_I() -> int
+auto speck::SPECK2D::m_code_I() -> RTNType
 {
     std::array<SPECKSet2D, 3> subsets;
     m_partition_I(subsets);
@@ -363,8 +394,10 @@ auto speck::SPECK2D::m_code_I() -> int
             m_LIS[s.part_level].emplace_back(s);
             size_t newidx1 = s.part_level;
             size_t newidx2 = m_LIS[newidx1].size() - 1;
-            if ((rtn = m_process_S(newidx1, newidx2, true)))
+            auto rtn = m_process_S(newidx1, newidx2, true);
+            if( rtn == RTNType::BitBudgetMet )
                 return rtn;
+            // The only other return value is RTNType::Good
 
             // clang-format off
             if (m_LIS[newidx1][newidx2].signif == Significance::Sig || 
@@ -376,10 +409,12 @@ auto speck::SPECK2D::m_code_I() -> int
     }
 
     bool need_decide_sig = already_sig == 0 ? false : true;
-    if ((rtn = m_process_I(need_decide_sig)))
+    auto rtn = m_process_I(need_decide_sig);
+    if( rtn == RTNType::BitBudgetMet )
         return rtn;
+    // The only other return value is RTNType::Good
 
-    return 0;
+    return RTNType::Good;
 }
 
 void speck::SPECK2D::m_partition_I(std::array<SPECKSet2D, 3>& subsets)
@@ -420,21 +455,19 @@ void speck::SPECK2D::m_partition_I(std::array<SPECKSet2D, 3>& subsets)
     m_I.start_y += detail_len_y;
 }
 
-auto speck::SPECK2D::m_decide_set_significance(SPECKSet2D& set) -> int
+auto speck::SPECK2D::m_decide_set_significance(SPECKSet2D& set) -> RTNType
 {
-    // Note: the only case this method returns 1 is when decoding and we have
-    //       already decoded enough number of bits.
-    //       All other cases return 0, meaning successfully decided the
-    //       significance of this set.
+    // Note: When encoding, this method always returns RTN::Good.
+    //       It could return RTNType::BitBudgetMet when decoding.
 
     // If decoding, simply read a bit from the bitstream, no matter TypeS or TypeI.
     if (!m_encode_mode) {
-        if (m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size())
-            return 1; // 1 means the algorithm needs to stop!
+        if (m_bit_idx >= m_budget )
+            return RTNType::BitBudgetMet;
 
         auto bit   = m_bit_buffer[m_bit_idx++];
         set.signif = bit ? Significance::Sig : Significance::Insig;
-        return 0;
+        return RTNType::Good;
     }
 
     // If encoding, we start by marking it insignificant, and then compare with the
@@ -448,19 +481,19 @@ auto speck::SPECK2D::m_decide_set_significance(SPECKSet2D& set) -> int
                 auto idx = y * m_dim_x + x;
                 if (m_significance_map[idx]) {
                     set.signif = Significance::Sig;
-                    return 0;
+                    return RTNType::Good;
                 }
             }
     }
-    // For TypeI sets, we need to test two rectangles!
     else if (set.type == SetType::TypeI) {
+        // For TypeI sets, we need to test two rectangles!
         // First rectangle: directly to the right of the missing top-left corner
         for (size_t y = 0; y < set.start_y; y++)
             for (auto x = set.start_x; x < set.length_x; x++) {
                 auto idx = y * m_dim_x + x;
                 if (m_significance_map[idx]) {
                     set.signif = Significance::Sig;
-                    return 0;
+                    return RTNType::Good;
                 }
             }
 
@@ -469,15 +502,15 @@ auto speck::SPECK2D::m_decide_set_significance(SPECKSet2D& set) -> int
         for (auto i = set.start_y * set.length_x; i < set.length_x * set.length_y; i++) {
             if (m_significance_map[i]) {
                 set.signif = Significance::Sig;
-                return 0;
+                return RTNType::Good;
             }
         }
     }
 
-    return 0;
+    return RTNType::Good;
 }
 
-auto speck::SPECK2D::m_output_set_significance(const SPECKSet2D& set) -> int
+auto speck::SPECK2D::m_output_set_significance(const SPECKSet2D& set) -> RTNType
 {
 #ifdef PRINT
     if (set.signif == Significance::Sig)
@@ -491,13 +524,12 @@ auto speck::SPECK2D::m_output_set_significance(const SPECKSet2D& set) -> int
 
     // Let's also see if we're reached the bit budget
     if (m_bit_buffer.size() >= m_budget)
-        return 1;
+        return RTNType::BitBudgetMet;
     else
-        return 0;
+        return RTNType::Good;
 }
 
-// It outputs by printing out the value at this point.
-auto speck::SPECK2D::m_output_pixel_sign(const SPECKSet2D& pixel) -> int
+auto speck::SPECK2D::m_output_pixel_sign(const SPECKSet2D& pixel) -> RTNType
 {
     const auto idx = pixel.start_y * m_dim_x + pixel.start_x;
 
@@ -515,15 +547,15 @@ auto speck::SPECK2D::m_output_pixel_sign(const SPECKSet2D& pixel) -> int
 
     // Let's also see if we're reached the bit budget
     if (m_bit_buffer.size() >= m_budget)
-        return 1;
+        return RTNType::BitBudgetMet;
     else
-        return 0;
+        return RTNType::Good;
 }
 
-auto speck::SPECK2D::m_input_pixel_sign(const SPECKSet2D& pixel) -> int
+auto speck::SPECK2D::m_input_pixel_sign(const SPECKSet2D& pixel) -> RTNType
 {
-    if (m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size())
-        return 1;
+    if (m_bit_idx >= m_budget )
+        return RTNType::BitBudgetMet;
 
     const auto idx    = pixel.start_y * m_dim_x + pixel.start_x;
     m_sign_array[idx] = m_bit_buffer[m_bit_idx++];
@@ -537,37 +569,41 @@ auto speck::SPECK2D::m_input_pixel_sign(const SPECKSet2D& pixel) -> int
     std::cout << str << std::endl;
 #endif
 
-    return 0;
+    return RTNType::Good;
 }
 
-auto speck::SPECK2D::m_output_refinement(const SPECKSet2D& pixel) -> int
+auto speck::SPECK2D::m_output_refinement(const SPECKSet2D& pixel) -> RTNType
 {
     const auto idx = pixel.start_y * m_dim_x + pixel.start_x;
 
     if (m_coeff_buf[idx] >= m_threshold) {
         m_bit_buffer.push_back(true);
+
 #ifdef PRINT
         std::cout << "r1" << std::endl;
 #endif
+
         m_coeff_buf[idx] -= m_threshold;
     } else {
         m_bit_buffer.push_back(false);
+
 #ifdef PRINT
         std::cout << "r0" << std::endl;
 #endif
+
     }
 
     // Let's also see if we're reached the bit budget
     if (m_bit_buffer.size() >= m_budget)
-        return 1;
+        return RTNType::BitBudgetMet;
     else
-        return 0;
+        return RTNType::Good;
 }
 
-auto speck::SPECK2D::m_input_refinement(const SPECKSet2D& pixel) -> int
+auto speck::SPECK2D::m_input_refinement(const SPECKSet2D& pixel) -> RTNType
 {
-    if (m_bit_idx >= m_budget || m_bit_idx >= m_bit_buffer.size())
-        return 1;
+    if (m_bit_idx >= m_budget )
+        return RTNType::BitBudgetMet;
 
     const auto bit = m_bit_buffer[m_bit_idx++];
     const auto idx = pixel.start_y * m_dim_x + pixel.start_x;
@@ -580,7 +616,7 @@ auto speck::SPECK2D::m_input_refinement(const SPECKSet2D& pixel) -> int
         std::cout << "r0" << std::endl;
 #endif
 
-    return 0;
+    return RTNType::Good;
 }
 
 // Calculate the number of partitions able to be performed
@@ -614,13 +650,10 @@ void speck::SPECK2D::m_clean_LIS()
     std::vector<SPECKSet2D> tmp;
 
     // Only consolidate memory if the garbage amount is big enough,
-    // in both absolute and relative senses.
     for (size_t i = 0; i < m_LIS_garbage_cnt.size(); i++) {
         // clang-format off
-        if ((m_LIS_garbage_cnt[i] > m_vec_init_capacity) && 
-            (m_LIS_garbage_cnt[i] >= m_LIS[i].size() / 2)) {
+        if ( m_LIS_garbage_cnt[i] > m_LIS[i].size() / 2 ) {
             tmp.clear();
-            tmp.reserve(m_vec_init_capacity);
             for (const auto& s : m_LIS[i]) {
                 if (s.type != SetType::Garbage)
                     tmp.emplace_back(s);
@@ -655,7 +688,7 @@ auto speck::SPECK2D::m_ready_to_decode() const -> bool
 }
 
 
-auto speck::SPECK2D::get_encoded_bitstream( buffer_type_raw& out_buf, size_t& out_size) const -> int
+auto speck::SPECK2D::get_encoded_bitstream() const -> std::pair<buffer_type_raw, size_t> 
 {
     // Header definition:
     // information: dim_x,    dim_y,    dim_z,    image_mean, max_coeff_bits, bitstream
@@ -679,17 +712,16 @@ auto speck::SPECK2D::get_encoded_bitstream( buffer_type_raw& out_buf, size_t& ou
     pos += sizeof(m_max_coeff_bits);
     assert(pos == header_size);
 
-    int rtn = m_assemble_encoded_bitstream( header, header_size, out_buf, out_size );
-    return rtn;
+    return m_assemble_encoded_bitstream( header, header_size );
 }
 
-auto speck::SPECK2D::read_encoded_bitstream(const void* buf, size_t buf_size) -> int
+auto speck::SPECK2D::parse_encoded_bitstream(const void* buf, size_t buf_size) -> RTNType
 {
     // Header definition is documented in the `write_to_disk()` function.
     const size_t header_size = 24;
     uint8_t header[header_size];
-    int rtn = m_disassemble_encoded_bitstream( header, header_size, buf, buf_size );
-    if (rtn)
+    auto rtn = m_disassemble_encoded_bitstream( header, header_size, buf, buf_size );
+    if (rtn != RTNType::Good)
         return rtn;
 
     // Parse the header
@@ -705,11 +737,11 @@ auto speck::SPECK2D::read_encoded_bitstream(const void* buf, size_t buf_size) ->
 
     // It is from the header definition that this element must be 1.
     if( dims[2] != 1 )
-        return 1;
+        return RTNType::DimMismatch;
 
-    set_dims(size_t(dims[0]), size_t(dims[1]));
+    this->set_dims(size_t(dims[0]), size_t(dims[1]));
 
-    return 0;
+    return RTNType::Good;
 }
 
 

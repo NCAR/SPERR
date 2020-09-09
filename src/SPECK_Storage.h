@@ -36,7 +36,7 @@ public:
     //
     // Note: it takes a raw pointer because it accesses memory provided by others,
     //       and others most likely provide a raw pointer.
-    virtual auto read_encoded_bitstream( const void*, size_t ) -> RTNType = 0;
+    virtual auto parse_encoded_bitstream( const void*, size_t ) -> RTNType = 0;
 
     void set_image_mean(double mean);
     auto get_image_mean() const -> double;

@@ -42,7 +42,9 @@ enum class RTNType {
     BitBudgetMet,
     VersionMismatch,
     ZSTDMismatch,
-    ZSTDError
+    ZSTDError,
+    DimMismatch,
+    Error
 };
 
 //
