@@ -650,7 +650,11 @@ void speck::SPECK2D::m_clean_LIS()
     std::vector<SPECKSet2D> tmp;
 
     // Only consolidate memory if the garbage amount is big enough,
-    for (size_t i = 0; i < m_LIS_garbage_cnt.size(); i++) {
+    for (size_t tmpi = 1; tmpi <= m_LIS_garbage_cnt.size(); tmpi++) {
+        // Because lists towards the end tend to have bigger sizes, we look at
+        // them first. This practices should reduce the number of memory allocations.
+        const auto i = m_LIS_garbage_cnt.size() - tmpi;
+
         // clang-format off
         if ( m_LIS_garbage_cnt[i] > m_LIS[i].size() / 2 ) {
             tmp.clear();
