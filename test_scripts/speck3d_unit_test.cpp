@@ -3,6 +3,8 @@
 #include <cstring>
 #include "gtest/gtest.h"
 
+using speck::RTNType;
+
 namespace
 {
 
@@ -55,13 +57,18 @@ public:
 #endif
 
     {
+        // Reset lmax and psnr
+        m_psnr = 100.0;
+        m_lmax = 0.0;
+        
         const size_t  total_vals = m_dim_x * m_dim_y * m_dim_z;
 
         //
         // Use a compressor 
         //
         SPECK3D_Compressor compressor( m_dim_x, m_dim_y, m_dim_z );
-        compressor.read_floats( m_input_name.c_str() );
+        if( compressor.read_floats( m_input_name.c_str() ) != RTNType::Good )
+            return 1;
 
 #ifdef QZ_TERM
         compressor.set_qz_level( qz_level );
@@ -69,32 +76,36 @@ public:
         compressor.set_bpp( bpp );
 #endif
 
-        compressor.compress();
-        compressor.write_bitstream( m_output_name.c_str() );
+        if( compressor.compress() != RTNType::Good )
+            return 1;
+        if( compressor.write_bitstream( m_output_name.c_str() ) != RTNType::Good )
+            return 1;
 
         
         //
         // Use a decompressor 
         //
         SPECK3D_Decompressor decompressor;
-        decompressor.read_bitstream( m_output_name.c_str() );
-        decompressor.decompress();
+        if( decompressor.read_bitstream( m_output_name.c_str() ) != RTNType::Good )
+            return 1;
+        if( decompressor.decompress() != RTNType::Good )
+            return 1;
+        auto vol = decompressor.get_decompressed_volume_f();
+        if( vol.first == nullptr || vol.second != total_vals )
+            return 1;
 
-        
         //
         // Compare results
         //
-        speck::buffer_type_f decomp_buf;
-        size_t decomp_buf_size;
-        decompressor.get_decompressed_volume_f( decomp_buf, decomp_buf_size );
-
         const size_t nbytes = sizeof(float) * total_vals;
         auto orig = speck::unique_malloc<float>(total_vals);
-        sam_read_n_bytes( m_input_name.c_str(), nbytes, orig.get() );
+        if( sam_read_n_bytes( m_input_name.c_str(), nbytes, orig.get() ) )
+            return 1;
 
         float rmse, lmax, psnr, arr1min, arr1max;
-        sam_get_statsf( orig.get(), decomp_buf.get(), total_vals,
-                        &rmse, &lmax, &psnr, &arr1min, &arr1max );
+        if( sam_get_statsf( orig.get(), vol.first.get(), total_vals,
+                            &rmse, &lmax, &psnr, &arr1min, &arr1max ) )
+            return 1;
         m_psnr = psnr;
         m_lmax = lmax;
 
@@ -162,8 +173,8 @@ TEST( speck3d_bit_rate, small )
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 52.559024 );
-    EXPECT_LT( lmax,  1.432911 );
+    EXPECT_GT( psnr, 52.646259 );
+    EXPECT_LT( lmax, 1.4229241 );
 
     tester.execute( 2.0f );
     psnr = tester.get_psnr();

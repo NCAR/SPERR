@@ -30,12 +30,11 @@ TEST( dwt1d, big_image_even )
     cdf.idwt1d();
 
     // Claim that with single precision, the result is identical to the input
-    size_t cdf_out_len;
-    const auto& result = cdf.get_read_only_data( cdf_out_len );
-    EXPECT_EQ( cdf_out_len, total_vals );
+    auto result = cdf.get_read_only_data();
+    EXPECT_EQ( result.second, total_vals );
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result[i]) );
+        EXPECT_EQ( in_buf[i], float(result.first[i]) );
     }
 }
 
@@ -58,12 +57,11 @@ TEST( dwt1d, big_image_odd )
     cdf.idwt1d();
 
     // Claim that with single precision, the result is identical to the input
-    size_t cdf_out_len;
-    const auto& result = cdf.get_read_only_data( cdf_out_len );
-    EXPECT_EQ( cdf_out_len, total_vals );
+    auto result = cdf.get_read_only_data();
+    EXPECT_EQ( result.second, total_vals );
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result[i]) );
+        EXPECT_EQ( in_buf[i], float(result.first[i]) );
     }
 }
 
@@ -86,12 +84,11 @@ TEST( dwt2d, small_image_even )
     cdf.idwt2d();
 
     // Claim that with single precision, the result is identical to the input
-    size_t cdf_out_len;
-    const auto& result = cdf.get_read_only_data( cdf_out_len );
-    EXPECT_EQ( cdf_out_len, total_vals );
+    auto result = cdf.get_read_only_data( );
+    EXPECT_EQ( result.second, total_vals );
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result[i]) );
+        EXPECT_EQ( in_buf[i], float(result.first[i]) );
     }
 }
 
@@ -114,12 +111,11 @@ TEST( dwt2d, small_image_odd )
     cdf.idwt2d();
 
     // Claim that with single precision, the result is identical to the input
-    size_t cdf_out_len;
-    const auto& result = cdf.get_read_only_data( cdf_out_len );
-    EXPECT_EQ( cdf_out_len, total_vals );
+    auto result = cdf.get_read_only_data( );
+    EXPECT_EQ( result.second, total_vals );
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result[i]) );
+        EXPECT_EQ( in_buf[i], float(result.first[i]) );
     }
 }
 
@@ -142,12 +138,11 @@ TEST( dwt2d, big_image_even )
     cdf.idwt2d();
 
     // Claim that with single precision, the result is identical to the input
-    size_t cdf_out_len;
-    const auto& result = cdf.get_read_only_data( cdf_out_len );
-    EXPECT_EQ( cdf_out_len, total_vals );
+    auto result = cdf.get_read_only_data();
+    EXPECT_EQ( result.second, total_vals );
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result[i]) );
+        EXPECT_EQ( in_buf[i], float(result.first[i]) );
     }
 }
 
@@ -170,12 +165,11 @@ TEST( dwt2d, big_image_odd )
     cdf.idwt2d();
 
     // Claim that with single precision, the result is identical to the input
-    size_t cdf_out_len;
-    const auto& result = cdf.get_read_only_data( cdf_out_len );
-    EXPECT_EQ( cdf_out_len, total_vals );
+    auto result = cdf.get_read_only_data( );
+    EXPECT_EQ( result.second, total_vals );
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result[i]) );
+        EXPECT_EQ( in_buf[i], float(result.first[i]) );
     }
 }
 
@@ -198,12 +192,11 @@ TEST( dwt3d, small_even_cube )
     cdf.idwt3d();
 
     // Claim that with single precision, the result is identical to the input
-    size_t cdf_out_len;
-    const auto& result = cdf.get_read_only_data( cdf_out_len );
-    EXPECT_EQ( cdf_out_len, total_vals );
+    auto result = cdf.get_read_only_data( );
+    EXPECT_EQ( result.second, total_vals );
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result[i]) );
+        EXPECT_EQ( in_buf[i], float(result.first[i]) );
     }
 }
 
@@ -226,12 +219,11 @@ TEST( dwt3d, big_odd_cube )
     cdf.idwt3d();
 
     // Claim that with single precision, the result is identical to the input
-    size_t cdf_out_len;
-    const auto& result = cdf.get_read_only_data( cdf_out_len );
-    EXPECT_EQ( cdf_out_len, total_vals );
+    auto result = cdf.get_read_only_data( );
+    EXPECT_EQ( result.second, total_vals );
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result[i]) );
+        EXPECT_EQ( in_buf[i], float(result.first[i]) );
     }
 }
 
@@ -254,12 +246,11 @@ TEST( dwt3d, big_even_cube )
     cdf.idwt3d();
 
     // Claim that with single precision, the result is identical to the input
-    size_t cdf_out_len;
-    const auto& result = cdf.get_read_only_data( cdf_out_len );
-    EXPECT_EQ( cdf_out_len, total_vals );
+    auto result = cdf.get_read_only_data( );
+    EXPECT_EQ( result.second, total_vals );
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result[i]) );
+        EXPECT_EQ( in_buf[i], float(result.first[i]) );
     }
 }
 

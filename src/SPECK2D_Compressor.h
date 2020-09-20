@@ -11,6 +11,8 @@
 #include "CDF97.h"
 #include "SPECK2D.h"
 
+using speck::RTNType;
+
 class SPECK2D_Compressor {
 
 public:
@@ -19,27 +21,25 @@ public:
 
     // Accept incoming data: copy from a raw memory block
     template< typename T >
-    auto copy_data( const T* p, size_t len ) -> int;
+    auto copy_data( const T* p, size_t len ) -> RTNType;
 
     // Accept incoming data by taking ownership of the memory block
-    auto take_data( speck::buffer_type_d buf, size_t len ) -> int;
+    auto take_data( speck::buffer_type_d buf, size_t len ) -> RTNType;
 
     // Accept incoming data by reading a file from disk.
     // The file is supposed to contain blocks of 32-bit floating values, with
     // X direction varying fastest, and Y direction varying slowest.
-    auto read_floats( const char* filename ) -> int;
+    auto read_floats( const char* filename ) -> RTNType;
 
 //#ifdef QZ_TERM
     //void set_qz_level( int32_t );
 //#else
-    auto set_bpp( float ) -> int;
+    auto set_bpp( float ) -> RTNType;
 //#endif
 
-    auto compress() -> int;
-    // Provide a copy of the encoded bitstream to the caller.
-    // The caller will take over the ownership.
-    auto get_encoded_bitstream( speck::buffer_type_raw&, size_t& ) const -> int;
-    auto write_bitstream( const char* filename ) const -> int;
+    auto compress() -> RTNType;
+    auto get_encoded_bitstream() const -> std::pair<speck::buffer_type_raw, size_t>;
+    auto write_bitstream( const char* filename ) const -> RTNType;
 
 private:
     const size_t m_dim_x, m_dim_y, m_total_vals;

@@ -36,7 +36,7 @@ auto speck::CDF97::get_read_only_data() const -> std::pair<const buffer_type_d&,
 
 auto speck::CDF97::release_data() -> std::pair<buffer_type_d, size_t>
 {
-    const tmp = m_buf_len;
+    const auto tmp = m_buf_len;
     m_buf_len = 0;
     return {std::move(m_data_buf), tmp};
 }
@@ -239,6 +239,7 @@ void speck::CDF97::m_calc_mean()
         }
     }
 
+    // TODO: combine this allocation with the previous one.
     buffer_type_d layer_means = speck::unique_malloc<double>(m_dim_z);
     const double  dim_y1      = 1.0 / double(m_dim_y);
     counter1                  = 0;

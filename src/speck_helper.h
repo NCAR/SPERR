@@ -39,6 +39,8 @@ enum class SetType : unsigned char {
 enum class RTNType {
     Good,
     WrongSize,
+    IOError,
+    InvalidParam,
     BitBudgetMet,
     VersionMismatch,
     ZSTDMismatch,
@@ -48,35 +50,8 @@ enum class RTNType {
 };
 
 //
-// Auxiliary class to hold a 3D SPECK Set
-//
-class SPECKSet3D {
-public:
-    //
-    // Member data
-    //
-    uint32_t start_x  = 0;
-    uint32_t start_y  = 0;
-    uint32_t start_z  = 0;
-    uint32_t length_x = 0;
-    uint32_t length_y = 0;
-    uint32_t length_z = 0;
-    // which partition level is this set at (starting from zero, in all 3 directions).
-    // This data member is the sum of all 3 partition levels.
-    uint16_t     part_level = 0;
-    Significance signif     = Significance::Insig;
-    SetType      type       = SetType::TypeS; // Only used to indicate garbage status
-
-public:
-    //
-    // Member functions
-    //
-    auto is_pixel() const -> bool;
-    auto is_empty() const -> bool;
-};
-
-//
 // Auxiliary class to hold a 1D SPECK Set
+// TODO: evaluate if it makes sense to move these 1D objects to SEPCK_Err
 //
 class SPECKSet1D {
 public:
@@ -125,11 +100,6 @@ void calc_approx_detail_len(size_t orig_len, size_t lev, // input
 template <typename U>
 auto make_coeff_positive(U& buf, size_t len, std::vector<bool>&) -> typename U::element_type;
 
-// Divide a SPECKSet3D into 8, 4, or 2 smaller subsets.
-void partition_S_XYZ(const SPECKSet3D& set, std::array<SPECKSet3D, 8>& subsets);
-void partition_S_XY(const SPECKSet3D& set, std::array<SPECKSet3D, 4>& subsets);
-void partition_S_Z(const SPECKSet3D& set, std::array<SPECKSet3D, 2>& subsets);
-
 // Pack and unpack booleans to array of chars. 
 // The caller should have allocated the right amount of memory for the `dest` array.
 // When packing, the caller should also make sure the number of booleans is a multiplier of 8.
@@ -148,7 +118,7 @@ auto unpack_booleans( std::vector<bool>&  dest,
 // Pack and unpack exactly 8 booleans to/from a single byte
 // Note that memory for the single byte and 8 booleans should already be allocated!
 // Note on the choice of using bool* instead of std::array<bool, 8>: it's less pixie dust
-//      in the former, though the latter also works.
+//      in the former.
 void pack_8_booleans(   uint8_t& dest,  const bool* src );
 void unpack_8_booleans( bool* dest,     uint8_t src );
 

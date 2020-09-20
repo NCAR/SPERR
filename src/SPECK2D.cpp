@@ -70,7 +70,7 @@ auto speck::SPECK2D::encode() -> RTNType
         m_clean_LIS();
     }
 
-    return RTN::Good;
+    return RTNType::Good;
 }
 
 auto speck::SPECK2D::decode() -> RTNType
@@ -295,7 +295,6 @@ auto speck::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> RTNType
         if( rtn == RTNType::BitBudgetMet )
             return rtn;
         // The only other return value is RTNType::Good
-        }
     }
 
     return RTNType::Good;
@@ -387,7 +386,7 @@ auto speck::SPECK2D::m_code_I() -> RTNType
     // We count how many subsets are significant, and if the 3 subsets resulted from
     // m_partition_I() are all insignificant, then it must be the remaining m_I to be
     // significant.
-    int already_sig = 0, rtn = 0;
+    int already_sig = 0;
     for (size_t i = 0; i < 3; i++) {
         const auto& s = subsets[i];
         if (!s.is_empty()) {

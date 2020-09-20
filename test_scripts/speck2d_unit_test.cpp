@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include "gtest/gtest.h"
 
+using speck::RTNType;
+
 namespace
 {
 
@@ -38,41 +40,48 @@ public:
     // Execute the compression/decompression pipeline. Return 0 on success
     int execute( float bpp )
     {
+        // Reset lmax and psnr
+        m_psnr = 100.0;
+        m_lmax = 0.0;
+
         const size_t  total_vals = m_dim_x * m_dim_y;
-        int rtn;
 
         //
         // Use a compressor
         //
         SPECK2D_Compressor compressor( m_dim_x, m_dim_y );
-        if( (rtn = compressor.read_floats( m_input_name.c_str() ) ))
-            return rtn;
-        if( (rtn = compressor.set_bpp( bpp ) ) )
-            return rtn;
-        if( (rtn = compressor.compress( ) ) )
-            return rtn;
-        if( (rtn = compressor.write_bitstream( m_output_name.c_str() ) ) )
-            return rtn;
+        if( compressor.read_floats( m_input_name.c_str() ) != RTNType::Good )
+            return 1;
+        if( compressor.set_bpp( bpp ) != RTNType::Good )
+            return 1;
+        if( compressor.compress() != RTNType::Good )
+            return 1;
+        if( compressor.write_bitstream( m_output_name.c_str() ) != RTNType::Good )
+            return 1;
 
         //
         // Then use a decompressor
         //
         SPECK2D_Decompressor decompressor;
-        decompressor.read_bitstream( m_output_name.c_str() );
-        decompressor.decompress();
+        if( decompressor.read_bitstream( m_output_name.c_str() ) != RTNType::Good )
+            return 1;
+        if( decompressor.decompress() != RTNType::Good )
+            return 1;
+        auto slice = decompressor.get_decompressed_slice_f();
+        if( slice.first == nullptr || slice.second != total_vals )
+            return 1;
 
         //
         // Compare results 
         //
-        speck::buffer_type_f decomp_buf;
-        size_t decomp_buf_size;
-        decompressor.get_decompressed_slice_f( decomp_buf, decomp_buf_size );
 
         auto orig = speck::unique_malloc<float>( total_vals );
-        sam_read_n_bytes( m_input_name.c_str(), 4 * total_vals, orig.get() );
+        if( sam_read_n_bytes( m_input_name.c_str(), 4 * total_vals, orig.get() ) )
+            return 1;
         float rmse, lmax, psnr, arr1min, arr1max;
-        sam_get_statsf( orig.get(), decomp_buf.get(), total_vals,
-                        &rmse, &lmax, &psnr, &arr1min, &arr1max );
+        if( sam_get_statsf( orig.get(), slice.first.get(), total_vals,
+                            &rmse, &lmax, &psnr, &arr1min, &arr1max ) )
+            return 1;
         m_psnr = psnr;
         m_lmax = lmax;
 

@@ -11,6 +11,8 @@
 #include "CDF97.h"
 #include "SPECK2D.h"
 
+using speck::RTNType;
+
 class SPECK2D_Decompressor {
 
 public:
@@ -21,22 +23,21 @@ public:
     void take_bitstream( speck::buffer_type_raw buf, size_t len );
 
     // Accept incoming data by reading a file from disk.
-    auto read_bitstream( const char* filename ) -> int;
+    auto read_bitstream( const char* filename ) -> RTNType;
 
-    auto set_bpp( float ) -> int;
+    auto set_bpp( float ) -> RTNType;
 
-    auto decompress() -> int;
+    auto decompress() -> RTNType;
 
     // Get the decompressed slice in a float or double buffer.
-    // The caller doesn't need to allocate any memory for `buf`.
-    // After calling this method, the caller will hold ownership of the memory.
-    // `buf_size` will be the number of elements in buf.
-    auto get_decompressed_slice_f( speck::buffer_type_f& buf, size_t& buf_size ) const -> int;
-    auto get_decompressed_slice_d( speck::buffer_type_d& buf, size_t& buf_size ) const -> int;
+    // The returned buffer is a copy of the slice, so caller can use
+    // that buffer withint making another copy.
+    auto get_decompressed_slice_f() const -> std::pair<speck::buffer_type_f, size_t>;
+    auto get_decompressed_slice_d() const -> std::pair<speck::buffer_type_d, size_t>;
 
     // Write the decompressed slice as floats or doubles to a file on disk.
-    auto write_slice_f( const char* filename ) const -> int;
-    auto write_slice_d( const char* filename ) const -> int;
+    auto write_slice_f( const char* filename ) const -> RTNType;
+    auto write_slice_d( const char* filename ) const -> RTNType;
 
     void get_slice_dims( size_t&, size_t& ) const;
 
