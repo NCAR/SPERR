@@ -226,8 +226,8 @@ void speck::CDF97::m_calc_mean()
      */
     assert(m_dim_x > 0 && m_dim_y > 0 && m_dim_z > 0);
     auto buffer = speck::unique_malloc<double>(m_dim_y * m_dim_z + m_dim_z);
-    double* row_means   = buffer.get();                     // Front of the buffer
-    double* layer_means = buffer.get() + m_dim_y * m_dim_z; // End of the buffer
+    double* const row_means   = buffer.get();                     // Front of the buffer
+    double* const layer_means = buffer.get() + m_dim_y * m_dim_z; // End of the buffer
 
     const double  dim_x1    = 1.0 / double(m_dim_x);
     size_t        counter1 = 0, counter2 = 0;
