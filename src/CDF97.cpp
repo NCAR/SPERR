@@ -29,9 +29,9 @@ void speck::CDF97::take_data(buffer_type_d ptr, size_t len)
 
 auto speck::CDF97::get_read_only_data() const -> std::pair<const buffer_type_d&, size_t>
 {
-    return {m_data_buf, m_buf_len};
-    // Note: the following syntax would also work, but it seems cumbersome. 
-    // return std::make_pair(std::cref(m_data_buf), m_buf_len);
+    return std::make_pair(std::cref(m_data_buf), m_buf_len);
+    // Note: the following syntax would also work, but the code above better expresses intent. 
+    // return {m_data_buf, m_buf_len};
 }
 
 auto speck::CDF97::release_data() -> std::pair<buffer_type_d, size_t>
