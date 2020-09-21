@@ -63,7 +63,7 @@ private:
     auto m_process_I(bool)                 -> RTNType;
     auto m_code_I()                        -> RTNType;
     void m_initialize_sets_lists();
-    void m_partition_S(const SPECKSet2D& set, std::array<SPECKSet2D, 4>& subsets) const;
+    auto m_partition_S(const SPECKSet2D&) const -> std::array<SPECKSet2D, 4>;
     void m_partition_I(std::array<SPECKSet2D, 3>& subsets);
     auto m_decide_set_significance(SPECKSet2D& set)       -> RTNType;
     auto m_output_set_significance(const SPECKSet2D& set) -> RTNType;

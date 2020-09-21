@@ -262,9 +262,8 @@ auto speck::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
 
 auto speck::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> RTNType
 {
-    const auto&               set = m_LIS[idx1][idx2];
-    std::array<SPECKSet2D, 4> subsets;
-    m_partition_S(set, subsets);
+    const auto& set = m_LIS[idx1][idx2];
+    auto subsets = m_partition_S(set);
 
     // We count how many subsets are significant, and if the first 3 subsets ain't,
     // then the 4th one must be significant.
@@ -304,8 +303,10 @@ auto speck::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> RTNType
     return RTNType::Good;
 }
 
-void speck::SPECK2D::m_partition_S(const SPECKSet2D& set, std::array<SPECKSet2D, 4>& list) const
+auto speck::SPECK2D::m_partition_S(const SPECKSet2D& set) const -> std::array<SPECKSet2D, 4>
 {
+    std::array<SPECKSet2D, 4> list;
+
     // The top-left set will have these bigger dimensions in case that
     // the current set has odd dimensions.
     const auto detail_len_x = set.length_x / 2;
@@ -341,6 +342,8 @@ void speck::SPECK2D::m_partition_S(const SPECKSet2D& set, std::array<SPECKSet2D,
     TL.start_y    = set.start_y;
     TL.length_x   = approx_len_x;
     TL.length_y   = approx_len_y;
+
+    return list;
 }
 
 auto speck::SPECK2D::m_process_I(bool need_decide_sig) -> RTNType
