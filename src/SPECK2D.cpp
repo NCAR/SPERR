@@ -166,7 +166,7 @@ auto speck::SPECK2D::m_sorting_pass() -> RTNType
                 auto rtn = m_process_S(idx1, idx2, true);
                 if( rtn == RTNType::BitBudgetMet )
                     return rtn;
-                // The only other return value is RTNType::Good
+                assert( rtn == RTNType::Good );
             }
         }
     }
@@ -174,7 +174,7 @@ auto speck::SPECK2D::m_sorting_pass() -> RTNType
     auto rtn = m_process_I(true);
     if( rtn == RTNType::BitBudgetMet )
         return rtn;
-    // The only other return value is RTNType::Good
+    assert( rtn == RTNType::Good );
 
     return RTNType::Good;
 }
@@ -189,12 +189,12 @@ auto speck::SPECK2D::m_refinement_pass() -> RTNType
                 auto rtn = m_output_refinement(p);
                 if( rtn == RTNType::BitBudgetMet )
                     return rtn;
-                // The only other return value is RTNType::Good
+                assert( rtn == RTNType::Good );
             } else {
                 auto rtn = m_input_refinement(p);
                 if( rtn == RTNType::BitBudgetMet )
                     return rtn;
-                // The only other return value is RTNType::Good
+                assert( rtn == RTNType::Good );
             }
         }
     }
@@ -212,12 +212,12 @@ auto speck::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
             auto rtn = m_output_set_significance(set);
             if( rtn == RTNType::BitBudgetMet )
                 return rtn;
-            // The only other return value is RTNType::Good
+            assert( rtn == RTNType::Good );
         } else {
             auto rtn = m_decide_set_significance(set);
             if( rtn == RTNType::BitBudgetMet )
                 return rtn;
-            // The only other return value is RTNType::Good
+            assert( rtn == RTNType::Good );
 #ifdef PRINT
             auto        bit = (set.signif == Significance::Sig);
             std::string str = bit ? "s1" : "s0";
@@ -234,12 +234,12 @@ auto speck::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
                 auto rtn = m_output_pixel_sign(set);
                 if( rtn == RTNType::BitBudgetMet )
                     return rtn;
-                // The only other return value is RTNType::Good
+                assert( rtn == RTNType::Good );
             } else {
                 auto rtn = m_input_pixel_sign(set);
                 if( rtn == RTNType::BitBudgetMet )
                     return rtn;
-                // The only other return value is RTNType::Good
+                assert( rtn == RTNType::Good );
             }
             m_LSP.emplace_back(set); // A copy is saved to m_LSP.
         } 
@@ -247,7 +247,7 @@ auto speck::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
             auto rtn = m_code_S(idx1, idx2);
             if( rtn == RTNType::BitBudgetMet )
                 return rtn;
-            // The only other return value is RTNType::Good
+            assert( rtn == RTNType::Good );
         }
         set.type = SetType::Garbage; // This particular object will be discarded.
         m_LIS_garbage_cnt[set.part_level]++;
@@ -274,7 +274,7 @@ auto speck::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> RTNType
             auto rtn = m_process_S(newidx1, newidx2, true);
             if( rtn == RTNType::BitBudgetMet )
                 return rtn;
-            // The only other return value is RTNType::Good
+            assert( rtn == RTNType::Good );
 
             // clang-format off
             if (m_LIS[newidx1][newidx2].signif == Significance::Sig || 
@@ -294,7 +294,7 @@ auto speck::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> RTNType
                                need_decide_sig);
         if( rtn == RTNType::BitBudgetMet )
             return rtn;
-        // The only other return value is RTNType::Good
+        assert( rtn == RTNType::Good );
     }
 
     return RTNType::Good;
@@ -353,12 +353,12 @@ auto speck::SPECK2D::m_process_I(bool need_decide_sig) -> RTNType
         auto rtn = m_output_set_significance(m_I);
         if( rtn == RTNType::BitBudgetMet )
             return rtn;
-        // The only other return value is RTNType::Good
+        assert( rtn == RTNType::Good );
     } else {
         auto rtn = m_decide_set_significance(m_I);
         if( rtn == RTNType::BitBudgetMet )
             return rtn;
-        // The only other return value is RTNType::Good
+        assert( rtn == RTNType::Good );
 
 #ifdef PRINT
         auto        bit = (m_I.signif == Significance::Sig);
@@ -372,7 +372,7 @@ auto speck::SPECK2D::m_process_I(bool need_decide_sig) -> RTNType
         auto rtn = m_code_I();
         if( rtn == RTNType::BitBudgetMet )
             return rtn;
-        // The only other return value is RTNType::Good
+        assert( rtn == RTNType::Good );
     }
 
     return RTNType::Good;
@@ -396,7 +396,7 @@ auto speck::SPECK2D::m_code_I() -> RTNType
             auto rtn = m_process_S(newidx1, newidx2, true);
             if( rtn == RTNType::BitBudgetMet )
                 return rtn;
-            // The only other return value is RTNType::Good
+            assert( rtn == RTNType::Good );
 
             // clang-format off
             if (m_LIS[newidx1][newidx2].signif == Significance::Sig || 
@@ -411,7 +411,7 @@ auto speck::SPECK2D::m_code_I() -> RTNType
     auto rtn = m_process_I(need_decide_sig);
     if( rtn == RTNType::BitBudgetMet )
         return rtn;
-    // The only other return value is RTNType::Good
+    assert( rtn == RTNType::Good );
 
     return RTNType::Good;
 }

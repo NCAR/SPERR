@@ -504,9 +504,10 @@ end_loop_label:
 #ifdef QZ_TERM
         m_code_S(idx1, idx2);
 #else
-        if ( m_code_S(idx1, idx2) == RTNType::BitBudgetMet )
+        auto rtn = m_code_S(idx1, idx2);
+        if( rtn == RTNType::BitBudgetMet )
             return RTNType::BitBudgetMet;
-        // The other other possible return value is `Good`. 
+        assert( rtn == RTNType::Good );
 #endif
 
         set.type = SetType::Garbage; // this current set is gonna be discarded.
@@ -555,9 +556,10 @@ auto speck::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2) -> RTNType
     int rtn    = 0;
 
     if (set.signif == Significance::Sig) {
-        if (m_code_S(idx1, idx2) == RTNType::BitBudgetMet )
+        auto rtn = m_code_S(idx1, idx2);
+        if( rtn == RTNType::BitBudgetMet )
             return RTNType::BitBudgetMet;
-        // The only other possible return value is `Good`.
+        assert( rtn == RTNType::Good );
 
         set.type = SetType::Garbage; // this current set is gonna be discarded.
         m_LIS_garbage_cnt[set.part_level]++;
@@ -581,15 +583,17 @@ auto speck::SPECK3D::m_code_S(size_t idx1, size_t idx2) -> RTNType
 #ifdef QZ_TERM
                 m_process_P_encode(m_LIP.size() - 1);
 #else
-                if( m_process_P_encode(m_LIP.size() - 1) == RTNType::BitBudgetMet )
+                auto rtn = m_process_P_encode(m_LIP.size() - 1);
+                if( rtn == RTNType::BitBudgetMet )
                     return RTNType::BitBudgetMet;
-                // The only other possible return value is `Good`.
+                assert( rtn == RTNType::Good );
 #endif
 
             } else {    // decoding mode
-                if( m_process_P_decode(m_LIP.size() - 1) == RTNType::BitBudgetMet )
+                auto rtn = m_process_P_decode(m_LIP.size() - 1);
+                if( rtn == RTNType::BitBudgetMet )
                     return RTNType::BitBudgetMet;
-                // The only other possible return value is `Good`.
+                assert( rtn == RTNType::Good );
             }
         } else if (!s.is_empty()) {
             const auto newidx1 = s.part_level;
@@ -601,15 +605,17 @@ auto speck::SPECK3D::m_code_S(size_t idx1, size_t idx2) -> RTNType
 #ifdef QZ_TERM
                 m_process_S_encode(newidx1, newidx2);
 #else
-                if( m_process_S_encode(newidx1, newidx2) == RTNType::BitBudgetMet )
+                auto rtn = m_process_S_encode(newidx1, newidx2);
+                if( rtn == RTNType::BitBudgetMet )
                     return RTNType::BitBudgetMet;
-                // The only other other possible return value is `Good`. 
+                assert( rtn == RTNType::Good );
 #endif
 
             } else {    // decoding mode
-                if( m_process_S_decode(newidx1, newidx2) == RTNType::BitBudgetMet )
+                auto rtn = m_process_S_decode(newidx1, newidx2);
+                if( rtn == RTNType::BitBudgetMet )
                     return RTNType::BitBudgetMet;
-                // The only other other possible return value is `Good`. 
+                assert( rtn == RTNType::Good );
             }
         }
     }
