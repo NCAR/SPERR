@@ -61,10 +61,12 @@ auto speck::SPECK2D::encode() -> RTNType
         auto rtn = m_sorting_pass();
         if( rtn == RTNType::BitBudgetMet )
             break;
+        assert( rtn == RTNType::Good );
 
         rtn = m_refinement_pass();
         if( rtn == RTNType::BitBudgetMet )
             break;
+        assert( rtn == RTNType::Good );
 
         m_threshold *= 0.5;
         m_clean_LIS();
@@ -98,10 +100,12 @@ auto speck::SPECK2D::decode() -> RTNType
         auto rtn = m_sorting_pass();
         if( rtn == RTNType::BitBudgetMet )
             break;
+        assert( rtn == RTNType::Good );
 
         rtn = m_refinement_pass();
         if( rtn == RTNType::BitBudgetMet )
             break;
+        assert( rtn == RTNType::Good );
 
         m_threshold *= 0.5;
 

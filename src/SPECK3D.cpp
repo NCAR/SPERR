@@ -155,14 +155,17 @@ auto speck::SPECK3D::encode() -> RTNType
         // Let's test if we need to terminate
         if ( current_qz_level <= m_qz_term_lev )
             break;
+        assert( rtn == RTNType::Good );
         current_qz_level--;
 
 #else
         // The following two functions only return `BitBudgetMet` or `Good`.
         if (m_sorting_pass_encode() == RTNType::BitBudgetMet )
             break;
+        assert( rtn == RTNType::Good );
         if (m_refinement_pass_encode() == RTNType::BitBudgetMet )
             break;
+        assert( rtn == RTNType::Good );
 #endif
 
         m_threshold *= 0.5;
@@ -203,8 +206,10 @@ auto speck::SPECK3D::decode() -> RTNType
         // The following 2 methods always return `BitBudgetMet` or `Good`.
         if (m_sorting_pass_decode() == RTNType::BitBudgetMet)
             break;
+        assert( rtn == RTNType::Good );
         if (m_refinement_pass_decode() == RTNType::BitBudgetMet)
             break;
+        assert( rtn == RTNType::Good );
 
         m_threshold *= 0.5;
 
