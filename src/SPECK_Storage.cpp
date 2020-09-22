@@ -35,7 +35,9 @@ void speck::SPECK_Storage::take_data(buffer_type_d coeffs, size_t len)
 
 auto speck::SPECK_Storage::get_read_only_data() const -> std::pair<const buffer_type_d&, size_t>
 {
-    return {m_coeff_buf, m_coeff_len};
+    return std::make_pair(std::cref(m_coeff_buf), m_coeff_len);
+    // The syntax below would also work, but the one above better expresses the intent.
+    //return {m_coeff_buf, m_coeff_len};
 }
 
 auto speck::SPECK_Storage::release_data() -> std::pair<buffer_type_d, size_t>
@@ -104,7 +106,7 @@ auto speck::SPECK_Storage::m_assemble_encoded_bitstream( const void* header,
     // Use ZSTD to compress `local_buf` and store the result in `comp_buf`.
     const size_t comp_size = ZSTD_compress( comp_buf.get() + meta_size, comp_buf_size, 
                              local_buf.get() + meta_size, header_size + stream_size, 
-                             ZSTD_CLEVEL_DEFAULT );     // Just use the default compression level.
+                             ZSTD_CLEVEL_DEFAULT ); // Just use the default compression level.
     if( ZSTD_isError( comp_size ) )
         return {nullptr, 0};
     else
