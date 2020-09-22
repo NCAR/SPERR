@@ -58,8 +58,8 @@ public:
 
     {
         // Reset lmax and psnr
-        m_psnr = 100.0;
-        m_lmax = 0.0;
+        m_psnr = 0.0;
+        m_lmax = 1000.0;
         
         const size_t  total_vals = m_dim_x * m_dim_y * m_dim_z;
 
