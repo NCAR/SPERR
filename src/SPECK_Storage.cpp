@@ -125,7 +125,7 @@ auto speck::SPECK_Storage::m_disassemble_encoded_bitstream( void*  header,
     const size_t meta_size  = 2;    // See m_assemble_encoded_bitstream() for the definition 
                                     // of metadata and meta_size
     // Give an alias to comp_buf so we can do pointer arithmetic
-    const uint8_t* comp_buf_ptr = static_cast<const uint8_t*>(comp_buf);
+    const uint8_t* const comp_buf_ptr = static_cast<const uint8_t*>(comp_buf);
 
     // Let's parse the metadata
     uint8_t meta[2];

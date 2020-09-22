@@ -262,8 +262,8 @@ auto speck::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
 
 auto speck::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> RTNType
 {
-    const auto& set = m_LIS[idx1][idx2];
-    auto subsets = m_partition_S(set);
+    const auto& set    = m_LIS[idx1][idx2];
+    const auto subsets = m_partition_S(set);
 
     // We count how many subsets are significant, and if the first 3 subsets ain't,
     // then the 4th one must be significant.

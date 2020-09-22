@@ -54,15 +54,12 @@ protected:
     // Any content that's already in out_buf will be destroyed.
     //
     // Note: The caller is supposed to hold ownership of the resulting memory block.
-    //
-    // Note: Here we use raw pointer for header because we want to address stack addresses.
     auto m_assemble_encoded_bitstream( const void* header, size_t header_size ) const
          -> std::pair<buffer_type_raw, size_t>;
 
     // Parse a compressed buffer, and extract the metadata, header, and bitstream from it.
     //
     // Note: `header` should already have memory allocated with `header_size` in size.
-    // Note: Here we use raw pointer for header because we want to be able to address stack memory.
     // Note: Here we use raw pointer for int_buf because we're accessing memory provided
     //       by others, and others most likely provide a raw pointer. 
     auto m_disassemble_encoded_bitstream( void* header,       size_t header_size, 

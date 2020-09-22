@@ -162,6 +162,7 @@ auto speck::SPECK3D::encode() -> RTNType
         if (m_sorting_pass_encode() == RTNType::BitBudgetMet )
             break;
         assert( rtn == RTNType::Good );
+
         if (m_refinement_pass_encode() == RTNType::BitBudgetMet )
             break;
         assert( rtn == RTNType::Good );
@@ -323,6 +324,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
             auto rtn = m_process_P_encode(i);
             if( rtn == RTNType::BitBudgetMet )
                 return rtn;
+            assert( rtn == RTNType::Good );
 #endif
         }
     }
@@ -340,6 +342,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
                 auto rtn = m_process_S_encode(idx1, idx2);
                 if( rtn == RTNType::BitBudgetMet )
                     return rtn;
+                assert( rtn == RTNType::Good );
 #endif
             }
         }
@@ -356,6 +359,7 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
             auto rtn = m_process_P_decode(i);
             if( rtn == RTNType::BitBudgetMet )
                 return rtn;
+            assert( rtn == RTNType::Good );
         }
     }
 
@@ -368,6 +372,7 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
                 auto rtn = m_process_S_decode(idx1, idx2);
                 if( rtn == RTNType::BitBudgetMet )
                     return rtn;
+                assert( rtn == RTNType::Good );
             }
         }
     }
@@ -704,7 +709,7 @@ auto speck::SPECK3D::parse_encoded_bitstream( const void* comp_buf, size_t comp_
 
     // If dims[2] is 1, then this file is for 2D planes! We abort immediately.
     if( dims[2] == 1 )
-        return RTNType::InvalidParam;
+        return RTNType::DimMismatch;
 
     this->set_dims(size_t(dims[0]), size_t(dims[1]), size_t(dims[2]));
 

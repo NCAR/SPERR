@@ -116,9 +116,8 @@ auto unpack_booleans( std::vector<bool>&  dest,
                       size_t char_offset = 0 ) -> RTNType;
 
 // Pack and unpack exactly 8 booleans to/from a single byte
-// Note that memory for the single byte and 8 booleans should already be allocated!
-// Note on the choice of using bool* instead of std::array<bool, 8>: it's less pixie dust
-//      in the former.
+// Note that memory for the 8 booleans should already be allocated!
+// Note on the choice of using bool* instead of std::array<bool, 8>: the former is less pixie dust
 void pack_8_booleans(   uint8_t& dest,  const bool* src );
 void unpack_8_booleans( bool* dest,     uint8_t src );
 
