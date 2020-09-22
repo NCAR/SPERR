@@ -27,16 +27,18 @@ void speck::CDF97::take_data(buffer_type_d ptr, size_t len)
     m_data_buf = std::move(ptr);
 }
 
-auto speck::CDF97::get_read_only_data(size_t& len) const -> const buffer_type_d&
+auto speck::CDF97::get_read_only_data() const -> std::pair<const buffer_type_d&, size_t>
 {
-    len = m_buf_len;
-    return m_data_buf;
+    return std::make_pair(std::cref(m_data_buf), m_buf_len);
+    // Note: the following syntax would also work, but the code above better expresses intent. 
+    // return {m_data_buf, m_buf_len};
 }
 
-auto speck::CDF97::release_data(size_t& len) -> buffer_type_d
+auto speck::CDF97::release_data() -> std::pair<buffer_type_d, size_t>
 {
-    len = m_buf_len;
-    return std::move(m_data_buf);
+    const auto tmp = m_buf_len;
+    m_buf_len = 0;
+    return {std::move(m_data_buf), tmp};
 }
 
 void speck::CDF97::dwt1d()
@@ -217,14 +219,16 @@ void speck::CDF97::idwt3d()
 //
 void speck::CDF97::m_calc_mean()
 {
-    assert(m_dim_x > 0 && m_dim_y > 0 && m_dim_z > 0);
-
     /*
      * Here we calculate mean row by row to avoid too big numbers.
      *   Not using Kahan summation because that's hard to vectorize.
      *   Also, one test shows that this implementation is 4X faster than Kahan.
      */
-    buffer_type_d row_means = speck::unique_malloc<double>(m_dim_y * m_dim_z);
+    assert(m_dim_x > 0 && m_dim_y > 0 && m_dim_z > 0);
+    auto buffer = speck::unique_malloc<double>(m_dim_y * m_dim_z + m_dim_z);
+    double* const row_means   = buffer.get();                     // Front of the buffer
+    double* const layer_means = buffer.get() + m_dim_y * m_dim_z; // End of the buffer
+
     const double  dim_x1    = 1.0 / double(m_dim_x);
     size_t        counter1 = 0, counter2 = 0;
     for (size_t z = 0; z < m_dim_z; z++) {
@@ -237,7 +241,6 @@ void speck::CDF97::m_calc_mean()
         }
     }
 
-    buffer_type_d layer_means = speck::unique_malloc<double>(m_dim_z);
     const double  dim_y1      = 1.0 / double(m_dim_y);
     counter1                  = 0;
     counter2                  = 0;

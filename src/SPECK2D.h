@@ -46,34 +46,31 @@ public:
     void get_dims(size_t&, size_t&) const; // Returns plane dimension
 
     // core operations
-    auto encode() -> int;
-    auto decode() -> int;
+    auto encode() -> RTNType;
+    auto decode() -> RTNType;
 
-    auto get_encoded_bitstream( buffer_type_raw& , size_t& ) const -> int override;
-    auto read_encoded_bitstream( const void* , size_t )            -> int override;
+    auto get_encoded_bitstream() const -> std::pair<buffer_type_raw, size_t> override;
+    auto parse_encoded_bitstream( const void* , size_t ) -> RTNType override;
 
 private:
-    //
-    // Note: for methods returning an integer, 0 means normal execution, and
-    // 1 means bit budget met.
-    //
-    auto m_sorting_pass() -> int;
-    auto m_refinement_pass() -> int;
+
+    auto m_sorting_pass()    -> RTNType;
+    auto m_refinement_pass() -> RTNType;
     // For the following 2 methods, indices are used to locate which set to process from m_LIS,
     // because of the choice to use vectors to represent lists, only indices are invariant.
-    auto m_process_S(size_t idx1, size_t idx2, bool) -> int; // need to decide if it's signif?
-    auto m_code_S(size_t idx1, size_t idx2) -> int;
-    auto m_process_I(bool) -> int; // Need to decide if m_I is significant?
-    auto m_code_I() -> int;
+    auto m_process_S(size_t, size_t, bool) -> RTNType;
+    auto m_code_S(   size_t, size_t)       -> RTNType;
+    auto m_process_I(bool)                 -> RTNType;
+    auto m_code_I()                        -> RTNType;
     void m_initialize_sets_lists();
-    void m_partition_S(const SPECKSet2D& set, std::array<SPECKSet2D, 4>& subsets) const;
+    auto m_partition_S(const SPECKSet2D&) const -> std::array<SPECKSet2D, 4>;
     void m_partition_I(std::array<SPECKSet2D, 3>& subsets);
-    auto m_decide_set_significance(SPECKSet2D& set) -> int; // input when decoding
-    auto m_output_set_significance(const SPECKSet2D& set) -> int;
-    auto m_input_pixel_sign(const SPECKSet2D& pixel) -> int;
-    auto m_output_pixel_sign(const SPECKSet2D& pixel) -> int;
-    auto m_input_refinement(const SPECKSet2D& pixel) -> int;
-    auto m_output_refinement(const SPECKSet2D& pixel) -> int;
+    auto m_decide_set_significance(SPECKSet2D& set)       -> RTNType;
+    auto m_output_set_significance(const SPECKSet2D& set) -> RTNType;
+    auto m_input_pixel_sign(const SPECKSet2D& pixel)      -> RTNType;
+    auto m_output_pixel_sign(const SPECKSet2D& pixel)     -> RTNType;
+    auto m_input_refinement(const SPECKSet2D& pixel)      -> RTNType;
+    auto m_output_refinement(const SPECKSet2D& pixel)     -> RTNType;
 
     void m_calc_root_size(SPECKSet2D& root) const;
     // How many partitions available to perform given the 2D dimensions?
@@ -95,7 +92,6 @@ private:
     size_t       m_dim_x             = 0;   // 2D plane dims
     size_t       m_dim_y             = 0;
     bool         m_encode_mode       = true; // Encode (true) or Decode (false) mode?
-    const size_t m_vec_init_capacity = 16;   // Vectors are initialized to have this capacity.
     int32_t      m_max_coeff_bits    = 0;    // = log2(max_coefficient)
 
     std::vector<bool> m_significance_map;

@@ -19,11 +19,11 @@ void SPECK3D_Decompressor::take_bitstream( speck::buffer_type_raw buf, size_t le
 }
     
 
-auto SPECK3D_Decompressor::read_bitstream( const char* filename ) -> int
+auto SPECK3D_Decompressor::read_bitstream( const char* filename ) -> RTNType
 {
     std::FILE* file = std::fopen( filename, "rb" );
     if( !file )
-        return 1;
+        return RTNType::IOError;
 
     std::fseek( file, 0, SEEK_END );
     const size_t file_size = std::ftell( file );
@@ -33,119 +33,125 @@ auto SPECK3D_Decompressor::read_bitstream( const char* filename ) -> int
     size_t nread  = std::fread( tmp_buf.get(), 1, file_size, file );
     std::fclose( file );
     if( nread != file_size )
-        return 1;
+        return RTNType::IOError;
     
     m_stream_buf = std::move( tmp_buf );
     m_stream_buf_size = file_size;
 
-    return 0;
+    return RTNType::Good;
 }
 
 
-auto SPECK3D_Decompressor::decompress() -> int
+auto SPECK3D_Decompressor::decompress() -> RTNType
 {
-    if( m_stream_buf == nullptr )
-        return 1;
+    if( m_stream_buf == nullptr || m_stream_buf_size == 0 )
+        return RTNType::Error;
 
-    m_decoder.read_encoded_bitstream( m_stream_buf.get(), m_stream_buf_size );
+    auto rtn = m_decoder.parse_encoded_bitstream( m_stream_buf.get(), m_stream_buf_size );
+    if( rtn != RTNType::Good )
+        return rtn;
+
     m_decoder.get_dims( m_dim_x, m_dim_y, m_dim_z );
+    assert( m_dim_x > 1 && m_dim_y > 1 && m_dim_z > 1 );
     m_total_vals = m_dim_x * m_dim_y * m_dim_z;
+
     m_decoder.set_bit_budget( size_t(m_bpp * m_total_vals) );
-    int rtn = m_decoder.decode();
-    if( rtn != 0 )
+    rtn = m_decoder.decode();
+    if( rtn != RTNType::Good )
         return rtn;
 
     m_cdf.set_dims( m_dim_x, m_dim_y, m_dim_z );
     m_cdf.set_mean( m_decoder.get_image_mean() );
-    m_cdf.take_data( m_decoder.release_coeffs(), m_total_vals );
+    auto coeffs = m_decoder.release_data();
+    if( coeffs.first == nullptr || coeffs.second != m_total_vals )
+        return RTNType::Error;
+    m_cdf.take_data( std::move(coeffs.first), coeffs.second );
     m_cdf.idwt3d();
 
-    return 0;
+    return RTNType::Good;
 }
 
 
-auto SPECK3D_Decompressor::get_decompressed_volume_f( 
-                           speck::buffer_type_f& out_buf, size_t& out_size ) const -> int
+auto SPECK3D_Decompressor::get_decompressed_volume_f() const
+                           -> std::pair<speck::buffer_type_f, size_t>
 {
-    out_buf  = speck::unique_malloc<float>(m_total_vals);
-    out_size = m_total_vals;
+    auto vol = m_cdf.get_read_only_data();
+    if( vol.first == nullptr || vol.second != m_total_vals )
+        return {nullptr, 0};
 
-    size_t cdf_out_len;
-    const auto& vol = m_cdf.get_read_only_data( cdf_out_len );
-    assert( cdf_out_len = m_total_vals );
+    auto out_buf = speck::unique_malloc<float>(m_total_vals);
     for( size_t i = 0; i < m_total_vals; i++ )
-        out_buf[i] = vol[i];
+        out_buf[i] = vol.first[i];
 
-    return 0;
+    return {std::move(out_buf), m_total_vals};
 }
 
 
-auto SPECK3D_Decompressor::get_decompressed_volume_d( 
-                           speck::buffer_type_d& out_buf, size_t& out_size ) const -> int
+auto SPECK3D_Decompressor::get_decompressed_volume_d() const
+                           -> std::pair<speck::buffer_type_d, size_t>
 {
-    out_buf  = speck::unique_malloc<double>(m_total_vals);
-    out_size = m_total_vals;
+    auto vol = m_cdf.get_read_only_data();
+    if( vol.first == nullptr || vol.second != m_total_vals )
+        return {nullptr, 0};
+    
+    auto out_buf  = speck::unique_malloc<double>(m_total_vals);
+    std::memcpy( out_buf.get(), vol.first.get(), sizeof(double) * m_total_vals );
 
-    size_t cdf_out_len;
-    const auto& vol = m_cdf.get_read_only_data( cdf_out_len );
-    assert( cdf_out_len == m_total_vals );
-    std::memcpy( vol.get(), out_buf.get(), sizeof(double) * m_total_vals );
-    return 0;
+    return {std::move(out_buf), m_total_vals};
 }
 
 
-auto SPECK3D_Decompressor::write_volume_d( const char* filename ) const -> int
+auto SPECK3D_Decompressor::write_volume_d( const char* filename ) const -> RTNType 
 {
     // Get a read-only handle of the volume from m_cdf, and then write it to disk.
-    size_t cdf_out_len;
-    const auto& vol = m_cdf.get_read_only_data( cdf_out_len );
-    if( vol == nullptr || cdf_out_len != m_total_vals )
-        return 1;
+    auto vol = m_cdf.get_read_only_data( );
+    if( vol.first == nullptr || vol.second != m_total_vals )
+        return RTNType::Error;
 
     std::FILE* file = std::fopen( filename, "wb" );
     if( file ) {
-        std::fwrite( vol.get(), sizeof(double), m_total_vals, file );
+        auto nwrite = std::fwrite( vol.first.get(), sizeof(double), m_total_vals, file );
         std::fclose( file );
-        return 0;
+        if( nwrite != m_total_vals )
+            return RTNType::IOError;
+        else
+            return RTNType::Good;
     }
     else {
-        return 1;
+        return RTNType::IOError;
     }
-
-return 0;
 }
 
 
-auto SPECK3D_Decompressor::write_volume_f( const char* filename ) const -> int
+auto SPECK3D_Decompressor::write_volume_f( const char* filename ) const -> RTNType
 {
     // Need to get a volume represented as floats, then write it to disk.
-    speck::buffer_type_f buf;
-    size_t buf_size;
-    this->get_decompressed_volume_f( buf, buf_size );
-    if( buf_size != m_total_vals )
-        return 1;
+    auto vol = get_decompressed_volume_f();
+    if( vol.first == nullptr || vol.second != m_total_vals )
+        return RTNType::Error;
 
     std::FILE* file = std::fopen( filename, "wb" );
     if( file ) {
-        std::fwrite( buf.get(), sizeof(float), m_total_vals, file );
+        auto nwrite = std::fwrite( vol.first.get(), sizeof(float), m_total_vals, file );
         std::fclose( file );
-        return 0;
+        if( nwrite != m_total_vals )
+            return RTNType::Error;
+        else
+            return RTNType::Good;
     }
     else {
-        return 1;
+        return RTNType::IOError;
     }
-
-return 0;
 }
 
 
-auto SPECK3D_Decompressor::set_bpp( float bpp ) -> int
+auto SPECK3D_Decompressor::set_bpp( float bpp ) -> RTNType
 {
     if( bpp < 0.0 || bpp > 64.0 )
-        return 1;
+        return RTNType::InvalidParam;
     else {
         m_bpp = bpp;
-        return 0;
+        return RTNType::Good;
     }
 }
 

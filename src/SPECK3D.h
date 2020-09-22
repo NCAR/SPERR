@@ -6,6 +6,34 @@
 namespace speck {
 
 //
+// Auxiliary class to hold a 3D SPECK Set
+//
+class SPECKSet3D {
+public:
+    //
+    // Member data
+    //
+    uint32_t start_x  = 0;
+    uint32_t start_y  = 0;
+    uint32_t start_z  = 0;
+    uint32_t length_x = 0;
+    uint32_t length_y = 0;
+    uint32_t length_z = 0;
+    // which partition level is this set at (starting from zero, in all 3 directions).
+    // This data member is the sum of all 3 partition levels.
+    uint16_t     part_level = 0;
+    Significance signif     = Significance::Insig;
+    SetType      type       = SetType::TypeS; // Only used to indicate garbage status
+
+public:
+    //
+    // Member functions
+    //
+    auto is_pixel() const -> bool;
+    auto is_empty() const -> bool;
+};
+
+//
 // Main SPECK3D class
 //
 class SPECK3D : public SPECK_Storage {
@@ -15,7 +43,7 @@ public:
     void set_max_coeff_bits(int32_t);
 
     // trivial output
-    void get_dims(size_t&, size_t&, size_t&) const;
+    void get_dims( size_t&, size_t&, size_t& ) const;
 
     // How many bits does speck process?
     // If set to zero during decoding, then all bits in the bitstream will be processed.
@@ -33,10 +61,10 @@ public:
 #endif
 
     // core operations
-    auto encode() -> int;
-    auto decode() -> int;
-    auto get_encoded_bitstream( buffer_type_raw& , size_t& ) const -> int override;
-    auto read_encoded_bitstream( const void* ,     size_t )        -> int override;
+    auto encode() -> RTNType;
+    auto decode() -> RTNType;
+    auto get_encoded_bitstream() const -> std::pair<buffer_type_raw, size_t> override;
+    auto parse_encoded_bitstream( const void*, size_t ) -> RTNType override;
 
 private:
     //
@@ -47,17 +75,22 @@ private:
     auto m_ready_to_decode() const  -> bool;
     void m_clean_LIS(); // Clean garbage sets from m_LIS if too much garbage exists.
     void m_initialize_sets_lists();
-    auto m_sorting_pass_encode()    -> int;
-    auto m_sorting_pass_decode()    -> int;
-    auto m_refinement_pass_encode() -> int;
-    auto m_refinement_pass_decode() -> int;
+    auto m_sorting_pass_encode()    -> RTNType;
+    auto m_sorting_pass_decode()    -> RTNType;
+    auto m_refinement_pass_encode() -> RTNType;
+    auto m_refinement_pass_decode() -> RTNType;
 
     // For the following 5 methods, indices are used to locate which set to process from m_LIS,
-    auto m_process_S_encode(size_t idx1, size_t idx2) -> int;
-    auto m_process_S_decode(size_t idx1, size_t idx2) -> int;
-    auto m_process_P_encode(size_t idx) -> int; // Similar to process_S, but for pixels.
-    auto m_process_P_decode(size_t idx) -> int; // Similar to process_S, but for pixels.
-    auto m_code_S(size_t idx1, size_t idx2) -> int;
+    auto m_process_S_encode(size_t idx1, size_t idx2) -> RTNType;
+    auto m_process_S_decode(size_t idx1, size_t idx2) -> RTNType;
+    auto m_process_P_encode(size_t idx) -> RTNType; // Similar to process_S, but for pixels.
+    auto m_process_P_decode(size_t idx) -> RTNType; // Similar to process_S, but for pixels.
+    auto m_code_S(size_t idx1, size_t idx2) -> RTNType;
+
+    // Divide a SPECKSet3D into 8, 4, or 2 smaller subsets.
+    auto m_partition_S_XYZ(const SPECKSet3D&) const -> std::array<SPECKSet3D, 8>;
+    auto m_partition_S_XY (const SPECKSet3D&) const -> std::array<SPECKSet3D, 4>;
+    auto m_partition_S_Z  (const SPECKSet3D&) const -> std::array<SPECKSet3D, 2>;
 
     //
     // Private data members
