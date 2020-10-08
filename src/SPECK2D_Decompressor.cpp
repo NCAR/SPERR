@@ -75,7 +75,7 @@ auto SPECK2D_Decompressor::get_decompressed_slice_f() const
                            -> std::pair<speck::buffer_type_f, size_t>
 {
     auto slice = m_cdf.get_read_only_data( );
-    if( slice.first == nullptr || slice.second != m_total_vals );
+    if( slice.first == nullptr || slice.second != m_total_vals )
         return {nullptr, 0};
 
     auto out_buf = speck::unique_malloc<float>(m_total_vals);
