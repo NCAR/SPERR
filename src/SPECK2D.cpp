@@ -653,25 +653,17 @@ void speck::SPECK2D::m_calc_root_size(SPECKSet2D& root) const
 
 void speck::SPECK2D::m_clean_LIS()
 {
-    std::vector<SPECKSet2D> tmp;
+    for( size_t i = 0; i < m_LIS.size(); i++ ) {
+        if( m_LIS_garbage_cnt[i] > m_LIS[i].size() / 4 ) {
 
-    // Only consolidate memory if the garbage amount is big enough,
-    for (size_t tmpi = 1; tmpi <= m_LIS_garbage_cnt.size(); tmpi++) {
-        // Because lists towards the end tend to have bigger sizes, we look at
-        // them first. This practices should reduce the number of memory allocations.
-        const auto i = m_LIS_garbage_cnt.size() - tmpi;
+            // Erase-remove idiom:
+            // https://en.wikipedia.org/wiki/Erase%E2%80%93remove_idiom
+            auto it = std::remove_if( m_LIS[i].begin(), m_LIS[i].end(),
+                      [](const SPECKSet2D& s) { return s.type == SetType::Garbage; });
+            m_LIS[i].erase( it, m_LIS[i].end() );
 
-        // clang-format off
-        if ( m_LIS_garbage_cnt[i] > m_LIS[i].size() / 2 ) {
-            tmp.clear();
-            for (const auto& s : m_LIS[i]) {
-                if (s.type != SetType::Garbage)
-                    tmp.emplace_back(s);
-            }
-            std::swap(m_LIS[i], tmp);
             m_LIS_garbage_cnt[i] = 0;
         }
-        // clang-format on
     }
 }
 
