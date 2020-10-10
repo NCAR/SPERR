@@ -87,7 +87,7 @@ void speck::SPECK3D::m_clean_LIS()
 
     // Let's also clean up m_LIP.
     if (m_LIP_garbage_cnt > m_LIP.size() / 4) {
-        auto it  = std::remove( m_LIP.begin(), m_LIP.end(), m_LIP_garbage_val );
+        auto it = std::remove( m_LIP.begin(), m_LIP.end(), m_LIP_garbage_val );
         m_LIP.erase( it, m_LIP.end() );
 
         m_LIP_garbage_cnt = 0;
@@ -147,11 +147,9 @@ auto speck::SPECK3D::encode() -> RTNType
         // The following two functions only return `BitBudgetMet` or `Good`.
         if (m_sorting_pass_encode() == RTNType::BitBudgetMet )
             break;
-        assert( rtn == RTNType::Good );
 
         if (m_refinement_pass_encode() == RTNType::BitBudgetMet )
             break;
-        assert( rtn == RTNType::Good );
 #endif
 
         m_threshold *= 0.5;
