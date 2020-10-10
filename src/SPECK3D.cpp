@@ -68,43 +68,29 @@ void speck::SPECK3D::set_bit_budget(size_t budget)
     }
 #endif
 
+
 void speck::SPECK3D::m_clean_LIS()
 {
-    std::vector<SPECKSet3D> tmpv;
+    // Erase-remove idiom:
+    // https://en.wikipedia.org/wiki/Erase%E2%80%93remove_idiom
 
-    for (size_t tmpi = 1; tmpi <= m_LIS_garbage_cnt.size(); tmpi++) {
+    for( size_t i = 0; i < m_LIS.size(); i++ ) {
+        if( m_LIS_garbage_cnt[i] > m_LIS[i].size() / 4 ) {
 
-        // Because lists towards the end tend to have bigger sizes, we look at
-        // them first. This practices should reduce the number of memory allocations.
-        const auto i = m_LIS_garbage_cnt.size() - tmpi;
+            auto it = std::remove_if( m_LIS[i].begin(), m_LIS[i].end(),
+                      [](const SPECKSet3D& s) { return s.type == SetType::Garbage; });
+            m_LIS[i].erase( it, m_LIS[i].end() );
 
-        // Only consolidate memory if the garbage count is more than half
-        if (m_LIS_garbage_cnt[i] > m_LIS[i].size() / 2) {
-            auto& list = m_LIS[i];
-            tmpv.clear();
-            tmpv.reserve(list.size()); // will leave half capacity unfilled, so the list
-                                       // won't need a memory re-allocation for a while.
-            std::copy_if(list.cbegin(), list.cend(), std::back_inserter(tmpv),
-                         [](const SPECKSet3D& s) { return s.type != SetType::Garbage; });
-            std::swap(list, tmpv);
             m_LIS_garbage_cnt[i] = 0;
         }
     }
-    // Re-claim memory held by tmpv
-    tmpv.clear();
-    tmpv.shrink_to_fit();
 
     // Let's also clean up m_LIP.
-    if (m_LIP_garbage_cnt > m_LIP.size() / 2) {
-        std::vector<size_t> tmp_LIP;
-        tmp_LIP.reserve(m_LIP.size());
-        for (size_t i = 0; i < m_LIP.size(); i++) {
-            if (!m_LIP_garbage[i])
-                tmp_LIP.emplace_back(m_LIP[i]);
-        }
-        std::swap(m_LIP, tmp_LIP);
+    if (m_LIP_garbage_cnt > m_LIP.size() / 4) {
+        auto it  = std::remove( m_LIP.begin(), m_LIP.end(), m_LIP_garbage_val );
+        m_LIP.erase( it, m_LIP.end() );
+
         m_LIP_garbage_cnt = 0;
-        m_LIP_garbage.assign(m_LIP.size(), false);
     }
 }
 
@@ -250,7 +236,6 @@ void speck::SPECK3D::m_initialize_sets_lists()
     m_LIS.resize(num_of_sizes);
     m_LIS_garbage_cnt.assign(num_of_sizes, 0);
     m_LIP.clear();
-    m_LIP_garbage.clear();
     m_LIP_garbage_cnt = 0;
 
     // Starting from a set representing the whole volume, identify the smaller sets
@@ -316,7 +301,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 
     // Since we have a separate representation of LIP, let's process that list first!
     for (size_t i = 0; i < m_LIP.size(); i++) {
-        if (!m_LIP_garbage[i]) {
+        if( m_LIP[i] != m_LIP_garbage_val ) {
 
 #ifdef QZ_TERM
             m_process_P_encode(i);
@@ -355,7 +340,7 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 {
     // Since we have a separate representation of LIP, let's process that list first!
     for (size_t i = 0; i < m_LIP.size(); i++) {
-        if (!m_LIP_garbage[i]) {
+        if( m_LIP[i] != m_LIP_garbage_val ) {
             auto rtn = m_process_P_decode(i);
             if( rtn == RTNType::BitBudgetMet )
                 return rtn;
@@ -463,7 +448,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
         m_LSP.push_back(pixel_idx);
         m_LSP_newly.push_back(true);
 
-        m_LIP_garbage[loc] = true;
+        m_LIP[loc] = m_LIP_garbage_val;
         m_LIP_garbage_cnt++;
 
 #ifndef QZ_TERM
@@ -549,7 +534,7 @@ auto speck::SPECK3D::m_process_P_decode(size_t loc) -> RTNType
         m_LSP.push_back(pixel_idx);
         m_LSP_newly.push_back(true);
 
-        m_LIP_garbage[loc] = true;
+        m_LIP[loc] = m_LIP_garbage_val;
         m_LIP_garbage_cnt++;
     }
 
@@ -588,7 +573,6 @@ auto speck::SPECK3D::m_code_S(size_t idx1, size_t idx2) -> RTNType
     for (const auto& s : subsets) {
         if (s.is_pixel()) {
             m_LIP.push_back(s.start_z * m_dim_x * m_dim_y + s.start_y * m_dim_x + s.start_x);
-            m_LIP_garbage.push_back(false);
 
             if (m_encode_mode) {
 
