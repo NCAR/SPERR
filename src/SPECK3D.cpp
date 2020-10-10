@@ -71,11 +71,12 @@ void speck::SPECK3D::set_bit_budget(size_t budget)
 
 void speck::SPECK3D::m_clean_LIS()
 {
+    // Erase-remove idiom:
+    // https://en.wikipedia.org/wiki/Erase%E2%80%93remove_idiom
+
     for( size_t i = 0; i < m_LIS.size(); i++ ) {
         if( m_LIS_garbage_cnt[i] > m_LIS[i].size() / 4 ) {
 
-            // Erase-remove idiom:
-            // https://en.wikipedia.org/wiki/Erase%E2%80%93remove_idiom
             auto it = std::remove_if( m_LIS[i].begin(), m_LIS[i].end(),
                       [](const SPECKSet3D& s) { return s.type == SetType::Garbage; });
             m_LIS[i].erase( it, m_LIS[i].end() );
@@ -85,16 +86,16 @@ void speck::SPECK3D::m_clean_LIS()
     }
 
     // Let's also clean up m_LIP.
-    if (m_LIP_garbage_cnt > m_LIP.size() / 2) {
-        std::vector<size_t> tmp_LIP;
-        tmp_LIP.reserve(m_LIP.size());
-        for (size_t i = 0; i < m_LIP.size(); i++) {
-            if (!m_LIP_garbage[i])
-                tmp_LIP.emplace_back(m_LIP[i]);
-        }
-        std::swap(m_LIP, tmp_LIP);
+    if (m_LIP_garbage_cnt > m_LIP.size() / 4) {
+
+        // Lambda can capture only local variables, but not class member bariables.
+        // So we create a local copy for the lambda to capture.
+        auto tmp = m_LIP_garbage_val;
+        auto it  = std::remove_if( m_LIP.begin(), m_LIP.end(),
+                   [tmp]( size_t v ){ return v == tmp; } );
+        m_LIP.erase( it, m_LIP.end() );
+
         m_LIP_garbage_cnt = 0;
-        m_LIP_garbage.assign(m_LIP.size(), false);
     }
 }
 
@@ -240,7 +241,6 @@ void speck::SPECK3D::m_initialize_sets_lists()
     m_LIS.resize(num_of_sizes);
     m_LIS_garbage_cnt.assign(num_of_sizes, 0);
     m_LIP.clear();
-    m_LIP_garbage.clear();
     m_LIP_garbage_cnt = 0;
 
     // Starting from a set representing the whole volume, identify the smaller sets
@@ -306,7 +306,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 
     // Since we have a separate representation of LIP, let's process that list first!
     for (size_t i = 0; i < m_LIP.size(); i++) {
-        if (!m_LIP_garbage[i]) {
+        if( m_LIP[i] != m_LIP_garbage_val ) {
 
 #ifdef QZ_TERM
             m_process_P_encode(i);
@@ -345,7 +345,7 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 {
     // Since we have a separate representation of LIP, let's process that list first!
     for (size_t i = 0; i < m_LIP.size(); i++) {
-        if (!m_LIP_garbage[i]) {
+        if( m_LIP[i] != m_LIP_garbage_val ) {
             auto rtn = m_process_P_decode(i);
             if( rtn == RTNType::BitBudgetMet )
                 return rtn;
@@ -453,7 +453,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
         m_LSP.push_back(pixel_idx);
         m_LSP_newly.push_back(true);
 
-        m_LIP_garbage[loc] = true;
+        m_LIP[loc] = m_LIP_garbage_val;
         m_LIP_garbage_cnt++;
 
 #ifndef QZ_TERM
@@ -539,7 +539,7 @@ auto speck::SPECK3D::m_process_P_decode(size_t loc) -> RTNType
         m_LSP.push_back(pixel_idx);
         m_LSP_newly.push_back(true);
 
-        m_LIP_garbage[loc] = true;
+        m_LIP[loc] = m_LIP_garbage_val;
         m_LIP_garbage_cnt++;
     }
 
@@ -578,7 +578,6 @@ auto speck::SPECK3D::m_code_S(size_t idx1, size_t idx2) -> RTNType
     for (const auto& s : subsets) {
         if (s.is_pixel()) {
             m_LIP.push_back(s.start_z * m_dim_x * m_dim_y + s.start_y * m_dim_x + s.start_x);
-            m_LIP_garbage.push_back(false);
 
             if (m_encode_mode) {
 

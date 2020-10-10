@@ -3,6 +3,8 @@
 
 #include "SPECK_Storage.h"
 
+#include <limits>
+
 namespace speck {
 
 //
@@ -116,8 +118,8 @@ private:
     // Now we use a vector of indices to serve the same funcationality of the last LIS,
     // which would contain all insignificant pixels.
     std::vector<size_t> m_LIP;         // List of insignificant pixels.
-    std::vector<bool>   m_LIP_garbage; // If this insignificant pixel is considered garbage.
     size_t              m_LIP_garbage_cnt = 0;
+    const size_t        m_LIP_garbage_val = std::numeric_limits<size_t>::max();
 
 #ifdef QZ_TERM
     int32_t m_qz_term_lev   = 0;  // At which quantization level does encoding terminate?
