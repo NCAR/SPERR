@@ -87,12 +87,7 @@ void speck::SPECK3D::m_clean_LIS()
 
     // Let's also clean up m_LIP.
     if (m_LIP_garbage_cnt > m_LIP.size() / 4) {
-
-        // Lambda can capture only local variables, but not class member bariables.
-        // So we create a local copy for the lambda to capture.
-        auto tmp = m_LIP_garbage_val;
-        auto it  = std::remove_if( m_LIP.begin(), m_LIP.end(),
-                   [tmp]( size_t v ){ return v == tmp; } );
+        auto it  = std::remove( m_LIP.begin(), m_LIP.end(), m_LIP_garbage_val );
         m_LIP.erase( it, m_LIP.end() );
 
         m_LIP_garbage_cnt = 0;
