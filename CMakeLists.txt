@@ -6,8 +6,9 @@ cmake_minimum_required(VERSION 3.10)
 project(SPECK VERSION 0.1)
 
 # specify the C++ standard
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+# CMake will try to add a -std=c++17 flag if the compiler supports, but if it doesn't,
+# CMake will `decay` to a previous supported flag, e.g. -std=c++11.
+set(CMAKE_CXX_STANDARD 17)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
     # Set the possible values of build type for cmake-gui
@@ -16,6 +17,7 @@ endif()
 
 option( BUILD_UNIT_TESTS "Build unit tests using googletest?" OFF)
 option( USE_ZSTD "Incorporate zstd to achieve further 5% compression?" OFF)
+option( USE_PMR "Use Polymorphic Resource feature, which is introduced in C++17" ON)
 option( BUILD_QCC_EXAMPLES "Build examples that link to QccPack?" OFF)
 option( QZ_TERM  "Operational mode which terminates by quantization level" OFF)
 
