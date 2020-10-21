@@ -98,10 +98,17 @@ int main( int argc, char* argv[] )
             return 1;
 #endif
 
+        auto start = std::chrono::steady_clock::now();
         if( compressor.compress() != speck::RTNType::Good )
             return 1;
+        auto end = std::chrono::steady_clock::now();
 
         if( print_stats ) {
+
+            // Print compression time
+            auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+            std::cout << "Compression takes time: " << diff << "ms\n";
+
             // Need to do a decompression anyway
             auto stream = compressor.get_encoded_bitstream();
             if( stream.first == nullptr || stream.second == 0 )
