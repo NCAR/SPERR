@@ -16,6 +16,12 @@ namespace speck {
 class SPECK_Storage {
 
 public:
+
+#ifdef USE_PMR
+    // Constructor
+    SPECK_Storage();
+#endif
+
     //
     // Memory management: input and output
     // Note: the nature of the data being input and output are wavelet coefficients
@@ -70,8 +76,14 @@ protected:
     //
     double            m_image_mean = 0.0;    // Mean of the original data. Used by DWT/IDWT.
     size_t            m_coeff_len  = 0;
-    std::vector<bool> m_bit_buffer;          // Output/Input bit buffer
     buffer_type_d     m_coeff_buf = nullptr; // All coefficients are kept here
+
+#ifdef USE_PMR
+    std::pmr::unsynchronized_pool_resource   m_pool;
+#endif
+
+    vector_bool       m_bit_buffer;          // Output/Input bit buffer
+
 };
 
 };
