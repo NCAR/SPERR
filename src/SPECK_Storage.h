@@ -18,8 +18,12 @@ class SPECK_Storage {
 public:
 
 #ifdef USE_PMR
-    // Constructor
     SPECK_Storage();
+    SPECK_Storage( const SPECK_Storage& )           = delete;
+    SPECK_Storage( const SPECK_Storage&& )          = delete;
+    SPECK_Storage& operator=(const SPECK_Storage&)  = delete;
+    SPECK_Storage& operator=(const SPECK_Storage&&) = delete;
+    virtual ~SPECK_Storage();
 #endif
 
     //
@@ -80,6 +84,7 @@ protected:
 
 #ifdef USE_PMR
     std::pmr::unsynchronized_pool_resource   m_pool;
+    std::pmr::memory_resource*               m_previous_resource;
 #endif
 
     vector_bool       m_bit_buffer;          // Output/Input bit buffer

@@ -365,9 +365,11 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 
 auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 {
+    // This loop seems to be pretty expensive, and also could be parallelized
+    //   using OpenMP reasonably well.
     for (size_t i = 0; i < m_LSP.size(); i++) {
         const auto pos = m_LSP[i];
-        if (m_LSP_newly[i]) { // This is pixel is newly identified!
+        if (m_LSP_newly[i]) { // This is pixel is newly identified as significant
             m_coeff_buf[pos] -= m_threshold;
             m_LSP_newly[i] = false;
         } else {
