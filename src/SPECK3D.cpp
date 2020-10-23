@@ -390,15 +390,17 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
     for( auto e : refine_results ) {
         if( e == 1 ) {
             m_bit_buffer.push_back( true );
-            #ifndef QZ_TERM
-              if( m_bit_buffer.size() >= m_budget ) return RTNType::BitBudgetMet;
-            #endif
+#ifndef QZ_TERM
+            if( m_bit_buffer.size() >= m_budget ) 
+                return RTNType::BitBudgetMet;
+#endif
         }
         else if( e == 2 ) {
             m_bit_buffer.push_back( false );
-            #ifndef QZ_TERM
-              if( m_bit_buffer.size() >= m_budget ) return RTNType::BitBudgetMet;
-            #endif
+#ifndef QZ_TERM
+            if( m_bit_buffer.size() >= m_budget ) 
+                return RTNType::BitBudgetMet;
+#endif
         }
     }
 
