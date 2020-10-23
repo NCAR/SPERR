@@ -26,11 +26,13 @@ namespace speck {
     using buffer_type_raw = std::unique_ptr<uint8_t[]>; // for blocks of raw memory
 
 #ifdef USE_PMR
-    using vector_bool   = std::pmr::vector<bool>;
-    using vector_size_t = std::pmr::vector<size_t>;
+    using vector_bool     = std::pmr::vector<bool>;
+    using vector_size_t   = std::pmr::vector<size_t>;
+    using vector_uint8_t  = std::pmr::vector<uint8_t>;
 #else
-    using vector_bool   = std::vector<bool>;
-    using vector_size_t = std::vector<size_t>;
+    using vector_bool     = std::vector<bool>;
+    using vector_size_t   = std::vector<size_t>;
+    using vector_uint8_t  = std::vector<uint8_t>;
 #endif
 
 #endif

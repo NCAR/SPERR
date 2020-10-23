@@ -365,34 +365,47 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 
 auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 {
-    // This loop seems to be pretty expensive, and also could be parallelized
-    //   using OpenMP reasonably well.
-    for (size_t i = 0; i < m_LSP.size(); i++) {
+
+#ifdef QZ_TERM
+    const size_t max_refines = m_LSP.size();
+#else
+    const size_t max_refines = (m_LSP.size() + m_bit_buffer.size() >= m_budget) ?
+                                m_budget - m_bit_buffer.size() : m_LSP.size();
+#endif
+
+    // Use an array to record 3 possible results of every refinement result:
+    // 1) result == 0 : no bit output 
+    // 2) result == 1 : `true` was output
+    // 3) result == 2 : `false` was output
+    speck::vector_uint8_t refine_results( max_refines, 0 );
+
+    for (size_t i = 0; i < max_refines; i++) {
         const auto pos = m_LSP[i];
-        if (m_LSP_newly[i]) { // This is pixel is newly identified as significant
+        if (m_LSP_newly[i]) {                       // case 1)
             m_coeff_buf[pos] -= m_threshold;
             m_LSP_newly[i] = false;
         } else {
-            if (m_coeff_buf[pos] >= m_threshold) {
-                m_bit_buffer.push_back(true);
+            if (m_coeff_buf[pos] >= m_threshold) {  // case 2)
+                refine_results[i] = 1;
                 m_coeff_buf[pos] -= m_threshold;
-            } else {
-                m_bit_buffer.push_back(false);
+            } else {                                // case 3)
+                refine_results[i] = 2;
             }
-
-#ifdef PRINT
-            const char* r = m_bit_buffer.back() ? "r1\n" : "r0\n";
-            std::cout << r; 
-#endif
-
-#ifndef QZ_TERM
-            // Let's also see if we've reached the bit budget
-            if (m_bit_buffer.size() >= m_budget)
-                return RTNType::BitBudgetMet;
-#endif
-
         }
     }
+
+    // Now attach the true/false outputs from `refine_results` to `m_bit_buffer` 
+    for( auto e : refine_results ) {
+        if( e == 1 )
+            m_bit_buffer.push_back( true );
+        else if( e == 2 )
+            m_bit_buffer.push_back( false );
+    }
+
+#ifndef QZ_TERM
+    if( m_bit_buffer.size() >= m_budget )
+        return RTNType::BitBudgetMet;
+#endif
 
     return RTNType::Good;
 }
