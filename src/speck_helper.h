@@ -11,14 +11,28 @@
 #include <vector>
 #include "SpeckConfig.h"
 
+#ifdef USE_PMR
+    #include <memory_resource>
+#endif
+
 namespace speck {
 
 #ifndef BUFFER_TYPES
 #define BUFFER_TYPES
-using buffer_type_d   = std::unique_ptr<double[]>;
-using buffer_type_f   = std::unique_ptr<float[]>;
-using buffer_type_c   = std::unique_ptr<char[]>;
-using buffer_type_raw = std::unique_ptr<uint8_t[]>; // for blocks of raw memory
+
+    using buffer_type_d   = std::unique_ptr<double[]>;
+    using buffer_type_f   = std::unique_ptr<float[]>;
+    using buffer_type_c   = std::unique_ptr<char[]>;
+    using buffer_type_raw = std::unique_ptr<uint8_t[]>; // for blocks of raw memory
+
+#ifdef USE_PMR
+    using vector_bool   = std::pmr::vector<bool>;
+    using vector_size_t = std::pmr::vector<size_t>;
+#else
+    using vector_bool   = std::vector<bool>;
+    using vector_size_t = std::vector<size_t>;
+#endif
+
 #endif
 
 //
@@ -98,7 +112,7 @@ void calc_approx_detail_len(size_t orig_len, size_t lev, // input
 // 2) make coeff_buffer containing all positive values.
 // 3) returns the maximum magnitude of all encountered values.
 template <typename U>
-auto make_coeff_positive(U& buf, size_t len, std::vector<bool>&) -> typename U::element_type;
+auto make_coeff_positive(U& buf, size_t len, vector_bool&) -> typename U::element_type;
 
 // Pack and unpack booleans to array of chars. 
 // The caller should have allocated the right amount of memory for the `dest` array.
@@ -107,13 +121,13 @@ auto make_coeff_positive(U& buf, size_t len, std::vector<bool>&) -> typename U::
 //
 // Note: unpack_booleans() takes a raw pointer because it accesses memory provided by others,
 //       and others most likely provide it by raw pointers.
-auto pack_booleans( buffer_type_raw&         dest,
-                    const std::vector<bool>& src,
-                    size_t char_offset = 0 ) -> RTNType;
-auto unpack_booleans( std::vector<bool>&  dest,
-                      const void*         src,
-                      size_t              src_len, // total length of char array
-                      size_t char_offset = 0 ) -> RTNType;
+auto pack_booleans( buffer_type_raw&   dest,
+                    const vector_bool& src,
+                    size_t             char_offset = 0 ) -> RTNType;
+auto unpack_booleans( vector_bool&     dest,
+                      const void*      src,
+                      size_t           src_len, // total length of char array
+                      size_t           char_offset = 0 ) -> RTNType;
 
 // Pack and unpack exactly 8 booleans to/from a single byte
 // Note that memory for the 8 booleans should already be allocated!

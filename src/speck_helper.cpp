@@ -61,7 +61,7 @@ void speck::calc_approx_detail_len(size_t orig_len, size_t lev,
 }
 
 template <typename U>
-auto speck::make_coeff_positive(U& buf, size_t len, std::vector<bool>& sign_array) 
+auto speck::make_coeff_positive(U& buf, size_t len, vector_bool& sign_array) 
      -> typename U::element_type
 {
     sign_array.assign(len, true);
@@ -80,16 +80,16 @@ auto speck::make_coeff_positive(U& buf, size_t len, std::vector<bool>& sign_arra
     return max;
 }
 template speck::buffer_type_d::element_type
-speck::make_coeff_positive(buffer_type_d&, size_t, std::vector<bool>&);
+speck::make_coeff_positive(buffer_type_d&, size_t, vector_bool&);
 template speck::buffer_type_f::element_type
-speck::make_coeff_positive(buffer_type_f&, size_t, std::vector<bool>&);
+speck::make_coeff_positive(buffer_type_f&, size_t, vector_bool&);
 
 
 // Good solution to deal with bools and unsigned chars
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
-auto speck::pack_booleans( buffer_type_raw&         dest,
-                           const std::vector<bool>& src,
-                           size_t                   offset ) -> RTNType
+auto speck::pack_booleans( buffer_type_raw&   dest,
+                           const vector_bool& src,
+                           size_t             offset ) -> RTNType
 {
     if( src.size() % 8 != 0 )
         return RTNType::WrongSize;
@@ -111,10 +111,10 @@ auto speck::pack_booleans( buffer_type_raw&         dest,
     return RTNType::Good;
 }
 
-auto speck::unpack_booleans( std::vector<bool>&    dest,
-                             const void*           src,
-                             size_t                src_len,
-                             size_t                char_offset ) -> RTNType
+auto speck::unpack_booleans( vector_bool& dest,
+                             const void*  src,
+                             size_t       src_len,
+                             size_t       char_offset ) -> RTNType
 {
     if( src_len < char_offset )
         return RTNType::WrongSize;
@@ -161,12 +161,7 @@ void speck::unpack_8_booleans( bool* dest, uint8_t src )
 template< typename T >
 auto speck::unique_malloc( size_t size ) -> std::unique_ptr<T[]>
 {
-#ifdef NO_CPP14
-    std::unique_ptr<T[]> buf(new T[size]);
-#else
     std::unique_ptr<T[]> buf = std::make_unique<T[]>(size);
-#endif
-
     return std::move( buf );
 }
 template auto speck::unique_malloc( size_t ) -> buffer_type_c;

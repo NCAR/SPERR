@@ -39,7 +39,9 @@ public:
 // Main SPECK3D class
 //
 class SPECK3D : public SPECK_Storage {
+
 public:
+
     // trivial input
     void set_dims(size_t, size_t, size_t); // Accepts volume dimension
     void set_max_coeff_bits(int32_t);
@@ -106,24 +108,30 @@ private:
     bool    m_encode_mode    = true; // Encode (true) or Decode (false) mode?
     int32_t m_max_coeff_bits = 0;    // = log2(max_coefficient)
 
-    std::vector<std::vector<SPECKSet3D>> m_LIS;
-    std::vector<size_t>                  m_LIS_garbage_cnt;
-
-    std::vector<bool> m_significance_map; // only used when encoding.
-    std::vector<bool> m_sign_array;
-
-    std::vector<size_t> m_LSP;       // Records locations of significant pixels
-    std::vector<bool>   m_LSP_newly; // Records if this pixel is newly significant or not.
-
     // Now we use a vector of indices to serve the same funcationality of the last LIS,
     // which would contain all insignificant pixels.
-    std::vector<size_t> m_LIP;         // List of insignificant pixels.
-    size_t              m_LIP_garbage_cnt = 0;
-    const size_t        m_LIP_garbage_val = std::numeric_limits<size_t>::max();
+    speck::vector_size_t m_LIP;       // List of insignificant pixels.
+    size_t               m_LIP_garbage_cnt = 0;
+    const size_t         m_LIP_garbage_val = std::numeric_limits<size_t>::max();
+
+    speck::vector_size_t m_LSP;       // List of significant pixels (recorded as locations)
+    speck::vector_bool   m_LSP_newly; // if this significant pixel newly became so or not
+
+    speck::vector_bool   m_sign_array;
+    speck::vector_bool   m_significance_map; // only in use when encoding.
+
+#ifdef USE_PMR
+    std::pmr::vector<std::pmr::vector<SPECKSet3D>>  m_LIS;
+    std::pmr::vector<size_t>                        m_LIS_garbage_cnt;
+#else
+    std::vector<std::vector<SPECKSet3D>>            m_LIS;
+    std::vector<size_t>                             m_LIS_garbage_cnt;
+#endif
 
 #ifdef QZ_TERM
     int32_t m_qz_term_lev   = 0;  // At which quantization level does encoding terminate?
 #endif
+
 };
 
 };

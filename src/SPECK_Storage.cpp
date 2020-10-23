@@ -9,6 +9,34 @@
 #endif
 
 
+#ifdef USE_PMR
+speck::SPECK_Storage::SPECK_Storage()
+                    : m_bit_buffer( std::pmr::polymorphic_allocator<bool>(&m_pool) )
+{
+    // Keep a copy of whatever the current system default memory resource is.
+    // That's because I'm not sure how long the std::pmr::set_default_resource() call 
+    //   will take effect, but apparently it's longer than the lifespan of this object.
+    //   So to not mess up other pmr objects, let's restore the default resource.
+    // It cannot be declared const because of how it's used in std::pmr::get_default_resource(),
+    //   so let's try to not touch it again before the object destruction :)
+    m_previous_resource = std::pmr::get_default_resource();
+    
+    // Set the default resource, so PMR objects created subsequently in this class
+    //   (and its subclasses) will use m_pool as the default resource.
+    std::pmr::set_default_resource( &m_pool );
+
+    // Note that m_bit_buffer was created before this default is set,
+    //   it was constructed with an explicit allocator.
+}
+
+speck::SPECK_Storage::~SPECK_Storage()
+{
+    // Restore the previous resource before this object was created.
+    std::pmr::set_default_resource( m_previous_resource );
+}
+#endif
+
+
 template <typename T>
 void speck::SPECK_Storage::copy_data(const T* p, size_t len)
 {

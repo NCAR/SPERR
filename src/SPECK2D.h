@@ -94,13 +94,20 @@ private:
     bool         m_encode_mode       = true; // Encode (true) or Decode (false) mode?
     int32_t      m_max_coeff_bits    = 0;    // = log2(max_coefficient)
 
-    std::vector<bool> m_significance_map;
-    std::vector<bool> m_sign_array;
+    SPECKSet2D   m_I;
 
-    std::vector<SPECKSet2D>              m_LSP;
-    std::vector<std::vector<SPECKSet2D>> m_LIS;
-    std::vector<size_t>                  m_LIS_garbage_cnt;
-    SPECKSet2D                           m_I;
+    speck::vector_bool      m_significance_map;
+    speck::vector_bool      m_sign_array;
+    speck::vector_size_t    m_LIS_garbage_cnt;
+
+#ifdef USE_PMR
+    std::pmr::vector<SPECKSet2D>                    m_LSP;
+    std::pmr::vector<std::pmr::vector<SPECKSet2D>>  m_LIS;
+#else
+    std::vector<SPECKSet2D>                         m_LSP;
+    std::vector<std::vector<SPECKSet2D>>            m_LIS;
+#endif
+
 };
 
 };
