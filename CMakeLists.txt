@@ -17,7 +17,7 @@ endif()
 
 option( BUILD_UNIT_TESTS "Build unit tests using googletest?" OFF)
 option( USE_ZSTD "Incorporate zstd to achieve further 5% compression?" OFF)
-option( USE_PMR "Use Polymorphic Resource feature, which is introduced in C++17" ON)
+option( USE_PMR "Use Polymorphic Memory Resource. (Requires a C++17 compiler.)" ON)
 option( BUILD_QCC_EXAMPLES "Build examples that link to QccPack?" OFF)
 option( QZ_TERM  "Operational mode which terminates by quantization level" OFF)
 

@@ -31,7 +31,7 @@ speck::SPECK_Storage::SPECK_Storage()
 
 speck::SPECK_Storage::~SPECK_Storage()
 {
-    // Restore the default resource.
+    // Restore the previous resource before this object was created.
     std::pmr::set_default_resource( m_previous_resource );
 }
 #endif
