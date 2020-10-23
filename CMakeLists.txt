@@ -2,7 +2,6 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-# set the project name and version
 project(SPECK VERSION 0.1)
 
 # specify the C++ standard
@@ -17,7 +16,7 @@ endif()
 
 option( BUILD_UNIT_TESTS "Build unit tests using googletest?" OFF)
 option( USE_ZSTD "Incorporate zstd to achieve further 5% compression?" OFF)
-option( USE_PMR "Use Polymorphic Memory Resource. (Requires a C++17 compiler.)" ON)
+option( USE_PMR "Use Polymorphic Memory Resource. (Requires a C++17 compiler.)" OFF)
 option( BUILD_QCC_EXAMPLES "Build examples that link to QccPack?" OFF)
 option( QZ_TERM  "Operational mode which terminates by quantization level" OFF)
 
@@ -74,48 +73,124 @@ file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/download/v1.9.1/CLI11.h
               "${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp" )
 
 add_subdirectory( src )
-list( APPEND SPECK_LIBS SPECK3D_Compressor   )
-list( APPEND SPECK_LIBS SPECK3D_Decompressor )
-list( APPEND SPECK_LIBS SPECK2D_Compressor   )
-list( APPEND SPECK_LIBS SPECK2D_Decompressor )
-list( APPEND SPECK_LIBS SPECK2D         )
-list( APPEND SPECK_LIBS SPECK3D         )
-list( APPEND SPECK_LIBS SPECK_Err       )
-list( APPEND SPECK_LIBS SPECK_Storage   )
-list( APPEND SPECK_LIBS CDF97           )
-list( APPEND SPECK_LIBS speck_helper    )
-list( APPEND SPECK_LIBS sam_helper      )
+list( APPEND CDF_LIBS CDF97           )
+list( APPEND CDF_LIBS speck_helper    )
+list( APPEND CDF_LIBS sam_helper      )
+
+list( APPEND SPECK3D_LIBS SPECK3D_Compressor   )
+list( APPEND SPECK3D_LIBS SPECK3D_Decompressor )
+list( APPEND SPECK3D_LIBS SPECK3D         )
+
+list( APPEND SPECK2D_LIBS SPECK2D_Compressor   )
+list( APPEND SPECK2D_LIBS SPECK2D_Decompressor )
+list( APPEND SPECK2D_LIBS SPECK2D         )
+
+list( APPEND SPECK_Err_LIBS SPECK_Err       )
+
+list( APPEND SPECK_Storage_LIBS SPECK_Storage   )
+
 if( USE_ZSTD )
     ExternalProject_Get_Property( zstd-download INSTALL_DIR )
     link_directories( "${INSTALL_DIR}/lib" )
-    list( APPEND SPECK_LIBS zstd )
+    list( APPEND SPECK_Storage_LIBS zstd )
 endif()
 
-# Executable #1
-add_executable(             example_dwt2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt2d.cpp" )
-target_link_libraries(      example_dwt2d PUBLIC ${SPECK_LIBS} )
+
+add_executable( example_dwt2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt2d.cpp" )
+target_link_libraries(      example_dwt2d PUBLIC ${CDF_LIBS} )
 target_include_directories( example_dwt2d PUBLIC ${PROJECT_BINARY_DIR} )
 
-# Executable #3
-add_executable(             example_dwt3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt3d.cpp" )
-target_link_libraries(      example_dwt3d PUBLIC ${SPECK_LIBS})
+add_executable( example_dwt3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt3d.cpp" )
+target_link_libraries(      example_dwt3d PUBLIC ${CDF_LIBS})
 target_include_directories( example_dwt3d PUBLIC ${PROJECT_BINARY_DIR} )
 
-# Executable #5
-add_executable(             compressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_3d.cpp" )
-target_link_libraries(      compressor_3d PUBLIC ${SPECK_LIBS})
+add_executable( compressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_3d.cpp" )
+target_link_libraries(      compressor_3d PUBLIC ${SPECK3D_LIBS}
+                                          PUBLIC ${SPECK_Storage_LIBS}
+                                          PUBLIC ${CDF_LIBS}           )
 target_include_directories( compressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
 
-# Executable #7
-add_executable(             compressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_2d.cpp" )
-target_link_libraries(      compressor_2d PUBLIC ${SPECK_LIBS})
+add_executable( compressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_2d.cpp" )
+target_link_libraries(      compressor_2d PUBLIC ${SPECK2D_LIBS}
+                                          PUBLIC ${SPECK_Storage_LIBS}
+                                          PUBLIC ${CDF_LIBS}           ) 
 target_include_directories( compressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
 
-# Executable #9
-add_executable(             example_speck_err "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck_err.cpp" )
-target_link_libraries(      example_speck_err PUBLIC ${SPECK_LIBS})
+add_executable( example_speck_err "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck_err.cpp" )
+target_link_libraries(      example_speck_err PUBLIC ${SPECK_Err_LIBS}
+                                              PUBLIC ${CDF_LIBS}           ) 
 target_include_directories( example_speck_err PUBLIC ${PROJECT_BINARY_DIR} )
 
+
+if( BUILD_UNIT_TESTS )
+    # Download and unpack googletest at configure time
+    configure_file(GTestCMake.txt.in googletest-download/CMakeLists.txt)
+    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .  RESULT_VARIABLE result
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download
+                    OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest.stdout
+                    ERROR_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest.stderr        )
+    if(result)
+      message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+    endif()
+
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .  RESULT_VARIABLE result
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download
+                    OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest.stdout
+                    ERROR_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest.stderr        )
+    if(result)
+      message(FATAL_ERROR "Build step for googletest failed: ${result}")
+    endif()
+
+    # Prevent overriding the parent project's compiler/linker settings on Windows
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+    # Add googletest directly to our build. This defines the gtest and gtest_main targets.
+    add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
+                     ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
+                     EXCLUDE_FROM_ALL)
+
+    # Now we have all the tests! 
+
+    add_executable( test_speck_helper 
+                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck_helper_unit_test.cpp" )
+    target_link_libraries( test_speck_helper PUBLIC ${CDF_LIBS}
+                                             PUBLIC gtest_main       )
+    add_test( NAME test_speck_helper COMMAND test_speck_helper       )
+
+    add_executable( test_dwt
+                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/dwt_unit_test.cpp" )
+    target_link_libraries( test_dwt PUBLIC ${CDF_LIBS}
+                                    PUBLIC ${SPECK_LIBS} 
+                                    PUBLIC gtest_main                 )
+    add_test( NAME test_dwt COMMAND test_dwt                          )
+
+    add_executable( test_speck2d
+                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck2d_unit_test.cpp" )
+    target_link_libraries( test_speck2d PUBLIC ${SPECK2D_LIBS}
+                                        PUBLIC ${SPECK_Storage_LIBS} 
+                                        PUBLIC ${CDF_LIBS} 
+                                        PUBLIC gtest_main            )
+    add_test( NAME test_speck2d COMMAND test_speck2d                 )
+
+    add_executable( test_speck3d
+                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck3d_unit_test.cpp" )
+    target_link_libraries( test_speck3d PUBLIC ${SPECK3D_LIBS}
+                                        PUBLIC ${SPECK_Storage_LIBS} 
+                                        PUBLIC ${CDF_LIBS} 
+                                        PUBLIC gtest_main            )
+    add_test( NAME test_speck3d COMMAND test_speck3d                 )
+
+    add_executable( test_speck_err
+                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck_err_unit_test.cpp" )
+    target_link_libraries( test_speck_err PUBLIC ${SPECK_Err_LIBS}
+                                          PUBLIC ${CDF_LIBS} 
+                                          PUBLIC gtest_main          )
+    add_test( NAME test_speck_err COMMAND test_speck_err             )
+
+endif()
+
+
+#[[
 if( BUILD_QCC_EXAMPLES )
     set ( QCCPACK_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/QccPack-0.61-1/install/" 
                               CACHE STRING "Where QccPack is installed"             )
@@ -155,75 +230,5 @@ if( BUILD_QCC_EXAMPLES )
                                                     PUBLIC m                   )
     target_include_directories( example_qcc_speck3d PUBLIC ${PROJECT_BINARY_DIR}
                                                     PUBLIC ${QCCPACK_INC}      )
-endif()
-
-
-if( BUILD_UNIT_TESTS )
-    # Download and unpack googletest at configure time
-    configure_file(GTestCMake.txt.in googletest-download/CMakeLists.txt)
-    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .  RESULT_VARIABLE result
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download
-                    OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest.stdout
-                    ERROR_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest.stderr        )
-    if(result)
-      message(FATAL_ERROR "CMake step for googletest failed: ${result}")
-    endif()
-
-    execute_process(COMMAND ${CMAKE_COMMAND} --build .  RESULT_VARIABLE result
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download
-                    OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest.stdout
-                    ERROR_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest.stderr        )
-    if(result)
-      message(FATAL_ERROR "Build step for googletest failed: ${result}")
-    endif()
-
-    # Prevent overriding the parent project's compiler/linker settings on Windows
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-    # Add googletest directly to our build. This defines the gtest and gtest_main targets.
-    add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
-                     ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
-                     EXCLUDE_FROM_ALL)
-
-    # Now we have all the tests! 
-    # unit tests for speck_helper
-    add_executable( test_speck_helper 
-                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck_helper_unit_test.cpp" )
-    target_link_libraries( test_speck_helper PUBLIC speck_helper 
-                                             PUBLIC gtest_main          )
-    add_test( NAME test_speck_helper COMMAND test_speck_helper          )
-
-    # unit tests for dwt
-    add_executable( test_dwt
-                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/dwt_unit_test.cpp" )
-    target_link_libraries( test_dwt PUBLIC sam_helper
-                                    PUBLIC ${SPECK_LIBS} 
-                                    PUBLIC gtest_main                 )
-    add_test( NAME test_dwt COMMAND test_dwt                        )
-
-    # unit tests for speck2d
-    add_executable( test_speck2d
-                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck2d_unit_test.cpp" )
-    target_link_libraries( test_speck2d PUBLIC sam_helper
-                                        PUBLIC ${SPECK_LIBS} 
-                                        PUBLIC gtest_main                 )
-    add_test( NAME test_speck2d COMMAND test_speck2d                    )
-
-    # unit tests for speck3d
-    add_executable( test_speck3d
-                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck3d_unit_test.cpp" )
-    target_link_libraries( test_speck3d PUBLIC sam_helper
-                                        PUBLIC ${SPECK_LIBS} 
-                                        PUBLIC gtest_main                 )
-    add_test( NAME test_speck3d COMMAND test_speck3d                    )
-
-    # unit tests for speck_err
-    add_executable( test_speck_err
-                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck_err_unit_test.cpp" )
-    target_link_libraries( test_speck_err PUBLIC sam_helper
-                                        PUBLIC ${SPECK_LIBS} 
-                                        PUBLIC gtest_main                 )
-    add_test( NAME test_speck_err COMMAND test_speck_err                    )
-
-endif()
-
+endif() 
+]]
