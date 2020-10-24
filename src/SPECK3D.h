@@ -118,18 +118,6 @@ private:
     speck::vector_bool   m_LSP_newly; // if this significant pixel newly became so or not
     speck::vector_bool   m_sign_array;
     
-#ifdef USE_OMP
-    // With multithreading, `vector_uint8_t` enables parallaization that's faster overall
-    speck::vector_uint8_t   m_significance_map;
-    const uint8_t           m_false = 0;
-    const uint8_t           m_true  = 1;
-#else
-    // With single threading, `vector_bool` enables compact storage that's faster overall
-    speck::vector_bool      m_significance_map;
-    const bool              m_false = false;
-    const bool              m_true  = false;
-#endif
-
 #ifdef USE_PMR
     std::pmr::vector<std::pmr::vector<SPECKSet3D>>  m_LIS;
     std::pmr::vector<size_t>                        m_LIS_garbage_cnt;
