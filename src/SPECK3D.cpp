@@ -379,8 +379,8 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
             // m_LSP_newly[i] will be set false later in a serial fashion.
         } else {
             if (m_coeff_buf[pos] >= m_threshold) {  // case 2)
-                refine_results[i] = 1;
                 m_coeff_buf[pos] -= m_threshold;
+                refine_results[i] = 1;
             } else {                                // case 3)
                 refine_results[i] = 2;
             }

@@ -95,7 +95,7 @@ list( APPEND SPECK_Storage_LIBS SPECK_Storage   )
 list( APPEND SPECK3D_LIBS SPECK3D_Compressor   )
 list( APPEND SPECK3D_LIBS SPECK3D_Decompressor )
 list( APPEND SPECK3D_LIBS SPECK3D              )
-if( OpenMP_CXX_FOUND )
+if( USE_OMP AND OpenMP_CXX_FOUND )
   list( APPEND SPECK3D_LIBS OpenMP::OpenMP_CXX   )
 endif()
 
