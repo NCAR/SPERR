@@ -78,6 +78,7 @@ void speck::SPECK3D::m_clean_LIS()
     // Erase-remove idiom:
     // https://en.wikipedia.org/wiki/Erase%E2%80%93remove_idiom
 
+    // It turns out that OpenMP does almost no help here...
     for( size_t i = 0; i < m_LIS.size(); i++ ) {
         if( m_LIS_garbage_cnt[i] > m_LIS[i].size() / 4 ) {
 
@@ -173,6 +174,7 @@ auto speck::SPECK3D::decode() -> RTNType
 
     // initialize coefficients to be zero, and sign array to be all positive
     m_coeff_buf = speck::unique_malloc<double>(m_coeff_len);
+    #pragma omp parallel for
     for (size_t i = 0; i < m_coeff_len; i++)
         m_coeff_buf[i] = 0.0;
     m_sign_array.assign(m_coeff_len, true);
@@ -201,12 +203,14 @@ auto speck::SPECK3D::decode() -> RTNType
 
     // If the loop above aborted before all newly significant pixels are initialized,
     // we finish them here!
+    #pragma omp parallel for
     for (size_t i = 0; i < m_LSP_newly.size(); i++) {
         if (m_LSP_newly[i])
             m_coeff_buf[m_LSP[i]] = 1.5 * m_threshold;
     }
 
     // Restore coefficient signs by setting some of them negative
+    #pragma omp parallel for
     for (size_t i = 0; i < m_sign_array.size(); i++) {
         if (!m_sign_array[i])
             m_coeff_buf[i] = -m_coeff_buf[i];
@@ -303,6 +307,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
         }
     }
 
+    // Then we process regular sets in LIS.
     for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
         // From the end of m_LIS to its front
         size_t idx1 = m_LIS.size() - tmp;
@@ -337,6 +342,7 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
         }
     }
 
+    // Then we process regular sets in LIS.
     for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
         // From the end of m_LIS to its front
         size_t idx1 = m_LIS.size() - tmp;
@@ -474,6 +480,9 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
     // decide the significance of this set
     set.signif              = Significance::Insig;
     const size_t slice_size = m_dim_x * m_dim_y;
+
+    // It turns out that you cannot put a `break` statement inside of an OpenMP for loop,
+    //   so we do it old-fashioned serial.
     for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
         const size_t slice_offset = z * slice_size;
         for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
@@ -488,7 +497,7 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
         }
     }
 end_loop_label:
-    m_bit_buffer.push_back(set.signif == Significance::Sig); // output the significance value
+    m_bit_buffer.push_back(set.signif == Significance::Sig); // output true/false
 
 #ifndef QZ_TERM
     if (m_bit_buffer.size() >= m_budget)
