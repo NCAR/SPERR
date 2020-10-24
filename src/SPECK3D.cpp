@@ -296,11 +296,6 @@ void speck::SPECK3D::m_initialize_sets_lists()
 
 auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 {
-
-#ifdef PRINT
-    std::cout << "--> Sorting Pass " << std::endl;
-#endif
-
     // Since we have a separate representation of LIP, let's process that list first!
     for (size_t i = 0; i < m_LIP.size(); i++) {
         if( m_LIP[i] != m_LIP_garbage_val ) {
@@ -381,7 +376,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
         if (m_LSP_newly[i]) {                       // case 1)
             m_coeff_buf[pos] -= m_threshold;
             // refine_results[i] remains 0. 
-            // m_LSP_newly[i] will be set false later in serial.
+            // m_LSP_newly[i] will be set false later in a serial fashion.
         } else {
             if (m_coeff_buf[pos] >= m_threshold) {  // case 2)
                 refine_results[i] = 1;
@@ -451,11 +446,6 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
     const bool this_pixel_is_sig = m_significance_map[pixel_idx];
     m_bit_buffer.push_back(this_pixel_is_sig);
 
-#ifdef PRINT
-    const char* s = this_pixel_is_sig ? "s1\n" : "s0\n";
-    std::cout << s; 
-#endif
-
 #ifndef QZ_TERM
     // Check bit budget after outputing a bit
     if (m_bit_buffer.size() >= m_budget)
@@ -466,10 +456,6 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
         // Output pixel sign
         m_bit_buffer.push_back(m_sign_array[pixel_idx]);
 
-#ifdef PRINT
-        const char* p = m_sign_array[pixel_idx] ? "p1\n" : "p0\n";
-        std::cout << p;
-#endif
         // Note that after outputing two bits this pixel got put in LSP.
         // The same logic is reversed when decoding.
         m_LSP.push_back(pixel_idx);
