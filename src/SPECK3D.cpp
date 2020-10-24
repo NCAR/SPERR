@@ -4,6 +4,10 @@
 #include <cmath>
 #include <cstring>
 
+#ifdef USE_OMP
+    #include <omp.h>
+#endif
+
 #ifdef PRINT
     #include <iostream>
 #endif
@@ -292,11 +296,6 @@ void speck::SPECK3D::m_initialize_sets_lists()
 
 auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 {
-
-#ifdef PRINT
-    std::cout << "--> Sorting Pass " << std::endl;
-#endif
-
     // Since we have a separate representation of LIP, let's process that list first!
     for (size_t i = 0; i < m_LIP.size(); i++) {
         if( m_LIP[i] != m_LIP_garbage_val ) {
@@ -365,36 +364,59 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 
 auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 {
-    // This loop seems to be pretty expensive, and also could be parallelized
-    //   using OpenMP reasonably well.
+    // Use an array to record 3 possible results of every refinement operation:
+    // 1) result == 0 : no bit output 
+    // 2) result == 1 : `true` was output
+    // 3) result == 2 : `false` was output
+    speck::vector_uint8_t refine_results( m_LSP.size(), 0 );
+
+    #pragma omp parallel for
     for (size_t i = 0; i < m_LSP.size(); i++) {
         const auto pos = m_LSP[i];
-        if (m_LSP_newly[i]) { // This is pixel is newly identified as significant
+        if (m_LSP_newly[i]) {                       // case 1)
             m_coeff_buf[pos] -= m_threshold;
-            m_LSP_newly[i] = false;
+            // refine_results[i] remains 0. 
+            // m_LSP_newly[i] will be set false later in a serial fashion.
         } else {
-            if (m_coeff_buf[pos] >= m_threshold) {
-                m_bit_buffer.push_back(true);
+            if (m_coeff_buf[pos] >= m_threshold) {  // case 2)
                 m_coeff_buf[pos] -= m_threshold;
-            } else {
-                m_bit_buffer.push_back(false);
+                refine_results[i] = 1;
+            } else {                                // case 3)
+                refine_results[i] = 2;
             }
+        }
+    }
 
-#ifdef PRINT
-            const char* r = m_bit_buffer.back() ? "r1\n" : "r0\n";
-            std::cout << r; 
-#endif
-
+    // Now remove newly significant marks, and also
+    //   attach the true/false outputs from `refine_results` to `m_bit_buffer` 
+    for( size_t i = 0; i < refine_results.size(); i++ ) {
+        const auto e = refine_results[i];
+        if( e == 0 )
+            m_LSP_newly[i] = false;
+        else if( e == 1 ) {
+            m_bit_buffer.push_back( true );
 #ifndef QZ_TERM
-            // Let's also see if we've reached the bit budget
-            if (m_bit_buffer.size() >= m_budget)
+            if( m_bit_buffer.size() >= m_budget ) 
                 return RTNType::BitBudgetMet;
 #endif
-
+        }
+        else if( e == 2 ) {
+            m_bit_buffer.push_back( false );
+#ifndef QZ_TERM
+            if( m_bit_buffer.size() >= m_budget ) 
+                return RTNType::BitBudgetMet;
+#endif
         }
     }
 
     return RTNType::Good;
+
+    // Note that in `fixed size` compression mode, unnecessary computation could be
+    // performed when a subset of m_LSP could satisfy the budget requirement, but
+    // all elements from m_LSP are processed.
+    // However, processing all elements from m_LSP enables OpenMP parallelism, which
+    // is a gain. Also, `fixed size` mode is considered as less useful than 
+    // `fixed QZ_TERM`, which will not see wasted computation.
 }
 
 auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
@@ -424,11 +446,6 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
     const bool this_pixel_is_sig = m_significance_map[pixel_idx];
     m_bit_buffer.push_back(this_pixel_is_sig);
 
-#ifdef PRINT
-    const char* s = this_pixel_is_sig ? "s1\n" : "s0\n";
-    std::cout << s; 
-#endif
-
 #ifndef QZ_TERM
     // Check bit budget after outputing a bit
     if (m_bit_buffer.size() >= m_budget)
@@ -439,10 +456,6 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
         // Output pixel sign
         m_bit_buffer.push_back(m_sign_array[pixel_idx]);
 
-#ifdef PRINT
-        const char* p = m_sign_array[pixel_idx] ? "p1\n" : "p0\n";
-        std::cout << p;
-#endif
         // Note that after outputing two bits this pixel got put in LSP.
         // The same logic is reversed when decoding.
         m_LSP.push_back(pixel_idx);
