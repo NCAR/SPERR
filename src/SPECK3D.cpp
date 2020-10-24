@@ -130,10 +130,11 @@ auto speck::SPECK3D::encode() -> RTNType
 
         // Update the significance map based on the current threshold
         // Most of them are gonna be false, and only a small portion to be true.
-        m_significance_map.assign(m_coeff_len, false);
+        m_significance_map.assign(m_coeff_len, m_false);
+        #pragma omp parallel for
         for (size_t i = 0; i < m_coeff_len; i++) {
             if (m_coeff_buf[i] >= m_threshold)
-                m_significance_map[i] = true;
+                m_significance_map[i] = m_true;
         }
 
 #ifdef QZ_TERM
@@ -443,7 +444,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
     const auto pixel_idx = m_LIP[loc];
 
     // decide the significance of this pixel
-    const bool this_pixel_is_sig = m_significance_map[pixel_idx];
+    const bool this_pixel_is_sig = (m_significance_map[pixel_idx] != m_false);
     m_bit_buffer.push_back(this_pixel_is_sig);
 
 #ifndef QZ_TERM
@@ -489,7 +490,7 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
 
             // Note: use std::any_of() isn't faster...
             for (auto x = set.start_x; x < (set.start_x + set.length_x); x++) {
-                if (m_significance_map[col_offset + x]) {
+                if (m_significance_map[col_offset + x] != m_false) {
                     set.signif = Significance::Sig;
                     goto end_loop_label;
                 }
