@@ -26,6 +26,13 @@ target_include_directories( SPECK3D_Compressor   INTERFACE ${CMAKE_CURRENT_SOURC
 target_include_directories( SPECK3D_Decompressor INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( SPECK2D_Compressor   INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( SPECK2D_Decompressor INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
+
+#
+# if OpenMP is enabled and found
+#
+if( OpenMP_CXX_FLAGS )
+    target_compile_options( SPECK3D PUBLIC ${OpenMP_CXX_FLAGS} )
+endif()
     
 if( USE_ZSTD )
     add_dependencies( SPECK_Storage zstd-download )
