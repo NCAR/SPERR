@@ -71,6 +71,9 @@ auto speck::make_coeff_positive(U& buf, size_t len, vector_bool& sign_array)
     auto max                = std::abs(buf[0]);
     using element_type      = typename U::element_type;
     const element_type zero = 0.0;
+
+    // Notice that the use of std::vector<bool> for sign_array prevents 
+    //   this loop been parallelized using OpenMP.
     for (size_t i = 0; i < len; i++) {
         if (buf[i] < zero) {
             buf[i]        = -buf[i];
