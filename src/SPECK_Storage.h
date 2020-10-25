@@ -40,7 +40,7 @@ public:
     // Get the encoded bitstream.
     // The returned memory block could be written to disk by other programs.
     //
-    virtual auto get_encoded_bitstream() const -> std::pair<buffer_type_raw, size_t> = 0;
+    virtual auto get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t> = 0;
 
     // Prepare internal states for a decompression operation from an encoded bitstream
     //
@@ -65,7 +65,7 @@ protected:
     //
     // Note: The caller is supposed to hold ownership of the resulting memory block.
     auto m_assemble_encoded_bitstream( const void* header, size_t header_size ) const
-         -> std::pair<buffer_type_raw, size_t>;
+         -> std::pair<buffer_type_uint8, size_t>;
 
     // Parse a compressed buffer, and extract the metadata, header, and bitstream from it.
     //

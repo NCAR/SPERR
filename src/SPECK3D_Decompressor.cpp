@@ -12,7 +12,7 @@ void SPECK3D_Decompressor::copy_bitstream( const void* p, size_t len )
 }
 
     
-void SPECK3D_Decompressor::take_bitstream( speck::buffer_type_raw buf, size_t len )
+void SPECK3D_Decompressor::take_bitstream( speck::buffer_type_uint8 buf, size_t len )
 {
     m_stream_buf = std::move( buf );
     m_stream_buf_size = len;

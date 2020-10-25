@@ -507,8 +507,9 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
     set.signif              = Significance::Insig;
     const size_t slice_size = m_dim_x * m_dim_y;
 
-    // It turns out that you cannot put a `break` statement inside of an OpenMP for loop,
-    //   so we do it old-fashioned serial.
+    // It turns out that you cannot put a `break` statement inside of an OpenMP for loop.
+    // Also, this old-fashioned serial implementation is faster than using OMP
+    //   at any level (Z, Y, X) of this loop.
     for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
         const size_t slice_offset = z * slice_size;
         for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
@@ -684,7 +685,7 @@ auto speck::SPECK3D::m_ready_to_decode() const -> bool
 }
 
 
-auto speck::SPECK3D::get_encoded_bitstream() const -> std::pair<buffer_type_raw, size_t>
+auto speck::SPECK3D::get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t>
 {
     // Header definition:
     // information: dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  bitstream

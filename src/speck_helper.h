@@ -20,10 +20,10 @@ namespace speck {
 #ifndef BUFFER_TYPES
 #define BUFFER_TYPES
 
-    using buffer_type_d   = std::unique_ptr<double[]>;
-    using buffer_type_f   = std::unique_ptr<float[]>;
-    using buffer_type_c   = std::unique_ptr<char[]>;
-    using buffer_type_raw = std::unique_ptr<uint8_t[]>; // for blocks of raw memory
+    using buffer_type_d     = std::unique_ptr<double[]>;
+    using buffer_type_f     = std::unique_ptr<float[]>;
+    using buffer_type_c     = std::unique_ptr<char[]>;
+    using buffer_type_uint8 = std::unique_ptr<uint8_t[]>;
 
 #ifdef USE_PMR
     using vector_bool     = std::pmr::vector<bool>;
@@ -123,7 +123,7 @@ auto make_coeff_positive(U& buf, size_t len, vector_bool&) -> typename U::elemen
 //
 // Note: unpack_booleans() takes a raw pointer because it accesses memory provided by others,
 //       and others most likely provide it by raw pointers.
-auto pack_booleans( buffer_type_raw&   dest,
+auto pack_booleans( buffer_type_uint8& dest,
                     const vector_bool& src,
                     size_t             char_offset = 0 ) -> RTNType;
 auto unpack_booleans( vector_bool&     dest,

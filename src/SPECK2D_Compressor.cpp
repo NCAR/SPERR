@@ -89,7 +89,7 @@ auto SPECK2D_Compressor::compress() -> RTNType
 
 
 auto SPECK2D_Compressor::get_encoded_bitstream() const
-                         -> std::pair<speck::buffer_type_raw, size_t>
+                         -> std::pair<speck::buffer_type_uint8, size_t>
 {
     return (m_encoder.get_encoded_bitstream());
 }

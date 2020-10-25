@@ -86,7 +86,7 @@ auto speck::SPECK_Storage::get_image_mean() const -> double
 
 auto speck::SPECK_Storage::m_assemble_encoded_bitstream( const void* header, 
                                                          size_t header_size ) const
-                           -> std::pair<buffer_type_raw, size_t>
+                           -> std::pair<buffer_type_uint8, size_t>
 {
     // Sanity check on the size of bit_buffer
     if(m_bit_buffer.size() % 8 != 0)

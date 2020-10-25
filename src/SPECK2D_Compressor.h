@@ -38,7 +38,7 @@ public:
 //#endif
 
     auto compress() -> RTNType;
-    auto get_encoded_bitstream() const -> std::pair<speck::buffer_type_raw, size_t>;
+    auto get_encoded_bitstream() const -> std::pair<speck::buffer_type_uint8, size_t>;
     auto write_bitstream( const char* filename ) const -> RTNType;
 
 private:

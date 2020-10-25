@@ -690,7 +690,7 @@ auto speck::SPECK2D::m_ready_to_decode() const -> bool
 }
 
 
-auto speck::SPECK2D::get_encoded_bitstream() const -> std::pair<buffer_type_raw, size_t> 
+auto speck::SPECK2D::get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t> 
 {
     // Header definition:
     // information: dim_x,    dim_y,    dim_z,    image_mean, max_coeff_bits, bitstream

@@ -87,7 +87,7 @@ speck::make_coeff_positive(buffer_type_f&, size_t, vector_bool&);
 
 // Good solution to deal with bools and unsigned chars
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
-auto speck::pack_booleans( buffer_type_raw&   dest,
+auto speck::pack_booleans( buffer_type_uint8& dest,
                            const vector_bool& src,
                            size_t             offset ) -> RTNType
 {
@@ -167,4 +167,4 @@ auto speck::unique_malloc( size_t size ) -> std::unique_ptr<T[]>
 template auto speck::unique_malloc( size_t ) -> buffer_type_c;
 template auto speck::unique_malloc( size_t ) -> buffer_type_d;
 template auto speck::unique_malloc( size_t ) -> buffer_type_f;
-template auto speck::unique_malloc( size_t ) -> buffer_type_raw;
+template auto speck::unique_malloc( size_t ) -> buffer_type_uint8;

@@ -20,7 +20,7 @@ public:
     void copy_bitstream( const void* p, size_t len );
 
     // Accept incoming data by taking ownership of the memory block
-    void take_bitstream( speck::buffer_type_raw buf, size_t len );
+    void take_bitstream( speck::buffer_type_uint8 buf, size_t len );
 
     // Accept incoming data by reading a file from disk.
     auto read_bitstream( const char* filename ) -> RTNType;
@@ -45,7 +45,7 @@ private:
     size_t m_dim_z           = 0;
     size_t m_total_vals      = 0;
     size_t m_stream_buf_size = 0;
-    speck::buffer_type_raw  m_stream_buf;
+    speck::buffer_type_uint8  m_stream_buf;
 
     speck::CDF97    m_cdf;
     speck::SPECK3D  m_decoder;

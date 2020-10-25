@@ -49,7 +49,7 @@ public:
     auto encode() -> RTNType;
     auto decode() -> RTNType;
 
-    auto get_encoded_bitstream() const -> std::pair<buffer_type_raw, size_t> override;
+    auto get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t> override;
     auto parse_encoded_bitstream( const void* , size_t ) -> RTNType override;
 
 private:
