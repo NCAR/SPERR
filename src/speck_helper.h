@@ -128,7 +128,7 @@ auto pack_booleans( buffer_type_uint8& dest,
                     size_t             dest_offset = 0 ) -> RTNType;
 auto unpack_booleans( vector_bool&     dest,
                       const void*      src,
-                      size_t           src_len, // total length of char array
+                      size_t           src_len,
                       size_t           src_offset = 0 ) -> RTNType;
 
 // Pack and unpack exactly 8 booleans to/from a single byte
