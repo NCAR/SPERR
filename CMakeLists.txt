@@ -95,15 +95,17 @@ list( APPEND SPECK_Storage_LIBS SPECK_Storage   )
 list( APPEND SPECK3D_LIBS SPECK3D_Compressor   )
 list( APPEND SPECK3D_LIBS SPECK3D_Decompressor )
 list( APPEND SPECK3D_LIBS SPECK3D              )
-if( USE_OMP AND OpenMP_CXX_FOUND )
-  list( APPEND SPECK3D_LIBS OpenMP::OpenMP_CXX   )
-endif()
 
 list( APPEND SPECK2D_LIBS SPECK2D_Compressor   )
 list( APPEND SPECK2D_LIBS SPECK2D_Decompressor )
 list( APPEND SPECK2D_LIBS SPECK2D              )
 
 list( APPEND SPECK_Err_LIBS SPECK_Err )
+
+if( USE_OMP AND OpenMP_CXX_FOUND )
+  list( APPEND HELPER_LIBS  OpenMP::OpenMP_CXX   )
+  list( APPEND SPECK3D_LIBS OpenMP::OpenMP_CXX   )
+endif()
 
 if( USE_ZSTD )
     ExternalProject_Get_Property( zstd-download INSTALL_DIR )

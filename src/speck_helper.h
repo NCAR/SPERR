@@ -125,11 +125,11 @@ auto make_coeff_positive(U& buf, size_t len, vector_bool&) -> typename U::elemen
 //       and others most likely provide it by raw pointers.
 auto pack_booleans( buffer_type_uint8& dest,
                     const vector_bool& src,
-                    size_t             char_offset = 0 ) -> RTNType;
+                    size_t             dest_offset = 0 ) -> RTNType;
 auto unpack_booleans( vector_bool&     dest,
                       const void*      src,
                       size_t           src_len, // total length of char array
-                      size_t           char_offset = 0 ) -> RTNType;
+                      size_t           src_offset = 0 ) -> RTNType;
 
 // Pack and unpack exactly 8 booleans to/from a single byte
 // Note that memory for the 8 booleans should already be allocated!

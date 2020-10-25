@@ -6,6 +6,9 @@
 #include <cstring>
 #include <fstream>
 
+#ifdef USE_OMP
+    #include <omp.h>
+#endif
 
 
 //
@@ -95,17 +98,14 @@ auto speck::pack_booleans( buffer_type_uint8& dest,
         return RTNType::WrongSize;
 
     const uint64_t magic = 0x8040201008040201;
-    size_t         pos   = offset;
-    bool           a[8];
-    uint64_t       t;
-    for (size_t i = 0; i < src.size(); i++) {
-        auto m = i % 8;
-        a[m]   = src[i];
-        if (m == 7) // Need to pack 8 booleans!
-        {
-            std::memcpy(&t, a, 8);
-            dest[pos++] = (magic * t) >> 56;
-        }
+
+    #pragma omp parallel for
+    for( size_t i = 0; i < src.size(); i += 8 ) {
+        bool     a[8];
+        uint64_t t;
+        std::copy( src.cbegin() + i, src.cbegin() + i + 8, std::begin(a) );
+        std::memcpy( &t, a, 8 );
+        dest[ offset + i / 8 ] = (magic * t) >> 56;
     }
 
     return RTNType::Good;
@@ -114,29 +114,26 @@ auto speck::pack_booleans( buffer_type_uint8& dest,
 auto speck::unpack_booleans( vector_bool& dest,
                              const void*  src,
                              size_t       src_len,
-                             size_t       char_offset ) -> RTNType
+                             size_t       src_offset ) -> RTNType
 {
-    if( src_len < char_offset )
+    if( src_len < src_offset )
         return RTNType::WrongSize;
 
-    const uint8_t* src_ptr = static_cast<const uint8_t*>(src);
-
-    size_t num_of_bools = (src_len - char_offset) * 8;
+    const size_t num_of_bytes = src_len - src_offset;
+    const size_t num_of_bools = num_of_bytes * 8;
     if( num_of_bools != dest.size() )
         return RTNType::WrongSize;
 
-    const uint64_t magic = 0x8040201008040201;
-    const uint64_t mask  = 0x8080808080808080;
-    size_t         pos   = char_offset;
-    bool           a[8];
-    uint64_t       t;
-    uint8_t        b;
-    for (size_t i = 0; i < num_of_bools; i += 8) {
-        std::memcpy( &b, src_ptr + pos++, 1 );
-        t = ((magic * b) & mask) >> 7;
-        std::memcpy(a, &t, 8);
-        for (size_t j = 0; j < 8; j++)
-            dest[i + j] = a[j];
+    const uint8_t* src_ptr = reinterpret_cast<const uint8_t*>(src) + src_offset;
+    const uint64_t magic   = 0x8040201008040201;
+    const uint64_t mask    = 0x8080808080808080;
+
+    #pragma omp parallel for
+    for( size_t i = 0; i < num_of_bytes; i++ ) {
+        const uint64_t t = (( magic * (*(src_ptr + i)) ) & mask) >> 7;
+        bool a[8];
+        std::memcpy( a, &t, 8 );
+        std::copy( std::cbegin(a), std::cend(a), dest.begin() + i * 8 );
     }
 
     return RTNType::Good;
