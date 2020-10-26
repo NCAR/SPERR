@@ -174,7 +174,6 @@ auto speck::SPECK3D::decode() -> RTNType
 
     // initialize coefficients to be zero, and sign array to be all positive
     m_coeff_buf = speck::unique_malloc<double>(m_coeff_len);
-    #pragma omp parallel for
     for (size_t i = 0; i < m_coeff_len; i++)
         m_coeff_buf[i] = 0.0;
     m_sign_array.assign(m_coeff_len, true);
@@ -203,14 +202,12 @@ auto speck::SPECK3D::decode() -> RTNType
 
     // If the loop above aborted before all newly significant pixels are initialized,
     // we finish them here!
-    #pragma omp parallel for
     for (size_t i = 0; i < m_LSP_newly.size(); i++) {
         if (m_LSP_newly[i])
             m_coeff_buf[m_LSP[i]] = 1.5 * m_threshold;
     }
 
     // Restore coefficient signs by setting some of them negative
-    #pragma omp parallel for
     for (size_t i = 0; i < m_sign_array.size(); i++) {
         if (!m_sign_array[i])
             m_coeff_buf[i] = -m_coeff_buf[i];
