@@ -5,6 +5,10 @@
 #include <cstring> // for std::memcpy()
 #include <type_traits>
 
+#ifdef USE_OMP
+    #include <omp.h>
+#endif
+
 template <typename T>
 void speck::CDF97::copy_data(const T* data, size_t len)
 {
@@ -219,18 +223,20 @@ void speck::CDF97::idwt3d()
 //
 void speck::CDF97::m_calc_mean()
 {
-    /*
-     * Here we calculate mean row by row to avoid too big numbers.
-     *   Not using Kahan summation because that's hard to vectorize.
-     *   Also, one test shows that this implementation is 4X faster than Kahan.
-     */
+    //
+    // Here we calculate mean row by row to avoid too big numbers.
+    // One test shows that this implementation is 4X faster than Kahan algorithm
+    // Another test shows that OpenMP also makes this routine slower...
+    //
     assert(m_dim_x > 0 && m_dim_y > 0 && m_dim_z > 0);
+
     auto buffer = speck::unique_malloc<double>(m_dim_y * m_dim_z + m_dim_z);
     double* const row_means   = buffer.get();                     // Front of the buffer
     double* const layer_means = buffer.get() + m_dim_y * m_dim_z; // End of the buffer
 
-    const double  dim_x1    = 1.0 / double(m_dim_x);
-    size_t        counter1 = 0, counter2 = 0;
+    const double  dim_x1   = 1.0 / double(m_dim_x);
+    size_t        counter1 = 0;
+    size_t        counter2 = 0;
     for (size_t z = 0; z < m_dim_z; z++) {
         for (size_t y = 0; y < m_dim_y; y++) {
             double sum = 0.0;

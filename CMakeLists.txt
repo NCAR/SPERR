@@ -104,6 +104,7 @@ list( APPEND SPECK_Err_LIBS SPECK_Err )
 
 if( USE_OMP AND OpenMP_CXX_FOUND )
   list( APPEND HELPER_LIBS  OpenMP::OpenMP_CXX   )
+  list( APPEND CDF_LIBS     OpenMP::OpenMP_CXX   )
   list( APPEND SPECK3D_LIBS OpenMP::OpenMP_CXX   )
 endif()
 
