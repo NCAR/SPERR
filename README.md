@@ -37,8 +37,8 @@ takes 38s, OpenMP with 2 cores takes 28s, and OpenMP with 4 cores takes 24s.
 its internal containers (mainly `std::vector`). Experiments show that this feature provides 
 little to no performance benefit (< 5%) at this point.
 
-5. `USE_ZSTD`. Determines if the SPECK bitstream further goes through an [ZSTD] compression.
-Experiments show that this step can further reduce the bitstream size by ~ 5% without obvious
+5. `USE_ZSTD`. Determines if the SPECK output bitstream further goes through an [ZSTD] compression.
+Experiments show that this step can further reduce the output size by ~ 5% without obvious
 performance impact.
 
 
