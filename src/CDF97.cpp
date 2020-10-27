@@ -1,5 +1,4 @@
 #include "CDF97.h"
-#include "speck_helper.h"
 
 #include <cassert>
 #include <cstring> // for std::memcpy()
@@ -93,17 +92,20 @@ void speck::CDF97::dwt3d()
     for (size_t i = 0; i < m_buf_len; i++)
         m_data_buf[i] -= m_data_mean;
 
+    size_t num_threads = 1;
+#ifdef USE_OMP
+    // This is a rather awkard way to get the number of threads...
+    #pragma omp parallel
+    {
+      if( omp_get_thread_num() == 0 )
+        num_threads = omp_get_num_threads();
+    }
+#endif
+
     size_t max_dim              = std::max(m_dim_x, m_dim_y);
     max_dim                     = std::max(max_dim, m_dim_z);
-    buffer_type_d tmp_buf       = speck::unique_malloc<double>(max_dim * 2);
+    buffer_type_d tmp_buf_pool  = speck::unique_malloc<double>(max_dim * 2 * num_threads);
     const size_t  plane_size_xy = m_dim_x * m_dim_y;
-
-    /*
-     * Note on the order of performing transforms in 3 dimensions:
-     * this implementation follows QccPack's example.
-     *
-     * First transform along the Z dimension
-     */
 
     /*
      *             Z
@@ -122,36 +124,51 @@ void speck::CDF97::dwt3d()
      *       Y
      */
 
+    /*
+     * Note on the order of performing transforms in 3 dimensions:
+     * this implementation follows QccPack's example.
+     *
+     * First transform along the Z dimension
+     */
+
     // Process one XZ slice at a time
-    buffer_type_d z_columns    = speck::unique_malloc<double>(m_dim_x * m_dim_z);
-    const auto    num_xforms_z = speck::num_of_xforms(m_dim_z);
+    buffer_type_d z_columns_pool = speck::unique_malloc<double>(m_dim_x * m_dim_z * num_threads);
+    const auto    num_xforms_z   = speck::num_of_xforms(m_dim_z);
+
+    #pragma omp parallel for
     for (size_t y = 0; y < m_dim_y; y++) {
-        const auto y_offset = y * m_dim_x;
+        const auto    y_offset    = y * m_dim_x;
+        const size_t  my_rank     = omp_get_thread_num();
+        double* const my_z_cols   = z_columns_pool.get() + my_rank * m_dim_x * m_dim_z;
+        double* const my_tmp_buf  = tmp_buf_pool.get() + my_rank * max_dim * 2;
 
         // Re-arrange values of one XZ slice so that they form many z_columns
         for (size_t z = 0; z < m_dim_z; z++) {
             const auto cube_start_idx = z * plane_size_xy + y_offset;
             for (size_t x = 0; x < m_dim_x; x++)
-                z_columns[z + x * m_dim_z] = m_data_buf[cube_start_idx + x];
+                my_z_cols[z + x * m_dim_z] = m_data_buf[cube_start_idx + x];
         }
 
         // DWT1D on every z_column
         for (size_t x = 0; x < m_dim_x; x++)
-            m_dwt1d(z_columns.get() + x * m_dim_z, m_dim_z, num_xforms_z, tmp_buf.get());
+            m_dwt1d(my_z_cols + x * m_dim_z, m_dim_z, num_xforms_z, my_tmp_buf);
 
         // Put back values of the many z_columns to the cube
         for (size_t z = 0; z < m_dim_z; z++) {
             const auto cube_start_idx = z * plane_size_xy + y_offset;
             for (size_t x = 0; x < m_dim_x; x++)
-                m_data_buf[cube_start_idx + x] = z_columns[z + x * m_dim_z];
+                m_data_buf[cube_start_idx + x] = my_z_cols[z + x * m_dim_z];
         }
     }
 
     // Second transform each plane
     const auto num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
-    for (size_t i = 0; i < m_dim_z; i++) {
-        size_t offset = plane_size_xy * i;
-        m_dwt2d(m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, tmp_buf.get());
+    #pragma omp parallel for
+    for (size_t z = 0; z < m_dim_z; z++) {
+        const size_t  my_rank     = omp_get_thread_num();
+        double* const my_tmp_buf  = tmp_buf_pool.get() + my_rank * max_dim * 2;
+        const size_t  offset      = plane_size_xy * z;
+        m_dwt2d(m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, my_tmp_buf);
     }
 }
 

@@ -7,6 +7,7 @@
 
 #include <array>
 #include <cstddef> // size_t
+#include <cstdlib>
 #include <memory>
 #include <vector>
 #include "SpeckConfig.h"
