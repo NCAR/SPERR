@@ -510,10 +510,9 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
     for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
         const size_t slice_offset = z * slice_size;
         for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
-            const size_t col_offset = slice_offset + y * m_dim_x;
-
-            for (auto x = set.start_x; x < (set.start_x + set.length_x); x++) {
-                if (m_coeff_buf[col_offset + x] >= m_threshold) {
+            const size_t col_offset = slice_offset + y * m_dim_x + set.start_x;
+            for( uint32_t x = 0; x < set.length_x; x++ ) {
+                if( m_coeff_buf[col_offset + x] >= m_threshold ) {
                     set.signif = Significance::Sig;
                     goto end_loop_label;
                 }
