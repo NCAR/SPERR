@@ -138,7 +138,11 @@ void speck::CDF97::dwt3d()
     #pragma omp parallel for
     for (size_t y = 0; y < m_dim_y; y++) {
         const auto    y_offset    = y * m_dim_x;
+#ifdef USE_OMP
         const size_t  my_rank     = omp_get_thread_num();
+#else
+        const size_t  my_rank     = 0;
+#endif
         double* const my_z_cols   = z_columns_pool.get() + my_rank * m_dim_x * m_dim_z;
         double* const my_tmp_buf  = tmp_buf_pool.get() + my_rank * max_dim * 2;
 
@@ -163,9 +167,14 @@ void speck::CDF97::dwt3d()
 
     // Second transform each plane
     const auto num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
+
     #pragma omp parallel for
     for (size_t z = 0; z < m_dim_z; z++) {
+#ifdef USE_OMP
         const size_t  my_rank     = omp_get_thread_num();
+#else
+        const size_t  my_rank     = 0;
+#endif
         double* const my_tmp_buf  = tmp_buf_pool.get() + my_rank * max_dim * 2;
         const size_t  offset      = plane_size_xy * z;
         m_dwt2d(m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, my_tmp_buf);
