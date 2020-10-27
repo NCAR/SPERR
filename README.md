@@ -30,8 +30,8 @@ If set `On`, then the encoding algorithm will terminate after processing a user-
 quantization level. In this case, the output size is non-deterministic.
 
 3. `USE_OMP`. Determines if the program should be compiled with OpenMP enabled. 
-Experiments show that OpenMP provides *limited* benefit. In one case where serial execution
-takes 38s, OpenMP with 2 cores takes 28s, and OpenMP with 4 cores takes 24s.
+Experiments show that OpenMP provides *limited* and *diminishing* benefit. In one case where 
+serial execution takes 38s, OpenMP with 2 cores takes 28s, and OpenMP with 4 cores takes 24s.
 
 4. `USE_PMR`. Determines if the encoder uses an [`std::pmr::unsynchronized_pool_resource`] for 
 its internal containers (mainly `std::vector`). Experiments show that this feature provides 
