@@ -177,8 +177,7 @@ if( BUILD_UNIT_TESTS )
 
     add_executable( test_speck_helper 
                     "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck_helper_unit_test.cpp" )
-    target_link_libraries( test_speck_helper PUBLIC ${CDF_LIBS}
-                                             PUBLIC ${HELPER_LIBS}
+    target_link_libraries( test_speck_helper PUBLIC ${HELPER_LIBS}
                                              PUBLIC gtest_main   )
     add_test( NAME test_speck_helper COMMAND test_speck_helper   )
 
