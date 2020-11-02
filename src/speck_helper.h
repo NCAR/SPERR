@@ -104,7 +104,7 @@ private:
     T* m_pos       = nullptr;
 
 public:
-    ptr_iterator(T* p)                              :  m_pos(p) {}
+    ptr_iterator(T* p) : m_pos(p) {}
     ptr_iterator()                                   = default;
     ptr_iterator           (const ptr_iterator<T>& ) = default;
     ptr_iterator           (      ptr_iterator<T>&&) = default;
