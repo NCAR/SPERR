@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <memory>
 #include <vector>
+#include <iterator>
 #include "SpeckConfig.h"
 
 #ifdef USE_PMR
@@ -20,22 +21,19 @@ namespace speck {
 
 #ifndef BUFFER_TYPES
 #define BUFFER_TYPES
-
     using buffer_type_d     = std::unique_ptr<double[]>;
     using buffer_type_f     = std::unique_ptr<float[]>;
     using buffer_type_c     = std::unique_ptr<char[]>;
     using buffer_type_uint8 = std::unique_ptr<uint8_t[]>;
-
-#ifdef USE_PMR
+  #ifdef USE_PMR
     using vector_bool     = std::pmr::vector<bool>;
     using vector_size_t   = std::pmr::vector<size_t>;
     using vector_uint8_t  = std::pmr::vector<uint8_t>;
-#else
+  #else
     using vector_bool     = std::vector<bool>;
     using vector_size_t   = std::vector<size_t>;
     using vector_uint8_t  = std::vector<uint8_t>;
-#endif
-
+  #endif
 #endif
 
 //
@@ -92,6 +90,50 @@ struct Outlier {
     Outlier() = default;
     Outlier( size_t, float );
 };
+
+
+//
+// Iterator class that enables STL algorithms to operate on raw arrays.  Adapted from: 
+// https://stackoverflow.com/questions/8054273/how-to-implement-an-stl-style-iterator-and-avoid-common-pitfalls
+//
+template<typename T>
+class ptr_iterator : public std::iterator<std::bidirectional_iterator_tag, T>
+{
+private:
+    using iterator = ptr_iterator<T>;
+    T* m_pos       = nullptr;
+
+public:
+    ptr_iterator(T* v)  :  m_pos(v) {}
+    ptr_iterator()                                   = default;
+    ptr_iterator           (const ptr_iterator<T>& ) = default;
+    ptr_iterator           (      ptr_iterator<T>&&) = default;
+    ptr_iterator& operator=(const ptr_iterator<T>& ) = default;
+    ptr_iterator& operator=(      ptr_iterator<T>&&) = default;
+    ~ptr_iterator()                                  = default;
+
+    // Requirements for a bidirectional iterator
+    iterator  operator++(int) /* postfix */         { return ptr_iterator<T>(m_pos++); }
+    iterator& operator++()    /* prefix  */         { ++m_pos; return *this; }
+    iterator  operator--(int) /* postfix */         { return ptr_iterator<T>(m_pos--); }
+    iterator& operator--()    /* prefix  */         { --m_pos; return *this; }
+    T&        operator* () const                    { return *m_pos; }
+    T*        operator->() const                    { return m_pos; }
+    bool      operator==(const iterator& rhs) const { return m_pos == rhs.m_pos; }
+    bool      operator!=(const iterator& rhs) const { return m_pos != rhs.m_pos; }
+    iterator  operator+ (std::ptrdiff_t  n  ) const { return ptr_iterator<T>(m_pos+n); }
+
+    // The last operation is a random access iterator requirement.
+    // To make it a complete random access iterator, more operations need to be added.
+    // A good example is available here: 
+    // https://github.com/shaomeng/cppcon2019_class/blob/master/labs/01-vector_walkthrough/code/trnx_vector_impl.h
+};
+
+// Helper function to produce a ptr_iterator from a raw pointer.
+// For a raw array with size N, the begin and end iterators are:
+// auto begin = ptr2itr( buf ); auto end = ptr2itr( buf + N );
+template<typename T>
+auto ptr2itr(T *val) -> ptr_iterator<T>;
 
 
 //

@@ -168,3 +168,12 @@ template auto speck::unique_malloc( size_t ) -> buffer_type_c;
 template auto speck::unique_malloc( size_t ) -> buffer_type_d;
 template auto speck::unique_malloc( size_t ) -> buffer_type_f;
 template auto speck::unique_malloc( size_t ) -> buffer_type_uint8;
+
+
+template<typename T>
+auto speck::ptr2itr(T *val) -> ptr_iterator<T>
+{
+    return ptr_iterator<T>(val);
+}
+template auto speck::ptr2itr(float*)  -> ptr_iterator<float>;
+template auto speck::ptr2itr(double*) -> ptr_iterator<double>;
