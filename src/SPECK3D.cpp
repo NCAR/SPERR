@@ -83,7 +83,7 @@ void speck::SPECK3D::m_clean_LIS()
         if( m_LIS_garbage_cnt[i] > m_LIS[i].size() / 4 ) {
 
             auto it = std::remove_if( m_LIS[i].begin(), m_LIS[i].end(),
-                      [](const SPECKSet3D& s) { return s.type == SetType::Garbage; });
+                      [](const auto& s) { return s.type == SetType::Garbage; });
             m_LIS[i].erase( it, m_LIS[i].end() );
 
             m_LIS_garbage_cnt[i] = 0;
