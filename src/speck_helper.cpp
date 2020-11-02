@@ -131,7 +131,8 @@ auto speck::unpack_booleans( vector_bool& dest,
     const uint64_t magic   = 0x8040201008040201;
     const uint64_t mask    = 0x8080808080808080;
 
-    #pragma omp parallel for
+    // It turns out that this routine cannot be parallelized, again, because
+    // std::vector<bool> is stored as uint64_t instead of individual booleans.
     for( size_t i = 0; i < num_of_bytes; i++ ) {
         const uint64_t t = (( magic * (*(src_ptr + i)) ) & mask) >> 7;
         bool a[8];
