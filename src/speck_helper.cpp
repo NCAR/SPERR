@@ -177,3 +177,11 @@ auto speck::ptr2itr(T *val) -> ptr_iterator<T>
 }
 template auto speck::ptr2itr(float*)  -> ptr_iterator<float>;
 template auto speck::ptr2itr(double*) -> ptr_iterator<double>;
+
+template<typename T>
+auto speck::uptr2itr( const std::unique_ptr<T[]>& uptr, size_t offset ) -> ptr_iterator<T>
+{
+    return ptr_iterator<T>( uptr.get() + offset );
+}
+template auto speck::uptr2itr(const std::unique_ptr<float[]>&,  size_t) -> ptr_iterator<float>;
+template auto speck::uptr2itr(const std::unique_ptr<double[]>&, size_t) -> ptr_iterator<double>;

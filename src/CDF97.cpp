@@ -49,7 +49,7 @@ auto speck::CDF97::release_data() -> std::pair<buffer_type_d, size_t>
 void speck::CDF97::dwt1d()
 {
     m_calc_mean();
-    auto m_data_begin = speck::ptr2itr( m_data_buf.get() );
+    auto m_data_begin = speck::uptr2itr( m_data_buf );
     std::for_each( m_data_begin, m_data_begin + m_buf_len,
                    [tmp = m_data_mean](auto& val){val -= tmp;} );
 
@@ -62,7 +62,7 @@ void speck::CDF97::idwt1d()
     size_t num_xforms = speck::num_of_xforms(m_dim_x);
     m_idwt1d(m_data_buf.get(), m_buf_len, num_xforms);
 
-    auto m_data_begin = speck::ptr2itr( m_data_buf.get() );
+    auto m_data_begin = speck::uptr2itr( m_data_buf );
     std::for_each( m_data_begin, m_data_begin + m_buf_len,
                    [tmp = m_data_mean](auto& val){val += tmp;} );
 }
@@ -70,7 +70,7 @@ void speck::CDF97::idwt1d()
 void speck::CDF97::dwt2d()
 {
     m_calc_mean();
-    auto m_data_begin = speck::ptr2itr( m_data_buf.get() );
+    auto m_data_begin = speck::uptr2itr( m_data_buf );
     std::for_each( m_data_begin, m_data_begin + m_buf_len,
                    [tmp = m_data_mean](auto& val){val -= tmp;} );
 
@@ -87,7 +87,7 @@ void speck::CDF97::idwt2d()
     size_t     num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
     m_idwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, tmp_buf.get());
 
-    auto m_data_begin = speck::ptr2itr( m_data_buf.get() );
+    auto m_data_begin = speck::uptr2itr( m_data_buf );
     std::for_each( m_data_begin, m_data_begin + m_buf_len,
                    [tmp = m_data_mean](auto& val){val += tmp;} );
 }
@@ -95,7 +95,7 @@ void speck::CDF97::idwt2d()
 void speck::CDF97::dwt3d()
 {
     m_calc_mean();
-    auto m_data_begin = speck::ptr2itr( m_data_buf.get() );
+    auto m_data_begin = speck::uptr2itr( m_data_buf );
     std::for_each( m_data_begin, m_data_begin + m_buf_len,
                    [tmp = m_data_mean](auto& val){val -= tmp;} );
 
@@ -247,7 +247,7 @@ void speck::CDF97::idwt3d()
     }
 
     // Finally, add back the mean which was subtracted earlier.
-    auto m_data_begin = speck::ptr2itr( m_data_buf.get() );
+    auto m_data_begin = speck::uptr2itr( m_data_buf );
     std::for_each( m_data_begin, m_data_begin + m_buf_len,
                    [tmp = m_data_mean](auto& val){val += tmp;} );
 }
@@ -269,12 +269,12 @@ void speck::CDF97::m_calc_mean()
     const size_t slice_size = m_dim_x * m_dim_y;
 
     for (size_t z = 0; z < m_dim_z; z++) {
-        auto begin = speck::ptr2itr( m_data_buf.get() + z * slice_size );
+        auto begin = speck::uptr2itr( m_data_buf, z * slice_size );
         auto end   = begin + slice_size;
         slice_means[z] = std::accumulate( begin, end, 0.0 ) / double(slice_size);
     }
 
-    auto begin = speck::ptr2itr( slice_means.get() );
+    auto begin = speck::uptr2itr( slice_means );
     double sum = std::accumulate( begin, begin + m_dim_z, 0.0 );
 
     m_data_mean = sum / double(m_dim_z);

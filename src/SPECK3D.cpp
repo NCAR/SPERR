@@ -174,7 +174,7 @@ auto speck::SPECK3D::decode() -> RTNType
 
     // initialize coefficients to be zero, and sign array to be all positive
     m_coeff_buf = speck::unique_malloc<double>(m_coeff_len);
-    auto m_coeff_begin = speck::ptr2itr( m_coeff_buf.get() );
+    auto m_coeff_begin = speck::uptr2itr( m_coeff_buf );
     std::fill( m_coeff_begin, m_coeff_begin + m_coeff_len, 0.0f );
     m_sign_array.assign(m_coeff_len, true);
 
@@ -511,7 +511,7 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
         const size_t slice_offset = z * slice_size;
         for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
             const size_t col_offset = slice_offset + y * m_dim_x + set.start_x;
-            auto begin = speck::ptr2itr( m_coeff_buf.get() + col_offset );
+            auto begin = speck::uptr2itr( m_coeff_buf, col_offset );
             auto end   = begin + set.length_x;
             if( std::any_of( begin, end, [tmp = m_threshold](auto& val){return val >= tmp;}) ) {
                 set.signif = Significance::Sig;

@@ -104,7 +104,7 @@ private:
     T* m_pos       = nullptr;
 
 public:
-    ptr_iterator(T* v)  :  m_pos(v) {}
+    ptr_iterator(T* p)                              :  m_pos(p) {}
     ptr_iterator()                                   = default;
     ptr_iterator           (const ptr_iterator<T>& ) = default;
     ptr_iterator           (      ptr_iterator<T>&&) = default;
@@ -129,11 +129,14 @@ public:
     // https://github.com/shaomeng/cppcon2019_class/blob/master/labs/01-vector_walkthrough/code/trnx_vector_impl.h
 };
 
-// Helper function to produce a ptr_iterator from a raw pointer.
+// Helper function to produce a ptr_iterator from a raw pointer or a unique_ptr.
 // For a raw array with size N, the begin and end iterators are:
 // auto begin = ptr2itr( buf ); auto end = ptr2itr( buf + N );
 template<typename T>
 auto ptr2itr(T *val) -> ptr_iterator<T>;
+
+template<typename T>
+auto uptr2itr( const std::unique_ptr<T[]>&, size_t offset = 0 ) -> ptr_iterator<T>;
 
 
 //
