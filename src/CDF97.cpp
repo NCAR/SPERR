@@ -1,7 +1,9 @@
 #include "CDF97.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstring> // for std::memcpy()
+#include <numeric> // for std::accumulate()
 #include <type_traits>
 
 #ifdef USE_OMP
@@ -47,8 +49,9 @@ auto speck::CDF97::release_data() -> std::pair<buffer_type_d, size_t>
 void speck::CDF97::dwt1d()
 {
     m_calc_mean();
-    for (size_t i = 0; i < m_buf_len; i++)
-        m_data_buf[i] -= m_data_mean;
+    auto m_data_begin = speck::uptr2itr( m_data_buf );
+    std::for_each( m_data_begin, m_data_begin + m_buf_len,
+                   [tmp = m_data_mean](auto& val){val -= tmp;} );
 
     size_t num_xforms = speck::num_of_xforms(m_dim_x);
     m_dwt1d(m_data_buf.get(), m_buf_len, num_xforms);
@@ -59,15 +62,17 @@ void speck::CDF97::idwt1d()
     size_t num_xforms = speck::num_of_xforms(m_dim_x);
     m_idwt1d(m_data_buf.get(), m_buf_len, num_xforms);
 
-    for (size_t i = 0; i < m_buf_len; i++)
-        m_data_buf[i] += m_data_mean;
+    auto m_data_begin = speck::uptr2itr( m_data_buf );
+    std::for_each( m_data_begin, m_data_begin + m_buf_len,
+                   [tmp = m_data_mean](auto& val){val += tmp;} );
 }
 
 void speck::CDF97::dwt2d()
 {
     m_calc_mean();
-    for (size_t i = 0; i < m_buf_len; i++)
-        m_data_buf[i] -= m_data_mean;
+    auto m_data_begin = speck::uptr2itr( m_data_buf );
+    std::for_each( m_data_begin, m_data_begin + m_buf_len,
+                   [tmp = m_data_mean](auto& val){val -= tmp;} );
 
     size_t     num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
     const auto max_dim       = std::max(m_dim_x, m_dim_y);
@@ -82,15 +87,17 @@ void speck::CDF97::idwt2d()
     size_t     num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
     m_idwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, tmp_buf.get());
 
-    for (size_t i = 0; i < m_buf_len; i++)
-        m_data_buf[i] += m_data_mean;
+    auto m_data_begin = speck::uptr2itr( m_data_buf );
+    std::for_each( m_data_begin, m_data_begin + m_buf_len,
+                   [tmp = m_data_mean](auto& val){val += tmp;} );
 }
 
 void speck::CDF97::dwt3d()
 {
     m_calc_mean();
-    for (size_t i = 0; i < m_buf_len; i++)
-        m_data_buf[i] -= m_data_mean;
+    auto m_data_begin = speck::uptr2itr( m_data_buf );
+    std::for_each( m_data_begin, m_data_begin + m_buf_len,
+                   [tmp = m_data_mean](auto& val){val -= tmp;} );
 
     size_t num_threads = 1;
 #ifdef USE_OMP
@@ -240,9 +247,11 @@ void speck::CDF97::idwt3d()
     }
 
     // Finally, add back the mean which was subtracted earlier.
-    for (size_t i = 0; i < m_buf_len; i++)
-        m_data_buf[i] += m_data_mean;
+    auto m_data_begin = speck::uptr2itr( m_data_buf );
+    std::for_each( m_data_begin, m_data_begin + m_buf_len,
+                   [tmp = m_data_mean](auto& val){val += tmp;} );
 }
+
 
 //
 // Private Methods
@@ -250,43 +259,23 @@ void speck::CDF97::idwt3d()
 void speck::CDF97::m_calc_mean()
 {
     //
-    // Here we calculate mean row by row to avoid too big numbers.
+    // Here we calculate mean slice by slice to avoid too big sums.
     // One test shows that this implementation is 4X faster than Kahan algorithm
-    // Another test shows that OpenMP also makes this routine slower...
+    // Another test shows that OpenMP actually slows down this calculation...
     //
     assert(m_dim_x > 0 && m_dim_y > 0 && m_dim_z > 0);
 
-    auto buffer = speck::unique_malloc<double>(m_dim_y * m_dim_z + m_dim_z);
-    double* const row_means   = buffer.get();                     // Front of the buffer
-    double* const layer_means = buffer.get() + m_dim_y * m_dim_z; // End of the buffer
+    auto slice_means        = speck::unique_malloc<double>(m_dim_z);
+    const size_t slice_size = m_dim_x * m_dim_y;
 
-    const double  dim_x1   = 1.0 / double(m_dim_x);
-    size_t        counter1 = 0;
-    size_t        counter2 = 0;
     for (size_t z = 0; z < m_dim_z; z++) {
-        for (size_t y = 0; y < m_dim_y; y++) {
-            double sum = 0.0;
-            for (size_t x = 0; x < m_dim_x; x++) {
-                sum += m_data_buf[counter1++];
-            }
-            row_means[counter2++] = sum * dim_x1;
-        }
+        auto begin = speck::uptr2itr( m_data_buf, z * slice_size );
+        auto end   = begin + slice_size;
+        slice_means[z] = std::accumulate( begin, end, 0.0 ) / double(slice_size);
     }
 
-    const double  dim_y1      = 1.0 / double(m_dim_y);
-    counter1                  = 0;
-    counter2                  = 0;
-    for (size_t z = 0; z < m_dim_z; z++) {
-        double sum = 0.0;
-        for (size_t y = 0; y < m_dim_y; y++) {
-            sum += row_means[counter1++];
-        }
-        layer_means[counter2++] = sum * dim_y1;
-    }
-
-    double sum = 0.0;
-    for (size_t z = 0; z < m_dim_z; z++)
-        sum += layer_means[z];
+    auto begin = speck::uptr2itr( slice_means );
+    double sum = std::accumulate( begin, begin + m_dim_z, 0.0 );
 
     m_data_mean = sum / double(m_dim_z);
 }

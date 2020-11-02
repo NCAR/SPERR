@@ -87,7 +87,7 @@ void speck::SPECK_Err::m_clean_LIS()
             tmpv.reserve(list.size()); // will leave half capacity unfilled, so the list
                                        // won't need a memory re-allocation for a while.
             std::copy_if(list.cbegin(), list.cend(), std::back_inserter(tmpv),
-                         [](const SPECKSet1D& s) { return s.type != SetType::Garbage; });
+                         [](const auto& s) { return s.type != SetType::Garbage; });
             std::swap(list, tmpv);
             m_LIS_garbage_cnt[idx] = 0;
         }

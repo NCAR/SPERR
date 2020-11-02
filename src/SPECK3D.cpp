@@ -83,7 +83,7 @@ void speck::SPECK3D::m_clean_LIS()
         if( m_LIS_garbage_cnt[i] > m_LIS[i].size() / 4 ) {
 
             auto it = std::remove_if( m_LIS[i].begin(), m_LIS[i].end(),
-                      [](const SPECKSet3D& s) { return s.type == SetType::Garbage; });
+                      [](const auto& s) { return s.type == SetType::Garbage; });
             m_LIS[i].erase( it, m_LIS[i].end() );
 
             m_LIS_garbage_cnt[i] = 0;
@@ -174,8 +174,8 @@ auto speck::SPECK3D::decode() -> RTNType
 
     // initialize coefficients to be zero, and sign array to be all positive
     m_coeff_buf = speck::unique_malloc<double>(m_coeff_len);
-    for (size_t i = 0; i < m_coeff_len; i++)
-        m_coeff_buf[i] = 0.0;
+    auto m_coeff_begin = speck::uptr2itr( m_coeff_buf );
+    std::fill( m_coeff_begin, m_coeff_begin + m_coeff_len, 0.0 );
     m_sign_array.assign(m_coeff_len, true);
 
     m_initialize_sets_lists();
@@ -511,11 +511,11 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
         const size_t slice_offset = z * slice_size;
         for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
             const size_t col_offset = slice_offset + y * m_dim_x + set.start_x;
-            for( uint32_t x = 0; x < set.length_x; x++ ) {
-                if( m_coeff_buf[col_offset + x] >= m_threshold ) {
-                    set.signif = Significance::Sig;
-                    goto end_loop_label;
-                }
+            auto begin = speck::uptr2itr( m_coeff_buf, col_offset );
+            auto end   = begin + set.length_x;
+            if( std::any_of( begin, end, [tmp = m_threshold](auto& val){return val >= tmp;}) ) {
+                set.signif = Significance::Sig;
+                goto end_loop_label;
             }
         }
     }

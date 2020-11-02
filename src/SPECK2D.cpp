@@ -659,7 +659,7 @@ void speck::SPECK2D::m_clean_LIS()
             // Erase-remove idiom:
             // https://en.wikipedia.org/wiki/Erase%E2%80%93remove_idiom
             auto it = std::remove_if( m_LIS[i].begin(), m_LIS[i].end(),
-                      [](const SPECKSet2D& s) { return s.type == SetType::Garbage; });
+                      [](const auto& s) { return s.type == SetType::Garbage; });
             m_LIS[i].erase( it, m_LIS[i].end() );
 
             m_LIS_garbage_cnt[i] = 0;
