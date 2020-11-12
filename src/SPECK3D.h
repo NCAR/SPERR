@@ -117,8 +117,10 @@ private:
     const uint8_t        m_true    = 1;
     const uint8_t        m_discard = 2;
 
-    speck::vector_size_t m_LSP;       // List of significant pixels (recorded as locations)
-    speck::vector_bool   m_LSP_newly; // if this significant pixel newly became so or not
+    //speck::vector_size_t m_LSP;       // List of significant pixels (recorded as locations)
+    //speck::vector_bool   m_LSP_newly; // if this significant pixel newly became so or not
+    speck::vector_size_t m_LSP_new;
+    speck::vector_size_t m_LSP_old;
     speck::vector_bool   m_sign_array;
     
 #ifdef USE_PMR
