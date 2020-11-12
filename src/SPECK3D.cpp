@@ -303,8 +303,9 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 
     // Experiments show that though we need an extra allocation (LIP_results) and that
     //   this omp section is rather simple, it's still faster than serial execution with
-    //   direct push to `m_bit_buffer`. I guess the random access of `m_coeff_buf` and
-    //   `m_sign_array` are just benefiting from concurrent queries too much.
+    //   direct push to `m_bit_buffer`. Also, this code isn't slower even without OMP.
+    //   I guess the random access of `m_coeff_buf` and `m_sign_array` are just benefiting
+    //   from concurrent queries too much.
     //
     #pragma omp parallel for
     for (size_t i = 0; i < m_LIP.size(); i++) {
@@ -422,18 +423,20 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 {
     // First process `m_LSP_old`.
     // Use an array to record 2 possible results of every refinement operation:
-    //   1) m_true    : `true` was output
+    //   1) m_true    : `true`  was output
     //   2) m_false   : `false` was output
     speck::vector_uint8_t refine_results( m_LSP_old.size(), m_false );
 
+    // Note that this somehow convoluted OMP implementation is still faster than an optimized
+    //   serial implementation, and not slower even when compiled w/o OMP.
+    //
     #pragma omp parallel for
     for (size_t i = 0; i < m_LSP_old.size(); i++) {
         const auto pos = m_LSP_old[i];
         if (m_coeff_buf[pos] >= m_threshold) {  // case 1)
             m_coeff_buf[pos] -= m_threshold;
             refine_results[i] = m_true;
-        }
-                                                // case 2). Don't need to do anything.
+        }                                       // case 2) needs nothing to be done.
     }
 
     // Now attach the true/false outputs from `refine_results` to `m_bit_buffer` 
@@ -446,7 +449,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
     }
 
     // Second, process `m_LSP_new`
-    // Experiments show that though this for loop is very simple, omp still brings benefit.
+    // Experiments show that though this for loop is very simple, OMP still brings benefit.
     // I think it's because more concurrent queries better exploit memory bandwith.
     //
     #pragma omp parallel for
