@@ -295,46 +295,69 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
     //   processing m_LIP. However, we consider `fixed QZ_TERM` is a more common use case
     //   thus warrents this design decision.
 
-    speck::vector_uint8_t LIP_results( m_LIP.size() * 2, m_discard );
+    // In addition to the pre-defined `m_false`, `m_true`, and `m_discard`,
+    //   let's define two more states that augments `m_true`:
+    const uint8_t sig_pos = 3;  // this pixel is significant and has a positive sign
+    const uint8_t sig_neg = 4;  // this pixel is significant and has a negative sign
+    speck::vector_uint8_t LIP_results( m_LIP.size(), m_discard );
 
+    // Experiments show that though we need an extra allocation (LIP_results) and that
+    //   this omp section is rather simple, it's still faster than serial execution with
+    //   direct push to `m_bit_buffer`.
+    //
     #pragma omp parallel for
     for (size_t i = 0; i < m_LIP.size(); i++) {
         const auto pixel_idx = m_LIP[i];
         if( pixel_idx != m_LIP_garbage_val ) {
             const bool pixel_is_sig = (m_coeff_buf[pixel_idx] >= m_threshold);
-            LIP_results[ i * 2 ] = pixel_is_sig ? m_true : m_false;
             if( pixel_is_sig )
-                LIP_results[ i * 2 + 1 ] = m_sign_array[pixel_idx] ? m_true : m_false;
+                LIP_results[i] = m_sign_array[pixel_idx] ? sig_pos : sig_neg;
+            else
+                LIP_results[i] = m_false;
         }
-    } // end of omp section
+    }
 
     for( size_t i = 0; i < m_LIP.size(); i++ ) {
-        const auto e = LIP_results[ i * 2 ];
-        if( e == m_true ) {
+        const auto e = LIP_results[i];
+        if( e == sig_pos ) {
+#ifdef QZ_TERM
+            m_bit_buffer.push_back( true ); // this pixel is significant
+            m_bit_buffer.push_back( true ); // this pixel has a positive sign
+#else
             m_bit_buffer.push_back( true );
-
-#ifndef QZ_TERM
-            if( m_bit_buffer.size() >= m_budget ) return RTNType::BitBudgetMet;
+            if( m_bit_buffer.size() >= m_budget )
+                return RTNType::BitBudgetMet;
+            m_bit_buffer.push_back( true );
+            if( m_bit_buffer.size() >= m_budget )
+                return RTNType::BitBudgetMet;
 #endif
-
-            m_bit_buffer.push_back( LIP_results[ i * 2 + 1 ] != m_false );
-
-#ifndef QZ_TERM
-            if( m_bit_buffer.size() >= m_budget ) return RTNType::BitBudgetMet;
+            m_LSP_new.push_back( m_LIP[i] );
+            m_LIP[i] = m_LIP_garbage_val;
+            m_LIP_garbage_cnt++;
+        }
+        else if( e == sig_neg ) {
+#ifdef QZ_TERM
+            m_bit_buffer.push_back( true );  // this pixel is significant
+            m_bit_buffer.push_back( false ); // this pixel has a negative sign
+#else
+            m_bit_buffer.push_back( true );
+            if( m_bit_buffer.size() >= m_budget )
+                return RTNType::BitBudgetMet;
+            m_bit_buffer.push_back( false );
+            if( m_bit_buffer.size() >= m_budget )
+                return RTNType::BitBudgetMet;
 #endif
-
             m_LSP_new.push_back( m_LIP[i] );
             m_LIP[i] = m_LIP_garbage_val;
             m_LIP_garbage_cnt++;
         }
         else if( e == m_false ) {
             m_bit_buffer.push_back( false );
-
 #ifndef QZ_TERM
-            if( m_bit_buffer.size() >= m_budget ) return RTNType::BitBudgetMet;
+            if( m_bit_buffer.size() >= m_budget )
+                return RTNType::BitBudgetMet;
 #endif
         }
-        // The other possible result is `m_discard`, in which case we do nothing.
     }
 
     // Then we process regular sets in LIS.
@@ -407,7 +430,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
             refine_results[i] = m_true;
         }
                                                 // case 2). Don't need to do anything.
-    } // end of omp section
+    }
 
     // Now attach the true/false outputs from `refine_results` to `m_bit_buffer` 
     for( auto result : refine_results ) {
@@ -419,6 +442,8 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
     }
 
     // Second, process `m_LSP_new`
+    // Experiments show that though this for loop is very simple, omp still brings benefit.
+    // I think it's because more concurrent queries better exploit memory bandwith.
     //
     #pragma omp parallel for
     for( auto pos : m_LSP_new ) {
