@@ -303,7 +303,8 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 
     // Experiments show that though we need an extra allocation (LIP_results) and that
     //   this omp section is rather simple, it's still faster than serial execution with
-    //   direct push to `m_bit_buffer`.
+    //   direct push to `m_bit_buffer`. I guess the random access of `m_coeff_buf` and
+    //   `m_sign_array` are just benefiting from concurrent queries too much.
     //
     #pragma omp parallel for
     for (size_t i = 0; i < m_LIP.size(); i++) {
@@ -321,6 +322,9 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
         const auto e = LIP_results[i];
         if( e == sig_pos ) {
 #ifdef QZ_TERM
+            // Interestingly, it seems any use of iterators from a bit_vector is just
+            //   super slow, for example, if using this equivalent line:
+            //   m_bit_buffer.insert( m_bit_buffer.cend(), 2, true );
             m_bit_buffer.push_back( true ); // this pixel is significant
             m_bit_buffer.push_back( true ); // this pixel has a positive sign
 #else
