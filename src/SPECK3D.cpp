@@ -202,10 +202,6 @@ auto speck::SPECK3D::decode() -> RTNType
 
     // If the loop above aborted before all newly significant pixels are initialized,
     // we finish them here!
-    /*for (size_t i = 0; i < m_LSP_newly.size(); i++) {
-        if (m_LSP_newly[i])
-            m_coeff_buf[m_LSP[i]] = 1.5 * m_threshold;
-    }*/
     for( auto idx : m_LSP_new )
         m_coeff_buf[idx] = m_threshold * 1.5;
 
@@ -285,8 +281,6 @@ void speck::SPECK3D::m_initialize_sets_lists()
     m_LIS[parts].insert(m_LIS[parts].begin(), big);
 
     // initialize LSP
-    /*m_LSP.clear();
-    m_LSP_newly.clear();*/
     m_LSP_new.clear();
     m_LSP_old.clear();
 }
@@ -328,14 +322,14 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 #ifndef QZ_TERM
             if( m_bit_buffer.size() >= m_budget ) return RTNType::BitBudgetMet;
 #endif
-            //m_LSP_newly.push_back( true );
-            //m_LSP.push_back( m_LIP[i] );
+
             m_LSP_new.push_back( m_LIP[i] );
             m_LIP[i] = m_LIP_garbage_val;
             m_LIP_garbage_cnt++;
         }
         else if( e == m_false ) {
             m_bit_buffer.push_back( false );
+
 #ifndef QZ_TERM
             if( m_bit_buffer.size() >= m_budget ) return RTNType::BitBudgetMet;
 #endif
@@ -396,61 +390,6 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
     return RTNType::Good;
 }
 
-#if 0
-auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
-{
-    // Use an array to record 3 possible results of every refinement operation:
-    // 1) m_discard :  no bit output 
-    // 2) m_true    : `true` was output
-    // 3) m_false   : `false` was output
-    speck::vector_uint8_t refine_results( m_LSP.size(), m_discard );
-
-    #pragma omp parallel for
-    for (size_t i = 0; i < m_LSP.size(); i++) {
-        const auto pos = m_LSP[i];
-        if (m_LSP_newly[i]) {                       // case 1)
-            m_coeff_buf[pos] -= m_threshold;
-            // m_LSP_newly[i] will be set false later in a serial fashion.
-        } else {
-            if (m_coeff_buf[pos] >= m_threshold) {  // case 2)
-                m_coeff_buf[pos] -= m_threshold;
-                refine_results[i] = m_true;
-            } else {                                // case 3)
-                refine_results[i] = m_false;
-            }
-        }
-    } // end of omp section
-
-    // Now remove newly significant marks, and also
-    //   attach the true/false outputs from `refine_results` to `m_bit_buffer` 
-    for( size_t i = 0; i < refine_results.size(); i++ ) {
-        const auto e = refine_results[i];
-        if( e == m_discard )
-            m_LSP_newly[i] = false;
-        else if( e == m_true ) {
-            m_bit_buffer.push_back( true );
-#ifndef QZ_TERM
-            if( m_bit_buffer.size() >= m_budget ) return RTNType::BitBudgetMet;
-#endif
-        }
-        else if( e == m_false ) {
-            m_bit_buffer.push_back( false );
-#ifndef QZ_TERM
-            if( m_bit_buffer.size() >= m_budget ) return RTNType::BitBudgetMet;
-#endif
-        }
-    }
-
-    return RTNType::Good;
-
-    // Note that in `fixed size` compression mode, unnecessary computation could be
-    // performed when a subset of m_LSP could satisfy the budget requirement, but
-    // all elements from m_LSP are processed.
-    // However, processing all elements from m_LSP enables OpenMP parallelism, which
-    // is a gain. Also, `fixed size` mode is considered as less useful than 
-    // `fixed QZ_TERM`, which will not see wasted computation.
-}
-#endif
 
 auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 {
@@ -499,26 +438,6 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
     return RTNType::Good;
 }
 
-#if 0
-auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
-{
-    for (size_t i = 0; i < m_LSP.size(); i++) {
-        const auto pos = m_LSP[i];
-        if (m_LSP_newly[i]) {
-            // Newly identified pixels are initialized.
-            m_coeff_buf[pos] = 1.5 * m_threshold;
-            m_LSP_newly[i]   = false;
-        } else {
-            if (m_bit_idx >= m_budget)
-                return RTNType::BitBudgetMet;
-
-            m_coeff_buf[pos] += m_bit_buffer[m_bit_idx++] ? m_threshold * 0.5 : m_threshold * -0.5;
-        }
-    }
-
-    return RTNType::Good;
-}
-#endif
 
 auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
 {
@@ -566,11 +485,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
     if (this_pixel_is_sig) {
         // Output pixel sign
         m_bit_buffer.push_back(m_sign_array[pixel_idx]);
-
-        //m_LSP.push_back(pixel_idx);
-        //m_LSP_newly.push_back(true);
         m_LSP_new.push_back( pixel_idx );
-
         m_LIP[loc] = m_LIP_garbage_val;
         m_LIP_garbage_cnt++;
 
@@ -578,7 +493,6 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
         if (m_bit_buffer.size() >= m_budget)
             return RTNType::BitBudgetMet;
 #endif
-
     }
 
     return RTNType::Good;
@@ -656,8 +570,6 @@ auto speck::SPECK3D::m_process_P_decode(size_t loc) -> RTNType
             m_sign_array[pixel_idx] = false;
 
         // Record to be initialized
-        //m_LSP.push_back(pixel_idx);
-        //m_LSP_newly.push_back(true);
         m_LSP_new.push_back( pixel_idx );
 
         m_LIP[loc] = m_LIP_garbage_val;
