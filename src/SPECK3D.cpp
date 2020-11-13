@@ -78,7 +78,7 @@ void speck::SPECK3D::m_clean_LIS()
     // Erase-remove idiom:
     // https://en.wikipedia.org/wiki/Erase%E2%80%93remove_idiom
 
-    // It turns out that OpenMP does almost no help here...
+    #pragma omp parallel for
     for( size_t i = 0; i < m_LIS.size(); i++ ) {
         auto it = std::remove_if( m_LIS[i].begin(), m_LIS[i].end(),
                   [](const auto& s) { return s.type == SetType::Garbage; });
