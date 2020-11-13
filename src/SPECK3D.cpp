@@ -544,8 +544,8 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
     for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
         const size_t slice_offset = z * slice_size;
         for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
-            const size_t col_offset = slice_offset + y * m_dim_x + set.start_x;
-            auto begin = speck::uptr2itr( m_coeff_buf, col_offset );
+            const size_t col_offset = slice_offset + y * m_dim_x;
+            auto begin = speck::uptr2itr( m_coeff_buf, col_offset + set.start_x );
             auto end   = begin + set.length_x;
             if( std::any_of( begin, end, [tmp = m_threshold](auto& val){return val >= tmp;}) ) {
                 set.signif = Significance::Sig;

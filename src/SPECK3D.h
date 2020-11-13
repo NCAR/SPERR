@@ -110,7 +110,7 @@ private:
 
     // Now we use a vector of indices to serve the same funcationality of the last LIS,
     // which would contain all insignificant pixels.
-    speck::vector_size_t m_LIP;       // List of insignificant pixels.
+    speck::vector_size_t m_LIP;      // List of insignificant pixels.
     size_t               m_LIP_garbage_cnt = 0;
     const size_t         m_LIP_garbage_val = std::numeric_limits<size_t>::max();
     const uint8_t        m_false   = 0;
@@ -120,14 +120,14 @@ private:
     // List of significant pixels (recorded as locations).
     speck::vector_size_t m_LSP_new; // Ones newly identified as significant
     speck::vector_size_t m_LSP_old; // Ones previously identified as significant
+
     speck::vector_bool   m_sign_array;
-    
+    speck::vector_size_t m_LIS_garbage_cnt;
+
 #ifdef USE_PMR
     std::pmr::vector<std::pmr::vector<SPECKSet3D>>  m_LIS;
-    std::pmr::vector<size_t>                        m_LIS_garbage_cnt;
 #else
     std::vector<std::vector<SPECKSet3D>>            m_LIS;
-    std::vector<size_t>                             m_LIS_garbage_cnt;
 #endif
 
 #ifdef QZ_TERM
