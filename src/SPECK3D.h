@@ -111,7 +111,6 @@ private:
     // Now we use a vector of indices to serve the same funcationality of the last LIS,
     // which would contain all insignificant pixels.
     speck::vector_size_t m_LIP;      // List of insignificant pixels.
-    size_t               m_LIP_garbage_cnt = 0;
     const size_t         m_LIP_garbage_val = std::numeric_limits<size_t>::max();
     const uint8_t        m_false   = 0;
     const uint8_t        m_true    = 1;

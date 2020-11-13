@@ -91,12 +91,10 @@ void speck::SPECK3D::m_clean_LIS()
     }
 
     // Let's also clean up m_LIP.
-    if (m_LIP_garbage_cnt > m_LIP.size() / 4) {
-        auto it = std::remove( m_LIP.begin(), m_LIP.end(), m_LIP_garbage_val );
-        m_LIP.erase( it, m_LIP.end() );
-
-        m_LIP_garbage_cnt = 0;
-    }
+    // We clean up garbage values so in the next round the algorithm could assume
+    //   that there is no garbage in the list.
+    auto it = std::remove( m_LIP.begin(), m_LIP.end(), m_LIP_garbage_val );
+    m_LIP.erase( it, m_LIP.end() );
 }
 
 auto speck::SPECK3D::encode() -> RTNType
@@ -229,7 +227,6 @@ void speck::SPECK3D::m_initialize_sets_lists()
     m_LIS.resize(num_of_sizes);
     m_LIS_garbage_cnt.assign(num_of_sizes, 0);
     m_LIP.clear();
-    m_LIP_garbage_cnt = 0;
 
     // Starting from a set representing the whole volume, identify the smaller sets
     //   and put them in LIS accordingly.
@@ -310,13 +307,12 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
     #pragma omp parallel for
     for (size_t i = 0; i < m_LIP.size(); i++) {
         const auto pixel_idx = m_LIP[i];
-        if( pixel_idx != m_LIP_garbage_val ) {
-            const bool pixel_is_sig = (m_coeff_buf[pixel_idx] >= m_threshold);
-            if( pixel_is_sig )
-                LIP_results[i] = m_sign_array[pixel_idx] ? sig_pos : sig_neg;
-            else
-                LIP_results[i] = m_false;
-        }
+        assert( pixel_idx != m_LIP_garbage_val );
+        const bool pixel_is_sig = (m_coeff_buf[pixel_idx] >= m_threshold);
+        if( pixel_is_sig )
+            LIP_results[i] = m_sign_array[pixel_idx] ? sig_pos : sig_neg;
+        else
+            LIP_results[i] = m_false;
     }
 
     for( size_t i = 0; i < m_LIP.size(); i++ ) {
@@ -338,7 +334,6 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 #endif
             m_LSP_new.push_back( m_LIP[i] );
             m_LIP[i] = m_LIP_garbage_val;
-            m_LIP_garbage_cnt++;
         }
         else if( e == sig_neg ) {
 #ifdef QZ_TERM
@@ -354,7 +349,6 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 #endif
             m_LSP_new.push_back( m_LIP[i] );
             m_LIP[i] = m_LIP_garbage_val;
-            m_LIP_garbage_cnt++;
         }
         else if( e == m_false ) {
             m_bit_buffer.push_back( false );
@@ -392,12 +386,11 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 {
     // Since we have a separate representation of LIP, let's process that list first!
     for (size_t i = 0; i < m_LIP.size(); i++) {
-        if( m_LIP[i] != m_LIP_garbage_val ) {
-            auto rtn = m_process_P_decode(i);
-            if( rtn == RTNType::BitBudgetMet )
-                return rtn;
-            assert( rtn == RTNType::Good );
-        }
+        assert( m_LIP[i] != m_LIP_garbage_val );
+        auto rtn = m_process_P_decode(i);
+        if( rtn == RTNType::BitBudgetMet )
+            return rtn;
+        assert( rtn == RTNType::Good );
     }
 
     // Then we process regular sets in LIS.
@@ -519,7 +512,6 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
         m_bit_buffer.push_back(m_sign_array[pixel_idx]);
         m_LSP_new.push_back( pixel_idx );
         m_LIP[loc] = m_LIP_garbage_val;
-        m_LIP_garbage_cnt++;
 
 #ifndef QZ_TERM
         if (m_bit_buffer.size() >= m_budget)
@@ -605,7 +597,6 @@ auto speck::SPECK3D::m_process_P_decode(size_t loc) -> RTNType
         m_LSP_new.push_back( pixel_idx );
 
         m_LIP[loc] = m_LIP_garbage_val;
-        m_LIP_garbage_cnt++;
     }
 
     return RTNType::Good;
