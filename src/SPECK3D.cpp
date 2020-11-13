@@ -80,14 +80,9 @@ void speck::SPECK3D::m_clean_LIS()
 
     // It turns out that OpenMP does almost no help here...
     for( size_t i = 0; i < m_LIS.size(); i++ ) {
-        if( m_LIS_garbage_cnt[i] > m_LIS[i].size() / 4 ) {
-
-            auto it = std::remove_if( m_LIS[i].begin(), m_LIS[i].end(),
-                      [](const auto& s) { return s.type == SetType::Garbage; });
-            m_LIS[i].erase( it, m_LIS[i].end() );
-
-            m_LIS_garbage_cnt[i] = 0;
-        }
+        auto it = std::remove_if( m_LIS[i].begin(), m_LIS[i].end(),
+                  [](const auto& s) { return s.type == SetType::Garbage; });
+        m_LIS[i].erase( it, m_LIS[i].end() );
     }
 
     // Let's also clean up m_LIP.
@@ -225,7 +220,6 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // initialize LIS
     m_LIS.clear();
     m_LIS.resize(num_of_sizes);
-    m_LIS_garbage_cnt.assign(num_of_sizes, 0);
     m_LIP.clear();
 
     // Starting from a set representing the whole volume, identify the smaller sets
@@ -365,17 +359,17 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
         size_t idx1 = m_LIS.size() - tmp;
         for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
             const auto& s = m_LIS[idx1][idx2];
-            if (s.type != SetType::Garbage) {
+            assert(s.type != SetType::Garbage);
 
 #ifdef QZ_TERM
-                m_process_S_encode(idx1, idx2);
+            m_process_S_encode(idx1, idx2);
 #else
-                auto rtn = m_process_S_encode(idx1, idx2);
-                if( rtn == RTNType::BitBudgetMet )
-                    return rtn;
-                assert( rtn == RTNType::Good );
+            auto rtn = m_process_S_encode(idx1, idx2);
+            if( rtn == RTNType::BitBudgetMet )
+                return rtn;
+            assert( rtn == RTNType::Good );
 #endif
-            }
+
         }
     }
 
@@ -399,12 +393,11 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
         size_t idx1 = m_LIS.size() - tmp;
         for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
             const auto& s = m_LIS[idx1][idx2];
-            if (s.type != SetType::Garbage) {
-                auto rtn = m_process_S_decode(idx1, idx2);
-                if( rtn == RTNType::BitBudgetMet )
-                    return rtn;
-                assert( rtn == RTNType::Good );
-            }
+            assert(s.type != SetType::Garbage);
+            auto rtn = m_process_S_decode(idx1, idx2);
+            if( rtn == RTNType::BitBudgetMet )
+                return rtn;
+            assert( rtn == RTNType::Good );
         }
     }
 
@@ -570,7 +563,6 @@ end_loop_label:
 #endif
 
         set.type = SetType::Garbage; // this current set is gonna be discarded.
-        m_LIS_garbage_cnt[set.part_level]++;
     }
 
     return RTNType::Good;
@@ -620,7 +612,6 @@ auto speck::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2) -> RTNType
         assert( rtn == RTNType::Good );
 
         set.type = SetType::Garbage; // this current set is gonna be discarded.
-        m_LIS_garbage_cnt[set.part_level]++;
     }
 
     return RTNType::Good;

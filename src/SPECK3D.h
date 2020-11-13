@@ -121,7 +121,6 @@ private:
     speck::vector_size_t m_LSP_old; // Ones previously identified as significant
 
     speck::vector_bool   m_sign_array;
-    speck::vector_size_t m_LIS_garbage_cnt;
 
 #ifdef USE_PMR
     std::pmr::vector<std::pmr::vector<SPECKSet3D>>  m_LIS;
