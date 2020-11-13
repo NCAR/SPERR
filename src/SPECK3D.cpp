@@ -86,8 +86,6 @@ void speck::SPECK3D::m_clean_LIS()
     }
 
     // Let's also clean up m_LIP.
-    // We clean up garbage values so in the next round the algorithm could assume
-    //   that there is no garbage in the list.
     auto it = std::remove( m_LIP.begin(), m_LIP.end(), m_LIP_garbage_val );
     m_LIP.erase( it, m_LIP.end() );
 }
