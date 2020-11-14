@@ -294,7 +294,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
     //   this omp section is rather simple, it's still faster than serial execution with
     //   direct push to `m_bit_buffer`. Also, this code isn't slower even without OMP.
     //   I guess the random access of `m_coeff_buf` and `m_sign_array` are just benefiting
-    //   from concurrent queries too much.
+    //   from concurrent queries a lot.
     //
     #pragma omp parallel for
     for (size_t i = 0; i < m_LIP.size(); i++) {
@@ -307,15 +307,22 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
             LIP_results[i] = m_false;
     }
 
+    // Now we put `LIP_results` into `m_bit_buffer` in serial.
+    // We expand `m_bit_buffer` to the largest size it could be, fill in values,
+    //   and then shrink if necessary.  Benchmark shows that this technique is 
+    //   1.5X faster than using indivisual push_back() operations.
+    // Also note that involvement of bvector::iterator is just slow...
+#ifdef QZ_TERM
+    size_t current_size = m_bit_buffer.size();
+    m_bit_buffer.resize( current_size + 2 * m_LIP.size(), false);
+#endif
+
     for( size_t i = 0; i < LIP_results.size(); i++ ) {
         const auto e = LIP_results[i];
         if( e == sig_pos ) {
 #ifdef QZ_TERM
-            // Interestingly, it seems any use of iterators from a bit_vector is just
-            //   super slow, for example, if using this equivalent line:
-            //   m_bit_buffer.insert( m_bit_buffer.cend(), 2, true );
-            m_bit_buffer.push_back( true ); // this pixel is significant
-            m_bit_buffer.push_back( true ); // this pixel has a positive sign
+            m_bit_buffer[ current_size++ ] = true; // this pixel is significant
+            m_bit_buffer[ current_size++ ] = true; // this pixel has a positive sign
 #else
             m_bit_buffer.push_back( true );
             if( m_bit_buffer.size() >= m_budget )
@@ -329,8 +336,8 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
         }
         else if( e == sig_neg ) {
 #ifdef QZ_TERM
-            m_bit_buffer.push_back( true );  // this pixel is significant
-            m_bit_buffer.push_back( false ); // this pixel has a negative sign
+            m_bit_buffer[ current_size++ ] = true;  // this pixel is significant
+            m_bit_buffer[ current_size++ ] = false; // this pixel has a negative sign
 #else
             m_bit_buffer.push_back( true );
             if( m_bit_buffer.size() >= m_budget )
@@ -343,13 +350,19 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
             m_LIP[i] = m_LIP_garbage_val;
         }
         else if( e == m_false ) {
+#ifdef QZ_TERM
+            m_bit_buffer[ current_size++ ] = false;
+#else
             m_bit_buffer.push_back( false );
-#ifndef QZ_TERM
             if( m_bit_buffer.size() >= m_budget )
                 return RTNType::BitBudgetMet;
 #endif
         }
     }
+
+#ifdef QZ_TERM
+    m_bit_buffer.resize( current_size );
+#endif
 
     // Then we process regular sets in LIS.
     for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
@@ -424,13 +437,21 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
     }
 
     // Now attach the true/false outputs from `refine_results` to `m_bit_buffer` 
+    //
+#ifdef QZ_TERM
+    // We expand the size of `m_bit_buffer` first at once
+    size_t current_size = m_bit_buffer.size();
+    m_bit_buffer.resize( current_size + refine_results.size(), false );
+    for( auto result : refine_results ) {
+        m_bit_buffer[ current_size++ ] = (result != m_false);
+    }
+#else
     for( auto result : refine_results ) {
         m_bit_buffer.push_back( result != m_false );
-#ifndef QZ_TERM
         if( m_bit_buffer.size() >= m_budget ) 
             return RTNType::BitBudgetMet;
-#endif
     }
+#endif
 
     // Second, process `m_LSP_new`
     // Experiments show that though this for loop is very simple, OMP still brings benefit.
