@@ -537,7 +537,7 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
         }
     }
 end_loop_label:
-    m_bit_buffer.push_back(set.signif == Significance::Sig); // output true/false
+    m_bit_buffer.push_back(set.signif != Significance::Insig); // output true/false
 
 #ifndef QZ_TERM
     if (m_bit_buffer.size() >= m_budget)
