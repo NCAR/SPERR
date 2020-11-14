@@ -307,7 +307,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
             LIP_results[i] = m_false;
     }
 
-    for( size_t i = 0; i < m_LIP.size(); i++ ) {
+    for( size_t i = 0; i < LIP_results.size(); i++ ) {
         const auto e = LIP_results[i];
         if( e == sig_pos ) {
 #ifdef QZ_TERM
