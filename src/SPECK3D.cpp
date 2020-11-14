@@ -294,7 +294,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
     //   this omp section is rather simple, it's still faster than serial execution with
     //   direct push to `m_bit_buffer`. Also, this code isn't slower even without OMP.
     //   I guess the random access of `m_coeff_buf` and `m_sign_array` are just benefiting
-    //   from concurrent queries too much.
+    //   from concurrent queries a lot.
     //
     #pragma omp parallel for
     for (size_t i = 0; i < m_LIP.size(); i++) {
@@ -423,7 +423,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
         }                                       // case 2) needs nothing to be done.
     }
 
-    // Now attach the true/false outputs from `refine_results` to `m_bit_buffer` 
+    // Now we attach the true/false outputs from `refine_results` to `m_bit_buffer`.
     for( auto result : refine_results ) {
         m_bit_buffer.push_back( result != m_false );
 #ifndef QZ_TERM

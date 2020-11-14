@@ -106,7 +106,9 @@ auto speck::pack_booleans( buffer_type_uint8& dest,
     for( size_t i = 0; i < src.size(); i += 8 ) {
         bool     a[8];
         uint64_t t;
-        std::copy( src.cbegin() + i, src.cbegin() + i + 8, std::begin(a) );
+        // Thinking bvec::iterator is expensive, so use a direct access.
+        for( size_t j = 0; j < 8; j++ )
+            a[j] = src[i + j];
         std::memcpy( &t, a, 8 );
         dest[ offset + i / 8 ] = (magic * t) >> 56;
     }
@@ -137,7 +139,9 @@ auto speck::unpack_booleans( vector_bool& dest,
         const uint64_t t = (( magic * (*(src_ptr + i)) ) & mask) >> 7;
         bool a[8];
         std::memcpy( a, &t, 8 );
-        std::copy( std::cbegin(a), std::cend(a), dest.begin() + i * 8 );
+        // Thinking bvec::iterator is expensive, so use a direct access.
+        for( size_t j = 0; j < 8; j++ )
+            dest[i * 8 + j] = a[j];
     }
 
     return RTNType::Good;
