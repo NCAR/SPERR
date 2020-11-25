@@ -440,10 +440,10 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
     //
 #ifdef QZ_TERM
     // We expand the size of `m_bit_buffer` first at once
-    size_t current_size = m_bit_buffer.size();
+    const size_t current_size = m_bit_buffer.size();
     m_bit_buffer.resize( current_size + refine_results.size(), false );
-    for( auto result : refine_results ) {
-        m_bit_buffer[ current_size++ ] = (result != m_false);
+    for( size_t i = 0; i < refine_results.size(); i++ ) {
+        m_bit_buffer[ current_size + i ] = (refine_results[i] != m_false);
     }
 #else
     for( auto result : refine_results ) {
