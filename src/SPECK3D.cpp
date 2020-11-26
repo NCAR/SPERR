@@ -4,10 +4,6 @@
 #include <cmath>
 #include <cstring>
 
-#ifdef USE_OMP
-    #include <omp.h>
-#endif
-
 #ifdef PRINT
     #include <iostream>
 #endif
@@ -475,8 +471,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 
     // Second, process `m_LSP_new`, including locations appended from `m_LSP_old`.
     // Depending on the length of `m_LSP_new`, we use one of 2 approaches. 
-    // Note that the choice of the threshold being a quarter of the total length is
-    //   just an empirical number from several desktops.
+    // Note that the choice of the threshold is just an empirical value.
     // 
     if( m_LSP_new.size() < m_coeff_len / 4 ) {
         for( auto loc : m_LSP_new )
@@ -486,8 +481,6 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
         speck::vector_bool mask( m_coeff_len, false );
         for( auto loc : m_LSP_new )
             mask[loc] = true;
-
-        // This loop hardly benefits from OpenMP, so don't bother...
         for( size_t i = 0; i < m_coeff_len; i++ ) {
             if( mask[i] )
                 m_coeff_buf[i] -= m_threshold;
@@ -518,11 +511,21 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
         m_coeff_buf[pos] += m_bit_buffer[m_bit_idx++] ? m_threshold * 0.5 : m_threshold * -0.5;
     }
 
-    // Second, process `m_LSP_new`
+    // Second, process `m_LSP_new`.
+    // Again we use one of two strategies depending on the length of `m_LSP_new`.
     //
-    #pragma omp parallel for
-    for( auto pos : m_LSP_new ) {
-        m_coeff_buf[ pos ] = m_threshold * 1.5;
+    if( m_LSP_new.size() < m_coeff_len / 4 ) {
+        for( auto pos : m_LSP_new )
+            m_coeff_buf[ pos ] = m_threshold * 1.5;
+    }
+    else {
+        speck::vector_bool mask( m_coeff_len, false );
+        for( auto loc : m_LSP_new )
+            mask[loc] = true;
+        for( size_t i = 0; i < m_coeff_len; i++ ) {
+            if( mask[i] )
+                m_coeff_buf[i] = m_threshold * 1.5;
+        }
     }
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
