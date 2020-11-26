@@ -191,3 +191,4 @@ auto speck::uptr2itr( const std::unique_ptr<T[]>& uptr, size_t offset ) -> ptr_i
 }
 template auto speck::uptr2itr(const std::unique_ptr<float[]>&,  size_t) -> ptr_iterator<float>;
 template auto speck::uptr2itr(const std::unique_ptr<double[]>&, size_t) -> ptr_iterator<double>;
+template auto speck::uptr2itr(const std::unique_ptr<bool[]>&, size_t) -> ptr_iterator<bool>;

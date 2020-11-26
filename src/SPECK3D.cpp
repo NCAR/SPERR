@@ -179,8 +179,9 @@ auto speck::SPECK3D::decode() -> RTNType
 
     // initialize coefficients to be zero, and sign array to be all positive
     m_coeff_buf = speck::unique_malloc<double>(m_coeff_len);
-    auto m_coeff_begin = speck::uptr2itr( m_coeff_buf );
-    std::fill( m_coeff_begin, m_coeff_begin + m_coeff_len, 0.0 );
+    auto begin  = speck::uptr2itr( m_coeff_buf );
+    auto end    = speck::uptr2itr( m_coeff_buf, m_coeff_len );
+    std::fill( begin, end, 0.0 );
     m_sign_array.assign(m_coeff_len, true);
 
     m_initialize_sets_lists();
@@ -286,6 +287,12 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // initialize LSP
     m_LSP_new.clear();
     m_LSP_old.clear();
+    // When encoding, these two lists can easily grow to high percentage of `m_coeff_len`,
+    // so reserve the full length for it at the beginning.
+    if( m_encode_mode ) {
+        m_LSP_new.reserve( m_coeff_len ); 
+        m_LSP_old.reserve( m_coeff_len ); 
+    }
 }
 
 auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
@@ -421,6 +428,12 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 
 auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 {
+    // Record all the locations (from LSP_old and LSP_new) that need to be refined.
+    // Locations from `m_LSP_old` will be appended to the end of `m_LSP_new`.
+    const size_t LSP_new_orig_size = m_LSP_new.size();
+    size_t       LSP_new_idx       = m_LSP_new.size();
+    m_LSP_new.resize( m_LSP_new.size() + m_LSP_old.size(), 0 ); // won't trigger a malloc
+
     // First process `m_LSP_old`.
     //
 #ifdef QZ_TERM
@@ -433,7 +446,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
             const auto pos    = m_LSP_old[i];
             const bool is_sig = m_sig_map[pos];                  // <-- only diff
             if( is_sig )
-                m_coeff_buf[pos] -= m_threshold;
+                m_LSP_new[ LSP_new_idx++ ] = pos;
 #ifdef QZ_TERM
             m_bit_buffer[ current_size + i ] = is_sig;
 #else
@@ -448,7 +461,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
             const auto pos    = m_LSP_old[i];
             const bool is_sig = m_coeff_buf[pos] >= m_threshold; // <-- only diff
             if( is_sig )
-                m_coeff_buf[pos] -= m_threshold;
+                m_LSP_new[ LSP_new_idx++ ] = pos;
 #ifdef QZ_TERM
             m_bit_buffer[ current_size + i ] = is_sig;
 #else
@@ -458,24 +471,36 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 #endif
         }
     }
+    m_LSP_new.resize( LSP_new_idx );
 
-    // Second, process `m_LSP_new`
-    // Experiments show that though this for loop is very simple, OMP still brings benefit.
-    // I think it's because more concurrent queries better exploit memory bandwith.
-    //
-    #pragma omp parallel for
-    for( auto pos : m_LSP_new ) {
-        m_coeff_buf[ pos ] -= m_threshold;
+    // Second, process `m_LSP_new`, including locations appended from `m_LSP_old`.
+    // Depending on the length of `m_LSP_new`, we use one of 2 approaches. 
+    // Note that the choice of the threshold being a quarter of the total length is
+    //   just an empirical number from several desktops.
+    // 
+    if( m_LSP_new.size() < m_coeff_len / 4 ) {
+        for( auto loc : m_LSP_new )
+            m_coeff_buf[ loc ] -= m_threshold;
+    }
+    else {
+        speck::vector_bool mask( m_coeff_len, false );
+        for( auto loc : m_LSP_new )
+            mask[loc] = true;
+
+        // This loop hardly benefits from OpenMP, so don't bother...
+        for( size_t i = 0; i < m_coeff_len; i++ ) {
+            if( mask[i] )
+                m_coeff_buf[i] -= m_threshold;
+        }
     }
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
-    const auto size_needed = m_LSP_old.size() + m_LSP_new.size();
-    if( size_needed > m_LSP_old.capacity() ) {
-        m_LSP_old.reserve( size_needed * 2 );
-    }
-    m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
+    //
+    m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), 
+                      m_LSP_new.cbegin() + LSP_new_orig_size );
 
     // Fourth, clear `m_LSP_new`.
+    //
     m_LSP_new.clear();
 
     return RTNType::Good;
@@ -485,6 +510,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
 {
     // First, process `m_LSP_old`
+    //
     for( auto pos : m_LSP_old ) {
         if (m_bit_idx >= m_budget)
             return RTNType::BitBudgetMet;
@@ -500,13 +526,11 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
     }
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
-    const auto size_needed = m_LSP_old.size() + m_LSP_new.size();
-    if( size_needed > m_LSP_old.capacity() ) {
-        m_LSP_old.reserve( size_needed * 2 );
-    }
+    //
     m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
 
     // Fourth, clear `m_LSP_new`.
+    //
     m_LSP_new.clear();
 
     return RTNType::Good;
