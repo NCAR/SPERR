@@ -172,6 +172,7 @@ auto speck::unique_malloc( size_t size ) -> std::unique_ptr<T[]>
 template auto speck::unique_malloc( size_t ) -> buffer_type_c;
 template auto speck::unique_malloc( size_t ) -> buffer_type_d;
 template auto speck::unique_malloc( size_t ) -> buffer_type_f;
+template auto speck::unique_malloc( size_t ) -> buffer_type_b;
 template auto speck::unique_malloc( size_t ) -> buffer_type_uint8;
 
 

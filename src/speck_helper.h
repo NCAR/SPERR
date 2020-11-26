@@ -24,6 +24,7 @@ namespace speck {
     using buffer_type_d     = std::unique_ptr<double[]>;
     using buffer_type_f     = std::unique_ptr<float[]>;
     using buffer_type_c     = std::unique_ptr<char[]>;
+    using buffer_type_b     = std::unique_ptr<bool[]>;
     using buffer_type_uint8 = std::unique_ptr<uint8_t[]>;
   #ifdef USE_PMR
     using vector_bool     = std::pmr::vector<bool>;

@@ -19,8 +19,8 @@ public:
 
 #ifdef USE_PMR
     SPECK_Storage();
-    SPECK_Storage( const SPECK_Storage& )           = delete;
-    SPECK_Storage(       SPECK_Storage&& )          = delete;
+    SPECK_Storage           (const SPECK_Storage&)  = delete;
+    SPECK_Storage           (      SPECK_Storage&&) = delete;
     SPECK_Storage& operator=(const SPECK_Storage&)  = delete;
     SPECK_Storage& operator=(      SPECK_Storage&&) = delete;
     virtual ~SPECK_Storage();
