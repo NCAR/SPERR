@@ -19,6 +19,10 @@
 
 namespace speck {
 
+    extern const uint8_t  u8_true;
+    extern const uint8_t  u8_false;
+    extern const uint8_t  u8_discard;
+
 #ifndef BUFFER_TYPES
 #define BUFFER_TYPES
     using buffer_type_d     = std::unique_ptr<double[]>;
@@ -26,6 +30,7 @@ namespace speck {
     using buffer_type_c     = std::unique_ptr<char[]>;
     using buffer_type_b     = std::unique_ptr<bool[]>;
     using buffer_type_uint8 = std::unique_ptr<uint8_t[]>;
+
   #ifdef USE_PMR
     using vector_bool     = std::pmr::vector<bool>;
     using vector_size_t   = std::pmr::vector<size_t>;
@@ -35,6 +40,7 @@ namespace speck {
     using vector_size_t   = std::vector<size_t>;
     using vector_uint8_t  = std::vector<uint8_t>;
   #endif
+
 #endif
 
 //
@@ -161,7 +167,7 @@ void calc_approx_detail_len(size_t orig_len, size_t lev, // input
 // 2) make coeff_buffer containing all positive values.
 // 3) returns the maximum magnitude of all encountered values.
 template <typename U>
-auto make_coeff_positive(U& buf, size_t len, vector_bool&) -> typename U::element_type;
+auto make_coeff_positive(U& buf, size_t len, vector_uint8_t&) -> typename U::element_type;
 
 // Pack and unpack booleans to array of chars. 
 // The caller should have allocated the right amount of memory for the `dest` array.
@@ -170,13 +176,13 @@ auto make_coeff_positive(U& buf, size_t len, vector_bool&) -> typename U::elemen
 //
 // Note: unpack_booleans() takes a raw pointer because it accesses memory provided by others,
 //       and others most likely provide it by raw pointers.
-auto pack_booleans( buffer_type_uint8& dest,
-                    const vector_bool& src,
-                    size_t             dest_offset = 0 ) -> RTNType;
-auto unpack_booleans( vector_bool&     dest,
-                      const void*      src,
-                      size_t           src_len,
-                      size_t           src_offset = 0 ) -> RTNType;
+auto pack_booleans( buffer_type_uint8&    dest,
+                    const vector_uint8_t& src,
+                    size_t                dest_offset = 0 ) -> RTNType;
+auto unpack_booleans( vector_uint8_t&     dest,
+                      const void*         src,
+                      size_t              src_len,
+                      size_t              src_offset = 0 ) -> RTNType;
 
 // Pack and unpack exactly 8 booleans to/from a single byte
 // Note that memory for the 8 booleans should already be allocated!

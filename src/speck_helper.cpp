@@ -36,6 +36,13 @@ auto speck::num_of_xforms(size_t len) -> size_t
     return num_of_xforms;
 }
 
+//
+// General speck_helper
+//
+const uint8_t speck::u8_false  ( 0 );
+const uint8_t speck::u8_true   ( 1 );
+const uint8_t speck::u8_discard( 3 );
+
 auto speck::num_of_partitions(size_t len) -> size_t
 {
     size_t num_of_parts = 0; // Num. of partitions we can do 
@@ -64,21 +71,23 @@ void speck::calc_approx_detail_len(size_t orig_len, size_t lev,
 }
 
 template <typename U>
-auto speck::make_coeff_positive(U& buf, size_t len, vector_bool& sign_array) 
+auto speck::make_coeff_positive(U& buf, size_t len, vector_uint8_t& sign_array) 
      -> typename U::element_type
 {
-    sign_array.assign(len, true);
+    assert( len == sign_array.size() );
+
     auto max                = std::abs(buf[0]);
     using element_type      = typename U::element_type;
     const element_type zero = 0.0;
 
-    // Notice that the use of std::vector<bool> for sign_array prevents 
-    //   this loop been parallelized using OpenMP.
     for (size_t i = 0; i < len; i++) {
         if (buf[i] < zero) {
-            buf[i]        = -buf[i];
-            sign_array[i] = false;
+            buf[i] = -buf[i];
+            sign_array[i] = u8_false;
         }
+        else
+            sign_array[i] = u8_true;
+
         if (buf[i] > max)
             max = buf[i];
     }
@@ -86,16 +95,16 @@ auto speck::make_coeff_positive(U& buf, size_t len, vector_bool& sign_array)
     return max;
 }
 template speck::buffer_type_d::element_type
-speck::make_coeff_positive(buffer_type_d&, size_t, vector_bool&);
+speck::make_coeff_positive(buffer_type_d&, size_t, vector_uint8_t&);
 template speck::buffer_type_f::element_type
-speck::make_coeff_positive(buffer_type_f&, size_t, vector_bool&);
+speck::make_coeff_positive(buffer_type_f&, size_t, vector_uint8_t&);
 
 
 // Good solution to deal with bools and unsigned chars
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
-auto speck::pack_booleans( buffer_type_uint8& dest,
-                           const vector_bool& src,
-                           size_t             offset ) -> RTNType
+auto speck::pack_booleans( buffer_type_uint8&    dest,
+                           const vector_uint8_t& src,
+                           size_t                offset ) -> RTNType
 {
     if( src.size() % 8 != 0 )
         return RTNType::WrongSize;
@@ -104,22 +113,18 @@ auto speck::pack_booleans( buffer_type_uint8& dest,
 
     #pragma omp parallel for
     for( size_t i = 0; i < src.size(); i += 8 ) {
-        bool     a[8];
         uint64_t t;
-        // Thinking bvec::iterator is expensive, so use a direct access.
-        for( size_t j = 0; j < 8; j++ )
-            a[j] = src[i + j];
-        std::memcpy( &t, a, 8 );
+        std::memcpy( &t, src.data() + i, 8 );
         dest[ offset + i / 8 ] = (magic * t) >> 56;
     }
 
     return RTNType::Good;
 }
 
-auto speck::unpack_booleans( vector_bool& dest,
-                             const void*  src,
-                             size_t       src_len,
-                             size_t       src_offset ) -> RTNType
+auto speck::unpack_booleans( vector_uint8_t& dest,
+                             const void*     src,
+                             size_t          src_len,
+                             size_t          src_offset ) -> RTNType
 {
     if( src_len < src_offset )
         return RTNType::WrongSize;
@@ -133,13 +138,11 @@ auto speck::unpack_booleans( vector_bool& dest,
     const uint64_t magic   = 0x8040201008040201;
     const uint64_t mask    = 0x8080808080808080;
 
-    // It turns out that this routine cannot be parallelized, again, because
-    // std::vector<bool> is stored as uint64_t instead of individual booleans.
+    #pragma omp parallel for
     for( size_t i = 0; i < num_of_bytes; i++ ) {
         const uint64_t t = (( magic * (*(src_ptr + i)) ) & mask) >> 7;
-        bool a[8];
+        uint8_t a[8];
         std::memcpy( a, &t, 8 );
-        // Thinking bvec::iterator is expensive, so use a direct access.
         for( size_t j = 0; j < 8; j++ )
             dest[i * 8 + j] = a[j];
     }
