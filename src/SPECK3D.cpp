@@ -321,8 +321,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 #ifdef QZ_TERM
             if( m_sig_map[pixel_idx] ) {                        // <-- Diff 1
                 m_bit_buffer[ bb_size + 2 * i     ] = u8_true;
-                m_bit_buffer[ bb_size + 2 * i + 1 ] = m_sign_array[pixel_idx] ? 
-                                                      u8_true : u8_false;
+                m_bit_buffer[ bb_size + 2 * i + 1 ] = uint8_t(m_sign_array[pixel_idx]);
                 m_LSP_new[ ln_size + i] = pixel_idx;
                 m_LIP[i] = m_u64_garbage_val;
             }
@@ -333,7 +332,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
                 m_bit_buffer.push_back( u8_true );
                 if( m_bit_buffer.size() >= m_budget )
                     return RTNType::BitBudgetMet;
-                m_bit_buffer.push_back( m_sign_array[pixel_idx] ? u8_true : u8_false );
+                m_bit_buffer.push_back( uint8_t(m_sign_array[pixel_idx]) );
                 if( m_bit_buffer.size() >= m_budget )
                     return RTNType::BitBudgetMet;
                 m_LSP_new.push_back( pixel_idx );
@@ -357,9 +356,8 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 
 #ifdef QZ_TERM
             if( m_coeff_buf[pixel_idx] >= m_threshold ) {       // <-- Diff 3
-                m_bit_buffer[ bb_size + 2 * i ]    = u8_true;
-                m_bit_buffer[ bb_size + 2 * i + 1] = m_sign_array[pixel_idx] ? 
-                                                     u8_true : u8_false;
+                m_bit_buffer[ bb_size + 2 * i    ] = u8_true;
+                m_bit_buffer[ bb_size + 2 * i + 1] = uint8_t(m_sign_array[pixel_idx]);
                 m_LSP_new[ ln_size + i ] = pixel_idx;
                 m_LIP[i] = m_u64_garbage_val;
             }
@@ -370,7 +368,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
                 m_bit_buffer.push_back( u8_true );
                 if( m_bit_buffer.size() >= m_budget )
                     return RTNType::BitBudgetMet;
-                m_bit_buffer.push_back( m_sign_array[pixel_idx] );
+                m_bit_buffer.push_back( uint8_t(m_sign_array[pixel_idx]) );
                 if( m_bit_buffer.size() >= m_budget )
                     return RTNType::BitBudgetMet;
                 m_LSP_new.push_back( pixel_idx );
@@ -451,8 +449,8 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
     // First process `m_LSP_old`.
     //
 #ifdef QZ_TERM
-    const size_t current_size = m_bit_buffer.size();
-    m_bit_buffer.resize( current_size + m_LSP_old.size(), u8_false );
+    const size_t bb_size = m_bit_buffer.size();
+    m_bit_buffer.resize( bb_size + m_LSP_old.size(), u8_false );
 #endif
 
     if( m_sig_map_enabled ) {
@@ -460,47 +458,57 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
         // Reminder: we make use of both `m_sig_map` and `m_refinement_mask` in this case.
         m_refinement_mask.assign( m_coeff_len, u8_false );
 
+#ifdef QZ_TERM
+        #pragma omp parallel for
+#endif
         for( size_t i = 0; i  < m_LSP_old.size(); i++ ) {
             const auto loc    = m_LSP_old[i];
             const bool is_sig = m_sig_map[loc];                  // <-- only diff
             if( is_sig )
                 m_refinement_mask[loc] = u8_true;
 #ifdef QZ_TERM
-            m_bit_buffer[ current_size + i ] = is_sig ? u8_true : u8_false;
+            m_bit_buffer[ bb_size + i ] = uint8_t(is_sig);
 #else
-            m_bit_buffer.push_back( is_sig ? u8_true : u8_false );
+            m_bit_buffer.push_back( uint8_t(is_sig) );
             if( m_bit_buffer.size() >= m_budget ) 
                 return RTNType::BitBudgetMet;
 #endif
-        }
+        } // End of iterating `m_LSP_old`
     }
     else {
+
+#ifdef QZ_TERM
+        #pragma omp parallel for
+#endif
         for( size_t i = 0; i  < m_LSP_old.size(); i++ ) {
             const auto loc    = m_LSP_old[i];
             const bool is_sig = m_coeff_buf[loc] >= m_threshold; // <-- only diff
             if( is_sig )
                 m_coeff_buf[ loc ] -= m_threshold;
 #ifdef QZ_TERM
-            m_bit_buffer[ current_size + i ] = is_sig ? u8_true : u8_false;
+            m_bit_buffer[ bb_size + i ] = uint8_t(is_sig);
 #else
-            m_bit_buffer.push_back( is_sig ? u8_true : u8_false );
+            m_bit_buffer.push_back( uint8_t(is_sig) );
             if( m_bit_buffer.size() >= m_budget ) 
                 return RTNType::BitBudgetMet;
 #endif
-        }
+        } // End of iterating `m_LSP_old`
     }
 
     // Second, process `m_LSP_new`.
     // 
     if( m_sig_map_enabled ) {
+        #pragma omp parallel for
         for( auto pos : m_LSP_new )
             m_refinement_mask[pos] = u8_true;
+        #pragma omp parallel for
         for( size_t i = 0; i < m_coeff_len; i++ ) {
             if( m_refinement_mask[i] != u8_false )
                 m_coeff_buf[i] -= m_threshold;
         }
     }
     else {
+        #pragma omp parallel for
         for( auto pos : m_LSP_new )
             m_coeff_buf[ pos ] -= m_threshold;
     }
@@ -565,7 +573,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
     const bool this_pixel_is_sig = m_sig_map_enabled ? 
                                    m_sig_map[pixel_idx] :
                                    m_coeff_buf[pixel_idx] >= m_threshold;
-    m_bit_buffer.push_back( this_pixel_is_sig ? u8_true : u8_false );
+    m_bit_buffer.push_back( uint8_t(this_pixel_is_sig) );
 
 #ifndef QZ_TERM
     if (m_bit_buffer.size() >= m_budget) 
@@ -574,7 +582,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
 
     if (this_pixel_is_sig) {
         // Output pixel sign
-        m_bit_buffer.push_back( m_sign_array[pixel_idx] ? u8_true : u8_false );
+        m_bit_buffer.push_back( uint8_t(m_sign_array[pixel_idx]) );
         m_LSP_new.push_back( pixel_idx );
         m_LIP[loc] = m_u64_garbage_val;
 
