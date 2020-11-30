@@ -71,10 +71,10 @@ void speck::calc_approx_detail_len(size_t orig_len, size_t lev,
 }
 
 template <typename U>
-auto speck::make_coeff_positive(U& buf, size_t len, vector_uint8_t& sign_array) 
+auto speck::make_coeff_positive(U& buf, size_t len, vector_bool& sign_array) 
      -> typename U::element_type
 {
-    assert( len == sign_array.size() );
+    sign_array.assign( len, true );
 
     auto max                = std::abs(buf[0]);
     using element_type      = typename U::element_type;
@@ -83,10 +83,8 @@ auto speck::make_coeff_positive(U& buf, size_t len, vector_uint8_t& sign_array)
     for (size_t i = 0; i < len; i++) {
         if (buf[i] < zero) {
             buf[i] = -buf[i];
-            sign_array[i] = u8_false;
+            sign_array[i] = false;
         }
-        else
-            sign_array[i] = u8_true;
 
         if (buf[i] > max)
             max = buf[i];
@@ -95,9 +93,9 @@ auto speck::make_coeff_positive(U& buf, size_t len, vector_uint8_t& sign_array)
     return max;
 }
 template speck::buffer_type_d::element_type
-speck::make_coeff_positive(buffer_type_d&, size_t, vector_uint8_t&);
+speck::make_coeff_positive(buffer_type_d&, size_t, vector_bool&);
 template speck::buffer_type_f::element_type
-speck::make_coeff_positive(buffer_type_f&, size_t, vector_uint8_t&);
+speck::make_coeff_positive(buffer_type_f&, size_t, vector_bool&);
 
 
 // Good solution to deal with bools and unsigned chars

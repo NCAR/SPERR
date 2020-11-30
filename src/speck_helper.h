@@ -167,7 +167,7 @@ void calc_approx_detail_len(size_t orig_len, size_t lev, // input
 // 2) make coeff_buffer containing all positive values.
 // 3) returns the maximum magnitude of all encountered values.
 template <typename U>
-auto make_coeff_positive(U& buf, size_t len, vector_uint8_t&) -> typename U::element_type;
+auto make_coeff_positive(U& buf, size_t len, vector_bool&) -> typename U::element_type;
 
 // Pack and unpack booleans to array of chars. 
 // The caller should have allocated the right amount of memory for the `dest` array.
