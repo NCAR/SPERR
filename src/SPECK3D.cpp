@@ -4,8 +4,8 @@
 #include <cmath>
 #include <cstring>
 
-#ifdef PRINT
-    #include <iostream>
+#ifdef USE_omp
+    #include <omp.h>
 #endif
 
 //
@@ -81,7 +81,7 @@ void speck::SPECK3D::m_clean_LIS()
     }
 
     // Let's also clean up m_LIP.
-    auto it = std::remove( m_LIP.begin(), m_LIP.end(), m_LIP_garbage_val );
+    auto it = std::remove( m_LIP.begin(), m_LIP.end(), m_u64_garbage_val );
     m_LIP.erase( it, m_LIP.end() );
 }
 
@@ -297,27 +297,37 @@ void speck::SPECK3D::m_initialize_sets_lists()
 
 auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 {
+    //
+    // First we process `m_LIP`, individual insignificant pixels.
+    //
 
 #ifdef QZ_TERM
-    // allocate space before hand at once.
-    size_t current_size = m_bit_buffer.size();
-    m_bit_buffer.resize( current_size + 2 * m_LIP.size(), u8_false);
+    const size_t bb_size = m_bit_buffer.size();
+    m_bit_buffer.resize( bb_size + 2 * m_LIP.size(), u8_discard );
+    const size_t ln_size = m_LSP_new.size();
+    m_LSP_new.resize( ln_size + m_LIP.size(), m_u64_garbage_val );
 #endif
 
     // Whether to use `m_sig_map` or `m_coeff_buf` to determine the significance of 
     //   a pixel index. Between these 2 conditions, only 4 lines are different.
     if( m_sig_map_enabled ) {
-        for( auto& pixel_idx : m_LIP ) {
+
+#ifdef QZ_TERM
+        #pragma omp parallel for
+#endif
+        for( size_t i = 0; i < m_LIP.size(); i++ ) {
+            const auto pixel_idx = m_LIP[i];
 
 #ifdef QZ_TERM
             if( m_sig_map[pixel_idx] ) {                        // <-- Diff 1
-                m_bit_buffer[ current_size++ ] = u8_true;
-                m_bit_buffer[ current_size++ ] = m_sign_array[pixel_idx] ? u8_true : u8_false;
-                m_LSP_new.push_back( pixel_idx );
-                pixel_idx = m_LIP_garbage_val;
+                m_bit_buffer[ bb_size + 2 * i     ] = u8_true;
+                m_bit_buffer[ bb_size + 2 * i + 1 ] = m_sign_array[pixel_idx] ? 
+                                                      u8_true : u8_false;
+                m_LSP_new[ ln_size + i] = pixel_idx;
+                m_LIP[i] = m_u64_garbage_val;
             }
             else
-                m_bit_buffer[ current_size++ ] = u8_false;
+                m_bit_buffer[ bb_size + 2 * i ] = u8_false;
 #else
             if( m_sig_map[pixel_idx] ) {                        // <-- Diff 2
                 m_bit_buffer.push_back( u8_true );
@@ -327,7 +337,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
                 if( m_bit_buffer.size() >= m_budget )
                     return RTNType::BitBudgetMet;
                 m_LSP_new.push_back( pixel_idx );
-                pixel_idx = m_LIP_garbage_val;
+                m_LIP[i] = m_u64_garbage_val;
             }
             else {
                 m_bit_buffer.push_back( u8_false );
@@ -335,20 +345,26 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
                     return RTNType::BitBudgetMet;
             }
 #endif
-        }
+        } // End of iterating all insignificant pixels.
     }
     else {
-        for( auto& pixel_idx : m_LIP ) {
+
+#ifdef QZ_TERM
+        #pragma omp parallel for
+#endif
+        for( size_t i = 0; i < m_LIP.size(); i++ ) {
+            const auto pixel_idx = m_LIP[i];
 
 #ifdef QZ_TERM
             if( m_coeff_buf[pixel_idx] >= m_threshold ) {       // <-- Diff 3
-                m_bit_buffer[ current_size++ ] = u8_true;
-                m_bit_buffer[ current_size++ ] = m_sign_array[pixel_idx] ? u8_true : u8_false;
-                m_LSP_new.push_back( pixel_idx );
-                pixel_idx = m_LIP_garbage_val;
+                m_bit_buffer[ bb_size + 2 * i ]    = u8_true;
+                m_bit_buffer[ bb_size + 2 * i + 1] = m_sign_array[pixel_idx] ? 
+                                                     u8_true : u8_false;
+                m_LSP_new[ ln_size + i ] = pixel_idx;
+                m_LIP[i] = m_u64_garbage_val;
             }
             else
-                m_bit_buffer[ current_size++ ] = u8_false;
+                m_bit_buffer[ bb_size + 2 * i ] = u8_false;
 #else
             if( m_coeff_buf[pixel_idx] >= m_threshold ) {       // <-- Diff 4
                 m_bit_buffer.push_back( u8_true );
@@ -358,7 +374,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
                 if( m_bit_buffer.size() >= m_budget )
                     return RTNType::BitBudgetMet;
                 m_LSP_new.push_back( pixel_idx );
-                pixel_idx = m_LIP_garbage_val;
+                m_LIP[i] = m_u64_garbage_val;
             }
             else {
                 m_bit_buffer.push_back( u8_false );
@@ -366,14 +382,19 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
                     return RTNType::BitBudgetMet;
             }
 #endif
-        }
+        } // End of iterating all insignificant pixels.
     }
 
 #ifdef QZ_TERM
-    m_bit_buffer.resize( current_size );
+    auto bb_itr = std::remove( m_bit_buffer.begin() + bb_size, m_bit_buffer.end(), u8_discard );
+    m_bit_buffer.erase( bb_itr, m_bit_buffer.end() );
+    auto ln_itr = std::remove( m_LSP_new.begin() + ln_size, m_LSP_new.end(), m_u64_garbage_val );
+    m_LSP_new.erase( ln_itr, m_LSP_new.end() );
 #endif
 
-    // Then we process regular sets in LIS.
+
+    // Second we process regular sets in LIS.
+    //
     for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
         // From the end of m_LIS to its front
         size_t idx1 = m_LIS.size() - tmp;
@@ -400,7 +421,7 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 {
     // Since we have a separate representation of LIP, let's process that list first!
     for (size_t i = 0; i < m_LIP.size(); i++) {
-        assert( m_LIP[i] != m_LIP_garbage_val );
+        assert( m_LIP[i] != m_u64_garbage_val );
         auto rtn = m_process_P_decode(i);
         if( rtn == RTNType::BitBudgetMet )
             return rtn;
@@ -555,7 +576,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
         // Output pixel sign
         m_bit_buffer.push_back( m_sign_array[pixel_idx] ? u8_true : u8_false );
         m_LSP_new.push_back( pixel_idx );
-        m_LIP[loc] = m_LIP_garbage_val;
+        m_LIP[loc] = m_u64_garbage_val;
 
 #ifndef QZ_TERM
         if (m_bit_buffer.size() >= m_budget)
@@ -647,7 +668,7 @@ auto speck::SPECK3D::m_process_P_decode(size_t loc) -> RTNType
         // Record to be initialized
         m_LSP_new.push_back( pixel_idx );
 
-        m_LIP[loc] = m_LIP_garbage_val;
+        m_LIP[loc] = m_u64_garbage_val;
     }
 
     return RTNType::Good;

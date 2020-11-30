@@ -110,21 +110,21 @@ private:
 
     // Now we use a vector of indices to serve the same funcationality of the last LIS,
     // which would contain all insignificant pixels.
-    vector_size_t m_LIP;      // List of insignificant pixels.
-    const size_t         m_LIP_garbage_val = std::numeric_limits<size_t>::max();
+    vector_size_t       m_LIP;      // List of insignificant pixels.
+    const size_t        m_u64_garbage_val = std::numeric_limits<size_t>::max();
 
     // List of significant pixels (recorded as locations).
-    vector_size_t m_LSP_new; // Ones newly identified as significant
-    vector_size_t m_LSP_old; // Ones previously identified as significant
+    vector_size_t       m_LSP_new;  // Ones newly identified as significant
+    vector_size_t       m_LSP_old;  // Ones previously identified as significant
 
-    vector_bool   m_sign_array;
+    vector_bool         m_sign_array;
 
     // Significance Map and a mask that's used in refinement subroutine.
     // A flag is used to label if the map and mask are enabled. They're 
     //   enabled or disabled at the same time.
-    vector_bool     m_sig_map;
-    vector_uint8_t  m_refinement_mask;
-    bool            m_sig_map_enabled = false;
+    vector_bool         m_sig_map;
+    vector_uint8_t      m_refinement_mask;
+    bool                m_sig_map_enabled = false;
     
 
 #ifdef USE_PMR
@@ -134,7 +134,7 @@ private:
 #endif
 
 #ifdef QZ_TERM
-    int32_t m_qz_term_lev   = 0;  // At which quantization level does encoding terminate?
+    int32_t m_qz_term_lev = 0;  // At which quantization level does encoding terminate?
 #endif
 
 };
