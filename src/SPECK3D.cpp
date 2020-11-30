@@ -285,11 +285,13 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // initialize LSP
     m_LSP_new.clear();
     m_LSP_old.clear();
-    // When encoding, these two lists can easily grow to high percentage of `m_coeff_len`,
-    // so reserve the full length for it at the beginning.
+    // When encoding, `m_LSP_old` can easily grow to high percentage of `m_coeff_len`,
+    //   so reserve the full length for it at the beginning.
+    // The other two lists should be reserved to have a quarter of `m_coeff_len`.
     if( m_encode_mode ) {
-        m_LSP_new.reserve( m_coeff_len ); 
         m_LSP_old.reserve( m_coeff_len ); 
+        m_LSP_new.reserve( m_coeff_len / 4 );
+        m_LIP.reserve( m_coeff_len / 4 );
     }
 }
 
