@@ -39,9 +39,9 @@ auto speck::num_of_xforms(size_t len) -> size_t
 //
 // General speck_helper
 //
-const uint8_t speck::u8_false  ( 0 );
-const uint8_t speck::u8_true   ( 1 );
-const uint8_t speck::u8_discard( 3 );
+const uint8_t speck::u8_false  ( 0 ); // Don't change this value! It's assumed in packing booleans.
+const uint8_t speck::u8_true   ( 1 ); // Don't change this value! It's assumed in packing booleans.
+const uint8_t speck::u8_discard( 2 ); // This value can be arbitrary.
 
 auto speck::num_of_partitions(size_t len) -> size_t
 {

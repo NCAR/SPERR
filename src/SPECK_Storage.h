@@ -87,7 +87,7 @@ protected:
     std::pmr::memory_resource*               m_previous_resource;
 #endif
 
-    vector_bool       m_bit_buffer;          // Output/Input bit buffer
+    vector_uint8_t    m_bit_buffer;
 
 };
 

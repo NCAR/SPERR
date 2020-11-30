@@ -48,20 +48,27 @@ TEST( speck_helper, bit_packing )
 {
     const size_t num_of_bytes = 6;
     const size_t byte_offset  = 1;
-    speck::vector_bool input {true,  true,  true,  true,  true,  true,  true,  true,  // 1st byte
-                              false, false, false, false, false, false, false, false, // 2nd byte
-                              true,  false, true,  false, true,  false, true,  false, // 3rd byte
-                              false, true,  false, true,  false, true,  false, true,  // 4th byte
-                              true,  true,  false, false, true,  true,  false, false, // 5th byte
-                              false, false, true,  true,  false, false, true,  true };// 6th byte
+    speck::vector_uint8_t input {speck::u8_true,  speck::u8_true,  speck::u8_true,  speck::u8_true,  
+                                 speck::u8_true,  speck::u8_true,  speck::u8_true,  speck::u8_true,  // 1st byte
+                                 speck::u8_false, speck::u8_false, speck::u8_false, speck::u8_false, 
+                                 speck::u8_false, speck::u8_false, speck::u8_false, speck::u8_false, // 2nd byte
+                                 speck::u8_true,  speck::u8_false, speck::u8_true,  speck::u8_false, 
+                                 speck::u8_true,  speck::u8_false, speck::u8_true,  speck::u8_false, // 3rd byte
+                                 speck::u8_false, speck::u8_true,  speck::u8_false, speck::u8_true,  
+                                 speck::u8_false, speck::u8_true,  speck::u8_false, speck::u8_true,  // 4th byte
+                                 speck::u8_true,  speck::u8_true,  speck::u8_false, speck::u8_false, 
+                                 speck::u8_true,  speck::u8_true,  speck::u8_false, speck::u8_false, // 5th byte
+                                 speck::u8_false, speck::u8_false, speck::u8_true,  speck::u8_true,  
+                                 speck::u8_false, speck::u8_false, speck::u8_true,  speck::u8_true };// 6th byte
 
     auto bytes = speck::unique_malloc<uint8_t>(num_of_bytes + byte_offset);
 
     // Pack booleans
     auto rtn = speck::pack_booleans( bytes, input, byte_offset );
     EXPECT_EQ( rtn, speck::RTNType::Good );
+
     // Unpack booleans
-    speck::vector_bool output( num_of_bytes * 8 );
+    speck::vector_uint8_t output( num_of_bytes * 8 );
     rtn = speck::unpack_booleans( output, bytes.get(), num_of_bytes + byte_offset, byte_offset );
 
     EXPECT_EQ( rtn, speck::RTNType::Good );
