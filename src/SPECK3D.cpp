@@ -159,7 +159,7 @@ auto speck::SPECK3D::encode() -> RTNType
 #ifdef QZ_TERM
     // If the bit buffer has the last byte empty, let's fill in zero's.
     while( m_bit_buffer.size() % 8 != 0 )
-        m_bit_buffer.push_back( false );
+        m_bit_buffer.push_back( u8_false );
 #endif
 
     return RTNType::Good;
@@ -301,7 +301,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 #ifdef QZ_TERM
     // allocate space before hand at once.
     size_t current_size = m_bit_buffer.size();
-    m_bit_buffer.resize( current_size + 2 * m_LIP.size(), false);
+    m_bit_buffer.resize( current_size + 2 * m_LIP.size(), u8_false);
 #endif
 
     // Whether to use `m_sig_map` or `m_coeff_buf` to determine the significance of 
@@ -311,26 +311,26 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 
 #ifdef QZ_TERM
             if( m_sig_map[pixel_idx] ) {                        // <-- Diff 1
-                m_bit_buffer[ current_size++ ] = true;
-                m_bit_buffer[ current_size++ ] = m_sign_array[pixel_idx];
+                m_bit_buffer[ current_size++ ] = u8_true;
+                m_bit_buffer[ current_size++ ] = m_sign_array[pixel_idx] ? u8_true : u8_false;
                 m_LSP_new.push_back( pixel_idx );
                 pixel_idx = m_LIP_garbage_val;
             }
             else
-                m_bit_buffer[ current_size++ ] = false;
+                m_bit_buffer[ current_size++ ] = u8_false;
 #else
             if( m_sig_map[pixel_idx] ) {                        // <-- Diff 2
-                m_bit_buffer.push_back( true );
+                m_bit_buffer.push_back( u8_true );
                 if( m_bit_buffer.size() >= m_budget )
                     return RTNType::BitBudgetMet;
-                m_bit_buffer.push_back( m_sign_array[pixel_idx] );
+                m_bit_buffer.push_back( m_sign_array[pixel_idx] ? u8_true : u8_false );
                 if( m_bit_buffer.size() >= m_budget )
                     return RTNType::BitBudgetMet;
                 m_LSP_new.push_back( pixel_idx );
                 pixel_idx = m_LIP_garbage_val;
             }
             else {
-                m_bit_buffer.push_back( false );
+                m_bit_buffer.push_back( u8_false );
                 if( m_bit_buffer.size() >= m_budget )
                     return RTNType::BitBudgetMet;
             }
@@ -342,16 +342,16 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 
 #ifdef QZ_TERM
             if( m_coeff_buf[pixel_idx] >= m_threshold ) {       // <-- Diff 3
-                m_bit_buffer[ current_size++ ] = true;
-                m_bit_buffer[ current_size++ ] = m_sign_array[pixel_idx];
+                m_bit_buffer[ current_size++ ] = u8_true;
+                m_bit_buffer[ current_size++ ] = m_sign_array[pixel_idx] ? u8_true : u8_false;
                 m_LSP_new.push_back( pixel_idx );
                 pixel_idx = m_LIP_garbage_val;
             }
             else
-                m_bit_buffer[ current_size++ ] = false;
+                m_bit_buffer[ current_size++ ] = u8_false;
 #else
             if( m_coeff_buf[pixel_idx] >= m_threshold ) {       // <-- Diff 4
-                m_bit_buffer.push_back( true );
+                m_bit_buffer.push_back( u8_true );
                 if( m_bit_buffer.size() >= m_budget )
                     return RTNType::BitBudgetMet;
                 m_bit_buffer.push_back( m_sign_array[pixel_idx] );
@@ -361,7 +361,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
                 pixel_idx = m_LIP_garbage_val;
             }
             else {
-                m_bit_buffer.push_back( false );
+                m_bit_buffer.push_back( u8_false );
                 if( m_bit_buffer.size() >= m_budget )
                     return RTNType::BitBudgetMet;
             }
@@ -431,23 +431,23 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
     //
 #ifdef QZ_TERM
     const size_t current_size = m_bit_buffer.size();
-    m_bit_buffer.resize( current_size + m_LSP_old.size(), false );
+    m_bit_buffer.resize( current_size + m_LSP_old.size(), u8_false );
 #endif
 
     if( m_sig_map_enabled ) {
 
         // Reminder: we make use of both `m_sig_map` and `m_refinement_mask` in this case.
-        m_refinement_mask.assign( m_coeff_len, false );
+        m_refinement_mask.assign( m_coeff_len, u8_false );
 
         for( size_t i = 0; i  < m_LSP_old.size(); i++ ) {
             const auto loc    = m_LSP_old[i];
             const bool is_sig = m_sig_map[loc];                  // <-- only diff
             if( is_sig )
-                m_refinement_mask[loc] = true;
+                m_refinement_mask[loc] = u8_true;
 #ifdef QZ_TERM
-            m_bit_buffer[ current_size + i ] = is_sig;
+            m_bit_buffer[ current_size + i ] = is_sig ? u8_true : u8_false;
 #else
-            m_bit_buffer.push_back( is_sig );
+            m_bit_buffer.push_back( is_sig ? u8_true : u8_false );
             if( m_bit_buffer.size() >= m_budget ) 
                 return RTNType::BitBudgetMet;
 #endif
@@ -460,9 +460,9 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
             if( is_sig )
                 m_coeff_buf[ loc ] -= m_threshold;
 #ifdef QZ_TERM
-            m_bit_buffer[ current_size + i ] = is_sig;
+            m_bit_buffer[ current_size + i ] = is_sig ? u8_true : u8_false;
 #else
-            m_bit_buffer.push_back( is_sig );
+            m_bit_buffer.push_back( is_sig ? u8_true : u8_false );
             if( m_bit_buffer.size() >= m_budget ) 
                 return RTNType::BitBudgetMet;
 #endif
@@ -473,9 +473,9 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
     // 
     if( m_sig_map_enabled ) {
         for( auto pos : m_LSP_new )
-            m_refinement_mask[pos] = true;
+            m_refinement_mask[pos] = u8_true;
         for( size_t i = 0; i < m_coeff_len; i++ ) {
-            if( m_refinement_mask[i] )
+            if( m_refinement_mask[i] != u8_false )
                 m_coeff_buf[i] -= m_threshold;
         }
     }
@@ -504,7 +504,8 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
         if (m_bit_idx >= m_budget)
             return RTNType::BitBudgetMet;
 
-        m_coeff_buf[pos] += m_bit_buffer[m_bit_idx++] ? m_threshold * 0.5 : m_threshold * -0.5;
+        m_coeff_buf[pos] += m_bit_buffer[m_bit_idx++] != u8_false ? 
+                            m_threshold * 0.5 : m_threshold * -0.5;
     }
 
     // Second, process `m_LSP_new`.
@@ -543,7 +544,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
     const bool this_pixel_is_sig = m_sig_map_enabled ? 
                                    m_sig_map[pixel_idx] :
                                    m_coeff_buf[pixel_idx] >= m_threshold;
-    m_bit_buffer.push_back(this_pixel_is_sig);
+    m_bit_buffer.push_back( this_pixel_is_sig ? u8_true : u8_false );
 
 #ifndef QZ_TERM
     if (m_bit_buffer.size() >= m_budget) 
@@ -552,7 +553,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
 
     if (this_pixel_is_sig) {
         // Output pixel sign
-        m_bit_buffer.push_back(m_sign_array[pixel_idx]);
+        m_bit_buffer.push_back( m_sign_array[pixel_idx] ? u8_true : u8_false );
         m_LSP_new.push_back( pixel_idx );
         m_LIP[loc] = m_LIP_garbage_val;
 
@@ -602,16 +603,11 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
         }
     }
 end_loop_label:
-    m_bit_buffer.push_back(set.signif != Significance::Insig); // output true/false
+    m_bit_buffer.push_back( set.signif != Significance::Insig ? u8_true : u8_false );
 
 #ifndef QZ_TERM
     if (m_bit_buffer.size() >= m_budget)
         return RTNType::BitBudgetMet;
-#endif
-
-#ifdef PRINT
-    const char* s = m_bit_buffer.back() ? "s1\n" : "s0\n";
-    std::cout << s;
 #endif
 
     if (set.signif == Significance::Sig) {
@@ -636,7 +632,7 @@ auto speck::SPECK3D::m_process_P_decode(size_t loc) -> RTNType
     // When decoding, check bit budget before attempting to read a bit
     if (m_bit_idx >= m_budget )
         return RTNType::BitBudgetMet;
-    const bool this_pixel_is_sig = m_bit_buffer[m_bit_idx++];
+    const bool this_pixel_is_sig = (m_bit_buffer[m_bit_idx++] != u8_false);
 
     if (this_pixel_is_sig) {
         const auto pixel_idx = m_LIP[loc];
@@ -645,7 +641,7 @@ auto speck::SPECK3D::m_process_P_decode(size_t loc) -> RTNType
         if (m_bit_idx >= m_budget )
             return RTNType::BitBudgetMet;
 
-        if (!m_bit_buffer[m_bit_idx++])
+        if (m_bit_buffer[m_bit_idx++] == u8_false)
             m_sign_array[pixel_idx] = false;
 
         // Record to be initialized
@@ -665,7 +661,7 @@ auto speck::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2) -> RTNType
         return RTNType::BitBudgetMet;
 
     auto& set  = m_LIS[idx1][idx2];
-    set.signif = m_bit_buffer[m_bit_idx++] ? Significance::Sig : Significance::Insig;
+    set.signif = m_bit_buffer[m_bit_idx++] != u8_false ? Significance::Sig : Significance::Insig;
     int rtn    = 0;
 
     if (set.signif == Significance::Sig) {
