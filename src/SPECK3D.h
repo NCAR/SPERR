@@ -119,9 +119,13 @@ private:
 
     speck::vector_bool   m_sign_array;
 
-    // Significance Map and a flag labelling if it's enabled.
+    // Significance Map and a mask that's used in refinement subroutine.
+    // A flag is used to label if the map and mask are enabled. They're 
+    //   enabled or disabled at the same time.
     speck::vector_bool   m_sig_map;
+    speck::vector_bool   m_refinement_mask;
     bool                 m_sig_map_enabled = false;
+    
 
 #ifdef USE_PMR
     std::pmr::vector<std::pmr::vector<SPECKSet3D>>  m_LIS;

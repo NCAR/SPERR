@@ -102,6 +102,7 @@ auto speck::SPECK3D::encode() -> RTNType
     // which will always reconstruct to a bitplane value that is smaller than max_coeff. 
     // Also, when max_coeff is close to 0.0, std::log2(max_coeff) can
     // have a pretty big magnitude, so we use int32_t here.
+    // 
     m_max_coeff_bits = int32_t(std::floor(std::log2(max_coeff)));
     m_threshold      = std::pow(2.0, double(m_max_coeff_bits));
 
@@ -115,10 +116,11 @@ auto speck::SPECK3D::encode() -> RTNType
 
     for( int itr = 0; itr < 128; itr++ ) {  // This is the upper limit of num of iterations.
 
-        // Enable `m_sig_map` when either of the two lists are longer than a threshold.
-        // The optimal threshold is hard to choose, so here we just say if they're within
-        //   1 order of magnitude in length, we start using `m_sig_map`.
-        if( (m_LIP.size() > m_coeff_len / 10) || (m_LSP_old.size() > m_coeff_len / 10) ) {
+        // Enable `m_sig_map` and `m_refinement_mask` the lists of individual pixels 
+        //   are longer than a threshold.
+        // The optimal threshold is hard to choose; this is just an experimental value.
+        // 
+        if( m_LIP.size() + m_LSP_old.size() + m_LSP_new.size() > m_coeff_len / 4 ) {
             if( m_sig_map.size() != m_coeff_len )
                 m_sig_map.resize( m_coeff_len, false );
             for( size_t i = 0; i < m_sig_map.size(); i++ ) {
@@ -304,7 +306,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
     //   a pixel index. Between these 2 conditions, only 4 lines are different.
     if( m_sig_map_enabled ) {
         for( auto& pixel_idx : m_LIP ) {
-            assert( pixel_idx != m_LIP_garbage_val );
+
 #ifdef QZ_TERM
             if( m_sig_map[pixel_idx] ) {                        // <-- Diff 1
                 m_bit_buffer[ current_size++ ] = true;
@@ -335,7 +337,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
     }
     else {
         for( auto& pixel_idx : m_LIP ) {
-            assert( pixel_idx != m_LIP_garbage_val );
+
 #ifdef QZ_TERM
             if( m_coeff_buf[pixel_idx] >= m_threshold ) {       // <-- Diff 3
                 m_bit_buffer[ current_size++ ] = true;
@@ -375,7 +377,6 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
         size_t idx1 = m_LIS.size() - tmp;
         for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
             const auto& s = m_LIS[idx1][idx2];
-            assert(s.type != SetType::Garbage);
 
 #ifdef QZ_TERM
             m_process_S_encode(idx1, idx2);
@@ -424,12 +425,6 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 
 auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 {
-    // Record all the locations (from LSP_old and LSP_new) that need to be refined.
-    // Locations from `m_LSP_old` will be appended to the end of `m_LSP_new`.
-    const size_t LSP_new_orig_size = m_LSP_new.size();
-    size_t       LSP_new_idx       = m_LSP_new.size();
-    m_LSP_new.resize( m_LSP_new.size() + m_LSP_old.size(), 0 ); // won't trigger a malloc
-
     // First process `m_LSP_old`.
     //
 #ifdef QZ_TERM
@@ -438,59 +433,58 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 #endif
 
     if( m_sig_map_enabled ) {
-        for( size_t i = 0; i  < m_LSP_old.size(); i++ ) {
-            const auto pos    = m_LSP_old[i];
-            const bool is_sig = m_sig_map[pos];                  // <-- only diff
-            if( is_sig )
-                m_LSP_new[ LSP_new_idx++ ] = pos;
-#ifdef QZ_TERM
-            m_bit_buffer[ current_size + i ] = is_sig;
-#else
-            m_bit_buffer.push_back( is_sig );
-            if( m_bit_buffer.size() >= m_budget ) 
-                return RTNType::BitBudgetMet;
-#endif
-        }
-    }
-    else {
-        for( size_t i = 0; i  < m_LSP_old.size(); i++ ) {
-            const auto pos    = m_LSP_old[i];
-            const bool is_sig = m_coeff_buf[pos] >= m_threshold; // <-- only diff
-            if( is_sig )
-                m_LSP_new[ LSP_new_idx++ ] = pos;
-#ifdef QZ_TERM
-            m_bit_buffer[ current_size + i ] = is_sig;
-#else
-            m_bit_buffer.push_back( is_sig );
-            if( m_bit_buffer.size() >= m_budget ) 
-                return RTNType::BitBudgetMet;
-#endif
-        }
-    }
-    m_LSP_new.resize( LSP_new_idx );
 
-    // Second, process `m_LSP_new`, including locations appended from `m_LSP_old`.
-    // Depending on the length of `m_LSP_new`, we use one of 2 approaches. 
-    // Note that the choice of the threshold is just an empirical value.
-    // 
-    if( m_LSP_new.size() < m_coeff_len / 4 ) {
-        for( auto loc : m_LSP_new )
-            m_coeff_buf[ loc ] -= m_threshold;
+        // Reminder: we make use of both `m_sig_map` and `m_refinement_mask` in this case.
+        m_refinement_mask.assign( m_coeff_len, false );
+
+        for( size_t i = 0; i  < m_LSP_old.size(); i++ ) {
+            const auto loc    = m_LSP_old[i];
+            const bool is_sig = m_sig_map[loc];                  // <-- only diff
+            if( is_sig )
+                m_refinement_mask[loc] = true;
+#ifdef QZ_TERM
+            m_bit_buffer[ current_size + i ] = is_sig;
+#else
+            m_bit_buffer.push_back( is_sig );
+            if( m_bit_buffer.size() >= m_budget ) 
+                return RTNType::BitBudgetMet;
+#endif
+        }
     }
     else {
-        speck::vector_bool mask( m_coeff_len, false );
-        for( auto loc : m_LSP_new )
-            mask[loc] = true;
+        for( size_t i = 0; i  < m_LSP_old.size(); i++ ) {
+            const auto loc    = m_LSP_old[i];
+            const bool is_sig = m_coeff_buf[loc] >= m_threshold; // <-- only diff
+            if( is_sig )
+                m_coeff_buf[ loc ] -= m_threshold;
+#ifdef QZ_TERM
+            m_bit_buffer[ current_size + i ] = is_sig;
+#else
+            m_bit_buffer.push_back( is_sig );
+            if( m_bit_buffer.size() >= m_budget ) 
+                return RTNType::BitBudgetMet;
+#endif
+        }
+    }
+
+    // Second, process `m_LSP_new`.
+    // 
+    if( m_sig_map_enabled ) {
+        for( auto pos : m_LSP_new )
+            m_refinement_mask[pos] = true;
         for( size_t i = 0; i < m_coeff_len; i++ ) {
-            if( mask[i] )
+            if( m_refinement_mask[i] )
                 m_coeff_buf[i] -= m_threshold;
         }
+    }
+    else {
+        for( auto pos : m_LSP_new )
+            m_coeff_buf[ pos ] -= m_threshold;
     }
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
     //
-    m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), 
-                      m_LSP_new.cbegin() + LSP_new_orig_size );
+    m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
 
     // Fourth, clear `m_LSP_new`.
     //
