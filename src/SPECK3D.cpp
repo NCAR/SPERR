@@ -8,10 +8,6 @@
     #include <omp.h>
 #endif
 
-#ifdef PRINT
-    #include <iostream>
-#endif
-
 //
 // Class SPECKSet3D
 //
@@ -75,9 +71,6 @@ void speck::SPECK3D::set_bit_budget(size_t budget)
 
 void speck::SPECK3D::m_clean_LIS()
 {
-    // Erase-remove idiom:
-    // https://en.wikipedia.org/wiki/Erase%E2%80%93remove_idiom
-
     #pragma omp parallel for
     for( size_t i = 0; i < m_LIS.size(); i++ ) {
         auto it = std::remove_if( m_LIS[i].begin(), m_LIS[i].end(),
@@ -107,6 +100,7 @@ auto speck::SPECK3D::encode() -> RTNType
     // which will always reconstruct to a bitplane value that is smaller than max_coeff. 
     // Also, when max_coeff is close to 0.0, std::log2(max_coeff) can
     // have a pretty big magnitude, so we use int32_t here.
+    //
     m_max_coeff_bits = int32_t(std::floor(std::log2(max_coeff)));
     m_threshold      = std::pow(2.0, double(m_max_coeff_bits));
 
@@ -270,7 +264,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
     m_LIS[parts].insert(m_LIS[parts].begin(), big);
 
     // Initialize LSP.
-    // Note that `m_LSP_old` grows close to the full length, so we reserve space now.
+    // Note that `m_LSP_old` usually grow close to the full length, so we reserve space now.
     m_LSP_new.clear();
     m_LSP_old.clear();
     m_LSP_old.reserve( m_coeff_len );
@@ -318,7 +312,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
     m_LSP_new.erase( end_itr, m_LSP_new.end() );
 
     // Now we put `m_tmp_result` into `m_bit_buffer` in serial.
-
+    //
     for( size_t i = 0; i < m_tmp_result.size(); i++ ) {
         const auto e = m_tmp_result[i];
         if( e == sig_pos ) {
@@ -357,6 +351,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
     }
 
     // Then we process regular sets in LIS.
+    //
     for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
         // From the end of m_LIS to its front
         size_t idx1 = m_LIS.size() - tmp;
@@ -544,13 +539,7 @@ end_loop_label:
         return RTNType::BitBudgetMet;
 #endif
 
-#ifdef PRINT
-    const char* s = m_bit_buffer.back() ? "s1\n" : "s0\n";
-    std::cout << s;
-#endif
-
     if (set.signif == Significance::Sig) {
-
 #ifdef QZ_TERM
         m_code_S(idx1, idx2);
 #else
@@ -559,7 +548,6 @@ end_loop_label:
             return RTNType::BitBudgetMet;
         assert( rtn == RTNType::Good );
 #endif
-
         set.type = SetType::Garbage; // this current set is gonna be discarded.
     }
 
