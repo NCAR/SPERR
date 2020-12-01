@@ -159,8 +159,9 @@ auto speck::SPECK3D::decode() -> RTNType
 
     // initialize coefficients to be zero, and sign array to be all positive
     m_coeff_buf = speck::unique_malloc<double>(m_coeff_len);
-    auto m_coeff_begin = speck::uptr2itr( m_coeff_buf );
-    std::fill( m_coeff_begin, m_coeff_begin + m_coeff_len, 0.0 );
+    auto begin  = speck::uptr2itr( m_coeff_buf );
+    auto end    = speck::uptr2itr( m_coeff_buf, m_coeff_len );
+    std::fill( begin, end, 0.0 );
     m_sign_array.assign(m_coeff_len, true);
 
     m_initialize_sets_lists();
@@ -284,8 +285,9 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
     //   let's define two more states that augments `m_true`:
     const uint8_t sig_pos = 3;  // this pixel is significant and has a positive sign
     const uint8_t sig_neg = 4;  // this pixel is significant and has a negative sign
-    const size_t lsp_size = m_LSP_new.size();
-    m_LSP_new.resize( lsp_size + m_LIP.size(), m_u64_garbage_val );
+
+    // `m_LSP_new` is now empty from the previous iteration, and ready to receive input from `m_LIP`.
+    m_LSP_new.assign( m_LIP.size(), m_u64_garbage_val );
     m_tmp_result.assign( m_LIP.size(), m_discard );
 
     // Experiments show that though we use a temporary storage space and that
@@ -301,14 +303,14 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
         const bool pixel_is_sig = (m_coeff_buf[pixel_idx] >= m_threshold);
         if( pixel_is_sig ) {
             m_tmp_result[i] = m_sign_array[pixel_idx] ? sig_pos : sig_neg;
-            m_LSP_new[ lsp_size + i ] = pixel_idx;
-            m_LIP[i] = m_u64_garbage_val;
+            m_LSP_new[i]    = pixel_idx;
+            m_LIP[i]        = m_u64_garbage_val;
         }
         else
             m_tmp_result[i] = m_false;
     }
 
-    auto end_itr = std::remove( m_LSP_new.begin() + lsp_size, m_LSP_new.end(), m_u64_garbage_val );
+    auto end_itr = std::remove( m_LSP_new.begin(), m_LSP_new.end(), m_u64_garbage_val );
     m_LSP_new.erase( end_itr, m_LSP_new.end() );
 
     // Now we put `m_tmp_result` into `m_bit_buffer` in serial.
