@@ -8,10 +8,6 @@
     #include <omp.h>
 #endif
 
-#ifdef PRINT
-    #include <iostream>
-#endif
-
 //
 // Class SPECKSet3D
 //
@@ -86,7 +82,7 @@ void speck::SPECK3D::m_clean_LIS()
     }
 
     // Let's also clean up m_LIP.
-    auto it = std::remove( m_LIP.begin(), m_LIP.end(), m_LIP_garbage_val );
+    auto it = std::remove( m_LIP.begin(), m_LIP.end(), m_u64_garbage_val );
     m_LIP.erase( it, m_LIP.end() );
 }
 
@@ -119,6 +115,22 @@ auto speck::SPECK3D::encode() -> RTNType
 #endif
 
     for( int i = 0; i < 128; i++ ) {    // This is the upper limit of num of iterations.
+
+        // Enable `m_sig_map` when the lists of individual pixels 
+        //   are longer than a threshold.
+        // The optimal threshold is hard to choose; this is just an experimental value.
+        // 
+        if( m_LIP.size() + m_LSP_old.size() + m_LSP_new.size() > m_coeff_len / 4 ) {
+            if( m_sig_map.size() != m_coeff_len )
+                m_sig_map.resize( m_coeff_len, false );
+            for( size_t i = 0; i < m_sig_map.size(); i++ ) {
+                m_sig_map[i] = (m_coeff_buf[i] >= m_threshold);
+            }
+            m_sig_map_enabled = true;
+        }
+        else {
+            m_sig_map_enabled = false;
+        }
 
 #ifdef QZ_TERM
         // The actual encoding steps
@@ -272,57 +284,62 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // initialize LSP
     m_LSP_new.clear();
     m_LSP_old.clear();
+
+    // `m_LSP_old` can grow close to the full length, so reserve space up front.
+    m_LSP_old.reserve( m_coeff_len );
 }
 
 auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 {
     // Since we have a separate representation of LIP, let's process that list first!
-    // Note that the code here to process m_LIP is equivalent to m_process_P_encode(),
-    //   but re-organized in a way that's more friendly to OpenMP parallelization.
-    // Also note that in `fixed size` compression mode, this code will result in more
-    //   computation than necessary, namely when the bit budget is met in the middle of 
-    //   processing m_LIP. However, we consider `fixed QZ_TERM` is a more common use case
-    //   thus warrents this design decision.
-
-    // In addition to the pre-defined `m_false`, `m_true`, and `m_discard`,
-    //   let's define two more states that augments `m_true`:
+    //
     const uint8_t sig_pos = 3;  // this pixel is significant and has a positive sign
     const uint8_t sig_neg = 4;  // this pixel is significant and has a negative sign
-    speck::vector_uint8_t LIP_results( m_LIP.size(), m_discard );
+    m_tmp_result.assign( m_LIP.size(), m_discard );
 
-    // Experiments show that though we need an extra allocation (LIP_results) and that
-    //   this omp section is rather simple, it's still faster than serial execution with
-    //   direct push to `m_bit_buffer`. Also, this code isn't slower even without OMP.
-    //   I guess the random access of `m_coeff_buf` and `m_sign_array` are just benefiting
-    //   from concurrent queries a lot.
-    //
-    #pragma omp parallel for
-    for (size_t i = 0; i < m_LIP.size(); i++) {
-        const auto pixel_idx = m_LIP[i];
-        assert( pixel_idx != m_LIP_garbage_val );
-        const bool pixel_is_sig = (m_coeff_buf[pixel_idx] >= m_threshold);
-        if( pixel_is_sig )
-            LIP_results[i] = m_sign_array[pixel_idx] ? sig_pos : sig_neg;
-        else
-            LIP_results[i] = m_false;
+    // Enlarge `m_LSP_new` and remove garbage values later.
+    const size_t lsp_size = m_LSP_new.size();
+    m_LSP_new.resize( lsp_size + m_LIP.size(), m_u64_garbage_val );
+
+    if( m_sig_map_enabled ) {
+        #pragma omp parallel for
+        for (size_t i = 0; i < m_LIP.size(); i++) {
+            const auto pixel_idx = m_LIP[i];
+            if( m_sig_map[ pixel_idx ] ) {
+                m_tmp_result[i] = m_sign_array[pixel_idx] ? sig_pos : sig_neg;
+                m_LSP_new[ lsp_size + i ] = pixel_idx;
+                m_LIP[i] = m_u64_garbage_val;
+            }
+            else
+                m_tmp_result[i] = m_false;
+        }
+    }
+    else {
+        #pragma omp parallel for
+        for (size_t i = 0; i < m_LIP.size(); i++) {
+            const auto pixel_idx = m_LIP[i];
+            const bool pixel_is_sig = (m_coeff_buf[pixel_idx] >= m_threshold);
+            if( pixel_is_sig ) {
+                m_tmp_result[i] = m_sign_array[pixel_idx] ? sig_pos : sig_neg;
+                m_LSP_new[ lsp_size + i ] = pixel_idx;
+                m_LIP[i] = m_u64_garbage_val;
+            }
+            else
+                m_tmp_result[i] = m_false;
+        }
     }
 
-    // Now we put `LIP_results` into `m_bit_buffer` in serial.
-    // We expand `m_bit_buffer` to the largest size it could be, fill in values,
-    //   and then shrink if necessary.  Benchmark shows that this technique is 
-    //   1.5X faster than using indivisual push_back() operations.
-    // Also note that involvement of bvector::iterator is just slow...
-#ifdef QZ_TERM
-    size_t current_size = m_bit_buffer.size();
-    m_bit_buffer.resize( current_size + 2 * m_LIP.size(), false);
-#endif
+    auto end_itr = std::remove( m_LSP_new.begin() + lsp_size, m_LSP_new.end(), m_u64_garbage_val );
+    m_LSP_new.erase( end_itr, m_LSP_new.end() );
 
-    for( size_t i = 0; i < LIP_results.size(); i++ ) {
-        const auto e = LIP_results[i];
+    // Now we put intermediate results from `m_tmp_result` into `m_bit_buffer` in serial.
+    //
+    for( size_t i = 0; i < m_tmp_result.size(); i++ ) {
+        const auto e = m_tmp_result[i];
         if( e == sig_pos ) {
 #ifdef QZ_TERM
-            m_bit_buffer[ current_size++ ] = true; // this pixel is significant
-            m_bit_buffer[ current_size++ ] = true; // this pixel has a positive sign
+            m_bit_buffer.push_back( true ); // this pixel is significant
+            m_bit_buffer.push_back( true ); // this pixel has a positive sign
 #else
             m_bit_buffer.push_back( true );
             if( m_bit_buffer.size() >= m_budget )
@@ -331,13 +348,11 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
             if( m_bit_buffer.size() >= m_budget )
                 return RTNType::BitBudgetMet;
 #endif
-            m_LSP_new.push_back( m_LIP[i] );
-            m_LIP[i] = m_LIP_garbage_val;
         }
         else if( e == sig_neg ) {
 #ifdef QZ_TERM
-            m_bit_buffer[ current_size++ ] = true;  // this pixel is significant
-            m_bit_buffer[ current_size++ ] = false; // this pixel has a negative sign
+            m_bit_buffer.push_back( true  ); // this pixel is significant
+            m_bit_buffer.push_back( false ); // this pixel has a negative sign
 #else
             m_bit_buffer.push_back( true );
             if( m_bit_buffer.size() >= m_budget )
@@ -346,23 +361,15 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
             if( m_bit_buffer.size() >= m_budget )
                 return RTNType::BitBudgetMet;
 #endif
-            m_LSP_new.push_back( m_LIP[i] );
-            m_LIP[i] = m_LIP_garbage_val;
         }
         else if( e == m_false ) {
-#ifdef QZ_TERM
-            m_bit_buffer[ current_size++ ] = false;
-#else
             m_bit_buffer.push_back( false );
+#ifndef QZ_TERM
             if( m_bit_buffer.size() >= m_budget )
                 return RTNType::BitBudgetMet;
 #endif
         }
     }
-
-#ifdef QZ_TERM
-    m_bit_buffer.resize( current_size );
-#endif
 
     // Then we process regular sets in LIS.
     for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
@@ -391,7 +398,7 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 {
     // Since we have a separate representation of LIP, let's process that list first!
     for (size_t i = 0; i < m_LIP.size(); i++) {
-        assert( m_LIP[i] != m_LIP_garbage_val );
+        assert( m_LIP[i] != m_u64_garbage_val );
         auto rtn = m_process_P_decode(i);
         if( rtn == RTNType::BitBudgetMet )
             return rtn;
@@ -418,48 +425,58 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 
 auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 {
-    // First process `m_LSP_old`.
-    // Use an array to record 2 possible results of every refinement operation:
-    //   1) m_true    : `true`  was output
-    //   2) m_false   : `false` was output
-    speck::vector_uint8_t refine_results( m_LSP_old.size(), m_false );
-
-    // Note that this somehow convoluted OMP implementation is still faster than an optimized
-    //   serial implementation, and not slower even when compiled w/o OMP.
+    // First, process `m_LSP_old`.
     //
-    #pragma omp parallel for
-    for (size_t i = 0; i < m_LSP_old.size(); i++) {
-        const auto pos = m_LSP_old[i];
-        if (m_coeff_buf[pos] >= m_threshold) {  // case 1)
-            m_coeff_buf[pos] -= m_threshold;
-            refine_results[i] = m_true;
-        }                                       // case 2) needs nothing to be done.
+    m_tmp_result.assign( m_LSP_old.size(), m_false );
+
+    if( m_sig_map_enabled ) {
+        m_mask.assign( m_coeff_len, m_false );
+
+        #pragma omp parallel for
+        for (size_t i = 0; i < m_LSP_old.size(); i++) {
+            const auto pos = m_LSP_old[i];
+            if (m_sig_map[pos] ) {                  // case 1)
+                m_mask[pos]     = m_true;           // This position will be refined.
+                m_tmp_result[i] = m_true;           // A true bit will be output.
+            }                                       // case 2) needs nothing to be done.
+        }
+    }
+    else {
+        #pragma omp parallel for
+        for (size_t i = 0; i < m_LSP_old.size(); i++) {
+            const auto pos = m_LSP_old[i];
+            if (m_coeff_buf[pos] >= m_threshold) {  // case 1)
+                m_coeff_buf[pos] -= m_threshold;    // Refine this position now.
+                m_tmp_result[i] = m_true;           // A true bit will be output.
+            }                                       // case 2) needs nothing to be done.
+        }
     }
 
-    // Now attach the true/false outputs from `refine_results` to `m_bit_buffer` 
-    //
-#ifdef QZ_TERM
-    // We expand the size of `m_bit_buffer` first at once
-    const size_t current_size = m_bit_buffer.size();
-    m_bit_buffer.resize( current_size + refine_results.size(), false );
-    for( size_t i = 0; i < refine_results.size(); i++ ) {
-        m_bit_buffer[ current_size + i ] = (refine_results[i] != m_false);
-    }
-#else
-    for( auto result : refine_results ) {
+    // Now attach the true/false outputs from `m_tmp_result` to `m_bit_buffer` 
+    for( auto result : m_tmp_result ) {
         m_bit_buffer.push_back( result != m_false );
+#ifndef QZ_TERM
         if( m_bit_buffer.size() >= m_budget ) 
             return RTNType::BitBudgetMet;
-    }
 #endif
+    }
 
     // Second, process `m_LSP_new`
-    // Experiments show that though this for loop is very simple, OMP still brings benefit.
-    // I think it's because more concurrent queries better exploit memory bandwith.
     //
-    #pragma omp parallel for
-    for( auto pos : m_LSP_new ) {
-        m_coeff_buf[ pos ] -= m_threshold;
+    if( m_sig_map_enabled ) {
+        #pragma omp parallel for
+        for( auto pos : m_LSP_new )
+            m_mask[pos] = m_true;
+        #pragma omp parallel for
+        for( size_t i = 0; i < m_coeff_len; i++ ) {
+            if( m_mask[i] != m_false )
+                m_coeff_buf[i] -= m_threshold;
+        }
+    }
+    else {
+        #pragma omp parallel for
+        for( auto pos : m_LSP_new )
+            m_coeff_buf[ pos ] -= m_threshold;
     }
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
@@ -479,6 +496,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
 {
     // First, process `m_LSP_old`
+    //
     for( auto pos : m_LSP_old ) {
         if (m_bit_idx >= m_budget)
             return RTNType::BitBudgetMet;
@@ -494,6 +512,7 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
     }
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
+    //
     const auto size_needed = m_LSP_old.size() + m_LSP_new.size();
     if( size_needed > m_LSP_old.capacity() ) {
         m_LSP_old.reserve( size_needed * 2 );
@@ -501,6 +520,7 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
     m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
 
     // Fourth, clear `m_LSP_new`.
+    //
     m_LSP_new.clear();
 
     return RTNType::Good;
@@ -523,7 +543,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
         // Output pixel sign
         m_bit_buffer.push_back(m_sign_array[pixel_idx]);
         m_LSP_new.push_back( pixel_idx );
-        m_LIP[loc] = m_LIP_garbage_val;
+        m_LIP[loc] = m_u64_garbage_val;
 
 #ifndef QZ_TERM
         if (m_bit_buffer.size() >= m_budget)
@@ -542,18 +562,31 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
     set.signif              = Significance::Insig;
     const size_t slice_size = m_dim_x * m_dim_y;
 
-    // It turns out that you cannot put a `break` statement inside of an OpenMP for loop.
-    // Also, this old-fashioned serial implementation is faster than using OMP
-    //   at any level (Z, Y, X) of this loop.
-    for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
-        const size_t slice_offset = z * slice_size;
-        for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
-            const size_t col_offset = slice_offset + y * m_dim_x;
-            auto begin = speck::uptr2itr( m_coeff_buf, col_offset + set.start_x );
-            auto end   = begin + set.length_x;
-            if( std::any_of( begin, end, [tmp = m_threshold](auto& val){return val >= tmp;}) ) {
-                set.signif = Significance::Sig;
-                goto end_loop_label;
+    if( m_sig_map_enabled ) {
+        for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
+            const size_t slice_offset = z * slice_size;
+            for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
+                const size_t col_offset = slice_offset + y * m_dim_x;
+                for( size_t x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
+                    if( m_sig_map[ col_offset + x ] ) {
+                        set.signif = Significance::Sig;
+                        goto end_loop_label;
+                    }
+                }
+            }
+        }
+    }
+    else {
+        for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
+            const size_t slice_offset = z * slice_size;
+            for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
+                const size_t col_offset = slice_offset + y * m_dim_x;
+                auto begin = speck::uptr2itr( m_coeff_buf, col_offset + set.start_x );
+                auto end   = begin + set.length_x;
+                if( std::any_of( begin, end, [tmp = m_threshold](auto& val){return val >= tmp;}) ) {
+                    set.signif = Significance::Sig;
+                    goto end_loop_label;
+                }
             }
         }
     }
@@ -563,11 +596,6 @@ end_loop_label:
 #ifndef QZ_TERM
     if (m_bit_buffer.size() >= m_budget)
         return RTNType::BitBudgetMet;
-#endif
-
-#ifdef PRINT
-    const char* s = m_bit_buffer.back() ? "s1\n" : "s0\n";
-    std::cout << s;
 #endif
 
     if (set.signif == Significance::Sig) {
@@ -607,7 +635,7 @@ auto speck::SPECK3D::m_process_P_decode(size_t loc) -> RTNType
         // Record to be initialized
         m_LSP_new.push_back( pixel_idx );
 
-        m_LIP[loc] = m_LIP_garbage_val;
+        m_LIP[loc] = m_u64_garbage_val;
     }
 
     return RTNType::Good;
