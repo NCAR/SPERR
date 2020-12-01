@@ -110,17 +110,18 @@ private:
 
     // Now we use a vector of indices to serve the same funcationality of the last LIS,
     // which would contain all insignificant pixels.
-    speck::vector_size_t m_LIP;      // List of insignificant pixels.
-    const size_t         m_LIP_garbage_val = std::numeric_limits<size_t>::max();
-    const uint8_t        m_false   = 0;
-    const uint8_t        m_true    = 1;
-    const uint8_t        m_discard = 2;
+    vector_size_t       m_LIP;      // List of insignificant pixels.
+    const size_t        m_u64_garbage_val = std::numeric_limits<size_t>::max();
+    const uint8_t       m_false   = 0;
+    const uint8_t       m_true    = 1;
+    const uint8_t       m_discard = 2;
 
     // List of significant pixels (recorded as locations).
-    speck::vector_size_t m_LSP_new; // Ones newly identified as significant
-    speck::vector_size_t m_LSP_old; // Ones previously identified as significant
+    vector_size_t       m_LSP_new; // Ones newly identified as significant
+    vector_size_t       m_LSP_old; // Ones previously identified as significant
 
-    speck::vector_bool   m_sign_array;
+    vector_bool         m_sign_array;
+    vector_uint8_t      m_tmp_result;
 
 #ifdef USE_PMR
     std::pmr::vector<std::pmr::vector<SPECKSet3D>>  m_LIS;
