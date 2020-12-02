@@ -115,7 +115,11 @@ auto speck::SPECK3D::encode() -> RTNType
     // We say that we run 128 iterations at most.
     for( int iteration = 0; iteration < 128; iteration++ ) {
 
-        if( m_LIP.size() + m_LSP_old.size() > m_coeff_len / 3 ) {
+        // Valid threshold is between 0.0 and 1.0.
+        //   Smaller thresholds result in more memory traverse and less random access.
+        //   Bigger thresholds result in more memory random access and less traverse.
+        const float threshold = 0.9;
+        if( m_LSP_old.size() > size_t(m_coeff_len * threshold) ) {
             m_sig_map.resize( m_coeff_len, false );
             for( size_t i = 0; i < m_coeff_len; i++ )
                 m_sig_map[i] = m_coeff_buf[i] >= m_threshold;
