@@ -46,28 +46,31 @@ public:
     void set_dims(size_t, size_t, size_t); // Accepts volume dimension
     void set_max_coeff_bits(int32_t);
 
-    // trivial output
-    void get_dims( size_t&, size_t&, size_t& ) const;
-
-    // How many bits does speck process?
+    // How many bits does speck process (for encoding and decoding).
     // If set to zero during decoding, then all bits in the bitstream will be processed.
     void set_bit_budget(size_t);           
 
+    // trivial output
+    void get_dims( size_t&, size_t&, size_t& ) const;
+
 #ifdef QZ_TERM
-    //
     // Notes for QZ_TERM mode:
     // It changes the behavior of encoding, so encoding terminates at a particular
     // quantization level (2^lev).
     // It does NOT change the behavior of decoding, though.
     //
     void set_quantization_term_level( int32_t lev );
-    auto get_num_of_bits() const -> size_t;
 #endif
 
     // core operations
     auto encode() -> RTNType;
     auto decode() -> RTNType;
+    
+    // Note that the following method assembles a bitstream on-the-fly and returns it
+    //   without keeping a local copy. Thus, it should *not* be called repeatedly.
+    //
     auto get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t> override;
+
     auto parse_encoded_bitstream( const void*, size_t ) -> RTNType override;
 
 private:

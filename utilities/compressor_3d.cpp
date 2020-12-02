@@ -27,7 +27,7 @@ int main( int argc, char* argv[] )
             ->required()->check(CLI::ExistingFile);
 
     bool decomp = false;
-    auto* decomp_ptr = app.add_flag("-d", decomp, "Perform decompression. \n"
+    auto* decomp_ptr = app.add_flag("-d,--decompress", decomp, "Perform decompression. \n"
             "If not specified, the program performs compression.");
 
     std::vector<size_t> dims;
@@ -37,22 +37,22 @@ int main( int argc, char* argv[] )
 
 #ifdef QZ_TERM
     int32_t qz_level = 0;
-    auto* qz_level_ptr = app.add_option("--qz_level", qz_level, 
-            "Quantization level to stop encoding. For example, \n"
-            "if `--qz_level n`, then the last quantization level will be 2^n.")
+    auto* qz_level_ptr = app.add_option("-q,--quantization_level", qz_level, 
+            "Target quantization level to stop encoding. For example, \n"
+            "if `-q n`, then the last quantization level will be 2^n.")
             ->group("Compression Options");
 #else
     float bpp = 0.0;
-    auto* bpp_ptr = app.add_option("--bpp", bpp, "Average bit-per-pixel")
-            ->check(CLI::Range(0.0f, 64.0f))
-            ->group("Compression Options");
+    auto* bpp_ptr = app.add_option("-b,--bit-per-pixel", bpp, 
+            "Target bit-per-pixel on average. \nFor example, `-b 2.3`.")
+             ->check(CLI::Range(0.0f, 64.0f))->group("Compression Options");
 #endif
 
     std::string output_file;
-    app.add_option("-o,--ofile", output_file, "Output filename.");
+    app.add_option("-o,--output_filename", output_file, "Output filename.");
 
     bool print_stats = false;
-    app.add_flag("-p,--print_stats", print_stats, "Print statistics (RMSE and L-Infinity)")
+    app.add_flag("-p,--print_stats", print_stats, "Print statistics (RMSE, L-Infinity, PSNR).")
             ->group("Compression Options");
 
     float decomp_bpp = 0.0;
@@ -103,16 +103,20 @@ int main( int argc, char* argv[] )
             return 1;
         auto end = std::chrono::steady_clock::now();
 
+        // Print compression time
+        auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+        std::cout << "Compression takes time: " << diff << "ms\n";
+
+        // Let's obtain an encoded bitstream
+        auto stream = compressor.get_encoded_bitstream();
+        if( stream.first == nullptr || stream.second == 0 )
+            return 1;
+
+        // Print average bit-per-pixel
+        const auto bpp = double(stream.second * 8) / double(total_vals);
+        std::cout << "Average bit-per-pixel: " << bpp << "\n";
+
         if( print_stats ) {
-
-            // Print compression time
-            auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-            std::cout << "Compression takes time: " << diff << "ms\n";
-
-            // Need to do a decompression anyway
-            auto stream = compressor.get_encoded_bitstream();
-            if( stream.first == nullptr || stream.second == 0 )
-                return 1;
 
             SPECK3D_Decompressor decompressor;
             decompressor.take_bitstream( std::move(stream.first), stream.second );

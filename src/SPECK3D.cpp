@@ -62,10 +62,6 @@ void speck::SPECK3D::set_bit_budget(size_t budget)
         m_qz_term_lev   = lev;
     }
 
-    auto speck::SPECK3D::get_num_of_bits() const -> size_t
-    {
-        return m_bit_buffer.size();
-    }
 #endif
 
 
@@ -766,7 +762,7 @@ auto speck::SPECK3D::get_encoded_bitstream() const -> std::pair<buffer_type_uint
     pos += sizeof(m_max_coeff_bits);
     assert(pos == header_size);
 
-    return  m_assemble_encoded_bitstream( header, header_size );
+    return m_assemble_encoded_bitstream( header, header_size );
 }
 
 
