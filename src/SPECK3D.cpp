@@ -118,6 +118,8 @@ auto speck::SPECK3D::encode() -> RTNType
         // Valid threshold is between 0.0 and 1.0.
         //   Smaller thresholds result in more memory traverse and less random access.
         //   Bigger thresholds result in more memory random access and less traverse.
+        //   Servers can use 0.9 or above; laptops can use 0.6 or below.
+        //   (No one-size-fit-all)
         const float threshold = 0.9;
         if( m_LSP_old.size() > size_t(m_coeff_len * threshold) ) {
             m_sig_map.resize( m_coeff_len, false );
@@ -478,14 +480,16 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
     }
     else {
         #pragma omp parallel for
-        for( auto pos : m_LSP_new )
-            m_coeff_buf[ pos ] -= m_threshold;
+        for( size_t i = 0; i < m_LSP_new.size(); i++ )
+            m_coeff_buf[ m_LSP_new[i] ] -= m_threshold;
     }
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
+    //
     m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
 
     // Fourth, clear `m_LSP_new`.
+    //
     m_LSP_new.clear();
 
     return RTNType::Good;
@@ -495,6 +499,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
 {
     // First, process `m_LSP_old`
+    //
     for( auto pos : m_LSP_old ) {
         if (m_bit_idx >= m_budget)
             return RTNType::BitBudgetMet;
@@ -505,11 +510,11 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
     // Second, process `m_LSP_new`
     //
     #pragma omp parallel for
-    for( auto pos : m_LSP_new ) {
-        m_coeff_buf[ pos ] = m_threshold * 1.5;
-    }
+    for( size_t i = 0; i < m_LSP_new.size(); i++ )
+        m_coeff_buf[ m_LSP_new[i] ] = m_threshold * 1.5;
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
+    //
     const auto size_needed = m_LSP_old.size() + m_LSP_new.size();
     if( size_needed > m_LSP_old.capacity() ) {
         m_LSP_old.reserve( size_needed * 2 );
@@ -517,6 +522,7 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
     m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
 
     // Fourth, clear `m_LSP_new`.
+    //
     m_LSP_new.clear();
 
     return RTNType::Good;
@@ -565,8 +571,6 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
             const size_t slice_offset = z * slice_size;
             for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
                 const size_t col_offset = slice_offset + y * m_dim_x;
-                auto begin = speck::uptr2itr( m_coeff_buf, col_offset + set.start_x );
-                auto end   = begin + set.length_x;
                 for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
                     if( m_sig_map[ col_offset + x ] ) {
                         set.signif = Significance::Sig;
