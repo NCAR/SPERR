@@ -112,7 +112,24 @@ auto speck::SPECK3D::encode() -> RTNType
     int32_t current_qz_level = m_max_coeff_bits;
 #endif
 
-    for( int i = 0; i < 128; i++ ) {    // This is the upper limit of num of iterations.
+    // We say that we run 128 iterations at most.
+    for( int iteration = 0; iteration < 128; iteration++ ) {
+
+        // Valid threshold is between 0.0 and 1.0.
+        //   Smaller thresholds result in more memory traverse and less random access.
+        //   Bigger thresholds result in more memory random access and less traverse.
+        //   Servers can use 0.9 or above; laptops can use 0.6 or below.
+        //   (No one-size-fit-all)
+        const float threshold = 0.9;
+        if( m_LSP_old.size() > size_t(m_coeff_len * threshold) ) {
+            m_sig_map.resize( m_coeff_len, false );
+            for( size_t i = 0; i < m_coeff_len; i++ )
+                m_sig_map[i] = m_coeff_buf[i] >= m_threshold;
+            m_sig_map_enabled = true;
+        }
+        else {
+            m_sig_map_enabled = false;
+        }
 
 #ifdef QZ_TERM
         // The actual encoding steps
@@ -124,7 +141,6 @@ auto speck::SPECK3D::encode() -> RTNType
         if ( current_qz_level <= m_qz_term_lev )
             break;
         current_qz_level--;
-
 #else
         // The following two functions only return `BitBudgetMet` or `Good`.
         if (m_sorting_pass_encode() == RTNType::BitBudgetMet )
@@ -289,25 +305,39 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
     // `m_LSP_new` is now empty from the previous iteration, and ready to receive input from `m_LIP`.
     m_LSP_new.assign( m_LIP.size(), m_u64_garbage_val );
     m_tmp_result.assign( m_LIP.size(), m_discard );
-
+    //
     // Experiments show that though we use a temporary storage space and that
     //   this omp section is rather simple, it's still faster than serial execution with
     //   direct push to `m_bit_buffer`. Also, this code isn't slower even without OMP.
     //   I guess the random access of `m_coeff_buf` and `m_sign_array` are just benefiting
     //   from concurrent queries a lot.
     //
-    #pragma omp parallel for
-    for (size_t i = 0; i < m_LIP.size(); i++) {
-        const auto pixel_idx = m_LIP[i];
-        assert( pixel_idx != m_u64_garbage_val );
-        const bool pixel_is_sig = (m_coeff_buf[pixel_idx] >= m_threshold);
-        if( pixel_is_sig ) {
-            m_tmp_result[i] = m_sign_array[pixel_idx] ? sig_pos : sig_neg;
-            m_LSP_new[i]    = pixel_idx;
-            m_LIP[i]        = m_u64_garbage_val;
+
+    if( m_sig_map_enabled ) {
+        #pragma omp parallel for
+        for( size_t i = 0; i < m_LIP.size(); i++ ) {
+            const auto pixel_idx = m_LIP[i];
+            if( m_sig_map[ pixel_idx ] ) {
+                m_tmp_result[i] = m_sign_array[pixel_idx] ? sig_pos : sig_neg;
+                m_LSP_new[i]    = pixel_idx;
+                m_LIP[i]        = m_u64_garbage_val;
+            }
+            else
+                m_tmp_result[i] = m_false;
         }
-        else
-            m_tmp_result[i] = m_false;
+    }
+    else {
+        #pragma omp parallel for
+        for (size_t i = 0; i < m_LIP.size(); i++) {
+            const auto pixel_idx = m_LIP[i];
+            if( m_coeff_buf[ pixel_idx ] >= m_threshold ) {
+                m_tmp_result[i] = m_sign_array[pixel_idx] ? sig_pos : sig_neg;
+                m_LSP_new[i]    = pixel_idx;
+                m_LIP[i]        = m_u64_garbage_val;
+            }
+            else
+                m_tmp_result[i] = m_false;
+        }
     }
 
     auto end_itr = std::remove( m_LSP_new.begin(), m_LSP_new.end(), m_u64_garbage_val );
@@ -411,15 +441,21 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
     //
     m_tmp_result.assign( m_LSP_old.size(), m_false );
 
-    // Note that this somehow convoluted OMP implementation is still faster than an optimized
-    //   serial implementation, and not slower even when compiled w/o OMP.
-    //
-    #pragma omp parallel for
-    for (size_t i = 0; i < m_LSP_old.size(); i++) {
-        const auto pos = m_LSP_old[i];
-        if (m_coeff_buf[pos] >= m_threshold) {
-            m_coeff_buf[pos] -= m_threshold;
-            m_tmp_result[i]   = m_true;
+    if( m_sig_map_enabled ) {
+        #pragma omp parallel for
+        for( size_t i = 0; i < m_LSP_old.size(); i++ ) {
+            if( m_sig_map[ m_LSP_old[i] ] )
+                m_tmp_result[i] = m_true;
+        }
+    }
+    else {
+        #pragma omp parallel for
+        for (size_t i = 0; i < m_LSP_old.size(); i++) {
+            const auto pos = m_LSP_old[i];
+            if (m_coeff_buf[pos] >= m_threshold) {
+                m_coeff_buf[pos] -= m_threshold;
+                m_tmp_result[i]   = m_true;
+            }
         }
     }
 
@@ -434,18 +470,26 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
     }
 
     // Second, process `m_LSP_new`
-    // Experiments show that though this for loop is very simple, OMP still brings benefit.
-    // I think it's because more concurrent queries better exploit memory bandwith.
     //
-    #pragma omp parallel for
-    for( auto pos : m_LSP_new ) {
-        m_coeff_buf[ pos ] -= m_threshold;
+    if( m_sig_map_enabled ) {
+        #pragma omp parallel for
+        for( size_t i = 0; i < m_coeff_len; i++ ) {
+            if( m_coeff_buf[i] >= m_threshold )
+                m_coeff_buf[i] -= m_threshold;
+        }
+    }
+    else {
+        #pragma omp parallel for
+        for( size_t i = 0; i < m_LSP_new.size(); i++ )
+            m_coeff_buf[ m_LSP_new[i] ] -= m_threshold;
     }
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
+    //
     m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
 
     // Fourth, clear `m_LSP_new`.
+    //
     m_LSP_new.clear();
 
     return RTNType::Good;
@@ -455,6 +499,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
 {
     // First, process `m_LSP_old`
+    //
     for( auto pos : m_LSP_old ) {
         if (m_bit_idx >= m_budget)
             return RTNType::BitBudgetMet;
@@ -465,11 +510,11 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
     // Second, process `m_LSP_new`
     //
     #pragma omp parallel for
-    for( auto pos : m_LSP_new ) {
-        m_coeff_buf[ pos ] = m_threshold * 1.5;
-    }
+    for( size_t i = 0; i < m_LSP_new.size(); i++ )
+        m_coeff_buf[ m_LSP_new[i] ] = m_threshold * 1.5;
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
+    //
     const auto size_needed = m_LSP_old.size() + m_LSP_new.size();
     if( size_needed > m_LSP_old.capacity() ) {
         m_LSP_old.reserve( size_needed * 2 );
@@ -477,6 +522,7 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
     m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
 
     // Fourth, clear `m_LSP_new`.
+    //
     m_LSP_new.clear();
 
     return RTNType::Good;
@@ -518,18 +564,33 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
     set.signif              = Significance::Insig;
     const size_t slice_size = m_dim_x * m_dim_y;
 
-    // It turns out that you cannot put a `break` statement inside of an OpenMP for loop.
     // Also, this old-fashioned serial implementation is faster than using OMP
     //   at any level (Z, Y, X) of this loop.
-    for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
-        const size_t slice_offset = z * slice_size;
-        for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
-            const size_t col_offset = slice_offset + y * m_dim_x;
-            auto begin = speck::uptr2itr( m_coeff_buf, col_offset + set.start_x );
-            auto end   = begin + set.length_x;
-            if( std::any_of( begin, end, [tmp = m_threshold](auto& val){return val >= tmp;}) ) {
-                set.signif = Significance::Sig;
-                goto end_loop_label;
+    if( m_sig_map_enabled ) {
+        for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
+            const size_t slice_offset = z * slice_size;
+            for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
+                const size_t col_offset = slice_offset + y * m_dim_x;
+                for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
+                    if( m_sig_map[ col_offset + x ] ) {
+                        set.signif = Significance::Sig;
+                        goto end_loop_label;
+                    }
+                }   
+            }
+        }
+    }
+    else {
+        for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
+            const size_t slice_offset = z * slice_size;
+            for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
+                const size_t col_offset = slice_offset + y * m_dim_x;
+                auto begin = speck::uptr2itr( m_coeff_buf, col_offset + set.start_x );
+                auto end   = begin + set.length_x;
+                if( std::any_of( begin, end, [tmp = m_threshold](auto& val){return val >= tmp;}) ) {
+                    set.signif = Significance::Sig;
+                    goto end_loop_label;
+                }
             }
         }
     }
