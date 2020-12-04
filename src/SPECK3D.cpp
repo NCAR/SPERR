@@ -405,8 +405,13 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 {
     // Since we have a separate representation of LIP, let's process that list first!
+    //
+    // Note that a large portion of the content in `m_LIP` will go to `m_LSP_new`,
+    //   and `m_LSP_new` is empty at this point, so cheapest to re-allocate right now!
+    if( m_LSP_new.capacity() < m_LIP.size() ) {
+        m_LSP_new.reserve( std::max( m_LSP_new.capacity() * 2, m_LIP.size() ) );
+    }
     for (size_t i = 0; i < m_LIP.size(); i++) {
-        assert( m_LIP[i] != m_u64_garbage_val );
         auto rtn = m_process_P_decode(i);
         if( rtn == RTNType::BitBudgetMet )
             return rtn;
@@ -419,7 +424,6 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
         size_t idx1 = m_LIS.size() - tmp;
         for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
             const auto& s = m_LIS[idx1][idx2];
-            assert(s.type != SetType::Garbage);
             auto rtn = m_process_S_decode(idx1, idx2);
             if( rtn == RTNType::BitBudgetMet )
                 return rtn;
@@ -496,25 +500,26 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
 {
     // First, process `m_LSP_old`
     //
-    for( auto pos : m_LSP_old ) {
-        if (m_bit_idx >= m_budget)
-            return RTNType::BitBudgetMet;
+    const size_t num_bits = std::min( m_budget - m_bit_idx, m_LSP_old.size() );
 
-        m_coeff_buf[pos] += m_bit_buffer[m_bit_idx++] ? m_threshold * 0.5 : m_threshold * -0.5;
+    #pragma omp parallel for
+    for( size_t i = 0; i < num_bits; i++ ) {
+        m_coeff_buf[ m_LSP_old[i] ] +=  m_bit_buffer[ m_bit_idx + i ] ? 
+                                        m_threshold * 0.5 : m_threshold * -0.5;
     }
-
+    m_bit_idx += num_bits;
+    if (m_bit_idx >= m_budget)
+        return RTNType::BitBudgetMet;
+    
     // Second, process `m_LSP_new`
     //
     #pragma omp parallel for
-    for( size_t i = 0; i < m_LSP_new.size(); i++ )
+    for( size_t i = 0; i < m_LSP_new.size(); i++ ) {
         m_coeff_buf[ m_LSP_new[i] ] = m_threshold * 1.5;
+    }
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
     //
-    const auto size_needed = m_LSP_old.size() + m_LSP_new.size();
-    if( size_needed > m_LSP_old.capacity() ) {
-        m_LSP_old.reserve( size_needed * 2 );
-    }
     m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
 
     // Fourth, clear `m_LSP_new`.
@@ -626,13 +631,10 @@ auto speck::SPECK3D::m_process_P_decode(size_t loc) -> RTNType
         // When decoding, check bit budget before attempting to read a bit
         if (m_bit_idx >= m_budget )
             return RTNType::BitBudgetMet;
+        m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];
 
-        if (!m_bit_buffer[m_bit_idx++])
-            m_sign_array[pixel_idx] = false;
-
-        // Record to be initialized
+        // This pixel is moved to `m_LSP_new` from `m_LIP`.
         m_LSP_new.push_back( pixel_idx );
-
         m_LIP[loc] = m_u64_garbage_val;
     }
 

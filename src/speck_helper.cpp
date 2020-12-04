@@ -106,7 +106,6 @@ auto speck::pack_booleans( buffer_type_uint8& dest,
     for( size_t i = 0; i < src.size(); i += 8 ) {
         bool     a[8];
         uint64_t t;
-        // Thinking bvec::iterator is expensive, so use a direct access.
         for( size_t j = 0; j < 8; j++ )
             a[j] = src[i + j];
         std::memcpy( &t, a, 8 );
@@ -132,14 +131,13 @@ auto speck::unpack_booleans( vector_bool& dest,
     const uint8_t* src_ptr = reinterpret_cast<const uint8_t*>(src) + src_offset;
     const uint64_t magic   = 0x8040201008040201;
     const uint64_t mask    = 0x8080808080808080;
+    bool           a[8];
 
     // It turns out that this routine cannot be parallelized, again, because
     // std::vector<bool> is stored as uint64_t instead of individual booleans.
     for( size_t i = 0; i < num_of_bytes; i++ ) {
         const uint64_t t = (( magic * (*(src_ptr + i)) ) & mask) >> 7;
-        bool a[8];
         std::memcpy( a, &t, 8 );
-        // Thinking bvec::iterator is expensive, so use a direct access.
         for( size_t j = 0; j < 8; j++ )
             dest[i * 8 + j] = a[j];
     }
