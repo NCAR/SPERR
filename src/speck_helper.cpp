@@ -131,15 +131,33 @@ auto speck::unpack_booleans( vector_bool& dest,
     const uint8_t* src_ptr = reinterpret_cast<const uint8_t*>(src) + src_offset;
     const uint64_t magic   = 0x8040201008040201;
     const uint64_t mask    = 0x8080808080808080;
-    bool           a[8];
 
-    // It turns out that this routine cannot be parallelized, again, because
-    // std::vector<bool> is stored as uint64_t instead of individual booleans.
-    for( size_t i = 0; i < num_of_bytes; i++ ) {
-        const uint64_t t = (( magic * (*(src_ptr + i)) ) & mask) >> 7;
+    // Because in most implementations std::vector<bool> is stored as uint64_t values,
+    //   we parallel in strides of 64 bits, or 8 bytes..
+    const size_t stride_size = 8;
+    const size_t num_of_strides  = num_of_bytes / stride_size;
+    const size_t remaining_bytes = num_of_bytes % stride_size;
+
+    #pragma omp parallel for
+    for( size_t stride = 0; stride < num_of_strides; stride++ ) {
+        bool a[64];
+        for( size_t byte = 0; byte < 8; byte++ ) {
+            const uint8_t* ptr = src_ptr + stride * stride_size + byte;
+            const uint64_t t = (( magic * (*ptr) ) & mask) >> 7;
+            std::memcpy( a + byte * 8, &t, 8 );
+        }
+        for( size_t i = 0; i < 64; i++ )
+            dest[ stride * 64 + i ] = a[i];
+    }
+
+    // This loop is at most 7 iterations, so not to worry about parallel anymore.
+    for( size_t byte = 0; byte < remaining_bytes; byte++ ) {
+        const uint8_t* ptr = src_ptr + num_of_strides * stride_size + byte;
+        const uint64_t t = (( magic * (*ptr) ) & mask) >> 7;
+        bool  a[8];
         std::memcpy( a, &t, 8 );
-        for( size_t j = 0; j < 8; j++ )
-            dest[i * 8 + j] = a[j];
+        for( size_t i = 0; i < 8; i++ )
+            dest[ num_of_strides * 64 + byte * 8 + i ] = a[i];
     }
 
     return RTNType::Good;

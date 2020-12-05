@@ -46,14 +46,19 @@ TEST( speck_helper, approx_detail_len )
 
 TEST( speck_helper, bit_packing )
 {
-    const size_t num_of_bytes = 6;
+    const size_t num_of_bytes = 11;
     const size_t byte_offset  = 1;
     speck::vector_bool input {true,  true,  true,  true,  true,  true,  true,  true,  // 1st byte
                               false, false, false, false, false, false, false, false, // 2nd byte
                               true,  false, true,  false, true,  false, true,  false, // 3rd byte
                               false, true,  false, true,  false, true,  false, true,  // 4th byte
                               true,  true,  false, false, true,  true,  false, false, // 5th byte
-                              false, false, true,  true,  false, false, true,  true };// 6th byte
+                              false, false, true,  true,  false, false, true,  true,  // 6th byte
+                              false, false, true,  true,  false, false, true,  false, // 7th byte
+                              true,  false, false, false, true,  true,  true,  false, // 8th byte
+                              false, false, false, true,  false, false, false, true,  // 9th byte
+                              true,  true,  true,  false, true,  true,  true,  false, // 10th byte
+                              false, false, true,  true,  true,  false, false, true };// 11th byte
 
     auto bytes = speck::unique_malloc<uint8_t>(num_of_bytes + byte_offset);
 

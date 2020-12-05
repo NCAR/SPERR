@@ -67,7 +67,7 @@ void speck::SPECK3D::set_bit_budget(size_t budget)
 
 void speck::SPECK3D::m_clean_LIS()
 {
-    #pragma omp parallel for
+    // This loop is in the order of one or two dozens, so not bother parallel here.
     for( size_t i = 0; i < m_LIS.size(); i++ ) {
         auto it = std::remove_if( m_LIS[i].begin(), m_LIS[i].end(),
                   [](const auto& s) { return s.type == SetType::Garbage; });
