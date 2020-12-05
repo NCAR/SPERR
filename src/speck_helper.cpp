@@ -104,10 +104,10 @@ auto speck::pack_booleans( buffer_type_uint8& dest,
 
     #pragma omp parallel for
     for( size_t i = 0; i < src.size(); i += 8 ) {
-        bool     a[8];
-        uint64_t t;
+        bool a[8];
         for( size_t j = 0; j < 8; j++ )
             a[j] = src[i + j];
+        uint64_t t;
         std::memcpy( &t, a, 8 );
         dest[ offset + i / 8 ] = (magic * t) >> 56;
     }
