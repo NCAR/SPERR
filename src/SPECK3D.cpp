@@ -118,9 +118,11 @@ auto speck::SPECK3D::encode() -> RTNType
         //   (No one-size-fit-all)
         const float threshold = 0.9;
         if( m_LSP_old.size() > size_t(m_coeff_len * threshold) ) {
-            m_sig_map.resize( m_coeff_len, false );
-            for( size_t i = 0; i < m_coeff_len; i++ )
-                m_sig_map[i] = m_coeff_buf[i] >= m_threshold;
+            m_sig_map.assign( m_coeff_len, false );
+            for( size_t i = 0; i < m_coeff_len; i++ ) {
+                if( m_coeff_buf[i] >= m_threshold )
+                    m_sig_map[i] = true;
+            }
             m_sig_map_enabled = true;
         }
         else {
@@ -500,12 +502,14 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
 {
     // First, process `m_LSP_old`
     //
-    const size_t num_bits = std::min( m_budget - m_bit_idx, m_LSP_old.size() );
+    const size_t num_bits   = std::min( m_budget - m_bit_idx, m_LSP_old.size() );
+    const double half_T     = m_threshold * 0.5;
+    const double neg_half_T = m_threshold * -0.5;
 
     #pragma omp parallel for
     for( size_t i = 0; i < num_bits; i++ ) {
-        m_coeff_buf[ m_LSP_old[i] ] +=  m_bit_buffer[ m_bit_idx + i ] ? 
-                                        m_threshold * 0.5 : m_threshold * -0.5;
+        m_coeff_buf[ m_LSP_old[i] ] += m_bit_buffer[ m_bit_idx + i ] ? 
+                                       half_T : neg_half_T;
     }
     m_bit_idx += num_bits;
     if (m_bit_idx >= m_budget)
@@ -513,9 +517,10 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
     
     // Second, process `m_LSP_new`
     //
+    const double one_half_T = m_threshold * 1.5;
     #pragma omp parallel for
     for( size_t i = 0; i < m_LSP_new.size(); i++ ) {
-        m_coeff_buf[ m_LSP_new[i] ] = m_threshold * 1.5;
+        m_coeff_buf[ m_LSP_new[i] ] = one_half_T;
     }
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
@@ -623,19 +628,18 @@ auto speck::SPECK3D::m_process_P_decode(size_t loc) -> RTNType
     // When decoding, check bit budget before attempting to read a bit
     if (m_bit_idx >= m_budget )
         return RTNType::BitBudgetMet;
-    const bool this_pixel_is_sig = m_bit_buffer[m_bit_idx++];
-
-    if (this_pixel_is_sig) {
+    if( m_bit_buffer[m_bit_idx++] ) {   // If this pixel is significant
         const auto pixel_idx = m_LIP[loc];
 
         // When decoding, check bit budget before attempting to read a bit
         if (m_bit_idx >= m_budget )
             return RTNType::BitBudgetMet;
-        m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];
+        if( !m_bit_buffer[m_bit_idx++] )
+            m_sign_array[pixel_idx] = false;
 
         // This pixel is moved to `m_LSP_new` from `m_LIP`.
-        m_LSP_new.push_back( pixel_idx );
         m_LIP[loc] = m_u64_garbage_val;
+        m_LSP_new.push_back( pixel_idx );
     }
 
     return RTNType::Good;

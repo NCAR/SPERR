@@ -141,7 +141,7 @@ auto speck::unpack_booleans( vector_bool& dest,
     #pragma omp parallel for
     for( size_t stride = 0; stride < num_of_strides; stride++ ) {
         bool a[64];
-        for( size_t byte = 0; byte < 8; byte++ ) {
+        for( size_t byte = 0; byte < stride_size; byte++ ) {
             const uint8_t* ptr = src_ptr + stride * stride_size + byte;
             const uint64_t t = (( magic * (*ptr) ) & mask) >> 7;
             std::memcpy( a + byte * 8, &t, 8 );
