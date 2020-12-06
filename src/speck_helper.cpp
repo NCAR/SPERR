@@ -136,7 +136,6 @@ auto speck::unpack_booleans( vector_bool& dest,
     //   we parallel in strides of 64 bits, or 8 bytes..
     const size_t stride_size = 8;
     const size_t num_of_strides  = num_of_bytes / stride_size;
-    const size_t remaining_bytes = num_of_bytes % stride_size;
 
     #pragma omp parallel for
     for( size_t stride = 0; stride < num_of_strides; stride++ ) {
@@ -151,13 +150,13 @@ auto speck::unpack_booleans( vector_bool& dest,
     }
 
     // This loop is at most 7 iterations, so not to worry about parallel anymore.
-    for( size_t byte = 0; byte < remaining_bytes; byte++ ) {
-        const uint8_t* ptr = src_ptr + num_of_strides * stride_size + byte;
+    for( size_t byte_idx = stride_size * num_of_strides; byte_idx < num_of_bytes; byte_idx++ ) {
+        const uint8_t* ptr = src_ptr + byte_idx;
         const uint64_t t = (( magic * (*ptr) ) & mask) >> 7;
         bool  a[8];
         std::memcpy( a, &t, 8 );
         for( size_t i = 0; i < 8; i++ )
-            dest[ num_of_strides * 64 + byte * 8 + i ] = a[i];
+            dest[ byte_idx * 8 + i ] = a[i];
     }
 
     return RTNType::Good;

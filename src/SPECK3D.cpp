@@ -111,18 +111,32 @@ auto speck::SPECK3D::encode() -> RTNType
     // We say that we run 128 iterations at most.
     for( int iteration = 0; iteration < 128; iteration++ ) {
 
-        // Valid threshold is between 0.0 and 1.0.
+        // Valid `sigmap_threshold` is between 0.0 and 1.0.
         //   Smaller thresholds result in more memory traverse and less random access.
         //   Bigger thresholds result in more memory random access and less traverse.
-        //   Servers can use 0.9 or above; laptops can use 0.6 or below.
+        //   We observed that desktops can use 0.9 or higher, while laptops can use 0.6 or lower.
         //   (No one-size-fit-all)
-        const float threshold = 0.9;
-        if( m_LSP_old.size() > size_t(m_coeff_len * threshold) ) {
+        const float sigmap_threshold = 0.9;
+        if( m_LSP_old.size() > size_t(m_coeff_len * sigmap_threshold) ) {
             m_sig_map.assign( m_coeff_len, false );
-            for( size_t i = 0; i < m_coeff_len; i++ ) {
-                if( m_coeff_buf[i] >= m_threshold )
-                    m_sig_map[i] = true;
+
+            const size_t stride_size    = 64;
+            const size_t num_of_strides = m_coeff_len / stride_size;
+
+            #pragma omp parallel for
+            for( size_t stride = 0; stride < num_of_strides; stride++ ) {
+                const size_t offset = stride * stride_size;
+                for( size_t i = offset; i < offset + stride_size; i++ ){
+                    if( m_coeff_buf[i] >= m_threshold )
+                        m_sig_map  [i]  = true;
+                }
             }
+
+            for( size_t i = stride_size * num_of_strides; i < m_coeff_len; i++ ) {
+                if( m_coeff_buf[i] >= m_threshold )
+                    m_sig_map  [i]  = true;
+            }
+
             m_sig_map_enabled = true;
         }
         else {
