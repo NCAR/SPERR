@@ -64,33 +64,6 @@ enum class RTNType {
     Error
 };
 
-//
-// Auxiliary class to hold a 1D SPECK Set
-// TODO: evaluate if it makes sense to move these 1D objects to SEPCK_Err
-//
-class SPECKSet1D {
-public:
-    size_t        start      = 0;
-    size_t        length     = 0;
-    uint32_t      part_level = 0;
-    Significance  signif     = Significance::Insig;
-    SetType       type       = SetType::TypeS;    // only to indicate if it's garbage
-
-    SPECKSet1D() = default;
-    SPECKSet1D( size_t start, size_t len, uint32_t part_lev );
-};
-
-//
-// Auxiliary struct to hold represent an outlier
-//
-struct Outlier {
-    size_t location = 0;
-    float  error    = 0.0f;
-
-    Outlier() = default;
-    Outlier( size_t, float );
-};
-
 
 //
 // Iterator class that enables STL algorithms to operate on raw arrays.  Adapted from: 

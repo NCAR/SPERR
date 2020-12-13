@@ -6,7 +6,21 @@
 #include <cstring>
 #include <iostream>
 
-// #define PRINT
+//
+// Class SPECKSet1D
+//
+speck::SPECKSet1D::SPECKSet1D( size_t s, size_t l, uint32_t p )
+                 : start(s), length(l), part_level(p)
+{ }
+
+
+//
+// Struct Outlier
+//
+speck::Outlier::Outlier( size_t loc, float e )
+              : location(loc), error(e)
+{ }
+
 
 void speck::SPECK_Err::reserve(size_t num)
 {
