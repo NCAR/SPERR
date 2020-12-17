@@ -103,12 +103,10 @@ auto speck::SPECK_Err::m_ready_to_encode() const -> bool
         return false;
     if (m_LOS.empty())
         return false;
-    for (const auto& o : m_LOS) {
-        if (std::abs(o.error) <= m_tolerance)
-            return false;
-    }
 
-    return true;
+    return std::all_of( m_LOS.begin(), m_LOS.end(),
+                        [len = m_total_len, tol = m_tolerance](auto& out)
+                        {return out.location < len && std::abs(out.error) > tol;} );
 }
 
 auto speck::SPECK_Err::m_ready_to_decode() const -> bool
@@ -121,10 +119,10 @@ auto speck::SPECK_Err::m_ready_to_decode() const -> bool
     return true;
 }
 
-auto speck::SPECK_Err::encode() -> int
+auto speck::SPECK_Err::encode() -> RTNType
 {
     if (!m_ready_to_encode())
-        return 1;
+        return RTNType::InvalidParam;
     m_encode_mode = true;
 
     m_initialize_LIS();
@@ -165,13 +163,13 @@ auto speck::SPECK_Err::encode() -> int
     //}
 #endif
 
-    return 0;
+    return RTNType::Good;
 }
 
-auto speck::SPECK_Err::decode() -> int
+auto speck::SPECK_Err::decode() -> RTNType
 {
     if (!m_ready_to_decode())
-        return 1;
+        return RTNType::InvalidParam;
     m_encode_mode = false;
 
     // Clear/initialize data structures
@@ -212,7 +210,7 @@ auto speck::SPECK_Err::decode() -> int
     //}
 #endif
 
-    return 0;
+    return RTNType::Good;
 }
 
 auto speck::SPECK_Err::m_decide_significance(const SPECKSet1D& set) const 

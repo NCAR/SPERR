@@ -60,8 +60,8 @@ public:
 
     // Action methods
     // Returns 0 upon success, 1 upon failure.
-    auto encode() -> int;
-    auto decode() -> int;
+    auto encode() -> RTNType;
+    auto decode() -> RTNType;
 
 private:
     //
