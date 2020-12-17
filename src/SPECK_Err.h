@@ -12,30 +12,28 @@ namespace speck
 
 //
 // Auxiliary class to hold a 1D SPECK Set
-// TODO: evaluate if it makes sense to move these 1D objects to SEPCK_Err
 //
 class SPECKSet1D {
 public:
     size_t        start      = 0;
     size_t        length     = 0;
     uint32_t      part_level = 0;
-    Significance  signif     = Significance::Insig;
     SetType       type       = SetType::TypeS;    // only to indicate if it's garbage
 
     SPECKSet1D() = default;
     SPECKSet1D( size_t start, size_t len, uint32_t part_lev );
 };
-using TwoSets = std::array<SPECKSet1D, 2>; // Should we use pair here? 
+using TwoSets = std::array<SPECKSet1D, 2>;
 
 //
 // Auxiliary struct to hold represent an outlier
 //
 struct Outlier {
     size_t location = 0;
-    float  error    = 0.0f;
+    double error    = 0.0;
 
     Outlier() = default;
-    Outlier( size_t, float );
+    Outlier( size_t, double);
 };
 
 
@@ -49,10 +47,10 @@ public:
     //
     // Input
     void reserve(size_t);                        // Optionally pre-allocate space. ?? What number ??
-    void add_outlier(size_t, float);             // add a single outlier.
-    void add_outlier_list(std::vector<Outlier>); // add an entire list of outliers
+    void add_outlier(size_t, double);            // add a single outlier.
+    void use_outlier_list(std::vector<Outlier>); // add an entire list of outliers
     void set_length(size_t);                     // set 1D array length
-    void set_tolerance(float);                   // set error tolerance
+    void set_tolerance(double);                  // set error tolerance
 
     // Output
     auto release_outliers() -> std::vector<Outlier>; // Release ownership of decoded outliers
@@ -75,9 +73,10 @@ private:
     auto m_ready_to_encode() const -> bool;
     auto m_ready_to_decode() const -> bool;
 
-    // If the set to be decided is significant, return the index that makes it significant.
-    // If not, return -1
-    auto m_decide_significance(const SPECKSet1D&) const -> int64_t;
+    // If the set to be decided is significant, return a pair containing true and 
+    //   the index that makes it significant.
+    // If not, return a pair containing false and zero.
+    auto m_decide_significance(const SPECKSet1D&) const -> std::pair<bool, size_t>;
 
     // For the following encoding methods that return a boolean,
     // True means that all outliers are refined to be within the tolerance
@@ -99,26 +98,25 @@ private:
     //
     // Properties that do not change
     size_t  m_total_len      = 0;    // 1D array length
-    float   m_tolerance      = 0.0f; // Gamma in the algorithm description
+    double  m_tolerance      = 0.0;  // Gamma in the algorithm description
     bool    m_encode_mode    = true; // Encode (true) or Decode (false) mode?
     int32_t m_max_coeff_bits = 0;    // = log2(max_coefficient)
 
     // Global variables that change and facilitate the process.
     size_t m_outlier_cnt = 0;   // How many data points are still exceeding the tolerance?
-    float  m_threshold   = 0.0; // Threshold that's used for quantization
+    double m_threshold   = 0.0; // Threshold that's used for quantization 
     size_t m_bit_idx     = 0;   // Used for decode. Which bit we're at?
 
-    std::vector<Outlier> m_LOS;   // List of OutlierS. This list is not altered by encoding.
-    std::vector<float>   m_q;     // Q list in the algorithm description. This list is
-                                  // constantly refined by the refinement pass.
-    std::vector<float> m_err_hat; // err_hat list in the algorithm description. This list
-                                  // contains the values that would be reconstructed.
+    std::vector<Outlier> m_LOS;    // List of OutlierS. This list is not altered by encoding.
+    std::vector<double>  m_q;      // Q list in the algorithm description. This list is
+                                   // constantly refined by the refinement pass.
+    std::vector<double> m_err_hat; // err_hat list in the algorithm description. This list
+                                   // contains the values that would be reconstructed.
 
     std::vector<Significance>            m_pixel_types; // Records the type of every pixel.
     std::vector<bool>                    m_bit_buffer;
     std::vector<size_t>                  m_LSP;
     std::vector<std::vector<SPECKSet1D>> m_LIS;
-    std::vector<size_t>                  m_LIS_garbage_cnt;
 };
 
 };
