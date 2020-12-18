@@ -160,13 +160,13 @@ auto speck::SPECK_Err::decode() -> RTNType
 
     // Clear/initialize data structures
     m_LOS.clear();
-    m_LSP_new.clear();  // Not used when decoding
-    m_LSP_old.clear();  // Not used when decoding
-    m_q.clear();        // Not used when decoding
     m_err_hat.clear();
     m_initialize_LIS();
     m_bit_idx  = 0;
     m_LOS_size = 0;
+    m_LSP_new.clear();  // Not used when decoding
+    m_LSP_old.clear();  // Not used when decoding
+    m_q.clear();        // Not used when decoding
 
     // Since we already have m_max_coeff_bits from the bit stream when decoding header,
     // we can go straight into quantization!
@@ -184,6 +184,7 @@ auto speck::SPECK_Err::decode() -> RTNType
     }
 
     // Put restored values in m_LOS with proper signs
+    assert( m_LOS.size() == m_err_hat.size() );
     for (size_t idx = 0; idx < m_LOS.size(); idx++) {
         m_LOS[idx].error *= m_err_hat[idx];
     }
@@ -194,6 +195,7 @@ auto speck::SPECK_Err::decode() -> RTNType
 auto speck::SPECK_Err::m_decide_significance(const SPECKSet1D& set) const 
                        -> std::pair<bool, size_t>
 {
+    // This function is only used during encoding.
     // Strategy:
     // Iterate all outliers: if
     // 1) its err_hat value is 0.0, meaning it's not processed yet,
@@ -338,10 +340,10 @@ auto speck::SPECK_Err::m_process_S_decoding(size_t idx1, size_t idx2) -> bool
     if (is_sig) {
         if (set.length == 1) { // This is a pixel
             // We recovered the location of another outlier!
-            // Is this pixel positive or negative? Keep that info in m_LOS.
+            // Keep reconstructed values at `m_err_hat` and the sign information in `m_LOS`.
+            m_err_hat.push_back(1.5 * m_threshold);
             auto sign = m_bit_buffer[m_bit_idx++] ? 1.0 : -1.0;
             m_LOS.emplace_back(set.start, sign);
-            m_err_hat.push_back(1.5 * m_threshold);
 
             // The bit buffer CAN be depleted at this point, so let's do a test
             if (m_bit_idx == m_bit_buffer.size())
@@ -366,7 +368,6 @@ auto speck::SPECK_Err::m_refinement_decoding() -> bool
     // Refine significant pixels from previous iterations only, 
     //   because pixels added from this iteration are already refined.
     for (size_t idx = 0; idx < m_LOS_size; idx++) {
-
         if (m_bit_buffer[m_bit_idx++])
             m_err_hat[idx] += m_threshold * 0.5;
         else
@@ -376,7 +377,7 @@ auto speck::SPECK_Err::m_refinement_decoding() -> bool
             return true;
     }
 
-    // Record the size of `m_los` after this iteration.
+    // Record the size of `m_LOS` after this iteration.
     m_LOS_size = m_LOS.size();
 
     return false;

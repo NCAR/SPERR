@@ -43,7 +43,8 @@ public:
     //
     // Trival input/output
     //
-    // Important note on the outliers: each one must live at a unique location.
+    // Important note on the outliers: each one must live at a unique location,
+    //   and each error value must be greater than the tolerance.
     //
     // Input
     void add_outlier(size_t, double);            // add a single outlier.
@@ -97,7 +98,7 @@ private:
     //
     // Properties that do not change
     size_t  m_total_len      = 0;    // 1D array length
-    double  m_tolerance      = 0.0;  // Gamma in the algorithm description
+    double  m_tolerance      = 0.0;  // Error tolerance. Gamma in the algorithm description.
     bool    m_encode_mode    = true; // Encode (true) or Decode (false) mode?
     int32_t m_max_coeff_bits = 0;    // = log2(max_coefficient)
 
@@ -109,9 +110,9 @@ private:
 
     std::vector<Outlier> m_LOS;     // List of OutlierS. This list is not altered by encoding.
     std::vector<double>  m_q;       // Q list in the algorithm description. This list is
-                                    // constantly refined by the refinement pass.
+                                    //   constantly refined by the refinement pass.
     std::vector<double>  m_err_hat; // err_hat list in the algorithm description. This list
-                                   // contains the values that would be reconstructed.
+                                    //   contains the values that would be reconstructed.
     std::vector<bool>    m_bit_buffer;
     std::vector<size_t>  m_LSP_new;
     std::vector<size_t>  m_LSP_old;
