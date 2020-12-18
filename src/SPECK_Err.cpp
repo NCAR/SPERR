@@ -160,13 +160,10 @@ auto speck::SPECK_Err::decode() -> RTNType
 
     // Clear/initialize data structures
     m_LOS.clear();
-    m_err_hat.clear();
+    m_recovered_signs.clear();
     m_initialize_LIS();
     m_bit_idx  = 0;
     m_LOS_size = 0;
-    m_LSP_new.clear();  // Not used when decoding
-    m_LSP_old.clear();  // Not used when decoding
-    m_q.clear();        // Not used when decoding
 
     // Since we already have m_max_coeff_bits from the bit stream when decoding header,
     // we can go straight into quantization!
@@ -184,9 +181,11 @@ auto speck::SPECK_Err::decode() -> RTNType
     }
 
     // Put restored values in m_LOS with proper signs
-    assert( m_LOS.size() == m_err_hat.size() );
+    assert( m_LOS.size() == m_recovered_signs.size() );
     for (size_t idx = 0; idx < m_LOS.size(); idx++) {
-        m_LOS[idx].error *= m_err_hat[idx];
+        if( m_recovered_signs[idx] == false ) {
+            m_LOS[idx].error = -m_LOS[idx].error;
+        }
     }
 
     return RTNType::Good;
@@ -340,10 +339,8 @@ auto speck::SPECK_Err::m_process_S_decoding(size_t idx1, size_t idx2) -> bool
     if (is_sig) {
         if (set.length == 1) { // This is a pixel
             // We recovered the location of another outlier!
-            // Keep reconstructed values at `m_err_hat` and the sign information in `m_LOS`.
-            m_err_hat.push_back(1.5 * m_threshold);
-            auto sign = m_bit_buffer[m_bit_idx++] ? 1.0 : -1.0;
-            m_LOS.emplace_back(set.start, sign);
+            m_LOS.emplace_back(set.start, m_threshold * 1.5);
+            m_recovered_signs.push_back( m_bit_buffer[m_bit_idx++] );
 
             // The bit buffer CAN be depleted at this point, so let's do a test
             if (m_bit_idx == m_bit_buffer.size())
@@ -362,16 +359,13 @@ auto speck::SPECK_Err::m_process_S_decoding(size_t idx1, size_t idx2) -> bool
 
 auto speck::SPECK_Err::m_refinement_decoding() -> bool
 {
-    // sanity check
-    assert(m_LOS.size() == m_err_hat.size());
-
     // Refine significant pixels from previous iterations only, 
     //   because pixels added from this iteration are already refined.
     for (size_t idx = 0; idx < m_LOS_size; idx++) {
         if (m_bit_buffer[m_bit_idx++])
-            m_err_hat[idx] += m_threshold * 0.5;
+            m_LOS[idx].error += m_threshold * 0.5;
         else
-            m_err_hat[idx] -= m_threshold * 0.5;
+            m_LOS[idx].error -= m_threshold * 0.5;
 
         if (m_bit_idx == m_bit_buffer.size())
             return true;

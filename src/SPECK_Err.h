@@ -105,17 +105,19 @@ private:
     // Global variables that change and facilitate the process.
     size_t m_outlier_cnt = 0;   // How many data points are still exceeding the tolerance?
     double m_threshold   = 0.0; // Threshold that's used for quantization 
-    size_t m_bit_idx     = 0;   // Used for decoding. Which bit we're at?
-    size_t m_LOS_size    = 0;   // Used for decoding. Size of `m_LOS` at the end of an iteration.
+    size_t m_bit_idx     = 0;   // decoding only. Which bit we're at?
+    size_t m_LOS_size    = 0;   // decoding only. Size of `m_LOS` at the end of an iteration.
 
-    std::vector<Outlier> m_LOS;     // List of OutlierS. This list is not altered by encoding.
-    std::vector<double>  m_q;       // Q list in the algorithm description. This list is
-                                    //   constantly refined by the refinement pass.
-    std::vector<double>  m_err_hat; // err_hat list in the algorithm description. This list
-                                    //   contains the values that would be reconstructed.
     std::vector<bool>    m_bit_buffer;
-    std::vector<size_t>  m_LSP_new;
-    std::vector<size_t>  m_LSP_old;
+    std::vector<Outlier> m_LOS;     // List of OutlierS. This list is not altered when encoding,
+                                    //   but constantly updated when decoding.
+    std::vector<double>  m_q;       // encoding only. This list is refined in the refinement pass. 
+    std::vector<double>  m_err_hat; // encoding only. This list contains values that
+                                    //   would be reconstructed.
+
+    std::vector<bool>    m_recovered_signs; // decoding only
+    std::vector<size_t>  m_LSP_new;         // encoding only
+    std::vector<size_t>  m_LSP_old;         // encoding only
 
     std::vector<std::vector<SPECKSet1D>> m_LIS;
 };
