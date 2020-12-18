@@ -83,8 +83,8 @@ private:
     auto m_process_S_encoding(size_t, size_t) -> bool;
     auto m_code_S(size_t, size_t) -> bool;
     auto m_sorting_pass() -> bool;              // Used in both encoding and decoding
-    auto m_refinement_Sig() -> bool;            // Used in encoding only
-    auto m_refinement_NewlySig(size_t) -> bool; // Used in encoding only
+    auto m_refinement_pass_encoding() -> bool;
+    auto m_refinement_new_SP(size_t) -> bool;   // Refine a new Significant Pixel (encoding only).
 
     // For the following decoding methods that return a boolean,
     // True means that all bits are processed and decoding finishes,
@@ -114,7 +114,8 @@ private:
 
     std::vector<Significance>            m_pixel_types; // Records the type of every pixel.
     std::vector<bool>                    m_bit_buffer;
-    std::vector<size_t>                  m_LSP;
+    std::vector<size_t>                  m_LSP_new;
+    std::vector<size_t>                  m_LSP_old;
     std::vector<std::vector<SPECKSet1D>> m_LIS;
 };
 

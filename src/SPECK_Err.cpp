@@ -126,9 +126,10 @@ auto speck::SPECK_Err::encode() -> RTNType
 
     // m_err_hat is initialized to have zeros.
     m_err_hat.assign(m_LOS.size(), 0.0);
-    m_pixel_types.assign(m_LOS.size(), Significance::Insig);
-    m_LSP.clear();
-    m_LSP.reserve(m_LOS.size());
+
+    m_LSP_new.clear();
+    m_LSP_old.clear();
+    m_LSP_old.reserve(m_LOS.size());
 
     // Find the maximum q, and decide m_max_coeff_bits
     auto max_q       = *(std::max_element(m_q.cbegin(), m_q.cend()));
@@ -141,21 +142,12 @@ auto speck::SPECK_Err::encode() -> RTNType
 
         if (m_sorting_pass())
             break;
-        if (m_refinement_Sig())
+        if (m_refinement_pass_encoding())
             break;
 
         m_threshold *= 0.5;
         m_clean_LIS();
     }
-
-#ifdef PRINT
-    //for (size_t i = 0; i < m_LOS.size(); i++) {
-    //    if (m_pixel_types[i] == Significance::Sig || m_pixel_types[i] == Significance::NewlySig) {
-    //        auto& out = m_LOS[i];
-    //        printf("  outlier: (%ld, %f)\n", out.location, m_err_hat[i]);
-    //    }
-    //}
-#endif
 
     return RTNType::Good;
 }
@@ -168,7 +160,8 @@ auto speck::SPECK_Err::decode() -> RTNType
 
     // Clear/initialize data structures
     m_LOS.clear();
-    m_LSP.clear(); // Not used when decoding
+    m_LSP_new.clear(); // Not used when decoding
+    m_LSP_old.clear(); // Not used when decoding
     m_q.clear();   // Not used when decoding
     m_err_hat.clear();
     m_pixel_types.clear();
@@ -195,15 +188,6 @@ auto speck::SPECK_Err::decode() -> RTNType
         m_LOS[idx].error *= m_err_hat[idx];
     }
 
-#ifdef PRINT
-    //for (size_t i = 0; i < m_LOS.size(); i++) {
-    //    if (m_pixel_types[i] == Significance::Sig || m_pixel_types[i] == Significance::NewlySig) {
-    //        auto& out = m_LOS[i];
-    //        printf("  outlier: (%ld, %f)\n", out.location, out.error);
-    //    }
-    //}
-#endif
-
     return RTNType::Good;
 }
 
@@ -212,14 +196,14 @@ auto speck::SPECK_Err::m_decide_significance(const SPECKSet1D& set) const
 {
     // Strategy:
     // Iterate all outliers: if
-    // 1) its type is Significance::Insig,
+    // 1) its err_hat value is 0.0, meaning it's not processed yet,
     // 2) its q value is above the current threshold, and
     // 3) its location falls inside this set,
     // then this set is significant. Otherwise its insignificant.
 
     for (size_t i = 0; i < m_LOS.size(); i++) {
 
-        if (m_pixel_types[i] == Significance::Insig && m_q[i] >= m_threshold && 
+        if (m_err_hat[i] == 0.0 && m_q[i] >= m_threshold && 
             set.start <= m_LOS[i].location && m_LOS[i].location < set.start + set.length)
             return {true, i};
     }
@@ -239,13 +223,13 @@ auto speck::SPECK_Err::m_process_S_encoding(size_t idx1, size_t idx2) -> bool
         if (set.length == 1) { // Is a pixel
             // Record the sign of this newly identify outlier, and put it in LSP
             m_bit_buffer.push_back(m_LOS[sig_idx].error >= 0.0);
-            m_pixel_types[sig_idx] = Significance::NewlySig;
-            m_LSP.push_back(sig_idx);
+            m_LSP_new.push_back(sig_idx);
 
             // Refine this pixel!
-            if (m_refinement_NewlySig(sig_idx))
+            if (m_refinement_new_SP(sig_idx))
                 return true;
-        } else { // Not a pixel
+        }
+        else { // Not a pixel
             if (m_code_S(idx1, idx2))
                 return true;
         }
@@ -291,41 +275,40 @@ auto speck::SPECK_Err::m_sorting_pass() -> bool
     return false;
 }
 
-auto speck::SPECK_Err::m_refinement_Sig() -> bool
+auto speck::SPECK_Err::m_refinement_pass_encoding() -> bool
 {
-    for (auto idx : m_LSP) {
+    for (auto idx : m_LSP_old) {
 
-        if (m_pixel_types[idx] == Significance::Sig) {
+        // First test if this pixel is still an outlier
+        auto diff        = m_err_hat[idx] - std::abs(m_LOS[idx].error);
+        auto was_outlier = std::abs(diff) > m_tolerance;
+        auto need_refine = m_q[idx] >= m_threshold;
+        m_bit_buffer.push_back(need_refine);
+        if (need_refine)
+            m_q[idx] -= m_threshold;
 
-            // First test if this pixel is still an outlier
-            auto diff        = m_err_hat[idx] - std::abs(m_LOS[idx].error);
-            auto was_outlier = std::abs(diff) > m_tolerance;
-            auto need_refine = m_q[idx] >= m_threshold;
-            m_bit_buffer.push_back(need_refine);
-            if (need_refine)
-                m_q[idx] -= m_threshold;
-
-            // If this pixel was an outlier, we test again!
-            if (was_outlier) {
-                m_err_hat[idx] += need_refine ? m_threshold * 0.5 : m_threshold * -0.5;
-                diff            = m_err_hat[idx] - std::abs(m_LOS[idx].error);
-                auto is_outlier = std::abs(diff) > m_tolerance;
-                if (!is_outlier) {
-                    m_outlier_cnt--;
-                    if (m_outlier_cnt == 0)
-                        return true;
-                }
+        // If this pixel was an outlier, we test again!
+        if (was_outlier) {
+            m_err_hat[idx] += need_refine ? m_threshold * 0.5 : m_threshold * -0.5;
+            diff            = m_err_hat[idx] - std::abs(m_LOS[idx].error);
+            auto is_outlier = std::abs(diff) > m_tolerance;
+            if (!is_outlier) {
+                m_outlier_cnt--;
+                if (m_outlier_cnt == 0)
+                    return true;
             }
-        } else if (m_pixel_types[idx] == Significance::NewlySig) {
-            // Simply remove the NewlySig mark
-            m_pixel_types[idx] = Significance::Sig;
         }
     }
+
+    // Now attach content from `m_LSP_new` to the end of `m_LSP_old`, and 
+    // marking those pixels as significant.
+    m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.begin(), m_LSP_new.end() );
+    m_LSP_new.clear();
 
     return false;
 }
 
-auto speck::SPECK_Err::m_refinement_NewlySig(size_t idx) -> bool
+auto speck::SPECK_Err::m_refinement_new_SP(size_t idx) -> bool
 {
     m_q[idx] -= m_threshold;
 
