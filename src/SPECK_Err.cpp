@@ -160,13 +160,13 @@ auto speck::SPECK_Err::decode() -> RTNType
 
     // Clear/initialize data structures
     m_LOS.clear();
-    m_LSP_new.clear(); // Not used when decoding
-    m_LSP_old.clear(); // Not used when decoding
-    m_q.clear();   // Not used when decoding
+    m_LSP_new.clear();  // Not used when decoding
+    m_LSP_old.clear();  // Not used when decoding
+    m_q.clear();        // Not used when decoding
     m_err_hat.clear();
-    m_pixel_types.clear();
     m_initialize_LIS();
-    m_bit_idx = 0;
+    m_bit_idx  = 0;
+    m_LOS_size = 0;
 
     // Since we already have m_max_coeff_bits from the bit stream when decoding header,
     // we can go straight into quantization!
@@ -336,14 +336,12 @@ auto speck::SPECK_Err::m_process_S_decoding(size_t idx1, size_t idx2) -> bool
     assert(m_bit_idx < m_bit_buffer.size());
 
     if (is_sig) {
-
         if (set.length == 1) { // This is a pixel
             // We recovered the location of another outlier!
             // Is this pixel positive or negative? Keep that info in m_LOS.
             auto sign = m_bit_buffer[m_bit_idx++] ? 1.0 : -1.0;
             m_LOS.emplace_back(set.start, sign);
             m_err_hat.push_back(1.5 * m_threshold);
-            m_pixel_types.push_back(Significance::NewlySig);
 
             // The bit buffer CAN be depleted at this point, so let's do a test
             if (m_bit_idx == m_bit_buffer.size())
@@ -364,28 +362,22 @@ auto speck::SPECK_Err::m_refinement_decoding() -> bool
 {
     // sanity check
     assert(m_LOS.size() == m_err_hat.size());
-    assert(m_LOS.size() == m_pixel_types.size());
 
-    // Refine existing identified significant pixels.
-    for (size_t idx = 0; idx < m_err_hat.size(); idx++) {
+    // Refine significant pixels from previous iterations only, 
+    //   because pixels added from this iteration are already refined.
+    for (size_t idx = 0; idx < m_LOS_size; idx++) {
 
-        if (m_pixel_types[idx] == Significance::Sig) {
+        if (m_bit_buffer[m_bit_idx++])
+            m_err_hat[idx] += m_threshold * 0.5;
+        else
+            m_err_hat[idx] -= m_threshold * 0.5;
 
-            if (m_bit_buffer[m_bit_idx++])
-                m_err_hat[idx] += m_threshold * 0.5;
-            else
-                m_err_hat[idx] -= m_threshold * 0.5;
-
-            if (m_bit_idx == m_bit_buffer.size())
-                return true;
-
-        } else {
-            assert(m_pixel_types[idx] == Significance::NewlySig); // Sanity check
-
-            // For NewlySig pixels, just mark it as significant
-            m_pixel_types[idx] = Significance::Sig;
-        }
+        if (m_bit_idx == m_bit_buffer.size())
+            return true;
     }
+
+    // Record the size of `m_los` after this iteration.
+    m_LOS_size = m_LOS.size();
 
     return false;
 }
