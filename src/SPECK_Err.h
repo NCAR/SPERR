@@ -48,7 +48,9 @@ public:
     //
     // Input
     void add_outlier(size_t, double);            // add a single outlier.
-    void use_outlier_list(std::vector<Outlier>); // add an entire list of outliers
+                                                 //   Does not affect existing outliers.
+    void use_outlier_list(std::vector<Outlier>); // use a given list of outliers.
+                                                 //   Existing outliers are erased.
     void set_length(size_t);                     // set 1D array length
     void set_tolerance(double);                  // set error tolerance
 
