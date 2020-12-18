@@ -46,7 +46,6 @@ public:
     // Important note on the outliers: each one must live at a unique location.
     //
     // Input
-    void reserve(size_t);                        // Optionally pre-allocate space. ?? What number ??
     void add_outlier(size_t, double);            // add a single outlier.
     void use_outlier_list(std::vector<Outlier>); // add an entire list of outliers
     void set_length(size_t);                     // set 1D array length

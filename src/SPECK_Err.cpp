@@ -21,18 +21,9 @@ speck::Outlier::Outlier( size_t loc, double e )
 { }
 
 
-
 //
 // Class SPECK_Err
 //
-void speck::SPECK_Err::reserve(size_t num)
-{
-    m_LOS.reserve(num);
-    m_q.reserve(num);
-    m_err_hat.reserve(num);
-    m_pixel_types.reserve(num);
-}
-
 void speck::SPECK_Err::add_outlier(size_t pos, double e)
 {
     m_LOS.emplace_back(pos, e);
@@ -127,10 +118,13 @@ auto speck::SPECK_Err::encode() -> RTNType
 
     m_initialize_LIS();
     m_outlier_cnt = m_LOS.size(); // Initially everyone in LOS is an outlier
-    m_q.clear();
-    m_q.reserve(m_LOS.size());
-    for (const auto& o : m_LOS)
-        m_q.push_back(std::abs(o.error));
+    m_q.assign( m_LOS.size(), 0.0 );
+
+    // m_q is initialized to have the absolute value of all error.
+    std::transform( m_LOS.cbegin(), m_LOS.cend(), m_q.begin(),
+                    [](auto& out){return std::abs(out.error);} );
+
+    // m_err_hat is initialized to have zeros.
     m_err_hat.assign(m_LOS.size(), 0.0);
     m_pixel_types.assign(m_LOS.size(), Significance::Insig);
     m_LSP.clear();
