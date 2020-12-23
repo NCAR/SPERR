@@ -44,6 +44,20 @@ void speck::SPECK_Err::set_tolerance(double t)
     m_tolerance = t;
 }
 
+void speck::SPECK_Err::use_bit_buffer( std::vector<bool> other_buf )
+{
+    m_bit_buffer = std::move( other_buf );
+}
+
+auto speck::SPECK_Err::release_bit_buffer() -> std::vector<bool>
+{
+    // Do some clean up work first
+    m_LOS.clear();
+    m_total_len = 0;
+    m_tolerance = 0.0;
+    return std::move(m_bit_buffer);
+}
+
 auto speck::SPECK_Err::m_part_set(const SPECKSet1D& set) const -> TwoSets 
 {
     SPECKSet1D set1, set2;
@@ -377,7 +391,7 @@ auto speck::SPECK_Err::m_refinement_decoding() -> bool
     return false;
 }
 
-auto speck::SPECK_Err::get_num_of_outliers() const -> size_t
+auto speck::SPECK_Err::num_of_outliers() const -> size_t
 {
     return m_LOS.size();
 }
@@ -387,9 +401,14 @@ auto speck::SPECK_Err::num_of_bits() const -> size_t
     return m_bit_buffer.size();
 }
 
-auto speck::SPECK_Err::get_ith_outlier(size_t idx) const -> Outlier
+auto speck::SPECK_Err::ith_outlier(size_t idx) const -> Outlier
 {
     return m_LOS[idx];
+}
+
+auto speck::SPECK_Err::max_coeff_bits() const -> int32_t
+{
+    return m_max_coeff_bits;
 }
 
 auto speck::SPECK_Err::release_outliers() -> std::vector<Outlier>

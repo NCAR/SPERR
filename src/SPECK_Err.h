@@ -40,30 +40,35 @@ struct Outlier {
 class SPECK_Err
 {
 public:
-    //
-    // Trival input/output
+    // Input
     //
     // Important note on the outliers: each one must live at a unique location,
-    //   and each error value must be greater than the tolerance.
-    //
-    // Input
+    // and each error value must be greater than the tolerance.
     void add_outlier(size_t, double);            // add a single outlier.
-                                                 //   Does not affect existing outliers.
+                                                 // Does not affect existing outliers.
     void use_outlier_list(std::vector<Outlier>); // use a given list of outliers.
-                                                 //   Existing outliers are erased.
+                                                 // Existing outliers are erased.
     void set_length(size_t);                     // set 1D array length
-    void set_tolerance(double);                  // set error tolerance
+    void set_tolerance(double);                  // set error tolerance (Must be positive)
 
     // Output
     auto release_outliers() -> std::vector<Outlier>; // Release ownership of decoded outliers
-    auto get_num_of_outliers() const -> size_t;      // How many outliers are decoded?
-    auto get_ith_outlier(size_t) const -> Outlier;   // Get a single outlier (No range check here!)
+    auto ith_outlier(size_t) const -> Outlier;       // Get a single outlier (No range check here!)
+    auto num_of_outliers() const -> size_t;          // How many outliers are decoded?
     auto num_of_bits() const -> size_t;              // How many bits are generated?
+    auto max_coeff_bits() const -> int32_t;          // Will be used when decoding.
+
+    // Given that this class is always expected to be used together with the main SPECK3D or
+    // SPECK2D classes, so let's decide that this class could receive and return bitstreams
+    // in their internal format, i.e., std::vector<bool>.
+    // Also note that this class isn't performance critical, so we don't bother using PMR containers.
+    void use_bit_buffer( std::vector<bool> );       // Take a bitstream for decoding.
+    auto release_bit_buffer() -> std::vector<bool>; // Release ownership of the encoded bitstream.
 
     // Action methods
-    // Returns 0 upon success, 1 upon failure.
     auto encode() -> RTNType;
     auto decode() -> RTNType;
+
 
 private:
     //
