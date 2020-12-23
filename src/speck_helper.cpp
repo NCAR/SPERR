@@ -11,21 +11,6 @@
 #endif
 
 
-//
-// Class SPECKSet1D
-//
-speck::SPECKSet1D::SPECKSet1D( size_t s, size_t l, uint32_t p )
-                 : start(s), length(l), part_level(p)
-{ }
-
-
-//
-// Struct Outlier
-//
-speck::Outlier::Outlier( size_t loc, float e )
-              : location(loc), error(e)
-{ }
-
 auto speck::num_of_xforms(size_t len) -> size_t
 {
     assert(len > 0);

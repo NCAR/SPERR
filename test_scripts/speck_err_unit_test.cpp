@@ -30,7 +30,7 @@ public:
         LOS.emplace_back( length - 1, 0.15f );
         LOS.emplace_back( length / 2, -0.5f );
         LOS.emplace_back( 100, -0.35f );
-        se.add_outlier_list( LOS );
+        se.use_outlier_list( LOS );
 
         se.encode();
         se.decode();

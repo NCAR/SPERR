@@ -463,6 +463,8 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
             if( m_sig_map[ m_LSP_old[i] ] )
                 m_tmp_result[i] = m_true;
         }
+        // Note that under this condition, the actual refinement of coefficients
+        //   is performed together with the step of refining newly significant pixels.
     }
     else {
         #pragma omp parallel for
@@ -493,6 +495,8 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
             if( m_coeff_buf[i] >= m_threshold )
                 m_coeff_buf[i] -= m_threshold;
         }
+        // Note that under this condition, pixels from old and new significant pixel
+        //   lists are refined at the same time.
     }
     else {
         #pragma omp parallel for

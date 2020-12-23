@@ -65,7 +65,7 @@ int main( int argc, char* argv[] )
     speck::SPECK_Err se;
     se.set_length( total_len );
     se.set_tolerance( tol );
-    se.add_outlier_list( LOS );
+    se.use_outlier_list( LOS );
 
     std::cout << "encoding -- " << std::endl;
     se.encode();
