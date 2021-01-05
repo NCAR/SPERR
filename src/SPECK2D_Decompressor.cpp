@@ -107,18 +107,7 @@ auto SPECK2D_Decompressor::write_slice_d( const char* filename ) const -> RTNTyp
     if( slice.first == nullptr || slice.second != m_total_vals )
         return RTNType::Error;
 
-    std::FILE* file = std::fopen( filename, "wb" );
-    if( file ) {
-        auto rtn = std::fwrite( slice.first.get(), sizeof(double), m_total_vals, file );
-        std::fclose( file );
-        if( rtn != m_total_vals )
-            return RTNType::IOError;
-        else
-            return RTNType::Good;
-    }
-    else {
-        return RTNType::IOError;
-    }
+    return speck::write_n_bytes( filename, sizeof(double) * slice.second, slice.first.get() );
 }
 
 
@@ -129,18 +118,7 @@ auto SPECK2D_Decompressor::write_slice_f( const char* filename ) const -> RTNTyp
     if( slice.first == nullptr || slice.second != m_total_vals )
         return RTNType::Error;
 
-    std::FILE* file = std::fopen( filename, "wb" );
-    if( file ) {
-        auto rtn = std::fwrite( slice.first.get(), sizeof(float), m_total_vals, file );
-        std::fclose( file );
-        if( rtn != m_total_vals )
-            return RTNType::IOError;
-        else
-            return RTNType::Good;
-    }
-    else {
-        return RTNType::IOError;
-    }
+    return speck::write_n_bytes( filename, sizeof(float) * slice.second, slice.first.get() );
 }
 
 

@@ -101,27 +101,9 @@ auto SPECK2D_Compressor::write_bitstream( const char* filename ) const -> RTNTyp
     if( stream.first == nullptr || stream.second == 0 ) 
         return RTNType::Error;
 
-    std::FILE* file = std::fopen( filename, "wb" );
-    if( file ) {
-        auto nwrite = std::fwrite( stream.first.get(), 1, stream.second, file );
-        std::fclose( file );
-        if( nwrite != stream.second )
-            return RTNType::IOError;
-        else
-            return RTNType::Good;
-    }
-    else {
-        return RTNType::IOError;
-    }
+    return speck::write_n_bytes( filename, stream.second, stream.first.get() );
 }
 
-
-//#ifdef QZ_TERM
-// void SPECK2D_Compressor::set_qz_level( int32_t q )
-// {
-//     m_qz_lev = q;
-// }
-//#else
 auto SPECK2D_Compressor::set_bpp( float bpp ) -> RTNType
 {
     if( bpp < 0.0 || bpp > 64.0 )
@@ -131,4 +113,3 @@ auto SPECK2D_Compressor::set_bpp( float bpp ) -> RTNType
         return RTNType::Good;
     }
 }
-//#endif

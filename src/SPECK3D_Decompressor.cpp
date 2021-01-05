@@ -108,18 +108,7 @@ auto SPECK3D_Decompressor::write_volume_d( const char* filename ) const -> RTNTy
     if( vol.first == nullptr || vol.second != m_total_vals )
         return RTNType::Error;
 
-    std::FILE* file = std::fopen( filename, "wb" );
-    if( file ) {
-        auto nwrite = std::fwrite( vol.first.get(), sizeof(double), m_total_vals, file );
-        std::fclose( file );
-        if( nwrite != m_total_vals )
-            return RTNType::IOError;
-        else
-            return RTNType::Good;
-    }
-    else {
-        return RTNType::IOError;
-    }
+    return speck::write_n_bytes( filename, sizeof(double) * vol.second, vol.first.get() );
 }
 
 
@@ -130,18 +119,7 @@ auto SPECK3D_Decompressor::write_volume_f( const char* filename ) const -> RTNTy
     if( vol.first == nullptr || vol.second != m_total_vals )
         return RTNType::Error;
 
-    std::FILE* file = std::fopen( filename, "wb" );
-    if( file ) {
-        auto nwrite = std::fwrite( vol.first.get(), sizeof(float), m_total_vals, file );
-        std::fclose( file );
-        if( nwrite != m_total_vals )
-            return RTNType::Error;
-        else
-            return RTNType::Good;
-    }
-    else {
-        return RTNType::IOError;
-    }
+    return speck::write_n_bytes( filename, sizeof(float) * vol.second, vol.first.get() );
 }
 
 

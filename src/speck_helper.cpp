@@ -194,7 +194,7 @@ template auto speck::uptr2itr(const std::unique_ptr<double[]>&, size_t) -> ptr_i
 
 auto speck::read_n_bytes( const char* filename, size_t n_bytes, void* buffer ) -> RTNType
 {
-    std::FILE* f = std::fopen( filename, "r" );
+    std::FILE* f = std::fopen( filename, "rb" );
     if( !f ) {
         return RTNType::IOError;
     }
@@ -214,7 +214,7 @@ auto speck::read_n_bytes( const char* filename, size_t n_bytes, void* buffer ) -
 
 auto speck::write_n_bytes( const char* filename, size_t n_bytes, const void* buffer ) -> RTNType
 {
-    std::FILE* f = std::fopen( filename, "w" );
+    std::FILE* f = std::fopen( filename, "wb" );
     if( !f ) {
         return RTNType::IOError;
     }

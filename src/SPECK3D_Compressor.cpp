@@ -101,18 +101,7 @@ auto SPECK3D_Compressor::write_bitstream( const char* filename ) const -> RTNTyp
     if( stream.first == nullptr || stream.second == 0 )
         return RTNType::Error;
 
-    std::FILE* file = std::fopen( filename, "wb" );
-    if( file ) {
-        auto nwrite = std::fwrite( stream.first.get(), 1, stream.second, file );
-        std::fclose( file );
-        if( nwrite != stream.second )
-            return RTNType::IOError;
-        else
-            return RTNType::Good;
-    }
-    else {
-        return RTNType::IOError;
-    }
+    return speck::write_n_bytes( filename, stream.second, stream.first.get() );
 }
 
 
