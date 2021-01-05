@@ -114,9 +114,9 @@ auto speck::SPECK3D::encode() -> RTNType
         // Valid `sigmap_threshold` is between 0.0 and 1.0.
         //   Smaller thresholds result in more memory traverse and less random access.
         //   Bigger thresholds result in more memory random access and less traverse.
-        //   We observed that desktops can use 0.9 or higher, while laptops can use 0.6 or lower.
+        //   We observed that desktops can use 0.8 or higher, while laptops can use 0.6 or lower.
         //   (No one-size-fit-all)
-        const float sigmap_threshold = 0.9;
+        const float sigmap_threshold = 0.8;
         if( m_LSP_old.size() > size_t(m_coeff_len * sigmap_threshold) ) {
             m_sig_map.assign( m_coeff_len, false );
 
@@ -316,7 +316,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 
     // `m_LSP_new` is now empty from the previous iteration, and ready to receive input from `m_LIP`.
     m_LSP_new.assign( m_LIP.size(), m_u64_garbage_val );
-    m_tmp_result.assign( m_LIP.size(), m_discard );
+    m_tmp_result.assign( m_LIP.size(), m_false );
     //
     // Experiments show that though we use a temporary storage space and that
     //   this omp section is rather simple, it's still faster than serial execution with
@@ -334,8 +334,6 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
                 m_LSP_new[i]    = pixel_idx;
                 m_LIP[i]        = m_u64_garbage_val;
             }
-            else
-                m_tmp_result[i] = m_false;
         }
     }
     else {
@@ -347,8 +345,6 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
                 m_LSP_new[i]    = pixel_idx;
                 m_LIP[i]        = m_u64_garbage_val;
             }
-            else
-                m_tmp_result[i] = m_false;
         }
     }
 
@@ -385,7 +381,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
                 return RTNType::BitBudgetMet;
 #endif
         }
-        else if( e == m_false ) {
+        else {
             m_bit_buffer.push_back( false );
 #ifndef QZ_TERM
             if( m_bit_buffer.size() >= m_budget )
