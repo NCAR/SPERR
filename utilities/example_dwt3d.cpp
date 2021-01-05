@@ -7,8 +7,6 @@
 
 extern "C"  // C Function calls, and don't include the C header!
 {
-    int sam_read_n_bytes( const char*, size_t, void* );
-    int sam_write_n_doubles( const char*, size_t, const double* );
     int sam_get_statsd( const double* arr1, const double* arr2, size_t len,
                         double* rmse,       double* lmax,   double* psnr,
                         double* arr1min,    double* arr1max            );
@@ -31,7 +29,7 @@ int main( int argc, char* argv[] )
 
     // Let read in binaries as 4-byte floats
     std::unique_ptr<float[]> in_buf( new float[ total_vals ] );
-    if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
+    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
     {
         std::cerr << "Input read error!" << std::endl;
         return 1;

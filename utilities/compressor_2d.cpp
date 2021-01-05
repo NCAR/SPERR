@@ -13,8 +13,6 @@ extern "C"  // C Function calls, and don't include the C header!
     int sam_get_statsf( const float* arr1, const float* arr2, size_t len,
                         float* rmse,       float* lmax,       float* psnr,
                         float* arr1min,    float* arr1max            );
-    int sam_read_n_bytes( const char* filename, size_t n_bytes,
-                          void*       buffer               );
 }
 
 int main( int argc, char* argv[] )
@@ -139,7 +137,7 @@ int main( int argc, char* argv[] )
             // Read the original input data again
             const size_t nbytes = sizeof(float) * total_vals;
             auto orig = speck::unique_malloc<float>(total_vals);
-            if( sam_read_n_bytes( input_file.c_str(), nbytes, orig.get() ))
+            if( speck::read_n_bytes( input_file.c_str(), nbytes, orig.get() ) != speck::RTNType::Good )
                 return 1;
             
             int rtn;

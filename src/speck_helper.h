@@ -160,6 +160,11 @@ void unpack_8_booleans( bool* dest,     uint8_t src );
 template <typename T>
 auto unique_malloc( size_t size ) -> std::unique_ptr<T[]>;
 
+// Read from and write to a file
+auto read_n_bytes(  const char* filename, size_t n_bytes,       void* buffer ) -> RTNType;
+auto write_n_bytes( const char* filename, size_t n_bytes, const void* buffer ) -> RTNType;
+
+
 };  // End of speck namespace.
 
 #endif

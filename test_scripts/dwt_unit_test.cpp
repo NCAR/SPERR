@@ -6,11 +6,6 @@
 namespace
 {
 
-extern "C"  // C Function calls, and don't include the C header!
-{
-    int sam_read_n_bytes( const char*, size_t, void* );
-}
-
 TEST( dwt1d, big_image_even )
 {
     const char*   input = "../test_data/128x128.float";
@@ -19,7 +14,7 @@ TEST( dwt1d, big_image_even )
 
     // Let read in binaries as 4-byte floats
     auto in_buf = speck::unique_malloc<float>( total_vals );
-    if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
+    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -46,7 +41,7 @@ TEST( dwt1d, big_image_odd )
 
     // Let read in binaries as 4-byte floats
     auto in_buf = speck::unique_malloc<float>( total_vals );
-    if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
+    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -73,7 +68,7 @@ TEST( dwt2d, small_image_even )
 
     // Let read in binaries as 4-byte floats
     auto in_buf = speck::unique_malloc<float>( total_vals );
-    if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
+    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -100,7 +95,7 @@ TEST( dwt2d, small_image_odd )
 
     // Let read in binaries as 4-byte floats
     auto in_buf = speck::unique_malloc<float>( total_vals );
-    if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
+    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -127,7 +122,7 @@ TEST( dwt2d, big_image_even )
 
     // Let read in binaries as 4-byte floats
     auto in_buf = speck::unique_malloc<float>( total_vals );
-    if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
+    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -154,7 +149,7 @@ TEST( dwt2d, big_image_odd )
 
     // Let read in binaries as 4-byte floats
     auto in_buf = speck::unique_malloc<float>( total_vals );
-    if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
+    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -181,7 +176,7 @@ TEST( dwt3d, small_even_cube )
 
     // Let read in binaries as 4-byte floats
     auto in_buf = speck::unique_malloc<float>( total_vals );
-    if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
+    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -208,7 +203,7 @@ TEST( dwt3d, big_odd_cube )
 
     // Let read in binaries as 4-byte floats
     auto in_buf = speck::unique_malloc<float>( total_vals );
-    if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
+    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -235,7 +230,7 @@ TEST( dwt3d, big_even_cube )
 
     // Let read in binaries as 4-byte floats
     auto in_buf = speck::unique_malloc<float>( total_vals );
-    if( sam_read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) )
+    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.

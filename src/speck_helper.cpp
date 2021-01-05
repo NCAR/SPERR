@@ -3,8 +3,8 @@
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
+#include <cstdio>
 #include <cstring>
-#include <fstream>
 
 #ifdef USE_OMP
     #include <omp.h>
@@ -190,3 +190,38 @@ auto speck::uptr2itr( const std::unique_ptr<T[]>& uptr, size_t offset ) -> ptr_i
 }
 template auto speck::uptr2itr(const std::unique_ptr<float[]>&,  size_t) -> ptr_iterator<float>;
 template auto speck::uptr2itr(const std::unique_ptr<double[]>&, size_t) -> ptr_iterator<double>;
+
+
+auto speck::read_n_bytes( const char* filename, size_t n_bytes, void* buffer ) -> RTNType
+{
+    std::FILE* f = std::fopen( filename, "r" );
+    if( !f ) {
+        return RTNType::IOError;
+    }
+    std::fseek( f, 0, SEEK_END );
+    if( std::ftell(f) < n_bytes ) {
+        std::fclose( f );
+        return RTNType::InvalidParam;
+    }
+    std::fseek( f, 0, SEEK_SET );
+    if( std::fread( buffer, 1, n_bytes, f ) != n_bytes ) {
+        std::fclose( f );
+        return RTNType::IOError;
+    }
+    std::fclose( f );
+    return RTNType::Good;
+}
+
+auto speck::write_n_bytes( const char* filename, size_t n_bytes, const void* buffer ) -> RTNType
+{
+    std::FILE* f = std::fopen( filename, "w" );
+    if( !f ) {
+        return RTNType::IOError;
+    }
+    if( std::fwrite(buffer, 1, n_bytes, f) != n_bytes ) {
+        std::fclose( f );
+        return RTNType::IOError;
+    }
+    std::fclose( f );
+    return RTNType::Good;
+}

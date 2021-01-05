@@ -10,7 +10,6 @@ namespace
 
 extern "C"  // C Function calls, and don't include the C header!
 {
-    int sam_read_n_bytes( const char*, size_t, void* );
     int sam_get_statsf( const float* arr1, const float* arr2, size_t len,
                         float* rmse,       float* lmax,   float* psnr,
                         float* arr1min,    float* arr1max            );
@@ -76,7 +75,7 @@ public:
         //
 
         auto orig = speck::unique_malloc<float>( total_vals );
-        if( sam_read_n_bytes( m_input_name.c_str(), 4 * total_vals, orig.get() ) )
+        if( speck::read_n_bytes( m_input_name.c_str(), 4 * total_vals, orig.get() ) != speck::RTNType::Good )
             return 1;
         float rmse, lmax, psnr, arr1min, arr1max;
         if( sam_get_statsf( orig.get(), slice.first.get(), total_vals,
