@@ -86,7 +86,6 @@ file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/download/v1.9.1/CLI11.h
 
 add_subdirectory( src )
 list( APPEND HELPER_LIBS speck_helper    )
-list( APPEND HELPER_LIBS sam_helper      )
 
 list( APPEND CDF_LIBS CDF97 )
 

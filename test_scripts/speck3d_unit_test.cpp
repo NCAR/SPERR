@@ -8,13 +8,6 @@ using speck::RTNType;
 namespace
 {
 
-extern "C"  // C Function calls, and don't include the C header!
-{
-    int sam_get_statsf( const float* arr1, const float* arr2, size_t len,
-                        float* rmse,       float* lmax,   float* psnr,
-                        float* arr1min,    float* arr1max            );
-}
-
 // Create a class that executes the entire pipeline, and calculates the error metrics
 class speck_tester
 {
@@ -102,10 +95,8 @@ public:
             return 1;
 
         float rmse, lmax, psnr, arr1min, arr1max;
-        if( sam_get_statsf( orig.get(), vol.first.get(), total_vals,
-                            &rmse, &lmax, &psnr, &arr1min, &arr1max ) ) {
-            return 1;
-        }
+        speck::calc_stats( orig.get(), vol.first.get(), total_vals,
+                           &rmse, &lmax, &psnr, &arr1min, &arr1max );
         m_psnr = psnr;
         m_lmax = lmax;
 

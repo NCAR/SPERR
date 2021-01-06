@@ -243,17 +243,17 @@ void speck::calc_stats( const T* arr1,   const T* arr2,  size_t len,
     // Calculate summation and l-infty of each stride
     //
     #pragma omp parallel for
-    for( size_t stride = 0; stride < num_of_strides; stride++ ) {
+    for( size_t stride_i = 0; stride_i < num_of_strides; stride_i++ ) {
         T linfty = 0.0;
         T buf[ stride_size ];
         for( size_t i = 0; i < stride_size; i++ ) {
-            const size_t idx = stride * stride_size + i;
+            const size_t idx = stride_i * stride_size + i;
             auto diff = std::abs( arr1[idx] - arr2[idx] );
             linfty    = std::max( linfty, diff );
             buf[i]    = diff * diff;
         }
-        sum_vec   [ stride ] = speck::kahan_summation( buf, stride_size );
-        linfty_vec[ stride ] = linfty;
+        sum_vec   [ stride_i ] = speck::kahan_summation( buf, stride_size );
+        linfty_vec[ stride_i ] = linfty;
     }
 
     //
@@ -280,6 +280,9 @@ void speck::calc_stats( const T* arr1,   const T* arr2,  size_t len,
 
     //
     // Now calculate rmse and psnr
+    // Note: psnr is calculated in dB, and follows the equation described in:
+    // http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/VELDHUIZEN/node18.html
+    // Also refer to https://www.mathworks.com/help/vision/ref/psnr.html
     //
     const auto avg = speck::kahan_summation( sum_vec.data(), sum_vec.size() ) / T(len);
     *rmse    = std::sqrt( avg );

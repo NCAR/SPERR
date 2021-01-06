@@ -8,12 +8,6 @@
 #include <chrono>
 #include <cstring>
 
-extern "C"  // C Function calls, and don't include the C header!
-{
-    int sam_get_statsf( const float* arr1, const float* arr2, size_t len,
-                        float* rmse,       float* lmax,       float* psnr,
-                        float* arr1min,    float* arr1max            );
-}
 
 int main( int argc, char* argv[] )
 {
@@ -140,11 +134,9 @@ int main( int argc, char* argv[] )
             if( speck::read_n_bytes( input_file.c_str(), nbytes, orig.get() ) != speck::RTNType::Good )
                 return 1;
             
-            int rtn;
             float rmse, lmax, psnr, arr1min, arr1max;
-            if( sam_get_statsf( orig.get(), slice.first.get(), total_vals,
-                                &rmse, &lmax, &psnr, &arr1min, &arr1max ) )
-                return 1;
+            speck::calc_stats( orig.get(), slice.first.get(), total_vals,
+                               &rmse, &lmax, &psnr, &arr1min, &arr1max );
 
             printf("RMSE = %f, L-Infty = %f, PSNR = %f\n", rmse, lmax, psnr);
             printf("The original data range is: (%f, %f)\n", arr1min, arr1max);
