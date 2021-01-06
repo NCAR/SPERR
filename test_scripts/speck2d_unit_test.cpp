@@ -79,8 +79,9 @@ public:
             return 1;
         float rmse, lmax, psnr, arr1min, arr1max;
         if( sam_get_statsf( orig.get(), slice.first.get(), total_vals,
-                            &rmse, &lmax, &psnr, &arr1min, &arr1max ) )
+                            &rmse, &lmax, &psnr, &arr1min, &arr1max ) ) {
             return 1;
+        }
         m_psnr = psnr;
         m_lmax = lmax;
 

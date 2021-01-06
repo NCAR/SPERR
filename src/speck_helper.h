@@ -164,6 +164,14 @@ auto unique_malloc( size_t size ) -> std::unique_ptr<T[]>;
 auto read_n_bytes(  const char* filename, size_t n_bytes,       void* buffer ) -> RTNType;
 auto write_n_bytes( const char* filename, size_t n_bytes, const void* buffer ) -> RTNType;
 
+// Calculate a suite of statistics
+// Note that arr1 is considered as the ground truth array, so it's the range of arr1
+// that is used internally for psnr calculations.
+template <typename T>
+void calc_stats( const T* arr1,   const T* arr2,  size_t len,
+                 T* rmse, T* linfty, T* psnr, T* arr1min, T* arr1max );
+template <typename T>
+auto kahan_summation( const T*, size_t ) -> T;
 
 };  // End of speck namespace.
 
