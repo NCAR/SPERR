@@ -102,12 +102,9 @@ public:
     // https://github.com/shaomeng/cppcon2019_class/blob/master/labs/01-vector_walkthrough/code/trnx_vector_impl.h
 };
 
-// Helper function to produce a ptr_iterator from a raw pointer or a unique_ptr.
-// For a raw array with size N, the begin and end iterators are:
-// auto begin = ptr2itr( buf ); auto end = ptr2itr( buf + N );
-template<typename T>
-auto ptr2itr(T *val) -> ptr_iterator<T>;
-
+// Helper function to produce a ptr_iterator from a unique_ptr.
+// For an array with size N, the begin and end iterators are:
+// auto begin = uptr2itr( buf ); auto end = uptr2itr( buf, N );
 template<typename T>
 auto uptr2itr( const std::unique_ptr<T[]>&, size_t offset = 0 ) -> ptr_iterator<T>;
 

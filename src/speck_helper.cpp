@@ -176,14 +176,6 @@ template auto speck::unique_malloc( size_t ) -> buffer_type_uint8;
 
 
 template<typename T>
-auto speck::ptr2itr(T *val) -> ptr_iterator<T>
-{
-    return ptr_iterator<T>(val);
-}
-template auto speck::ptr2itr(float*)  -> ptr_iterator<float>;
-template auto speck::ptr2itr(double*) -> ptr_iterator<double>;
-
-template<typename T>
 auto speck::uptr2itr( const std::unique_ptr<T[]>& uptr, size_t offset ) -> ptr_iterator<T>
 {
     return ptr_iterator<T>( uptr.get() + offset );
@@ -273,7 +265,7 @@ void speck::calc_stats( const T* arr1,   const T* arr2,  size_t len,
     //
     // Now calculate min, max, linfty
     //
-    const auto minmax = std::minmax_element( ptr2itr(arr1), ptr2itr(arr1 + len) );
+    const auto minmax = std::minmax_element( arr1, arr1 + len );
     *arr1min = *minmax.first;
     *arr1max = *minmax.second;
     *linfty  = *(std::max_element(linfty_vec.begin(), linfty_vec.end()));
