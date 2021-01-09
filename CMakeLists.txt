@@ -144,6 +144,16 @@ target_link_libraries(  example_speck_err PUBLIC ${SPECK_Err_LIBS}
                                           PUBLIC ${HELPER_LIBS} )
 target_include_directories( example_speck_err PUBLIC ${PROJECT_BINARY_DIR} )
 
+if( QZ_TERM )
+
+else()
+  add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_size.cpp" )
+endif()
+target_link_libraries(      probe_3d PUBLIC ${SPECK3D_LIBS}
+                                     PUBLIC ${SPECK_Storage_LIBS}
+                                     PUBLIC ${CDF_LIBS}
+                                     PUBLIC ${HELPER_LIBS} )
+target_include_directories( probe_3d PUBLIC ${PROJECT_BINARY_DIR} )
 
 if( BUILD_UNIT_TESTS )
     # Download and unpack googletest at configure time
@@ -217,8 +227,9 @@ if( BUILD_UNIT_TESTS )
 endif()
 
 
-#option( BUILD_QCC_EXAMPLES "Build examples that link to QccPack?" OFF)
+# block comment
 #[[
+#option( BUILD_QCC_EXAMPLES "Build examples that link to QccPack?" OFF)
 if( BUILD_QCC_EXAMPLES )
     set ( QCCPACK_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/QccPack-0.61-1/install/" 
                               CACHE STRING "Where QccPack is installed"             )
