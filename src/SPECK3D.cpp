@@ -744,7 +744,7 @@ auto speck::SPECK3D::m_ready_to_encode() const -> bool
         return false;
 
 #ifndef QZ_TERM
-    if (m_budget == 0 || m_budget > m_coeff_len * 8)
+    if (m_budget == 0 || m_budget > m_coeff_len * 64)
         return false;
 #endif
 

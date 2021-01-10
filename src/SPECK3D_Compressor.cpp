@@ -70,6 +70,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
         return RTNType::Error;
 
     m_cdf.take_data( std::move(m_val_buf), m_total_vals );
+    m_val_buf = nullptr; // give the moved-from object a specified state
     m_cdf.dwt3d();
     auto cdf_out = m_cdf.release_data();
     if( cdf_out.first == nullptr || cdf_out.second != m_total_vals )
