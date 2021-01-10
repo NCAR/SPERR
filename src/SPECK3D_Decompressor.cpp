@@ -134,9 +134,7 @@ auto SPECK3D_Decompressor::set_bpp( float bpp ) -> RTNType
 }
 
 
-void SPECK3D_Decompressor::get_volume_dims( size_t& x, size_t& y, size_t& z ) const
+auto SPECK3D_Decompressor::get_volume_dims( ) const -> std::array<size_t, 3>
 {
-    x = m_dim_x;
-    y = m_dim_y;
-    z = m_dim_z;
+    return {m_dim_x, m_dim_y, m_dim_z};
 }

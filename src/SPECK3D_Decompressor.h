@@ -37,7 +37,7 @@ public:
     auto write_volume_f( const char* filename ) const -> RTNType;
     auto write_volume_d( const char* filename ) const -> RTNType;
 
-    void get_volume_dims( size_t&, size_t&, size_t& ) const;
+    auto get_volume_dims() const -> std::array<size_t, 3>;
 
 private:
     size_t m_dim_x           = 0;

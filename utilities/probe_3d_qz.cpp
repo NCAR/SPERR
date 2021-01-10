@@ -8,11 +8,11 @@
 #include <chrono>
 #include <cstring>
 
-// This file should only be compiled in non QZ_TERM mode.
-#ifndef QZ_TERM
+// This file should only be compiled in QZ_TERM mode.
+#ifdef QZ_TERM
 
 
-auto use_compressor( const float* in_buf, std::array<size_t, 3> dims, float bpp )
+auto use_compressor( const float* in_buf, std::array<size_t, 3> dims, int32_t qz_level )
      -> std::pair<speck::buffer_type_uint8, size_t>
 {
     const size_t total_vals = dims[0] * dims[1] * dims[2];
@@ -22,10 +22,7 @@ auto use_compressor( const float* in_buf, std::array<size_t, 3> dims, float bpp 
         return {nullptr, 0};
     }
 
-    if( compressor.set_bpp( bpp ) != speck::RTNType::Good ) {
-        std::cerr << "  -- setting BPP failed!\n";
-        return {nullptr, 0};
-    }
+    compressor.set_qz_level( qz_level );
 
     auto start = std::chrono::steady_clock::now();
     if( compressor.compress() != speck::RTNType::Good ) {
@@ -69,14 +66,16 @@ auto use_decompressor( std::pair<speck::buffer_type_uint8, size_t> stream )
     return vol;
 }
 
-auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, float bpp ) -> int
+auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, int32_t qz_level,
+                         float tolerance ) -> int 
 {
     const size_t total_vals = dims[0] * dims[1] * dims[2];
 
-    auto stream = use_compressor( in_buf, dims, bpp );
+    auto stream = use_compressor( in_buf, dims, qz_level );
     if( stream.first == nullptr || stream.second == 0 )
         return 1;
-    printf("    Total compressed size in bytes: %ld\n", stream.second );
+    printf("    Total compressed size in bytes = %ld, average bpp = %.2f\n", 
+                stream.second, float(stream.second) * 8.0f / float(total_vals)  );
 
     auto reconstruct = use_decompressor( std::move(stream) );
     if( reconstruct.first == nullptr || reconstruct.second != total_vals )
@@ -85,9 +84,16 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, float 
     float rmse, lmax, psnr, arr1min, arr1max;
     speck::calc_stats( in_buf, reconstruct.first.get(), total_vals,
                        &rmse, &lmax, &psnr, &arr1min, &arr1max);
-
     printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
     printf("    RMSE = %.2e, L-Infty = %.2e, PSNR = %.2f\n", rmse, lmax, psnr);
+
+    size_t num_outlier = 0;
+    for( size_t i = 0; i < total_vals; i++ )
+        if( std::abs( in_buf[i] - reconstruct.first[i] ) > tolerance )
+            num_outlier++;
+    printf("    With qz level = %d and tolerance = %.2e, "
+           "number of outliers = %ld and percentage = %.2f\n",
+           qz_level, tolerance, num_outlier, float(num_outlier * 100) / float(total_vals) );
     
     return 0;
 }
@@ -108,7 +114,16 @@ int main( int argc, char* argv[] )
     app.add_option("--dims", dims_v, "Dimensions of the input volume. \n"
             "For example, `--dims 128 128 128`.")->required()->expected(3);
 
+    float tolerance = 0.0;
+    auto* tol_ptr = app.add_option("-t,--tolerance", tolerance, 
+                    "Maximum point-wise error tolerance. \nFor example, `-t 0.001`.")
+                    ->required();
+
     CLI11_PARSE(app, argc, argv);
+    if( tolerance <= 0.0 ) {
+        std::cerr << "Error tolerance must be a positive value!\n";
+        return 1;
+    }
     const std::array<size_t, 3> dims = {dims_v[0], dims_v[1], dims_v[2]};
 
     // Read and keep a copy of input data (will be used for evaluation)
@@ -121,11 +136,15 @@ int main( int argc, char* argv[] )
     }
 
     //
-    // Let's do an initial analysis
+    // Let's do an initial analysis to pick an initial QZ level.
+    // The strategy is to use a QZ level that about 1/1000 of the input data range.
     //
-    float bpp = 4.0;    // We decide to use 4 bpp for initial analysis
-    printf("Initial analysis: compression at %.2f bit-per-pixel...  \n", bpp);
-    int rtn = test_configuration( input_buf.get(), dims, bpp );
+    const auto minmax = std::minmax_element( input_buf.get(), input_buf.get() + total_vals );
+    const auto range  = *minmax.second - *minmax.first;
+    int32_t qz_level  = int32_t(std::floor(std::log2(range / 1000.0)));
+
+    printf("Initial analysis: compression at quantization level %d ...  \n", qz_level);
+    int rtn = test_configuration( input_buf.get(), dims, qz_level, tolerance );
     if( rtn != 0 )
         return rtn;
 
@@ -133,23 +152,25 @@ int main( int argc, char* argv[] )
     // Now it enters the interactive session
     //
     char answer;
-    std::cout << "Do you want to explore other bit-per-pixel values? [y/n]:  ";
+    std::cout << "Do you want to explore other quantization levels? [y/n]:  ";
     std::cin >> answer;
     while ( answer == 'y' || answer == 'Y' ) {
-        bpp = -1.0;
-        std::cout << "Please input a new bpp value to test [0.0 - 64.0]:  ";
-        std::cin >> bpp;
-        while (bpp <= 0.0 || bpp >= 64.0 ) {
-            std::cout << "Please input a bpp value inbetween [0.0 - 64.0]:  ";
-            std::cin >> bpp;
+        int32_t tmp;
+        std::cout << "Please input a new qz level to test "
+                     "(smaller values mean less compression):  ";
+        std::cin >> tmp;
+        while (tmp < qz_level - 10 || tmp > qz_level + 10) {
+            printf("Please input a qz level within (-10, 10) of %d:  ", qz_level);
+            std::cin >> tmp;
         }
-        printf("\nNow testing bpp %.2f ...\n", bpp);
+        qz_level = tmp;
+        printf("\nNow testing qz level %d ...\n", qz_level);
     
-        rtn = test_configuration( input_buf.get(), dims, bpp );
+        rtn = test_configuration( input_buf.get(), dims, qz_level, tolerance );
         if ( rtn != 0 )
             return rtn;
 
-        std::cout << "Do you want to try other bpp value? [y/n]:  ";
+        std::cout << "Do you want to try other qz level? [y/n]:  ";
         std::cin >> answer;
     }
     

@@ -145,7 +145,7 @@ target_link_libraries(  example_speck_err PUBLIC ${SPECK_Err_LIBS}
 target_include_directories( example_speck_err PUBLIC ${PROJECT_BINARY_DIR} )
 
 if( QZ_TERM )
-
+  add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_qz.cpp" )
 else()
   add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_size.cpp" )
 endif()
