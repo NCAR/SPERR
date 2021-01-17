@@ -32,12 +32,12 @@ int main( int argc, char* argv[] )
     auto* qz_level_ptr = app.add_option("-q,--quantization_level", qz_level, 
             "Target quantization level to stop encoding. For example, \n"
             "if `-q n`, then the last quantization level will be 2^n.")
-            ->group("Compression Options");
+            ->group("Compression Options")->required();
 #else
     float bpp = 0.0;
     auto* bpp_ptr = app.add_option("-b,--bit-per-pixel", bpp, 
             "Target bit-per-pixel on average. \nFor example, `-b 2.3`.")
-             ->check(CLI::Range(0.0f, 64.0f))->group("Compression Options");
+             ->check(CLI::Range(0.0f, 64.0f))->group("Compression Options")->required();
 #endif
 
     std::string output_file;
@@ -65,18 +65,6 @@ int main( int argc, char* argv[] )
             std::cerr << "Please specify the input dimensions" << std::endl;
             return 1;
         }
-
-#ifdef QZ_TERM
-        if( !(*qz_level_ptr) ) {
-            std::cerr << "Please specify the quantization level to encode" << std::endl;
-            return 1;
-        }
-#else
-        if( !(*bpp_ptr) ) {
-            std::cerr << "Please specify the target bit-per-pixel rate" << std::endl;
-            return 1;
-        }
-#endif        
 
         const size_t total_vals = dims[0] * dims[1] * dims[2];
         SPECK3D_Compressor compressor ( dims[0], dims[1], dims[2] );

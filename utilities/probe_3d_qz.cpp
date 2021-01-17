@@ -7,6 +7,7 @@
 #include <iostream>
 #include <chrono>
 #include <cstring>
+#include <cctype> // std::tolower
 
 // This file should only be compiled in QZ_TERM mode.
 #ifdef QZ_TERM
@@ -75,7 +76,7 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, int32_
     if( stream.first == nullptr || stream.second == 0 )
         return 1;
     printf("    Total compressed size in bytes = %ld, average bpp = %.2f\n", 
-                stream.second, float(stream.second) * 8.0f / float(total_vals)  );
+                stream.second, float(stream.second) * 8.0f / float(total_vals) );
 
     auto reconstruct = use_decompressor( std::move(stream) );
     if( reconstruct.first == nullptr || reconstruct.second != total_vals )
@@ -88,12 +89,17 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, int32_
     printf("    RMSE = %.2e, L-Infty = %.2e, PSNR = %.2f\n", rmse, lmax, psnr);
 
     size_t num_outlier = 0;
-    for( size_t i = 0; i < total_vals; i++ )
+    for( size_t i = 0; i < total_vals; i++ ) {
         if( std::abs( in_buf[i] - reconstruct.first[i] ) > tolerance )
             num_outlier++;
+    }
     printf("    With qz level = %d and tolerance = %.2e, "
-           "number of outliers = %ld and percentage = %.2f\n",
+           "num of outliers = %ld, pct = %.2f%%\n",
            qz_level, tolerance, num_outlier, float(num_outlier * 100) / float(total_vals) );
+
+    // Here we approximate each encoded outlier taking 32 bits.
+    printf("    Encoding these outliers will increase bpp to ~ %.2f\n",
+                float(stream.second + num_outlier * 4) * 8.0f / float(total_vals) );
     
     return 0;
 }
@@ -104,10 +110,10 @@ int main( int argc, char* argv[] )
     //
     // Parse command line options
     //
-    CLI::App app("Parse CLI options to compressor_3d");
+    CLI::App app("CLI options to probe_3d");
 
     std::string input_file;
-    app.add_option("filename", input_file, "Input file to the compressor")
+    app.add_option("filename", input_file, "Input file to the probe")
             ->required()->check(CLI::ExistingFile);
 
     std::vector<size_t> dims_v;
@@ -115,9 +121,12 @@ int main( int argc, char* argv[] )
             "For example, `--dims 128 128 128`.")->required()->expected(3);
 
     float tolerance = 0.0;
-    auto* tol_ptr = app.add_option("-t,--tolerance", tolerance, 
-                    "Maximum point-wise error tolerance. \nFor example, `-t 0.001`.")
-                    ->required();
+    app.add_option("-t", tolerance, "Maximum point-wise error tolerance.\n"
+                   "For example, `-t 0.001`.")->required();
+
+    int32_t qz_level;
+    auto* qz_level_ptr = app.add_option("-q", qz_level, 
+                         "Integer quantization level to test. \nFor example, `-q -10`.");
 
     CLI11_PARSE(app, argc, argv);
     if( tolerance <= 0.0 ) {
@@ -141,7 +150,9 @@ int main( int argc, char* argv[] )
     //
     const auto minmax = std::minmax_element( input_buf.get(), input_buf.get() + total_vals );
     const auto range  = *minmax.second - *minmax.first;
-    int32_t qz_level  = int32_t(std::floor(std::log2(range / 1000.0)));
+    if( !(*qz_level_ptr) ) {
+        qz_level  = int32_t(std::floor(std::log2(range / 1000.0)));
+    }
 
     printf("Initial analysis: compression at quantization level %d ...  \n", qz_level);
     int rtn = test_configuration( input_buf.get(), dims, qz_level, tolerance );
@@ -154,17 +165,17 @@ int main( int argc, char* argv[] )
     char answer;
     std::cout << "Do you want to explore other quantization levels? [y/n]:  ";
     std::cin >> answer;
-    while ( answer == 'y' || answer == 'Y' ) {
+    while ( std::tolower(answer) == 'y' ) {
         int32_t tmp;
         std::cout << "Please input a new qz level to test "
-                     "(smaller values mean less compression):  ";
+                     "(larger values mean more compression):  ";
         std::cin >> tmp;
         while (tmp < qz_level - 10 || tmp > qz_level + 10) {
             printf("Please input a qz level within (-10, 10) of %d:  ", qz_level);
             std::cin >> tmp;
         }
         qz_level = tmp;
-        printf("\nNow testing qz level %d ...\n", qz_level);
+        printf("\nNow testing qz level = %d ...\n", qz_level);
     
         rtn = test_configuration( input_buf.get(), dims, qz_level, tolerance );
         if ( rtn != 0 )
@@ -172,6 +183,12 @@ int main( int argc, char* argv[] )
 
         std::cout << "Do you want to try other qz level? [y/n]:  ";
         std::cin >> answer;
+        answer = std::tolower(answer);
+        while( answer != 'y' && answer != 'n' ) {
+            std::cout << "Do you want to try other qz level? [y/n]:  ";
+            std::cin >> answer;
+            answer = std::tolower(answer);
+        }
     }
     
     std::cout << "\nHave a good day! \n";

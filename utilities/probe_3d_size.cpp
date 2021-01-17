@@ -7,6 +7,7 @@
 #include <iostream>
 #include <chrono>
 #include <cstring>
+#include <cctype> // std::tolower()
 
 // This file should only be compiled in non QZ_TERM mode.
 #ifndef QZ_TERM
@@ -76,7 +77,8 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, float 
     auto stream = use_compressor( in_buf, dims, bpp );
     if( stream.first == nullptr || stream.second == 0 )
         return 1;
-    printf("    Total compressed size in bytes: %ld\n", stream.second );
+    printf("    Total compressed size in bytes = %ld, average bpp = %.2f\n", 
+                stream.second, float(stream.second) * 8.0f / float(total_vals) );
 
     auto reconstruct = use_decompressor( std::move(stream) );
     if( reconstruct.first == nullptr || reconstruct.second != total_vals )
@@ -98,15 +100,19 @@ int main( int argc, char* argv[] )
     //
     // Parse command line options
     //
-    CLI::App app("Parse CLI options to compressor_3d");
+    CLI::App app("CLI options to probe_3d");
 
     std::string input_file;
-    app.add_option("filename", input_file, "Input file to the compressor")
+    app.add_option("filename", input_file, "Input file to the probe")
             ->required()->check(CLI::ExistingFile);
 
     std::vector<size_t> dims_v;
-    app.add_option("--dims", dims_v, "Dimensions of the input volume. \n"
+    app.add_option("--dims", dims_v, "Dimensions of the input volume.\n"
             "For example, `--dims 128 128 128`.")->required()->expected(3);
+
+    float bpp;
+    auto* bpp_ptr = app.add_option("--bpp", bpp, "Target bit-per-pixel value.\n"
+                    "For example, `--bpp 0.5`.");
 
     CLI11_PARSE(app, argc, argv);
     const std::array<size_t, 3> dims = {dims_v[0], dims_v[1], dims_v[2]};
@@ -123,7 +129,9 @@ int main( int argc, char* argv[] )
     //
     // Let's do an initial analysis
     //
-    float bpp = 4.0;    // We decide to use 4 bpp for initial analysis
+    if( !(*bpp_ptr) ) {
+        bpp = 4.0; // We decide to use 4 bpp for initial analysis
+    }
     printf("Initial analysis: compression at %.2f bit-per-pixel...  \n", bpp);
     int rtn = test_configuration( input_buf.get(), dims, bpp );
     if( rtn != 0 )
@@ -135,7 +143,7 @@ int main( int argc, char* argv[] )
     char answer;
     std::cout << "Do you want to explore other bit-per-pixel values? [y/n]:  ";
     std::cin >> answer;
-    while ( answer == 'y' || answer == 'Y' ) {
+    while ( std::tolower(answer) == 'y' ) {
         bpp = -1.0;
         std::cout << "Please input a new bpp value to test [0.0 - 64.0]:  ";
         std::cin >> bpp;
@@ -143,7 +151,7 @@ int main( int argc, char* argv[] )
             std::cout << "Please input a bpp value inbetween [0.0 - 64.0]:  ";
             std::cin >> bpp;
         }
-        printf("\nNow testing bpp %.2f ...\n", bpp);
+        printf("\nNow testing bpp = %.2f ...\n", bpp);
     
         rtn = test_configuration( input_buf.get(), dims, bpp );
         if ( rtn != 0 )
@@ -151,6 +159,12 @@ int main( int argc, char* argv[] )
 
         std::cout << "Do you want to try other bpp value? [y/n]:  ";
         std::cin >> answer;
+        answer = std::tolower(answer);
+        while( answer != 'y' && answer != 'n' ) {
+            std::cout << "Do you want to try other bpp value? [y/n]:  ";
+            std::cin >> answer;
+            answer = std::tolower(answer);
+        }
     }
     
     std::cout << "\nHave a good day! \n";

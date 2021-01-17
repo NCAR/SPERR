@@ -115,45 +115,45 @@ endif()
 
 
 add_executable( example_dwt2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt2d.cpp" )
+target_include_directories( example_dwt2d PUBLIC ${PROJECT_BINARY_DIR} )
 target_link_libraries(      example_dwt2d PUBLIC ${CDF_LIBS}
                                           PUBLIC ${HELPER_LIBS} )
-target_include_directories( example_dwt2d PUBLIC ${PROJECT_BINARY_DIR} )
 
 add_executable( example_dwt3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt3d.cpp" )
+target_include_directories( example_dwt3d PUBLIC ${PROJECT_BINARY_DIR} )
 target_link_libraries(      example_dwt3d PUBLIC ${CDF_LIBS}
                                           PUBLIC ${HELPER_LIBS} )
-target_include_directories( example_dwt3d PUBLIC ${PROJECT_BINARY_DIR} )
 
 add_executable( compressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_3d.cpp" )
+target_include_directories( compressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
 target_link_libraries(      compressor_3d PUBLIC ${SPECK3D_LIBS}
                                           PUBLIC ${SPECK_Storage_LIBS}
                                           PUBLIC ${CDF_LIBS}
                                           PUBLIC ${HELPER_LIBS} )
-target_include_directories( compressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
 
 add_executable( compressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_2d.cpp" )
+target_include_directories( compressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
 target_link_libraries(      compressor_2d PUBLIC ${SPECK2D_LIBS}
                                           PUBLIC ${SPECK_Storage_LIBS}
                                           PUBLIC ${CDF_LIBS}
                                           PUBLIC ${HELPER_LIBS} )
-target_include_directories( compressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
 
 add_executable( example_speck_err "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck_err.cpp" )
+target_include_directories( example_speck_err PUBLIC ${PROJECT_BINARY_DIR} )
 target_link_libraries(  example_speck_err PUBLIC ${SPECK_Err_LIBS}
                                           PUBLIC ${CDF_LIBS}
                                           PUBLIC ${HELPER_LIBS} )
-target_include_directories( example_speck_err PUBLIC ${PROJECT_BINARY_DIR} )
 
 if( QZ_TERM )
   add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_qz.cpp" )
 else()
   add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_size.cpp" )
 endif()
+target_include_directories( probe_3d PUBLIC ${PROJECT_BINARY_DIR} )
 target_link_libraries(      probe_3d PUBLIC ${SPECK3D_LIBS}
                                      PUBLIC ${SPECK_Storage_LIBS}
                                      PUBLIC ${CDF_LIBS}
                                      PUBLIC ${HELPER_LIBS} )
-target_include_directories( probe_3d PUBLIC ${PROJECT_BINARY_DIR} )
 
 if( BUILD_UNIT_TESTS )
     # Download and unpack googletest at configure time
@@ -271,3 +271,4 @@ if( BUILD_QCC_EXAMPLES )
                                                     PUBLIC ${QCCPACK_INC}      )
 endif() 
 ]]
+# end of block comment
