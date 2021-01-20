@@ -84,6 +84,84 @@ auto speck::SPECK_Storage::get_image_mean() const -> double
     return m_image_mean;
 }
 
+
+auto speck::SPECK_Storage::get_bit_buffer_size() const -> size_t
+{
+    return m_bit_buffer.size();
+}
+
+
+auto speck::SPECK_Storage::get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t>
+{
+    // Header definition:
+    // dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  bitstream_len
+    // uint32_t,  uint32_t,  uint32_t,  double       int32_t,         uint64_t
+    uint32_t dims[3] { uint32_t(m_dim_x), uint32_t(m_dim_y), uint32_t(m_dim_z) };
+
+    assert( m_bit_buffer.size() % 8 == 0 );
+    const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
+    const size_t total_size = m_header_size + bit_in_byte;
+    auto tmp_buf = speck::unique_malloc<uint8_t>( total_size );
+    auto* const ptr = tmp_buf.get();
+
+    // Fill header 
+    size_t pos = 0;
+    std::memcpy(ptr, dims, sizeof(dims));
+    pos += sizeof(dims);
+    std::memcpy(ptr + pos, &m_image_mean, sizeof(m_image_mean));
+    pos += sizeof(m_image_mean);
+    std::memcpy(ptr + pos, &m_max_coeff_bits, sizeof(m_max_coeff_bits));
+    pos += sizeof(m_max_coeff_bits);
+    std::memcpy(ptr + pos, &bit_in_byte, sizeof(bit_in_byte));
+    pos += sizeof(bit_in_byte);
+
+    // Assemble the bitstream into bytes
+    auto rtn = speck::pack_booleans( tmp_buf, m_bit_buffer, pos );
+    if( rtn != RTNType::Good )
+        return {nullptr, 0};
+    else
+        return {std::move(tmp_buf), total_size};
+}
+
+
+auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t comp_size) 
+            -> RTNType
+{
+    // The buffer passed in is supposed to consist a header and then a compacted bitstream,
+    // just like what was returned by `get_encoded_bitstream()`.
+    // Note: header definition is documented in get_encoded_bitstream().
+
+    const uint8_t* const ptr = static_cast<const uint8_t*>( comp_buf );
+
+    // Parse the header
+    uint32_t dims[3] = {0, 0, 0};
+    size_t   pos = 0;
+    std::memcpy(dims, ptr, sizeof(dims));
+    pos += sizeof(dims);
+    std::memcpy(&m_image_mean, ptr + pos, sizeof(m_image_mean));
+    pos += sizeof(m_image_mean);
+    std::memcpy(&m_max_coeff_bits, ptr + pos, sizeof(m_max_coeff_bits));
+    pos += sizeof(m_max_coeff_bits);
+    uint64_t bit_in_byte;
+    std::memcpy(&bit_in_byte, ptr + pos, sizeof(bit_in_byte));
+    pos += sizeof(bit_in_byte);
+
+    // Sanity check: if the recorded bitstream size matches what's passed in.
+    if( bit_in_byte + m_header_size != comp_size )
+        return RTNType::WrongSize;
+    else
+        speck::unpack_booleans( m_bit_buffer, comp_buf, comp_size, pos );
+
+    m_dim_x = dims[0]; 
+    m_dim_y = dims[1]; 
+    m_dim_z = dims[2];
+    m_coeff_len = m_dim_x * m_dim_y * m_dim_z;
+
+    return RTNType::Good;
+}
+
+
+#if 0
 auto speck::SPECK_Storage::m_assemble_encoded_bitstream( const void* header, 
                                                          size_t header_size ) const
                            -> std::pair<buffer_type_uint8, size_t>
@@ -145,8 +223,10 @@ auto speck::SPECK_Storage::m_assemble_encoded_bitstream( const void* header,
     return {std::move(local_buf), total_size};
 #endif
 }
+#endif
 
 
+#if 0
 auto speck::SPECK_Storage::m_disassemble_encoded_bitstream( void*  header, 
                                                             size_t header_size, 
                                                             const void* comp_buf,
@@ -204,9 +284,6 @@ auto speck::SPECK_Storage::m_disassemble_encoded_bitstream( void*  header,
     return rtn;
 #endif
 }
+#endif
 
 
-auto speck::SPECK_Storage::get_bit_buffer_size() const -> size_t
-{
-    return m_bit_buffer.size();
-}

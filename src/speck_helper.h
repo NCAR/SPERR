@@ -133,13 +133,12 @@ template <typename U>
 auto make_coeff_positive(U& buf, size_t len, vector_bool&) -> typename U::element_type;
 
 // Pack and unpack booleans to array of chars. 
-// The caller should have allocated the right amount of memory for the `dest` array.
-// When packing, the caller should also make sure the number of booleans is a multiplier of 8.
+// When packing, the caller should make sure the number of booleans is a multiplier of 8.
 // It optionally takes in an offset that specifies where to start writing/reading the char array.
 //
 // Note: unpack_booleans() takes a raw pointer because it accesses memory provided by others,
 //       and others most likely provide it by raw pointers.
-auto pack_booleans( buffer_type_uint8& dest,
+auto pack_booleans( buffer_type_uint8& dest, // !!This space should be allocated by the caller!!
                     const vector_bool& src,
                     size_t             dest_offset = 0 ) -> RTNType;
 auto unpack_booleans( vector_bool&     dest,

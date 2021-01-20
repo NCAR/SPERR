@@ -40,13 +40,13 @@ public:
     // Get the encoded bitstream.
     // The returned memory block could be written to disk by other programs.
     //
-    virtual auto get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t> = 0;
+    auto get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t>;
 
     // Prepare internal states for a decompression operation from an encoded bitstream
     //
     // Note: it takes a raw pointer because it accesses memory provided by others,
     //       and others most likely provide a raw pointer.
-    virtual auto parse_encoded_bitstream( const void*, size_t ) -> RTNType = 0;
+    auto parse_encoded_bitstream( const void*, size_t ) -> RTNType;
 
     void set_image_mean(double mean);
     auto get_image_mean() const -> double;
@@ -64,23 +64,28 @@ protected:
     // Any content that's already in out_buf will be destroyed.
     //
     // Note: The caller is supposed to hold ownership of the resulting memory block.
-    auto m_assemble_encoded_bitstream( const void* header, size_t header_size ) const
-         -> std::pair<buffer_type_uint8, size_t>;
+    //auto m_assemble_encoded_bitstream( const void* header, size_t header_size ) const
+    //     -> std::pair<buffer_type_uint8, size_t>;
 
     // Parse a compressed buffer, and extract the metadata, header, and bitstream from it.
     //
     // Note: `header` should already have memory allocated with `header_size` in size.
     // Note: Here we use raw pointer for int_buf because we're accessing memory provided
     //       by others, and others most likely provide a raw pointer. 
-    auto m_disassemble_encoded_bitstream( void* header,       size_t header_size, 
-                                          const void* in_buf, size_t in_size ) -> RTNType;
+    //auto m_disassemble_encoded_bitstream( void* header,       size_t header_size, 
+    //                                      const void* in_buf, size_t in_size ) -> RTNType;
 
     //
     // Member variables
     //
-    double            m_image_mean = 0.0;    // Mean of the original data. Used by DWT/IDWT.
-    size_t            m_coeff_len  = 0;
-    buffer_type_d     m_coeff_buf = nullptr; // All coefficients are kept here
+    double          m_image_mean     = 0.0;
+    size_t          m_coeff_len      = 0;
+    buffer_type_d   m_coeff_buf      = nullptr; // All coefficients are kept here
+    const size_t    m_header_size    = 32;
+    size_t          m_dim_x          = 0;
+    size_t          m_dim_y          = 0;
+    size_t          m_dim_z          = 0;
+    int32_t         m_max_coeff_bits = 0;    // = log2(max_coefficient)
 
 #ifdef USE_PMR
     std::pmr::unsynchronized_pool_resource   m_pool;

@@ -110,8 +110,8 @@ auto speck::unpack_booleans( vector_bool& dest,
 
     const size_t num_of_bytes = src_len - src_offset;
     const size_t num_of_bools = num_of_bytes * 8;
-    if( num_of_bools != dest.size() )
-        return RTNType::WrongSize;
+    if( dest.size() != num_of_bools )
+        dest.resize( num_of_bools );
 
     const uint8_t* src_ptr = reinterpret_cast<const uint8_t*>(src) + src_offset;
     const uint64_t magic   = 0x8040201008040201;

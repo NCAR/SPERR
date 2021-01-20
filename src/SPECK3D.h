@@ -44,7 +44,6 @@ public:
 
     // trivial input
     void set_dims(size_t, size_t, size_t); // Accepts volume dimension
-    void set_max_coeff_bits(int32_t);
 
     // How many bits does speck process (for encoding and decoding).
     // If set to zero during decoding, then all bits in the bitstream will be processed.
@@ -69,9 +68,8 @@ public:
     // Note that the following method assembles a bitstream on-the-fly and returns it
     //   without keeping a local copy. Thus, it should *not* be called repeatedly.
     //
-    auto get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t> override;
-
-    auto parse_encoded_bitstream( const void*, size_t ) -> RTNType override;
+    //auto get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t> override;
+    //auto parse_encoded_bitstream( const void*, size_t ) -> RTNType override;
 
 private:
     //
@@ -105,11 +103,7 @@ private:
     double  m_threshold      = 0.0; // Threshold that's used for quantization
     size_t  m_budget         = 0;   // What's the budget for num of bits?
     size_t  m_bit_idx        = 0;   // Used for decode. Which bit we're at?
-    size_t  m_dim_x          = 0;   // 3D volume dims
-    size_t  m_dim_y          = 0;
-    size_t  m_dim_z          = 0;
     bool    m_encode_mode    = true; // Encode (true) or Decode (false) mode?
-    int32_t m_max_coeff_bits = 0;    // = log2(max_coefficient)
 
     // Now we use a vector of indices to serve the same funcationality of the last LIS,
     // which would contain all insignificant pixels.
