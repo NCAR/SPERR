@@ -10,6 +10,7 @@
 speck::SPECK2D::SPECK2D()
 {
     m_I.type = SetType::TypeI;
+    m_dim_z  = 1;
 }
 
 void speck::SPECK2D::set_dims(size_t dx, size_t dy)
@@ -19,11 +20,6 @@ void speck::SPECK2D::set_dims(size_t dx, size_t dy)
     m_dim_x     = dx;
     m_dim_y     = dy;
     m_coeff_len = dx * dy;
-}
-
-void speck::SPECK2D::set_max_coeff_bits(int32_t bits)
-{
-    m_max_coeff_bits = bits;
 }
 
 void speck::SPECK2D::set_bit_budget(size_t budget)
@@ -690,17 +686,17 @@ auto speck::SPECK2D::m_ready_to_decode() const -> bool
 }
 
 
+#if 0
 auto speck::SPECK2D::get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t> 
 {
     // Header definition:
-    // information: dim_x,    dim_y,    dim_z,    image_mean, max_coeff_bits, bitstream
-    // format:      uint32_t, uint32_t, uint32_t, double      int32_t,        packed_bytes
+    // dim_x,    dim_y,    dim_z,    image_mean, max_coeff_bits, bitstream_len
+    // uint32_t, uint32_t, uint32_t, double      int32_t,        uint64_t
     //
     // Note 1: The dim_z field must strictly be 1.
     // Note 2: This header definition is essentially the same as the header for SPECK3D. 
     //         The dim_z field can then be used to distinguish the two.
     //
-    const size_t header_size = 24;
     uint32_t dims[3] { uint32_t(m_dim_x), uint32_t(m_dim_y), 1 };
     size_t   pos = 0;
 
@@ -745,6 +741,7 @@ auto speck::SPECK2D::parse_encoded_bitstream(const void* buf, size_t buf_size) -
 
     return RTNType::Good;
 }
+#endif
 
 
 #ifdef PRINT

@@ -39,7 +39,6 @@ public:
 
     // trivial input
     void set_dims(size_t, size_t);    // Accepts plane dimension
-    void set_max_coeff_bits(int32_t);
     void set_bit_budget(size_t);      // How many bits does speck process?
 
     // trivial output
@@ -48,9 +47,6 @@ public:
     // core operations
     auto encode() -> RTNType;
     auto decode() -> RTNType;
-
-    auto get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t> override;
-    auto parse_encoded_bitstream( const void* , size_t ) -> RTNType override;
 
 private:
 
@@ -89,10 +85,7 @@ private:
     double       m_threshold         = 0.0; // Threshold that's used for an iteration
     size_t       m_budget            = 0;   // What's the budget for num of bits?
     size_t       m_bit_idx           = 0;   // Used for decode. Which bit we're at?
-    size_t       m_dim_x             = 0;   // 2D plane dims
-    size_t       m_dim_y             = 0;
     bool         m_encode_mode       = true; // Encode (true) or Decode (false) mode?
-    int32_t      m_max_coeff_bits    = 0;    // = log2(max_coefficient)
 
     SPECKSet2D   m_I;
 

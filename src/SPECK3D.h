@@ -65,12 +65,6 @@ public:
     auto encode() -> RTNType;
     auto decode() -> RTNType;
     
-    // Note that the following method assembles a bitstream on-the-fly and returns it
-    //   without keeping a local copy. Thus, it should *not* be called repeatedly.
-    //
-    //auto get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t> override;
-    //auto parse_encoded_bitstream( const void*, size_t ) -> RTNType override;
-
 private:
     //
     // Note: for methods returning an integer, 0 means normal execution, and
