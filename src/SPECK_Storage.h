@@ -51,6 +51,10 @@ public:
     void set_image_mean(double mean);
     auto get_image_mean() const -> double;
     auto get_bit_buffer_size() const -> size_t; // Report the available bits when decoding
+    auto get_dims() const -> std::array<size_t, 3>;
+
+    // Given a header, tell how long the speck stream is.
+    auto get_speck_stream_size( const void*, size_t ) const -> uint64_t;
 
 protected:
     //

@@ -4,10 +4,6 @@
 #include <cstring>
 #include <cstdio>
 
-#ifdef USE_ZSTD
-    #include "zstd.h"
-#endif
-
 
 #ifdef USE_PMR
 speck::SPECK_Storage::SPECK_Storage()
@@ -83,12 +79,16 @@ auto speck::SPECK_Storage::get_image_mean() const -> double
 {
     return m_image_mean;
 }
-
-
 auto speck::SPECK_Storage::get_bit_buffer_size() const -> size_t
 {
     return m_bit_buffer.size();
 }
+auto speck::SPECK_Storage::get_dims() const -> std::array<size_t, 3>
+{
+    return {m_dim_x, m_dim_y, m_dim_z};
+}
+
+
 
 
 auto speck::SPECK_Storage::get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t>
@@ -146,11 +146,14 @@ auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t
     std::memcpy(&bit_in_byte, ptr + pos, sizeof(bit_in_byte));
     pos += sizeof(bit_in_byte);
 
-    // Sanity check: if the recorded bitstream size matches what's passed in.
-    if( bit_in_byte + m_header_size != comp_size )
+    // Sanity check
+    if( bit_in_byte + m_header_size > comp_size )
         return RTNType::WrongSize;
-    else
-        speck::unpack_booleans( m_bit_buffer, comp_buf, comp_size, pos );
+    else {
+        auto rtn = speck::unpack_booleans( m_bit_buffer, comp_buf, comp_size, pos );
+        if( rtn != RTNType::Good )
+            return rtn;
+    }
 
     m_dim_x = dims[0]; 
     m_dim_y = dims[1]; 
@@ -158,6 +161,21 @@ auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t
     m_coeff_len = m_dim_x * m_dim_y * m_dim_z;
 
     return RTNType::Good;
+}
+    
+auto speck::SPECK_Storage::get_speck_stream_size( const void* buf, size_t buf_size) const 
+            -> uint64_t
+{
+    if( buf_size <= m_header_size )
+        return 0;
+
+    // Given the header definition in `get_encoded_bitstream()`, directly
+    // go retrieve the value stored in byte 24-31.
+    const uint8_t* const ptr = static_cast<const uint8_t*>( comp_buf );
+    uint64_t bit_in_byte;
+    std::memcpy(&bit_in_byte, ptr + 24, sizeof(bit_in_byte));
+
+    return m_header_size + bit_in_byte;
 }
 
 
