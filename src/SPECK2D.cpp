@@ -31,11 +31,11 @@ void speck::SPECK2D::set_bit_budget(size_t budget)
         m_budget = budget + 8 - mod;
 }
 
-void speck::SPECK2D::get_dims(size_t& x, size_t& y) const
-{
-    x = m_dim_x;
-    y = m_dim_y;
-}
+//void speck::SPECK2D::get_dims(size_t& x, size_t& y) const
+//{
+//    x = m_dim_x;
+//    y = m_dim_y;
+//}
 
 auto speck::SPECK2D::encode() -> RTNType
 {

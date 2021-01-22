@@ -50,7 +50,7 @@ public:
     void set_bit_budget(size_t);           
 
     // trivial output
-    void get_dims( size_t&, size_t&, size_t& ) const;
+    //void get_dims( size_t&, size_t&, size_t& ) const;
 
 #ifdef QZ_TERM
     // Notes for QZ_TERM mode:

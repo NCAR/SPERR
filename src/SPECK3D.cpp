@@ -35,12 +35,12 @@ void speck::SPECK3D::set_dims(size_t x, size_t y, size_t z)
     m_coeff_len = x * y * z;
 }
 
-void speck::SPECK3D::get_dims( size_t& x, size_t& y, size_t& z ) const
-{
-    x = m_dim_x;
-    y = m_dim_y;
-    z = m_dim_z;
-}
+//void speck::SPECK3D::get_dims( size_t& x, size_t& y, size_t& z ) const
+//{
+//    x = m_dim_x;
+//    y = m_dim_y;
+//    z = m_dim_z;
+//}
 
 void speck::SPECK3D::set_bit_budget(size_t budget)
 {

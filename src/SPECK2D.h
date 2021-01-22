@@ -42,7 +42,7 @@ public:
     void set_bit_budget(size_t);      // How many bits does speck process?
 
     // trivial output
-    void get_dims(size_t&, size_t&) const; // Returns plane dimension
+    //void get_dims(size_t&, size_t&) const; // Returns plane dimension
 
     // core operations
     auto encode() -> RTNType;
