@@ -37,20 +37,21 @@ public:
     auto write_volume_f( const char* filename ) const -> RTNType;
     auto write_volume_d( const char* filename ) const -> RTNType;
 
-    auto get_volume_dims() const -> std::array<size_t, 3>;
-
 private:
-    size_t m_dim_x           = 0;
-    size_t m_dim_y           = 0;
-    size_t m_dim_z           = 0;
-    size_t m_total_vals      = 0;
-    size_t m_stream_buf_size = 0;
-    speck::buffer_type_uint8  m_stream_buf;
+    size_t                      m_total_vals      = 0;
+    const size_t                m_meta_size       = 2;
+    float                       m_bpp             = 0.0;
+    speck::buffer_type_uint8    m_entire_stream;
+    size_t                      m_entire_stream_len = 0;
+    bool                        m_metadata_parsed   = false;
 
-    speck::CDF97    m_cdf;
-    speck::SPECK3D  m_decoder;
+    speck::CDF97                m_cdf;
+    speck::SPECK3D              m_decoder;
 
-    float m_bpp = 0.0;
+    //
+    // Private methods
+    //
+    auto parse_metadata() -> RTNType;
 };
 
 
