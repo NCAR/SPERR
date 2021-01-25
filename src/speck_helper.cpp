@@ -205,7 +205,8 @@ auto speck::read_n_bytes( const char* filename, size_t n_bytes, void* buffer ) -
 }
 
 
-auto speck::read_whole_file( const char* filename ) -> std::pair<buffer_type_uint8, size_t>
+template <typename T>
+auto speck::read_whole_file( const char* filename ) -> std::pair<std::unique_ptr<T[]>, size_t>
 {
     std::FILE* file = std::fopen( filename, "rb" );
     if( !file )
@@ -213,16 +214,20 @@ auto speck::read_whole_file( const char* filename ) -> std::pair<buffer_type_uin
 
     std::fseek( file, 0, SEEK_END );
     const size_t file_size = std::ftell( file );
+    const size_t num_vals  = file_size / sizeof(T);
     std::fseek( file, 0, SEEK_SET );
 
-    auto buf = speck::unique_malloc<uint8_t>( file_size );
-    size_t nread  = std::fread( buf.get(), 1, file_size, file );
+    auto buf = speck::unique_malloc<T>( num_vals );
+    size_t nread  = std::fread( buf.get(), sizeof(T), num_vals, file );
     std::fclose( file );
-    if( nread != file_size )
+    if( nread != num_vals )
         return {nullptr, 0};
     else
-        return {std::move(buf), file_size};
+        return {std::move(buf), num_vals};
 }
+template auto speck::read_whole_file( const char* ) -> std::pair<buffer_type_f, size_t>;
+template auto speck::read_whole_file( const char* ) -> std::pair<buffer_type_d, size_t>;
+template auto speck::read_whole_file( const char* ) -> std::pair<buffer_type_uint8, size_t>;
 
 
 auto speck::write_n_bytes( const char* filename, size_t n_bytes, const void* buffer ) -> RTNType

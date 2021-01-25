@@ -27,7 +27,7 @@ void SPECK2D_Decompressor::take_bitstream( speck::buffer_type_uint8 buf, size_t 
 
 auto SPECK2D_Decompressor::read_bitstream( const char* filename ) -> RTNType
 {
-    auto buf = speck::read_whole_file( filename );
+    auto buf = speck::read_whole_file<uint8_t>( filename );
     if( buf.first == nullptr || buf.second == 0 )
         return RTNType::IOError;
     

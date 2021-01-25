@@ -45,25 +45,11 @@ auto SPECK3D_Compressor::take_data( speck::buffer_type_d buf, size_t len ) -> RT
 
 auto SPECK3D_Compressor::read_floats( const char* filename ) -> RTNType
 {
-    std::FILE* file = std::fopen( filename, "rb" );
-    if( !file )
-        return RTNType::IOError;
-
-    std::fseek( file, 0, SEEK_END );
-    const size_t file_size = std::ftell( file );
-    std::fseek( file, 0, SEEK_SET );
-    if( file_size % 4 != 0 || file_size / 4 != m_total_vals ) {
-        std::fclose( file );
-        return RTNType::WrongSize;
-    }
-
-    auto tmp_buf = speck::unique_malloc<float>(   file_size / 4 );
-    size_t nread  = std::fread( tmp_buf.get(), 4, file_size / 4, file );
-    std::fclose( file );
-    if( nread != file_size / 4)
+    auto buf = speck::read_whole_file<float>( filename );
+    if( buf.first == nullptr || buf.second == 0 )
         return RTNType::IOError;
     
-    return( this->copy_data( tmp_buf.get(), file_size / 4 ) );
+    return( this->copy_data( buf.first.get(), buf.second ) );
 }
 
 

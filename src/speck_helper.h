@@ -159,7 +159,8 @@ auto unique_malloc( size_t size ) -> std::unique_ptr<T[]>;
 // Read from and write to a file
 auto write_n_bytes(  const char* filename, size_t n_bytes, const void* buffer ) -> RTNType;
 auto read_n_bytes(   const char* filename, size_t n_bytes,       void* buffer ) -> RTNType;
-auto read_whole_file(const char* filename) -> std::pair<buffer_type_uint8, size_t>;
+template <typename T>
+auto read_whole_file(const char* filename) -> std::pair<std::unique_ptr<T[]>, size_t>;
 
 // Calculate a suite of statistics
 // Note that arr1 is considered as the ground truth array, so it's the range of arr1
