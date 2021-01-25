@@ -27,22 +27,12 @@ void SPECK2D_Decompressor::take_bitstream( speck::buffer_type_uint8 buf, size_t 
 
 auto SPECK2D_Decompressor::read_bitstream( const char* filename ) -> RTNType
 {
-    std::FILE* file = std::fopen( filename, "rb" );
-    if( !file )
-        return RTNType::IOError;
-
-    std::fseek( file, 0, SEEK_END );
-    const size_t file_size = std::ftell( file );
-    std::fseek( file, 0, SEEK_SET );
-
-    auto tmp_buf = speck::unique_malloc<uint8_t>( file_size );
-    size_t nread  = std::fread( tmp_buf.get(), 1, file_size, file );
-    std::fclose( file );
-    if( nread != file_size )
+    auto buf = speck::read_whole_file( filename );
+    if( buf.first == nullptr || buf.second == 0 )
         return RTNType::IOError;
     
-    m_entire_stream     = std::move( tmp_buf );
-    m_entire_stream_len = file_size;
+    m_entire_stream     = std::move( buf.first );
+    m_entire_stream_len = buf.second;
     m_metadata_parsed   = false;
 
     return RTNType::Good;
