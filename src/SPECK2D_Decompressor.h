@@ -39,19 +39,21 @@ public:
     auto write_slice_f( const char* filename ) const -> RTNType;
     auto write_slice_d( const char* filename ) const -> RTNType;
 
-    void get_slice_dims( size_t&, size_t& ) const;
-
 private:
-    size_t m_dim_x           = 0;
-    size_t m_dim_y           = 0;
-    size_t m_total_vals      = 0;
-    size_t m_stream_buf_size = 0;
-    speck::buffer_type_uint8  m_stream_buf;
+    const size_t                m_meta_size         = 2;
+    float                       m_bpp               = 0.0;
+    speck::buffer_type_uint8    m_entire_stream;
+    size_t                      m_entire_stream_len = 0;
+    bool                        m_metadata_parsed   = false;
 
-    speck::CDF97    m_cdf;
-    speck::SPECK2D  m_decoder;
+    speck::CDF97                m_cdf;
+    speck::SPECK2D              m_decoder;
 
-    float m_bpp = 0.0;
+    //
+    // Private methods
+    //
+    auto m_parse_metadata() -> RTNType;
+
 };
 
 

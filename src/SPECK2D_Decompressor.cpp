@@ -3,19 +3,25 @@
 #include <cstring>
 #include <cassert>
 
+#ifdef USE_ZSTD
+    #include "zstd.h"
+#endif
+
 
 void SPECK2D_Decompressor::copy_bitstream( const void* p, size_t len )
 {
-    m_stream_buf = speck::unique_malloc<uint8_t>( len );
-    std::memcpy( m_stream_buf.get(), p, len );
-    m_stream_buf_size = len;
+    m_entire_stream = speck::unique_malloc<uint8_t>( len );
+    std::memcpy( m_entire_stream.get(), p, len );
+    m_entire_stream_len = len;
+    m_metadata_parsed = false;
 }
 
     
 void SPECK2D_Decompressor::take_bitstream( speck::buffer_type_uint8 buf, size_t len )
 {
-    m_stream_buf = std::move( buf );
-    m_stream_buf_size = len;
+    m_entire_stream = std::move( buf );
+    m_entire_stream_len = len;
+    m_metadata_parsed = false;
 }
     
 
@@ -35,8 +41,9 @@ auto SPECK2D_Decompressor::read_bitstream( const char* filename ) -> RTNType
     if( nread != file_size )
         return RTNType::IOError;
     
-    m_stream_buf = std::move( tmp_buf );
-    m_stream_buf_size = file_size;
+    m_entire_stream     = std::move( tmp_buf );
+    m_entire_stream_len = file_size;
+    m_metadata_parsed   = false;
 
     return RTNType::Good;
 }
@@ -44,27 +51,35 @@ auto SPECK2D_Decompressor::read_bitstream( const char* filename ) -> RTNType
 
 auto SPECK2D_Decompressor::decompress() -> RTNType
 {
-    if( m_stream_buf == nullptr || m_stream_buf_size == 0 )
-        return RTNType::WrongSize;  // 0 sized buffer is a wrong size.
+    if( m_entire_stream == nullptr || m_entire_stream_len == 0 )
+        return RTNType::Error;
 
-    auto rtn = m_decoder.parse_encoded_bitstream( m_stream_buf.get(), m_stream_buf_size );
+    auto rtn = RTNType::Good;
+    if( !m_metadata_parsed )
+        rtn = this->m_parse_metadata();
     if( rtn != RTNType::Good )
         return rtn;
-    m_decoder.get_dims( m_dim_x, m_dim_y );
-    assert( m_dim_x > 1 && m_dim_y > 1 );
 
-    m_total_vals = m_dim_x * m_dim_y;
-    m_decoder.set_bit_budget( size_t(m_bpp * m_total_vals) );
+    rtn = m_decoder.parse_encoded_bitstream( m_entire_stream.get() + m_meta_size,
+                                             m_entire_stream_len   - m_meta_size );
+    if( rtn != RTNType::Good )
+        return rtn;
+
+    const auto dims = m_decoder.get_dims();
+    assert( dims[0] > 1 && dims[1] > 1 && dims[2] == 1 );
+    auto total_vals = dims[0] * dims[1];
+
+    m_decoder.set_bit_budget( size_t(m_bpp * total_vals) );
     rtn = m_decoder.decode();
     if( rtn != RTNType::Good )
         return rtn;
 
-    m_cdf.set_dims( m_dim_x, m_dim_y );
+    m_cdf.set_dims( dims[0], dims[1] );
     m_cdf.set_mean( m_decoder.get_image_mean() );
     auto coeffs = m_decoder.release_data();
-    if( coeffs.first == nullptr || coeffs.second != m_total_vals )
+    if( coeffs.first == nullptr || coeffs.second != total_vals )
         return RTNType::Error;
-    m_cdf.take_data( std::move(coeffs.first), m_total_vals );
+    m_cdf.take_data( std::move(coeffs.first), total_vals );
     m_cdf.idwt2d();
 
     return RTNType::Good;
@@ -75,14 +90,14 @@ auto SPECK2D_Decompressor::get_decompressed_slice_f() const
                            -> std::pair<speck::buffer_type_f, size_t>
 {
     auto slice = m_cdf.get_read_only_data( );
-    if( slice.first == nullptr || slice.second != m_total_vals )
+    if( slice.first == nullptr || slice.second == 0 )
         return {nullptr, 0};
 
-    auto out_buf = speck::unique_malloc<float>(m_total_vals);
-    for( size_t i = 0; i < m_total_vals; i++ )
+    auto out_buf = speck::unique_malloc<float>(slice.second);
+    for( size_t i = 0; i < slice.second; i++ )
         out_buf[i] = slice.first[i];
 
-    return {std::move(out_buf), m_total_vals};
+    return {std::move(out_buf), slice.second};
 }
 
 
@@ -90,13 +105,13 @@ auto SPECK2D_Decompressor::get_decompressed_slice_d() const
                            -> std::pair<speck::buffer_type_d, size_t> 
 {
     auto slice = m_cdf.get_read_only_data();
-    if( slice.first == nullptr || slice.second != m_total_vals )
+    if( slice.first == nullptr || slice.second == 0 )
         return {nullptr, 0};
 
-    auto out_buf  = speck::unique_malloc<double>(m_total_vals);
-    std::memcpy( out_buf.get(), slice.first.get(), sizeof(double) * m_total_vals );
+    auto out_buf  = speck::unique_malloc<double>(slice.second);
+    std::memcpy( out_buf.get(), slice.first.get(), sizeof(double) * slice.second );
 
-    return {std::move(out_buf), m_total_vals};
+    return {std::move(out_buf), slice.second};
 }
 
 
@@ -104,7 +119,7 @@ auto SPECK2D_Decompressor::write_slice_d( const char* filename ) const -> RTNTyp
 {
     // Get a read-only handle of the slice from m_cdf, and then write it to disk.
     auto slice = m_cdf.get_read_only_data( );
-    if( slice.first == nullptr || slice.second != m_total_vals )
+    if( slice.first == nullptr || slice.second == 0 )
         return RTNType::Error;
 
     return speck::write_n_bytes( filename, sizeof(double) * slice.second, slice.first.get() );
@@ -115,7 +130,7 @@ auto SPECK2D_Decompressor::write_slice_f( const char* filename ) const -> RTNTyp
 {
     // Need to get a slice represented as floats, then write it to disk.
     auto slice = this->get_decompressed_slice_f();
-    if( slice.first == nullptr || slice.second != m_total_vals )
+    if( slice.first == nullptr || slice.second == 0 )
         return RTNType::Error;
 
     return speck::write_n_bytes( filename, sizeof(float) * slice.second, slice.first.get() );
@@ -133,8 +148,66 @@ auto SPECK2D_Decompressor::set_bpp( float bpp ) -> RTNType
 }
 
 
-void SPECK2D_Decompressor::get_slice_dims( size_t& x, size_t& y ) const
+auto SPECK2D_Decompressor::m_parse_metadata() -> RTNType
 {
-    x = m_dim_x;
-    y = m_dim_y;
+    // This method parses the metadata of a bitstream and performs the following tasks:
+    // 1) Verify if the major version number is consistant.
+    // 2) Verify that the application of ZSTD is consistant, and apply ZSTD if needed.
+    // 3) Make sure if the bitstream is for 2D encoding.
+    // 3) Separate error-bound data from SPECK stream if needed.
+
+    assert( m_entire_stream != nullptr && m_entire_stream_len > 2 && !m_metadata_parsed);
+
+    uint8_t meta[2];
+    assert( sizeof(meta) == m_meta_size );
+    bool    metabool[8];
+    std::memcpy( meta, m_entire_stream.get(), sizeof(meta) );
+    speck::unpack_8_booleans( metabool, meta[1] );
+
+    // Task 1)
+    if( meta[0] != uint8_t(SPECK_VERSION_MAJOR) )
+        return RTNType::VersionMismatch;
+
+    // Task 2)
+#ifdef USE_ZSTD
+    if( metabool[0] == false )
+        return RTNType::ZSTDMismatch;
+
+    const auto content_size = ZSTD_getFrameContentSize( m_entire_stream.get() + m_meta_size,
+                                                        m_entire_stream_len   - m_meta_size );
+    if( content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN )
+        return RTNType::ZSTDError;
+
+    auto content_buf = speck::unique_malloc<uint8_t>( m_meta_size + content_size );
+    const auto decomp_size = ZSTD_decompress( content_buf.get() + m_meta_size,
+                                              content_size,
+                                              m_entire_stream.get() + m_meta_size,
+                                              m_entire_stream_len   - m_meta_size );
+    if( ZSTD_isError( decomp_size ) || decomp_size != content_size )
+        return RTNType::ZSTDError;
+
+    // Replace `m_entire_stream` with the decompressed version.
+    std::memcpy( content_buf.get(), meta, sizeof(meta) );
+    m_entire_stream = std::move( content_buf );
+    m_entire_stream_len = m_meta_size + decomp_size;
+#else
+    if( metabool[0] == true )
+        return RTNType::ZSTDMismatch;
+#endif
+
+    // Task 3)
+    if( metabool[1] != false ) // false means it's 2D
+        return RTNType::DimMismatch;
+
+    m_metadata_parsed = true;
+
+    return RTNType::Good;
 }
+
+
+
+
+
+
+
+

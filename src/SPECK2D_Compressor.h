@@ -42,11 +42,12 @@ public:
     auto write_bitstream( const char* filename ) const -> RTNType;
 
 private:
-    const size_t m_dim_x, m_dim_y, m_total_vals;
-    speck::buffer_type_d  m_val_buf;
+    const size_t            m_total_vals;
+    const size_t            m_meta_size = 2;
+    speck::buffer_type_d    m_val_buf;
 
-    speck::CDF97    m_cdf;
-    speck::SPECK2D  m_encoder;
+    speck::CDF97            m_cdf;
+    speck::SPECK2D          m_encoder;
 
 //#ifdef QZ_TERM
     //int32_t m_qz_lev = 0;

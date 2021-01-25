@@ -38,9 +38,8 @@ public:
     auto write_volume_d( const char* filename ) const -> RTNType;
 
 private:
-    size_t                      m_total_vals      = 0;
-    const size_t                m_meta_size       = 2;
-    float                       m_bpp             = 0.0;
+    const size_t                m_meta_size         = 2;
+    float                       m_bpp               = 0.0;
     speck::buffer_type_uint8    m_entire_stream;
     size_t                      m_entire_stream_len = 0;
     bool                        m_metadata_parsed   = false;
@@ -51,7 +50,7 @@ private:
     //
     // Private methods
     //
-    auto parse_metadata() -> RTNType;
+    auto m_parse_metadata() -> RTNType;
 };
 
 
