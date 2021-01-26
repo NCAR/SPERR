@@ -90,7 +90,7 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, int32_
 
     size_t num_outlier = 0;
     for( size_t i = 0; i < total_vals; i++ ) {
-        if( std::abs( in_buf[i] - reconstruct.first[i] ) > tolerance )
+        if( std::abs(in_buf[i] - reconstruct.first[i]) > tolerance )
             num_outlier++;
     }
     printf("    With qz level = %d and tolerance = %.2e, "
