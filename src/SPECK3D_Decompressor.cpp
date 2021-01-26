@@ -84,8 +84,11 @@ auto SPECK3D_Decompressor::get_decompressed_volume_f() const
         return {nullptr, 0};
 
     auto out_buf = speck::unique_malloc<float>(vol.second);
-    for( size_t i = 0; i < vol.second; i++ )
-        out_buf[i] = vol.first[i];
+    //for( size_t i = 0; i < vol.second; i++ )
+    //    out_buf[i] = vol.first[i];
+    auto begin = speck::uptr2itr( vol.first );
+    auto end   = speck::uptr2itr( vol.first, vol.second );
+    std::copy( begin, end, speck::uptr2itr( out_buf ) );
 
     return {std::move(out_buf), vol.second};
 }
