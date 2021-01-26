@@ -1,6 +1,7 @@
 #include "SPECK2D_Compressor.h"
 
 #include <cassert>
+#include <cstring>
 
 #ifdef USE_ZSTD
     #include "zstd.h"
