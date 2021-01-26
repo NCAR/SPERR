@@ -19,8 +19,7 @@ void speck::CDF97::copy_data(const T* data, size_t len)
     assert(m_dim_x * m_dim_y * m_dim_z == 0 || m_dim_x * m_dim_y * m_dim_z == len);
     m_buf_len  = len;
     m_data_buf = speck::unique_malloc<double>(len);
-    for (size_t i = 0; i < len; i++)
-        m_data_buf[i] = data[i];
+    std::copy( data, data + len, uptr2itr(m_data_buf) );
 }
 template void speck::CDF97::copy_data(const float*, size_t);
 template void speck::CDF97::copy_data(const double*, size_t);

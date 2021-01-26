@@ -43,8 +43,7 @@ void speck::SPECK_Storage::copy_data(const T* p, size_t len)
     assert(m_coeff_len == 0 || m_coeff_len == len);
     m_coeff_len = len;
     m_coeff_buf = unique_malloc<double>(len);
-    for (size_t i = 0; i < len; i++)
-        m_coeff_buf[i] = p[i];
+    std::copy( p, p + len, uptr2itr(m_coeff_buf) );
 }
 template void speck::SPECK_Storage::copy_data(const double*, size_t);
 template void speck::SPECK_Storage::copy_data(const float*, size_t);
