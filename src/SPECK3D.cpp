@@ -174,9 +174,10 @@ auto speck::SPECK3D::decode() -> RTNType
         m_budget = m_bit_buffer.size();
 
     // initialize coefficients to be zero, and sign array to be all positive
-    m_coeff_buf = speck::unique_malloc<double>(m_coeff_len);
-    auto begin  = speck::uptr2itr( m_coeff_buf );
-    auto end    = speck::uptr2itr( m_coeff_buf, m_coeff_len );
+    if( m_coeff_buf == nullptr )
+        m_coeff_buf = speck::unique_malloc<double>(m_coeff_len);
+    auto begin = speck::uptr2itr( m_coeff_buf );
+    auto end   = speck::uptr2itr( m_coeff_buf, m_coeff_len );
     std::fill( begin, end, 0.0 );
     m_sign_array.assign(m_coeff_len, true);
 
