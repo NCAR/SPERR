@@ -35,13 +35,6 @@ void speck::SPECK3D::set_dims(size_t x, size_t y, size_t z)
     m_coeff_len = x * y * z;
 }
 
-//void speck::SPECK3D::get_dims( size_t& x, size_t& y, size_t& z ) const
-//{
-//    x = m_dim_x;
-//    y = m_dim_y;
-//    z = m_dim_z;
-//}
-
 void speck::SPECK3D::set_bit_budget(size_t budget)
 {
     size_t mod = budget % 8;
@@ -755,80 +748,6 @@ auto speck::SPECK3D::m_ready_to_decode() const -> bool
 
     return true;
 }
-
-
-#if 0
-auto speck::SPECK3D::get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t>
-{
-    // Header definition:
-    // dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  bitstream_len
-    // uint32_t,  uint32_t,  uint32_t,  double       int32_t,         uint64_t
-    uint32_t dims[3] { uint32_t(m_dim_x), uint32_t(m_dim_y), uint32_t(m_dim_z) };
-
-    assert( m_bit_buffer.size() % 8 == 0 );
-    const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
-    const size_t total_size = m_header_size + bit_in_byte;
-    auto tmp_buf = speck::unique_malloc<uint8_t>( total_size );
-    auto* const ptr = tmp_buf.get();
-
-    // Fill header 
-    size_t pos = 0;
-    std::memcpy(ptr, dims, sizeof(dims));
-    pos += sizeof(dims);
-    std::memcpy(ptr + pos, &m_image_mean, sizeof(m_image_mean));
-    pos += sizeof(m_image_mean);
-    std::memcpy(ptr + pos, &m_max_coeff_bits, sizeof(m_max_coeff_bits));
-    pos += sizeof(m_max_coeff_bits);
-    std::memcpy(ptr + pos, &bit_in_byte, sizeof(bit_in_byte));
-    pos += sizeof(bit_in_byte);
-
-    // Assemble the bitstream into bytes
-    auto rtn = speck::pack_booleans( tmp_buf, m_bit_buffer, pos );
-    if( rtn != RTNType::Good )
-        return {nullptr, 0};
-    else
-        return {std::move(tmp_buf), total_size};
-}
-#endif
-
-
-#if 0
-auto speck::SPECK3D::parse_encoded_bitstream( const void* comp_buf, size_t comp_size) -> RTNType
-{
-    // The buffer passed in is supposed to consist a header and then a compacted bitstream,
-    // just like what was returned by `get_encoded_bitstream()`.
-    // Note: header definition is documented in get_encoded_bitstream().
-
-    const uint8_t* const ptr = static_cast<const uint8_t*>( comp_buf );
-
-    // Parse the header
-    uint32_t dims[3] = {0, 0, 0};
-    size_t   pos = 0;
-    std::memcpy(dims, ptr, sizeof(dims));
-    pos += sizeof(dims);
-    std::memcpy(&m_image_mean, ptr + pos, sizeof(m_image_mean));
-    pos += sizeof(m_image_mean);
-    std::memcpy(&m_max_coeff_bits, ptr + pos, sizeof(m_max_coeff_bits));
-    pos += sizeof(m_max_coeff_bits);
-    uint64_t bit_in_byte;
-    std::memcpy(&bit_in_byte, ptr + pos, sizeof(bit_in_byte));
-    pos += sizeof(bit_in_byte);
-
-    // Sanity check: if dims[2] is 1, then this file is for 2D planes!
-    if( dims[2] == 1 )
-        return RTNType::DimMismatch;
-    else
-        this->set_dims(size_t(dims[0]), size_t(dims[1]), size_t(dims[2]));
-
-    // Sanity check: if the recorded bitstream size matches what's passed in.
-    if( bit_in_byte + m_header_size != comp_size )
-        return RTNType::WrongSize;
-    else
-        speck::unpack_booleans( m_bit_buffer, comp_buf, comp_size, pos );
-
-    return RTNType::Good;
-}
-#endif
 
 
 auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::array<SPECKSet3D, 8>

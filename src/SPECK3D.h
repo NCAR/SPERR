@@ -49,9 +49,6 @@ public:
     // If set to zero during decoding, then all bits in the bitstream will be processed.
     void set_bit_budget(size_t);           
 
-    // trivial output
-    //void get_dims( size_t&, size_t&, size_t& ) const;
-
 #ifdef QZ_TERM
     // Notes for QZ_TERM mode:
     // It changes the behavior of encoding, so encoding terminates at a particular

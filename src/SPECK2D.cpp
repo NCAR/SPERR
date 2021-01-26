@@ -31,12 +31,6 @@ void speck::SPECK2D::set_bit_budget(size_t budget)
         m_budget = budget + 8 - mod;
 }
 
-//void speck::SPECK2D::get_dims(size_t& x, size_t& y) const
-//{
-//    x = m_dim_x;
-//    y = m_dim_y;
-//}
-
 auto speck::SPECK2D::encode() -> RTNType
 {
     if( !m_ready_to_encode() )
@@ -684,64 +678,6 @@ auto speck::SPECK2D::m_ready_to_decode() const -> bool
 
     return true;
 }
-
-
-#if 0
-auto speck::SPECK2D::get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t> 
-{
-    // Header definition:
-    // dim_x,    dim_y,    dim_z,    image_mean, max_coeff_bits, bitstream_len
-    // uint32_t, uint32_t, uint32_t, double      int32_t,        uint64_t
-    //
-    // Note 1: The dim_z field must strictly be 1.
-    // Note 2: This header definition is essentially the same as the header for SPECK3D. 
-    //         The dim_z field can then be used to distinguish the two.
-    //
-    uint32_t dims[3] { uint32_t(m_dim_x), uint32_t(m_dim_y), 1 };
-    size_t   pos = 0;
-
-    // Create and fill header buffer
-    uint8_t header[header_size];
-    std::memcpy(header, dims, sizeof(dims));
-    pos += sizeof(dims);
-    std::memcpy(header + pos, &m_image_mean, sizeof(m_image_mean));
-    pos += sizeof(m_image_mean);
-    std::memcpy(header + pos, &m_max_coeff_bits, sizeof(m_max_coeff_bits));
-    pos += sizeof(m_max_coeff_bits);
-    assert(pos == header_size);
-
-    return m_assemble_encoded_bitstream( header, header_size );
-}
-
-auto speck::SPECK2D::parse_encoded_bitstream(const void* buf, size_t buf_size) -> RTNType
-{
-    // Header definition is documented in the `write_to_disk()` function.
-    const size_t header_size = 24;
-    uint8_t header[header_size];
-    auto rtn = m_disassemble_encoded_bitstream( header, header_size, buf, buf_size );
-    if (rtn != RTNType::Good)
-        return rtn;
-
-    // Parse the header
-    uint32_t dims[3] = {0, 0, 0};
-    size_t   pos = 0;
-    std::memcpy(dims, header, sizeof(dims));
-    pos += sizeof(dims);
-    std::memcpy(&m_image_mean, header + pos, sizeof(m_image_mean));
-    pos += sizeof(m_image_mean);
-    std::memcpy(&m_max_coeff_bits, header + pos, sizeof(m_max_coeff_bits));
-    pos += sizeof(m_max_coeff_bits);
-    assert(pos == header_size);
-
-    // It is from the header definition that this element must be 1.
-    if( dims[2] != 1 )
-        return RTNType::DimMismatch;
-
-    this->set_dims(size_t(dims[0]), size_t(dims[1]));
-
-    return RTNType::Good;
-}
-#endif
 
 
 #ifdef PRINT
