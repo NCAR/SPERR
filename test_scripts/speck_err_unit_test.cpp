@@ -12,7 +12,7 @@ class err_tester
 {
 private:
     const size_t length = 256 * 256 * 256;
-    const float  tol    = 0.1f;
+    const double tol    = 0.1;
     
     std::vector<speck::Outlier> LOS, recovered;
 
@@ -20,9 +20,9 @@ public:
     void test_outliers() {
 
         // Create an encoder
-        speck::SPECK_Err se;
-        se.set_length( length );
-        se.set_tolerance( tol );
+        speck::SPECK_Err encoder;
+        encoder.set_length( length );
+        encoder.set_tolerance( tol );
 
         LOS.clear();
         LOS.emplace_back( 0, 0.15f );
@@ -30,12 +30,12 @@ public:
         LOS.emplace_back( length - 1, 0.15f );
         LOS.emplace_back( length / 2, -0.5f );
         LOS.emplace_back( 100, -0.35f );
-        se.use_outlier_list( LOS );
+        encoder.use_outlier_list( LOS );
 
-        se.encode();
-        se.decode();
+        encoder.encode();
+        encoder.decode();
         
-        recovered = se.release_outliers();
+        recovered = encoder.release_outliers();
     }
 
     // Now see if every element in LOS is successfully recovered

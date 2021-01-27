@@ -169,7 +169,6 @@ auto speck::unique_malloc( size_t size ) -> std::unique_ptr<T[]>
     std::unique_ptr<T[]> buf = std::make_unique<T[]>(size);
     return std::move( buf );
 }
-template auto speck::unique_malloc( size_t ) -> buffer_type_c;
 template auto speck::unique_malloc( size_t ) -> buffer_type_d;
 template auto speck::unique_malloc( size_t ) -> buffer_type_f;
 template auto speck::unique_malloc( size_t ) -> buffer_type_uint8;

@@ -23,16 +23,18 @@ namespace speck {
 #define BUFFER_TYPES
     using buffer_type_d     = std::unique_ptr<double[]>;
     using buffer_type_f     = std::unique_ptr<float[]>;
-    using buffer_type_c     = std::unique_ptr<char[]>;
     using buffer_type_uint8 = std::unique_ptr<uint8_t[]>;
+    using smart_buffer_d    = std::pair<buffer_type_d, size_t>; // It's smart because
+    using smart_buffer_f    = std::pair<buffer_type_f, size_t>; // it knows its size.
+    using smart_buffer_uint8= std::pair<buffer_type_uint8, size_t>;
   #ifdef USE_PMR
-    using vector_bool     = std::pmr::vector<bool>;
-    using vector_size_t   = std::pmr::vector<size_t>;
-    using vector_uint8_t  = std::pmr::vector<uint8_t>;
+    using vector_bool       = std::pmr::vector<bool>;
+    using vector_size_t     = std::pmr::vector<size_t>;
+    using vector_uint8      = std::pmr::vector<uint8_t>;
   #else
-    using vector_bool     = std::vector<bool>;
-    using vector_size_t   = std::vector<size_t>;
-    using vector_uint8_t  = std::vector<uint8_t>;
+    using vector_bool       = std::vector<bool>;
+    using vector_size_t     = std::vector<size_t>;
+    using vector_uint8      = std::vector<uint8_t>;
   #endif
 #endif
 

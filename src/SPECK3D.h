@@ -110,7 +110,7 @@ private:
 
     vector_bool         m_sign_array;
     vector_bool         m_sig_map;
-    vector_uint8_t      m_tmp_result;
+    vector_uint8        m_tmp_result;
     bool                m_sig_map_enabled;
 
 #ifdef USE_PMR
