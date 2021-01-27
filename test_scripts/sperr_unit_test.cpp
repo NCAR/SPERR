@@ -1,5 +1,4 @@
-
-#include "SPECK_Err.h"
+#include "SPERR.h"
 #include <algorithm>
 #include <cassert>
 #include <random>
@@ -20,7 +19,7 @@ public:
     void test_outliers() {
 
         // Create an encoder
-        speck::SPECK_Err encoder;
+        speck::SPERR encoder;
         encoder.set_length( length );
         encoder.set_tolerance( tol );
 
@@ -54,7 +53,7 @@ public:
 };
 
 
-TEST( speck_err, manual_outliers )
+TEST( sperr, manual_outliers )
 {
     err_tester tester;   
     tester.test_outliers();

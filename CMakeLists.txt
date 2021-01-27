@@ -99,7 +99,7 @@ list( APPEND SPECK2D_LIBS SPECK2D_Compressor   )
 list( APPEND SPECK2D_LIBS SPECK2D_Decompressor )
 list( APPEND SPECK2D_LIBS SPECK2D              )
 
-list( APPEND SPECK_Err_LIBS SPECK_Err )
+list( APPEND SPERR_LIBS SPERR )
 
 if( USE_OMP AND OpenMP_CXX_FOUND )
   list( APPEND HELPER_LIBS  OpenMP::OpenMP_CXX   )
@@ -138,9 +138,9 @@ target_link_libraries(      compressor_2d PUBLIC ${SPECK2D_LIBS}
                                           PUBLIC ${CDF_LIBS}
                                           PUBLIC ${HELPER_LIBS} )
 
-add_executable( example_speck_err "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_speck_err.cpp" )
-target_include_directories( example_speck_err PUBLIC ${PROJECT_BINARY_DIR} )
-target_link_libraries(  example_speck_err PUBLIC ${SPECK_Err_LIBS}
+add_executable( example_sperr "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_sperr.cpp" )
+target_include_directories( example_sperr PUBLIC ${PROJECT_BINARY_DIR} )
+target_link_libraries(      example_sperr PUBLIC ${SPERR_LIBS}
                                           PUBLIC ${CDF_LIBS}
                                           PUBLIC ${HELPER_LIBS} )
 
@@ -216,13 +216,13 @@ if( BUILD_UNIT_TESTS )
                                         PUBLIC gtest_main            )
     add_test( NAME test_speck3d COMMAND test_speck3d                 )
 
-    add_executable( test_speck_err
-                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck_err_unit_test.cpp" )
-    target_link_libraries( test_speck_err PUBLIC ${SPECK_Err_LIBS}
-                                          PUBLIC ${CDF_LIBS} 
-                                        PUBLIC ${HELPER_LIBS}
-                                          PUBLIC gtest_main          )
-    add_test( NAME test_speck_err COMMAND test_speck_err             )
+    add_executable( test_sperr
+                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/sperr_unit_test.cpp" )
+    target_link_libraries( test_sperr PUBLIC ${SPERR_LIBS}
+                                      PUBLIC ${CDF_LIBS} 
+                                      PUBLIC ${HELPER_LIBS}
+                                      PUBLIC gtest_main             )
+    add_test( NAME test_sperr COMMAND test_sperr                    )
 
 endif()
 

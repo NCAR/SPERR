@@ -1,9 +1,9 @@
 //
-// This class implements the error-bound SPECK add-on.
+// This class implements the SPECK encoder for errors, dubbed as SPERR.
 //
 
-#ifndef SPECK_ERR_H
-#define SPECK_ERR_H
+#ifndef SPERR_H
+#define SPERR_H
 
 #include "speck_helper.h"
 
@@ -37,7 +37,7 @@ struct Outlier {
 };
 
 
-class SPECK_Err
+class SPERR
 {
 public:
     // Input

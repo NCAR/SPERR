@@ -1,4 +1,4 @@
-#include "SPECK_Err.h"
+#include "SPERR.h"
 #include <algorithm>
 #include <cassert>
 #include <random>
@@ -62,7 +62,7 @@ int main( int argc, char* argv[] )
     LOS.resize( num_of_outs );
 
     // Create an encoder
-    speck::SPECK_Err se;
+    speck::SPERR se;
     se.set_length( total_len );
     se.set_tolerance( tol );
     se.use_outlier_list( LOS );

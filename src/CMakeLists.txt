@@ -3,7 +3,7 @@ add_library( CDF97          CDF97.cpp         )
 add_library( SPECK_Storage  SPECK_Storage.cpp ) 
 add_library( SPECK2D        SPECK2D.cpp       ) 
 add_library( SPECK3D        SPECK3D.cpp       ) 
-add_library( SPECK_Err      SPECK_Err.cpp     ) 
+add_library( SPERR          SPERR.cpp     ) 
 
 #
 # A user would really want to use the following 4 classes, instead of ones above
@@ -18,7 +18,7 @@ target_include_directories( CDF97         INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} 
 target_include_directories( SPECK_Storage INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( SPECK2D       INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( SPECK3D       INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
-target_include_directories( SPECK_Err     INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
+target_include_directories( SPERR         INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 
 target_include_directories( SPECK3D_Compressor   INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( SPECK3D_Decompressor INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
