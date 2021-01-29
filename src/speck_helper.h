@@ -104,11 +104,14 @@ public:
     // https://github.com/shaomeng/cppcon2019_class/blob/master/labs/01-vector_walkthrough/code/trnx_vector_impl.h
 };
 
-// Helper function to produce a ptr_iterator from a unique_ptr.
+// Helper functions to generate a ptr_iterator from a unique_ptr.
+// (Their names resemble std::begin() and std::end().)
 // For an array with size N, the begin and end iterators are:
-// auto begin = uptr2itr( buf ); auto end = uptr2itr( buf, N );
+// auto begin = speck::begin( buf ); auto end = speck::end( buf, N );
 template<typename T>
-auto uptr2itr( const std::unique_ptr<T[]>&, size_t offset = 0 ) -> ptr_iterator<T>;
+auto begin( const std::unique_ptr<T[]>&             ) -> ptr_iterator<T>;
+template<typename T>
+auto end( const std::unique_ptr<T[]>&, size_t length ) -> ptr_iterator<T>;
 
 
 //
@@ -172,6 +175,9 @@ void calc_stats( const T* arr1,   const T* arr2,  size_t len,
                  T* rmse, T* linfty, T* psnr, T* arr1min, T* arr1max );
 template <typename T>
 auto kahan_summation( const T*, size_t ) -> T;
+
+template <typename T>
+auto empty_buf( const T& ) -> bool;
 
 };  // End of speck namespace.
 

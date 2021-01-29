@@ -24,9 +24,7 @@ auto SPECK2D_Compressor::copy_data( const T* p, size_t len ) -> RTNType
                   "!! Only floating point values are supported !!");
 
     m_val_buf = speck::unique_malloc<double>( len );
-    //for( size_t i = 0; i < len; i++ )
-    //    m_val_buf[i] = p[i];
-    std::copy( p, p + len, speck::uptr2itr(m_val_buf) );
+    std::copy( p, p + len, speck::begin(m_val_buf) );
 
     return RTNType::Good;
 }

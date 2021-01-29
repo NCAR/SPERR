@@ -43,7 +43,7 @@ void speck::SPECK_Storage::copy_data(const T* p, size_t len)
     assert(m_coeff_len == 0 || m_coeff_len == len);
     m_coeff_len = len;
     m_coeff_buf = unique_malloc<double>(len);
-    std::copy( p, p + len, uptr2itr(m_coeff_buf) );
+    std::copy( p, p + len, speck::begin(m_coeff_buf) );
 }
 template void speck::SPECK_Storage::copy_data(const double*, size_t);
 template void speck::SPECK_Storage::copy_data(const float*, size_t);
@@ -90,7 +90,7 @@ auto speck::SPECK_Storage::get_dims() const -> std::array<size_t, 3>
 
 
 
-auto speck::SPECK_Storage::get_encoded_bitstream() const -> smart_buffer_uint8_t
+auto speck::SPECK_Storage::get_encoded_bitstream() const -> smart_buffer_uint8
 {
     // Header definition:
     // dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  bitstream_len (in byte)

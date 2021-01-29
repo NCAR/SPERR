@@ -175,12 +175,19 @@ template auto speck::unique_malloc( size_t ) -> buffer_type_uint8;
 
 
 template<typename T>
-auto speck::uptr2itr( const std::unique_ptr<T[]>& uptr, size_t offset ) -> ptr_iterator<T>
+auto speck::begin( const std::unique_ptr<T[]>& uptr ) -> ptr_iterator<T>
 {
-    return ptr_iterator<T>( uptr.get() + offset );
+    return ptr_iterator<T>( uptr.get() );
 }
-template auto speck::uptr2itr(const std::unique_ptr<float[]>&,  size_t) -> ptr_iterator<float>;
-template auto speck::uptr2itr(const std::unique_ptr<double[]>&, size_t) -> ptr_iterator<double>;
+template<typename T>
+auto speck::end( const std::unique_ptr<T[]>& uptr, size_t length ) -> ptr_iterator<T>
+{
+    return ptr_iterator<T>( uptr.get() + length );
+}
+template auto speck::begin(const std::unique_ptr<float[]>&         ) -> ptr_iterator<float>;
+template auto speck::begin(const std::unique_ptr<double[]>&        ) -> ptr_iterator<double>;
+template auto speck::end(  const std::unique_ptr<float[]>&,  size_t) -> ptr_iterator<float>;
+template auto speck::end(  const std::unique_ptr<double[]>&, size_t) -> ptr_iterator<double>;
 
 
 auto speck::read_n_bytes( const char* filename, size_t n_bytes, void* buffer ) -> RTNType
@@ -331,4 +338,11 @@ template auto speck::kahan_summation( const double*, size_t ) -> double;
 
 
 
-
+template <typename T>
+auto speck::empty_buf( const T& buf ) -> bool
+{
+    return (buf.first == nullptr || buf.second == 0);
+}
+template auto speck::empty_buf( const smart_buffer_d&     ) -> bool;
+template auto speck::empty_buf( const smart_buffer_f&     ) -> bool;
+template auto speck::empty_buf( const smart_buffer_uint8& ) -> bool;

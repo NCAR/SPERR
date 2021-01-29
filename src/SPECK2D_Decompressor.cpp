@@ -84,11 +84,9 @@ auto SPECK2D_Decompressor::get_decompressed_slice_f() const
         return {nullptr, 0};
 
     auto out_buf = speck::unique_malloc<float>(slice.second);
-    //for( size_t i = 0; i < slice.second; i++ )
-    //    out_buf[i] = slice.first[i];
-    auto begin = speck::uptr2itr( slice.first );
-    auto end   = speck::uptr2itr( slice.first, slice.second );
-    std::copy( begin, end, speck::uptr2itr( out_buf ) );
+    auto begin = speck::begin( slice.first );
+    auto end   = speck::end(   slice.first, slice.second );
+    std::copy( begin, end, speck::begin( out_buf ) );
 
     return {std::move(out_buf), slice.second};
 }
