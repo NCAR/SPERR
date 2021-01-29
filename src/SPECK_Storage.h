@@ -40,7 +40,7 @@ public:
     // Get the encoded bitstream.
     // The returned memory block could be written to disk by other programs.
     //
-    auto get_encoded_bitstream() const -> std::pair<buffer_type_uint8, size_t>;
+    auto get_encoded_bitstream() const -> smart_buffer_uint8;
 
     // Prepare internal states for a decompression operation from an encoded bitstream
     //

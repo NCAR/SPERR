@@ -3,10 +3,10 @@
 #include <cstring>
 #include "gtest/gtest.h"
 
-using speck::RTNType;
-
 namespace
 {
+
+using speck::RTNType;
 
 // Create a class that executes the entire pipeline, and calculates the error metrics
 class speck_tester

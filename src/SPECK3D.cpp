@@ -156,6 +156,9 @@ auto speck::SPECK3D::encode() -> RTNType
 
 #ifdef QZ_TERM
     // If the bit buffer has the last byte empty, let's fill in zero's.
+    // When decoding, these padded zero's will trigger an extra iteration, and 
+    // they will be interpreted as indicating *insignificant* pixels and sets,
+    // thus posing no change to the decoded values.
     while( m_bit_buffer.size() % 8 != 0 )
         m_bit_buffer.push_back( false );
 #endif
