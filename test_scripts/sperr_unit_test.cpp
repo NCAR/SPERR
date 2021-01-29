@@ -6,6 +6,7 @@
 
 namespace {
 
+using speck::RTNType;
 
 class err_tester 
 {
@@ -31,8 +32,16 @@ public:
         LOS.emplace_back( 100, -0.35f );
         encoder.use_outlier_list( LOS );
 
-        encoder.encode();
-        encoder.decode();
+        if( encoder.encode() != RTNType::Good )
+            return;
+        auto stream = encoder.get_encoded_bitstream();
+
+        // Create a decoder
+        speck::SPERR decoder;
+        if( decoder.parse_encoded_bitstream(stream.first.get(), stream.second) != RTNType::Good )
+            return;
+        if( decoder.decode() != RTNType::Good )
+            return;
         
         recovered = encoder.release_outliers();
     }

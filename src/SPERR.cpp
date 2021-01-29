@@ -34,7 +34,7 @@ void speck::SPERR::use_outlier_list(std::vector<Outlier> list)
     m_LOS = std::move(list);
 }
 
-void speck::SPERR::set_length(size_t len)
+void speck::SPERR::set_length(uint64_t len)
 {
     m_total_len = len;
 }
@@ -44,21 +44,13 @@ void speck::SPERR::set_tolerance(double t)
     m_tolerance = t;
 }
 
-void speck::SPERR::use_bit_buffer( std::vector<bool> other_buf )
+auto speck::SPERR::release_outliers() -> std::vector<Outlier>
 {
-    m_bit_buffer = std::move( other_buf );
+    return std::move(m_LOS);
 }
 
-auto speck::SPERR::release_bit_buffer() -> std::vector<bool>
-{
-    // Do some clean up work first
-    m_LOS.clear();
-    m_total_len = 0;
-    m_tolerance = 0.0;
-    return std::move(m_bit_buffer);
-}
 
-auto speck::SPERR::m_part_set(const SPECKSet1D& set) const -> TwoSets 
+auto speck::SPERR::m_part_set(const SPECKSet1D& set) const -> std::array<SPECKSet1D, 2>
 {
     SPECKSet1D set1, set2;
     // Prepare the 1st set
@@ -132,9 +124,9 @@ auto speck::SPERR::encode() -> RTNType
 
     m_initialize_LIS();
     m_outlier_cnt = m_LOS.size(); // Initially everyone in LOS is an outlier
-    m_q.assign( m_LOS.size(), 0.0 );
 
     // m_q is initialized to have the absolute value of all error.
+    m_q.assign( m_LOS.size(), 0.0 );
     std::transform( m_LOS.cbegin(), m_LOS.cend(), m_q.begin(),
                     [](auto& out){return std::abs(out.error);} );
 
@@ -206,15 +198,14 @@ auto speck::SPERR::decode() -> RTNType
 }
 
 auto speck::SPERR::m_decide_significance(const SPECKSet1D& set) const 
-                       -> std::pair<bool, size_t>
+                   -> std::pair<bool, size_t>
 {
     // This function is only used during encoding.
-    // Strategy:
-    // Iterate all outliers: if
-    // 1) its err_hat value is 0.0, meaning it's not processed yet,
-    // 2) its q value is above the current threshold, and
-    // 3) its location falls inside this set,
+    // Strategy: iterate all outliers, if all requirements are met,
     // then this set is significant. Otherwise its insignificant.
+    // 1) its err_hat value is 0.0, meaning it's not processed yet;
+    // 2) its q value is above the current threshold (same requirement as in SPECK);
+    // 3) its location falls inside this set.
 
     for (size_t i = 0; i < m_LOS.size(); i++) {
 
@@ -295,6 +286,8 @@ auto speck::SPERR::m_refinement_pass_encoding() -> bool
     for (auto idx : m_LSP_old) {
 
         // First test if this pixel is still an outlier
+        // Note that every refinement pass generates exactly 1 bit for each pixel in
+        // `m_LSP_old` no matter if that pixel value is within error tolerance or not.
         auto diff        = m_err_hat[idx] - std::abs(m_LOS[idx].error);
         auto was_outlier = std::abs(diff) > m_tolerance;
         auto need_refine = m_q[idx] >= m_threshold;
@@ -315,8 +308,7 @@ auto speck::SPERR::m_refinement_pass_encoding() -> bool
         }
     }
 
-    // Now attach content from `m_LSP_new` to the end of `m_LSP_old`, and 
-    // marking those pixels as significant.
+    // Now attach content from `m_LSP_new` to the end of `m_LSP_old`.
     m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.begin(), m_LSP_new.end() );
     m_LSP_new.clear();
 
@@ -411,7 +403,70 @@ auto speck::SPERR::max_coeff_bits() const -> int32_t
     return m_max_coeff_bits;
 }
 
-auto speck::SPERR::release_outliers() -> std::vector<Outlier>
+auto speck::SPERR::get_encoded_bitstream() const -> smart_buffer_uint8
 {
-    return std::move(m_LOS);
+    // Header definition:
+    // total_len  max_coeff_bits  num_of_bits
+    // uint64_t   int32_t         uint64_t
+
+    // Record the current (useful) number of bits
+    const uint64_t num_bits = m_bit_buffer.size();
+
+    // Create a copy of the current bit buffer with length being multiples of 8.
+    // The purpose is to not mess up with the useful container.
+    speck::vector_bool tmp_buf( m_bit_buffer );
+    while( tmp_buf.size() % 8 != 0 )
+        tmp_buf.push_back(false);
+
+    const size_t buf_len = m_header_size + tmp_buf.size() / 8;
+    auto buf = speck::unique_malloc<uint8_t>( buf_len );
+    
+    // Fill header
+    size_t pos = 0;
+    std::memcpy( buf.get(), &m_total_len, sizeof(m_total_len) );
+    pos += sizeof(m_total_len);
+    std::memcpy( buf.get() + pos, &m_max_coeff_bits, sizeof(m_max_coeff_bits) );
+    pos += sizeof(m_max_coeff_bits);
+    std::memcpy( buf.get() + pos, &num_bits, sizeof(num_bits) );
+    pos += sizeof(num_bits);
+    assert( pos == m_header_size );
+
+    // Assemble the bitstream into bytes
+    auto rtn = speck::pack_booleans( buf, tmp_buf, pos );
+    if( rtn != RTNType::Good )
+        return {nullptr, 0};
+    else
+        return {std::move(buf), buf_len};
 }
+
+
+auto speck::SPERR::parse_encoded_bitstream( const void* buf, size_t len ) -> RTNType
+{
+    // The buffer passed in is supposed to consist a header and then a compacted bitstream,
+    // just like what was returned by `get_encoded_bitstream()`.
+    // Note: header definition is documented in get_encoded_bitstream().
+
+    const uint8_t* const ptr = static_cast<const uint8_t*>( buf );
+
+    // Parse header
+    uint64_t num_bits, pos = 0;
+    std::memcpy( &m_total_len, ptr, sizeof(m_total_len) );
+    pos += sizeof(m_total_len);
+    std::memcpy( &m_max_coeff_bits, ptr + pos, sizeof(m_max_coeff_bits) );
+    pos += sizeof(m_max_coeff_bits);
+    std::memcpy( &num_bits, ptr + pos, sizeof(num_bits) );
+    pos += sizeof(num_bits);
+    assert( pos == m_header_size );
+
+    // Unpack bits
+    auto rtn = speck::unpack_booleans( m_bit_buffer, buf, len, pos );
+    if( rtn != RTNType::Good )
+        return rtn;
+
+    // Restore the correct number of bits
+    m_bit_buffer.resize( num_bits );
+
+    return RTNType::Good;
+}
+
+

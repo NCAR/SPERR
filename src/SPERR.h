@@ -23,7 +23,6 @@ public:
     SPECKSet1D() = default;
     SPECKSet1D( size_t start, size_t len, uint32_t part_lev );
 };
-using TwoSets = std::array<SPECKSet1D, 2>;
 
 //
 // Auxiliary struct to hold represent an outlier
@@ -48,7 +47,7 @@ public:
                                                  // Does not affect existing outliers.
     void use_outlier_list(std::vector<Outlier>); // use a given list of outliers.
                                                  // Existing outliers are erased.
-    void set_length(size_t);                     // set 1D array length
+    void set_length(uint64_t);                   // set 1D array length
     void set_tolerance(double);                  // set error tolerance (Must be positive)
 
     // Output
@@ -58,12 +57,9 @@ public:
     auto num_of_bits() const -> size_t;              // How many bits are generated?
     auto max_coeff_bits() const -> int32_t;          // Will be used when decoding.
 
-    // Given that this class is always expected to be used together with the main SPECK3D or
-    // SPECK2D classes, so let's decide that this class could receive and return bitstreams
-    // in their internal format, i.e., std::vector<bool>.
-    // Also note that this class isn't performance critical, so we don't bother using PMR containers.
-    void use_bit_buffer( std::vector<bool> );       // Take a bitstream for decoding.
-    auto release_bit_buffer() -> std::vector<bool>; // Release ownership of the encoded bitstream.
+    // Note that this class isn't performance critical, so don't bother using PMR containers.
+    auto get_encoded_bitstream() const -> smart_buffer_uint8;
+    auto parse_encoded_bitstream( const void*, size_t ) -> RTNType;
 
     // Action methods
     auto encode() -> RTNType;
@@ -74,7 +70,7 @@ private:
     //
     // Private methods
     //
-    auto m_part_set(const SPECKSet1D&) const -> TwoSets;
+    auto m_part_set(const SPECKSet1D&) const -> std::array<SPECKSet1D, 2>;
     void m_initialize_LIS();
     void m_clean_LIS();
     auto m_ready_to_encode() const -> bool;
@@ -103,24 +99,23 @@ private:
     //
     // Private data members
     //
-    // Properties that do not change
-    size_t  m_total_len      = 0;    // 1D array length
-    double  m_tolerance      = 0.0;  // Error tolerance. Gamma in the algorithm description.
-    bool    m_encode_mode    = true; // Encode (true) or Decode (false) mode?
-    int32_t m_max_coeff_bits = 0;    // = log2(max_coefficient)
+    uint64_t     m_total_len      = 0;    // 1D array length
+    double       m_tolerance      = 0.0;  // Error tolerance.
+    int32_t      m_max_coeff_bits = 0;    // = log2(max_coefficient)
+    const size_t m_header_size    = 20;   // in bytes
 
-    // Global variables that change and facilitate the process.
     size_t m_outlier_cnt = 0;   // How many data points are still exceeding the tolerance?
     double m_threshold   = 0.0; // Threshold that's used for quantization 
+    bool   m_encode_mode = true;// Encode (true) or Decode (false) mode?
     size_t m_bit_idx     = 0;   // decoding only. Which bit we're at?
     size_t m_LOS_size    = 0;   // decoding only. Size of `m_LOS` at the end of an iteration.
 
     std::vector<bool>    m_bit_buffer;
     std::vector<Outlier> m_LOS;     // List of OutlierS. This list is not altered when encoding,
-                                    //   but constantly updated when decoding.
+                                    // but constantly updated when decoding.
     std::vector<double>  m_q;       // encoding only. This list is refined in the refinement pass. 
     std::vector<double>  m_err_hat; // encoding only. This list contains values that
-                                    //   would be reconstructed.
+                                    // would be reconstructed.
 
     std::vector<bool>    m_recovered_signs; // decoding only
     std::vector<size_t>  m_LSP_new;         // encoding only
