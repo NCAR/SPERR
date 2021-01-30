@@ -414,7 +414,9 @@ auto speck::SPERR::get_encoded_bitstream() const -> smart_buffer_uint8
 
     // Create a copy of the current bit buffer with length being multiples of 8.
     // The purpose is to not mess up with the useful container.
-    speck::vector_bool tmp_buf( m_bit_buffer );
+    speck::vector_bool tmp_buf;
+    tmp_buf.reserve( num_bits + 8 ); // No need to re-allocate when padding.
+    tmp_buf = m_bit_buffer;
     while( tmp_buf.size() % 8 != 0 )
         tmp_buf.push_back(false);
 
