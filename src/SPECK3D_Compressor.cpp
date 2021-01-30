@@ -26,7 +26,7 @@ auto SPECK3D_Compressor::copy_data( const T* p, size_t len ) -> RTNType
     static_assert(std::is_floating_point<T>::value,
                   "!! Only floating point values are supported !!");
 
-    m_val_buf = speck::unique_malloc<double>( len );
+    m_val_buf = std::make_unique<double[]>( len );
     std::copy( p, p + len, speck::begin(m_val_buf) );
 
     return RTNType::Good;

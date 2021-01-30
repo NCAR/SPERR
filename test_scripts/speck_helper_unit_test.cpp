@@ -60,7 +60,7 @@ TEST( speck_helper, bit_packing )
                               true,  true,  true,  false, true,  true,  true,  false, // 10th byte
                               false, false, true,  true,  true,  false, false, true };// 11th byte
 
-    auto bytes = speck::unique_malloc<uint8_t>(num_of_bytes + byte_offset);
+    auto bytes = std::make_unique<uint8_t[]>(num_of_bytes + byte_offset);
 
     // Pack booleans
     auto rtn = speck::pack_booleans( bytes, input, byte_offset );

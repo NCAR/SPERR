@@ -157,10 +157,6 @@ auto unpack_booleans( vector_bool&     dest,
 void pack_8_booleans(   uint8_t& dest,  const bool* src );
 void unpack_8_booleans( bool* dest,     uint8_t src );
 
-// Allocate an array of a certain type, and return as a unique pointer.
-template <typename T>
-auto unique_malloc( size_t size ) -> std::unique_ptr<T[]>;
-
 // Read from and write to a file
 auto write_n_bytes(  const char* filename, size_t n_bytes, const void* buffer ) -> RTNType;
 auto read_n_bytes(   const char* filename, size_t n_bytes,       void* buffer ) -> RTNType;

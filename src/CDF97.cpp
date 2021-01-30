@@ -18,7 +18,7 @@ void speck::CDF97::copy_data(const T* data, size_t len)
 
     assert(m_dim_x * m_dim_y * m_dim_z == 0 || m_dim_x * m_dim_y * m_dim_z == len);
     m_buf_len  = len;
-    m_data_buf = speck::unique_malloc<double>(len);
+    m_data_buf = std::make_unique<double[]>(len);
     std::copy( data, data + len, speck::begin(m_data_buf) );
 }
 template void speck::CDF97::copy_data(const float*, size_t);
@@ -75,14 +75,14 @@ void speck::CDF97::dwt2d()
 
     size_t     num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
     const auto max_dim       = std::max(m_dim_x, m_dim_y);
-    auto       tmp_buf       = speck::unique_malloc<double>(max_dim * 2);
+    auto       tmp_buf       = std::make_unique<double[]>(max_dim * 2);
     m_dwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, tmp_buf.get());
 }
 
 void speck::CDF97::idwt2d()
 {
     const auto max_dim       = std::max(m_dim_x, m_dim_y);
-    auto       tmp_buf       = speck::unique_malloc<double>(max_dim * 2);
+    auto       tmp_buf       = std::make_unique<double[]>(max_dim * 2);
     size_t     num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
     m_idwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, tmp_buf.get());
 
@@ -109,7 +109,7 @@ void speck::CDF97::dwt3d()
 
     size_t max_dim              = std::max(m_dim_x, m_dim_y);
     max_dim                     = std::max(max_dim, m_dim_z);
-    buffer_type_d tmp_buf_pool  = speck::unique_malloc<double>(max_dim * 2 * num_threads);
+    buffer_type_d tmp_buf_pool  = std::make_unique<double[]>(max_dim * 2 * num_threads);
     const size_t  plane_size_xy = m_dim_x * m_dim_y;
 
     /*
@@ -137,7 +137,7 @@ void speck::CDF97::dwt3d()
      */
 
     // Process one XZ slice at a time
-    buffer_type_d z_column_pool = speck::unique_malloc<double>(m_dim_x * m_dim_z * num_threads);
+    buffer_type_d z_column_pool = std::make_unique<double[]>(m_dim_x * m_dim_z * num_threads);
     const auto    num_xforms_z   = speck::num_of_xforms(m_dim_z);
 
     #pragma omp parallel for
@@ -199,7 +199,7 @@ void speck::CDF97::idwt3d()
 
     size_t max_dim              = std::max(m_dim_x, m_dim_y);
     max_dim                     = std::max(max_dim, m_dim_z);
-    buffer_type_d tmp_buf_pool  = speck::unique_malloc<double>(max_dim * 2 * num_threads);
+    buffer_type_d tmp_buf_pool  = std::make_unique<double[]>(max_dim * 2 * num_threads);
     const size_t  plane_size_xy = m_dim_x * m_dim_y;
 
     // First, inverse transform each plane
@@ -237,7 +237,7 @@ void speck::CDF97::idwt3d()
      */
 
     // Process one XZ slice at a time
-    buffer_type_d z_column_pool = speck::unique_malloc<double>(m_dim_x * m_dim_z * num_threads);
+    buffer_type_d z_column_pool = std::make_unique<double[]>(m_dim_x * m_dim_z * num_threads);
     const auto    num_xforms_z  = speck::num_of_xforms(m_dim_z);
 
     #pragma omp parallel for
@@ -289,7 +289,7 @@ void speck::CDF97::m_calc_mean()
     //
     assert(m_dim_x > 0 && m_dim_y > 0 && m_dim_z > 0);
 
-    auto slice_means        = speck::unique_malloc<double>(m_dim_z);
+    auto slice_means        = std::make_unique<double[]>(m_dim_z);
     const size_t slice_size = m_dim_x * m_dim_y;
 
     for (size_t z = 0; z < m_dim_z; z++) {
@@ -342,7 +342,7 @@ void speck::CDF97::m_dwt1d(double* array,
     if (tmp_buf != nullptr) {
         ptr = tmp_buf;
     } else {
-        buf = speck::unique_malloc<double>(array_len);
+        buf = std::make_unique<double[]>(array_len);
         ptr = buf.get();
     }
 
@@ -370,7 +370,7 @@ void speck::CDF97::m_idwt1d(double* array,
     if (tmp_buf != nullptr) {
         ptr = tmp_buf;
     } else {
-        buf = speck::unique_malloc<double>(array_len);
+        buf = std::make_unique<double[]>(array_len);
         ptr = buf.get();
     }
 
@@ -401,7 +401,7 @@ void speck::CDF97::m_dwt2d_one_level(double* plane,
         buf_ptr  = tmp_buf;          // First half of the array
         buf_ptr2 = tmp_buf + len_xy; // Second half of the array
     } else {
-        buffer   = speck::unique_malloc<double>(len_xy * 2);
+        buffer   = std::make_unique<double[]>(len_xy * 2);
         buf_ptr  = buffer.get();     // First half of the array
         buf_ptr2 = buf_ptr + len_xy; // Second half of the array
     }
@@ -472,7 +472,7 @@ void speck::CDF97::m_idwt2d_one_level(double* plane,
         buf_ptr  = tmp_buf;          // First half of the array
         buf_ptr2 = tmp_buf + len_xy; // Second half of the array
     } else {
-        buffer   = speck::unique_malloc<double>(len_xy * 2);
+        buffer   = std::make_unique<double[]>(len_xy * 2);
         buf_ptr  = buffer.get();     // First half of the array
         buf_ptr2 = buf_ptr + len_xy; // Second half of the array
     }

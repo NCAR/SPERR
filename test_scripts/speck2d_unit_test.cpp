@@ -67,7 +67,7 @@ public:
         // Compare results 
         //
 
-        auto orig = speck::unique_malloc<float>( total_vals );
+        auto orig = std::make_unique<float[]>( total_vals );
         if( speck::read_n_bytes( m_input_name.c_str(), 4 * total_vals, orig.get() ) != speck::RTNType::Good )
             return 1;
         float rmse, lmax, psnr, arr1min, arr1max;

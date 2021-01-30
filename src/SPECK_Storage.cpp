@@ -42,7 +42,7 @@ void speck::SPECK_Storage::copy_data(const T* p, size_t len)
     assert(len > 0);
     assert(m_coeff_len == 0 || m_coeff_len == len);
     m_coeff_len = len;
-    m_coeff_buf = unique_malloc<double>(len);
+    m_coeff_buf = std::make_unique<double[]>(len);
     std::copy( p, p + len, speck::begin(m_coeff_buf) );
 }
 template void speck::SPECK_Storage::copy_data(const double*, size_t);
@@ -100,7 +100,7 @@ auto speck::SPECK_Storage::get_encoded_bitstream() const -> smart_buffer_uint8
     assert( m_bit_buffer.size() % 8 == 0 );
     const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
     const size_t total_size = m_header_size + bit_in_byte;
-    auto tmp_buf = speck::unique_malloc<uint8_t>( total_size );
+    auto tmp_buf = std::make_unique<uint8_t[]>( total_size );
     auto* const ptr = tmp_buf.get();
 
     // Fill header 

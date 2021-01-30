@@ -10,7 +10,7 @@
 
 void SPECK2D_Decompressor::copy_bitstream( const void* p, size_t len )
 {
-    m_entire_stream = speck::unique_malloc<uint8_t>( len );
+    m_entire_stream = std::make_unique<uint8_t[]>( len );
     std::memcpy( m_entire_stream.get(), p, len );
     m_entire_stream_len = len;
     m_metadata_parsed = false;
@@ -83,7 +83,7 @@ auto SPECK2D_Decompressor::get_decompressed_slice_f() const
     if( slice.first == nullptr || slice.second == 0 )
         return {nullptr, 0};
 
-    auto out_buf = speck::unique_malloc<float>(slice.second);
+    auto out_buf = std::make_unique<float[]>(slice.second);
     auto begin = speck::begin( slice.first );
     auto end   = speck::end(   slice.first, slice.second );
     std::copy( begin, end, speck::begin( out_buf ) );
@@ -99,7 +99,7 @@ auto SPECK2D_Decompressor::get_decompressed_slice_d() const
     if( slice.first == nullptr || slice.second == 0 )
         return {nullptr, 0};
 
-    auto out_buf  = speck::unique_malloc<double>(slice.second);
+    auto out_buf  = std::make_unique<double[]>(slice.second);
     std::memcpy( out_buf.get(), slice.first.get(), sizeof(double) * slice.second );
 
     return {std::move(out_buf), slice.second};
@@ -169,7 +169,7 @@ auto SPECK2D_Decompressor::m_parse_metadata() -> RTNType
     if( content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN )
         return RTNType::ZSTDError;
 
-    auto content_buf = speck::unique_malloc<uint8_t>( m_meta_size + content_size );
+    auto content_buf = std::make_unique<uint8_t[]>( m_meta_size + content_size );
     const auto decomp_size = ZSTD_decompress( content_buf.get() + m_meta_size,
                                               content_size,
                                               m_entire_stream.get() + m_meta_size,

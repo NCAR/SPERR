@@ -23,7 +23,7 @@ auto SPECK2D_Compressor::copy_data( const T* p, size_t len ) -> RTNType
     static_assert(std::is_floating_point<T>::value,
                   "!! Only floating point values are supported !!");
 
-    m_val_buf = speck::unique_malloc<double>( len );
+    m_val_buf = std::make_unique<double[]>( len );
     std::copy( p, p + len, speck::begin(m_val_buf) );
 
     return RTNType::Good;
@@ -115,7 +115,7 @@ auto SPECK2D_Compressor::get_encoded_bitstream() const
 #ifdef USE_ZSTD
     const size_t uncomp_size  = speck_stream.second;
     const size_t comp_buf_len = ZSTD_compressBound( uncomp_size );
-    auto comp_buf = speck::unique_malloc<uint8_t>( m_meta_size + comp_buf_len );
+    auto comp_buf = std::make_unique<uint8_t[]>( m_meta_size + comp_buf_len );
     std:memcpy( comp_buf.get(), meta, m_meta_size );
 
     size_t comp_size = ZSTD_compress( comp_buf.get() + m_meta_size, comp_buf_len,
@@ -127,7 +127,7 @@ auto SPECK2D_Compressor::get_encoded_bitstream() const
         return {std::move(comp_buf), m_meta_size + comp_size};
 #else
     const size_t total_size = m_meta_size + speck_stream.second;
-    auto buf = speck::unique_malloc<uint8_t>( total_size );
+    auto buf = std::make_unique<uint8_t[]>( total_size );
     std::memcpy( buf.get(), meta, m_meta_size );
     std::memcpy( buf.get() + m_meta_size,
                  speck_stream.first.get(), speck_stream.second );

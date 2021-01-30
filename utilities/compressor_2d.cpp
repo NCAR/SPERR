@@ -130,7 +130,7 @@ int main( int argc, char* argv[] )
 
             // Read the original input data again
             const size_t nbytes = sizeof(float) * total_vals;
-            auto orig = speck::unique_malloc<float>(total_vals);
+            auto orig = std::make_unique<float[]>(total_vals);
             if( speck::read_n_bytes( input_file.c_str(), nbytes, orig.get() ) != speck::RTNType::Good )
                 return 1;
             

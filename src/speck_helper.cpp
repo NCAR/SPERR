@@ -163,16 +163,6 @@ void speck::unpack_8_booleans( bool* dest, uint8_t src )
     std::memcpy( dest, &t, 8 );
 }
 
-template< typename T >
-auto speck::unique_malloc( size_t size ) -> std::unique_ptr<T[]>
-{
-    std::unique_ptr<T[]> buf = std::make_unique<T[]>(size);
-    return std::move( buf );
-}
-template auto speck::unique_malloc( size_t ) -> buffer_type_d;
-template auto speck::unique_malloc( size_t ) -> buffer_type_f;
-template auto speck::unique_malloc( size_t ) -> buffer_type_uint8;
-
 
 template<typename T>
 auto speck::begin( const std::unique_ptr<T[]>& uptr ) -> ptr_iterator<T>
@@ -223,7 +213,7 @@ auto speck::read_whole_file( const char* filename ) -> std::pair<std::unique_ptr
     const size_t num_vals  = file_size / sizeof(T);
     std::fseek( file, 0, SEEK_SET );
 
-    auto buf = speck::unique_malloc<T>( num_vals );
+    auto buf = std::make_unique<T[]>( num_vals );
     size_t nread  = std::fread( buf.get(), sizeof(T), num_vals, file );
     std::fclose( file );
     if( nread != num_vals )

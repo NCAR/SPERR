@@ -421,7 +421,7 @@ auto speck::SPERR::get_encoded_bitstream() const -> smart_buffer_uint8
         tmp_buf.push_back(false);
 
     const size_t buf_len = m_header_size + tmp_buf.size() / 8;
-    auto buf = speck::unique_malloc<uint8_t>( buf_len );
+    auto buf = std::make_unique<uint8_t[]>( buf_len );
     
     // Fill header
     size_t pos = 0;

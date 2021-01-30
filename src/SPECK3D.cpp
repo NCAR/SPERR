@@ -178,7 +178,7 @@ auto speck::SPECK3D::decode() -> RTNType
 
     // initialize coefficients to be zero, and sign array to be all positive
     if( m_coeff_buf == nullptr )
-        m_coeff_buf = speck::unique_malloc<double>(m_coeff_len);
+        m_coeff_buf = std::make_unique<double[]>(m_coeff_len);
     auto begin = speck::begin( m_coeff_buf );
     auto end   = speck::end( m_coeff_buf, m_coeff_len );
     std::fill( begin, end, 0.0 );

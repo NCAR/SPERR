@@ -10,7 +10,7 @@
 
 void SPECK3D_Decompressor::copy_bitstream( const void* p, size_t len )
 {
-    m_entire_stream = speck::unique_malloc<uint8_t>( len );
+    m_entire_stream = std::make_unique<uint8_t[]>( len );
     std::memcpy( m_entire_stream.get(), p, len );
     m_entire_stream_len = len;
     m_metadata_parsed = false;
@@ -83,12 +83,10 @@ auto SPECK3D_Decompressor::get_decompressed_volume_f() const
     if( vol.first == nullptr || vol.second == 0 )
         return {nullptr, 0};
 
-    auto out_buf = speck::unique_malloc<float>(vol.second);
-    //for( size_t i = 0; i < vol.second; i++ )
-    //    out_buf[i] = vol.first[i];
-    auto begin = speck::uptr2itr( vol.first );
-    auto end   = speck::uptr2itr( vol.first, vol.second );
-    std::copy( begin, end, speck::uptr2itr( out_buf ) );
+    auto out_buf = std::make_unique<float[]>(vol.second);
+    auto begin = speck::begin( vol.first );
+    auto end   = speck::end( vol.first, vol.second );
+    std::copy( begin, end, speck::begin( out_buf ) );
 
     return {std::move(out_buf), vol.second};
 }
@@ -101,7 +99,7 @@ auto SPECK3D_Decompressor::get_decompressed_volume_d() const
     if( vol.first == nullptr || vol.second == 0 )
         return {nullptr, 0};
     
-    auto out_buf = speck::unique_malloc<double>(vol.second);
+    auto out_buf = std::make_unique<double[]>(vol.second);
     std::memcpy( out_buf.get(), vol.first.get(), sizeof(double) * vol.second );
 
     return {std::move(out_buf), vol.second};
@@ -171,7 +169,7 @@ auto SPECK3D_Decompressor::m_parse_metadata() -> RTNType
     if( content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN )
         return RTNType::ZSTDError;
 
-    auto content_buf = speck::unique_malloc<uint8_t>( m_meta_size + content_size );
+    auto content_buf = std::make_unique<uint8_t[]>( m_meta_size + content_size );
     const auto decomp_size = ZSTD_decompress( content_buf.get() + m_meta_size, 
                                               content_size,
                                               m_entire_stream.get() + m_meta_size,
