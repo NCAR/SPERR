@@ -128,6 +128,7 @@ add_executable( compressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_
 target_include_directories( compressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
 target_link_libraries(      compressor_3d PUBLIC ${SPECK3D_LIBS}
                                           PUBLIC ${SPECK_Storage_LIBS}
+                                          PUBLIC ${SPERR_LIBS}
                                           PUBLIC ${CDF_LIBS}
                                           PUBLIC ${HELPER_LIBS} )
 
@@ -152,6 +153,7 @@ endif()
 target_include_directories( probe_3d PUBLIC ${PROJECT_BINARY_DIR} )
 target_link_libraries(      probe_3d PUBLIC ${SPECK3D_LIBS}
                                      PUBLIC ${SPECK_Storage_LIBS}
+                                     PUBLIC ${SPERR_LIBS}
                                      PUBLIC ${CDF_LIBS}
                                      PUBLIC ${HELPER_LIBS} )
 
@@ -211,6 +213,7 @@ if( BUILD_UNIT_TESTS )
                     "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck3d_unit_test.cpp" )
     target_link_libraries( test_speck3d PUBLIC ${SPECK3D_LIBS}
                                         PUBLIC ${SPECK_Storage_LIBS} 
+                                        PUBLIC ${SPERR_LIBS}
                                         PUBLIC ${CDF_LIBS} 
                                         PUBLIC ${HELPER_LIBS}
                                         PUBLIC gtest_main            )

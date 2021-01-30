@@ -10,6 +10,7 @@
 
 #include "CDF97.h"
 #include "SPECK3D.h"
+#include "SPERR.h"
 
 using speck::RTNType;
 
@@ -33,6 +34,7 @@ public:
 
 #ifdef QZ_TERM
     void set_qz_level( int32_t );
+    auto set_tolerance( double ) -> RTNType;
 #else
     auto set_bpp( float ) -> RTNType;
 #endif
@@ -40,21 +42,27 @@ public:
     auto compress() -> RTNType;
 
     // Provide a copy of the encoded bitstream to the caller.
-    auto get_encoded_bitstream() const -> std::pair<speck::buffer_type_uint8, size_t>;
+    auto get_encoded_bitstream() const -> speck::smart_buffer_uint8;
     auto write_bitstream( const char* filename ) const -> RTNType;
 
 private:
-    const size_t            m_total_vals;
-    const size_t            m_meta_size = 2;
-    speck::buffer_type_d    m_val_buf;
+    const size_t                m_total_vals;
+    const size_t                m_meta_size = 2;
+    speck::buffer_type_d        m_val_buf;
 
-    speck::CDF97            m_cdf;
-    speck::SPECK3D          m_encoder;
+    speck::CDF97                m_cdf;
+    speck::SPECK3D              m_encoder;
+
+    // Store bitstreams from SPECK encoding and error correction if applicable
+    speck::smart_buffer_uint8   m_speck_stream = {nullptr, 0};
+    speck::smart_buffer_uint8   m_sperr_stream = {nullptr, 0};
 
 #ifdef QZ_TERM
-    int32_t m_qz_lev = 0;
+    speck::SPERR    m_sperr;
+    int32_t         m_qz_lev = 0;
+    double          m_tol    = 0.0; // tolerance used in error correction
 #else
-    float m_bpp = 0.0;
+    float           m_bpp    = 0.0;
 #endif
 };
 
