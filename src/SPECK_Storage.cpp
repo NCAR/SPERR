@@ -159,19 +159,16 @@ auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t
     return RTNType::Good;
 }
     
-auto speck::SPECK_Storage::get_speck_stream_size( const void* buf, size_t buf_size) const 
+auto speck::SPECK_Storage::get_speck_stream_size( const void* buf ) const 
             -> uint64_t
 {
-    if( buf_size <= m_header_size )
-        return 0;
-
     // Given the header definition in `get_encoded_bitstream()`, directly
     // go retrieve the value stored in byte 24-31.
     const uint8_t* const ptr = static_cast<const uint8_t*>( buf );
     uint64_t bit_in_byte;
     std::memcpy(&bit_in_byte, ptr + 24, sizeof(bit_in_byte));
 
-    return m_header_size + bit_in_byte;
+    return (m_header_size + bit_in_byte);
 }
 
 

@@ -172,6 +172,7 @@ void calc_stats( const T* arr1,   const T* arr2,  size_t len,
 template <typename T>
 auto kahan_summation( const T*, size_t ) -> T;
 
+// Test if a smart_buffer is empty. Might support other types of buffers in the future.
 template <typename T>
 auto empty_buf( const T& ) -> bool;
 

@@ -4,106 +4,93 @@
 #include "CLI11.hpp"
 
 #include <cstdlib>
+#include <cassert>
+#include <cstring>
 #include <iostream>
 #include <chrono>
-#include <cstring>
-#include <cctype> // std::tolower
+#include <cctype>   // std::tolower
+#include <numeric>  // std::inner_product
+#include <functional>  // std::plus<>
 
-// This file should only be compiled in QZ_TERM mode.
+
 #ifdef QZ_TERM
+// This file should only be compiled in QZ_TERM mode.
 
 
-auto use_compressor( const float* in_buf, std::array<size_t, 3> dims, int32_t qz_level )
-     -> std::pair<speck::buffer_type_uint8, size_t>
+auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, 
+                         int32_t qz_level, float tolerance ) -> int 
 {
+    // Here we use individual CDF and SPECK encoders instead of 
+    // `SPECK3D_Compressor` and `SPECK3D_Decompressor.`
+    // That is because `SPECK3D_Compressor` does outlier correction already
+    // in QZ_TERM mode!
+    // A minor benefit is that we can reuse the same objects for encoding and decoding.
+
+    // Step 1: Wavelet transform
+    auto start_time = std::chrono::steady_clock::now();
     const size_t total_vals = dims[0] * dims[1] * dims[2];
-    SPECK3D_Compressor compressor ( dims[0], dims[1], dims[2] );
-    if( compressor.copy_data( in_buf, total_vals ) != speck::RTNType::Good ) {
-        std::cerr << "  -- copying data failed!" << std::endl;
-        return {nullptr, 0};
-    }
-
-    compressor.set_qz_level( qz_level );
-
-    auto start = std::chrono::steady_clock::now();
-    if( compressor.compress() != speck::RTNType::Good ) {
-        std::cerr << "  -- compression failed!\n";
-        return {nullptr, 0};
-    }
-    auto end = std::chrono::steady_clock::now();
-    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-    std::cout << "    Compression takes time  : " << diff << "ms\n";
-
-    auto stream = compressor.get_encoded_bitstream();
-    if( stream.first == nullptr || stream.second == 0 ) {
-        std::cerr << "  -- obtaining encoded bitstream failed!\n";
-        return {nullptr, 0};
-    }
-
-    return stream;
-}
-
-auto use_decompressor( std::pair<speck::buffer_type_uint8, size_t> stream )
-     -> std::pair<speck::buffer_type_f, size_t>
-{
-    SPECK3D_Decompressor decompressor;
-    decompressor.take_bitstream( std::move(stream.first), stream.second );
-
-    auto start = std::chrono::steady_clock::now();
-    if( decompressor.decompress() != speck::RTNType::Good ) {
-        std::cerr << "  -- decompression failed!\n";
-        return {nullptr, 0};
-    }
-    auto end = std::chrono::steady_clock::now();
-    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-    std::cout << "    Decompression takes time: " << diff << "ms\n";
-
-    auto vol = decompressor.get_decompressed_volume_f();
-    if( vol.first == nullptr ) {
-        std::cerr << "  -- obtaining reconstructed volume failed!\n";
-        return {nullptr, 0};
-    }
-
-    return vol;
-}
-
-auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, int32_t qz_level,
-                         float tolerance ) -> int 
-{
-    const size_t total_vals = dims[0] * dims[1] * dims[2];
-
-    auto stream = use_compressor( in_buf, dims, qz_level );
-    if( stream.first == nullptr || stream.second == 0 )
+    speck::CDF97 cdf;
+    cdf.set_dims( dims[0], dims[1], dims[2] );   
+    cdf.copy_data( in_buf, total_vals );
+    cdf.dwt3d();
+    auto cdf_out = cdf.release_data();
+    
+    // Step 2: SPECK3D encoding
+    speck::SPECK3D speck;
+    speck.set_dims( dims[0], dims[1], dims[2] );
+    speck.set_image_mean( cdf.get_mean() );
+    speck.set_quantization_term_level( qz_level );
+    speck.take_data( std::move(cdf_out.first), cdf_out.second );
+    auto rtn  = speck.encode();
+    if(  rtn != RTNType::Good )
         return 1;
-    printf("    Total compressed size in bytes = %ld, average bpp = %.2f\n", 
-                stream.second, float(stream.second) * 8.0f / float(total_vals) );
+    auto end_time = std::chrono::steady_clock::now();
+    auto diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
+    std::cout << "    Compression takes time  : " << diff_time << "ms\n";
+    const auto num_bits = speck.get_bit_buffer_size();
+    printf("    Total compressed size in bytes: ~%ld, average bpp: ~%.2f\n", 
+                num_bits / 8, float(num_bits) / float(total_vals) );
 
-    auto reconstruct = use_decompressor( std::move(stream) );
-    if( reconstruct.first == nullptr || reconstruct.second != total_vals )
+    // Step 3: SPECK3D decoding
+    start_time = std::chrono::steady_clock::now();
+    rtn = speck.decode();
+    if( rtn != RTNType::Good )
         return 1;
+    auto speck_out = speck.release_data();
 
+    // Step 4: Inverse wavelet transform
+    cdf.take_data( std::move(speck_out.first), speck_out.second );
+    cdf.idwt3d();
+    auto vol_d = cdf.get_read_only_data();
+    assert( vol_d.second == total_vals );
+    auto reconstruct = std::make_unique<float[]>( total_vals );
+    for( size_t i = 0; i < total_vals; i++ )
+        reconstruct[i] = vol_d.first[i];
+    end_time = std::chrono::steady_clock::now();
+    diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
+    std::cout << "    Decompression takes time  : " << diff_time << "ms\n";
+
+    // Step 5: Calculate statistics
     float rmse, lmax, psnr, arr1min, arr1max;
-    speck::calc_stats( in_buf, reconstruct.first.get(), total_vals,
+    speck::calc_stats( in_buf, reconstruct.get(), total_vals,
                        &rmse, &lmax, &psnr, &arr1min, &arr1max);
     printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
     printf("    RMSE = %.2e, L-Infty = %.2e, PSNR = %.2f\n", rmse, lmax, psnr);
 
-    size_t num_outlier = 0;
-    for( size_t i = 0; i < total_vals; i++ ) {
-        if( std::abs(in_buf[i] - reconstruct.first[i]) > tolerance )
-            num_outlier++;
-    }
+    // Step 6: Count the number of outliers. 
+    //         Estimate new bpp by approximating each encoded outlier taking 32 bits.
+    auto num_outlier = std::inner_product( in_buf, in_buf + total_vals,
+                                           reconstruct.get(), size_t{0},
+                                           std::plus<>(),
+                [tolerance](auto a, auto b){return std::abs(a-b) > tolerance ? 1 : 0;});
     printf("    With qz level = %d and tolerance = %.2e, "
            "num of outliers = %ld, pct = %.2f%%\n",
            qz_level, tolerance, num_outlier, float(num_outlier * 100) / float(total_vals) );
+    printf("    Encoding these outliers will increase bpp to: ~%.2f\n",
+                float(num_bits + num_outlier * 32) / float(total_vals) );
 
-    // Here we approximate each encoded outlier taking 32 bits.
-    printf("    Encoding these outliers will increase bpp to ~ %.2f\n",
-                float(stream.second + num_outlier * 4) * 8.0f / float(total_vals) );
-    
     return 0;
 }
-
 
 int main( int argc, char* argv[] )
 {
