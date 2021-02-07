@@ -68,8 +68,6 @@ auto SPECK3D_Compressor::compress() -> RTNType
     m_cdf.copy_data( m_val_buf.get(), m_total_vals );
     m_cdf.dwt3d();
     auto cdf_out = m_cdf.release_data();
-    if( cdf_out.first == nullptr || cdf_out.second != m_total_vals )
-        return RTNType::Error;
     m_encoder.set_image_mean( m_cdf.get_mean() );
     m_encoder.take_data( std::move(cdf_out.first), cdf_out.second );
     m_encoder.set_quantization_term_level( m_qz_lev );
@@ -103,7 +101,6 @@ auto SPECK3D_Compressor::compress() -> RTNType
             LOS.emplace_back( i, diff );
     }
 
-
     // Now we encode any outlier that's found.
     if( !LOS.empty() ) {
         m_sperr.use_outlier_list( std::move(LOS) );
@@ -134,7 +131,6 @@ auto SPECK3D_Compressor::compress() -> RTNType
 
     m_encoder.set_image_mean( m_cdf.get_mean() );
     m_encoder.take_data( std::move(cdf_out.first), cdf_out.second );
-
     m_encoder.set_bit_budget( size_t(m_bpp * m_total_vals) );
 
     auto rtn = m_encoder.encode();
@@ -200,8 +196,8 @@ auto SPECK3D_Compressor::get_encoded_bitstream() const -> speck::smart_buffer_ui
         uncomp_size = m_speck_stream.second + m_sperr_stream.second;
         buf_owner   = std::make_unique<uint8_t[]>(uncomp_size);
         uncomp_buf  = buf_owner.get();
-        std::memcpy(uncomp_buf, m_speck_stream.first.get(), m_speck_stream.second);
-        std::memcpy(uncomp_buf + m_speck_stream.second,
+        std::memcpy(buf_owner.get(), m_speck_stream.first.get(), m_speck_stream.second);
+        std::memcpy(buf_owner.get() + m_speck_stream.second,
                     m_sperr_stream.first.get(),
                     m_sperr_stream.second);
     }
@@ -236,7 +232,7 @@ auto SPECK3D_Compressor::get_encoded_bitstream() const -> speck::smart_buffer_ui
 auto SPECK3D_Compressor::write_bitstream( const char* filename ) const -> RTNType
 {
     auto stream = this->get_encoded_bitstream();
-    if( stream.first == nullptr || stream.second == 0 )
+    if( speck::empty_buf(stream) )
         return RTNType::Error;
 
     return speck::write_n_bytes( filename, stream.second, stream.first.get() );

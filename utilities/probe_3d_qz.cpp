@@ -46,7 +46,7 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims,
         return 1;
     auto end_time = std::chrono::steady_clock::now();
     auto diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
-    std::cout << "    Compression takes time  : " << diff_time << "ms\n";
+    std::cout << "    Compression takes time: " << diff_time << "ms\n";
     const auto num_bits = speck.get_bit_buffer_size();
     printf("    Total compressed size in bytes: ~%ld, average bpp: ~%.2f\n", 
                 num_bits / 8, float(num_bits) / float(total_vals) );
@@ -68,14 +68,14 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims,
         reconstruct[i] = vol_d.first[i];
     end_time = std::chrono::steady_clock::now();
     diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
-    std::cout << "    Decompression takes time  : " << diff_time << "ms\n";
+    std::cout << "    Decompression takes time: " << diff_time << "ms\n";
 
     // Step 5: Calculate statistics
     float rmse, lmax, psnr, arr1min, arr1max;
     speck::calc_stats( in_buf, reconstruct.get(), total_vals,
                        &rmse, &lmax, &psnr, &arr1min, &arr1max);
     printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
-    printf("    RMSE = %.2e, L-Infty = %.2e, PSNR = %.2f\n", rmse, lmax, psnr);
+    printf("    Reconstructed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2f\n", rmse, lmax, psnr);
 
     // Step 6: Count the number of outliers. 
     //         Estimate new bpp by approximating each encoded outlier taking 32 bits.
