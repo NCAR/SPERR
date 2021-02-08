@@ -99,7 +99,7 @@ int main( int argc, char* argv[] )
         if( print_stats ) {
 
             SPECK3D_Decompressor decompressor;
-            decompressor.take_bitstream( std::move(stream.first), stream.second );
+            decompressor.take_bitstream( std::move(stream) );
             if( decompressor.decompress() != speck::RTNType::Good )
                 return 1;
     
