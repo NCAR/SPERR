@@ -174,10 +174,26 @@ auto speck::end( const std::unique_ptr<T[]>& uptr, size_t length ) -> ptr_iterat
 {
     return ptr_iterator<T>( uptr.get() + length );
 }
-template auto speck::begin(const std::unique_ptr<float[]>&         ) -> ptr_iterator<float>;
-template auto speck::begin(const std::unique_ptr<double[]>&        ) -> ptr_iterator<double>;
-template auto speck::end(  const std::unique_ptr<float[]>&,  size_t) -> ptr_iterator<float>;
-template auto speck::end(  const std::unique_ptr<double[]>&, size_t) -> ptr_iterator<double>;
+template auto speck::begin(const speck::buffer_type_f& )         -> ptr_iterator<float >;
+template auto speck::begin(const speck::buffer_type_d& )         -> ptr_iterator<double>;
+template auto speck::end(  const speck::buffer_type_f&, size_t ) -> ptr_iterator<float >;
+template auto speck::end(  const speck::buffer_type_d&, size_t ) -> ptr_iterator<double>;
+
+
+template<typename T>
+auto speck::begin( const std::pair<std::unique_ptr<T[]>, size_t>& sbf ) -> ptr_iterator<T>
+{
+    return ptr_iterator<T>( sbf.first.get() );
+}
+template<typename T>
+auto speck::end( const std::pair<std::unique_ptr<T[]>, size_t>& sbf ) -> ptr_iterator<T>
+{
+    return ptr_iterator<T>( sbf.first.get() + sbf.second );
+}
+template auto speck::begin( const speck::smart_buffer_f& ) -> ptr_iterator<float >;
+template auto speck::begin( const speck::smart_buffer_d& ) -> ptr_iterator<double>;
+template auto speck::end(   const speck::smart_buffer_f& ) -> ptr_iterator<float >;
+template auto speck::end(   const speck::smart_buffer_d& ) -> ptr_iterator<double>;
 
 
 auto speck::read_n_bytes( const char* filename, size_t n_bytes, void* buffer ) -> RTNType
