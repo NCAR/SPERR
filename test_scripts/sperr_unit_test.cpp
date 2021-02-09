@@ -11,25 +11,43 @@ using speck::RTNType;
 class err_tester 
 {
 private:
-    const size_t length = 256 * 256 * 256;
-    const double tol    = 0.1;
+    const size_t length = 256 * 128* 415;
+    const double tolerance = 0.05;
     
     std::vector<speck::Outlier> LOS, recovered;
 
 public:
-    void test_outliers() {
+    // A method to generate `N` outliers 
+    // The resulting outliers will be stored in `LOS`.
+    void gen_outliers( size_t N )
+    {
+        std::random_device rd{};
+        std::mt19937 gen{rd()};
+        std::normal_distribution<double> val_d{0.0, tolerance};
+        std::uniform_int_distribution<size_t> loc_d{0, length-1};
 
+        LOS.clear();
+        LOS.reserve(N);
+        while( LOS.size() < N ) {
+            double val = 0.0;
+            while( std::abs(val) <= tolerance )
+                val = val_d(gen);
+
+            // Make sure there ain't duplicate locations
+            auto loc = loc_d(gen);
+            while( std::any_of(LOS.begin(), LOS.end(),
+                   [loc](auto& out){return out.location == loc;} )) {
+                loc = loc_d(gen);
+            }
+            LOS.emplace_back(loc, val);
+        }
+    }
+
+    void test_outliers() {
         // Create an encoder
         speck::SPERR encoder;
         encoder.set_length( length );
-        encoder.set_tolerance( tol );
-
-        LOS.clear();
-        LOS.emplace_back( 0, 0.15f );
-        LOS.emplace_back( 10, -0.15f );
-        LOS.emplace_back( length - 1, 0.15f );
-        LOS.emplace_back( length / 2, -0.5f );
-        LOS.emplace_back( 100, -0.35f );
+        encoder.set_tolerance( tolerance );
         encoder.use_outlier_list( LOS );
 
         if( encoder.encode() != RTNType::Good )
@@ -50,8 +68,8 @@ public:
     bool test_recovery() {
         for( auto& orig : LOS ) {
             if( !std::any_of( recovered.cbegin(), recovered.cend(), 
-                [&orig, this](const auto& recov) { return (recov.location == orig.location 
-                && std::abs( recov.error - orig.error ) < tol ); } ) ) {
+                [&orig, this](auto& recov) { return (recov.location == orig.location 
+                && std::abs(recov.error - orig.error) <= tolerance ); } ) ) {
 
                 printf("failed to recover: (%ld, %f)\n", orig.location, orig.error );
                 return false;
@@ -62,9 +80,28 @@ public:
 };
 
 
-TEST( sperr, manual_outliers )
+TEST( sperr, small_num_outliers )
 {
     err_tester tester;   
+    tester.gen_outliers( 100 );
+    tester.test_outliers();
+    bool success = tester.test_recovery();
+    EXPECT_EQ( success, true );
+}
+
+TEST( sperr, medium_num_outliers )
+{
+    err_tester tester;
+    tester.gen_outliers( 1000 );
+    tester.test_outliers();
+    bool success = tester.test_recovery();
+    EXPECT_EQ( success, true );
+}
+
+TEST( sperr, big_num_outliers )
+{
+    err_tester tester;
+    tester.gen_outliers( 10000 );
     tester.test_outliers();
     bool success = tester.test_recovery();
     EXPECT_EQ( success, true );

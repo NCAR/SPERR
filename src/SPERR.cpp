@@ -101,9 +101,19 @@ auto speck::SPERR::m_ready_to_encode() const -> bool
     if (m_LOS.empty())
         return false;
 
-    return std::all_of( m_LOS.begin(), m_LOS.end(),
-                        [len = m_total_len, tol = m_tolerance](auto& out)
-                        {return out.location < len && std::abs(out.error) > tol;} );
+    // Make sure each outlier to process is a valid outlier.
+    if( std::any_of( m_LOS.begin(), m_LOS.end(),
+                     [len = m_total_len, tol = m_tolerance](auto& out)
+                     {return out.location >= len && std::abs(out.error) <= tol;}))
+        return false;
+
+    // Make sure there are no duplicate locations in the outlier list.
+    std::vector<size_t> locs( m_LOS.size(), 0 );
+    std::transform( m_LOS.begin(), m_LOS.end(), locs.begin(),
+                    [](auto& out){return out.location;} );
+    std::sort( locs.begin(), locs.end() );
+    auto adj = std::adjacent_find( locs.begin(), locs.end() );
+    return (adj == locs.end());
 }
 
 auto speck::SPERR::m_ready_to_decode() const -> bool
@@ -203,14 +213,13 @@ auto speck::SPERR::m_decide_significance(const SPECKSet1D& set) const
     // This function is only used during encoding.
     // Strategy: iterate all outliers, if all requirements are met,
     // then this set is significant. Otherwise its insignificant.
-    // 1) its err_hat value is 0.0, meaning it's not processed yet;
-    // 2) its q value is above the current threshold (same requirement as in SPECK);
-    // 3) its location falls inside this set.
+    // 1) its q value is above the current threshold (same requirement as in SPECK);
+    // 2) its location falls inside this set.
 
     for (size_t i = 0; i < m_LOS.size(); i++) {
 
-        if (m_err_hat[i] == 0.0 && m_q[i] >= m_threshold && 
-            set.start <= m_LOS[i].location && m_LOS[i].location < set.start + set.length)
+        if (m_q[i] >= m_threshold && set.start <= m_LOS[i].location && 
+            m_LOS[i].location < set.start + set.length)
             return {true, i};
     }
 
