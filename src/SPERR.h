@@ -77,7 +77,7 @@ private:
     auto m_ready_to_decode() const -> bool;
 
     // If the set to be decided is significant, return a pair containing true and 
-    //   the index that makes it significant.
+    //   the index in the outlier list that makes it significant.
     // If not, return a pair containing false and zero.
     auto m_decide_significance(const SPECKSet1D&) const -> std::pair<bool, size_t>;
 
@@ -120,6 +120,7 @@ private:
     std::vector<bool>    m_recovered_signs; // decoding only
     std::vector<size_t>  m_LSP_new;         // encoding only
     std::vector<size_t>  m_LSP_old;         // encoding only
+    std::vector<bool>    m_sig_map;         // encoding only
 
     std::vector<std::vector<SPECKSet1D>> m_LIS;
 };

@@ -222,7 +222,6 @@ if( BUILD_UNIT_TESTS )
     add_executable( test_sperr
                     "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/sperr_unit_test.cpp" )
     target_link_libraries( test_sperr PUBLIC ${SPERR_LIBS}
-                                      PUBLIC ${CDF_LIBS} 
                                       PUBLIC ${HELPER_LIBS}
                                       PUBLIC gtest_main             )
     add_test( NAME test_sperr COMMAND test_sperr                    )

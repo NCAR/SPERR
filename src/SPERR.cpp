@@ -87,7 +87,7 @@ void speck::SPERR::m_clean_LIS()
 {
     for( auto& list : m_LIS ) {
         auto itr = std::remove_if( list.begin(), list.end(), 
-                                   [](const auto& s) { return s.type == SetType::Garbage; });
+                    [](auto& s){return s.type == SetType::Garbage;});
         list.erase( itr, list.end() );
     }
 }
@@ -108,12 +108,10 @@ auto speck::SPERR::m_ready_to_encode() const -> bool
         return false;
 
     // Make sure there are no duplicate locations in the outlier list.
-    std::vector<size_t> locs( m_LOS.size(), 0 );
-    std::transform( m_LOS.begin(), m_LOS.end(), locs.begin(),
-                    [](auto& out){return out.location;} );
-    std::sort( locs.begin(), locs.end() );
-    auto adj = std::adjacent_find( locs.begin(), locs.end() );
-    return (adj == locs.end());
+    // Note that the list of outliers is sorted at this point.
+    auto adj = std::adjacent_find( m_LOS.begin(), m_LOS.end(), [](auto& a, auto& b)
+                                   {return a.location == b.location;} );
+    return (adj == m_LOS.end());
 }
 
 auto speck::SPERR::m_ready_to_decode() const -> bool
@@ -128,6 +126,8 @@ auto speck::SPERR::m_ready_to_decode() const -> bool
 
 auto speck::SPERR::encode() -> RTNType
 {
+    // Let's sort the list of outliers so it'll be easier to locate particular individuals.
+    std::sort( m_LOS.begin(), m_LOS.end(), [](auto& a, auto& b){return a.location < b.location;} );
     if (!m_ready_to_encode())
         return RTNType::InvalidParam;
     m_encode_mode = true;
@@ -135,12 +135,12 @@ auto speck::SPERR::encode() -> RTNType
     m_initialize_LIS();
     m_outlier_cnt = m_LOS.size(); // Initially everyone in LOS is an outlier
 
-    // m_q is initialized to have the absolute value of all error.
+    // `m_q` is initialized to have the absolute value of all error.
     m_q.assign( m_LOS.size(), 0.0 );
     std::transform( m_LOS.cbegin(), m_LOS.cend(), m_q.begin(),
                     [](auto& out){return std::abs(out.error);} );
 
-    // m_err_hat is initialized to have zeros.
+    // `m_err_hat` is initialized to have zeros.
     m_err_hat.assign(m_LOS.size(), 0.0);
 
     m_LSP_new.clear();
@@ -155,6 +155,13 @@ auto speck::SPERR::encode() -> RTNType
 
     // Start the iterations!
     for (size_t bitplane = 0; bitplane < 64; bitplane++) {
+
+        // Reset the significance map
+        m_sig_map.assign(m_total_len, false);
+        for( size_t i = 0; i < m_LOS.size(); i++ ) {
+            if( m_q[i] >= m_threshold )
+                m_sig_map[ m_LOS[i].location ] = true;
+        }
 
         if (m_sorting_pass())
             break;
@@ -211,24 +218,33 @@ auto speck::SPERR::m_decide_significance(const SPECKSet1D& set) const
                    -> std::pair<bool, size_t>
 {
     // This function is only used during encoding.
-    // Strategy: iterate all outliers, if all requirements are met,
-    // then this set is significant. Otherwise its insignificant.
-    // 1) its q value is above the current threshold (same requirement as in SPECK);
-    // 2) its location falls inside this set.
 
-    for (size_t i = 0; i < m_LOS.size(); i++) {
-
-        if (m_q[i] >= m_threshold && set.start <= m_LOS[i].location && 
-            m_LOS[i].location < set.start + set.length)
-            return {true, i};
+    // Step 1: use the significance map to decide if this set is significant
+    std::pair<bool, size_t> sig{false, 0};
+    for( size_t i = set.start; i < set.start + set.length; i++ ) {
+        if( m_sig_map[i] ) {
+            sig = {true, i};
+            break;
+        }
     }
 
-    return {false, 0};
+    // Step 2: if this set is significant, then find the index of the outlier in 
+    //         `m_LSO` that caused it being significant.
+    // Note that `m_LSO` is sorted at the beginning of encoding.
+    if( sig.first ) {
+        auto itr = std::lower_bound( m_LOS.begin(), m_LOS.end(), sig.second,
+                   [](auto& out, auto& val){return out.location < val;} );
+        assert( itr != m_LOS.end() );
+        assert( (*itr).location == sig.second );  // Must find exactly this index
+        sig.second = std::distance( m_LOS.begin(), itr );
+    }
+
+    return sig;
 }
 
 auto speck::SPERR::m_process_S_encoding(size_t idx1, size_t idx2) -> bool
 {
-    auto& set     = m_LIS[idx1][idx2];
+    auto&  set    = m_LIS[idx1][idx2];
     auto  sig_rtn = m_decide_significance(set);
     bool  is_sig  = sig_rtn.first;
     auto  sig_idx = sig_rtn.second;
@@ -236,8 +252,7 @@ auto speck::SPERR::m_process_S_encoding(size_t idx1, size_t idx2) -> bool
 
     if (is_sig) {
         if (set.length == 1) { // Is a pixel
-            // Record the sign of this newly identify outlier, and put it in LSP
-            m_bit_buffer.push_back(m_LOS[sig_idx].error >= 0.0);
+            m_bit_buffer.push_back(m_LOS[sig_idx].error >= 0.0); // Record its sign
             m_LSP_new.push_back(sig_idx);
 
             // Refine this pixel!
