@@ -103,12 +103,12 @@ auto speck::SPERR::m_ready_to_encode() const -> bool
 
     // Make sure each outlier to process is a valid outlier.
     if( std::any_of( m_LOS.begin(), m_LOS.end(),
-                     [len = m_total_len, tol = m_tolerance](auto& out)
-                     {return out.location >= len && std::abs(out.error) <= tol;}))
+        [len = m_total_len, tol = m_tolerance](auto& out)
+        {return out.location >= len || std::abs(out.error) <= tol;}))
         return false;
 
     // Make sure there are no duplicate locations in the outlier list.
-    // Note that the list of outliers is sorted at this point.
+    // Note that the list of outliers is already sorted at the beginning of encoding.
     auto adj = std::adjacent_find( m_LOS.begin(), m_LOS.end(), [](auto& a, auto& b)
                                    {return a.location == b.location;} );
     return (adj == m_LOS.end());
@@ -233,7 +233,7 @@ auto speck::SPERR::m_decide_significance(const SPECKSet1D& set) const
     // Note that `m_LSO` is sorted at the beginning of encoding.
     if( sig.first ) {
         auto itr = std::lower_bound( m_LOS.begin(), m_LOS.end(), sig.second,
-                   [](auto& out, auto& val){return out.location < val;} );
+                   [](auto& otl, auto& val){return otl.location < val;} );
         assert( itr != m_LOS.end() );
         assert( (*itr).location == sig.second );  // Must find exactly this index
         sig.second = std::distance( m_LOS.begin(), itr );
@@ -244,7 +244,7 @@ auto speck::SPERR::m_decide_significance(const SPECKSet1D& set) const
 
 auto speck::SPERR::m_process_S_encoding(size_t idx1, size_t idx2) -> bool
 {
-    auto&  set    = m_LIS[idx1][idx2];
+    auto& set     = m_LIS[idx1][idx2];
     auto  sig_rtn = m_decide_significance(set);
     bool  is_sig  = sig_rtn.first;
     auto  sig_idx = sig_rtn.second;
