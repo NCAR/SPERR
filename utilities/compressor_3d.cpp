@@ -15,7 +15,7 @@ int main( int argc, char* argv[] )
     CLI::App app("Parse CLI options to compressor_3d");
 
     std::string input_file;
-    app.add_option("filename", input_file, "Input file to the compressor")
+    app.add_option("input_filename", input_file, "Input file to the compressor")
             ->required()->check(CLI::ExistingFile);
 
     bool decomp = false;
@@ -24,35 +24,38 @@ int main( int argc, char* argv[] )
 
     std::vector<size_t> dims;
     app.add_option("--dims", dims, "Dimensions of the input volume. \n"
-            "For example, `--dims 128 128 128`.")->expected(3)
+            "E.g., `--dims 128 128 128`.")->expected(3)
             ->group("Compression Options");
 
 #ifdef QZ_TERM
     int32_t qz_level = 0;
-    auto* qz_level_ptr = app.add_option("-q,--quantization_level", qz_level, 
-            "Target quantization level to stop encoding. For example, \n"
-            "if `-q n`, then the last quantization level will be 2^n.")
+    auto* qz_level_ptr = app.add_option("-q,--qz_level", qz_level, 
+            "Quantization level to reach when encoding. \n"
+            "E.g., `-q n` means that the last quantization level is 2^n, \n"
+            "Note 1: the smaller n is, the smaller compression errors are. \n"
+            "Note 2: n could be negative integers as well.")
             ->group("Compression Options")->required();
 #else
     float bpp = 0.0;
     auto* bpp_ptr = app.add_option("-b,--bit-per-pixel", bpp, 
             "Target bit-per-pixel on average. \nFor example, `-b 2.3`.")
              ->check(CLI::Range(0.0f, 64.0f))->group("Compression Options")->required();
-#endif
 
-    std::string output_file;
-    app.add_option("-o,--output_filename", output_file, "Output filename.");
-
-    bool print_stats = false;
-    app.add_flag("-p,--print_stats", print_stats, "Print statistics (RMSE, L-Infinity, PSNR).")
-            ->group("Compression Options");
-
+    // Partial bitstream decompression is only applicable to fixed-size mode.
     float decomp_bpp = 0.0;
     auto* decomp_bpp_ptr = app.add_option("--partial_bpp", decomp_bpp,
             "Partially decode the bitstream up to a certain bit-per-pixel. \n"
             "If not specified, the entire bitstream will be decoded.")
             ->check(CLI::Range(0.0f, 64.0f))
             ->group("Decompression Options");
+#endif
+
+    std::string output_file;
+    app.add_option("-o", output_file, "Output filename.");
+
+    bool print_stats = false;
+    app.add_flag("-p,--print_stats", print_stats, "Print statistics (RMSE, L-Infinity, PSNR).")
+            ->group("Compression Options");
     
     CLI11_PARSE(app, argc, argv);
 
@@ -138,8 +141,10 @@ int main( int argc, char* argv[] )
         SPECK3D_Decompressor decompressor;
         if( decompressor.read_bitstream( input_file.c_str() ) != speck::RTNType::Good )
             return 1;
+#ifndef QZ_TERM
         if( decompressor.set_bpp( decomp_bpp ) != speck::RTNType::Good )
             return 1;
+#endif
         if( decompressor.decompress() != speck::RTNType::Good )
             return 1;
         if( decompressor.write_volume_f( output_file.c_str() ) != speck::RTNType::Good )

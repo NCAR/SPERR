@@ -84,7 +84,7 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims,
                                            std::plus<>(),
                 [tolerance](auto a, auto b){return std::abs(a-b) > tolerance ? 1 : 0;});
     printf("    With qz level = %d and tolerance = %.2e, "
-           "num of outliers = %ld, pct = %.2f%%\n",
+           "num of outliers = %ld, pct = %.3f%%\n",
            qz_level, tolerance, num_outlier, float(num_outlier * 100) / float(total_vals) );
     printf("    Encoding these outliers will increase bpp to: ~%.2f\n",
                 float(num_bits + num_outlier * 32) / float(total_vals) );
@@ -109,11 +109,12 @@ int main( int argc, char* argv[] )
 
     float tolerance = 0.0;
     app.add_option("-t", tolerance, "Maximum point-wise error tolerance.\n"
-                   "For example, `-t 0.001`.")->required();
+                   "I.e., `-t 0.001`.")->required();
 
     int32_t qz_level;
-    auto* qz_level_ptr = app.add_option("-q", qz_level, 
-                         "Integer quantization level to test. \nFor example, `-q -10`.");
+    auto* qz_level_ptr = app.add_option("-q,--qz_level", qz_level, 
+                         "Integer quantization level to test. \nI.e., `-q -10`. \n"
+                         "If not specified, the probe will pick one for you.");
 
     CLI11_PARSE(app, argc, argv);
     if( tolerance <= 0.0 ) {

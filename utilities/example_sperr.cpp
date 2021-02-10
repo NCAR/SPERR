@@ -85,5 +85,4 @@ int main( int argc, char* argv[] )
             printf("failed to recover: (%ld, %f)\n", orig.location, orig.error );
         }
     }
-
 }
