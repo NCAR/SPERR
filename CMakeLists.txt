@@ -60,25 +60,6 @@ endif()
 
 
 #
-# Add cxxopt
-#
-#project(cxxopt-download NONE)
-#include(ExternalProject)
-#ExternalProject_Add( cxxopt-download
-#  GIT_REPOSITORY        git@github.com:jarro2783/cxxopts.git
-#  GIT_TAG               v2.2.1
-#  GIT_SHALLOW           "True"
-#  PREFIX                "${CMAKE_CURRENT_BINARY_DIR}/cxxopt"
-#  UPDATE_DISCONNECTED   "True"  # Skip update from git step
-#  CONFIGURE_COMMAND     ""      # Configure nothing
-#  BUILD_COMMAND         ""      # Build nothing
-#  INSTALL_COMMAND       ""      # Install nothing
-#  LOG_DOWNLOAD          "True"
-#)
-#ExternalProject_Get_Property( cxxopt-download SOURCE_DIR )
-#configure_file("${SOURCE_DIR}/include/cxxopts.hpp" "cxxopts.hpp" COPYONLY)
-
-#
 # Download CLI11
 #
 file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/download/v1.9.1/CLI11.hpp 
@@ -114,16 +95,6 @@ if( USE_ZSTD )
 endif()
 
 
-add_executable( example_dwt2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt2d.cpp" )
-target_include_directories( example_dwt2d PUBLIC ${PROJECT_BINARY_DIR} )
-target_link_libraries(      example_dwt2d PUBLIC ${CDF_LIBS}
-                                          PUBLIC ${HELPER_LIBS} )
-
-add_executable( example_dwt3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt3d.cpp" )
-target_include_directories( example_dwt3d PUBLIC ${PROJECT_BINARY_DIR} )
-target_link_libraries(      example_dwt3d PUBLIC ${CDF_LIBS}
-                                          PUBLIC ${HELPER_LIBS} )
-
 add_executable( compressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_3d.cpp" )
 target_include_directories( compressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
 target_link_libraries(      compressor_3d PUBLIC ${SPECK3D_LIBS}
@@ -136,12 +107,6 @@ add_executable( compressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_
 target_include_directories( compressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
 target_link_libraries(      compressor_2d PUBLIC ${SPECK2D_LIBS}
                                           PUBLIC ${SPECK_Storage_LIBS}
-                                          PUBLIC ${CDF_LIBS}
-                                          PUBLIC ${HELPER_LIBS} )
-
-add_executable( example_sperr "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_sperr.cpp" )
-target_include_directories( example_sperr PUBLIC ${PROJECT_BINARY_DIR} )
-target_link_libraries(      example_sperr PUBLIC ${SPERR_LIBS}
                                           PUBLIC ${CDF_LIBS}
                                           PUBLIC ${HELPER_LIBS} )
 
@@ -231,7 +196,7 @@ endif()
 
 # block comment
 #[[
-#option( BUILD_QCC_EXAMPLES "Build examples that link to QccPack?" OFF)
+option( BUILD_QCC_EXAMPLES "Build examples that link to QccPack?" OFF)
 if( BUILD_QCC_EXAMPLES )
     set ( QCCPACK_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/QccPack-0.61-1/install/" 
                               CACHE STRING "Where QccPack is installed"             )
@@ -272,5 +237,24 @@ if( BUILD_QCC_EXAMPLES )
     target_include_directories( example_qcc_speck3d PUBLIC ${PROJECT_BINARY_DIR}
                                                     PUBLIC ${QCCPACK_INC}      )
 endif() 
+
+#
+# Examples that I decide not to maintain anymore.
+#
+add_executable( example_dwt2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt2d.cpp" )
+target_include_directories( example_dwt2d PUBLIC ${PROJECT_BINARY_DIR} )
+target_link_libraries(      example_dwt2d PUBLIC ${CDF_LIBS}
+                                          PUBLIC ${HELPER_LIBS} )
+
+add_executable( example_dwt3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt3d.cpp" )
+target_include_directories( example_dwt3d PUBLIC ${PROJECT_BINARY_DIR} )
+target_link_libraries(      example_dwt3d PUBLIC ${CDF_LIBS}
+                                          PUBLIC ${HELPER_LIBS} )
+
+add_executable( example_sperr "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_sperr.cpp" )
+target_include_directories( example_sperr PUBLIC ${PROJECT_BINARY_DIR} )
+target_link_libraries(      example_sperr PUBLIC ${SPERR_LIBS}
+                                          PUBLIC ${CDF_LIBS}
+                                          PUBLIC ${HELPER_LIBS} )
 ]]
 # end of block comment
