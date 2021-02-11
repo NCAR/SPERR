@@ -43,7 +43,7 @@ public:
     //
 
 #ifdef QZ_TERM
-    int execute( int32_t qz_level )
+    int execute( int32_t qz_level, double tol )
 #else
     int execute( float bpp )
 #endif
@@ -64,7 +64,7 @@ public:
 
 #ifdef QZ_TERM
         compressor.set_qz_level( qz_level );
-        compressor.set_tolerance( 0.1 );
+        compressor.set_tolerance( tol );
 #else
         compressor.set_bpp( bpp );
 #endif
@@ -92,7 +92,8 @@ public:
         //
         const size_t nbytes = sizeof(float) * total_vals;
         auto orig = std::make_unique<float[]>(total_vals);
-        if( speck::read_n_bytes( m_input_name.c_str(), nbytes, orig.get() ) != speck::RTNType::Good )
+        if( speck::read_n_bytes( m_input_name.c_str(), nbytes, orig.get() ) != 
+            speck::RTNType::Good )
             return 1;
 
         float rmse, lmax, psnr, arr1min, arr1max;
@@ -114,49 +115,58 @@ private:
 
 
 #ifdef QZ_TERM
-TEST( speck3d_qz_term, big )
+TEST( speck3d_qz_term, large_tolerance )
 {
+    const double tol = 1.0;
     speck_tester tester( "../test_data/wmag128.float", 128, 128, 128 );
-    //tester.execute( 4 );
-    tester.execute( -4 );
+    tester.execute( 2, tol );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 40.241935 );
-    EXPECT_LT( lmax, 29.461009 );
+    EXPECT_GT( psnr, 57.629364 );
+    EXPECT_LT( lmax, tol );
 
-    //tester.execute( 2 );
-    //psnr = tester.get_psnr();
-    //lmax = tester.get_lmax();
-    //EXPECT_GT( psnr, 48.605482 );
-    //EXPECT_LT( lmax,  9.535521 );
+    tester.execute( -1, tol );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 65.498861 );
+    EXPECT_LT( lmax, tol );
 
-    //tester.execute( -1 );
-    //psnr = tester.get_psnr();
-    //lmax = tester.get_lmax();
-    //EXPECT_GT( psnr, 65.496590 );
-    //EXPECT_LT( lmax,  1.376005 );
-
-    //tester.execute( -3 );
-    //psnr = tester.get_psnr();
-    //lmax = tester.get_lmax();
-    //EXPECT_GT( psnr, 78.661909 );
-    //EXPECT_LT( lmax,  0.257962 );
+    tester.execute( -2, tol );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 72.025230 );
+    EXPECT_LT( lmax, 0.6164713 );
 }
+TEST( speck3d_qz_term, small_tolerance )
+{
+    const double tol = 0.07;
+    speck_tester tester( "../test_data/wmag128.float", 128, 128, 128 );
+    tester.execute( -3, tol );
+    float psnr = tester.get_psnr();
+    float lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 81.446037 );
+    EXPECT_LT( lmax, tol );
 
+    tester.execute( -5, tol );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 91.618080 );
+    EXPECT_LT( lmax, 0.0637522 );
+}
 TEST( speck3d_qz_term, narrow_data_range)
 {
     speck_tester tester( "../test_data/vorticity.128_128_41", 128, 128, 41 );
-    tester.execute( -16 );
+    tester.execute( -16, 4e-5 );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
     EXPECT_GT( psnr, 42.292308 );
-    EXPECT_LT( lmax, 0.000032 );
+    EXPECT_LT( lmax, 3.168651e-5 );
 
-    tester.execute( -18 );
+    tester.execute( -18, 4e-5 );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 50.513602 );
-    EXPECT_LT( lmax,  0.000009 );
+    EXPECT_GT( psnr, 50.513606 );
+    EXPECT_LT( lmax, 8.966978e-6 );
 }
 #else
 TEST( speck3d_bit_rate, small )
