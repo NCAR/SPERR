@@ -18,7 +18,7 @@
 
 
 auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, 
-                         int32_t qz_level, float tolerance ) -> int 
+                         int32_t qz_level, double tolerance ) -> int 
 {
     // Setup
     const size_t total_vals = dims[0] * dims[1] * dims[2];
@@ -93,7 +93,7 @@ int main( int argc, char* argv[] )
     app.add_option("--dims", dims_v, "Dimensions of the input volume. \n"
             "For example, `--dims 128 128 128`.")->required()->expected(3);
 
-    float tolerance = 0.0;
+    double tolerance = 0.0;
     app.add_option("-t", tolerance, "Maximum point-wise error tolerance.\n"
                    "I.e., `-t 0.001`.")->required();
 

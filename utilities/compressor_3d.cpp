@@ -5,150 +5,88 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <chrono>
 #include <cstring>
 
 
 int main( int argc, char* argv[] )
 {
     // Parse command line options
-    CLI::App app("Parse CLI options to compressor_3d");
+    CLI::App app("");
 
     std::string input_file;
     app.add_option("input_filename", input_file, "Input file to the compressor")
             ->required()->check(CLI::ExistingFile);
 
-    bool decomp = false;
-    auto* decomp_ptr = app.add_flag("-d,--decompress", decomp, "Perform decompression. \n"
-            "If not specified, the program performs compression.");
-
     std::vector<size_t> dims;
-    app.add_option("--dims", dims, "Dimensions of the input volume. \n"
-            "E.g., `--dims 128 128 128`.")->expected(3)
-            ->group("Compression Options");
+    app.add_option("--dims", dims, "Dimensions of the input volume\n"
+                   "E.g., `--dims 128 128 128`")->expected(3)->required();
 
 #ifdef QZ_TERM
     int32_t qz_level = 0;
     auto* qz_level_ptr = app.add_option("-q,--qz_level", qz_level, 
-            "Quantization level to reach when encoding. \n"
-            "E.g., `-q n` means that the last quantization level is 2^n, \n"
-            "Note 1: the smaller n is, the smaller compression errors are. \n"
+            "Quantization level to reach when encoding\n"
+            "E.g., `-q n` means that the last quantization level is 2^n.\n"
+            "Note 1: smaller n usually yields smaller compression errors.\n"
             "Note 2: n could be negative integers as well.")
-            ->group("Compression Options")->required();
+            ->group("Compression Parameters")->required();
+    double tolerance = 0.0;
+    auto* tol_ptr = app.add_option("-t,--tolerance", tolerance, 
+                                   "Maximum point-wise error tolerance\nI.e., `-t 1e-2`")
+                                   ->group("Compression Parameters")->required();
 #else
     float bpp = 0.0;
-    auto* bpp_ptr = app.add_option("-b,--bit-per-pixel", bpp, 
-            "Target bit-per-pixel on average. \nFor example, `-b 2.3`.")
-             ->check(CLI::Range(0.0f, 64.0f))->group("Compression Options")->required();
+    auto* bpp_ptr = app.add_option("-b,--bpp", bpp, 
+            "Target bit-per-pixel on average. E.g., `-b 2.3`.")
+             ->check(CLI::Range(0.0f, 64.0f))
+             ->group("Compression Parameters")->required();
 
     // Partial bitstream decompression is only applicable to fixed-size mode.
-    float decomp_bpp = 0.0;
-    auto* decomp_bpp_ptr = app.add_option("--partial_bpp", decomp_bpp,
-            "Partially decode the bitstream up to a certain bit-per-pixel. \n"
-            "If not specified, the entire bitstream will be decoded.")
-            ->check(CLI::Range(0.0f, 64.0f))
-            ->group("Decompression Options");
+    //float decomp_bpp = 0.0;
+    //auto* decomp_bpp_ptr = app.add_option("--partial_bpp", decomp_bpp,
+    //        "Partially decode the bitstream up to a certain bit-per-pixel. \n"
+    //        "If not specified, the entire bitstream will be decoded.")
+    //        ->check(CLI::Range(0.0f, 64.0f))
+    //        ->group("Decompression Options");
 #endif
 
     std::string output_file;
-    app.add_option("-o", output_file, "Output filename.");
+    app.add_option("-o", output_file, "Output filename")->required();
 
-    bool print_stats = false;
-    app.add_flag("-p,--print_stats", print_stats, "Print statistics (RMSE, L-Infinity, PSNR).")
-            ->group("Compression Options");
-    
     CLI11_PARSE(app, argc, argv);
 
-    //
-    // Compression mode
-    //
-    if( !decomp ) {
-
-        if( dims.empty() ) {
-            std::cerr << "Please specify the input dimensions" << std::endl;
-            return 1;
-        }
-
-        const size_t total_vals = dims[0] * dims[1] * dims[2];
-        SPECK3D_Compressor compressor ( dims[0], dims[1], dims[2] );
-        if( compressor.read_floats( input_file.c_str() ) != speck::RTNType::Good )
-            return 1;
-
 #ifdef QZ_TERM
-        compressor.set_qz_level( qz_level );
-#else
-        if( compressor.set_bpp( bpp ) != speck::RTNType::Good )
-            return 1;
+    if( tolerance <= 0.0 ) { 
+        std::cerr << "Tolerance must be a positive value!\n";
+        return 1;
+    }
 #endif
 
-        auto start = std::chrono::steady_clock::now();
-        if( compressor.compress() != speck::RTNType::Good )
-            return 1;
-        auto end = std::chrono::steady_clock::now();
 
-        // Print compression time
-        auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-        std::cout << "Compression takes time: " << diff << "ms\n";
-
-        // Let's obtain an encoded bitstream
-        auto stream = compressor.get_encoded_bitstream();
-        if( stream.first == nullptr || stream.second == 0 )
-            return 1;
-
-        // Print average bit-per-pixel
-        const auto bpp = double(stream.second * 8) / double(total_vals);
-        std::cout << "Average bit-per-pixel: " << bpp << "\n";
-
-        if( print_stats ) {
-
-            SPECK3D_Decompressor decompressor;
-            decompressor.take_bitstream( std::move(stream) );
-            if( decompressor.decompress() != speck::RTNType::Good )
-                return 1;
-    
-            auto vol = decompressor.get_decompressed_volume_f();
-            if( vol.first == nullptr || vol.second != total_vals )
-                return 1;
-
-            // Read the original input data again
-            const size_t nbytes = sizeof(float) * total_vals;
-            auto orig = std::make_unique<float[]>(total_vals);
-            if( speck::read_n_bytes( input_file.c_str(), nbytes, orig.get() ) != speck::RTNType::Good )
-                return 1;
-            
-            float rmse, lmax, psnr, arr1min, arr1max;
-            speck::calc_stats( orig.get(), vol.first.get(), total_vals,
-                               &rmse, &lmax, &psnr, &arr1min, &arr1max);
-
-            printf("RMSE = %f, L-Infty = %f, PSNR = %f\n", rmse, lmax, psnr);
-            printf("The original data range is: (%f, %f)\n", arr1min, arr1max);
-        }
-    
-        if( !output_file.empty() ) {
-            if( compressor.write_bitstream( output_file.c_str() ) != speck::RTNType::Good )
-                return 1;
-        }
+    //
+    // Let's do the actual work
+    //
+    const size_t total_vals = dims[0] * dims[1] * dims[2];
+    SPECK3D_Compressor compressor ( dims[0], dims[1], dims[2] );
+    if( compressor.read_floats( input_file.c_str() ) != speck::RTNType::Good ) {
+        std::cerr << "Read input file error: " << input_file << std::endl;
+        return 1;
     }
 
-    //
-    // Decompression mode
-    //
-    else {
-        if( output_file.empty() ) {
-            std::cerr << "Please specify output filename!" << std::endl;
-            return 1;
-        }
-        SPECK3D_Decompressor decompressor;
-        if( decompressor.read_bitstream( input_file.c_str() ) != speck::RTNType::Good )
-            return 1;
-#ifndef QZ_TERM
-        if( decompressor.set_bpp( decomp_bpp ) != speck::RTNType::Good )
-            return 1;
+#ifdef QZ_TERM
+    compressor.set_qz_level( qz_level );
+    compressor.set_tolerance( tolerance );
+#else
+    compressor.set_bpp( bpp );
 #endif
-        if( decompressor.decompress() != speck::RTNType::Good )
-            return 1;
-        if( decompressor.write_volume_f( output_file.c_str() ) != speck::RTNType::Good )
-            return 1;
+
+    if( compressor.compress() != speck::RTNType::Good ) {
+        std::cerr << "Compression failed!" << std::endl;
+        return 1;
+    }
+
+    if( compressor.write_bitstream( output_file.c_str() ) != speck::RTNType::Good ) {
+        std::cerr << "Write to disk failed!" << std::endl;
+        return 1;
     }
 
     return 0;
