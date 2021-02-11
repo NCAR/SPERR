@@ -237,9 +237,9 @@ auto speck::read_whole_file( const char* filename ) -> std::pair<std::unique_ptr
     else
         return {std::move(buf), num_vals};
 }
-template auto speck::read_whole_file( const char* ) -> std::pair<buffer_type_f, size_t>;
-template auto speck::read_whole_file( const char* ) -> std::pair<buffer_type_d, size_t>;
-template auto speck::read_whole_file( const char* ) -> std::pair<buffer_type_uint8, size_t>;
+template auto speck::read_whole_file( const char* ) -> speck::smart_buffer_f;
+template auto speck::read_whole_file( const char* ) -> speck::smart_buffer_d;
+template auto speck::read_whole_file( const char* ) -> speck::smart_buffer_uint8;
 
 
 auto speck::write_n_bytes( const char* filename, size_t n_bytes, const void* buffer ) -> RTNType

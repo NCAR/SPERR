@@ -1,5 +1,4 @@
 #include "SPECK3D_Compressor.h"
-#include "SPECK3D_Decompressor.h"
 
 #include "CLI11.hpp"
 
@@ -14,7 +13,7 @@ int main( int argc, char* argv[] )
     CLI::App app("");
 
     std::string input_file;
-    app.add_option("input_filename", input_file, "Input file to the compressor")
+    app.add_option("input_filename", input_file, "Input data file to the compressor")
             ->required()->check(CLI::ExistingFile);
 
     std::vector<size_t> dims;

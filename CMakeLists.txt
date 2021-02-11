@@ -103,6 +103,14 @@ target_link_libraries(      compressor_3d PUBLIC ${SPECK3D_LIBS}
                                           PUBLIC ${CDF_LIBS}
                                           PUBLIC ${HELPER_LIBS} )
 
+add_executable( decompressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/decompressor_3d.cpp" )
+target_include_directories( decompressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
+target_link_libraries(      decompressor_3d PUBLIC ${SPECK3D_LIBS}
+                                            PUBLIC ${SPECK_Storage_LIBS}
+                                            PUBLIC ${SPERR_LIBS}
+                                            PUBLIC ${CDF_LIBS}
+                                            PUBLIC ${HELPER_LIBS} )
+
 add_executable( compressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_2d.cpp" )
 target_include_directories( compressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
 target_link_libraries(      compressor_2d PUBLIC ${SPECK2D_LIBS}

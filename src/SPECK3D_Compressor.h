@@ -1,7 +1,6 @@
 //
 // This is a the class object that is supposed to be used by most users, because
 // it provides easy-to-use APIs.
-// Functionality wise, it does not bring anything new though.
 // 
 
 #ifndef SPECK3D_COMPRESSOR_H
