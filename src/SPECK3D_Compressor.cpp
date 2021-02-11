@@ -63,6 +63,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
         return RTNType::Error;
     m_speck_stream = {nullptr, 0};
     m_sperr_stream = {nullptr, 0};
+    m_num_outlier  = 0;
 
     // Note that we keep the original buffer untouched for outlier calculations later.
     m_cdf.copy_data( m_val_buf.get(), m_total_vals );
@@ -103,6 +104,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
 
     // Now we encode any outlier that's found.
     if( !LOS.empty() ) {
+        m_num_outlier = LOS.size();
         m_sperr.use_outlier_list( std::move(LOS) );
         rtn  = m_sperr.encode();
         if( rtn != RTNType::Good )
@@ -173,9 +175,9 @@ auto SPECK3D_Compressor::get_encoded_bitstream() const -> speck::smart_buffer_ui
 #endif
     metabool[1] = true;     // 3D
     if( speck::empty_buf(m_sperr_stream) )
-        metabool[2] = false;// has sperr data attached
+        metabool[2] = false;// no sperr data attached
     else
-        metabool[2] = true; // no sperr data attached 
+        metabool[2] = true; // has sperr data attached 
     for( int i = 3; i < 8; i++ )
         metabool[i] = false;// unused
     speck::pack_8_booleans( meta[1], metabool );
@@ -253,6 +255,10 @@ auto SPECK3D_Compressor::set_tolerance( double tol ) -> RTNType
         m_sperr.set_tolerance( tol );
         return RTNType::Good;
     }
+}
+auto SPECK3D_Compressor::get_outlier_count() const -> std::pair<size_t, size_t>
+{
+    return {m_num_outlier, m_sperr_stream.second};
 }
 #else
 auto SPECK3D_Compressor::set_bpp( float bpp ) -> RTNType

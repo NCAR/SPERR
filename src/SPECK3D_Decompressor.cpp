@@ -110,8 +110,7 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
 }
 
 
-auto SPECK3D_Decompressor::get_decompressed_volume_f() const
-                           -> std::pair<speck::buffer_type_f, size_t>
+auto SPECK3D_Decompressor::get_decompressed_volume_f() const -> speck::smart_buffer_f
 {
     auto vol = m_cdf.get_read_only_data();
     if( vol.first == nullptr || vol.second == 0 )
@@ -133,8 +132,7 @@ auto SPECK3D_Decompressor::get_decompressed_volume_f() const
 }
 
 
-auto SPECK3D_Decompressor::get_decompressed_volume_d() const
-                           -> std::pair<speck::buffer_type_d, size_t>
+auto SPECK3D_Decompressor::get_decompressed_volume_d() const -> speck::smart_buffer_d
 {
     auto vol = m_cdf.get_read_only_data();
     if(  vol.first == nullptr || vol.second == 0 )

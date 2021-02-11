@@ -31,8 +31,8 @@ public:
     auto decompress() -> RTNType;
 
     // Get the decompressed volume in a float or double buffer.
-    auto get_decompressed_volume_f() const -> std::pair<speck::buffer_type_f, size_t>;
-    auto get_decompressed_volume_d() const -> std::pair<speck::buffer_type_d, size_t>;
+    auto get_decompressed_volume_f() const -> speck::smart_buffer_f;
+    auto get_decompressed_volume_d() const -> speck::smart_buffer_d;
 
     // Write the decompressed volume as floats or doubles to a file on disk.
     auto write_volume_f( const char* filename ) const -> RTNType;
