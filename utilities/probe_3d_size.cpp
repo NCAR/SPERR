@@ -14,7 +14,7 @@
 
 
 auto use_compressor( const float* in_buf, std::array<size_t, 3> dims, float bpp )
-     -> std::pair<speck::buffer_type_uint8, size_t>
+                    -> speck::smart_buffer_uint8 
 {
     const size_t total_vals = dims[0] * dims[1] * dims[2];
     SPECK3D_Compressor compressor ( dims[0], dims[1], dims[2] );
@@ -35,7 +35,7 @@ auto use_compressor( const float* in_buf, std::array<size_t, 3> dims, float bpp 
     }
     auto end = std::chrono::steady_clock::now();
     auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-    std::cout << "    Compression takes time  : " << diff << "ms\n";
+    std::cout << " -> Compression takes time  : " << diff << "ms\n";
 
     auto stream = compressor.get_encoded_bitstream();
     if( stream.first == nullptr || stream.second == 0 ) {
@@ -46,11 +46,10 @@ auto use_compressor( const float* in_buf, std::array<size_t, 3> dims, float bpp 
     return stream;
 }
 
-auto use_decompressor( std::pair<speck::buffer_type_uint8, size_t> stream )
-     -> std::pair<speck::buffer_type_f, size_t>
+auto use_decompressor( speck::smart_buffer_uint8 stream ) -> speck::smart_buffer_f
 {
     SPECK3D_Decompressor decompressor;
-    decompressor.take_bitstream( std::move(stream.first), stream.second );
+    decompressor.take_bitstream( std::move(stream) );
 
     auto start = std::chrono::steady_clock::now();
     if( decompressor.decompress() != speck::RTNType::Good ) {
@@ -59,7 +58,7 @@ auto use_decompressor( std::pair<speck::buffer_type_uint8, size_t> stream )
     }
     auto end = std::chrono::steady_clock::now();
     auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-    std::cout << "    Decompression takes time: " << diff << "ms\n";
+    std::cout << " -> Decompression takes time: " << diff << "ms\n";
 
     auto vol = decompressor.get_decompressed_volume_f();
     if( vol.first == nullptr ) {
@@ -89,7 +88,7 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, float 
                        &rmse, &lmax, &psnr, &arr1min, &arr1max);
 
     printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
-    printf("    RMSE = %.2e, L-Infty = %.2e, PSNR = %.2f\n", rmse, lmax, psnr);
+    printf("    RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
     
     return 0;
 }
@@ -103,7 +102,7 @@ int main( int argc, char* argv[] )
     CLI::App app("CLI options to probe_3d");
 
     std::string input_file;
-    app.add_option("filename", input_file, "Input file to the probe")
+    app.add_option("input_filename", input_file, "Input data file to probe")
             ->required()->check(CLI::ExistingFile);
 
     std::vector<size_t> dims_v;
@@ -112,7 +111,7 @@ int main( int argc, char* argv[] )
 
     float bpp;
     auto* bpp_ptr = app.add_option("--bpp", bpp, "Target bit-per-pixel value.\n"
-                    "For example, `--bpp 0.5`.");
+                    "For example, `--bpp 0.5`.")->check(CLI::Range(0.0f, 64.0f));
 
     CLI11_PARSE(app, argc, argv);
     const std::array<size_t, 3> dims = {dims_v[0], dims_v[1], dims_v[2]};

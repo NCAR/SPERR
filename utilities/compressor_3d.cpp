@@ -33,19 +33,11 @@ int main( int argc, char* argv[] )
                                    "Maximum point-wise error tolerance\nI.e., `-t 1e-2`")
                                    ->group("Compression Parameters")->required();
 #else
-    float bpp = 0.0;
+    float bpp;
     auto* bpp_ptr = app.add_option("-b,--bpp", bpp, 
-            "Target bit-per-pixel on average. E.g., `-b 2.3`.")
+            "Target bit-per-pixel. E.g., `-b 2.3`.")
              ->check(CLI::Range(0.0f, 64.0f))
              ->group("Compression Parameters")->required();
-
-    // Partial bitstream decompression is only applicable to fixed-size mode.
-    //float decomp_bpp = 0.0;
-    //auto* decomp_bpp_ptr = app.add_option("--partial_bpp", decomp_bpp,
-    //        "Partially decode the bitstream up to a certain bit-per-pixel. \n"
-    //        "If not specified, the entire bitstream will be decoded.")
-    //        ->check(CLI::Range(0.0f, 64.0f))
-    //        ->group("Decompression Options");
 #endif
 
     std::string output_file;

@@ -91,7 +91,8 @@ endif()
 if( USE_ZSTD )
     ExternalProject_Get_Property( zstd-download INSTALL_DIR )
     link_directories( "${INSTALL_DIR}/lib" )
-    list( APPEND SPECK_Storage_LIBS zstd )
+    list( APPEND SPECK3D_LIBS zstd )
+    list( APPEND SPECK2D_LIBS zstd )
 endif()
 
 

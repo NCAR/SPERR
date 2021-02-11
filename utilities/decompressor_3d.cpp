@@ -47,6 +47,10 @@ int main( int argc, char* argv[] )
         return 1;
     }
 
+#ifndef QZ_TERM
+    decompressor.set_bpp( decomp_bpp );
+#endif
+
     if( decompressor.decompress() != speck::RTNType::Good ) {
         std::cerr << "Decompression failed!" << std::endl;
         return 1;
