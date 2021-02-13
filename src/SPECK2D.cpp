@@ -176,8 +176,8 @@ auto speck::SPECK2D::m_sorting_pass() -> RTNType
 auto speck::SPECK2D::m_refinement_pass() -> RTNType
 {
     for (auto& p : m_LSP) {
-        if (p.signif == Significance::NewlySig)
-            p.signif = Significance::Sig;
+        if (p.signif == SigType::NewlySig)
+            p.signif =  SigType::Sig;
         else {
             if (m_encode_mode) {
                 auto rtn = m_output_refinement(p);
@@ -213,17 +213,17 @@ auto speck::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
                 return rtn;
             assert( rtn == RTNType::Good );
 #ifdef PRINT
-            auto        bit = (set.signif == Significance::Sig);
+            auto bit = (set.signif == SigType::Sig);
             std::string str = bit ? "s1" : "s0";
             std::cout << str << std::endl;
 #endif
         }
     } else
-        set.signif = Significance::Sig;
+        set.signif = SigType::Sig;
 
-    if (set.signif == Significance::Sig) {
+    if (set.signif == SigType::Sig) {
         if (set.is_pixel()) {
-            set.signif = Significance::NewlySig;
+            set.signif = SigType::NewlySig;
             if (m_encode_mode) {
                 auto rtn = m_output_pixel_sign(set);
                 if( rtn == RTNType::BitBudgetMet )
@@ -270,8 +270,8 @@ auto speck::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> RTNType
             assert( rtn == RTNType::Good );
 
             // clang-format off
-            if (m_LIS[newidx1][newidx2].signif == Significance::Sig || 
-                m_LIS[newidx1][newidx2].signif == Significance::NewlySig) {
+            if (m_LIS[newidx1][newidx2].signif == SigType::Sig || 
+                m_LIS[newidx1][newidx2].signif == SigType::NewlySig) {
                 already_sig++;
             }
             // clang-format on
@@ -345,7 +345,7 @@ auto speck::SPECK2D::m_process_I(bool need_decide_sig) -> RTNType
         if (need_decide_sig)
             m_decide_set_significance(m_I);
         else
-            m_I.signif = Significance::Sig;
+            m_I.signif = SigType::Sig;
 
         auto rtn = m_output_set_significance(m_I);
         if( rtn == RTNType::BitBudgetMet )
@@ -358,14 +358,14 @@ auto speck::SPECK2D::m_process_I(bool need_decide_sig) -> RTNType
         assert( rtn == RTNType::Good );
 
 #ifdef PRINT
-        auto        bit = (m_I.signif == Significance::Sig);
+        auto bit = (m_I.signif == SigType::Sig);
         std::string str = bit ? "s1" : "s0";
         std::cout << str << std::endl;
 #endif
 
     }
 
-    if (m_I.signif == Significance::Sig) {
+    if (m_I.signif == SigType::Sig) {
         auto rtn = m_code_I();
         if( rtn == RTNType::BitBudgetMet )
             return rtn;
@@ -396,8 +396,8 @@ auto speck::SPECK2D::m_code_I() -> RTNType
             assert( rtn == RTNType::Good );
 
             // clang-format off
-            if (m_LIS[newidx1][newidx2].signif == Significance::Sig || 
-                m_LIS[newidx1][newidx2].signif == Significance::NewlySig) {
+            if (m_LIS[newidx1][newidx2].signif == SigType::Sig || 
+                m_LIS[newidx1][newidx2].signif == SigType::NewlySig) {
                 already_sig++;
             }
             // clang-format on
@@ -462,13 +462,13 @@ auto speck::SPECK2D::m_decide_set_significance(SPECKSet2D& set) -> RTNType
             return RTNType::BitBudgetMet;
 
         auto bit   = m_bit_buffer[m_bit_idx++];
-        set.signif = bit ? Significance::Sig : Significance::Insig;
+        set.signif = bit ? SigType::Sig : SigType::Insig;
         return RTNType::Good;
     }
 
     // If encoding, we start by marking it insignificant, and then compare with the
     // significance map.
-    set.signif = Significance::Insig;
+    set.signif = SigType::Insig;
 
     // For TypeS sets, we test an obvious rectangle specified by this set.
     if (set.type == SetType::TypeS) {
@@ -476,7 +476,7 @@ auto speck::SPECK2D::m_decide_set_significance(SPECKSet2D& set) -> RTNType
             for (auto x = set.start_x; x < (set.start_x + set.length_x); x++) {
                 auto idx = y * m_dim_x + x;
                 if (m_significance_map[idx]) {
-                    set.signif = Significance::Sig;
+                    set.signif = SigType::Sig;
                     return RTNType::Good;
                 }
             }
@@ -488,7 +488,7 @@ auto speck::SPECK2D::m_decide_set_significance(SPECKSet2D& set) -> RTNType
             for (auto x = set.start_x; x < set.length_x; x++) {
                 auto idx = y * m_dim_x + x;
                 if (m_significance_map[idx]) {
-                    set.signif = Significance::Sig;
+                    set.signif = SigType::Sig;
                     return RTNType::Good;
                 }
             }
@@ -497,7 +497,7 @@ auto speck::SPECK2D::m_decide_set_significance(SPECKSet2D& set) -> RTNType
         // Note: this rectangle is stored in a contiguous chunk of memory :)
         for (auto i = set.start_y * set.length_x; i < set.length_x * set.length_y; i++) {
             if (m_significance_map[i]) {
-                set.signif = Significance::Sig;
+                set.signif = SigType::Sig;
                 return RTNType::Good;
             }
         }
@@ -509,13 +509,13 @@ auto speck::SPECK2D::m_decide_set_significance(SPECKSet2D& set) -> RTNType
 auto speck::SPECK2D::m_output_set_significance(const SPECKSet2D& set) -> RTNType
 {
 #ifdef PRINT
-    if (set.signif == Significance::Sig)
+    if (set.signif == SigType::Sig)
         std::cout << "s1" << std::endl;
     else
         std::cout << "s0" << std::endl;
 #endif
 
-    auto bit = (set.signif == Significance::Sig);
+    auto bit = (set.signif == SigType::Sig);
     m_bit_buffer.push_back(bit);
 
     // Let's also see if we're reached the bit budget

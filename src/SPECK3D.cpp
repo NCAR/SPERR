@@ -615,7 +615,7 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
 
     // decide the significance of this set
     bool sig = m_decide_significance(set);
-    set.signif = sig ? Significance::Sig : Significance::Insig;
+    set.signif = sig ? SigType::Sig : SigType::Insig;
     m_bit_buffer.push_back(sig);
 
 
@@ -624,7 +624,7 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
         return RTNType::BitBudgetMet;
 #endif
 
-    if (set.signif == Significance::Sig) {
+    if (set.signif == SigType::Sig) {
 #ifdef QZ_TERM
         m_code_S(idx1, idx2);
 #else
@@ -669,10 +669,10 @@ auto speck::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2) -> RTNType
         return RTNType::BitBudgetMet;
 
     auto& set  = m_LIS[idx1][idx2];
-    set.signif = m_bit_buffer[m_bit_idx++] ? Significance::Sig : Significance::Insig;
+    set.signif = m_bit_buffer[m_bit_idx++] ? SigType::Sig : SigType::Insig;
     int rtn    = 0;
 
-    if (set.signif == Significance::Sig) {
+    if (set.signif == SigType::Sig) {
         auto rtn = m_code_S(idx1, idx2);
         if( rtn == RTNType::BitBudgetMet )
             return RTNType::BitBudgetMet;

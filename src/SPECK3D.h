@@ -23,9 +23,9 @@ public:
     uint32_t length_z = 0;
     // which partition level is this set at (starting from zero, in all 3 directions).
     // This data member is the sum of all 3 partition levels.
-    uint16_t     part_level = 0;
-    Significance signif     = Significance::Insig;
-    SetType      type       = SetType::TypeS; // Only used to indicate garbage status
+    uint16_t part_level = 0;
+    SigType  signif     = SigType::Insig;
+    SetType  type       = SetType::TypeS; // Only used to indicate garbage status
 
 public:
     //

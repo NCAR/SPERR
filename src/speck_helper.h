@@ -41,10 +41,11 @@ namespace speck {
 //
 // Helper classes
 //
-enum class Significance : unsigned char {
+enum class SigType : unsigned char {
     Insig,
     Sig,
-    NewlySig
+    NewlySig,
+    Dunno
 };
 
 enum class SetType : unsigned char {
