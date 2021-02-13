@@ -176,6 +176,9 @@ auto speck::SPECK2D::m_sorting_pass() -> RTNType
 auto speck::SPECK2D::m_refinement_pass() -> RTNType
 {
     for (auto& p : m_LSP) {
+        // This pixel should have one of the two significant markers
+        assert( p.signif == SigType::NewlySig || p.signif == SigType::Sig );
+
         if (p.signif == SigType::NewlySig)
             p.signif =  SigType::Sig;
         else {
@@ -218,8 +221,13 @@ auto speck::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
             std::cout << str << std::endl;
 #endif
         }
-    } else
+    } 
+    else {
         set.signif = SigType::Sig;
+    }
+
+    // set should not have a Dunno marker
+    assert( set.signif != SigType::Dunno );
 
     if (set.signif == SigType::Sig) {
         if (set.is_pixel()) {
