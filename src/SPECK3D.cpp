@@ -382,6 +382,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
         }
     }
 
+    //
     // Then we process regular sets in LIS.
     //
     for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
@@ -568,16 +569,13 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
     return RTNType::Good;
 }
 
-auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType 
+auto speck::SPECK3D::m_decide_significance( const SPECKSet3D& set ) const -> bool
 {
-    auto& set = m_LIS[idx1][idx2];
-
-    // decide the significance of this set
-    set.signif              = Significance::Insig;
+    bool sig = false;
     const size_t slice_size = m_dim_x * m_dim_y;
 
-    // Also, this old-fashioned serial implementation is faster than using OMP
-    //   at any level (Z, Y, X) of this loop.
+    // This old-fashioned serial implementation is faster than using OMP
+    // at any level (Z, Y, X) of this loop.
     if( m_sig_map_enabled ) {
         for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
             const size_t slice_offset = z * slice_size;
@@ -585,7 +583,7 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
                 const size_t col_offset = slice_offset + y * m_dim_x;
                 for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
                     if( m_sig_map[ col_offset + x ] ) {
-                        set.signif = Significance::Sig;
+                        sig = true;
                         goto end_loop_label;
                     }
                 }   
@@ -601,14 +599,24 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
                 const size_t col_offset = slice_offset + y * m_dim_x;
                 auto start = begin0 + (col_offset + set.start_x);
                 if(std::any_of(start, start + set.length_x, GT)) {
-                    set.signif = Significance::Sig;
+                    sig = true;
                     goto end_loop_label;
                 }
             }
         }
     }
-end_loop_label:
-    m_bit_buffer.push_back(set.signif != Significance::Insig); // output true/false
+  end_loop_label:
+    return sig;
+}
+
+auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType 
+{
+    auto& set = m_LIS[idx1][idx2];
+
+    // decide the significance of this set
+    bool sig = m_decide_significance(set);
+    set.signif = sig ? Significance::Sig : Significance::Insig;
+    m_bit_buffer.push_back(sig);
 
 
 #ifndef QZ_TERM
@@ -686,7 +694,6 @@ auto speck::SPECK3D::m_code_S(size_t idx1, size_t idx2) -> RTNType
             m_LIP.push_back(s.start_z * m_dim_x * m_dim_y + s.start_y * m_dim_x + s.start_x);
 
             if (m_encode_mode) {
-
 #ifdef QZ_TERM
                 m_process_P_encode(m_LIP.size() - 1);
 #else
@@ -695,20 +702,20 @@ auto speck::SPECK3D::m_code_S(size_t idx1, size_t idx2) -> RTNType
                     return RTNType::BitBudgetMet;
                 assert( rtn == RTNType::Good );
 #endif
-
-            } else {    // decoding mode
+            } 
+            else {    // decoding mode
                 auto rtn = m_process_P_decode(m_LIP.size() - 1);
                 if( rtn == RTNType::BitBudgetMet )
                     return RTNType::BitBudgetMet;
                 assert( rtn == RTNType::Good );
             }
-        } else if (!s.is_empty()) {
+        } 
+        else if (!s.is_empty()) {
             const auto newidx1 = s.part_level;
             m_LIS[newidx1].emplace_back(s);
             const auto newidx2 = m_LIS[newidx1].size() - 1;
 
             if (m_encode_mode) {
-
 #ifdef QZ_TERM
                 m_process_S_encode(newidx1, newidx2);
 #else
@@ -717,8 +724,8 @@ auto speck::SPECK3D::m_code_S(size_t idx1, size_t idx2) -> RTNType
                     return RTNType::BitBudgetMet;
                 assert( rtn == RTNType::Good );
 #endif
-
-            } else {    // decoding mode
+            } 
+            else {    // decoding mode
                 auto rtn = m_process_S_decode(newidx1, newidx2);
                 if( rtn == RTNType::BitBudgetMet )
                     return RTNType::BitBudgetMet;

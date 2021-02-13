@@ -88,6 +88,9 @@ private:
     auto m_partition_S_XY (const SPECKSet3D&) const -> std::array<SPECKSet3D, 4>;
     auto m_partition_S_Z  (const SPECKSet3D&) const -> std::array<SPECKSet3D, 2>;
 
+    // Decide if a set is significant or not
+    auto m_decide_significance( const SPECKSet3D& ) const -> bool;
+
     //
     // Private data members
     //
