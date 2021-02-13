@@ -13,7 +13,7 @@ int main( int argc, char* argv[] )
     CLI::App app("");
 
     std::string input_file;
-    app.add_option("input_filename", input_file, "Input data file to the compressor")
+    app.add_option("filename", input_file, "Input data file to the compressor")
             ->required()->check(CLI::ExistingFile);
 
     std::vector<size_t> dims;

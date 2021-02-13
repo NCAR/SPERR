@@ -593,14 +593,14 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
         }
     }
     else {
+        auto GT = [trd = m_threshold](double val){return val >= trd;};
+        const auto begin0 = speck::begin(m_coeff_buf);
         for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
             const size_t slice_offset = z * slice_size;
             for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
                 const size_t col_offset = slice_offset + y * m_dim_x;
-                auto begin = speck::begin(m_coeff_buf) + (col_offset + set.start_x);
-                auto end   = begin + set.length_x;
-                if(std::any_of(begin, end, [tmp = m_threshold](auto& val){return val >= tmp;}))
-                {
+                auto start = begin0 + (col_offset + set.start_x);
+                if(std::any_of(start, start + set.length_x, GT)) {
                     set.signif = Significance::Sig;
                     goto end_loop_label;
                 }
@@ -609,6 +609,7 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
     }
 end_loop_label:
     m_bit_buffer.push_back(set.signif != Significance::Insig); // output true/false
+
 
 #ifndef QZ_TERM
     if (m_bit_buffer.size() >= m_budget)

@@ -102,7 +102,7 @@ int main( int argc, char* argv[] )
     CLI::App app("CLI options to probe_3d");
 
     std::string input_file;
-    app.add_option("input_filename", input_file, "Input data file to probe")
+    app.add_option("filename", input_file, "Input data file to probe")
             ->required()->check(CLI::ExistingFile);
 
     std::vector<size_t> dims_v;

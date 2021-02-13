@@ -47,7 +47,7 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims,
         printf("    There are no outliers at this quantization level!\n");
     }
     else {
-        printf("    Outliers: num = %ld, pct = %.3f%%, bpp ~ %.2f, "
+        printf("    Outliers: num = %ld, pct = %.2f%%, bpp ~ %.2f, "
                    "using total storage ~ %.2f%%\n",
                 otl_count.first, float(otl_count.first * 100) / float(total_vals),
                 float(otl_count.second * 8) / float(otl_count.first),
@@ -90,23 +90,27 @@ int main( int argc, char* argv[] )
             ->required()->check(CLI::ExistingFile);
 
     std::vector<size_t> dims_v;
-    app.add_option("--dims", dims_v, "Dimensions of the input volume. \n"
-            "For example, `--dims 128 128 128`.")->required()->expected(3);
+    app.add_option("--dims", dims_v, "Dimensions of the input volume. "
+            "E.g., `--dims 128 128 128`.\n")->required()->expected(3);
+
+    bool rel_tol = false;
+    app.add_flag("--rel_tol", rel_tol, "Use relative error tolerance (as a percentage).\n");
 
     double tolerance = 0.0;
-    app.add_option("-t", tolerance, "Maximum point-wise error tolerance.\n"
-                   "I.e., `-t 0.001`.")->required();
+    app.add_option("-t", tolerance, "Maximum point-wise error tolerance. E.g., `-t 0.001`.\n"
+                   "By default, it takes the input as an absolute error tolerance.\n"
+                   "If flag `--rel_tol` presents, the input is treated as a percentage\n"
+                   "of input data range that point-wise errors could occur.\n"
+                   "E.g., `-t 5` means that error tolerance is at 5% of the data range.\n")
+                    ->required();
 
     int32_t qz_level;
     auto* qz_level_ptr = app.add_option("-q,--qz_level", qz_level, 
-                         "Integer quantization level to test. \nI.e., `-q -10`. \n"
+                         "Integer quantization level to test. E.g., `-q -10`. \n"
                          "If not specified, the probe will pick one for you.");
 
     CLI11_PARSE(app, argc, argv);
-    if( tolerance <= 0.0 ) {
-        std::cerr << "Error tolerance must be a positive value!\n";
-        return 1;
-    }
+
     const std::array<size_t, 3> dims = {dims_v[0], dims_v[1], dims_v[2]};
 
     // Read and keep a copy of input data (will be used for evaluation)
@@ -127,8 +131,25 @@ int main( int argc, char* argv[] )
     if( !(*qz_level_ptr) ) {
         qz_level  = int32_t(std::floor(std::log2(range / 1000.0)));
     }
+    if( rel_tol ) {
+        if( tolerance <= 0.0 || tolerance >= 100.0 ) {
+            std::cerr << "Relative error tolerance must be in the range of [0, 100]\n";
+            return 1;
+        }
+        else {
+            auto frc  = tolerance / 100.0;
+            tolerance = range * frc;
+        }
+    }
+    else {
+        if( tolerance <= 0.0 ) {
+            std::cerr << "Absolute error tolerance must be a positive value!\n";
+            return 1;
+        }
+    }
 
-    printf("Initial analysis: compression at quantization level %d ...  \n", qz_level);
+    printf("Initial analysis: absolute error tolerance = %.2e, quantization level = %d ...  \n", 
+            tolerance, qz_level);
     int rtn = test_configuration( input_buf.get(), dims, qz_level, tolerance );
     if( rtn != 0 )
         return rtn;
