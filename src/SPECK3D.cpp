@@ -548,8 +548,12 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc, SigType sig) -> RTNType
     // Decide the significance of this pixel
     assert( sig != SigType::NewlySig );
     bool this_pixel_is_sig;
-    if( sig == SigType::Dunno )
-        this_pixel_is_sig = (m_coeff_buf[pixel_idx] >= m_threshold);
+    if( sig == SigType::Dunno ) {
+        if( m_sig_map_enabled )
+            this_pixel_is_sig = m_sig_map[pixel_idx];
+        else
+            this_pixel_is_sig = (m_coeff_buf[pixel_idx] >= m_threshold);
+    }
     else
         this_pixel_is_sig = (sig == SigType::Sig);
     m_bit_buffer.push_back(this_pixel_is_sig);
@@ -598,16 +602,15 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D& set ) const -> Sig
         }
     }
     else {
-        auto GT = [trd = m_threshold](double val){return val >= trd;};
-        const auto begin0 = speck::begin(m_coeff_buf);
         for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
             const size_t slice_offset = z * slice_size;
             for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
                 const size_t col_offset = slice_offset + y * m_dim_x;
-                auto start = begin0 + (col_offset + set.start_x);
-                if(std::any_of(start, start + set.length_x, GT)) {
-                    sig = SigType::Sig;
-                    goto end_loop_label;
+                for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
+                    if( m_coeff_buf[col_offset + x] >= m_threshold ) {
+                        sig = SigType::Sig;
+                        goto end_loop_label;
+                    }
                 }
             }
         }
@@ -635,7 +638,6 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2, SigType sig) -
 
     if( sig == SigType::Dunno ) {
         auto subsets = m_partition_S_XYZ( set ); 
-        #pragma omp parallel for
         for( size_t i = 0; i < 8; i++ ) {
             if( !subsets[i].is_empty() ) {
                 subset_sigs[i] = m_decide_significance( subsets[i] );
@@ -644,6 +646,8 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2, SigType sig) -
         bool tmp = std::any_of( subset_sigs.begin(), subset_sigs.end(),
                                 [](auto e){return e == SigType::Sig;} );
         set.signif = tmp ? SigType::Sig : SigType::Insig;
+
+        //set.signif = m_decide_significance( set );
     }
     else {
         set.signif = sig;
@@ -722,7 +726,7 @@ auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2,
 
     for( size_t i = 0; i < 8; i++ ) {
         const auto& s   = subsets[i];
-        auto        sig = subset_sigs[i];
+        const auto  sig = subset_sigs[i];
         if (s.is_pixel()) {
             m_LIP.push_back(s.start_z * m_dim_x * m_dim_y + s.start_y * m_dim_x + s.start_x);
 #ifdef QZ_TERM
