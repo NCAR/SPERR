@@ -81,7 +81,8 @@ private:
     auto m_process_S_decode(size_t idx1, size_t idx2) -> RTNType;
     auto m_process_P_encode(size_t, SigType) -> RTNType; // Similar to process_S, but for pixels.
     auto m_process_P_decode(size_t idx) -> RTNType; // Similar to process_S, but for pixels.
-    auto m_code_S(size_t idx1, size_t idx2, std::array<SigType, 8>) -> RTNType;
+    auto m_code_S_encode(size_t idx1, size_t idx2, std::array<SigType, 8>) -> RTNType;
+    auto m_code_S_decode(size_t idx1, size_t idx2) -> RTNType;
 
     // Divide a SPECKSet3D into 8, 4, or 2 smaller subsets.
     auto m_partition_S_XYZ(const SPECKSet3D&) const -> std::array<SPECKSet3D, 8>;

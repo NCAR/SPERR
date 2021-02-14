@@ -660,9 +660,9 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2, SigType sig) -
 
     if (set.signif == SigType::Sig) {
 #ifdef QZ_TERM
-        m_code_S(idx1, idx2, subset_sigs);
+        m_code_S_encode(idx1, idx2, subset_sigs);
 #else
-        auto rtn = m_code_S(idx1, idx2, subset_sigs);
+        auto rtn = m_code_S_encode(idx1, idx2, subset_sigs);
         if( rtn == RTNType::BitBudgetMet )
             return RTNType::BitBudgetMet;
         assert( rtn == RTNType::Good );
@@ -706,9 +706,7 @@ auto speck::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2) -> RTNType
     set.signif = m_bit_buffer[m_bit_idx++] ? SigType::Sig : SigType::Insig;
 
     if (set.signif == SigType::Sig) {
-        std::array<SigType, 8> subset_sigs;
-        subset_sigs.fill( SigType::Dunno );
-        auto rtn = m_code_S(idx1, idx2, subset_sigs);
+        auto rtn = m_code_S_decode(idx1, idx2);
         if( rtn == RTNType::BitBudgetMet )
             return RTNType::BitBudgetMet;
         assert( rtn == RTNType::Good );
@@ -719,8 +717,8 @@ auto speck::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2) -> RTNType
     return RTNType::Good;
 }
 
-auto speck::SPECK3D::m_code_S(size_t idx1, size_t idx2, 
-                              std::array<SigType, 8> subset_sigs) -> RTNType
+auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2, 
+                                     std::array<SigType, 8> subset_sigs) -> RTNType
 {
     const auto& set     = m_LIS[idx1][idx2];
     const auto  subsets = m_partition_S_XYZ(set);
@@ -730,45 +728,56 @@ auto speck::SPECK3D::m_code_S(size_t idx1, size_t idx2,
         auto        sig = subset_sigs[i];
         if (s.is_pixel()) {
             m_LIP.push_back(s.start_z * m_dim_x * m_dim_y + s.start_y * m_dim_x + s.start_x);
-
-            if (m_encode_mode) {
 #ifdef QZ_TERM
-                m_process_P_encode(m_LIP.size() - 1, sig);
+            m_process_P_encode(m_LIP.size() - 1, sig);
 #else
-                auto rtn = m_process_P_encode(m_LIP.size() - 1, sig);
-                if( rtn == RTNType::BitBudgetMet )
-                    return RTNType::BitBudgetMet;
-                assert( rtn == RTNType::Good );
+            auto rtn = m_process_P_encode(m_LIP.size() - 1, sig);
+            if( rtn == RTNType::BitBudgetMet )
+                return RTNType::BitBudgetMet;
+            assert( rtn == RTNType::Good );
 #endif
-            } 
-            else {    // decoding mode
-                auto rtn = m_process_P_decode(m_LIP.size() - 1);
-                if( rtn == RTNType::BitBudgetMet )
-                    return RTNType::BitBudgetMet;
-                assert( rtn == RTNType::Good );
-            }
+        }
+        else if (!s.is_empty()) {
+            const auto newidx1 = s.part_level;
+            m_LIS[newidx1].emplace_back(s);
+            const auto newidx2 = m_LIS[newidx1].size() - 1;
+#ifdef QZ_TERM
+            m_process_S_encode(newidx1, newidx2, sig);
+#else
+            auto rtn = m_process_S_encode(newidx1, newidx2, sig);
+            if( rtn == RTNType::BitBudgetMet )
+                return RTNType::BitBudgetMet;
+            assert( rtn == RTNType::Good );
+#endif
+        }
+    }
+
+    return RTNType::Good;
+}
+
+auto speck::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
+{
+    const auto& set     = m_LIS[idx1][idx2];
+    const auto  subsets = m_partition_S_XYZ(set);
+
+    for( const auto& s : subsets ) {
+        if (s.is_pixel()) {
+            m_LIP.push_back(s.start_z * m_dim_x * m_dim_y + s.start_y * m_dim_x + s.start_x);
+
+            auto rtn = m_process_P_decode(m_LIP.size() - 1);
+            if( rtn == RTNType::BitBudgetMet )
+                return RTNType::BitBudgetMet;
+            assert( rtn == RTNType::Good );
         }
         else if (!s.is_empty()) {
             const auto newidx1 = s.part_level;
             m_LIS[newidx1].emplace_back(s);
             const auto newidx2 = m_LIS[newidx1].size() - 1;
 
-            if (m_encode_mode) {
-#ifdef QZ_TERM
-                m_process_S_encode(newidx1, newidx2, sig);
-#else
-                auto rtn = m_process_S_encode(newidx1, newidx2, sig);
-                if( rtn == RTNType::BitBudgetMet )
-                    return RTNType::BitBudgetMet;
-                assert( rtn == RTNType::Good );
-#endif
-            } 
-            else {    // decoding mode
-                auto rtn = m_process_S_decode(newidx1, newidx2);
-                if( rtn == RTNType::BitBudgetMet )
-                    return RTNType::BitBudgetMet;
-                assert( rtn == RTNType::Good );
-            }
+            auto rtn = m_process_S_decode(newidx1, newidx2);
+            if( rtn == RTNType::BitBudgetMet )
+                return RTNType::BitBudgetMet;
+            assert( rtn == RTNType::Good );
         }
     }
 
