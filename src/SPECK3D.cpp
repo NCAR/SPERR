@@ -258,6 +258,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
     }
 
     // One of these two conditions could happen if num_of_xforms_xy != num_of_xforms_z
+// But could still use m_partition_S_XYZ()!
     if (xf < num_of_xforms_xy) {
         while (xf < num_of_xforms_xy) {
             auto subsets = m_partition_S_XY(big);
@@ -393,9 +394,9 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
             assert(s.type != SetType::Garbage);
 
 #ifdef QZ_TERM
-            m_process_S_encode(idx1, idx2);
+            m_process_S_encode(idx1, idx2, SigType::Dunno);
 #else
-            auto rtn = m_process_S_encode(idx1, idx2);
+            auto rtn = m_process_S_encode(idx1, idx2, SigType::Dunno);
             if( rtn == RTNType::BitBudgetMet )
                 return rtn;
             assert( rtn == RTNType::Good );
@@ -541,12 +542,17 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
     return RTNType::Good;
 }
 
-auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
+auto speck::SPECK3D::m_process_P_encode(size_t loc, SigType sig) -> RTNType
 {
     const auto pixel_idx = m_LIP[loc];
 
     // Decide the significance of this pixel
-    const bool this_pixel_is_sig = (m_coeff_buf[pixel_idx] >= m_threshold);
+    assert( sig != SigType::NewlySig );
+    bool this_pixel_is_sig;
+    if( sig == SigType::Dunno )
+        this_pixel_is_sig = (m_coeff_buf[pixel_idx] >= m_threshold);
+    else
+        this_pixel_is_sig = (sig == SigType::Sig);
     m_bit_buffer.push_back(this_pixel_is_sig);
 
 #ifndef QZ_TERM
@@ -569,9 +575,11 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc) -> RTNType
     return RTNType::Good;
 }
 
-auto speck::SPECK3D::m_decide_significance( const SPECKSet3D& set ) const -> bool
+auto speck::SPECK3D::m_decide_significance( const SPECKSet3D& set ) const -> SigType
 {
-    bool sig = false;
+    assert( !set.is_empty() );
+
+    SigType sig = SigType::Insig;
     const size_t slice_size = m_dim_x * m_dim_y;
 
     // This old-fashioned serial implementation is faster than using OMP
@@ -583,7 +591,7 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D& set ) const -> boo
                 const size_t col_offset = slice_offset + y * m_dim_x;
                 for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
                     if( m_sig_map[ col_offset + x ] ) {
-                        sig = true;
+                        sig = SigType::Sig;
                         goto end_loop_label;
                     }
                 }   
@@ -599,7 +607,7 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D& set ) const -> boo
                 const size_t col_offset = slice_offset + y * m_dim_x;
                 auto start = begin0 + (col_offset + set.start_x);
                 if(std::any_of(start, start + set.length_x, GT)) {
-                    sig = true;
+                    sig = SigType::Sig;
                     goto end_loop_label;
                 }
             }
@@ -609,14 +617,40 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D& set ) const -> boo
     return sig;
 }
 
-auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType 
+auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2, SigType sig) -> RTNType 
 {
+    // Significance type cannot be NewlySig!
+    assert( sig != SigType::NewlySig );
+    
     auto& set = m_LIS[idx1][idx2];
 
-    // decide the significance of this set
-    bool sig = m_decide_significance(set);
-    set.signif = sig ? SigType::Sig : SigType::Insig;
-    m_bit_buffer.push_back(sig);
+    // Strategy to decide the significance of this set;
+    // 1) If sig == dunno, then find the significance of this set. We do it in a way that
+    //    all its 8 subsets' significance become known as well.
+    // 2) If sig is significant, then we directly proceed to `m_code_s()`, but its
+    //    subsets' significance is unknown.
+    // 3) if sig is insignificant, then this set is not processed.
+
+    std::array<SigType, 8> subset_sigs;
+    subset_sigs.fill( SigType::Dunno );
+
+    if( sig == SigType::Dunno ) {
+        auto subsets = m_partition_S_XYZ( set ); 
+        #pragma omp parallel for
+        for( size_t i = 0; i < 8; i++ ) {
+            if( !subsets[i].is_empty() ) {
+                subset_sigs[i] = m_decide_significance( subsets[i] );
+            }
+        }
+        bool tmp = std::any_of( subset_sigs.begin(), subset_sigs.end(),
+                                [](auto e){return e == SigType::Sig;} );
+        set.signif = tmp ? SigType::Sig : SigType::Insig;
+    }
+    else {
+        set.signif = sig;
+    }
+
+    m_bit_buffer.push_back(set.signif == SigType::Sig);
 
 
 #ifndef QZ_TERM
@@ -626,9 +660,9 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2) -> RTNType
 
     if (set.signif == SigType::Sig) {
 #ifdef QZ_TERM
-        m_code_S(idx1, idx2);
+        m_code_S(idx1, idx2, subset_sigs);
 #else
-        auto rtn = m_code_S(idx1, idx2);
+        auto rtn = m_code_S(idx1, idx2, subset_sigs);
         if( rtn == RTNType::BitBudgetMet )
             return RTNType::BitBudgetMet;
         assert( rtn == RTNType::Good );
@@ -670,10 +704,11 @@ auto speck::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2) -> RTNType
 
     auto& set  = m_LIS[idx1][idx2];
     set.signif = m_bit_buffer[m_bit_idx++] ? SigType::Sig : SigType::Insig;
-    int rtn    = 0;
 
     if (set.signif == SigType::Sig) {
-        auto rtn = m_code_S(idx1, idx2);
+        std::array<SigType, 8> subset_sigs;
+        subset_sigs.fill( SigType::Dunno );
+        auto rtn = m_code_S(idx1, idx2, subset_sigs);
         if( rtn == RTNType::BitBudgetMet )
             return RTNType::BitBudgetMet;
         assert( rtn == RTNType::Good );
@@ -684,20 +719,23 @@ auto speck::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2) -> RTNType
     return RTNType::Good;
 }
 
-auto speck::SPECK3D::m_code_S(size_t idx1, size_t idx2) -> RTNType
+auto speck::SPECK3D::m_code_S(size_t idx1, size_t idx2, 
+                              std::array<SigType, 8> subset_sigs) -> RTNType
 {
     const auto& set     = m_LIS[idx1][idx2];
-    const auto& subsets = m_partition_S_XYZ(set);
+    const auto  subsets = m_partition_S_XYZ(set);
 
-    for (const auto& s : subsets) {
+    for( size_t i = 0; i < 8; i++ ) {
+        const auto& s   = subsets[i];
+        auto        sig = subset_sigs[i];
         if (s.is_pixel()) {
             m_LIP.push_back(s.start_z * m_dim_x * m_dim_y + s.start_y * m_dim_x + s.start_x);
 
             if (m_encode_mode) {
 #ifdef QZ_TERM
-                m_process_P_encode(m_LIP.size() - 1);
+                m_process_P_encode(m_LIP.size() - 1, sig);
 #else
-                auto rtn = m_process_P_encode(m_LIP.size() - 1);
+                auto rtn = m_process_P_encode(m_LIP.size() - 1, sig);
                 if( rtn == RTNType::BitBudgetMet )
                     return RTNType::BitBudgetMet;
                 assert( rtn == RTNType::Good );
@@ -709,7 +747,7 @@ auto speck::SPECK3D::m_code_S(size_t idx1, size_t idx2) -> RTNType
                     return RTNType::BitBudgetMet;
                 assert( rtn == RTNType::Good );
             }
-        } 
+        }
         else if (!s.is_empty()) {
             const auto newidx1 = s.part_level;
             m_LIS[newidx1].emplace_back(s);
@@ -717,9 +755,9 @@ auto speck::SPECK3D::m_code_S(size_t idx1, size_t idx2) -> RTNType
 
             if (m_encode_mode) {
 #ifdef QZ_TERM
-                m_process_S_encode(newidx1, newidx2);
+                m_process_S_encode(newidx1, newidx2, sig);
 #else
-                auto rtn = m_process_S_encode(newidx1, newidx2);
+                auto rtn = m_process_S_encode(newidx1, newidx2, sig);
                 if( rtn == RTNType::BitBudgetMet )
                     return RTNType::BitBudgetMet;
                 assert( rtn == RTNType::Good );
