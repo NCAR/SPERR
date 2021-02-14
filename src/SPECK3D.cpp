@@ -258,7 +258,6 @@ void speck::SPECK3D::m_initialize_sets_lists()
     }
 
     // One of these two conditions could happen if num_of_xforms_xy != num_of_xforms_z
-// But could still use m_partition_S_XYZ()!
     if (xf < num_of_xforms_xy) {
         while (xf < num_of_xforms_xy) {
             auto subsets = m_partition_S_XY(big);
@@ -651,8 +650,6 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2, SigType sig) -
     }
 
     m_bit_buffer.push_back(set.signif == SigType::Sig);
-
-
 #ifndef QZ_TERM
     if (m_bit_buffer.size() >= m_budget)
         return RTNType::BitBudgetMet;
