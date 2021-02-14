@@ -578,11 +578,11 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc, SigType sig) -> RTNType
     return RTNType::Good;
 }
 
-auto speck::SPECK3D::m_decide_significance( const SPECKSet3D& set ) const -> SigType
+auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
+                                            std::array<uint32_t, 3>& xyz ) const -> SigType
 {
     assert( !set.is_empty() );
 
-    SigType sig = SigType::Insig;
     const size_t slice_size = m_dim_x * m_dim_y;
 
     // This old-fashioned serial implementation is faster than using OMP
@@ -594,8 +594,10 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D& set ) const -> Sig
                 const size_t col_offset = slice_offset + y * m_dim_x;
                 for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
                     if( m_sig_map[ col_offset + x ] ) {
-                        sig = SigType::Sig;
-                        goto end_loop_label;
+                        xyz[0] = x - set.start_x;
+                        xyz[1] = y - set.start_y;
+                        xyz[2] = z - set.start_z;
+                        return SigType::Sig;
                     }
                 }   
             }
@@ -608,15 +610,16 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D& set ) const -> Sig
                 const size_t col_offset = slice_offset + y * m_dim_x;
                 for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
                     if( m_coeff_buf[col_offset + x] >= m_threshold ) {
-                        sig = SigType::Sig;
-                        goto end_loop_label;
+                        xyz[0] = x - set.start_x;
+                        xyz[1] = y - set.start_y;
+                        xyz[2] = z - set.start_z;
+                        return SigType::Sig;
                     }
                 }
             }
         }
     }
-  end_loop_label:
-    return sig;
+    return SigType::Insig;
 }
 
 auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2, SigType sig) -> RTNType 
@@ -628,7 +631,7 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2, SigType sig) -
 
     // Strategy to decide the significance of this set;
     // 1) If sig == dunno, then find the significance of this set. We do it in a way that
-    //    all its 8 subsets' significance become known as well.
+    //    some of its 8 subsets' significance become known as well.
     // 2) If sig is significant, then we directly proceed to `m_code_s()`, but its
     //    subsets' significance is unknown.
     // 3) if sig is insignificant, then this set is not processed.
@@ -637,21 +640,29 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2, SigType sig) -
     subset_sigs.fill( SigType::Dunno );
 
     if( sig == SigType::Dunno ) {
-        auto subsets = m_partition_S_XYZ( set ); 
-        for( size_t i = 0; i < 8; i++ ) {
-            if( !subsets[i].is_empty() ) {
-                subset_sigs[i] = m_decide_significance( subsets[i] );
+        std::array<uint32_t, 3> xyz;
+        set.signif = m_decide_significance( set, xyz );
+        if (set.signif == SigType::Sig) {
+            // Try to deduce the significance of some of its subsets.
+            // Step 1: which one of the 8 subsets is significant?
+            //         (Refer to m_partition_S_XYZ() for subset orders)
+            size_t sub_i = 0;
+            sub_i += (xyz[0] < (set.length_x - set.length_x / 2)) ? 0 : 1;
+            sub_i += (xyz[1] < (set.length_y - set.length_y / 2)) ? 0 : 2;
+            sub_i += (xyz[2] < (set.length_z - set.length_z / 2)) ? 0 : 4;
+            subset_sigs[sub_i] = SigType::Sig;
+
+            // Step 2: if it's the 5th, 6th, 7th, or 8th subset significant, then 
+            //         the first four subsets must be insignificant. Again, this is
+            //         based on the ordering of subsets.
+            if( sub_i >= 4 ) {
+                for( size_t i = 0; i < 4; i++ )
+                    subset_sigs[i] = SigType::Insig;
             }
         }
-        bool tmp = std::any_of( subset_sigs.begin(), subset_sigs.end(),
-                                [](auto e){return e == SigType::Sig;} );
-        set.signif = tmp ? SigType::Sig : SigType::Insig;
-
-        //set.signif = m_decide_significance( set );
     }
-    else {
+    else
         set.signif = sig;
-    }
 
     m_bit_buffer.push_back(set.signif == SigType::Sig);
 #ifndef QZ_TERM

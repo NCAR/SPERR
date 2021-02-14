@@ -91,7 +91,9 @@ private:
     auto m_partition_S_Z  (const SPECKSet3D&) const -> std::array<SPECKSet3D, 2>;
 
     // Decide if a set is significant or not
-    auto m_decide_significance( const SPECKSet3D& ) const -> SigType;
+    // In the case of a pixel being located to make the set significant,
+    // the local x, y, z indices of that pixel, which start from 0,  is also reported.
+    auto m_decide_significance(const SPECKSet3D&, std::array<uint32_t, 3>& xyz) const -> SigType;
 
     //
     // Private data members
