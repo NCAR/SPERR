@@ -467,7 +467,6 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
     }
 
     // Now attach the true/false outputs from `m_tmp_result` to `m_bit_buffer` 
-    //
     for( auto result : m_tmp_result ) {
         m_bit_buffer.push_back( result != m_false );
 #ifndef QZ_TERM
@@ -485,7 +484,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
                 m_coeff_buf[i] -= m_threshold;
         }
         // Note that under this condition, pixels from old and new significant pixel
-        //   lists are refined at the same time.
+        // lists are refined at the same time.
     }
     else {
         #pragma omp parallel for
@@ -549,10 +548,8 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc, SigType sig) -> RTNType
     assert( sig != SigType::NewlySig );
     bool this_pixel_is_sig;
     if( sig == SigType::Dunno ) {
-        if( m_sig_map_enabled )
-            this_pixel_is_sig = m_sig_map[pixel_idx];
-        else
-            this_pixel_is_sig = (m_coeff_buf[pixel_idx] >= m_threshold);
+        this_pixel_is_sig = m_sig_map_enabled ? m_sig_map[pixel_idx] :
+                            (m_coeff_buf[pixel_idx] >= m_threshold);
     }
     else
         this_pixel_is_sig = (sig == SigType::Sig);
@@ -585,8 +582,6 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
 
     const size_t slice_size = m_dim_x * m_dim_y;
 
-    // This old-fashioned serial implementation is faster than using OMP
-    // at any level (Z, Y, X) of this loop.
     if( m_sig_map_enabled ) {
         for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
             const size_t slice_offset = z * slice_size;
@@ -645,7 +640,7 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2, SigType sig) -
         if (set.signif == SigType::Sig) {
             // Try to deduce the significance of some of its subsets.
             // Step 1: which one of the 8 subsets is significant?
-            //         (Refer to m_partition_S_XYZ() for subset orders)
+            //         (Refer to m_partition_S_XYZ() for subset ordering.)
             size_t sub_i = 0;
             sub_i += (xyz[0] < (set.length_x - set.length_x / 2)) ? 0 : 1;
             sub_i += (xyz[1] < (set.length_y - set.length_y / 2)) ? 0 : 2;
