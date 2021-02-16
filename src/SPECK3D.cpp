@@ -575,25 +575,47 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc, SigType sig) -> RTNType
 }
 
 auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
-                                            std::array<uint32_t, 3>& xyz ) const -> SigType
+                                            std::array<uint32_t, 6>& xyz ) const -> SigType
 {
+    // In this implementation, when we know that a line [set.start_x, set.start_x + set.length_x) 
+    // has a significant pixel, we try to identify the last occurance of significant pixel
+    // in the same line as well.
+    // This is because identifying the last occurance is almost free, since that line of data is 
+    // already in cache, and that last occurance might cause the next subset to be significant too.
+    // Experiments show that there is a 10% - 15% chance identifying the next subset to be significant.
+
     assert( !set.is_empty() );
 
     const size_t slice_size = m_dim_x * m_dim_y;
+    bool found_sig = false;
 
     if( m_sig_map_enabled ) {
         for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
             const size_t slice_offset = z * slice_size;
             for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
                 const size_t col_offset = slice_offset + y * m_dim_x;
+
                 for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
                     if( m_sig_map[ col_offset + x ] ) {
                         xyz[0] = x - set.start_x;
                         xyz[1] = y - set.start_y;
                         xyz[2] = z - set.start_z;
-                        return SigType::Sig;
+                        found_sig = true;
+                        break;
                     }
-                }   
+                }
+                if( found_sig ) {
+                    for( auto x = (set.start_x + set.length_x); x > set.start_x; x-- ) {
+                        if( m_sig_map[ col_offset + x - 1 ] ) {
+                            xyz[3] = x - 1 - set.start_x;
+                            xyz[4] = y - set.start_y;
+                            xyz[5] = z - set.start_z;
+                            break;
+                        }
+                    }
+                    return SigType::Sig;
+                }
+
             }
         }
     }
@@ -602,13 +624,28 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
             const size_t slice_offset = z * slice_size;
             for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
                 const size_t col_offset = slice_offset + y * m_dim_x;
+
                 for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
                     if( m_coeff_buf[col_offset + x] >= m_threshold ) {
                         xyz[0] = x - set.start_x;
                         xyz[1] = y - set.start_y;
                         xyz[2] = z - set.start_z;
-                        return SigType::Sig;
+                        found_sig = true;
+                        break;
                     }
+                }
+
+                if( found_sig ) {
+                    for( auto x = (set.start_x + set.length_x); x > set.start_x; x-- ) {
+                        if( m_coeff_buf[col_offset + x - 1] >= m_threshold ) {
+                            xyz[3] = x - 1 - set.start_x;
+                            xyz[4] = y - set.start_y;
+                            xyz[5] = z - set.start_z;
+                            found_sig = true;
+                            break;
+                        }
+                    }
+                    return SigType::Sig;
                 }
             }
         }
@@ -634,17 +671,23 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2, SigType sig) -
     subset_sigs.fill( SigType::Dunno );
 
     if( sig == SigType::Dunno ) {
-        std::array<uint32_t, 3> xyz;
+        std::array<uint32_t, 6> xyz;
         set.signif = m_decide_significance( set, xyz );
         if (set.signif == SigType::Sig) {
             // Try to deduce the significance of some of its subsets.
-            // Step 1: which one of the 8 subsets is significant?
+            // Step 1: which one (or 2) of the 8 subsets is significant?
             //         (Refer to m_partition_S_XYZ() for subset ordering.)
             size_t sub_i = 0;
             sub_i += (xyz[0] < (set.length_x - set.length_x / 2)) ? 0 : 1;
             sub_i += (xyz[1] < (set.length_y - set.length_y / 2)) ? 0 : 2;
             sub_i += (xyz[2] < (set.length_z - set.length_z / 2)) ? 0 : 4;
             subset_sigs[sub_i] = SigType::Sig;
+
+            sub_i = 0;
+            sub_i += (xyz[3] < (set.length_x - set.length_x / 2)) ? 0 : 1;
+            sub_i += (xyz[4] < (set.length_y - set.length_y / 2)) ? 0 : 2;
+            sub_i += (xyz[5] < (set.length_z - set.length_z / 2)) ? 0 : 4;
+            subset_sigs[sub_i] = SigType::Sig; // Might or might not be the same one.
 
             // Step 2: if it's the 5th, 6th, 7th, or 8th subset significant, then 
             //         the first four subsets must be insignificant. Again, this is
