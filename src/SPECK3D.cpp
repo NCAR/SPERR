@@ -692,6 +692,7 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2, SigType sig) -
             // Step 2: if it's the 5th, 6th, 7th, or 8th subset significant, then 
             //         the first four subsets must be insignificant. Again, this is
             //         based on the ordering of subsets.
+            // In a cube there is 30% - 40% chance this condition meets.
             if( sub_i >= 4 ) {
                 for( size_t i = 0; i < 4; i++ )
                     subset_sigs[i] = SigType::Insig;
