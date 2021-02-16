@@ -587,7 +587,6 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
     assert( !set.is_empty() );
 
     const size_t slice_size = m_dim_x * m_dim_y;
-    bool found_sig = false;
 
     if( m_sig_map_enabled ) {
         for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
@@ -600,22 +599,19 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
                         xyz[0] = x - set.start_x;
                         xyz[1] = y - set.start_y;
                         xyz[2] = z - set.start_z;
-                        found_sig = true;
-                        break;
-                    }
-                }
-                if( found_sig ) {
-                    for( auto x = (set.start_x + set.length_x); x > set.start_x; x-- ) {
-                        if( m_sig_map[ col_offset + x - 1 ] ) {
-                            xyz[3] = x - 1 - set.start_x;
-                            xyz[4] = y - set.start_y;
-                            xyz[5] = z - set.start_z;
-                            break;
+
+                        // Now scan the same line backwards
+                        for( auto x2 = (set.start_x + set.length_x); x2 > set.start_x; x2-- ) {
+                            if( m_sig_map[ col_offset + (x2 - 1) ] ) {
+                                // x2 could be the same or different from x.
+                                xyz[3] = (x2 - 1) - set.start_x;
+                                xyz[4] = xyz[1];
+                                xyz[5] = xyz[2];
+                                return SigType::Sig;
+                            }
                         }
                     }
-                    return SigType::Sig;
-                }
-
+                } // End of processing a line
             }
         }
     }
@@ -630,23 +626,19 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
                         xyz[0] = x - set.start_x;
                         xyz[1] = y - set.start_y;
                         xyz[2] = z - set.start_z;
-                        found_sig = true;
-                        break;
-                    }
-                }
 
-                if( found_sig ) {
-                    for( auto x = (set.start_x + set.length_x); x > set.start_x; x-- ) {
-                        if( m_coeff_buf[col_offset + x - 1] >= m_threshold ) {
-                            xyz[3] = x - 1 - set.start_x;
-                            xyz[4] = y - set.start_y;
-                            xyz[5] = z - set.start_z;
-                            found_sig = true;
-                            break;
+                        // Now scan the same line backwards
+                        for( auto x2 = (set.start_x + set.length_x); x2 > set.start_x; x2-- ) {
+                            if( m_coeff_buf[col_offset + (x2 - 1)] >= m_threshold ) {
+                                xyz[3] = (x2 - 1) - set.start_x;
+                                xyz[4] = xyz[1];
+                                xyz[5] = xyz[2];
+
+                                return SigType::Sig;
+                            }
                         }
                     }
-                    return SigType::Sig;
-                }
+                } // End of processing a line
             }
         }
     }
@@ -687,7 +679,7 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2, SigType sig) -
             sub_i += (xyz[3] < (set.length_x - set.length_x / 2)) ? 0 : 1;
             sub_i += (xyz[4] < (set.length_y - set.length_y / 2)) ? 0 : 2;
             sub_i += (xyz[5] < (set.length_z - set.length_z / 2)) ? 0 : 4;
-            subset_sigs[sub_i] = SigType::Sig; // Might or might not be the same one.
+            subset_sigs[sub_i] = SigType::Sig;
 
             // Step 2: if it's the 5th, 6th, 7th, or 8th subset significant, then 
             //         the first four subsets must be insignificant. Again, this is
