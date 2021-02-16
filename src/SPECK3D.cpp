@@ -509,8 +509,9 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
     // First, process `m_LSP_old`
     //
     const size_t num_bits   = std::min( m_budget - m_bit_idx, m_LSP_old.size() );
-    const double half_T     = m_threshold * 0.5;
+    const double half_T     = m_threshold *  0.5;
     const double neg_half_T = m_threshold * -0.5;
+    const double one_half_T = m_threshold *  1.5;
 
     #pragma omp parallel for
     for( size_t i = 0; i < num_bits; i++ ) {
@@ -523,7 +524,6 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
     
     // Second, process `m_LSP_new`
     //
-    const double one_half_T = m_threshold * 1.5;
     #pragma omp parallel for
     for( size_t i = 0; i < m_LSP_new.size(); i++ ) {
         m_coeff_buf[ m_LSP_new[i] ] = one_half_T;
@@ -565,7 +565,6 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc, SigType sig) -> RTNType
         m_bit_buffer.push_back(m_sign_array[pixel_idx]);
         m_LSP_new.push_back( pixel_idx );
         m_LIP[loc] = m_u64_garbage_val;
-
 #ifndef QZ_TERM
         if (m_bit_buffer.size() >= m_budget)
             return RTNType::BitBudgetMet;
