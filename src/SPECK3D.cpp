@@ -577,6 +577,13 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc, SigType sig) -> RTNType
 auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
                                             std::array<uint32_t, 6>& xyz ) const -> SigType
 {
+    // In this implementation, when we know that a line [set.start_x, set.start_x + set.length_x) 
+    // has a significant pixel, we try to identify the last occurance of significant pixel
+    // in the same line as well.
+    // This is because identifying the last occurance is almost free, since that line of data is 
+    // already in cache, and that last occurance might cause the next subset to be significant too.
+    // Experiments show that there is a 10% - 15% chance identifying the next subset to be significant.
+
     assert( !set.is_empty() );
 
     const size_t slice_size = m_dim_x * m_dim_y;
@@ -598,11 +605,6 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
                     }
                 }
                 if( found_sig ) {
-                    // In this case, we know that this line [set.start_x, set.start_x + set.length_x) 
-                    // has at least one significant pixel. Since this line is already in cache, 
-                    // we might scan it again in backwards order (almost for free) and locate the
-                    // last significant pixel in this line. 
-                    // It might well help identify the next subset being significant.
                     for( auto x = (set.start_x + set.length_x); x > set.start_x; x-- ) {
                         if( m_sig_map[ col_offset + x - 1 ] ) {
                             xyz[3] = x - 1 - set.start_x;
