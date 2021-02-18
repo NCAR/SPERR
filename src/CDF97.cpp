@@ -295,11 +295,11 @@ void speck::CDF97::m_calc_mean()
     for (size_t z = 0; z < m_dim_z; z++) {
         auto begin = speck::begin( m_data_buf ) + slice_size * z;
         auto end   = begin + slice_size;
-        slice_means[z] = std::accumulate( begin, end, 0.0 ) / double(slice_size);
+        slice_means[z] = std::accumulate( begin, end, double{0.0} ) / double(slice_size);
     }
 
     auto begin = speck::begin( slice_means );
-    double sum = std::accumulate( begin, begin + m_dim_z, 0.0 );
+    double sum = std::accumulate( begin, begin + m_dim_z, double{0.0} );
 
     m_data_mean = sum / double(m_dim_z);
 }

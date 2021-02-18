@@ -110,7 +110,7 @@ public:
 // For an array with size N, the begin and end iterators are:
 // auto begin = speck::begin( buf ); auto end = speck::end( buf, N );
 template<typename T>
-auto begin( const std::unique_ptr<T[]>&             ) -> ptr_iterator<T>;
+auto begin( const std::unique_ptr<T[]>& ) -> ptr_iterator<T>;
 template<typename T>
 auto end( const std::unique_ptr<T[]>&, size_t length ) -> ptr_iterator<T>;
 // Generate a ptr_iterator from a smart_buffer.
