@@ -256,7 +256,7 @@ auto SPECK3D_Compressor::set_tolerance( double tol ) -> RTNType
         return RTNType::Good;
     }
 }
-auto SPECK3D_Compressor::get_outlier_count() const -> std::pair<size_t, size_t>
+auto SPECK3D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
 {
     return {m_num_outlier, m_sperr_stream.second};
 }

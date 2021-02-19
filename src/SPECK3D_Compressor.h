@@ -45,7 +45,7 @@ public:
     auto write_bitstream( const char* filename ) const -> RTNType;
 #ifdef QZ_TERM
     // Return 1) the number of outliers, and 2) the num of bytes to encode them.
-    auto get_outlier_count() const -> std::pair<size_t, size_t>;
+    auto get_outlier_stats() const -> std::pair<size_t, size_t>;
 #endif
 
 private:

@@ -36,7 +36,7 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims,
     auto diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
     std::cout << " -> Compression takes time: " << diff_time << "ms\n";
     auto encoded_stream = compressor.get_encoded_bitstream();
-    auto otl_count = compressor.get_outlier_count();
+    auto otl_count = compressor.get_outlier_stats();
 
     // Print some analysis
     if( speck::empty_buf( encoded_stream ) )
