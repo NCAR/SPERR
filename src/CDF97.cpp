@@ -6,9 +6,12 @@
 #include <numeric> // for std::accumulate()
 #include <type_traits>
 
-#ifdef USE_OMP
-    #include <omp.h>
-#endif
+//
+// Uncomment the following lines to enable OpenMP
+//
+// #ifdef USE_OMP
+//    #include <omp.h>
+// #endif
 
 template <typename T>
 void speck::CDF97::copy_data(const T* data, size_t len)
@@ -99,13 +102,16 @@ void speck::CDF97::dwt3d()
                    [tmp = m_data_mean](auto& val){val -= tmp;} );
 
     size_t num_threads = 1;
-#ifdef USE_OMP
-    #pragma omp parallel
-    {
-      if( omp_get_thread_num() == 0 )
-        num_threads = omp_get_num_threads();
-    }
-#endif
+//
+// Uncomment the following lines to enable OpenMP
+//
+// #ifdef USE_OMP
+//    #pragma omp parallel
+//    {
+//      if( omp_get_thread_num() == 0 )
+//        num_threads = omp_get_num_threads();
+//    }
+// #endif
 
     size_t max_dim              = std::max(m_dim_x, m_dim_y);
     max_dim                     = std::max(max_dim, m_dim_z);
@@ -140,14 +146,20 @@ void speck::CDF97::dwt3d()
     buffer_type_d z_column_pool = std::make_unique<double[]>(m_dim_x * m_dim_z * num_threads);
     const auto    num_xforms_z   = speck::num_of_xforms(m_dim_z);
 
-    #pragma omp parallel for
+    //
+    // Uncomment the following lines to enable OpenMP
+    //
+    // #pragma omp parallel for
     for (size_t y = 0; y < m_dim_y; y++) {
         const auto    y_offset    = y * m_dim_x;
-#ifdef USE_OMP
-        const size_t  my_rank     = omp_get_thread_num();
-#else
+//
+// Uncomment the following lines to enable OpenMP
+//
+// #ifdef USE_OMP
+//        const size_t  my_rank     = omp_get_thread_num();
+// #else
         const size_t  my_rank     = 0;
-#endif
+// #endif
         double* const my_z_col    = z_column_pool.get() + my_rank * m_dim_x * m_dim_z;
         double* const my_tmp_buf  = tmp_buf_pool.get() + my_rank * max_dim * 2;
 
@@ -173,13 +185,19 @@ void speck::CDF97::dwt3d()
     // Second transform each plane
     const auto num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
 
-    #pragma omp parallel for
+    //
+    // Uncomment the following lines to enable OpenMP
+    //
+    // #pragma omp parallel for
     for (size_t z = 0; z < m_dim_z; z++) {
-#ifdef USE_OMP
-        const size_t  my_rank     = omp_get_thread_num();
-#else
+//
+// Uncomment the following lines to enable OpenMP
+//
+// #ifdef USE_OMP
+//        const size_t  my_rank     = omp_get_thread_num();
+// #else
         const size_t  my_rank     = 0;
-#endif
+// #endif
         double* const my_tmp_buf  = tmp_buf_pool.get() + my_rank * max_dim * 2;
         const size_t  offset      = plane_size_xy * z;
         m_dwt2d(m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, my_tmp_buf);
@@ -189,13 +207,16 @@ void speck::CDF97::dwt3d()
 void speck::CDF97::idwt3d()
 {
     size_t num_threads = 1;
-#ifdef USE_OMP
-    #pragma omp parallel
-    {
-        if( omp_get_thread_num() == 0 )
-            num_threads = omp_get_num_threads();
-    }
-#endif
+//
+// Uncomment the following lines to enable OpenMP
+//
+// #ifdef USE_OMP
+//    #pragma omp parallel
+//    {
+//        if( omp_get_thread_num() == 0 )
+//            num_threads = omp_get_num_threads();
+//    }
+// #endif
 
     size_t max_dim              = std::max(m_dim_x, m_dim_y);
     max_dim                     = std::max(max_dim, m_dim_z);
@@ -205,14 +226,20 @@ void speck::CDF97::idwt3d()
     // First, inverse transform each plane
     auto num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
 
-    #pragma omp parallel for
+    //
+    // Uncomment the following lines to enable OpenMP
+    //
+    // #pragma omp parallel for
     for (size_t i = 0; i < m_dim_z; i++) {
         const size_t offset  = plane_size_xy * i;
-#ifdef USE_OMP
-        const size_t my_rank = omp_get_thread_num();
-#else
+//
+// Uncomment the following lines to enable OpenMP
+//
+// #ifdef USE_OMP
+//        const size_t my_rank = omp_get_thread_num();
+// #else
         const size_t my_rank = 0;
-#endif
+// #endif
         double* const my_tmp_buf = tmp_buf_pool.get() + max_dim * 2 * my_rank;
         m_idwt2d(m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, my_tmp_buf);
     }
@@ -240,14 +267,20 @@ void speck::CDF97::idwt3d()
     buffer_type_d z_column_pool = std::make_unique<double[]>(m_dim_x * m_dim_z * num_threads);
     const auto    num_xforms_z  = speck::num_of_xforms(m_dim_z);
 
-    #pragma omp parallel for
+    //
+    // Uncomment the following lines to enable OpenMP
+    //
+    // #pragma omp parallel for
     for (size_t y = 0; y < m_dim_y; y++) {
         const auto y_offset  = y * m_dim_x;
-#ifdef USE_OMP
-        const size_t my_rank = omp_get_thread_num();
-#else
+//
+// Uncomment the following lines to enable OpenMP
+//
+// #ifdef USE_OMP
+//        const size_t my_rank = omp_get_thread_num();
+// #else
         const size_t my_rank = 0;
-#endif
+// #endif
         double* const my_z_col   = z_column_pool.get() + m_dim_x * m_dim_z * my_rank;
         double* const my_tmp_buf = tmp_buf_pool.get() + max_dim * 2 * my_rank;
 
