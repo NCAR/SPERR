@@ -293,6 +293,12 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 {
     // Since we have a separate representation of LIP, let's process that list first!
     //
+    // Note that a large portion of the content in `m_LIP` will go to `m_LSP_new`,
+    //   and `m_LSP_new` is empty at this point, so cheapest to re-allocate right now!
+    //
+    if( m_LSP_new.capacity() < m_LIP.size() ) {
+        m_LSP_new.reserve( std::max(m_LSP_new.capacity() * 2, m_LIP.size()) );
+    }
     for( auto& pixel_idx : m_LIP ) {
         if( m_coeff_buf[pixel_idx] >= m_threshold ) {
             // Record that this pixel is significant
@@ -343,6 +349,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
     return RTNType::Good;
 }
 
+
 auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 {
     // Since we have a separate representation of LIP, let's process that list first!
@@ -378,33 +385,15 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 
 auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 {
-    // First process `m_LSP_old`.
+    // First, process `m_LSP_old`.
     //
-    m_tmp_result.assign( m_LSP_old.size(), m_false );
-
-    if( m_sig_map_enabled ) {
-        #pragma omp parallel for
-        for( size_t i = 0; i < m_LSP_old.size(); i++ ) {
-            if( m_sig_map[ m_LSP_old[i] ] )
-                m_tmp_result[i] = m_true;
+    for( auto loc : m_LSP_old ) {
+        if (m_coeff_buf[loc] >= m_threshold) {
+            m_coeff_buf[loc] -= m_threshold;
+            m_bit_buffer.push_back(true);
         }
-        // Note that under this condition, the actual refinement of coefficients
-        //   is performed together with the step of refining newly significant pixels.
-    }
-    else {
-        #pragma omp parallel for
-        for (size_t i = 0; i < m_LSP_old.size(); i++) {
-            const auto pos = m_LSP_old[i];
-            if (m_coeff_buf[pos] >= m_threshold) {
-                m_coeff_buf[pos] -= m_threshold;
-                m_tmp_result[i]   = m_true;
-            }
-        }
-    }
-
-    // Now attach the true/false outputs from `m_tmp_result` to `m_bit_buffer` 
-    for( auto result : m_tmp_result ) {
-        m_bit_buffer.push_back( result != m_false );
+        else
+            m_bit_buffer.push_back(false);
 #ifndef QZ_TERM
         if( m_bit_buffer.size() >= m_budget ) 
             return RTNType::BitBudgetMet;
@@ -413,20 +402,8 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 
     // Second, process `m_LSP_new`
     //
-    if( m_sig_map_enabled ) {
-        #pragma omp parallel for
-        for( size_t i = 0; i < m_coeff_len; i++ ) {
-            if( m_coeff_buf[i] >= m_threshold )
-                m_coeff_buf[i] -= m_threshold;
-        }
-        // Note that under this condition, pixels from old and new significant pixel
-        // lists are refined at the same time.
-    }
-    else {
-        #pragma omp parallel for
-        for( size_t i = 0; i < m_LSP_new.size(); i++ )
-            m_coeff_buf[ m_LSP_new[i] ] -= m_threshold;
-    }
+    for( auto loc : m_LSP_new )
+        m_coeff_buf[loc] -= m_threshold;
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
     //
