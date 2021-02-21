@@ -417,6 +417,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
         m_coeff_buf[loc] -= m_threshold;
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
+    // (`m_LSP_old` has reserved `m_coeff_len` capacity in advance.)
     //
     m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
 
@@ -437,23 +438,19 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
     const double neg_half_T = m_threshold * -0.5;
     const double one_half_T = m_threshold *  1.5;
 
-    #pragma omp parallel for
-    for( size_t i = 0; i < num_bits; i++ ) {
-        m_coeff_buf[ m_LSP_old[i] ] += m_bit_buffer[ m_bit_idx + i ] ? 
-                                       half_T : neg_half_T;
-    }
+    for( size_t i = 0; i < num_bits; i++ )
+        m_coeff_buf[ m_LSP_old[i] ] += m_bit_buffer[m_bit_idx + i] ? half_T : neg_half_T;
     m_bit_idx += num_bits;
     if (m_bit_idx >= m_budget)
         return RTNType::BitBudgetMet;
     
     // Second, process `m_LSP_new`
     //
-    #pragma omp parallel for
-    for( size_t i = 0; i < m_LSP_new.size(); i++ ) {
-        m_coeff_buf[ m_LSP_new[i] ] = one_half_T;
-    }
+    for( auto loc : m_LSP_new )
+        m_coeff_buf[ loc ] = one_half_T;
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
+    // (`m_LSP_old` has reserved `m_coeff_len` capacity in advance.)
     //
     m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
 
