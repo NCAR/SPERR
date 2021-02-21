@@ -6,9 +6,12 @@
 #include <cstring>
 #include <algorithm>
 
-#ifdef USE_OMP
-    #include <omp.h>
-#endif
+//
+// Uncomment the following lines to enable OpenMP
+//
+//#ifdef USE_OMP
+//    #include <omp.h>
+//#endif
 
 
 auto speck::num_of_xforms(size_t len) -> size_t
@@ -87,7 +90,10 @@ auto speck::pack_booleans( buffer_type_uint8& dest,
 
     const uint64_t magic = 0x8040201008040201;
 
-    #pragma omp parallel for
+    //
+    // Uncomment the following line to enable OpenMP
+    //
+    // #pragma omp parallel for
     for( size_t i = 0; i < src.size(); i += 8 ) {
         bool a[8];
         for( size_t j = 0; j < 8; j++ )
@@ -122,7 +128,10 @@ auto speck::unpack_booleans( vector_bool& dest,
     const size_t stride_size = 8;
     const size_t num_of_strides  = num_of_bytes / stride_size;
 
-    #pragma omp parallel for
+    //
+    // Uncomment the following line to enable OpenMP
+    //
+    // #pragma omp parallel for
     for( size_t stride = 0; stride < num_of_strides; stride++ ) {
         bool a[64];
         for( size_t byte = 0; byte < stride_size; byte++ ) {
@@ -271,7 +280,9 @@ void speck::calc_stats( const T* arr1,   const T* arr2,  size_t len,
     //
     // Calculate summation and l-infty of each stride
     //
-    #pragma omp parallel for
+    // (Uncomment the following line to enable OpenMP)
+    //
+    // #pragma omp parallel for
     for( size_t stride_i = 0; stride_i < num_of_strides; stride_i++ ) {
         T linfty = 0.0;
         T buf[ stride_size ];

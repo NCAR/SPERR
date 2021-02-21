@@ -28,11 +28,11 @@ target_include_directories( SPECK2D_Decompressor INTERFACE ${CMAKE_CURRENT_SOURC
 #
 # if OpenMP is enabled and found
 #
-if( USE_OMP AND OpenMP_CXX_FLAGS )
-    target_compile_options( speck_helper PUBLIC ${OpenMP_CXX_FLAGS} )
-    target_compile_options( CDF97        PUBLIC ${OpenMP_CXX_FLAGS} )
-    target_compile_options( SPECK3D      PUBLIC ${OpenMP_CXX_FLAGS} )
-endif()
+#if( USE_OMP AND OpenMP_CXX_FLAGS )
+#    target_compile_options( speck_helper PUBLIC ${OpenMP_CXX_FLAGS} )
+#    target_compile_options( CDF97        PUBLIC ${OpenMP_CXX_FLAGS} )
+#    target_compile_options( SPECK3D      PUBLIC ${OpenMP_CXX_FLAGS} )
+#endif()
     
 if( USE_ZSTD )
     add_dependencies( SPECK_Storage zstd-download )
