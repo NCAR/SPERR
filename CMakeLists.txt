@@ -82,11 +82,11 @@ list( APPEND SPECK2D_LIBS SPECK2D              )
 
 list( APPEND SPERR_LIBS SPERR )
 
-if( USE_OMP AND OpenMP_CXX_FOUND )
-  list( APPEND HELPER_LIBS  OpenMP::OpenMP_CXX   )
-  list( APPEND CDF_LIBS     OpenMP::OpenMP_CXX   )
-  list( APPEND SPECK3D_LIBS OpenMP::OpenMP_CXX   )
-endif()
+# if( USE_OMP AND OpenMP_CXX_FOUND )
+#   list( APPEND HELPER_LIBS  OpenMP::OpenMP_CXX   )
+#   list( APPEND CDF_LIBS     OpenMP::OpenMP_CXX   )
+#   list( APPEND SPECK3D_LIBS OpenMP::OpenMP_CXX   )
+# endif()
 
 if( USE_ZSTD )
     ExternalProject_Get_Property( zstd-download INSTALL_DIR )
