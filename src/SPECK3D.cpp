@@ -387,18 +387,29 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 {
     // First, process `m_LSP_old`.
     //
-    for( auto loc : m_LSP_old ) {
+    // In QZ_TERM mode, we process all elements in `m_LSP_old`, and each element
+    // produces a bit.
+    // In fixed-size mode, we either process all elements in `m_LSP_old`,
+    // or process a portion of them that meets the total bit budget.
+    //
+#ifdef QZ_TERM
+    const size_t n_to_process = m_LSP_old.size();
+#else
+    const size_t n_to_process = std::min( m_LSP_old.size(), m_budget - m_bit_buffer.size() );
+#endif
+    for( size_t i = 0; i < n_to_process; i++ ) {
+        const auto loc = m_LSP_old[i];
         if (m_coeff_buf[loc] >= m_threshold) {
             m_coeff_buf[loc] -= m_threshold;
             m_bit_buffer.push_back(true);
         }
         else
             m_bit_buffer.push_back(false);
-#ifndef QZ_TERM
-        if( m_bit_buffer.size() >= m_budget ) 
-            return RTNType::BitBudgetMet;
-#endif
     }
+#ifndef QZ_TERM
+    if( m_bit_buffer.size() >= m_budget ) 
+        return RTNType::BitBudgetMet;
+#endif
 
     // Second, process `m_LSP_new`
     //
