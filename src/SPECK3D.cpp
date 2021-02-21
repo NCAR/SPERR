@@ -108,7 +108,6 @@ auto speck::SPECK3D::encode() -> RTNType
             const size_t stride_size    = 64;
             const size_t num_of_strides = m_coeff_len / stride_size;
 
-            // #pragma omp parallel for
             for( size_t stride = 0; stride < num_of_strides; stride++ ) {
                 const size_t offset = stride * stride_size;
                 for( size_t i = offset; i < offset + stride_size; i++ ){
@@ -472,8 +471,9 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc, SigType sig) -> RTNType
         this_pixel_is_sig = m_sig_map_enabled ? m_sig_map[pixel_idx] :
                             (m_coeff_buf[pixel_idx] >= m_threshold);
     }
-    else
+    else {
         this_pixel_is_sig = (sig == SigType::Sig);
+    }
     m_bit_buffer.push_back(this_pixel_is_sig);
 
 #ifndef QZ_TERM
@@ -612,9 +612,9 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2, SigType sig) -
             }
         }
     }
-    else
+    else {
         set.signif = sig;
-
+    }
     m_bit_buffer.push_back(set.signif == SigType::Sig);
 #ifndef QZ_TERM
     if (m_bit_buffer.size() >= m_budget)
