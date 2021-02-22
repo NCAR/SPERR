@@ -112,10 +112,7 @@ private:
     // List of significant pixels (recorded as locations).
     vector_size_t       m_LSP_new; // Ones newly identified as significant
     vector_size_t       m_LSP_old; // Ones previously identified as significant
-
     vector_bool         m_sign_array;
-    vector_bool         m_sig_map;
-    bool                m_sig_map_enabled;
 
 #ifdef USE_PMR
     std::pmr::vector<std::pmr::vector<SPECKSet3D>>  m_LIS;
