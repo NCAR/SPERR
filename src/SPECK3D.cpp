@@ -96,37 +96,6 @@ auto speck::SPECK3D::encode() -> RTNType
     // We say that we run 128 iterations at most.
     for( int iteration = 0; iteration < 128; iteration++ ) {
 
-        // Valid `sigmap_threshold` is between 0.0 and 1.0.
-        //   Smaller thresholds result in more memory traverse and less random access.
-        //   Bigger thresholds result in more memory random access and less traverse.
-        //   We observed that desktops can use 0.8 or higher, while laptops can use 0.6 or lower.
-        //   (No one-size-fit-all)
-        const float sigmap_threshold = 0.8;
-        if( m_LSP_old.size() > size_t(m_coeff_len * sigmap_threshold) ) {
-            m_sig_map.assign( m_coeff_len, false );
-
-            const size_t stride_size    = 64;
-            const size_t num_of_strides = m_coeff_len / stride_size;
-
-            for( size_t stride = 0; stride < num_of_strides; stride++ ) {
-                const size_t offset = stride * stride_size;
-                for( size_t i = offset; i < offset + stride_size; i++ ){
-                    if( m_coeff_buf[i] >= m_threshold )
-                        m_sig_map  [i]  = true;
-                }
-            }
-
-            for( size_t i = stride_size * num_of_strides; i < m_coeff_len; i++ ) {
-                if( m_coeff_buf[i] >= m_threshold )
-                    m_sig_map  [i]  = true;
-            }
-
-            m_sig_map_enabled = true;
-        }
-        else {
-            m_sig_map_enabled = false;
-        }
-
 #ifdef QZ_TERM
         // The actual encoding steps
         // Note that in QZ_TERM mode, only check termination at the end of bitplanes.
@@ -468,8 +437,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc, SigType sig) -> RTNType
     assert( sig != SigType::NewlySig );
     bool this_pixel_is_sig;
     if( sig == SigType::Dunno ) {
-        this_pixel_is_sig = m_sig_map_enabled ? m_sig_map[pixel_idx] :
-                            (m_coeff_buf[pixel_idx] >= m_threshold);
+        this_pixel_is_sig = (m_coeff_buf[pixel_idx] >= m_threshold);
     }
     else {
         this_pixel_is_sig = (sig == SigType::Sig);
@@ -509,60 +477,32 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
 
     const size_t slice_size = m_dim_x * m_dim_y;
 
-    if( m_sig_map_enabled ) {
-        for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
-            const size_t slice_offset = z * slice_size;
-            for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
-                const size_t col_offset = slice_offset + y * m_dim_x;
+    for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
+        const size_t slice_offset = z * slice_size;
+        for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
+            const size_t col_offset = slice_offset + y * m_dim_x;
 
-                for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
-                    if( m_sig_map[ col_offset + x ] ) {
-                        xyz[0] = x - set.start_x;
-                        xyz[1] = y - set.start_y;
-                        xyz[2] = z - set.start_z;
+            for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
+                if( m_coeff_buf[col_offset + x] >= m_threshold ) {
+                    xyz[0] = x - set.start_x;
+                    xyz[1] = y - set.start_y;
+                    xyz[2] = z - set.start_z;
 
-                        // Now scan the same line backwards
-                        for( auto x2 = (set.start_x + set.length_x); x2 > set.start_x; x2-- ) {
-                            if( m_sig_map[ col_offset + (x2 - 1) ] ) {
-                                // x2 could be the same or different from x.
-                                xyz[3] = (x2 - 1) - set.start_x;
-                                xyz[4] = xyz[1];
-                                xyz[5] = xyz[2];
-                                return SigType::Sig;
-                            }
+                    // Now scan the same line backwards
+                    for( auto x2 = (set.start_x + set.length_x); x2 > set.start_x; x2-- ) {
+                        if( m_coeff_buf[col_offset + (x2 - 1)] >= m_threshold ) {
+                            xyz[3] = (x2 - 1) - set.start_x;
+                            xyz[4] = xyz[1];
+                            xyz[5] = xyz[2];
+
+                            return SigType::Sig;
                         }
                     }
-                } // End of processing a line
-            }
+                }
+            } // End of processing a line
         }
     }
-    else {
-        for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
-            const size_t slice_offset = z * slice_size;
-            for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
-                const size_t col_offset = slice_offset + y * m_dim_x;
 
-                for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
-                    if( m_coeff_buf[col_offset + x] >= m_threshold ) {
-                        xyz[0] = x - set.start_x;
-                        xyz[1] = y - set.start_y;
-                        xyz[2] = z - set.start_z;
-
-                        // Now scan the same line backwards
-                        for( auto x2 = (set.start_x + set.length_x); x2 > set.start_x; x2-- ) {
-                            if( m_coeff_buf[col_offset + (x2 - 1)] >= m_threshold ) {
-                                xyz[3] = (x2 - 1) - set.start_x;
-                                xyz[4] = xyz[1];
-                                xyz[5] = xyz[2];
-
-                                return SigType::Sig;
-                            }
-                        }
-                    }
-                } // End of processing a line
-            }
-        }
-    }
     return SigType::Insig;
 }
 
