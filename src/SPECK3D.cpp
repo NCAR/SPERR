@@ -464,13 +464,13 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc, SigType sig) -> RTNType
 }
 
 auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
-                                            std::array<uint32_t, 6>& xyz ) const -> SigType
+                                            std::array<uint32_t, 4>& xyz ) const -> SigType
 {
     // In this implementation, when we know that a line [set.start_x, set.start_x + set.length_x) 
-    // has a significant pixel, we try to identify the last occurance of significant pixel
-    // in the same line as well.
-    // This is because identifying the last occurance is almost free, since that line of data is 
-    // already in cache, and that last occurance might cause the next subset to be significant too.
+    // has a significant pixel, we try to identify if there is another significant pixel
+    // in the same line but on the 2nd half.
+    // This is because identifying another occurance is almost free, since that line of data is 
+    // already in cache, and that the other occurance might cause the next subset to be significant too.
     // Experiments show that there is a 10% - 15% chance identifying the next subset to be significant.
 
     assert( !set.is_empty() );
@@ -488,16 +488,22 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
                     xyz[1] = y - set.start_y;
                     xyz[2] = z - set.start_z;
 
-                    // Now scan the same line backwards
-                    for( auto x2 = (set.start_x + set.length_x); x2 > set.start_x; x2-- ) {
-                        if( m_coeff_buf[col_offset + (x2 - 1)] >= m_threshold ) {
-                            xyz[3] = (x2 - 1) - set.start_x;
-                            xyz[4] = xyz[1];
-                            xyz[5] = xyz[2];
+                    // Fill in the same x value for the next occurance at index=3 location
+                    xyz[3] = x - set.start_x;
 
-                            return SigType::Sig;
+                    // If the identified pixel is at the 1st half of the line, we scan the 
+                    // 2nd half of the line attempting to find the next significant pixel
+                    if( x < set.length_x - set.length_x / 2 ) {
+                        for( auto x2 = set.start_x + set.length_x / 2;
+                                  x2 < set.start_x + set.length_x; x2++ ) {
+                            if( m_coeff_buf[col_offset + x2] >= m_threshold ) {
+                                xyz[3] = x2 - set.start_x;
+                                break;
+                            }
                         }
                     }
+
+                    return SigType::Sig;
                 }
             } // End of processing a line
         }
@@ -524,7 +530,7 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2, SigType sig) -
     subset_sigs.fill( SigType::Dunno );
 
     if( sig == SigType::Dunno ) {
-        std::array<uint32_t, 6> xyz;
+        std::array<uint32_t, 4> xyz;
         set.signif = m_decide_significance( set, xyz );
         if (set.signif == SigType::Sig) {
             // Try to deduce the significance of some of its subsets.
@@ -536,10 +542,11 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1, size_t idx2, SigType sig) -
             sub_i += (xyz[2] < (set.length_z - set.length_z / 2)) ? 0 : 4;
             subset_sigs[sub_i] = SigType::Sig;
 
+            // Another potential significant pixel has the same y, z index.
             sub_i = 0;
             sub_i += (xyz[3] < (set.length_x - set.length_x / 2)) ? 0 : 1;
-            sub_i += (xyz[4] < (set.length_y - set.length_y / 2)) ? 0 : 2;
-            sub_i += (xyz[5] < (set.length_z - set.length_z / 2)) ? 0 : 4;
+            sub_i += (xyz[1] < (set.length_y - set.length_y / 2)) ? 0 : 2;
+            sub_i += (xyz[2] < (set.length_z - set.length_z / 2)) ? 0 : 4;
             subset_sigs[sub_i] = SigType::Sig;
 
             // Step 2: if it's the 5th, 6th, 7th, or 8th subset significant, then 

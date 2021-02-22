@@ -91,7 +91,7 @@ private:
     auto m_partition_S_Z  (const SPECKSet3D&) const -> std::array<SPECKSet3D, 2>;
 
     // Decide if a set is significant or not
-    auto m_decide_significance(const SPECKSet3D&, std::array<uint32_t, 6>& xyz) const -> SigType;
+    auto m_decide_significance(const SPECKSet3D&, std::array<uint32_t, 4>& xyz) const -> SigType;
 
     //
     // Private data members
