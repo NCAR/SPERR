@@ -57,9 +57,11 @@ public:
     auto num_of_bits() const -> size_t;              // How many bits are generated?
     auto max_coeff_bits() const -> int32_t;          // Will be used when decoding.
 
-    // Note that this class isn't performance critical, so don't bother using PMR containers.
     auto get_encoded_bitstream() const -> smart_buffer_uint8;
     auto parse_encoded_bitstream( const void*, size_t ) -> RTNType;
+
+    // Given a SPERR stream, tell how long the speck stream is.
+    auto get_sperr_stream_size( const void* ) const -> uint64_t;
 
     // Action methods
     auto encode() -> RTNType;

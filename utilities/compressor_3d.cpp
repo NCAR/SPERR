@@ -75,7 +75,12 @@ int main( int argc, char* argv[] )
         return 1;
     }
 
-    if( compressor.write_bitstream( output_file.c_str() ) != speck::RTNType::Good ) {
+    auto stream = compressor.get_encoded_bitstream();
+    if( speck::empty_buf(stream) )
+        return 1;
+
+    if( speck::write_n_bytes( output_file.c_str(), stream.second, stream.first.get() ) != 
+                              speck::RTNType::Good ) {
         std::cerr << "Write to disk failed!" << std::endl;
         return 1;
     }

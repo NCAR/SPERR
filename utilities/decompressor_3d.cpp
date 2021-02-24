@@ -41,8 +41,12 @@ int main( int argc, char* argv[] )
     //
     // Let's do the actual work
     //
+    auto in_stream = speck::read_whole_file<uint8_t>( input_file.c_str() );
+    if( speck::empty_buf(in_stream) )
+        return 1;
     SPECK3D_Decompressor decompressor;
-    if( decompressor.read_bitstream( input_file.c_str() ) != speck::RTNType::Good ) {
+    if( decompressor.use_bitstream(in_stream.first.get(), in_stream.second) != 
+                                   speck::RTNType::Good ) {
         std::cerr << "Read compressed file error: " << input_file << std::endl;
         return 1;
     }
@@ -56,7 +60,11 @@ int main( int argc, char* argv[] )
         return 1;
     }
 
-    if( decompressor.write_volume_f( output_file.c_str() ) != speck::RTNType::Good ) {
+    auto vol = decompressor.get_decompressed_volume_f();
+    if( speck::empty_buf(vol) )
+        return 1;
+    if( speck::write_n_bytes( output_file.c_str(), vol.second * sizeof(float), 
+                              vol.first.get() ) != speck::RTNType::Good ) {
         std::cerr << "Write to disk failed!" << std::endl;
         return 1;
     }

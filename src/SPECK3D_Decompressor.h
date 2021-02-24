@@ -18,13 +18,7 @@ class SPECK3D_Decompressor {
 
 public:
     // Accept incoming data: copy from a raw memory block
-    void copy_bitstream( const void* p, size_t len );
-
-    // Accept incoming data by taking ownership of the memory block
-    void take_bitstream( speck::smart_buffer_uint8 );
-
-    // Accept incoming data by reading a file from disk.
-    auto read_bitstream( const char* filename ) -> RTNType;
+    auto use_bitstream( const void* p, size_t len ) -> RTNType;
 
     auto set_bpp( float ) -> RTNType;
 
@@ -34,21 +28,10 @@ public:
     auto get_decompressed_volume_f() const -> speck::smart_buffer_f;
     auto get_decompressed_volume_d() const -> speck::smart_buffer_d;
 
-    // Write the decompressed volume as floats or doubles to a file on disk.
-    auto write_volume_f( const char* filename ) const -> RTNType;
-    auto write_volume_d( const char* filename ) const -> RTNType;
-
 private:
     const size_t                m_meta_size         = 2;
     float                       m_bpp               = 0.0;
 
-    // bitstreams can live in EITHER `m_entire_stream` OR 
-    // `m_speck_stream` plus `m_sperr_stream`, but not both.
-    // When a bitstream is first read from disk or passed in by others, 
-    // it lives in `m_entire_stream`.
-    // After the bitstream is parsed, the approperiate portions go to
-    // `m_speck_stream` and/or `m_sperr_stream`.
-    speck::smart_buffer_uint8   m_entire_stream     = {nullptr, 0};
     speck::smart_buffer_uint8   m_speck_stream      = {nullptr, 0};
 
     speck::CDF97                m_cdf;
@@ -63,7 +46,7 @@ private:
     //
     // Private methods
     //
-    auto m_parse_metadata() -> RTNType;
+    //auto m_parse_metadata() -> RTNType;
 };
 
 

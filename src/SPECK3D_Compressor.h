@@ -42,7 +42,6 @@ public:
 
     // Provide a copy of the encoded bitstream to the caller.
     auto get_encoded_bitstream() const -> speck::smart_buffer_uint8;
-    auto write_bitstream( const char* filename ) const -> RTNType;
 #ifdef QZ_TERM
     // Return 1) the number of outliers, and 2) the num of bytes to encode them.
     auto get_outlier_stats() const -> std::pair<size_t, size_t>;
