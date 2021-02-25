@@ -58,8 +58,11 @@ public:
         //
         // Use a compressor 
         //
+        auto in_buf = speck::read_whole_file<float>( m_input_name.c_str() );
+        if( in_buf.first == nullptr || in_buf.second != total_vals )
+            return 1;
         SPECK3D_Compressor compressor( m_dim_x, m_dim_y, m_dim_z );
-        if( compressor.read_floats( m_input_name.c_str() ) != RTNType::Good )
+        if( compressor.copy_data( in_buf.first.get(), total_vals ) != RTNType::Good )
             return 1;
 
 #ifdef QZ_TERM

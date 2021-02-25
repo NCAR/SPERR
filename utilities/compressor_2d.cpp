@@ -129,13 +129,14 @@ int main( int argc, char* argv[] )
             }
 
             // Read the original input data again
-            const size_t nbytes = sizeof(float) * total_vals;
-            auto orig = std::make_unique<float[]>(total_vals);
-            if( speck::read_n_bytes( input_file.c_str(), nbytes, orig.get() ) != speck::RTNType::Good )
+            auto orig = speck::read_whole_file<float>( input_file.c_str() );
+            if( !speck::size_is(orig, total_vals) ) {
+                std::cerr << "Read the original data failed!" << std::endl;
                 return 1;
+            }
             
             float rmse, lmax, psnr, arr1min, arr1max;
-            speck::calc_stats( orig.get(), slice.first.get(), total_vals,
+            speck::calc_stats( orig.first.get(), slice.first.get(), total_vals,
                                &rmse, &lmax, &psnr, &arr1min, &arr1max );
 
             printf("RMSE = %f, L-Infty = %f, PSNR = %f\n", rmse, lmax, psnr);

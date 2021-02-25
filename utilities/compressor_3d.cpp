@@ -58,8 +58,13 @@ int main( int argc, char* argv[] )
     //
     const size_t total_vals = dims[0] * dims[1] * dims[2];
     SPECK3D_Compressor compressor ( dims[0], dims[1], dims[2] );
-    if( compressor.read_floats( input_file.c_str() ) != speck::RTNType::Good ) {
+    auto orig = speck::read_whole_file<float>( input_file.c_str() );
+    if( !speck::size_is(orig, total_vals) ) {
         std::cerr << "Read input file error: " << input_file << std::endl;
+        return 1;
+    }
+    if( compressor.copy_data( orig.first.get(), orig.second ) != speck::RTNType::Good ) {
+        std::cerr << "Copy data failed!" << std::endl;
         return 1;
     }
 
