@@ -43,10 +43,6 @@ private:
     std::vector<speck::Outlier> m_sperr_los;
 #endif
 
-    //
-    // Private methods
-    //
-    //auto m_parse_metadata() -> RTNType;
 };
 
 

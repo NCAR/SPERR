@@ -14,6 +14,7 @@ SPECK3D_Compressor::SPECK3D_Compressor( size_t x, size_t y, size_t z )
 #endif
 }
 
+
 template< typename T >
 auto SPECK3D_Compressor::copy_data( const T* p, size_t len ) -> RTNType
 {
@@ -42,16 +43,6 @@ auto SPECK3D_Compressor::take_data( speck::buffer_type_d buf, size_t len ) -> RT
     return RTNType::Good;
 }
  
-
-auto SPECK3D_Compressor::read_floats( const char* filename ) -> RTNType
-{
-    auto buf = speck::read_whole_file<float>( filename );
-    if( speck::empty_buf(buf) )
-        return RTNType::IOError;
-    
-    return( this->copy_data( buf.first.get(), buf.second ) );
-}
-
 
 #ifdef QZ_TERM
 auto SPECK3D_Compressor::compress() -> RTNType

@@ -26,11 +26,6 @@ public:
     // Accept incoming data by taking ownership of the memory block
     auto take_data( speck::buffer_type_d buf, size_t len ) -> RTNType;
 
-    // Accept incoming data by reading a file from disk.
-    // The file is supposed to contain blocks of 32-bit floating values, with
-    // X direction varying fastest, and Z direction varying slowest.
-    auto read_floats( const char* filename ) -> RTNType;
-
 #ifdef QZ_TERM
     void set_qz_level( int32_t );
     auto set_tolerance( double ) -> RTNType;
@@ -49,7 +44,6 @@ public:
 
 private:
     const size_t                m_total_vals;
-    const size_t                m_meta_size = 2;
     speck::buffer_type_d        m_val_buf;
 
     speck::CDF97                m_cdf;
