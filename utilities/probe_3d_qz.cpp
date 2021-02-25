@@ -56,7 +56,9 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims,
 
     // Perform decompression
     SPECK3D_Decompressor decompressor;
-    decompressor.take_bitstream( std::move(encoded_stream) );
+    if( decompressor.use_bitstream( encoded_stream.first.get(), encoded_stream.second ) !=
+                                    RTNType::Good )
+        return 1;
     start_time = std::chrono::steady_clock::now();
     rtn = decompressor.decompress();
     if( rtn != RTNType::Good )

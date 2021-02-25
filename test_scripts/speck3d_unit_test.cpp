@@ -71,7 +71,8 @@ public:
 
         if( compressor.compress() != RTNType::Good )
             return 1;
-        if( compressor.write_bitstream( m_output_name.c_str() ) != RTNType::Good )
+        auto stream = compressor.get_encoded_bitstream();
+        if( speck::empty_buf(stream) )
             return 1;
 
         
@@ -79,7 +80,7 @@ public:
         // Use a decompressor 
         //
         SPECK3D_Decompressor decompressor;
-        if( decompressor.read_bitstream( m_output_name.c_str() ) != RTNType::Good )
+        if( decompressor.use_bitstream( stream.first.get(), stream.second ) != RTNType::Good )
             return 1;
         if( decompressor.decompress() != RTNType::Good )
             return 1;

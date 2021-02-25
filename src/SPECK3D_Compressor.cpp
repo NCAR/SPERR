@@ -3,9 +3,6 @@
 #include <cassert>
 #include <cstring>
 
-#ifdef USE_ZSTD
-    #include "zstd.h"
-#endif
 
 SPECK3D_Compressor::SPECK3D_Compressor( size_t x, size_t y, size_t z )
                   : m_total_vals( x * y * z )
@@ -16,6 +13,7 @@ SPECK3D_Compressor::SPECK3D_Compressor( size_t x, size_t y, size_t z )
     m_sperr.set_length( m_total_vals );
 #endif
 }
+
 
 template< typename T >
 auto SPECK3D_Compressor::copy_data( const T* p, size_t len ) -> RTNType
@@ -45,16 +43,6 @@ auto SPECK3D_Compressor::take_data( speck::buffer_type_d buf, size_t len ) -> RT
     return RTNType::Good;
 }
  
-
-auto SPECK3D_Compressor::read_floats( const char* filename ) -> RTNType
-{
-    auto buf = speck::read_whole_file<float>( filename );
-    if( speck::empty_buf(buf) )
-        return RTNType::IOError;
-    
-    return( this->copy_data( buf.first.get(), buf.second ) );
-}
-
 
 #ifdef QZ_TERM
 auto SPECK3D_Compressor::compress() -> RTNType
@@ -148,6 +136,21 @@ auto SPECK3D_Compressor::compress() -> RTNType
 
 auto SPECK3D_Compressor::get_encoded_bitstream() const -> speck::smart_buffer_uint8
 {
+    const size_t total_size = m_speck_stream.second + m_sperr_stream.second;
+    auto buf = std::make_unique<uint8_t[]>( total_size );
+    std::memcpy( buf.get(), m_speck_stream.first.get(), m_speck_stream.second );
+    if( !speck::empty_buf(m_sperr_stream) ) { // UB to memcpy nullptr, so we do the test.
+        std::memcpy( buf.get() + m_speck_stream.second,
+                     m_sperr_stream.first.get(),
+                     m_sperr_stream.second );
+    }
+    return {std::move(buf), total_size};
+}
+
+
+#if 0
+auto SPECK3D_Compressor::get_encoded_bitstream() const -> speck::smart_buffer_uint8
+{
     // After receiving the bitstream from SPECK3D, this method does 3 things:
     // 1) prepend a proper header containing meta data.
     // 2) potentially append a block of data that performs outlier correction.
@@ -229,16 +232,8 @@ auto SPECK3D_Compressor::get_encoded_bitstream() const -> speck::smart_buffer_ui
     return {std::move(buf), total_size};
 #endif
 }
+#endif
     
-
-auto SPECK3D_Compressor::write_bitstream( const char* filename ) const -> RTNType
-{
-    auto stream = this->get_encoded_bitstream();
-    if( speck::empty_buf(stream) )
-        return RTNType::Error;
-
-    return speck::write_n_bytes( filename, stream.second, stream.first.get() );
-}
 
 
 #ifdef QZ_TERM
