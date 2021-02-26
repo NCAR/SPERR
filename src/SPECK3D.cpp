@@ -548,11 +548,13 @@ auto speck::SPECK3D::m_process_S_encode(size_t  idx1,    size_t idx2, SigType si
             subset_sigs[sub_i] = SigType::Sig;
 
             // Another potential significant pixel has the same y, z index.
-            sub_i = 0;
-            sub_i += (xyz[3] < (set.length_x - set.length_x / 2)) ? 0 : 1;
-            sub_i += (xyz[1] < (set.length_y - set.length_y / 2)) ? 0 : 2;
-            sub_i += (xyz[2] < (set.length_z - set.length_z / 2)) ? 0 : 4;
-            subset_sigs[sub_i] = SigType::Sig;
+            if( xyz[3] != xyz[0] ) {
+                sub_i  = 0;
+                sub_i += (xyz[3] < (set.length_x - set.length_x / 2)) ? 0 : 1;
+                sub_i += (xyz[1] < (set.length_y - set.length_y / 2)) ? 0 : 2;
+                sub_i += (xyz[2] < (set.length_z - set.length_z / 2)) ? 0 : 4;
+                subset_sigs[sub_i] = SigType::Sig;
+            }
 
             // Step 2: if it's the 5th, 6th, 7th, or 8th subset significant, then 
             //         the first four subsets must be insignificant. Again, this is
@@ -664,13 +666,13 @@ auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2,
     for( size_t i = 0; i < 8; i++ ) {
         if( subsets[i].is_empty() )
             subset_sigs[i] = SigType::Garbage;
-        // Value SigType::Garbage is only used locally.
+            // Value SigType::Garbage is only used here locally.
     }
     const auto set_end    = std::remove_if( subsets.begin(), subsets.end(),
                             [](const auto& s){return s.is_empty();} );
-    const auto set_end_m1 = set_end - 1;
     const auto sig_end    = std::remove( subset_sigs.begin(), subset_sigs.end(), 
                             SigType::Garbage );
+    const auto set_end_m1 = set_end - 1;
 
     auto sig_it = subset_sigs.begin();
     size_t sig_counter = 0;
@@ -682,9 +684,10 @@ auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2,
             output = false;
             *sig_it = SigType::Sig;
         }
-        const auto& s = *it;
-        if(s.is_pixel()) {
-            m_LIP.push_back(s.start_z * m_dim_x * m_dim_y + s.start_y * m_dim_x + s.start_x);
+
+        if(it->is_pixel()) {
+            m_LIP.push_back(it->start_z * m_dim_x * m_dim_y + 
+                            it->start_y * m_dim_x + it->start_x);
 #ifdef QZ_TERM
             m_process_P_encode(m_LIP.size() - 1, *sig_it, sig_counter, output);
 #else
@@ -695,8 +698,8 @@ auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2,
 #endif
         }
         else {
-            const auto newidx1 = s.part_level;
-            m_LIS[newidx1].emplace_back(s);
+            const auto newidx1 = it->part_level;
+            m_LIS[newidx1].emplace_back(*it);
             const auto newidx2 = m_LIS[newidx1].size() - 1;
 #ifdef QZ_TERM
             m_process_S_encode(newidx1, newidx2, *sig_it, sig_counter, output);
@@ -728,9 +731,9 @@ auto speck::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
         if( it == set_end_m1 && sig_counter == 0 ) {
             read = false;
         }
-        const auto& s = *it;
-        if (s.is_pixel()) {
-            m_LIP.push_back(s.start_z * m_dim_x * m_dim_y + s.start_y * m_dim_x + s.start_x);
+        if (it->is_pixel()) {
+            m_LIP.push_back(it->start_z * m_dim_x * m_dim_y + 
+                            it->start_y * m_dim_x + it->start_x);
 
             auto rtn = m_process_P_decode(m_LIP.size() - 1, sig_counter, read);
             if( rtn == RTNType::BitBudgetMet )
@@ -738,8 +741,8 @@ auto speck::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
             assert( rtn == RTNType::Good );
         }
         else {
-            const auto newidx1 = s.part_level;
-            m_LIS[newidx1].emplace_back(s);
+            const auto newidx1 = it->part_level;
+            m_LIS[newidx1].emplace_back(*it);
             const auto newidx2 = m_LIS[newidx1].size() - 1;
 
             auto rtn = m_process_S_decode(newidx1, newidx2, sig_counter, read);
