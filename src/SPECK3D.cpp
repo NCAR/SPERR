@@ -630,36 +630,49 @@ auto speck::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2) -> RTNType
 auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2, 
                                      std::array<SigType, 8> subset_sigs) -> RTNType
 {
-    const auto& set     = m_LIS[idx1][idx2];
-    const auto  subsets = m_partition_S_XYZ(set);
+    auto  subsets = m_partition_S_XYZ(m_LIS[idx1][idx2]);
 
+    // Since some subsets could be empty, let's put empty sets at the end
+    // Also need to organize `subset_sigs` to maintain the relative order
     for( size_t i = 0; i < 8; i++ ) {
-        const auto& s   = subsets[i];
-        const auto  sig = subset_sigs[i];
+        if( subsets[i].is_empty() )
+            subset_sigs[i] = SigType::Garbage;
+        // Value SigType::Garbage is only used locally.
+    }
+    const auto set_end    = std::remove_if( subsets.begin(), subsets.end(),
+                            [](const auto& s){return s.is_empty();} );
+    const auto set_end_m1 = set_end - 1;
+    const auto sig_end    = std::remove( subset_sigs.begin(), subset_sigs.end(), 
+                            SigType::Garbage );
+
+    auto sig_it = subset_sigs.begin();
+    for( auto it = subsets.begin(); it <= set_end_m1; ++it ) {
+        const auto& s       = *it;
         if (s.is_pixel()) {
             m_LIP.push_back(s.start_z * m_dim_x * m_dim_y + s.start_y * m_dim_x + s.start_x);
 #ifdef QZ_TERM
-            m_process_P_encode(m_LIP.size() - 1, sig);
+            m_process_P_encode(m_LIP.size() - 1, *sig_it);
 #else
-            auto rtn = m_process_P_encode(m_LIP.size() - 1, sig);
+            auto rtn = m_process_P_encode(m_LIP.size() - 1, *sig_it);
             if( rtn == RTNType::BitBudgetMet )
                 return RTNType::BitBudgetMet;
             assert( rtn == RTNType::Good );
 #endif
         }
-        else if (!s.is_empty()) {
+        else {
             const auto newidx1 = s.part_level;
             m_LIS[newidx1].emplace_back(s);
             const auto newidx2 = m_LIS[newidx1].size() - 1;
 #ifdef QZ_TERM
-            m_process_S_encode(newidx1, newidx2, sig);
+            m_process_S_encode(newidx1, newidx2, *sig_it);
 #else
-            auto rtn = m_process_S_encode(newidx1, newidx2, sig);
+            auto rtn = m_process_S_encode(newidx1, newidx2, *sig_it);
             if( rtn == RTNType::BitBudgetMet )
                 return RTNType::BitBudgetMet;
             assert( rtn == RTNType::Good );
 #endif
         }
+        ++sig_it;
     }
 
     return RTNType::Good;
@@ -667,10 +680,13 @@ auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2,
 
 auto speck::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
 {
-    const auto& set     = m_LIS[idx1][idx2];
-    const auto  subsets = m_partition_S_XYZ(set);
+    auto        subsets    = m_partition_S_XYZ( m_LIS[idx1][idx2] );
+    const auto  set_end    = std::remove_if( subsets.begin(), subsets.end(),
+                             [](const auto& s){return s.is_empty();} );
+    const auto  set_end_m1 = set_end - 1;
 
-    for( const auto& s : subsets ) {
+    for( auto it = subsets.begin(); it <= set_end_m1; ++it ) {
+        const auto& s = *it;
         if (s.is_pixel()) {
             m_LIP.push_back(s.start_z * m_dim_x * m_dim_y + s.start_y * m_dim_x + s.start_x);
 
@@ -679,7 +695,7 @@ auto speck::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
                 return RTNType::BitBudgetMet;
             assert( rtn == RTNType::Good );
         }
-        else if (!s.is_empty()) {
+        else {
             const auto newidx1 = s.part_level;
             m_LIS[newidx1].emplace_back(s);
             const auto newidx2 = m_LIS[newidx1].size() - 1;
