@@ -67,8 +67,8 @@ TEST( dwt2d, small_image_even )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
-    auto in_buf = std::make_unique<float[]>( total_vals );
-    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
+    auto [in_buf, len] = speck::read_whole_file<float>(input);
+    if( in_buf == nullptr || len != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -94,8 +94,8 @@ TEST( dwt2d, small_image_odd )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
-    auto in_buf = std::make_unique<float[]>( total_vals );
-    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
+    auto [in_buf, len] = speck::read_whole_file<float>(input);
+    if( in_buf == nullptr || len != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -121,8 +121,8 @@ TEST( dwt2d, big_image_even )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
-    auto in_buf = std::make_unique<float[]>( total_vals );
-    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
+    auto [in_buf, len] = speck::read_whole_file<float>(input);
+    if( in_buf == nullptr || len != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -148,8 +148,8 @@ TEST( dwt2d, big_image_odd )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
-    auto in_buf = std::make_unique<float[]>( total_vals );
-    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
+    auto [in_buf, len] = speck::read_whole_file<float>(input);
+    if( in_buf == nullptr || len != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -175,8 +175,8 @@ TEST( dwt3d, small_even_cube )
     const size_t  total_vals = dim_x * dim_y * dim_z;
 
     // Let read in binaries as 4-byte floats
-    auto in_buf = std::make_unique<float[]>( total_vals );
-    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
+    auto [in_buf, len] = speck::read_whole_file<float>(input);
+    if( in_buf == nullptr || len != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -202,8 +202,8 @@ TEST( dwt3d, big_odd_cube )
     const size_t  total_vals = dim_x * dim_y * dim_z;
 
     // Let read in binaries as 4-byte floats
-    auto in_buf = std::make_unique<float[]>( total_vals );
-    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
+    auto [in_buf, len] = speck::read_whole_file<float>(input);
+    if( in_buf == nullptr || len != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -229,8 +229,8 @@ TEST( dwt3d, big_even_cube )
     const size_t  total_vals = dim_x * dim_y * dim_z;
 
     // Let read in binaries as 4-byte floats
-    auto in_buf = std::make_unique<float[]>( total_vals );
-    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
+    auto [in_buf, len] = speck::read_whole_file<float>(input);
+    if( in_buf == nullptr || len != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Use a speck::CDF97 to perform DWT and IDWT.
