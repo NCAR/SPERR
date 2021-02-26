@@ -119,7 +119,7 @@ int main( int argc, char* argv[] )
 
     // Read and keep a copy of input data (will be used for evaluation)
     const size_t total_vals = dims[0] * dims[1] * dims[2];
-    auto [input_buf, buf_len] = speck::read_whole_file( input_file.c_str() );
+    auto [input_buf, buf_len] = speck::read_whole_file<float>( input_file.c_str() );
     if( input_buf == nullptr || buf_len != total_vals ) {
         std::cerr << "  -- reading input file failed!" << std::endl;
         return 1;
