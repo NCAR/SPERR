@@ -49,7 +49,8 @@ auto use_compressor( const float* in_buf, std::array<size_t, 3> dims, float bpp 
 auto use_decompressor( speck::smart_buffer_uint8 stream ) -> speck::smart_buffer_f
 {
     SPECK3D_Decompressor decompressor;
-    decompressor.take_bitstream( std::move(stream) );
+    if( decompressor.use_bitstream( stream.first.get(), stream.second ) != RTNType::Good )
+        return {nullptr, 0};
 
     auto start = std::chrono::steady_clock::now();
     if( decompressor.decompress() != speck::RTNType::Good ) {
@@ -118,9 +119,8 @@ int main( int argc, char* argv[] )
 
     // Read and keep a copy of input data (will be used for evaluation)
     const size_t total_vals = dims[0] * dims[1] * dims[2];
-    auto input_buf = std::make_unique<float[]>( total_vals );
-    if( speck::read_n_bytes( input_file.c_str(), total_vals * sizeof(float), input_buf.get() )
-        != speck::RTNType::Good ) {
+    auto [input_buf, buf_len] = speck::read_whole_file( input_file.c_str() );
+    if( input_buf == nullptr || buf_len != total_vals ) {
         std::cerr << "  -- reading input file failed!" << std::endl;
         return 1;
     }

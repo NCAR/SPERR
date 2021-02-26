@@ -58,8 +58,13 @@ int main( int argc, char* argv[] )
     //
     const size_t total_vals = dims[0] * dims[1] * dims[2];
     SPECK3D_Compressor compressor ( dims[0], dims[1], dims[2] );
-    if( compressor.read_floats( input_file.c_str() ) != speck::RTNType::Good ) {
+    auto orig = speck::read_whole_file<float>( input_file.c_str() );
+    if( !speck::size_is(orig, total_vals) ) {
         std::cerr << "Read input file error: " << input_file << std::endl;
+        return 1;
+    }
+    if( compressor.copy_data( orig.first.get(), orig.second ) != speck::RTNType::Good ) {
+        std::cerr << "Copy data failed!" << std::endl;
         return 1;
     }
 
@@ -75,7 +80,12 @@ int main( int argc, char* argv[] )
         return 1;
     }
 
-    if( compressor.write_bitstream( output_file.c_str() ) != speck::RTNType::Good ) {
+    auto stream = compressor.get_encoded_bitstream();
+    if( speck::empty_buf(stream) )
+        return 1;
+
+    if( speck::write_n_bytes( output_file.c_str(), stream.second, stream.first.get() ) != 
+                              speck::RTNType::Good ) {
         std::cerr << "Write to disk failed!" << std::endl;
         return 1;
     }

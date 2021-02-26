@@ -3,53 +3,37 @@
 #include <cstring>
 #include <cassert>
 
-#ifdef USE_ZSTD
-    #include "zstd.h"
-#endif
 
-
-void SPECK3D_Decompressor::copy_bitstream( const void* p, size_t len )
+auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
 {
-    auto buf = std::make_unique<uint8_t[]>( len );
-    std::memcpy( buf.get(), p, len );
-    m_entire_stream = {std::move(buf), len};
-    m_speck_stream  = {nullptr, 0};
-#ifdef QZ_TERM
-    m_sperr_stream  = {nullptr, 0};
-    m_sperr_los.clear();
-#endif
-}
+    // Step 1: extract SPECK stream from it
+    m_speck_stream = {nullptr, 0};
+    const auto speck_size = m_decoder.get_speck_stream_size(p);
+    if( speck_size > len )
+        return RTNType::WrongSize;
+    auto buf = std::make_unique<uint8_t[]>( speck_size );
+    std::memcpy( buf.get(), p, speck_size );
+    m_speck_stream = {std::move(buf), speck_size};
 
-    
-void SPECK3D_Decompressor::take_bitstream( speck::smart_buffer_uint8 buf )
-{
-    m_entire_stream = std::move( buf );
-    m_speck_stream  = {nullptr, 0};
+    // Step 2: extract SPERR stream from it
 #ifdef QZ_TERM
-    m_sperr_stream  = {nullptr, 0};
-    m_sperr_los.clear();
-#endif
-}
-    
-
-auto SPECK3D_Decompressor::read_bitstream( const char* filename ) -> RTNType
-{
-    auto buf = speck::read_whole_file<uint8_t>( filename );
-    if( speck::empty_buf(buf) )
-        return RTNType::IOError;
-    
-    m_entire_stream.first   = std::move( buf.first );
-    m_entire_stream.second  = buf.second;
-    m_speck_stream  = {nullptr, 0};
-#ifdef QZ_TERM
-    m_sperr_stream  = {nullptr, 0};
-    m_sperr_los.clear();
+    m_sperr_stream = {nullptr, 0};
+    if( speck_size < len ) {
+        const uint8_t* const sperr_p = static_cast<const uint8_t*>(p) + speck_size;
+        const auto sperr_size = m_sperr.get_sperr_stream_size( sperr_p );
+        if( sperr_size != len - speck_size )
+            return RTNType::WrongSize;
+        buf = std::make_unique<uint8_t[]>( sperr_size );
+        std::memcpy( buf.get(), sperr_p, sperr_size );
+        m_sperr_stream = {std::move(buf), sperr_size};
+        m_sperr_los.clear();
+    }
 #endif
 
     return RTNType::Good;
 }
 
-
+    
 auto SPECK3D_Decompressor::set_bpp( float bpp ) -> RTNType
 {
     if( bpp < 0.0 || bpp > 64.0 )
@@ -63,15 +47,12 @@ auto SPECK3D_Decompressor::set_bpp( float bpp ) -> RTNType
 
 auto SPECK3D_Decompressor::decompress() -> RTNType
 {
-    auto rtn = RTNType::Good;
-    if( speck::empty_buf(m_speck_stream) )
-        rtn  = this->m_parse_metadata();
-    if( rtn != RTNType::Good )
-        return rtn;
-
     // Step 1: SPECK decode.
-    rtn = m_decoder.parse_encoded_bitstream( m_speck_stream.first.get(),
-                                             m_speck_stream.second );
+    if( speck::empty_buf(m_speck_stream) )
+        return RTNType::Error;
+    
+    auto rtn = m_decoder.parse_encoded_bitstream( m_speck_stream.first.get(),
+                                                  m_speck_stream.second );
     if( rtn != RTNType::Good )
         return rtn;
 
@@ -152,28 +133,7 @@ auto SPECK3D_Decompressor::get_decompressed_volume_d() const -> speck::smart_buf
 }
 
 
-auto SPECK3D_Decompressor::write_volume_d( const char* filename ) const -> RTNType 
-{
-    // Get a read-only handle of the volume from m_cdf, and then write it to disk.
-    auto vol = m_cdf.get_read_only_data( );
-    if( vol.first == nullptr || vol.second == 0 )
-        return RTNType::Error;
-
-    return speck::write_n_bytes( filename, sizeof(double) * vol.second, vol.first.get() );
-}
-
-
-auto SPECK3D_Decompressor::write_volume_f( const char* filename ) const -> RTNType
-{
-    // Need to get a volume represented as floats, then write it to disk.
-    auto vol = get_decompressed_volume_f();
-    if( vol.first == nullptr || vol.second == 0 )
-        return RTNType::Error;
-
-    return speck::write_n_bytes( filename, sizeof(float) * vol.second, vol.first.get() );
-}
-
-
+#if 0
 auto SPECK3D_Decompressor::m_parse_metadata() -> RTNType
 {
     // This method parses the metadata of a bitstream and performs the following tasks:
@@ -270,7 +230,7 @@ auto SPECK3D_Decompressor::m_parse_metadata() -> RTNType
 
     return RTNType::Good;
 }
-
+#endif
 
 
 

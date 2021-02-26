@@ -53,7 +53,7 @@ public:
     auto get_bit_buffer_size() const -> size_t; // Size in number of bits.
     auto get_dims() const -> std::array<size_t, 3>;
 
-    // Given a buffer of a header, tell how long the speck stream is.
+    // Given a SPECK stream, tell how long the speck stream is.
     // Note: don't need to provide the buffer size because this function
     //       goes to a fixed location to retrieve the stream size.
     auto get_speck_stream_size( const void* ) const -> uint64_t;

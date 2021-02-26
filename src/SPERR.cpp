@@ -495,4 +495,16 @@ auto speck::SPERR::parse_encoded_bitstream( const void* buf, size_t len ) -> RTN
     return RTNType::Good;
 }
 
+auto speck::SPERR::get_sperr_stream_size( const void* buf ) const -> uint64_t
+{
+    // Given the header definition in `get_encoded_bitstream()`, directly
+    // go retrieve the value stored in byte 12-20.
+    const uint8_t* const ptr = static_cast<const uint8_t*>( buf );
+    uint64_t num_bits;
+    std::memcpy( &num_bits, ptr + 12, sizeof(num_bits) );
+    while( num_bits % 8 != 0 )
+        num_bits++;
 
+    return (m_header_size + num_bits / 8);
+
+}

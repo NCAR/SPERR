@@ -58,8 +58,11 @@ public:
         //
         // Use a compressor 
         //
+        auto in_buf = speck::read_whole_file<float>( m_input_name.c_str() );
+        if( in_buf.first == nullptr || in_buf.second != total_vals )
+            return 1;
         SPECK3D_Compressor compressor( m_dim_x, m_dim_y, m_dim_z );
-        if( compressor.read_floats( m_input_name.c_str() ) != RTNType::Good )
+        if( compressor.copy_data( in_buf.first.get(), total_vals ) != RTNType::Good )
             return 1;
 
 #ifdef QZ_TERM
@@ -71,7 +74,8 @@ public:
 
         if( compressor.compress() != RTNType::Good )
             return 1;
-        if( compressor.write_bitstream( m_output_name.c_str() ) != RTNType::Good )
+        auto stream = compressor.get_encoded_bitstream();
+        if( speck::empty_buf(stream) )
             return 1;
 
         
@@ -79,7 +83,7 @@ public:
         // Use a decompressor 
         //
         SPECK3D_Decompressor decompressor;
-        if( decompressor.read_bitstream( m_output_name.c_str() ) != RTNType::Good )
+        if( decompressor.use_bitstream( stream.first.get(), stream.second ) != RTNType::Good )
             return 1;
         if( decompressor.decompress() != RTNType::Good )
             return 1;
