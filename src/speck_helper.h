@@ -45,7 +45,8 @@ enum class SigType : unsigned char {
     Insig,
     Sig,
     NewlySig,
-    Dunno
+    Dunno,
+    Garbage
 };
 
 enum class SetType : unsigned char {

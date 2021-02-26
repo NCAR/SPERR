@@ -18,7 +18,7 @@ option( BUILD_UNIT_TESTS "Build unit tests using googletest?" OFF)
 option( USE_ZSTD "Incorporate zstd to achieve further 5% compression?" OFF)
 option( USE_PMR  "Use Polymorphic Memory Resource. (Requires a C++17 compiler.)" OFF)
 option( QZ_TERM  "Operational mode which terminates by quantization level" ON)
-option( USE_OMP  "Enable OpenMP in a few calculations" ON)
+option( USE_OMP  "Enable OpenMP in a few calculations" OFF)
 
 if( USE_OMP )
     find_package(OpenMP REQUIRED)
