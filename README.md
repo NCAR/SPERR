@@ -9,6 +9,7 @@ to have it built on a UNIX system.
 ```
 cd SPECK2020
 mkdir build
+cd build
 cmake ..
 make -j 4
 ```
