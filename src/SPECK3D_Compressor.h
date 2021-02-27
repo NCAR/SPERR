@@ -23,8 +23,13 @@ public:
     template< typename T >
     auto copy_data( const T* p, size_t len ) -> RTNType;
 
-    // Accept incoming data by taking ownership of the memory block
+    // Accept incoming data: take ownership of a memory block
     auto take_data( speck::buffer_type_d buf, size_t len ) -> RTNType;
+
+    // Accept incoming data: gather a block from a bigger volume
+    template<typename T>
+    auto gather_block( const T* vol, std::array<size_t, 3> vol_dim, 
+                       std::array<size_t, 6> block ) -> RTNType;
 
 #ifdef QZ_TERM
     void set_qz_level( int32_t );
@@ -43,6 +48,9 @@ public:
 #endif
 
 private:
+    const size_t                m_dim_x;
+    const size_t                m_dim_y;
+    const size_t                m_dim_z;
     const size_t                m_total_vals;
     speck::buffer_type_d        m_val_buf;
 

@@ -91,46 +91,31 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
 }
 
 
-auto SPECK3D_Decompressor::get_decompressed_volume_f() const -> speck::smart_buffer_f
+template<typename T>
+auto SPECK3D_Decompressor::get_decompressed_volume() const ->
+                           std::pair<std::unique_ptr<T[]>, size_t>
 {
-    auto vol = m_cdf.get_read_only_data();
-    if( vol.first == nullptr || vol.second == 0 )
+    auto [vol, len]  = m_cdf.get_read_only_data();
+    if( vol == nullptr || len == 0 )
         return {nullptr, 0};
 
-    auto out_buf = std::make_unique<float[]>(vol.second);
-    auto begin = speck::begin( vol.first );
-    auto end   = speck::end( vol.first, vol.second );
-    std::copy( begin, end, speck::begin( out_buf ) );
+    auto out_buf = std::make_unique<T[]>( len );
+    auto begin   = speck::begin( vol );
+    auto end     = speck::end( vol, len );
+    std::copy( begin, end, speck::begin(out_buf) );
 
-    // If there are corrections for outliers, do it now!
 #ifdef QZ_TERM
+    // If there are corrections for outliers, do it now!
     for( const auto& outlier : m_sperr_los ) {
         out_buf[outlier.location] += outlier.error;
     }
 #endif
 
-    return {std::move(out_buf), vol.second};
+    return {std::move(out_buf), len};
 }
+template auto SPECK3D_Decompressor::get_decompressed_volume() const -> speck::smart_buffer_f;
+template auto SPECK3D_Decompressor::get_decompressed_volume() const -> speck::smart_buffer_d;
 
-
-auto SPECK3D_Decompressor::get_decompressed_volume_d() const -> speck::smart_buffer_d
-{
-    auto vol = m_cdf.get_read_only_data();
-    if(  vol.first == nullptr || vol.second == 0 )
-        return {nullptr, 0};
-    
-    auto out_buf = std::make_unique<double[]>(vol.second);
-    std::memcpy( out_buf.get(), vol.first.get(), sizeof(double) * vol.second );
-
-    // If there are corrections for outliers, do it now!
-#ifdef QZ_TERM
-    for( const auto& outlier : m_sperr_los ) {
-        out_buf[outlier.location] += outlier.error;
-    }
-#endif
-
-    return {std::move(out_buf), vol.second};
-}
 
 
 #if 0

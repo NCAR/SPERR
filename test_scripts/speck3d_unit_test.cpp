@@ -87,8 +87,8 @@ public:
             return 1;
         if( decompressor.decompress() != RTNType::Good )
             return 1;
-        auto vol = decompressor.get_decompressed_volume_f();
-        if( vol.first == nullptr || vol.second != total_vals )
+        auto vol = decompressor.get_decompressed_volume<float>();
+        if( !speck::size_is( vol, total_vals ) )
             return 1;
 
         //

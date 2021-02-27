@@ -61,7 +61,7 @@ auto use_decompressor( speck::smart_buffer_uint8 stream ) -> speck::smart_buffer
     auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
     std::cout << " -> Decompression takes time: " << diff << "ms\n";
 
-    auto vol = decompressor.get_decompressed_volume_f();
+    auto vol = decompressor.get_decompressed_volume<float>();
     if( vol.first == nullptr ) {
         std::cerr << "  -- obtaining reconstructed volume failed!\n";
         return {nullptr, 0};

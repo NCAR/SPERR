@@ -5,7 +5,8 @@
 
 
 SPECK3D_Compressor::SPECK3D_Compressor( size_t x, size_t y, size_t z )
-                  : m_total_vals( x * y * z )
+                  : m_dim_x(x), m_dim_y(y), m_dim_z(z), 
+                    m_total_vals( x * y * z )
 {
     m_cdf.set_dims( x, y, z );
     m_encoder.set_dims( x, y, z );
@@ -42,6 +43,33 @@ auto SPECK3D_Compressor::take_data( speck::buffer_type_d buf, size_t len ) -> RT
 
     return RTNType::Good;
 }
+
+
+template<typename T>
+auto SPECK3D_Compressor::gather_block( const T* vol, std::array<size_t, 3> vol_dim,
+                                       std::array<size_t, 6> block ) -> RTNType
+{
+    if( block[1] != m_dim_x || block[3] != m_dim_y || block[5] != m_dim_z )
+        return RTNType::DimMismatch;
+
+    m_val_buf  = std::make_unique<double[]>( m_total_vals );
+    size_t idx = 0;
+    for( size_t z = block[4]; z < block[4] + block[5]; z++ ) {
+      const size_t plane_offset = z * vol_dim[0] * vol_dim[1];
+      for( size_t y = block[2]; y < block[2] + block[3]; y++ ) {
+        const size_t col_offset = plane_offset + y * vol_dim[0];
+        for( size_t x = block[0]; x < block[0] + block[1]; x++ ) {
+          m_val_buf[idx++] = vol[col_offset + x];
+        }
+      }
+    }
+
+    return RTNType::Good;
+}
+template auto SPECK3D_Compressor::gather_block( const double*, std::array<size_t, 3>,
+                                                std::array<size_t, 6> ) -> RTNType;
+template auto SPECK3D_Compressor::gather_block( const float*, std::array<size_t, 3>,
+                                                std::array<size_t, 6> ) -> RTNType;
  
 
 #ifdef QZ_TERM

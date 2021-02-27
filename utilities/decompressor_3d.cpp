@@ -60,7 +60,7 @@ int main( int argc, char* argv[] )
         return 1;
     }
 
-    auto vol = decompressor.get_decompressed_volume_f();
+    auto vol = decompressor.get_decompressed_volume<float>();
     if( speck::empty_buf(vol) )
         return 1;
     if( speck::write_n_bytes( output_file.c_str(), vol.second * sizeof(float), 
@@ -72,7 +72,7 @@ int main( int argc, char* argv[] )
     // Compare with the original data if user specifies
     if( *compare_file_ptr ) {
         auto orig = speck::read_whole_file<float>( compare_file.c_str() );
-        auto decomp = decompressor.get_decompressed_volume_f();
+        auto decomp = decompressor.get_decompressed_volume<float>();
         if( orig.second != decomp.second ) {
             std::cerr << "File to compare with has difference size "
                          "with the decompressed file!" << std::endl;

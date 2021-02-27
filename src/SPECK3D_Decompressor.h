@@ -25,8 +25,13 @@ public:
     auto decompress() -> RTNType;
 
     // Get the decompressed volume in a float or double buffer.
-    auto get_decompressed_volume_f() const -> speck::smart_buffer_f;
-    auto get_decompressed_volume_d() const -> speck::smart_buffer_d;
+    // It returns a smart_buffer_f or smart_buffer_d
+    template<typename T>
+    auto get_decompressed_volume() const -> std::pair<std::unique_ptr<T[]>, size_t>;
+
+    // Put this block to a bigger volume
+    template<typename T>
+    auto scatter_block( T*, std::array<size_t, 3> ) const -> RTNType;
 
 private:
     const size_t                m_meta_size         = 2;
