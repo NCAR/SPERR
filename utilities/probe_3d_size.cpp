@@ -89,7 +89,7 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, float 
                        &rmse, &lmax, &psnr, &arr1min, &arr1max);
 
     printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
-    printf("    RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
+    printf("    RMSE = %.2e, L-Infty = %.2e, PSNR = %.8fdB\n", rmse, lmax, psnr);
     
     return 0;
 }
