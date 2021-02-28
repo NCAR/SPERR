@@ -42,6 +42,7 @@ public:
 
     // Provide a copy of the encoded bitstream to the caller.
     auto get_encoded_bitstream() const -> speck::smart_buffer_uint8;
+
 #ifdef QZ_TERM
     // Return 1) the number of outliers, and 2) the num of bytes to encode them.
     auto get_outlier_stats() const -> std::pair<size_t, size_t>;
@@ -67,7 +68,7 @@ private:
     double          m_tol         = 0.0; // tolerance used in error correction
     size_t          m_num_outlier = 0;
 #else
-    float           m_bpp    = 0.0;
+    float           m_bpp         = 0.0;
 #endif
 };
 

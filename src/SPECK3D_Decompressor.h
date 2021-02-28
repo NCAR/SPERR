@@ -31,11 +31,16 @@ public:
 
     // Put this block to a bigger volume
     template<typename T>
-    auto scatter_block( T*, std::array<size_t, 3> ) const -> RTNType;
+    auto scatter_block( T* vol,  std::array<size_t, 3> vol_dim,
+                        std::array<size_t, 6> block) const -> RTNType;
+
+    auto get_dims() const -> std::array<size_t, 3>;
 
 private:
-    const size_t                m_meta_size         = 2;
     float                       m_bpp               = 0.0;
+    size_t                      m_dim_x             = 0;
+    size_t                      m_dim_y             = 0;
+    size_t                      m_dim_z             = 0;
 
     speck::smart_buffer_uint8   m_speck_stream      = {nullptr, 0};
 

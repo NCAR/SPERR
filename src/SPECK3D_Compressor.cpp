@@ -58,9 +58,8 @@ auto SPECK3D_Compressor::gather_block( const T* vol, std::array<size_t, 3> vol_d
       const size_t plane_offset = z * vol_dim[0] * vol_dim[1];
       for( size_t y = block[2]; y < block[2] + block[3]; y++ ) {
         const size_t col_offset = plane_offset + y * vol_dim[0];
-        for( size_t x = block[0]; x < block[0] + block[1]; x++ ) {
+        for( size_t x = block[0]; x < block[0] + block[1]; x++ )
           m_val_buf[idx++] = vol[col_offset + x];
-        }
       }
     }
 
