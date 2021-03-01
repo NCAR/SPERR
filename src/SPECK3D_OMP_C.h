@@ -41,22 +41,24 @@ public:
 
 
 private:
-    size_t      m_dim_x     = 0;
-    size_t      m_dim_y     = 0;
-    size_t      m_dim_z     = 0;
-    size_t      m_chunk_x   = 0;
-    size_t      m_chunk_y   = 0;
-    size_t      m_chunk_z   = 0;
+    size_t      m_dim_x       = 0;
+    size_t      m_dim_y       = 0;
+    size_t      m_dim_z       = 0;
+    size_t      m_chunk_x     = 0;
+    size_t      m_chunk_y     = 0;
+    size_t      m_chunk_z     = 0;
+    size_t      m_num_chunks  = 0;
 
     std::vector<SPECK3D_Compressor>         m_compressors;
     std::vector<speck::smart_buffer_uint8>  m_encoded_streams;
+    std::vector<RTNType>                    m_chunk_rtn; // temporarily store return valuesg
 
 #ifdef QZ_TERM
-    int32_t     m_qz_lev    = 0;
-    double      m_tol       = 0.0;
+    int32_t     m_qz_lev      = 0;
+    double      m_tol         = 0.0;
     std::vector<std::pair<size_t, size_t>>  m_otlr_stats;
 #else
-    float       m_bpp       = 0.0;
+    float       m_bpp         = 0.0;
 #endif
 
 };
