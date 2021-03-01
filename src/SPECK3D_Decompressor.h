@@ -29,10 +29,10 @@ public:
     template<typename T>
     auto get_decompressed_volume() const -> std::pair<std::unique_ptr<T[]>, size_t>;
 
-    // Put this block to a bigger volume
+    // Put this chunk to a bigger volume
     template<typename T>
-    auto scatter_block( T* vol,  std::array<size_t, 3> vol_dim,
-                        std::array<size_t, 6> block) const -> RTNType;
+    auto scatter_chunk( T* vol,  std::array<size_t, 3> vol_dim,
+                        std::array<size_t, 6> chunk) const -> RTNType;
 
     auto get_dims() const -> std::array<size_t, 3>;
 

@@ -376,54 +376,54 @@ template auto speck::size_is( const smart_buffer_f&, size_t     ) -> bool;
 template auto speck::size_is( const smart_buffer_uint8&, size_t ) -> bool;
 
 
-auto speck::block_volume( std::array<size_t, 3> vol_dim, std::array<size_t, 3> block_dim )
+auto speck::chunk_volume( std::array<size_t, 3> vol_dim, std::array<size_t, 3> chunk_dim )
                           -> std::vector< std::array<size_t, 6> >
 {
     for( size_t i = 0; i < 3; i++ )
-        if( vol_dim[i] < block_dim[i] )
+        if( vol_dim[i] < chunk_dim[i] )
             return {};
 
     // Step 1: figure out how many segments are there along each axis.
     auto n_segs = std::array<size_t, 3>();
     for( size_t i = 0; i < 3; i++ ) {
-        n_segs[i] = vol_dim[i] / block_dim[i];
-        if( (vol_dim[i] % block_dim[i]) > (block_dim[i] / 2) )
+        n_segs[i] = vol_dim[i] / chunk_dim[i];
+        if( (vol_dim[i] % chunk_dim[i]) > (chunk_dim[i] / 2) )
             n_segs[i]++;
     }
 
     // Step 2: calculate the starting indices of each segment along each axis.
     auto x_tics = std::vector<size_t>( n_segs[0] + 1 );
     for( size_t i = 0; i < n_segs[0]; i++ )
-        x_tics[i] = i * block_dim[0];
+        x_tics[i] = i * chunk_dim[0];
     x_tics[n_segs[0]] = vol_dim[0];
 
     auto y_tics = std::vector<size_t>( n_segs[1] + 1 );
     for( size_t i = 0; i < n_segs[1]; i++ )
-        y_tics[i] = i * block_dim[1];
+        y_tics[i] = i * chunk_dim[1];
     y_tics[n_segs[1]] = vol_dim[1];
 
     auto z_tics = std::vector<size_t>( n_segs[2] + 1 );
     for( size_t i = 0; i < n_segs[2]; i++ )
-        z_tics[i] = i * block_dim[2];
+        z_tics[i] = i * chunk_dim[2];
     z_tics[n_segs[2]] = vol_dim[2];
 
-    // Step 3: fill in details of each block
-    auto n_blocks = n_segs[0] * n_segs[1] * n_segs[2];
-    auto blocks   = std::vector< std::array<size_t, 6> >( n_blocks );
-    size_t block_idx = 0;
+    // Step 3: fill in details of each chunk
+    auto n_chunks = n_segs[0] * n_segs[1] * n_segs[2];
+    auto chunks   = std::vector< std::array<size_t, 6> >( n_chunks );
+    size_t chunk_idx = 0;
     for( size_t z = 0; z < n_segs[2]; z++ )
       for( size_t y = 0; y < n_segs[1]; y++ )
         for( size_t x = 0; x < n_segs[0]; x++ ) {
-            blocks[block_idx][0] = x_tics[x];                   // X start
-            blocks[block_idx][1] = x_tics[x + 1] - x_tics[x];   // X length
-            blocks[block_idx][2] = y_tics[y];                   // Y start
-            blocks[block_idx][3] = y_tics[y + 1] - y_tics[y];   // Y length
-            blocks[block_idx][4] = z_tics[z];                   // Z start
-            blocks[block_idx][5] = z_tics[z + 1] - z_tics[z];   // Z length
-            block_idx++;
+            chunks[chunk_idx][0] = x_tics[x];                   // X start
+            chunks[chunk_idx][1] = x_tics[x + 1] - x_tics[x];   // X length
+            chunks[chunk_idx][2] = y_tics[y];                   // Y start
+            chunks[chunk_idx][3] = y_tics[y + 1] - y_tics[y];   // Y length
+            chunks[chunk_idx][4] = z_tics[z];                   // Z start
+            chunks[chunk_idx][5] = z_tics[z + 1] - z_tics[z];   // Z length
+            chunk_idx++;
         }
 
-    return std::move(blocks);
+    return std::move(chunks);
 }
 
 

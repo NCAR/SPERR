@@ -66,8 +66,8 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims,
     end_time = std::chrono::steady_clock::now();
     diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
     std::cout << " -> Decompression takes time: " << diff_time << "ms\n";
-    auto decoded_volume = decompressor.get_decompressed_volume_f();
-    if( speck::empty_buf( decoded_volume ) || decoded_volume.second != total_vals )
+    auto decoded_volume = decompressor.get_decompressed_volume<float>();
+    if( !speck::size_is( decoded_volume, total_vals ) )
         return 1;
 
     // Collect statistics

@@ -121,28 +121,28 @@ template auto SPECK3D_Decompressor::get_decompressed_volume() const -> speck::sm
 
 
 template<typename T>
-auto SPECK3D_Decompressor::scatter_block( T* big_vol, std::array<size_t, 3> vol_dim,
-                                          std::array<size_t, 6> block ) const -> RTNType
+auto SPECK3D_Decompressor::scatter_chunk( T* big_vol, std::array<size_t, 3> vol_dim,
+                                          std::array<size_t, 6> chunk ) const -> RTNType
 {
-    if( block[1] != m_dim_x || block[3] != m_dim_y || block[5] != m_dim_z )
+    if( chunk[1] != m_dim_x || chunk[3] != m_dim_y || chunk[5] != m_dim_z )
         return RTNType::DimMismatch;
 
     auto [small_vol, len] = this->get_decompressed_volume<T>();
     size_t idx = 0;
-    for( size_t z = block[4]; z < block[4] + block[5]; z++ ) {
+    for( size_t z = chunk[4]; z < chunk[4] + chunk[5]; z++ ) {
       const size_t plane_offset = z * vol_dim[0] * vol_dim[1];
-      for( size_t y = block[2]; y < block[2] + block[3]; y++ ) {
+      for( size_t y = chunk[2]; y < chunk[2] + chunk[3]; y++ ) {
         const size_t col_offset = plane_offset + y * vol_dim[0];
-        for( size_t x = block[0]; x < block[0] + block[1]; x++ )
+        for( size_t x = chunk[0]; x < chunk[0] + chunk[1]; x++ )
           big_vol[ col_offset + x ] = small_vol[ idx++ ];
       }
     }
 
     return RTNType::Good;
 }
-template auto SPECK3D_Decompressor::scatter_block( float*, std::array<size_t, 3>,
+template auto SPECK3D_Decompressor::scatter_chunk( float*, std::array<size_t, 3>,
                                                    std::array<size_t, 6> ) const -> RTNType;
-template auto SPECK3D_Decompressor::scatter_block( double*, std::array<size_t, 3>,
+template auto SPECK3D_Decompressor::scatter_chunk( double*, std::array<size_t, 3>,
                                                    std::array<size_t, 6> ) const -> RTNType;
 
 

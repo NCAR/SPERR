@@ -13,8 +13,8 @@
 
 using speck::RTNType;
 
-class SPECK3D_Compressor {
-
+class SPECK3D_Compressor
+{
 public:
     // Constructor
     SPECK3D_Compressor( size_t x, size_t y, size_t z );
@@ -26,14 +26,16 @@ public:
     // Accept incoming data: take ownership of a memory block
     auto take_data( speck::buffer_type_d buf, size_t len ) -> RTNType;
 
-    // Accept incoming data: gather a block from a bigger volume
+    // Accept incoming data: gather a chunk from a bigger volume
     template<typename T>
-    auto gather_block( const T* vol, std::array<size_t, 3> vol_dim, 
-                       std::array<size_t, 6> block ) -> RTNType;
+    auto gather_chunk( const T* vol, std::array<size_t, 3> vol_dim, 
+                       std::array<size_t, 6> chunk ) -> RTNType;
 
 #ifdef QZ_TERM
     void set_qz_level( int32_t );
     auto set_tolerance( double ) -> RTNType;
+    // Return 1) the number of outliers, and 2) the num of bytes to encode them.
+    auto get_outlier_stats() const -> std::pair<size_t, size_t>;
 #else
     auto set_bpp( float ) -> RTNType;
 #endif
@@ -43,10 +45,6 @@ public:
     // Provide a copy of the encoded bitstream to the caller.
     auto get_encoded_bitstream() const -> speck::smart_buffer_uint8;
 
-#ifdef QZ_TERM
-    // Return 1) the number of outliers, and 2) the num of bytes to encode them.
-    auto get_outlier_stats() const -> std::pair<size_t, size_t>;
-#endif
 
 private:
     const size_t                m_dim_x;

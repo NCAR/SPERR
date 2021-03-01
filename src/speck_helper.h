@@ -189,10 +189,10 @@ auto size_is( const  std::pair<std::unique_ptr<T[]>, size_t>& smart_buf,
               size_t expected_size ) -> bool;
 
 
-// Given a whole volume size and a desired block size, this helper function returns
-// a list of blocks which are specified by their starting indices in the whole volume
-// and their actual sizes (which might differ from the desired block size).
-auto block_volume( std::array<size_t, 3> vol_dim, std::array<size_t, 3> block_dim )
+// Given a whole volume size and a desired chunk size, this helper function returns
+// a list of chunks which are specified by their starting indices in the whole volume
+// and their actual sizes (which might differ from the desired chunk size).
+auto chunk_volume( std::array<size_t, 3> vol_dim, std::array<size_t, 3> chunk_dim )
                    -> std::vector< std::array<size_t, 6> >;
 
 };  // End of speck namespace.
