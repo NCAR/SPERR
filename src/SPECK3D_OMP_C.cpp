@@ -74,14 +74,14 @@ auto SPECK3D_OMP_C::use_volume( const T* vol, size_t len ) -> RTNType
         m_compressors.emplace_back( chunks[i][1], chunks[i][3], chunks[i][5] );
 
     // Ask these compressor instances to go grab their own chunks
-    m_chunk_rtn.assign( m_num_chunks, RTNType::Good );
+    auto gather_rtn = std::vector<RTNType>( m_num_chunks, RTNType::Good );
 
     // #pragma omp parallel for
     for( size_t i = 0; i < m_num_chunks; i++ ) {
-        m_chunk_rtn[i] = m_compressors[i].gather_chunk( vol, {m_dim_x, m_dim_y, m_dim_z}, chunks[i] );
+        gather_rtn[i] = m_compressors[i].gather_chunk( vol, {m_dim_x, m_dim_y, m_dim_z}, chunks[i] );
     }
 
-    if( std::all_of( m_chunk_rtn.begin(), m_chunk_rtn.end(), 
+    if( std::all_of( gather_rtn.begin(), gather_rtn.end(), 
         [](const auto& r){return r == RTNType::Good;} ) )
         return RTNType::Good;
     else
@@ -97,7 +97,7 @@ auto SPECK3D_OMP_C::compress() -> RTNType
     if( m_compressors.empty() || m_num_chunks == 0 )
         return RTNType::Error;
 
-    auto m_chunk_rtn = std::vector<RTNType>( m_num_chunks, RTNType::Good );
+    auto compressor_rtn = std::vector<RTNType>( m_num_chunks, RTNType::Good );
     m_encoded_streams.reserve( m_num_chunks );
     for( size_t i = 0; i < m_num_chunks; i++ )
         m_encoded_streams.emplace_back(nullptr, 0);
@@ -115,12 +115,12 @@ auto SPECK3D_OMP_C::compress() -> RTNType
         compressor.set_bpp( m_bpp );
 #endif
 
-        m_chunk_rtn[i] = compressor.compress();
+        compressor_rtn[i] = compressor.compress();
 
         m_encoded_streams[i] = std::move(compressor.get_encoded_bitstream());
     }
 
-    if( std::any_of( m_chunk_rtn.begin(), m_chunk_rtn.end(), 
+    if( std::any_of( compressor_rtn.begin(), compressor_rtn.end(), 
         [](const auto& r){return r != RTNType::Good;} ) )
         return RTNType::Error;
 

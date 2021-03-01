@@ -51,7 +51,6 @@ private:
 
     std::vector<SPECK3D_Compressor>         m_compressors;
     std::vector<speck::smart_buffer_uint8>  m_encoded_streams;
-    std::vector<RTNType>                    m_chunk_rtn; // temporarily store return valuesg
 
 #ifdef QZ_TERM
     int32_t     m_qz_lev      = 0;
