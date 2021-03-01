@@ -29,7 +29,7 @@ public:
     // Accept incoming data: gather a chunk from a bigger volume
     template<typename T>
     auto gather_chunk( const T* vol, std::array<size_t, 3> vol_dim, 
-                       std::array<size_t, 6> chunk ) -> RTNType;
+                       const std::array<size_t, 6>& chunk ) -> RTNType;
 
 #ifdef QZ_TERM
     void set_qz_level( int32_t );

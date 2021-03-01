@@ -72,6 +72,7 @@ list( APPEND CDF_LIBS CDF97 )
 
 list( APPEND SPECK_Storage_LIBS SPECK_Storage   )
 
+list( APPEND SPECK3D_LIBS SPECK3D_OMP_C        )
 list( APPEND SPECK3D_LIBS SPECK3D_Compressor   )
 list( APPEND SPECK3D_LIBS SPECK3D_Decompressor )
 list( APPEND SPECK3D_LIBS SPECK3D              )

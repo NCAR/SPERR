@@ -47,7 +47,7 @@ auto SPECK3D_Compressor::take_data( speck::buffer_type_d buf, size_t len ) -> RT
 
 template<typename T>
 auto SPECK3D_Compressor::gather_chunk( const T* vol, std::array<size_t, 3> vol_dim,
-                                       std::array<size_t, 6> chunk ) -> RTNType
+                                       const std::array<size_t, 6>& chunk ) -> RTNType
 {
     if( chunk[1] != m_dim_x || chunk[3] != m_dim_y || chunk[5] != m_dim_z )
         return RTNType::DimMismatch;
@@ -66,9 +66,9 @@ auto SPECK3D_Compressor::gather_chunk( const T* vol, std::array<size_t, 3> vol_d
     return RTNType::Good;
 }
 template auto SPECK3D_Compressor::gather_chunk( const double*, std::array<size_t, 3>,
-                                                std::array<size_t, 6> ) -> RTNType;
+                                                const std::array<size_t, 6>& ) -> RTNType;
 template auto SPECK3D_Compressor::gather_chunk( const float*, std::array<size_t, 3>,
-                                                std::array<size_t, 6> ) -> RTNType;
+                                                const std::array<size_t, 6>& ) -> RTNType;
  
 
 #ifdef QZ_TERM
