@@ -158,7 +158,8 @@ auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t
 
     return RTNType::Good;
 }
-    
+
+
 auto speck::SPECK_Storage::get_speck_stream_size( const void* buf ) const 
             -> uint64_t
 {
@@ -168,8 +169,18 @@ auto speck::SPECK_Storage::get_speck_stream_size( const void* buf ) const
     uint64_t bit_in_byte;
     std::memcpy(&bit_in_byte, ptr + 24, sizeof(bit_in_byte));
 
-    return (m_header_size + bit_in_byte);
+    return (m_header_size + size_t(bit_in_byte));
 }
 
 
+auto speck::SPECK_Storage::get_speck_stream_dims( const void* buf ) const 
+            -> std::array<size_t, 3>
+{
+    // Given the header definition in `get_encoded_bitstream()`, directly
+    // go retrieve the value stored in byte 0-12.
+    auto dims = std::array<uint32_t, 3>();
+    std::memcpy(dims.data(), buf, sizeof(dims));
+
+    return {dims[0], dims[1], dims[2]};
+}
 

@@ -15,7 +15,13 @@ auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
     std::memcpy( buf.get(), p, speck_size );
     m_speck_stream = {std::move(buf), speck_size};
 
-    // Step 2: extract SPERR stream from it
+    // Step 2: keep the volume dimension from the header
+    auto dims = m_decoder.get_speck_stream_dims( p );
+    m_dim_x   = dims[0];
+    m_dim_y   = dims[1];
+    m_dim_z   = dims[2];
+
+    // Step 3: extract SPERR stream from it
 #ifdef QZ_TERM
     m_sperr_stream = {nullptr, 0};
     if( speck_size < len ) {
@@ -33,7 +39,7 @@ auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
     return RTNType::Good;
 }
 
-    
+
 auto SPECK3D_Decompressor::set_bpp( float bpp ) -> RTNType
 {
     if( bpp < 0.0 || bpp > 64.0 )
@@ -56,20 +62,13 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
     if( rtn != RTNType::Good )
         return rtn;
 
-    const auto dims = m_decoder.get_dims();
-    assert( dims[0] > 1 && dims[1] > 1 && dims[2] > 1 );
-    m_dim_x = dims[0];
-    m_dim_y = dims[1];
-    m_dim_z = dims[2];
-    auto total_vals = dims[0] * dims[1] * dims[2];
-
-    m_decoder.set_bit_budget( size_t(m_bpp * total_vals) );
+    m_decoder.set_bit_budget( size_t(m_bpp * float(m_dim_x * m_dim_y * m_dim_z)) );
     rtn = m_decoder.decode();
     if( rtn != RTNType::Good )
         return rtn;
 
     // Step 2: Inverse Wavelet Transform
-    m_cdf.set_dims( dims[0], dims[1], dims[2] );
+    m_cdf.set_dims( m_dim_x, m_dim_y, m_dim_z );
     m_cdf.set_mean( m_decoder.get_image_mean() );
     auto coeffs = m_decoder.release_data();
     m_cdf.take_data( std::move(coeffs.first), coeffs.second );
@@ -121,8 +120,8 @@ template auto SPECK3D_Decompressor::get_decompressed_volume() const -> speck::sm
 
 
 template<typename T>
-auto SPECK3D_Decompressor::scatter_chunk( T* big_vol, std::array<size_t, 3> vol_dim,
-                                          std::array<size_t, 6> chunk ) const -> RTNType
+auto SPECK3D_Decompressor::scatter_chunk( T* big_vol, const std::array<size_t, 3>& vol_dim,
+                                          const std::array<size_t, 6>& chunk ) const -> RTNType
 {
     if( chunk[1] != m_dim_x || chunk[3] != m_dim_y || chunk[5] != m_dim_z )
         return RTNType::DimMismatch;
@@ -140,10 +139,10 @@ auto SPECK3D_Decompressor::scatter_chunk( T* big_vol, std::array<size_t, 3> vol_
 
     return RTNType::Good;
 }
-template auto SPECK3D_Decompressor::scatter_chunk( float*, std::array<size_t, 3>,
-                                                   std::array<size_t, 6> ) const -> RTNType;
-template auto SPECK3D_Decompressor::scatter_chunk( double*, std::array<size_t, 3>,
-                                                   std::array<size_t, 6> ) const -> RTNType;
+template auto SPECK3D_Decompressor::scatter_chunk( float*, const std::array<size_t, 3>&,
+                                                   const std::array<size_t, 6>& ) const -> RTNType;
+template auto SPECK3D_Decompressor::scatter_chunk( double*, const std::array<size_t, 3>&,
+                                                   const std::array<size_t, 6>& ) const -> RTNType;
 
 
 auto SPECK3D_Decompressor::get_dims() const -> std::array<size_t, 3>

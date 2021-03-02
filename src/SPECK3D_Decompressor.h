@@ -31,8 +31,8 @@ public:
 
     // Put this chunk to a bigger volume
     template<typename T>
-    auto scatter_chunk( T* vol,  std::array<size_t, 3> vol_dim,
-                        std::array<size_t, 6> chunk) const -> RTNType;
+    auto scatter_chunk( T* vol,  const std::array<size_t, 3>& vol_dim,
+                        const std::array<size_t, 6>& chunk) const -> RTNType;
 
     auto get_dims() const -> std::array<size_t, 3>;
 
