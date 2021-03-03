@@ -7,7 +7,6 @@
 #ifndef SPECK3D_OMP_C_H
 #define SPECK3D_OMP_C_H
 
-
 #include "SPECK3D_Compressor.h"
 
 using speck::RTNType;
@@ -39,15 +38,16 @@ public:
     // Provide a copy of the encoded bitstream to the caller.
     auto get_encoded_bitstream() const -> speck::smart_buffer_uint8;
 
+    // For debug only
+    auto release_chunk_bitstream() -> std::vector<speck::smart_buffer_uint8>;
 
 private:
-    size_t      m_dim_x       = 0;
-    size_t      m_dim_y       = 0;
-    size_t      m_dim_z       = 0;
+    size_t      m_dim_x       = 0; // Dimension of the entire volume
+    size_t      m_dim_y       = 0; // Dimension of the entire volume
+    size_t      m_dim_z       = 0; // Dimension of the entire volume
     size_t      m_chunk_x     = 0;
     size_t      m_chunk_y     = 0;
     size_t      m_chunk_z     = 0;
-    size_t      m_num_chunks  = 0;
 
     std::vector<SPECK3D_Compressor>         m_compressors;
     std::vector<speck::smart_buffer_uint8>  m_encoded_streams;

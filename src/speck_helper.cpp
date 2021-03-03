@@ -376,7 +376,8 @@ template auto speck::size_is( const smart_buffer_f&, size_t     ) -> bool;
 template auto speck::size_is( const smart_buffer_uint8&, size_t ) -> bool;
 
 
-auto speck::chunk_volume( std::array<size_t, 3> vol_dim, std::array<size_t, 3> chunk_dim )
+auto speck::chunk_volume( const std::array<size_t, 3>& vol_dim, 
+                          const std::array<size_t, 3>& chunk_dim )
                           -> std::vector< std::array<size_t, 6> >
 {
     for( size_t i = 0; i < 3; i++ )

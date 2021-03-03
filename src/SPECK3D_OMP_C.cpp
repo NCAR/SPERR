@@ -66,23 +66,22 @@ auto SPECK3D_OMP_C::use_volume( const T* vol, size_t len ) -> RTNType
     // Block the volume into smaller chunks
     auto chunks = speck::chunk_volume( {m_dim_x, m_dim_y, m_dim_z}, 
                                        {m_chunk_x, m_chunk_y, m_chunk_z} );
-    m_num_chunks = chunks.size();
+    const auto num_chunks = chunks.size();
 
     // Create many compressor instances
-    m_compressors.reserve( m_num_chunks );
-    for( size_t i = 0; i < m_num_chunks; i++ )
+    m_compressors.reserve( num_chunks );
+    for( size_t i = 0; i < num_chunks; i++ )
         m_compressors.emplace_back( chunks[i][1], chunks[i][3], chunks[i][5] );
 
     // Ask these compressor instances to go grab their own chunks
-    auto gather_rtn = std::vector<RTNType>( m_num_chunks, RTNType::Good );
+    auto gather_rtn = std::vector<RTNType>( num_chunks, RTNType::Good );
 
     // #pragma omp parallel for
-    for( size_t i = 0; i < m_num_chunks; i++ ) {
+    for( size_t i = 0; i < num_chunks; i++ ) {
         gather_rtn[i] = m_compressors[i].gather_chunk( vol, {m_dim_x, m_dim_y, m_dim_z}, chunks[i] );
     }
 
-    if( std::all_of( gather_rtn.begin(), gather_rtn.end(), 
-        [](const auto& r){return r == RTNType::Good;} ) )
+    if(std::all_of( gather_rtn.begin(), gather_rtn.end(), [](auto r){return r == RTNType::Good;} ))
         return RTNType::Good;
     else
         return RTNType::Error;
@@ -94,16 +93,17 @@ template auto SPECK3D_OMP_C::use_volume( const double* , size_t ) -> RTNType;
 auto SPECK3D_OMP_C::compress() -> RTNType
 {
     // First we need to make sure that the compressor list isn't empty.
-    if( m_compressors.empty() || m_num_chunks == 0 )
+    const auto num_chunks = m_compressors.size();
+    if( num_chunks == 0 )
         return RTNType::Error;
 
-    auto compressor_rtn = std::vector<RTNType>( m_num_chunks, RTNType::Good );
-    m_encoded_streams.reserve( m_num_chunks );
-    for( size_t i = 0; i < m_num_chunks; i++ )
+    auto compressor_rtn = std::vector<RTNType>( num_chunks, RTNType::Good );
+    m_encoded_streams.reserve( num_chunks );
+    for( size_t i = 0; i < num_chunks; i++ )
         m_encoded_streams.emplace_back(nullptr, 0);
 
     // #pragma omp parallel for
-    for( size_t i = 0; i < m_num_chunks; i++ ) {
+    for( size_t i = 0; i < num_chunks; i++ ) {
         auto& compressor = m_compressors[i];
 
         // Note that we have already made sure that `m_tol` and `m_bpp` are valid, so
@@ -136,3 +136,8 @@ auto SPECK3D_OMP_C::compress() -> RTNType
 
 
 
+// For debug only
+auto SPECK3D_OMP_C::release_chunk_bitstream() -> std::vector<speck::smart_buffer_uint8>
+{
+    return std::move( m_encoded_streams );
+}
