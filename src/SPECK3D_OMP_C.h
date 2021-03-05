@@ -39,15 +39,16 @@ public:
     auto get_encoded_bitstream() const -> speck::smart_buffer_uint8;
 
     // For debug only
-    auto release_chunk_bitstream() -> std::vector<speck::smart_buffer_uint8>;
+    //auto release_chunk_bitstream() -> std::vector<speck::smart_buffer_uint8>;
+
 
 private:
     size_t      m_dim_x       = 0; // Dimension of the entire volume
     size_t      m_dim_y       = 0; // Dimension of the entire volume
     size_t      m_dim_z       = 0; // Dimension of the entire volume
-    size_t      m_chunk_x     = 0;
-    size_t      m_chunk_y     = 0;
-    size_t      m_chunk_z     = 0;
+    size_t      m_chunk_x     = 0; // Dimension of the preferred chunk size
+    size_t      m_chunk_y     = 0; // Dimension of the preferred chunk size
+    size_t      m_chunk_z     = 0; // Dimension of the preferred chunk size
 
     std::vector<SPECK3D_Compressor>         m_compressors;
     std::vector<speck::smart_buffer_uint8>  m_encoded_streams;
@@ -55,10 +56,15 @@ private:
 #ifdef QZ_TERM
     int32_t     m_qz_lev      = 0;
     double      m_tol         = 0.0;
-    std::vector<std::pair<size_t, size_t>>  m_otlr_stats;
+    std::vector<std::pair<size_t, size_t>>  m_outlier_stats;
 #else
     float       m_bpp         = 0.0;
 #endif
+
+    //
+    // Private methods
+    //
+    auto m_generate_header() const -> speck::smart_buffer_uint8;
 
 };
 

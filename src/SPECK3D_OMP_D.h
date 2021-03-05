@@ -32,8 +32,7 @@ public:
     auto get_data_volume() const -> std::pair<std::unique_ptr<T[]>, size_t>;
 
     // For debug use only
-    auto take_chunk_bitstream( std::vector<speck::smart_buffer_uint8>,
-                               std::array<size_t, 3> ) -> RTNType;
+    auto take_chunk_bitstream( std::vector<speck::smart_buffer_uint8> ) -> RTNType;
 
 
 private:
@@ -41,9 +40,9 @@ private:
     size_t      m_dim_x       = 0;  // Dimension of the entire volume
     size_t      m_dim_y       = 0;  // Dimension of the entire volume
     size_t      m_dim_z       = 0;  // Dimension of the entire volume
-    size_t      m_chunk_x     = 0;
-    size_t      m_chunk_y     = 0;
-    size_t      m_chunk_z     = 0;
+    size_t      m_chunk_x     = 0;  // Preferred dimension for a chunk.
+    size_t      m_chunk_y     = 0;  // Preferred dimension for a chunk.
+    size_t      m_chunk_z     = 0;  // Preferred dimension for a chunk.
 
     float       m_bpp         = 0.0;
 

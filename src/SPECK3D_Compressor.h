@@ -42,7 +42,7 @@ public:
 
     auto compress() -> RTNType;
 
-    // Provide a copy of the encoded bitstream to the caller.
+    // Provide a copy of the encoded bitstream to the caller with proper metadata
     auto get_encoded_bitstream() const -> speck::smart_buffer_uint8;
 
 

@@ -1,6 +1,9 @@
 #include "SPECK3D_Compressor.h"
 #include "SPECK3D_Decompressor.h"
 
+#include "SPECK3D_OMP_C.h"
+#include "SPECK3D_OMP_D.h"
+
 #include "CLI11.hpp"
 
 #include <cstdlib>
@@ -15,6 +18,62 @@
 
 #ifdef QZ_TERM
 // This file should only be compiled in QZ_TERM mode.
+
+
+auto test_configuration2( const float* in_buf, std::array<size_t, 3> dims, 
+                          int32_t qz_level, double tolerance ) -> int 
+{
+    // Setup
+    const size_t total_vals = dims[0] * dims[1] * dims[2];
+    SPECK3D_OMP_C compressor;
+    compressor.set_dims(dims[0], dims[1], dims[2]);
+    compressor.prefer_chunk_size( 64, 64, 64 );
+    auto rtn = compressor.use_volume( in_buf, total_vals );
+    if(  rtn != RTNType::Good )
+        return 1;
+
+    compressor.set_qz_level( qz_level );
+    compressor.set_tolerance( tolerance );
+
+    // Perform actual compression work
+    rtn = compressor.compress();
+    if(  rtn != RTNType::Good )
+        return 1;
+    auto outlier = compressor.get_outlier_stats();
+    if( outlier.first == 0 ) {
+        printf("    There are no outliers at this quantization level!\n");
+    }
+    else {
+        printf("    Outliers: num = %ld, pct = %.2f%%, bpp ~ %.2f\n ",
+                    outlier.first, float(outlier.first * 100) / float(total_vals),
+                    float(outlier.second * 8) / float(outlier.first) );
+    }
+
+
+    // Perform decompression
+    SPECK3D_OMP_D decompressor;
+    rtn = decompressor.take_chunk_bitstream( compressor.release_chunk_bitstream() );
+    if(  rtn != RTNType::Good )
+        return 1;
+
+    rtn = decompressor.decompress();
+    if(  rtn != RTNType::Good )
+        return 1;
+
+    auto decoded_volume = decompressor.get_data_volume<float>();
+    if( !speck::size_is( decoded_volume, total_vals ) )
+        return 1;
+
+
+    // Collect statistics
+    float rmse, lmax, psnr, arr1min, arr1max;
+    speck::calc_stats( in_buf, decoded_volume.first.get(), total_vals,
+                       &rmse, &lmax, &psnr, &arr1min, &arr1max);
+    printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
+    printf("    Reconstructed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
+
+    return 0;
+}
 
 
 auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, 
@@ -151,7 +210,7 @@ int main( int argc, char* argv[] )
 
     printf("Initial analysis: absolute error tolerance = %.2e, quantization level = %d ...  \n", 
             tolerance, qz_level);
-    int rtn = test_configuration( input_buf.get(), dims, qz_level, tolerance );
+    int rtn = test_configuration2( input_buf.get(), dims, qz_level, tolerance );
     if( rtn != 0 )
         return rtn;
 
@@ -172,7 +231,7 @@ int main( int argc, char* argv[] )
         qz_level = tmp;
         printf("\nNow testing qz level = %d ...\n", qz_level);
     
-        rtn = test_configuration( input_buf.get(), dims, qz_level, tolerance );
+        rtn = test_configuration2( input_buf.get(), dims, qz_level, tolerance );
         if ( rtn != 0 )
             return rtn;
 

@@ -8,8 +8,8 @@
 
 
 // Debug only
-auto SPECK3D_OMP_D::take_chunk_bitstream( std::vector<speck::smart_buffer_uint8> chunks,
-                                          std::array<size_t, 3> chunk_size ) -> RTNType
+auto SPECK3D_OMP_D::take_chunk_bitstream( std::vector<speck::smart_buffer_uint8> chunks )
+                                          -> RTNType
 {
     const auto num_chunks = chunks.size();
 
@@ -22,20 +22,6 @@ auto SPECK3D_OMP_D::take_chunk_bitstream( std::vector<speck::smart_buffer_uint8>
     for( size_t i = 0; i < num_chunks; i++ ) {
         use_rtn[i] = m_decompressors[i].use_bitstream( chunks[i].first.get(), chunks[i].second );
     }
-
-    // Each decompressor reports its dimension, so we know the whole volume dimension
-    m_dim_x = 0;
-    m_dim_y = 0;
-    m_dim_z = 0;
-    for( const auto& d : m_decompressors ) {
-        auto dims = d.get_dims();
-        m_dim_x  += dims[0];
-        m_dim_y  += dims[1];
-        m_dim_z  += dims[2];
-    }
-    m_chunk_x = chunk_size[0];
-    m_chunk_y = chunk_size[1];
-    m_chunk_z = chunk_size[2];
 
     if(std::all_of( use_rtn.begin(), use_rtn.end(), [](auto r){return r == RTNType::Good;} ))
         return RTNType::Good;
