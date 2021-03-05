@@ -3,20 +3,40 @@
 #include <cstring>
 #include <cassert>
 
+#ifdef USE_ZSTD
+  #include "zstd.h"
+#endif
+
 
 auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
 {
+#ifdef USE_ZSTD
+    // Preprocessing: if ZSTD is enabled, we need to run ZSTD decompression first!
+    const size_t content_size = ZSTD_getFrameContentSize( p, len );
+    if( content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN )
+        return RTNType::ZSTDError;
+    auto content_buf = std::make_unique<uint8_t[]>( content_size );
+    const auto decomp_size = ZSTD_decompress( content_buf.get(), content_size, p, len );
+    if( ZSTD_isError( decomp_size ) || decomp_size != content_size )
+        return RTNType::ZSTDError;
+    const uint8_t* const ptr     = content_buf.get();
+    const size_t         ptr_len = decomp_size;
+#else
+    const uint8_t* const ptr     = static_cast<const uint8_t*>(p);
+    const size_t         ptr_len = len;
+#endif
+
     // Step 1: extract SPECK stream from it
     m_speck_stream = {nullptr, 0};
-    const auto speck_size = m_decoder.get_speck_stream_size(p);
-    if( speck_size > len )
+    const auto speck_size = m_decoder.get_speck_stream_size(ptr);
+    if( speck_size > ptr_len )
         return RTNType::WrongSize;
     auto buf = std::make_unique<uint8_t[]>( speck_size );
-    std::memcpy( buf.get(), p, speck_size );
+    std::memcpy( buf.get(), ptr, speck_size );
     m_speck_stream = {std::move(buf), speck_size};
 
     // Step 2: keep the volume dimension from the header
-    auto dims = m_decoder.get_speck_stream_dims( p );
+    auto dims = m_decoder.get_speck_stream_dims( ptr );
     m_dim_x   = dims[0];
     m_dim_y   = dims[1];
     m_dim_z   = dims[2];
@@ -24,10 +44,10 @@ auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
     // Step 3: extract SPERR stream from it
 #ifdef QZ_TERM
     m_sperr_stream = {nullptr, 0};
-    if( speck_size < len ) {
-        const uint8_t* const sperr_p = static_cast<const uint8_t*>(p) + speck_size;
+    if( speck_size < ptr_len ) {
+        const uint8_t* const sperr_p = ptr + speck_size;
         const auto sperr_size = m_sperr.get_sperr_stream_size( sperr_p );
-        if( sperr_size != len - speck_size )
+        if( sperr_size != ptr_len - speck_size )
             return RTNType::WrongSize;
         buf = std::make_unique<uint8_t[]>( sperr_size );
         std::memcpy( buf.get(), sperr_p, sperr_size );

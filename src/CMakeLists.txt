@@ -37,7 +37,8 @@ target_include_directories( SPECK2D_Decompressor INTERFACE ${CMAKE_CURRENT_SOURC
 #endif()
     
 if( USE_ZSTD )
-    add_dependencies( SPECK_Storage zstd-download )
+    add_dependencies( SPECK3D_Compressor   zstd-download )
+    add_dependencies( SPECK3D_Decompressor zstd-download )
     ExternalProject_Get_Property( zstd-download INSTALL_DIR )
     include_directories("${INSTALL_DIR}/include")
 endif()

@@ -3,6 +3,10 @@
 #include <cassert>
 #include <cstring>
 
+#ifdef USE_ZSTD
+  #include "zstd.h"
+#endif
+
 
 SPECK3D_Compressor::SPECK3D_Compressor( size_t x, size_t y, size_t z )
                   : m_dim_x(x), m_dim_y(y), m_dim_z(z), 
@@ -171,7 +175,19 @@ auto SPECK3D_Compressor::get_encoded_bitstream() const -> speck::smart_buffer_ui
                      m_sperr_stream.first.get(),
                      m_sperr_stream.second );
     }
+
+#ifdef USE_ZSTD
+    const size_t comp_buf_size = ZSTD_compressBound( total_size );
+    auto comp_buf = std::make_unique<uint8_t[]>( comp_buf_size );
+    const size_t comp_size = ZSTD_compress( comp_buf.get(), comp_buf_size, buf.get(), total_size,
+                                            ZSTD_CLEVEL_DEFAULT + 6 );
+    if( ZSTD_isError( comp_size ) )
+        return {nullptr, 0};
+    else
+        return {std::move(comp_buf), comp_size};
+#else
     return {std::move(buf), total_size};
+#endif
 }
 
 
