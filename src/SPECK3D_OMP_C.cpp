@@ -82,7 +82,7 @@ auto SPECK3D_OMP_C::use_volume( const T* vol, size_t len ) -> RTNType
     // Ask these compressor instances to go grab their own chunks
     auto gather_rtn = std::vector<RTNType>( num_chunks, RTNType::Good );
 
-    #pragma omp parallel for
+    // #pragma omp parallel for
     for( size_t i = 0; i < num_chunks; i++ ) {
         gather_rtn[i] = m_compressors[i].gather_chunk( vol, {m_dim_x, m_dim_y, m_dim_z}, chunks[i] );
     }
@@ -151,16 +151,80 @@ auto SPECK3D_OMP_C::compress() -> RTNType
 
 auto SPECK3D_OMP_C::get_encoded_bitstream() const -> speck::smart_buffer_uint8
 {
-    // This method does 3 things:
-    // 1) prepare a header containing information regarding the volume and chunks.
-    // 2) prepare a metadata block containing version numbers and ZSTD status.
-    // 3) potentially apply ZSTD on header and bitstreams.
+    //
+    // This method packs a header and chunk bitstreams together to the caller.
+    //
+    auto header = m_generate_header();
+    if( speck::empty_buf(header) )
+        return header;
+
+    auto total_size = header.second;
+    for( const auto& s : m_encoded_streams )
+        total_size += s.second;
+    auto buf = std::make_unique<uint8_t[]>( total_size );
+
+    std::memcpy( buf.get(), header.first.get(), header.second );
+    auto loc = header.second;
+    for( const auto& s : m_encoded_streams ) {
+        std::memcpy( buf.get() + loc, s.first.get(), s.second );
+        loc += s.second;
+    }
+
+    return {std::move(buf), total_size};
 }
 
 
 auto SPECK3D_OMP_C::m_generate_header() const -> speck::smart_buffer_uint8
 {
     // The header would contain the following information
+    //  -- a version number                     (1 byte)
+    //  -- 8 booleans                           (1 byte)
+    //  -- volume and chunk dimensions          (4 x 6 = 24 bytes)
+    //  -- offset of bitstream for each chunk   (8 x num_chunks)
+    //  -- offset of the end location           (8 byte)
+
+    auto chunks = speck::chunk_volume( {m_dim_x, m_dim_y, m_dim_z}, 
+                                       {m_chunk_x, m_chunk_y, m_chunk_z} );
+    const auto num_chunks  = chunks.size();
+    if( num_chunks != m_encoded_streams.size() )
+        return {nullptr, 0};
+    const auto header_size = num_chunks * 8 + 1 + 1 + 24 + 8;
+    auto header = std::make_unique<uint8_t[]>( header_size );
+
+    size_t loc = 0;
+    // Version number
+    uint8_t ver = 10 * SPECK_VERSION_MAJOR + SPECK_VERSION_MINOR;
+    std::memcpy( header.get() + loc, &ver, sizeof(ver) );
+    loc += sizeof(ver);
+
+    // 8 booleans: 
+    // bool[0]  : if ZSTD is used
+    // bool[1-7]: undefined
+    bool b[8] = {false, false, false, false, false, false, false, false};
+#ifdef USE_ZSTD
+    b[0] = true;
+#endif
+    speck::pack_8_booleans( header[loc], b );
+    loc += 1;
+
+    // Volume and chunk dimensions
+    uint32_t vcdim[6] = {uint32_t(m_dim_x),   uint32_t(m_dim_y),   uint32_t(m_dim_z), 
+                         uint32_t(m_chunk_x), uint32_t(m_chunk_y), uint32_t(m_chunk_z)};
+    std::memcpy( header.get() + loc, vcdim, sizeof(vcdim) );
+    loc += sizeof(vcdim);
+
+    // Offset of bitstream for each chunk
+    uint64_t offset = loc;
+    for( const auto& stream : m_encoded_streams ) {
+        std::memcpy( header.get() + loc, &offset, sizeof(offset) );
+        loc    += sizeof(offset);
+        offset += stream.second;
+    }
+
+    // Record the end location
+    std::memcpy( header.get() + loc, &offset, sizeof(offset) );
+
+    return {std::move(header), header_size};
 }
 
 
