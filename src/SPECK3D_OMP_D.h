@@ -49,7 +49,10 @@ private:
     std::vector<SPECK3D_Decompressor>   m_decompressors;
     speck::smart_buffer_d               m_vol_buf;
 
-
+    //
+    // Private methods
+    //
+    auto m_parse_header( const uint8_t*, size_t ) -> std::vector<size_t>;
 
 };
 

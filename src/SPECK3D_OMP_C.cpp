@@ -180,15 +180,14 @@ auto SPECK3D_OMP_C::m_generate_header() const -> speck::smart_buffer_uint8
     //  -- a version number                     (1 byte)
     //  -- 8 booleans                           (1 byte)
     //  -- volume and chunk dimensions          (4 x 6 = 24 bytes)
-    //  -- offset of bitstream for each chunk   (8 x num_chunks)
-    //  -- offset of the end location           (8 byte)
+    //  -- length of bitstream for each chunk   (4 x num_chunks)
 
     auto chunks = speck::chunk_volume( {m_dim_x, m_dim_y, m_dim_z}, 
                                        {m_chunk_x, m_chunk_y, m_chunk_z} );
     const auto num_chunks  = chunks.size();
     if( num_chunks != m_encoded_streams.size() )
         return {nullptr, 0};
-    const auto header_size = num_chunks * 8 + 1 + 1 + 24 + 8;
+    const auto header_size = num_chunks * 4 + 1 + 1 + 24;
     auto header = std::make_unique<uint8_t[]>( header_size );
 
     size_t loc = 0;
@@ -213,16 +212,19 @@ auto SPECK3D_OMP_C::m_generate_header() const -> speck::smart_buffer_uint8
     std::memcpy( header.get() + loc, vcdim, sizeof(vcdim) );
     loc += sizeof(vcdim);
 
-    // Offset of bitstream for each chunk
-    uint64_t offset = loc;
+    // Length of bitstream for each chunk
+    // Note that we use uint32_t to keep the length, and we need to make sure
+    // that no chunk size is bigger than that.
     for( const auto& stream : m_encoded_streams ) {
-        std::memcpy( header.get() + loc, &offset, sizeof(offset) );
-        loc    += sizeof(offset);
-        offset += stream.second;
+        if( stream.second >= std::numeric_limits<uint32_t>::max() )
+            return {nullptr, 0};
     }
-
-    // Record the end location
-    std::memcpy( header.get() + loc, &offset, sizeof(offset) );
+    for( const auto& stream : m_encoded_streams ) {
+        uint32_t len = stream.second;
+        std::memcpy( header.get() + loc, &len, sizeof(len) );
+        loc += sizeof(len);
+    }
+    assert( loc == header_size );
 
     return {std::move(header), header_size};
 }
