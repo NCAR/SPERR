@@ -17,8 +17,9 @@ using speck::RTNType;
 class SPECK3D_Decompressor {
 
 public:
-    // Accept incoming data: copy from a raw memory block
-    auto use_bitstream( const void* p, size_t len ) -> RTNType;
+    // Accept incoming data: copy from a raw memory block.
+    // This data is expected to have a header.
+    auto use_bitstream_header( const void* p, size_t len ) -> RTNType;
 
     auto set_bpp( float ) -> RTNType;
 

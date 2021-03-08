@@ -146,7 +146,8 @@ auto SPECK3D_OMP_D::take_chunk_bitstream( std::vector<speck::smart_buffer_uint8>
 
     // Each decompressor takes the bitstream
     for( size_t i = 0; i < num_chunks; i++ ) {
-        use_rtn[i] = m_decompressors[i].use_bitstream( chunks[i].first.get(), chunks[i].second );
+        use_rtn[i] = m_decompressors[i].use_bitstream_header( chunks[i].first.get(), 
+                                                              chunks[i].second );
     }
 
     if(std::all_of( use_rtn.begin(), use_rtn.end(), [](auto r){return r == RTNType::Good;} ))

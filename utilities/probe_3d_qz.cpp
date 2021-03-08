@@ -20,6 +20,7 @@
 // This file should only be compiled in QZ_TERM mode.
 
 
+#if 0
 auto test_configuration2( const float* in_buf, std::array<size_t, 3> dims, 
                           int32_t qz_level, double tolerance ) -> int 
 {
@@ -74,6 +75,7 @@ auto test_configuration2( const float* in_buf, std::array<size_t, 3> dims,
 
     return 0;
 }
+#endif
 
 
 auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, 
@@ -115,8 +117,8 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims,
 
     // Perform decompression
     SPECK3D_Decompressor decompressor;
-    if( decompressor.use_bitstream( encoded_stream.first.get(), encoded_stream.second ) !=
-                                    RTNType::Good )
+    if( decompressor.use_bitstream_header(encoded_stream.first.get(), encoded_stream.second) !=
+                                          RTNType::Good )
         return 1;
     start_time = std::chrono::steady_clock::now();
     rtn = decompressor.decompress();
@@ -210,7 +212,7 @@ int main( int argc, char* argv[] )
 
     printf("Initial analysis: absolute error tolerance = %.2e, quantization level = %d ...  \n", 
             tolerance, qz_level);
-    int rtn = test_configuration2( input_buf.get(), dims, qz_level, tolerance );
+    int rtn = test_configuration( input_buf.get(), dims, qz_level, tolerance );
     if( rtn != 0 )
         return rtn;
 
@@ -231,7 +233,7 @@ int main( int argc, char* argv[] )
         qz_level = tmp;
         printf("\nNow testing qz level = %d ...\n", qz_level);
     
-        rtn = test_configuration2( input_buf.get(), dims, qz_level, tolerance );
+        rtn = test_configuration( input_buf.get(), dims, qz_level, tolerance );
         if ( rtn != 0 )
             return rtn;
 

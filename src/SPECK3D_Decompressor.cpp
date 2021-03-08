@@ -8,7 +8,7 @@
 #endif
 
 
-auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
+auto SPECK3D_Decompressor::use_bitstream_header( const void* p, size_t len ) -> RTNType
 {
 #ifdef USE_ZSTD
     // Preprocessing: if ZSTD is enabled, we need to run ZSTD decompression first!
