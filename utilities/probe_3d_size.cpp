@@ -1,6 +1,9 @@
 #include "SPECK3D_Compressor.h"
 #include "SPECK3D_Decompressor.h"
 
+#include "SPECK3D_OMP_C.h"
+#include "SPECK3D_OMP_D.h"
+
 #include "CLI11.hpp"
 
 #include <cstdlib>
@@ -95,6 +98,67 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, float 
 }
 
 
+auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, float bpp ) -> int
+{
+    // Setup
+    const size_t total_vals = dims[0] * dims[1] * dims[2];
+    SPECK3D_OMP_C compressor;
+    compressor.set_dims(dims[0], dims[1], dims[2]);
+    compressor.prefer_chunk_size( 64, 64, 64 );
+    auto rtn = compressor.use_volume( in_buf, total_vals );
+    if(  rtn != RTNType::Good )
+        return 1;
+
+    compressor.set_bpp( bpp );
+
+    // Perform actual compression work
+    auto start_time = std::chrono::steady_clock::now();
+    rtn = compressor.compress();
+    if(  rtn != RTNType::Good )
+        return 1;
+    auto end_time = std::chrono::steady_clock::now();
+    auto diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
+    std::cout << " -> Compression takes time: " << diff_time << "ms\n";
+
+    auto encoded_stream = compressor.get_encoded_bitstream();
+    if( speck::empty_buf( encoded_stream ) )
+        return 1;
+    else
+        printf("    Total compressed size in bytes = %ld, average bpp = %.2f\n",
+               encoded_stream.second, float(encoded_stream.second * 8) / float(total_vals) );
+
+
+    // Perform decompression
+    SPECK3D_OMP_D decompressor;
+    rtn = decompressor.use_bitstream( encoded_stream.first.get(), encoded_stream.second );
+    if( rtn != RTNType::Good )
+        return 1;
+
+    start_time = std::chrono::steady_clock::now();
+    rtn = decompressor.decompress();
+    if(  rtn != RTNType::Good )
+        return 1;
+    end_time = std::chrono::steady_clock::now();
+    diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
+    std::cout << " -> Decompression takes time: " << diff_time << "ms\n";
+
+    auto decoded_volume = decompressor.get_data_volume<float>();
+    if( !speck::size_is( decoded_volume, total_vals ) )
+        return 1;
+
+
+    // Collect statistics
+    float rmse, lmax, psnr, arr1min, arr1max;
+    speck::calc_stats( in_buf, decoded_volume.first.get(), total_vals,
+                       &rmse, &lmax, &psnr, &arr1min, &arr1max);
+    printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
+    printf("    Reconstructed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
+
+    return 0;
+
+}
+
+
 int main( int argc, char* argv[] )
 {
     //
@@ -132,7 +196,7 @@ int main( int argc, char* argv[] )
         bpp = 4.0; // We decide to use 4 bpp for initial analysis
     }
     printf("Initial analysis: compression at %.2f bit-per-pixel...  \n", bpp);
-    int rtn = test_configuration( input_buf.get(), dims, bpp );
+    int rtn = test_configuration_omp( input_buf.get(), dims, bpp );
     if( rtn != 0 )
         return rtn;
 
@@ -152,7 +216,7 @@ int main( int argc, char* argv[] )
         }
         printf("\nNow testing bpp = %.2f ...\n", bpp);
     
-        rtn = test_configuration( input_buf.get(), dims, bpp );
+        rtn = test_configuration_omp( input_buf.get(), dims, bpp );
         if ( rtn != 0 )
             return rtn;
 
