@@ -20,9 +20,8 @@
 // This file should only be compiled in QZ_TERM mode.
 
 
-#if 0
-auto test_configuration2( const float* in_buf, std::array<size_t, 3> dims, 
-                          int32_t qz_level, double tolerance ) -> int 
+auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, 
+                             int32_t qz_level, double tolerance ) -> int 
 {
     // Setup
     const size_t total_vals = dims[0] * dims[1] * dims[2];
@@ -37,29 +36,47 @@ auto test_configuration2( const float* in_buf, std::array<size_t, 3> dims,
     compressor.set_tolerance( tolerance );
 
     // Perform actual compression work
+    auto start_time = std::chrono::steady_clock::now();
     rtn = compressor.compress();
     if(  rtn != RTNType::Good )
         return 1;
+    auto end_time = std::chrono::steady_clock::now();
+    auto diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
+    std::cout << " -> Compression takes time: " << diff_time << "ms\n";
+
+    auto encoded_stream = compressor.get_encoded_bitstream();
+    if( speck::empty_buf( encoded_stream ) )
+        return 1;
+    else
+        printf("    Total compressed size in bytes = %ld, average bpp = %.2f\n",
+               encoded_stream.second, float(encoded_stream.second * 8) / float(total_vals) );
+
     auto outlier = compressor.get_outlier_stats();
     if( outlier.first == 0 ) {
         printf("    There are no outliers at this quantization level!\n");
     }
     else {
-        printf("    Outliers: num = %ld, pct = %.2f%%, bpp ~ %.2f\n ",
-                    outlier.first, float(outlier.first * 100) / float(total_vals),
-                    float(outlier.second * 8) / float(outlier.first) );
+        printf("    Outliers: num = %ld, pct = %.2f%%, bpp ~ %.2f, "
+               "using total storage ~ %.2f%%\n",
+                outlier.first, float(outlier.first * 100) / float(total_vals),
+                float(outlier.second * 8)    / float(outlier.first),
+                float(outlier.second * 100 ) / float(encoded_stream.second) );
     }
 
 
     // Perform decompression
     SPECK3D_OMP_D decompressor;
-    rtn = decompressor.take_chunk_bitstream( compressor.release_chunk_bitstream() );
-    if(  rtn != RTNType::Good )
+    rtn = decompressor.use_bitstream( encoded_stream.first.get(), encoded_stream.second );
+    if( rtn != RTNType::Good )
         return 1;
 
+    start_time = std::chrono::steady_clock::now();
     rtn = decompressor.decompress();
     if(  rtn != RTNType::Good )
         return 1;
+    end_time = std::chrono::steady_clock::now();
+    diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
+    std::cout << " -> Decompression takes time: " << diff_time << "ms\n";
 
     auto decoded_volume = decompressor.get_data_volume<float>();
     if( !speck::size_is( decoded_volume, total_vals ) )
@@ -75,11 +92,10 @@ auto test_configuration2( const float* in_buf, std::array<size_t, 3> dims,
 
     return 0;
 }
-#endif
 
 
-auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, 
-                         int32_t qz_level, double tolerance ) -> int 
+auto test_configuration_single_block( const float* in_buf, std::array<size_t, 3> dims, 
+                                      int32_t qz_level, double tolerance ) -> int 
 {
     // Setup
     const size_t total_vals = dims[0] * dims[1] * dims[2];
@@ -117,8 +133,8 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims,
 
     // Perform decompression
     SPECK3D_Decompressor decompressor;
-    if( decompressor.use_bitstream_header(encoded_stream.first.get(), encoded_stream.second) !=
-                                          RTNType::Good )
+    if( decompressor.use_bitstream( encoded_stream.first.get(), encoded_stream.second ) !=
+                                    RTNType::Good )
         return 1;
     start_time = std::chrono::steady_clock::now();
     rtn = decompressor.decompress();
@@ -140,6 +156,7 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims,
 
     return 0;
 }
+
 
 int main( int argc, char* argv[] )
 {
@@ -212,7 +229,7 @@ int main( int argc, char* argv[] )
 
     printf("Initial analysis: absolute error tolerance = %.2e, quantization level = %d ...  \n", 
             tolerance, qz_level);
-    int rtn = test_configuration( input_buf.get(), dims, qz_level, tolerance );
+    int rtn = test_configuration_omp( input_buf.get(), dims, qz_level, tolerance );
     if( rtn != 0 )
         return rtn;
 
@@ -233,7 +250,7 @@ int main( int argc, char* argv[] )
         qz_level = tmp;
         printf("\nNow testing qz level = %d ...\n", qz_level);
     
-        rtn = test_configuration( input_buf.get(), dims, qz_level, tolerance );
+        rtn = test_configuration_omp( input_buf.get(), dims, qz_level, tolerance );
         if ( rtn != 0 )
             return rtn;
 

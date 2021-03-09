@@ -12,6 +12,8 @@ void SPECK3D_OMP_C::set_dims( size_t x, size_t y, size_t z )
     m_dim_y = y;
     m_dim_z = z;
 }
+
+
 void SPECK3D_OMP_C::prefer_chunk_size( size_t x, size_t y, size_t z )
 {
     m_chunk_x = x;
@@ -82,9 +84,9 @@ auto SPECK3D_OMP_C::use_volume( const T* vol, size_t len ) -> RTNType
     // Ask these compressor instances to go grab their own chunks
     auto gather_rtn = std::vector<RTNType>( num_chunks, RTNType::Good );
 
-    // #pragma omp parallel for
+    #pragma omp parallel for
     for( size_t i = 0; i < num_chunks; i++ ) {
-        gather_rtn[i] = m_compressors[i].gather_chunk( vol, {m_dim_x, m_dim_y, m_dim_z}, chunks[i] );
+        gather_rtn[i] = m_compressors[i].gather_chunk(vol, {m_dim_x, m_dim_y, m_dim_z}, chunks[i]);
     }
 
     if(std::all_of( gather_rtn.begin(), gather_rtn.end(), [](auto r){return r == RTNType::Good;} ))
@@ -109,7 +111,7 @@ auto SPECK3D_OMP_C::compress() -> RTNType
     for( size_t i = 0; i < num_chunks; i++ )
         m_encoded_streams.emplace_back(nullptr, 0);
 
-    // #pragma omp parallel for
+    #pragma omp parallel for
     for( size_t i = 0; i < num_chunks; i++ ) {
         auto& compressor = m_compressors[i];
 
@@ -122,7 +124,7 @@ auto SPECK3D_OMP_C::compress() -> RTNType
         compressor.set_bpp( m_bpp );
 #endif
 
-        compressor_rtn[i] = compressor.compress();
+        compressor_rtn[i]    = compressor.compress();
         m_encoded_streams[i] = std::move(compressor.get_encoded_bitstream());
     }
 
@@ -187,10 +189,10 @@ auto SPECK3D_OMP_C::m_generate_header() const -> speck::smart_buffer_uint8
     const auto num_chunks  = chunks.size();
     if( num_chunks != m_encoded_streams.size() )
         return {nullptr, 0};
-    const auto header_size = num_chunks * 4 + 1 + 1 + 24;
+    const auto header_size = m_header_magic + num_chunks * 4;
     auto header = std::make_unique<uint8_t[]>( header_size );
-
     size_t loc = 0;
+
     // Version number
     uint8_t ver = 10 * SPECK_VERSION_MAJOR + SPECK_VERSION_MINOR;
     std::memcpy( header.get() + loc, &ver, sizeof(ver) );
@@ -228,32 +230,5 @@ auto SPECK3D_OMP_C::m_generate_header() const -> speck::smart_buffer_uint8
 
     return {std::move(header), header_size};
 }
-
-
-
-// For debug only
-//auto SPECK3D_OMP_C::release_chunk_bitstream() -> std::vector<speck::smart_buffer_uint8>
-//{
-//    return std::move( m_encoded_streams );
-//}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

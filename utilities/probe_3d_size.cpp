@@ -49,7 +49,7 @@ auto use_compressor( const float* in_buf, std::array<size_t, 3> dims, float bpp 
 auto use_decompressor( speck::smart_buffer_uint8 stream ) -> speck::smart_buffer_f
 {
     SPECK3D_Decompressor decompressor;
-    if( decompressor.use_bitstream_header( stream.first.get(), stream.second ) != RTNType::Good )
+    if( decompressor.use_bitstream( stream.first.get(), stream.second ) != RTNType::Good )
         return {nullptr, 0};
 
     auto start = std::chrono::steady_clock::now();

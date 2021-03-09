@@ -45,8 +45,8 @@ int main( int argc, char* argv[] )
     if( speck::empty_buf(in_stream) )
         return 1;
     SPECK3D_Decompressor decompressor;
-    if( decompressor.use_bitstream_header(in_stream.first.get(), in_stream.second) != 
-                                          speck::RTNType::Good ) {
+    if( decompressor.use_bitstream(in_stream.first.get(), in_stream.second) != 
+        speck::RTNType::Good ) {
         std::cerr << "Read compressed file error: " << input_file << std::endl;
         return 1;
     }

@@ -38,9 +38,6 @@ public:
     // Provide a copy of the encoded bitstream to the caller.
     auto get_encoded_bitstream() const -> speck::smart_buffer_uint8;
 
-    // For debug only
-    //auto release_chunk_bitstream() -> std::vector<speck::smart_buffer_uint8>;
-
 
 private:
     size_t      m_dim_x       = 0; // Dimension of the entire volume
@@ -52,6 +49,8 @@ private:
 
     std::vector<SPECK3D_Compressor>         m_compressors;
     std::vector<speck::smart_buffer_uint8>  m_encoded_streams;
+
+    const size_t m_header_magic = 26; // header size would be this number + num_chunks * 4
 
 #ifdef QZ_TERM
     int32_t     m_qz_lev      = 0;

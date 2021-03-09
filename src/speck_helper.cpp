@@ -9,9 +9,7 @@
 //
 // Uncomment the following lines to enable OpenMP
 //
-//#ifdef USE_OMP
-//    #include <omp.h>
-//#endif
+// #include <omp.h>
 
 
 auto speck::num_of_xforms(size_t len) -> size_t

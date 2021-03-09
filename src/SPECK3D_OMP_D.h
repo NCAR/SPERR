@@ -18,7 +18,7 @@ public:
 
     // Parse and separate data segments for each chunk.
     // Individual decompressors will then hold segments of the bitstream.
-    void use_bitstream( const void*, size_t );
+    auto use_bitstream( const void*, size_t ) -> RTNType;
 
     auto set_bpp(float) -> RTNType;
 
@@ -31,9 +31,6 @@ public:
     template<typename T>
     auto get_data_volume() const -> std::pair<std::unique_ptr<T[]>, size_t>;
 
-    // For debug use only
-    auto take_chunk_bitstream( std::vector<speck::smart_buffer_uint8> ) -> RTNType;
-
 
 private:
 
@@ -45,6 +42,8 @@ private:
     size_t      m_chunk_z     = 0;  // Preferred dimension for a chunk.
 
     float       m_bpp         = 0.0;
+    
+    const size_t m_header_magic = 26; // header size would be this number + num_chunks * 4
 
     std::vector<SPECK3D_Decompressor>   m_decompressors;
     speck::smart_buffer_d               m_vol_buf;
@@ -52,7 +51,7 @@ private:
     //
     // Private methods
     //
-    auto m_parse_header( const uint8_t*, size_t ) -> std::vector<size_t>;
+    auto m_parse_header( const void*, size_t ) -> std::vector<size_t>;
 
 };
 
