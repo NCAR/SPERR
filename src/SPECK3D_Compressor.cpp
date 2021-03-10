@@ -3,9 +3,14 @@
 #include <cassert>
 #include <cstring>
 
+#ifdef USE_ZSTD
+  #include "zstd.h"
+#endif
+
 
 SPECK3D_Compressor::SPECK3D_Compressor( size_t x, size_t y, size_t z )
-                  : m_total_vals( x * y * z )
+                  : m_dim_x(x), m_dim_y(y), m_dim_z(z), 
+                    m_total_vals( x * y * z )
 {
     m_cdf.set_dims( x, y, z );
     m_encoder.set_dims( x, y, z );
@@ -42,6 +47,32 @@ auto SPECK3D_Compressor::take_data( speck::buffer_type_d buf, size_t len ) -> RT
 
     return RTNType::Good;
 }
+
+
+template<typename T>
+auto SPECK3D_Compressor::gather_chunk( const T* vol, const std::array<size_t, 3>& vol_dim,
+                                       const std::array<size_t, 6>& chunk ) -> RTNType
+{
+    if( chunk[1] != m_dim_x || chunk[3] != m_dim_y || chunk[5] != m_dim_z )
+        return RTNType::DimMismatch;
+
+    m_val_buf  = std::make_unique<double[]>( m_total_vals );
+    size_t idx = 0;
+    for( size_t z = chunk[4]; z < chunk[4] + chunk[5]; z++ ) {
+      const size_t plane_offset = z * vol_dim[0] * vol_dim[1];
+      for( size_t y = chunk[2]; y < chunk[2] + chunk[3]; y++ ) {
+        const size_t col_offset = plane_offset + y * vol_dim[0];
+        for( size_t x = chunk[0]; x < chunk[0] + chunk[1]; x++ )
+          m_val_buf[idx++] = vol[col_offset + x];
+      }
+    }
+
+    return RTNType::Good;
+}
+template auto SPECK3D_Compressor::gather_chunk( const double*, const std::array<size_t, 3>&,
+                                                const std::array<size_t, 6>& ) -> RTNType;
+template auto SPECK3D_Compressor::gather_chunk( const float*, const std::array<size_t, 3>&,
+                                                const std::array<size_t, 6>& ) -> RTNType;
  
 
 #ifdef QZ_TERM
@@ -144,7 +175,19 @@ auto SPECK3D_Compressor::get_encoded_bitstream() const -> speck::smart_buffer_ui
                      m_sperr_stream.first.get(),
                      m_sperr_stream.second );
     }
+
+#ifdef USE_ZSTD
+    const size_t comp_buf_size = ZSTD_compressBound( total_size );
+    auto comp_buf = std::make_unique<uint8_t[]>( comp_buf_size );
+    const size_t comp_size = ZSTD_compress( comp_buf.get(), comp_buf_size, buf.get(), total_size,
+                                            ZSTD_CLEVEL_DEFAULT + 6 );
+    if( ZSTD_isError( comp_size ) )
+        return {nullptr, 0};
+    else
+        return {std::move(comp_buf), comp_size};
+#else
     return {std::move(buf), total_size};
+#endif
 }
 
 

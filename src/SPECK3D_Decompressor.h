@@ -17,7 +17,7 @@ using speck::RTNType;
 class SPECK3D_Decompressor {
 
 public:
-    // Accept incoming data: copy from a raw memory block
+    // Accept incoming data; this data is expected to have a header.
     auto use_bitstream( const void* p, size_t len ) -> RTNType;
 
     auto set_bpp( float ) -> RTNType;
@@ -25,12 +25,22 @@ public:
     auto decompress() -> RTNType;
 
     // Get the decompressed volume in a float or double buffer.
-    auto get_decompressed_volume_f() const -> speck::smart_buffer_f;
-    auto get_decompressed_volume_d() const -> speck::smart_buffer_d;
+    // It returns a smart_buffer_f or smart_buffer_d
+    template<typename T>
+    auto get_decompressed_volume() const -> std::pair<std::unique_ptr<T[]>, size_t>;
+
+    // Put this chunk to a bigger volume
+    template<typename T>
+    auto scatter_chunk( T* vol,  const std::array<size_t, 3>& vol_dim,
+                        const std::array<size_t, 6>& chunk) const -> RTNType;
+
+    auto get_dims() const -> std::array<size_t, 3>;
 
 private:
-    const size_t                m_meta_size         = 2;
     float                       m_bpp               = 0.0;
+    size_t                      m_dim_x             = 0;
+    size_t                      m_dim_y             = 0;
+    size_t                      m_dim_z             = 0;
 
     speck::smart_buffer_uint8   m_speck_stream      = {nullptr, 0};
 

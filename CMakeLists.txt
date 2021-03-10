@@ -18,15 +18,12 @@ option( BUILD_UNIT_TESTS "Build unit tests using googletest?" OFF)
 option( USE_ZSTD "Incorporate zstd to achieve further 5% compression?" OFF)
 option( USE_PMR  "Use Polymorphic Memory Resource. (Requires a C++17 compiler.)" OFF)
 option( QZ_TERM  "Operational mode which terminates by quantization level" ON)
-option( USE_OMP  "Enable OpenMP in a few calculations" OFF)
 
-if( USE_OMP )
-    find_package(OpenMP REQUIRED)
-    if( OpenMP_CXX_FOUND AND OpenMP_CXX_FLAGS )
-        message(STATUS "OpenMP found! (${OpenMP_CXX_LIB_NAMES})")
-    else()
-        message(STATUS "OpenMP NOT found!")
-    endif()
+find_package(OpenMP REQUIRED)
+if( OpenMP_CXX_FOUND AND OpenMP_CXX_FLAGS )
+    message(STATUS "OpenMP found! (${OpenMP_CXX_LIB_NAMES})")
+else()
+    message(STATUS "OpenMP NOT found!")
 endif()
 
 #
@@ -72,21 +69,18 @@ list( APPEND CDF_LIBS CDF97 )
 
 list( APPEND SPECK_Storage_LIBS SPECK_Storage   )
 
+list( APPEND SPECK3D_LIBS SPECK3D_OMP_C        )
+list( APPEND SPECK3D_LIBS SPECK3D_OMP_D        )
 list( APPEND SPECK3D_LIBS SPECK3D_Compressor   )
 list( APPEND SPECK3D_LIBS SPECK3D_Decompressor )
 list( APPEND SPECK3D_LIBS SPECK3D              )
+list( APPEND SPECK3D_LIBS OpenMP::OpenMP_CXX   )
 
 list( APPEND SPECK2D_LIBS SPECK2D_Compressor   )
 list( APPEND SPECK2D_LIBS SPECK2D_Decompressor )
 list( APPEND SPECK2D_LIBS SPECK2D              )
 
 list( APPEND SPERR_LIBS SPERR )
-
-# if( USE_OMP AND OpenMP_CXX_FOUND )
-#   list( APPEND HELPER_LIBS  OpenMP::OpenMP_CXX   )
-#   list( APPEND CDF_LIBS     OpenMP::OpenMP_CXX   )
-#   list( APPEND SPECK3D_LIBS OpenMP::OpenMP_CXX   )
-# endif()
 
 if( USE_ZSTD )
     ExternalProject_Get_Property( zstd-download INSTALL_DIR )

@@ -7,6 +7,5 @@
 #cmakedefine USE_ZSTD
 #cmakedefine USE_PMR
 #cmakedefine QZ_TERM
-#cmakedefine USE_OMP
 
 #endif

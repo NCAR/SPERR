@@ -70,10 +70,15 @@ int main( int argc, char* argv[] )
 
 #ifdef QZ_TERM
     compressor.set_qz_level( qz_level );
-    compressor.set_tolerance( tolerance );
+    auto rtn = compressor.set_tolerance( tolerance );
 #else
-    compressor.set_bpp( bpp );
+    auto rtn = compressor.set_bpp( bpp );
 #endif
+
+    if( rtn != RTNType::Good ) {
+        std::cerr << "Compressor parameters invalid!" << std::endl;
+        return 1;
+    }
 
     if( compressor.compress() != speck::RTNType::Good ) {
         std::cerr << "Compression failed!" << std::endl;

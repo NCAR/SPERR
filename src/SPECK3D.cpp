@@ -482,35 +482,35 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
     const size_t slice_size = m_dim_x * m_dim_y;
 
     for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
-        const size_t slice_offset = z * slice_size;
-        for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
-            const size_t col_offset = slice_offset + y * m_dim_x;
+      const size_t slice_offset = z * slice_size;
+      for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
+        const size_t col_offset = slice_offset + y * m_dim_x;
 
-            for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
-                if( m_coeff_buf[col_offset + x] >= m_threshold ) {
-                    xyz[0] = x - set.start_x;
-                    xyz[1] = y - set.start_y;
-                    xyz[2] = z - set.start_z;
+        for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
+          if( m_coeff_buf[col_offset + x] >= m_threshold ) {
+            xyz[0] = x - set.start_x;
+            xyz[1] = y - set.start_y;
+            xyz[2] = z - set.start_z;
 
-                    // Fill in the same x value for the next occurance at index=3 location
-                    xyz[3] = x - set.start_x;
+            // Fill in the same x value for the next occurance at index=3 location
+            xyz[3] = x - set.start_x;
 
-                    // If the identified pixel is at the 1st half of the line, we scan the 
-                    // 2nd half of the line attempting to find the next significant pixel
-                    if( x < set.length_x - set.length_x / 2 ) {
-                        for( auto x2 = set.start_x + set.length_x / 2;
-                                  x2 < set.start_x + set.length_x; x2++ ) {
-                            if( m_coeff_buf[col_offset + x2] >= m_threshold ) {
-                                xyz[3] = x2 - set.start_x;
-                                break;
-                            }
-                        }
-                    }
-
-                    return SigType::Sig;
+            // If the identified pixel is at the 1st half of the line, we scan the 
+            // 2nd half of the line attempting to find the next significant pixel
+            if( x < set.length_x - set.length_x / 2 ) {
+              for( auto x2 = set.start_x + set.length_x / 2;
+                        x2 < set.start_x + set.length_x; x2++ ) {
+                if( m_coeff_buf[col_offset + x2] >= m_threshold ) {
+                  xyz[3] = x2 - set.start_x;
+                  break;
                 }
-            } // End of processing a line
-        }
+              }
+            }
+
+            return SigType::Sig;
+          }
+        } // End of processing a line
+      }
     }
 
     return SigType::Insig;

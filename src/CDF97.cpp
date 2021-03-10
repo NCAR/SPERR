@@ -739,17 +739,11 @@ auto speck::CDF97::get_mean() const -> double
     return m_data_mean;
 }
 
-void speck::CDF97::get_dims(size_t& x, size_t& y) const
-{
-    x = m_dim_x;
-    y = m_dim_y;
-}
 
-void speck::CDF97::get_dims(size_t& x, size_t& y, size_t& z) const
+
+auto speck::CDF97::get_dims() const -> std::array<size_t, 3>
 {
-    x = m_dim_x;
-    y = m_dim_y;
-    z = m_dim_z;
+    return {m_dim_x, m_dim_y, m_dim_z};
 }
 
 void speck::CDF97::reset()
