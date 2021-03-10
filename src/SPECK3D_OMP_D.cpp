@@ -141,11 +141,9 @@ auto SPECK3D_OMP_D::m_parse_header( const void* buf, size_t total_len ) -> std::
     speck::unpack_8_booleans( b, u8p[loc] );
     loc++;
 #ifdef USE_ZSTD
-    if( b[0] == false ) 
-        return {};
+    if( b[0] == false ) return {};
 #else
-    if( b[0] == true )  
-        return {};
+    if( b[0] == true )  return {};
 #endif
     
     // Extract volume and chunk dimensions
