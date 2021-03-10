@@ -17,6 +17,7 @@ public:
 
     void set_dims( size_t, size_t, size_t );
     void prefer_chunk_size( size_t, size_t, size_t );
+    void set_num_threads( size_t );
 
     // Upon receiving incoming data, a chunking scheme is decided, multiple instances
     // of SPECK3D_Compressor are created, and they retrieve chunks from the source.
@@ -46,6 +47,7 @@ private:
     size_t      m_chunk_x     = 0; // Dimension of the preferred chunk size
     size_t      m_chunk_y     = 0; // Dimension of the preferred chunk size
     size_t      m_chunk_z     = 0; // Dimension of the preferred chunk size
+    size_t      m_num_threads = 1; // number of theads to use in OpenMP sections
 
     std::vector<SPECK3D_Compressor>         m_compressors;
     std::vector<speck::smart_buffer_uint8>  m_encoded_streams;

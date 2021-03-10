@@ -98,13 +98,15 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, float 
 }
 
 
-auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, float bpp ) -> int
+auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, float bpp,
+                             size_t omp_num_threads ) -> int
 {
     // Setup
     const size_t total_vals = dims[0] * dims[1] * dims[2];
     SPECK3D_OMP_C compressor;
     compressor.set_dims(dims[0], dims[1], dims[2]);
     compressor.prefer_chunk_size( 64, 64, 64 );
+    compressor.set_num_threads( omp_num_threads );
     auto rtn = compressor.use_volume( in_buf, total_vals );
     if(  rtn != RTNType::Good )
         return 1;
@@ -130,6 +132,7 @@ auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, fl
 
     // Perform decompression
     SPECK3D_OMP_D decompressor;
+    decompressor.set_num_threads( omp_num_threads );
     rtn = decompressor.use_bitstream( encoded_stream.first.get(), encoded_stream.second );
     if( rtn != RTNType::Good )
         return 1;
@@ -172,14 +175,21 @@ int main( int argc, char* argv[] )
 
     std::vector<size_t> dims_v;
     app.add_option("--dims", dims_v, "Dimensions of the input volume.\n"
-            "For example, `--dims 128 128 128`.")->required()->expected(3);
+            "For example, `--dims 128 128 128`.\n")->required()->expected(3);
 
     float bpp;
     auto* bpp_ptr = app.add_option("--bpp", bpp, "Target bit-per-pixel value.\n"
-                    "For example, `--bpp 0.5`.")->check(CLI::Range(0.0f, 64.0f));
+                    "For example, `--bpp 0.5`.\n")->check(CLI::Range(0.0f, 64.0f));
+
+    size_t omp_num_threads = 0;
+    auto* omp_ptr = app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. "
+                                   "Default: 4\n"); 
 
     CLI11_PARSE(app, argc, argv);
+
     const std::array<size_t, 3> dims = {dims_v[0], dims_v[1], dims_v[2]};
+    if( omp_num_threads == 0 )
+        omp_num_threads = 4;
 
     // Read and keep a copy of input data (will be used for evaluation)
     const size_t total_vals = dims[0] * dims[1] * dims[2];
@@ -196,7 +206,7 @@ int main( int argc, char* argv[] )
         bpp = 4.0; // We decide to use 4 bpp for initial analysis
     }
     printf("Initial analysis: compression at %.2f bit-per-pixel...  \n", bpp);
-    int rtn = test_configuration_omp( input_buf.get(), dims, bpp );
+    int rtn = test_configuration_omp( input_buf.get(), dims, bpp, omp_num_threads );
     if( rtn != 0 )
         return rtn;
 
@@ -216,7 +226,7 @@ int main( int argc, char* argv[] )
         }
         printf("\nNow testing bpp = %.2f ...\n", bpp);
     
-        rtn = test_configuration_omp( input_buf.get(), dims, bpp );
+        rtn = test_configuration_omp( input_buf.get(), dims, bpp, omp_num_threads );
         if ( rtn != 0 )
             return rtn;
 

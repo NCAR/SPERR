@@ -21,6 +21,13 @@ void SPECK3D_OMP_C::prefer_chunk_size( size_t x, size_t y, size_t z )
     m_chunk_z = z;
 }
 
+    
+void SPECK3D_OMP_C::set_num_threads( size_t n )
+{
+    if( n > 0 )
+        m_num_threads = n;
+}
+
 
 #ifdef QZ_TERM
 void SPECK3D_OMP_C::set_qz_level( int32_t q )
@@ -84,7 +91,7 @@ auto SPECK3D_OMP_C::use_volume( const T* vol, size_t len ) -> RTNType
     // Ask these compressor instances to go grab their own chunks
     auto gather_rtn = std::vector<RTNType>( num_chunks, RTNType::Good );
 
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(m_num_threads)
     for( size_t i = 0; i < num_chunks; i++ ) {
         gather_rtn[i] = m_compressors[i].gather_chunk(vol, {m_dim_x, m_dim_y, m_dim_z}, chunks[i]);
     }
@@ -111,7 +118,7 @@ auto SPECK3D_OMP_C::compress() -> RTNType
     for( size_t i = 0; i < num_chunks; i++ )
         m_encoded_streams.emplace_back(nullptr, 0);
 
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(m_num_threads)
     for( size_t i = 0; i < num_chunks; i++ ) {
         auto& compressor = m_compressors[i];
 

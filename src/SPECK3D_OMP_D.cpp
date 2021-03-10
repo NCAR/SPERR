@@ -7,6 +7,24 @@
 #include <algorithm>
 
 
+auto SPECK3D_OMP_D::set_bpp( float bpp ) -> RTNType
+{
+    if( bpp < 0.0 || bpp > 64.0 )
+        return RTNType::InvalidParam;
+    else {
+        m_bpp = bpp;
+        return RTNType::Good;
+    }
+}
+    
+
+void SPECK3D_OMP_D::set_num_threads( size_t n )
+{
+    if( n > 0 )
+        m_num_threads = n;
+}
+
+
 auto SPECK3D_OMP_D::use_bitstream( const void* p, size_t len ) -> RTNType
 {
     const auto chunk_sizes = m_parse_header( p, len );
@@ -22,7 +40,7 @@ auto SPECK3D_OMP_D::use_bitstream( const void* p, size_t len ) -> RTNType
     const auto header_size   = m_header_magic + num_chunks * 4;
     const uint8_t* const u8p = static_cast<const uint8_t*>(p);
 
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(m_num_threads)
     for( size_t i = 0; i < num_chunks; i++ ) {
         // Where does this chunk start?
         // This calculation is duplicate but it's really cheap anyway.
@@ -55,7 +73,7 @@ auto SPECK3D_OMP_D::decompress() -> RTNType
     auto chunk_rtn = std::vector<RTNType>( num_chunks, RTNType::Good );
 
     // Decompress each chunk
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(m_num_threads)
     for( size_t i = 0; i < num_chunks; i++ ) {
         m_decompressors[i].set_bpp( m_bpp );
         chunk_rtn[i] = m_decompressors[i].decompress();
@@ -65,7 +83,7 @@ auto SPECK3D_OMP_D::decompress() -> RTNType
 
     // Put data from individual chunks to the whole volume buffer
     chunk_rtn.assign( num_chunks, RTNType::Good );
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(m_num_threads)
     for( size_t i = 0; i < num_chunks; i++ ) {
         chunk_rtn[i] = m_decompressors[i].scatter_chunk( m_vol_buf.first.get(),
                                                          {m_dim_x, m_dim_y, m_dim_z},

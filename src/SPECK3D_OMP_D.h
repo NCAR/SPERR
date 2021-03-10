@@ -21,6 +21,7 @@ public:
     auto use_bitstream( const void*, size_t ) -> RTNType;
 
     auto set_bpp(float) -> RTNType;
+    void set_num_threads( size_t );
 
     auto decompress() -> RTNType;
 
@@ -40,6 +41,7 @@ private:
     size_t      m_chunk_x     = 0;  // Preferred dimension for a chunk.
     size_t      m_chunk_y     = 0;  // Preferred dimension for a chunk.
     size_t      m_chunk_z     = 0;  // Preferred dimension for a chunk.
+    size_t      m_num_threads = 1; // number of theads to use in OpenMP sections
 
     float       m_bpp         = 0.0;
     
