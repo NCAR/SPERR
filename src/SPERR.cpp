@@ -252,9 +252,9 @@ auto speck::SPERR::m_process_S_encoding(size_t  idx1,    size_t idx2,
 
     if( output )
         m_bit_buffer.push_back( is_sig );
-    else {
-        assert( is_sig == true );
-    }
+
+    // Sanity check: when `output` is false, `is_sig` must be true.
+    assert( output || is_sig );
 
     if (is_sig) {
         counter++;
@@ -387,14 +387,11 @@ auto speck::SPERR::m_refinement_new_SP(size_t idx) -> bool
 auto speck::SPERR::m_process_S_decoding(size_t  idx1,    size_t idx2,
                                         size_t& counter, bool   input) -> bool
 {
-    bool is_sig;
+    bool is_sig = true;
     if( input ) {
         is_sig = m_bit_buffer[m_bit_idx++];
         // Sanity check: the bit buffer should NOT be depleted at this point
         assert(m_bit_idx < m_bit_buffer.size());
-    }
-    else {
-        is_sig = true;
     }
 
     auto& set    = m_LIS[idx1][idx2];
