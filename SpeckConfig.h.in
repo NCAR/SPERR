@@ -5,7 +5,6 @@
 #define SPECK_VERSION_MINOR @SPECK_VERSION_MINOR@
 
 #cmakedefine USE_ZSTD
-#cmakedefine USE_PMR
 #cmakedefine QZ_TERM
 
 #endif

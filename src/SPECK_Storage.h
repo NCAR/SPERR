@@ -17,15 +17,6 @@ class SPECK_Storage {
 
 public:
 
-#ifdef USE_PMR
-    SPECK_Storage();
-    SPECK_Storage( const SPECK_Storage& )           = delete;
-    SPECK_Storage(       SPECK_Storage&& )          = delete;
-    SPECK_Storage& operator=(const SPECK_Storage&)  = delete;
-    SPECK_Storage& operator=(      SPECK_Storage&&) = delete;
-    virtual ~SPECK_Storage();
-#endif
-
     //
     // Memory management: input and output
     // Note: the nature of the data being input and output are wavelet coefficients
@@ -95,12 +86,7 @@ protected:
     size_t          m_dim_z          = 0;
     int32_t         m_max_coeff_bits = 0;    // = log2(max_coefficient)
 
-#ifdef USE_PMR
-    std::pmr::unsynchronized_pool_resource   m_pool;
-    std::pmr::memory_resource*               m_previous_resource;
-#endif
-
-    vector_bool       m_bit_buffer;          // Output/Input bit buffer
+    std::vector<bool>  m_bit_buffer;
 
 };
 

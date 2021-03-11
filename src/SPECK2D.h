@@ -83,21 +83,14 @@ private:
     size_t       m_budget            = 0;   // What's the budget for num of bits?
     size_t       m_bit_idx           = 0;   // Used for decode. Which bit we're at?
     bool         m_encode_mode       = true; // Encode (true) or Decode (false) mode?
-
     SPECKSet2D   m_I;
 
-    speck::vector_bool      m_significance_map;
-    speck::vector_bool      m_sign_array;
-    speck::vector_size_t    m_LIS_garbage_cnt;
+    std::vector<bool>                       m_significance_map;
+    std::vector<bool>                       m_sign_array;
+    std::vector<size_t>                     m_LIS_garbage_cnt;
 
-#ifdef USE_PMR
-    std::pmr::vector<SPECKSet2D>                    m_LSP;
-    std::pmr::vector<std::pmr::vector<SPECKSet2D>>  m_LIS;
-#else
-    std::vector<SPECKSet2D>                         m_LSP;
-    std::vector<std::vector<SPECKSet2D>>            m_LIS;
-#endif
-
+    std::vector<SPECKSet2D>                 m_LSP;
+    std::vector<std::vector<SPECKSet2D>>    m_LIS;
 };
 
 };
