@@ -53,28 +53,6 @@ public:
 
 protected:
     //
-    // Member functions
-    //
-
-    // Prepare the compressed memory, which includes metadata, header, and the bitstream. 
-    // It compacts the bitstream, prepends a header, prepends metadata, and optionally
-    //   applies zstd compression.
-    // The resulting memory block, out_buf, could be directly written to disk.
-    // Any content that's already in out_buf will be destroyed.
-    //
-    // Note: The caller is supposed to hold ownership of the resulting memory block.
-    //auto m_assemble_encoded_bitstream( const void* header, size_t header_size ) const
-    //     -> std::pair<buffer_type_uint8, size_t>;
-
-    // Parse a compressed buffer, and extract the metadata, header, and bitstream from it.
-    //
-    // Note: `header` should already have memory allocated with `header_size` in size.
-    // Note: Here we use raw pointer for int_buf because we're accessing memory provided
-    //       by others, and others most likely provide a raw pointer. 
-    //auto m_disassemble_encoded_bitstream( void* header,       size_t header_size, 
-    //                                      const void* in_buf, size_t in_size ) -> RTNType;
-
-    //
     // Member variables
     //
     double          m_image_mean     = 0.0;

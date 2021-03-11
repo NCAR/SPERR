@@ -15,15 +15,15 @@
 
 namespace speck {
 
-#ifndef BUFFER_TYPES
-#define BUFFER_TYPES
-    using buffer_type_d     = std::unique_ptr<double[]>;
-    using buffer_type_f     = std::unique_ptr<float[]>;
-    using buffer_type_uint8 = std::unique_ptr<uint8_t[]>;
-    using smart_buffer_d    = std::pair<buffer_type_d, size_t>; // It's smart because
-    using smart_buffer_f    = std::pair<buffer_type_f, size_t>; // it knows its size.
-    using smart_buffer_uint8= std::pair<buffer_type_uint8, size_t>;
-#endif
+//
+// A few shortcuts
+//
+using buffer_type_d     = std::unique_ptr<double[]>;
+using buffer_type_f     = std::unique_ptr<float[]>;
+using buffer_type_uint8 = std::unique_ptr<uint8_t[]>;
+using smart_buffer_d    = std::pair<buffer_type_d, size_t>; // It's smart because
+using smart_buffer_f    = std::pair<buffer_type_f, size_t>; // it knows its size.
+using smart_buffer_uint8= std::pair<buffer_type_uint8, size_t>;
 
 //
 // Helper classes
