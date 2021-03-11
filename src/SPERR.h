@@ -86,7 +86,7 @@ private:
     // For the following encoding methods that return a boolean,
     // True means that all outliers are refined to be within the tolerance
     // False means otherwise.
-    auto m_process_S_encoding(size_t, size_t) -> bool;
+    auto m_process_S_encoding(size_t idx1, size_t idx2, size_t& counter, bool output) -> bool;
     auto m_code_S(size_t, size_t) -> bool;
     auto m_sorting_pass() -> bool;              // Used in both encoding and decoding
     auto m_refinement_pass_encoding() -> bool;
@@ -95,7 +95,7 @@ private:
     // For the following decoding methods that return a boolean,
     // True means that all bits are processed and decoding finishes,
     // False means otherwise.
-    auto m_process_S_decoding(size_t, size_t) -> bool;
+    auto m_process_S_decoding(size_t idx1, size_t idx2, size_t& counter, bool input) -> bool;
     auto m_refinement_decoding() -> bool;
 
     //

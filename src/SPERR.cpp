@@ -242,15 +242,22 @@ auto speck::SPERR::m_decide_significance(const SPECKSet1D& set) const
     return sig;
 }
 
-auto speck::SPERR::m_process_S_encoding(size_t idx1, size_t idx2) -> bool
+auto speck::SPERR::m_process_S_encoding(size_t  idx1,    size_t idx2,
+                                        size_t& counter, bool   output) -> bool
 {
     auto& set     = m_LIS[idx1][idx2];
     auto  sig_rtn = m_decide_significance(set);
     bool  is_sig  = sig_rtn.first;
     auto  sig_idx = sig_rtn.second;
-    m_bit_buffer.push_back( is_sig );
+
+    if( output )
+        m_bit_buffer.push_back( is_sig );
+    else {
+        assert( is_sig == true );
+    }
 
     if (is_sig) {
+        counter++;
         if (set.length == 1) { // Is a pixel
             m_bit_buffer.push_back(m_LOS[sig_idx].error >= 0.0); // Record its sign
             m_LSP_new.push_back(sig_idx);
@@ -274,17 +281,35 @@ auto speck::SPERR::m_code_S(size_t idx1, size_t idx2) -> bool
 {
     const auto& set = m_LIS[idx1][idx2];
 
-    auto sets = m_part_set(set);
-    for( const auto& ss : sets ) {
-        if (ss.length > 0) {
-            auto newi1 = ss.part_level;
-            m_LIS[newi1].emplace_back(ss);
-            auto newi2 = m_LIS[newi1].size() - 1;
-            if (m_encode_mode && m_process_S_encoding(newi1, newi2))
-                return true;
-            else if (!m_encode_mode && m_process_S_decoding(newi1, newi2))
-                return true;
-        }
+    auto   sets    = m_part_set(set);
+    size_t counter = 0;
+
+    // Process the 1st set
+    const auto& s1 = sets[0];
+    if (s1.length > 0) {
+        auto newi1 = s1.part_level;
+        m_LIS[newi1].emplace_back(s1);
+        auto newi2 = m_LIS[newi1].size() - 1;
+        if (m_encode_mode && m_process_S_encoding(newi1, newi2, counter, true))
+            return true;
+        else if (!m_encode_mode && m_process_S_decoding(newi1, newi2, counter, true))
+            return true;
+    }
+
+    // Process the 2nd set
+    const auto& s2 = sets[1];
+    if( s2.length > 0 ) {
+        auto newi1 = s2.part_level;
+        m_LIS[newi1].emplace_back(s2);
+        auto newi2 = m_LIS[newi1].size() - 1;
+
+        // If the 1st set wasn't significant, then the 2nd set must be significant,
+        // thus don't need to output/input this information.
+        bool IO = (counter == 0 ? false : true);
+        if (m_encode_mode && m_process_S_encoding(newi1, newi2, counter, IO) )
+            return true;
+        else if (!m_encode_mode && m_process_S_decoding(newi1, newi2, counter, IO))
+            return true;
     }
 
     return false;
@@ -292,12 +317,13 @@ auto speck::SPERR::m_code_S(size_t idx1, size_t idx2) -> bool
 
 auto speck::SPERR::m_sorting_pass() -> bool
 {
+    size_t dummy = 0;
     for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
         size_t idx1 = m_LIS.size() - tmp;
         for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
-            if (m_encode_mode && m_process_S_encoding(idx1, idx2))
+            if (m_encode_mode && m_process_S_encoding(idx1, idx2, dummy, true))
                 return true;
-            else if (!m_encode_mode && m_process_S_decoding(idx1, idx2))
+            else if (!m_encode_mode && m_process_S_decoding(idx1, idx2, dummy, true))
                 return true;
         }
     }
@@ -358,15 +384,23 @@ auto speck::SPERR::m_refinement_new_SP(size_t idx) -> bool
         return false;
 }
 
-auto speck::SPERR::m_process_S_decoding(size_t idx1, size_t idx2) -> bool
+auto speck::SPERR::m_process_S_decoding(size_t  idx1,    size_t idx2,
+                                        size_t& counter, bool   input) -> bool
 {
-    auto& set    = m_LIS[idx1][idx2];
-    bool  is_sig = m_bit_buffer[m_bit_idx++];
+    bool is_sig;
+    if( input ) {
+        is_sig = m_bit_buffer[m_bit_idx++];
+        // Sanity check: the bit buffer should NOT be depleted at this point
+        assert(m_bit_idx < m_bit_buffer.size());
+    }
+    else {
+        is_sig = true;
+    }
 
-    // Sanity check: the bit buffer should NOT be depleted at this point
-    assert(m_bit_idx < m_bit_buffer.size());
+    auto& set    = m_LIS[idx1][idx2];
 
     if (is_sig) {
+        counter++;
         if (set.length == 1) { // This is a pixel
             // We recovered the location of another outlier!
             m_LOS.emplace_back(set.start, m_threshold * 1.5);
