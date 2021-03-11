@@ -160,8 +160,7 @@ auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t
 }
 
 
-auto speck::SPECK_Storage::get_speck_stream_size( const void* buf ) const 
-            -> uint64_t
+auto speck::SPECK_Storage::get_speck_stream_size( const void* buf ) const -> uint64_t
 {
     // Given the header definition in `get_encoded_bitstream()`, directly
     // go retrieve the value stored in byte 24-31.
