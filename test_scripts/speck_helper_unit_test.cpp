@@ -48,7 +48,7 @@ TEST( speck_helper, bit_packing )
 {
     const size_t num_of_bytes = 11;
     const size_t byte_offset  = 1;
-    speck::vector_bool input {true,  true,  true,  true,  true,  true,  true,  true,  // 1st byte
+    std::vector<bool>  input {true,  true,  true,  true,  true,  true,  true,  true,  // 1st byte
                               false, false, false, false, false, false, false, false, // 2nd byte
                               true,  false, true,  false, true,  false, true,  false, // 3rd byte
                               false, true,  false, true,  false, true,  false, true,  // 4th byte
@@ -66,7 +66,7 @@ TEST( speck_helper, bit_packing )
     auto rtn = speck::pack_booleans( bytes, input, byte_offset );
     EXPECT_EQ( rtn, speck::RTNType::Good );
     // Unpack booleans
-    speck::vector_bool output( num_of_bytes * 8 );
+    auto output = std::vector<bool>( num_of_bytes * 8 );
     rtn = speck::unpack_booleans( output, bytes.get(), num_of_bytes + byte_offset, byte_offset );
 
     EXPECT_EQ( rtn, speck::RTNType::Good );

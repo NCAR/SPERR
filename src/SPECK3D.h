@@ -101,24 +101,18 @@ private:
     size_t  m_bit_idx        = 0;   // Used for decode. Which bit we're at?
     bool    m_encode_mode    = true; // Encode (true) or Decode (false) mode?
 
-    // Now we use a vector of indices to serve the same funcationality of the last LIS,
-    // which would contain all insignificant pixels.
-    vector_size_t       m_LIP;      // List of insignificant pixels.
     const size_t        m_u64_garbage_val = std::numeric_limits<size_t>::max();
     const uint8_t       m_false   = 0;
     const uint8_t       m_true    = 1;
     const uint8_t       m_discard = 2;
 
     // List of significant pixels (recorded as locations).
-    vector_size_t       m_LSP_new; // Ones newly identified as significant
-    vector_size_t       m_LSP_old; // Ones previously identified as significant
-    vector_bool         m_sign_array;
+    std::vector<size_t> m_LSP_new; // Ones newly identified as significant
+    std::vector<size_t> m_LSP_old; // Ones previously identified as significant
+    std::vector<bool>   m_sign_array;
 
-#ifdef USE_PMR
-    std::pmr::vector<std::pmr::vector<SPECKSet3D>>  m_LIS;
-#else
-    std::vector<std::vector<SPECKSet3D>>            m_LIS;
-#endif
+    std::vector<std::vector<SPECKSet3D>>  m_LIS;
+    std::vector<size_t>                   m_LIP; // List of insignificant pixels.
 
 #ifdef QZ_TERM
     int32_t m_qz_term_lev   = 0;  // At which quantization level does encoding terminate?

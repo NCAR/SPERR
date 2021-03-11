@@ -279,9 +279,7 @@ auto speck::SPERR::m_process_S_encoding(size_t  idx1,    size_t idx2,
 
 auto speck::SPERR::m_code_S(size_t idx1, size_t idx2) -> bool
 {
-    const auto& set = m_LIS[idx1][idx2];
-
-    auto   sets    = m_part_set(set);
+    auto   sets    = m_part_set( m_LIS[idx1][idx2] );
     size_t counter = 0;
 
     // Process the 1st set
@@ -394,7 +392,7 @@ auto speck::SPERR::m_process_S_decoding(size_t  idx1,    size_t idx2,
         assert(m_bit_idx < m_bit_buffer.size());
     }
 
-    auto& set    = m_LIS[idx1][idx2];
+    auto& set = m_LIS[idx1][idx2];
 
     if (is_sig) {
         counter++;
@@ -469,7 +467,7 @@ auto speck::SPERR::get_encoded_bitstream() const -> smart_buffer_uint8
 
     // Create a copy of the current bit buffer with length being multiples of 8.
     // The purpose is to not mess up with the useful container.
-    speck::vector_bool tmp_buf;
+    std::vector<bool> tmp_buf;
     tmp_buf.reserve( num_bits + 8 ); // No need to re-allocate when padding.
     tmp_buf = m_bit_buffer;
     while( tmp_buf.size() % 8 != 0 )

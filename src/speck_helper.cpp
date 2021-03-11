@@ -50,7 +50,7 @@ void speck::calc_approx_detail_len(size_t orig_len, size_t lev,
 }
 
 template <typename U>
-auto speck::make_coeff_positive(U& buf, size_t len, vector_bool& sign_array) 
+auto speck::make_coeff_positive(U& buf, size_t len, std::vector<bool>& sign_array) 
      -> typename U::element_type
 {
     sign_array.assign(len, true);
@@ -72,16 +72,16 @@ auto speck::make_coeff_positive(U& buf, size_t len, vector_bool& sign_array)
     return max;
 }
 template speck::buffer_type_d::element_type
-speck::make_coeff_positive(buffer_type_d&, size_t, vector_bool&);
+speck::make_coeff_positive(buffer_type_d&, size_t, std::vector<bool>&);
 template speck::buffer_type_f::element_type
-speck::make_coeff_positive(buffer_type_f&, size_t, vector_bool&);
+speck::make_coeff_positive(buffer_type_f&, size_t, std::vector<bool>&);
 
 
 // Good solution to deal with bools and unsigned chars
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
-auto speck::pack_booleans( buffer_type_uint8& dest,
-                           const vector_bool& src,
-                           size_t             offset ) -> RTNType
+auto speck::pack_booleans( buffer_type_uint8&       dest,
+                           const std::vector<bool>& src,
+                           size_t                   offset ) -> RTNType
 {
     if( src.size() % 8 != 0 )
         return RTNType::WrongSize;
@@ -104,10 +104,10 @@ auto speck::pack_booleans( buffer_type_uint8& dest,
     return RTNType::Good;
 }
 
-auto speck::unpack_booleans( vector_bool& dest,
-                             const void*  src,
-                             size_t       src_len,
-                             size_t       src_offset ) -> RTNType
+auto speck::unpack_booleans( std::vector<bool>& dest,
+                             const void*        src,
+                             size_t             src_len,
+                             size_t             src_offset ) -> RTNType
 {
     if( src_len < src_offset )
         return RTNType::WrongSize;
