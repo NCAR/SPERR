@@ -12,7 +12,6 @@ SPECK3D_Compressor::SPECK3D_Compressor( size_t x, size_t y, size_t z )
                   : m_dim_x(x), m_dim_y(y), m_dim_z(z), 
                     m_total_vals( x * y * z )
 {
-    m_cdf.set_dims( x, y, z );
     m_encoder.set_dims( x, y, z );
 #ifdef QZ_TERM
     m_sperr.set_length( m_total_vals );
@@ -85,7 +84,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     m_num_outlier  = 0;
 
     // Note that we keep the original buffer untouched for outlier calculations later.
-    m_cdf.copy_data( m_val_buf.get(), m_total_vals );
+    m_cdf.copy_data( m_val_buf.get(), m_total_vals, m_dim_x, m_dim_y, m_dim_z );
     m_cdf.dwt3d();
     auto cdf_out = m_cdf.release_data();
     m_encoder.set_image_mean( m_cdf.get_mean() );
@@ -107,12 +106,12 @@ auto SPECK3D_Compressor::compress() -> RTNType
     auto coeffs = m_encoder.release_data();
     if( coeffs.first == nullptr || coeffs.second != m_total_vals )
         return RTNType::Error;
-    m_cdf.take_data( std::move(coeffs.first), coeffs.second );
+    m_cdf.take_data( std::move(coeffs.first), coeffs.second, m_dim_x, m_dim_y, m_dim_z );
     m_cdf.idwt3d();
 
     // Now we find all the outliers!
     auto vol = m_cdf.get_read_only_data();
-    if( vol.first == nullptr || vol.second != m_total_vals )
+    if( !speck::size_is( vol, m_total_vals ) )
         return RTNType::Error;
     std::vector<speck::Outlier> LOS; // List of OutlierS
     for( size_t i = 0; i < m_total_vals; i++ ) {

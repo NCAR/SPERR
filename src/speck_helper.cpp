@@ -354,24 +354,26 @@ template auto speck::kahan_summation( const double*, size_t ) -> double;
 
 
 template <typename T>
-auto speck::empty_buf( const std::pair<std::unique_ptr<T[]>, size_t>& buf ) -> bool
+auto speck::empty_buf( const std::pair<T, size_t>& buf ) -> bool
 {
     return (buf.first == nullptr || buf.second == 0);
 }
 template auto speck::empty_buf( const smart_buffer_d&     ) -> bool;
 template auto speck::empty_buf( const smart_buffer_f&     ) -> bool;
 template auto speck::empty_buf( const smart_buffer_uint8& ) -> bool;
+template auto speck::empty_buf( const std::pair<const buffer_type_d&, size_t>& ) -> bool;
 
 
 template <typename T>
-auto speck::size_is( const  std::pair<std::unique_ptr<T[]>, size_t>& buf,
+auto speck::size_is( const  std::pair<T, size_t>& buf,
                      size_t expected_size ) -> bool
 {
     return (buf.first != nullptr && buf.second == expected_size);
 }
-template auto speck::size_is( const smart_buffer_d&, size_t     ) -> bool;
-template auto speck::size_is( const smart_buffer_f&, size_t     ) -> bool;
+template auto speck::size_is( const smart_buffer_d&,     size_t ) -> bool;
+template auto speck::size_is( const smart_buffer_f&,     size_t ) -> bool;
 template auto speck::size_is( const smart_buffer_uint8&, size_t ) -> bool;
+template auto speck::size_is( const std::pair<const buffer_type_d&, size_t>&, size_t ) -> bool;
 
 
 auto speck::chunk_volume( const std::array<size_t, 3>& vol_dim, 

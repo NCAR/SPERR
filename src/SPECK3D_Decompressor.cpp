@@ -88,10 +88,9 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
         return rtn;
 
     // Step 2: Inverse Wavelet Transform
-    m_cdf.set_dims( m_dim_x, m_dim_y, m_dim_z );
-    m_cdf.set_mean( m_decoder.get_image_mean() );
     auto coeffs = m_decoder.release_data();
-    m_cdf.take_data( std::move(coeffs.first), coeffs.second );
+    m_cdf.take_data( std::move(coeffs.first), coeffs.second, m_dim_x, m_dim_y, m_dim_z );
+    m_cdf.set_mean( m_decoder.get_image_mean() );
     m_cdf.idwt3d();
 
     // Step 3: If there's SPERR data, then do the correction.

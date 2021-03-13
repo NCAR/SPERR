@@ -168,12 +168,11 @@ auto kahan_summation( const T*, size_t ) -> T;
 
 // Test if a smart_buffer is empty. Might support other types of buffers in the future.
 template <typename T>
-auto empty_buf( const std::pair<std::unique_ptr<T[]>, size_t>& smart_buf) -> bool;
+auto empty_buf( const std::pair<T, size_t>& smart_buf) -> bool;
 
 // Test if a smart_buffer is non-empty, AND correct in size.
 template <typename T>
-auto size_is( const  std::pair<std::unique_ptr<T[]>, size_t>& smart_buf, 
-              size_t expected_size ) -> bool;
+auto size_is( const std::pair<T, size_t>& smart_buf, size_t expected_size ) -> bool;
 
 
 // Given a whole volume size and a desired chunk size, this helper function returns

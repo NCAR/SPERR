@@ -10,7 +10,6 @@
 SPECK2D_Compressor::SPECK2D_Compressor( size_t x, size_t y )
                   : m_total_vals( x * y )
 {
-    m_cdf.set_dims( x, y );
     m_encoder.set_dims( x, y );
 }
 

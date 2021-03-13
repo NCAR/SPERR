@@ -64,12 +64,11 @@ auto SPECK2D_Decompressor::decompress() -> RTNType
     if( rtn != RTNType::Good )
         return rtn;
 
-    m_cdf.set_dims( dims[0], dims[1] );
-    m_cdf.set_mean( m_decoder.get_image_mean() );
     auto coeffs = m_decoder.release_data();
     if( coeffs.first == nullptr || coeffs.second != total_vals )
         return RTNType::Error;
-    m_cdf.take_data( std::move(coeffs.first), total_vals );
+    m_cdf.take_data( std::move(coeffs.first), total_vals, dims[0], dims[1] );
+    m_cdf.set_mean( m_decoder.get_image_mean() );
     m_cdf.idwt2d();
 
     return RTNType::Good;
