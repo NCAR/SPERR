@@ -19,8 +19,7 @@ TEST( dwt1d, big_image_even )
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.set_dims( dim_x );
-    cdf.copy_data( in_buf.get(), total_vals );
+    cdf.copy_data( in_buf.get(), total_vals, dim_x );
     cdf.dwt1d();
     cdf.idwt1d();
 
@@ -46,8 +45,7 @@ TEST( dwt1d, big_image_odd )
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.set_dims( dim_x );
-    cdf.copy_data( in_buf.get(), total_vals );
+    cdf.copy_data( in_buf.get(), total_vals, dim_x );
     cdf.dwt1d();
     cdf.idwt1d();
 
@@ -73,8 +71,7 @@ TEST( dwt2d, small_image_even )
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.set_dims( dim_x, dim_y );
-    cdf.copy_data( in_buf.get(), dim_x * dim_y );
+    cdf.copy_data( in_buf.get(), dim_x * dim_y, dim_x, dim_y );
     cdf.dwt2d();
     cdf.idwt2d();
 
@@ -100,8 +97,7 @@ TEST( dwt2d, small_image_odd )
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.set_dims( dim_x, dim_y );
-    cdf.copy_data( in_buf.get(), dim_x * dim_y );
+    cdf.copy_data( in_buf.get(), dim_x * dim_y, dim_x, dim_y );
     cdf.dwt2d();
     cdf.idwt2d();
 
@@ -127,8 +123,7 @@ TEST( dwt2d, big_image_even )
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.set_dims( dim_x, dim_y );
-    cdf.copy_data( in_buf.get(), dim_x * dim_y );
+    cdf.copy_data( in_buf.get(), dim_x * dim_y, dim_x, dim_y );
     cdf.dwt2d();
     cdf.idwt2d();
 
@@ -154,8 +149,7 @@ TEST( dwt2d, big_image_odd )
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.set_dims( dim_x, dim_y );
-    cdf.copy_data( in_buf.get(), dim_x * dim_y );
+    cdf.copy_data( in_buf.get(), dim_x * dim_y, dim_x * dim_y );
     cdf.dwt2d();
     cdf.idwt2d();
 
@@ -181,8 +175,7 @@ TEST( dwt3d, small_even_cube )
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.set_dims( dim_x, dim_y, dim_z );
-    cdf.copy_data( in_buf.get(), total_vals );
+    cdf.copy_data( in_buf.get(), total_vals, dim_x, dim_y, dim_z );
     cdf.dwt3d();
     cdf.idwt3d();
 
@@ -208,8 +201,7 @@ TEST( dwt3d, big_odd_cube )
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.set_dims( dim_x, dim_y, dim_z );
-    cdf.copy_data( in_buf.get(), total_vals );
+    cdf.copy_data( in_buf.get(), total_vals, dim_x, dim_y, dim_z );
     cdf.dwt3d();
     cdf.idwt3d();
 
@@ -235,8 +227,7 @@ TEST( dwt3d, big_even_cube )
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.set_dims( dim_x, dim_y, dim_z );
-    cdf.copy_data( in_buf.get(), total_vals );
+    cdf.copy_data( in_buf.get(), total_vals, dim_x, dim_y, dim_z );
     cdf.dwt3d();
     cdf.idwt3d();
 

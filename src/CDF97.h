@@ -15,11 +15,14 @@ public:
     //
     // Input
     //
+    // Note that copy_data() and take_data() effectively resets internal states
+    // of this class.
     template <typename T>
-    void copy_data(const T*, size_t len);
-    void take_data(buffer_type_d, size_t len); // Take ownership
+    auto copy_data(const T* buf,  size_t len,
+                   size_t   dimx, size_t dimy = 1, size_t dimz = 1) -> RTNType;
+    auto take_data(buffer_type_d buf,  size_t len,
+                   size_t dimx, size_t dimy = 1, size_t dimz = 1) -> RTNType;
     void set_mean(double);
-    void set_dims(size_t x, size_t y = 1, size_t z = 1);
 
     //
     // Output
@@ -27,10 +30,10 @@ public:
     auto get_read_only_data() const -> std::pair<const buffer_type_d&, size_t>; // Keep ownership
     auto release_data()             -> std::pair<buffer_type_d, size_t>;     // Release ownership
     auto get_mean() const -> double;
-    auto get_dims() const -> std::array<size_t, 3>; // In 2D case, the 3rd value equals 0.
+    auto get_dims() const -> std::array<size_t, 3>; // In 2D case, the 3rd value equals 1.
 
     // Action items
-    void reset();  // Reset this class to its initial state.
+    void release_resources();
     void dwt2d();  // 1) calculates the number of levels of dwt,
                    // 2) subtract mean of the data,
                    // 3) perform the actual dwt.
@@ -117,10 +120,10 @@ private:
     //
     // Methods from QccPack, keep their original names.
     //
-    void QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length);
-    void QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length);
+    void QccWAVCDF97AnalysisSymmetricEvenEven( double* signal, size_t signal_length);
+    void QccWAVCDF97AnalysisSymmetricOddEven(  double* signal, size_t signal_length);
     void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length);
-    void QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length);
+    void QccWAVCDF97SynthesisSymmetricOddEven( double* signal, size_t signal_length);
 
     //
     // Private data members
@@ -133,7 +136,7 @@ private:
     size_t        m_buf_len   = 0;
 
     /*
-     * Note on the coefficients, ALPHA, BETA, etc.
+     * Note on the coefficients and constants:
      * The ones from QccPack are slightly different from what's described in the
      * lifting scheme paper: Pg19 of "FACTORING WAVELET TRANSFORMS INTO LIFTING
      * STEPS," DAUBECHIES and SWELDEN.
@@ -147,8 +150,8 @@ private:
     // Paper coefficients
     const double h[5] { .602949018236,
                         .266864118443,
-                        -.078223266529,
-                        -.016864118443,
+                       -.078223266529,
+                       -.016864118443,
                         .026748757411 };
     const double r0          = h[0] - 2.0  *  h[4] * h[1] / h[3];
     const double r1          = h[2] - h[4] -  h[4] * h[1] / h[3];

@@ -14,24 +14,43 @@
 // #endif
 
 template <typename T>
-void speck::CDF97::copy_data(const T* data, size_t len)
+auto speck::CDF97::copy_data(const T* data, size_t len, size_t dimx, size_t dimy, size_t dimz) -> RTNType
 {
     static_assert(std::is_floating_point<T>::value,
                   "!! Only floating point values are supported !!");
+    if( len != dimx * dimy * dimz )
+        return RTNType::DimMismatch;
 
-    assert(m_dim_x * m_dim_y * m_dim_z == 0 || m_dim_x * m_dim_y * m_dim_z == len);
-    m_buf_len  = len;
-    m_data_buf = std::make_unique<double[]>(len);
+    // If `m_data_buf` is empty, or having a different length, we need to allocate memory!
+    if( m_data_buf == nullptr || m_buf_len != len ) {
+        m_buf_len  = len;
+        m_data_buf = std::make_unique<double[]>(len); 
+    }
     std::copy( data, data + len, speck::begin(m_data_buf) );
-}
-template void speck::CDF97::copy_data(const float*, size_t);
-template void speck::CDF97::copy_data(const double*, size_t);
 
-void speck::CDF97::take_data(buffer_type_d ptr, size_t len)
+    m_dim_x = dimx;
+    m_dim_y = dimy;
+    m_dim_z = dimz;
+
+    return RTNType::Good;
+}
+template auto speck::CDF97::copy_data(const float*,  size_t, size_t, size_t, size_t) -> RTNType;
+template auto speck::CDF97::copy_data(const double*, size_t, size_t, size_t, size_t) -> RTNType;
+
+
+auto speck::CDF97::take_data(buffer_type_d ptr, size_t len, size_t dimx, size_t dimy, size_t dimz)
+                 -> RTNType
 {
-    assert(m_dim_x * m_dim_y * m_dim_z == 0 || m_dim_x * m_dim_y * m_dim_z == len);
-    m_buf_len  = len;
+    if( len != dimx * dimy * dimz )
+        return RTNType::DimMismatch;
+
     m_data_buf = std::move(ptr);
+    m_buf_len  = len;
+    m_dim_x    = dimx;
+    m_dim_y    = dimy;
+    m_dim_z    = dimz;
+
+    return RTNType::Good;
 }
 
 auto speck::CDF97::get_read_only_data() const -> std::pair<const buffer_type_d&, size_t>
@@ -719,20 +738,12 @@ void speck::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double* signal,
         signal[index] *= (-INV_EPSILON);
 }
 
+
 void speck::CDF97::set_mean(double m)
 {
     m_data_mean = m;
 }
 
-void speck::CDF97::set_dims(size_t x, size_t y, size_t z)
-{
-    assert(m_buf_len == x * y * z || m_buf_len == 0);
-
-    m_dim_x   = x;
-    m_dim_y   = y;
-    m_dim_z   = z;
-    m_buf_len = x * y * z;
-}
 
 auto speck::CDF97::get_mean() const -> double
 {
@@ -746,12 +757,7 @@ auto speck::CDF97::get_dims() const -> std::array<size_t, 3>
     return {m_dim_x, m_dim_y, m_dim_z};
 }
 
-void speck::CDF97::reset()
+void speck::CDF97::release_resources()
 {
-    m_dim_x     = 0;
-    m_dim_y     = 0;
-    m_dim_z     = 0;
-    m_buf_len   = 0;
-    m_data_mean = 0.0;
-    m_data_buf.reset();
+    m_data_buf.reset(nullptr);
 }
