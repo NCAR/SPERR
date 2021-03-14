@@ -6,37 +6,46 @@
 
 
 template <typename T>
-void speck::SPECK_Storage::copy_data(const T* p, size_t len)
+auto speck::SPECK_Storage::copy_data(const T* p, size_t len, size_t dimx, size_t dimy, size_t dimz) 
+          -> RTNType
 {
     static_assert(std::is_floating_point<T>::value,
                   "!! Only floating point values are supported !!");
+    if( len != dimx * dimy * dimz )
+        return RTNType::DimMismatch;
 
-    assert(len > 0);
-    assert(m_coeff_len == 0 || m_coeff_len == len);
-
-    if( m_coeff_len == 0 || m_coeff_buf == nullptr ) {
+    // If `m_coeff_buf` is empty, or having a different length, we need to allocate memory!
+    if( m_coeff_buf == nullptr || m_coeff_len != len ) {
         m_coeff_len = len;
-        m_coeff_buf = std::make_unique<double[]>(len);
+        m_coeff_buf = std::make_unique<double[]>(len); 
     }
     std::copy( p, p + len, speck::begin(m_coeff_buf) );
-}
-template void speck::SPECK_Storage::copy_data(const double*, size_t);
-template void speck::SPECK_Storage::copy_data(const float*, size_t);
 
-void speck::SPECK_Storage::take_data(buffer_type_d coeffs, size_t len)
+    m_dim_x = dimx;
+    m_dim_y = dimy;
+    m_dim_z = dimz;
+
+    return RTNType::Good;
+}
+template auto speck::SPECK_Storage::copy_data(const double*, size_t, size_t, size_t, size_t) -> RTNType;
+template auto speck::SPECK_Storage::copy_data(const float*,  size_t, size_t, size_t, size_t) -> RTNType;
+
+
+auto speck::SPECK_Storage::take_data(buffer_type_d coeffs, size_t len, 
+                                     size_t dimx, size_t dimy, size_t dimz) -> RTNType
 {
-    assert(len > 0);
-    assert(m_coeff_len == 0 || m_coeff_len == len);
-    m_coeff_len = len;
+    if( len != dimx * dimy * dimz )
+        return RTNType::DimMismatch;
+
     m_coeff_buf = std::move(coeffs);
+    m_coeff_len = len;
+    m_dim_x     = dimx;
+    m_dim_y     = dimy;
+    m_dim_z     = dimz;
+
+    return RTNType::Good;
 }
 
-auto speck::SPECK_Storage::get_read_only_data() const -> std::pair<const buffer_type_d&, size_t>
-{
-    return std::make_pair(std::cref(m_coeff_buf), m_coeff_len);
-    // The syntax below would also work, but the one above better expresses the intent.
-    //return {m_coeff_buf, m_coeff_len};
-}
 
 auto speck::SPECK_Storage::release_data() -> std::pair<buffer_type_d, size_t>
 {
@@ -53,16 +62,10 @@ auto speck::SPECK_Storage::get_image_mean() const -> double
 {
     return m_image_mean;
 }
-auto speck::SPECK_Storage::get_bit_buffer_size() const -> size_t
-{
-    return m_bit_buffer.size();
-}
 auto speck::SPECK_Storage::get_dims() const -> std::array<size_t, 3>
 {
     return {m_dim_x, m_dim_y, m_dim_z};
 }
-
-
 
 
 auto speck::SPECK_Storage::get_encoded_bitstream() const -> smart_buffer_uint8
@@ -129,7 +132,10 @@ auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t
     m_dim_x = dims[0]; 
     m_dim_y = dims[1]; 
     m_dim_z = dims[2];
-    m_coeff_len = m_dim_x * m_dim_y * m_dim_z;
+    if( m_coeff_len != m_dim_x * m_dim_y * m_dim_z ) {
+        m_coeff_len  = m_dim_x * m_dim_y * m_dim_z;
+        m_coeff_buf.reset(nullptr);
+    }
 
     return RTNType::Good;
 }

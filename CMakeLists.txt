@@ -68,8 +68,8 @@ list( APPEND CDF_LIBS CDF97 )
 
 list( APPEND SPECK_Storage_LIBS SPECK_Storage   )
 
-list( APPEND SPECK3D_LIBS SPECK3D_OMP_C        )
-list( APPEND SPECK3D_LIBS SPECK3D_OMP_D        )
+# list( APPEND SPECK3D_LIBS SPECK3D_OMP_C        )
+# list( APPEND SPECK3D_LIBS SPECK3D_OMP_D        )
 list( APPEND SPECK3D_LIBS SPECK3D_Compressor   )
 list( APPEND SPECK3D_LIBS SPECK3D_Decompressor )
 list( APPEND SPECK3D_LIBS SPECK3D              )
@@ -89,21 +89,21 @@ if( USE_ZSTD )
 endif()
 
 
-add_executable( compressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_3d.cpp" )
-target_include_directories( compressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
-target_link_libraries(      compressor_3d PUBLIC ${SPECK3D_LIBS}
-                                          PUBLIC ${SPECK_Storage_LIBS}
-                                          PUBLIC ${SPERR_LIBS}
-                                          PUBLIC ${CDF_LIBS}
-                                          PUBLIC ${HELPER_LIBS} )
-
-add_executable( decompressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/decompressor_3d.cpp" )
-target_include_directories( decompressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
-target_link_libraries(      decompressor_3d PUBLIC ${SPECK3D_LIBS}
-                                            PUBLIC ${SPECK_Storage_LIBS}
-                                            PUBLIC ${SPERR_LIBS}
-                                            PUBLIC ${CDF_LIBS}
-                                            PUBLIC ${HELPER_LIBS} )
+# add_executable( compressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_3d.cpp" )
+# target_include_directories( compressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
+# target_link_libraries(      compressor_3d PUBLIC ${SPECK3D_LIBS}
+#                                           PUBLIC ${SPECK_Storage_LIBS}
+#                                           PUBLIC ${SPERR_LIBS}
+#                                           PUBLIC ${CDF_LIBS}
+#                                           PUBLIC ${HELPER_LIBS} )
+# 
+# add_executable( decompressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/decompressor_3d.cpp" )
+# target_include_directories( decompressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
+# target_link_libraries(      decompressor_3d PUBLIC ${SPECK3D_LIBS}
+#                                             PUBLIC ${SPECK_Storage_LIBS}
+#                                             PUBLIC ${SPERR_LIBS}
+#                                             PUBLIC ${CDF_LIBS}
+#                                             PUBLIC ${HELPER_LIBS} )
 
 # add_executable( compressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_2d.cpp" )
 # target_include_directories( compressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
@@ -112,17 +112,17 @@ target_link_libraries(      decompressor_3d PUBLIC ${SPECK3D_LIBS}
 #                                           PUBLIC ${CDF_LIBS}
 #                                           PUBLIC ${HELPER_LIBS} )
 
-if( QZ_TERM )
-  add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_qz.cpp" )
-else()
-  add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_size.cpp" )
-endif()
-target_include_directories( probe_3d PUBLIC ${PROJECT_BINARY_DIR} )
-target_link_libraries(      probe_3d PUBLIC ${SPECK3D_LIBS}
-                                     PUBLIC ${SPECK_Storage_LIBS}
-                                     PUBLIC ${SPERR_LIBS}
-                                     PUBLIC ${CDF_LIBS}
-                                     PUBLIC ${HELPER_LIBS} )
+# if( QZ_TERM )
+#   add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_qz.cpp" )
+# else()
+#   add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_size.cpp" )
+# endif()
+# target_include_directories( probe_3d PUBLIC ${PROJECT_BINARY_DIR} )
+# target_link_libraries(      probe_3d PUBLIC ${SPECK3D_LIBS}
+#                                      PUBLIC ${SPECK_Storage_LIBS}
+#                                      PUBLIC ${SPERR_LIBS}
+#                                      PUBLIC ${CDF_LIBS}
+#                                      PUBLIC ${HELPER_LIBS} )
 
 if( BUILD_UNIT_TESTS )
     # Download and unpack googletest at configure time

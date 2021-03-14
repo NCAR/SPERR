@@ -757,7 +757,3 @@ auto speck::CDF97::get_dims() const -> std::array<size_t, 3>
     return {m_dim_x, m_dim_y, m_dim_z};
 }
 
-void speck::CDF97::release_resources()
-{
-    m_data_buf.reset(nullptr);
-}

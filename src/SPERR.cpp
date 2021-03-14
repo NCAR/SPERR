@@ -67,14 +67,15 @@ auto speck::SPERR::m_part_set(const SPECKSet1D& set) const -> std::array<SPECKSe
 
 void speck::SPERR::m_initialize_LIS()
 {
-    // To initialize this 1D array, just calculate how many partitions can be performed,
-    // and partition this long array to 2 parts.
-
-    // Initialize LIS with possible length values
+    // Note that `m_LIS` is a 2D array. In order to avoid unnecessary memory allocation, 
+    // we don't clear `m_LIS` itself, but clear every secondary array it holds.
+    // This is OK as long as the extra secondary arrays are cleared.
     auto num_of_parts = speck::num_of_partitions(m_total_len);
-    auto num_of_sizes = num_of_parts + 1;
-    m_LIS.clear();
-    m_LIS.resize(num_of_sizes);
+    auto num_of_lists = num_of_parts + 1;
+    if( m_LIS.size() < num_of_lists )
+        m_LIS.resize( num_of_lists );
+    for( auto& list : m_LIS )
+        list.clear();
 
     // Put in two sets, each representing a half of the long array.
     SPECKSet1D set ( 0, m_total_len, 0 ); // the whole 1D array

@@ -1,7 +1,6 @@
 #ifndef CDF97_H
 #define CDF97_H
 
-
 #include <cmath>
 #include <memory>
 #include <utility>  // std::pair<>
@@ -33,7 +32,6 @@ public:
     auto get_dims() const -> std::array<size_t, 3>; // In 2D case, the 3rd value equals 1.
 
     // Action items
-    void release_resources();
     void dwt2d();  // 1) calculates the number of levels of dwt,
                    // 2) subtract mean of the data,
                    // 3) perform the actual dwt.

@@ -16,15 +16,14 @@ using speck::RTNType;
 class SPECK3D_Compressor
 {
 public:
-    // Constructor
-    SPECK3D_Compressor( size_t x, size_t y, size_t z );
 
     // Accept incoming data: copy from a raw memory block
     template< typename T >
-    auto copy_data( const T* p, size_t len ) -> RTNType;
+    auto copy_data( const T* p, size_t len, size_t dimx, size_t dimy, size_t dimz ) -> RTNType;
 
     // Accept incoming data: take ownership of a memory block
-    auto take_data( speck::buffer_type_d buf, size_t len ) -> RTNType;
+    auto take_data( speck::buffer_type_d buf, size_t len, size_t dimx, size_t dimy, size_t dimz ) 
+                    -> RTNType;
 
     // Accept incoming data: gather a chunk from a bigger volume
     template<typename T>
@@ -47,10 +46,10 @@ public:
 
 
 private:
-    const size_t                m_dim_x;
-    const size_t                m_dim_y;
-    const size_t                m_dim_z;
-    const size_t                m_total_vals;
+    size_t                      m_dim_x;
+    size_t                      m_dim_y;
+    size_t                      m_dim_z;
+    size_t                      m_total_vals;
     speck::buffer_type_d        m_val_buf;
 
     speck::CDF97                m_cdf;

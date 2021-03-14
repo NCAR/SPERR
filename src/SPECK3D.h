@@ -42,9 +42,6 @@ class SPECK3D : public SPECK_Storage {
 
 public:
 
-    // trivial input
-    void set_dims(size_t, size_t, size_t); // Accepts volume dimension
-
     // How many bits does speck process (for encoding and decoding).
     // If set to zero during decoding, then all bits in the bitstream will be processed.
     void set_bit_budget(size_t);           

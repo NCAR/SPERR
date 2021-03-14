@@ -22,16 +22,6 @@ auto speck::SPECKSet3D::is_empty() const -> bool
 //
 // Class SPECK3D
 //
-void speck::SPECK3D::set_dims(size_t x, size_t y, size_t z)
-{
-    // Sanity Check
-    assert(m_coeff_len == 0 || m_coeff_len == x * y * z);
-    m_dim_x     = x;
-    m_dim_y     = y;
-    m_dim_z     = z;
-    m_coeff_len = x * y * z;
-}
-
 void speck::SPECK3D::set_bit_budget(size_t budget)
 {
     size_t mod = budget % 8;
@@ -40,6 +30,7 @@ void speck::SPECK3D::set_bit_budget(size_t budget)
     else // we can fill up the last byte
         m_budget = budget + 8 - mod;
 }
+
 
 #ifdef QZ_TERM
     void speck::SPECK3D::set_quantization_term_level( int32_t lev )
@@ -63,6 +54,7 @@ void speck::SPECK3D::m_clean_LIS()
     auto it = std::remove( m_LIP.begin(), m_LIP.end(), m_u64_garbage_val );
     m_LIP.erase( it, m_LIP.end() );
 }
+
 
 auto speck::SPECK3D::encode() -> RTNType
 {
@@ -195,10 +187,16 @@ void speck::SPECK3D::m_initialize_sets_lists()
     for (size_t i = 0; i < 3; i++)
         num_of_sizes += num_of_parts[i];
 
-    // initialize LIS
-    m_LIS.clear();
-    m_LIS.resize(num_of_sizes);
-    m_LIP.clear();
+    // Initialize LIS
+    // Note that `m_LIS` is a two-dimensional array. We want to keep the memory allocated
+    // in the secondary array, so we don't clear `m_LIS` itself, but clear the every 
+    // secondary arrays inside of it.
+    // Also note that we don't shrink the size of `m_LIS`. This is OK as long as the
+    // extra lists at the end are cleared.
+    if( m_LIS.size() < num_of_sizes )
+        m_LIS.resize(num_of_sizes);
+    for( auto& list : m_LIS )
+        list.clear();
 
     // Starting from a set representing the whole volume, identify the smaller sets
     //   and put them in LIS accordingly.
@@ -249,8 +247,9 @@ void speck::SPECK3D::m_initialize_sets_lists()
     const auto parts = big.part_level;
     m_LIS[parts].insert(m_LIS[parts].begin(), big);
 
-    // Initialize LSP.
+    // Initialize LIP and LSP: lists that represent individual pixels.
     // Note that `m_LSP_old` usually grow close to the full length, so we reserve space now.
+    m_LIP.clear();
     m_LSP_new.clear();
     m_LSP_old.clear();
     m_LSP_old.reserve( m_coeff_len );

@@ -15,21 +15,21 @@ target_include_directories( SPERR         INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} 
 
 add_library( SPECK3D_Compressor   SPECK3D_Compressor.cpp   ) 
 add_library( SPECK3D_Decompressor SPECK3D_Decompressor.cpp ) 
-add_library( SPECK3D_OMP_C        SPECK3D_OMP_C.cpp        ) 
-add_library( SPECK3D_OMP_D        SPECK3D_OMP_D.cpp        ) 
+# add_library( SPECK3D_OMP_C        SPECK3D_OMP_C.cpp        ) 
+# add_library( SPECK3D_OMP_D        SPECK3D_OMP_D.cpp        ) 
 # add_library( SPECK2D_Compressor   SPECK2D_Compressor.cpp   ) 
 # add_library( SPECK2D_Decompressor SPECK2D_Decompressor.cpp )
 
 target_include_directories( SPECK3D_Compressor   INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( SPECK3D_Decompressor INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
-target_include_directories( SPECK3D_OMP_C        INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
-target_include_directories( SPECK3D_OMP_D        INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
+# target_include_directories( SPECK3D_OMP_C        INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
+# target_include_directories( SPECK3D_OMP_D        INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 # target_include_directories( SPECK2D_Compressor   INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 # target_include_directories( SPECK2D_Decompressor INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 
 
-target_compile_options( SPECK3D_OMP_C PUBLIC ${OpenMP_CXX_FLAGS} )
-target_compile_options( SPECK3D_OMP_D PUBLIC ${OpenMP_CXX_FLAGS} )
+# target_compile_options( SPECK3D_OMP_C PUBLIC ${OpenMP_CXX_FLAGS} )
+# target_compile_options( SPECK3D_OMP_D PUBLIC ${OpenMP_CXX_FLAGS} )
     
 
 if( USE_ZSTD )
