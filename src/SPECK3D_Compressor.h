@@ -25,11 +25,6 @@ public:
     auto take_data( speck::buffer_type_d buf, size_t len, size_t dimx, size_t dimy, size_t dimz ) 
                     -> RTNType;
 
-    // Accept incoming data: gather a chunk from a bigger volume
-    template<typename T>
-    auto gather_chunk( const T* vol, const std::array<size_t, 3>& vol_dim, 
-                       const std::array<size_t, 6>& chunk ) -> RTNType;
-
 #ifdef QZ_TERM
     void set_qz_level( int32_t );
     auto set_tolerance( double ) -> RTNType;

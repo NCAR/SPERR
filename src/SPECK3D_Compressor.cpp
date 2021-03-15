@@ -49,44 +49,7 @@ auto SPECK3D_Compressor::take_data( speck::buffer_type_d buf, size_t len,
     return RTNType::Good;
 }
 
-
-template<typename T>
-auto SPECK3D_Compressor::gather_chunk( const T* vol, const std::array<size_t, 3>& vol_dim,
-                                       const std::array<size_t, 6>& chunk ) -> RTNType
-{
-    if( chunk[0] + chunk[1] > vol_dim[0] || 
-        chunk[2] + chunk[3] > vol_dim[1] ||
-        chunk[4] + chunk[5] > vol_dim[2] )
-        return RTNType::DimMismatch;
-
-    auto len = chunk[1] * chunk[3] * chunk[5];
-    if( m_val_buf == nullptr || m_total_vals != len ) {
-        m_total_vals = len;
-        m_val_buf = std::make_unique<double[]>( len );
-    }
-
-    m_dim_x = chunk[1];
-    m_dim_y = chunk[3];
-    m_dim_z = chunk[5];
-
-    size_t idx = 0;
-    for( size_t z = chunk[4]; z < chunk[4] + chunk[5]; z++ ) {
-      const size_t plane_offset = z * vol_dim[0] * vol_dim[1];
-      for( size_t y = chunk[2]; y < chunk[2] + chunk[3]; y++ ) {
-        const size_t col_offset = plane_offset + y * vol_dim[0];
-        for( size_t x = chunk[0]; x < chunk[0] + chunk[1]; x++ )
-          m_val_buf[idx++] = vol[col_offset + x];
-      }
-    }
-
-    return RTNType::Good;
-}
-template auto SPECK3D_Compressor::gather_chunk( const double*, const std::array<size_t, 3>&,
-                                                const std::array<size_t, 6>& ) -> RTNType;
-template auto SPECK3D_Compressor::gather_chunk( const float*, const std::array<size_t, 3>&,
-                                                const std::array<size_t, 6>& ) -> RTNType;
  
-
 #ifdef QZ_TERM
 auto SPECK3D_Compressor::compress() -> RTNType
 {

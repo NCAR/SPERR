@@ -428,6 +428,56 @@ auto speck::chunk_volume( const std::array<size_t, 3>& vol_dim,
 }
 
 
+template<typename T>
+auto speck::gather_chunk( const T* vol, const std::array<size_t, 3>& vol_dim,
+                          const std::array<size_t, 6>& chunk ) -> buffer_type_d
+{
+    if( chunk[0] + chunk[1] > vol_dim[0] || 
+        chunk[2] + chunk[3] > vol_dim[1] ||
+        chunk[4] + chunk[5] > vol_dim[2] )
+        return {};
+
+    auto len = chunk[1] * chunk[3] * chunk[5];
+    auto buf = std::make_unique<double[]>( len );
+
+    size_t idx = 0;
+    for( size_t z = chunk[4]; z < chunk[4] + chunk[5]; z++ ) {
+      const size_t plane_offset = z * vol_dim[0] * vol_dim[1];
+      for( size_t y = chunk[2]; y < chunk[2] + chunk[3]; y++ ) {
+        const size_t col_offset = plane_offset + y * vol_dim[0];
+        for( size_t x = chunk[0]; x < chunk[0] + chunk[1]; x++ )
+          buf[idx++] = vol[ col_offset + x ];
+      }
+    }
+
+    return std::move(buf);
+}
+template auto speck::gather_chunk( const double*, const std::array<size_t, 3>&,
+                                   const std::array<size_t, 6>& ) -> buffer_type_d;
+template auto speck::gather_chunk( const float*, const std::array<size_t, 3>&,
+                                   const std::array<size_t, 6>& ) -> buffer_type_d;
+
+
+template<typename T>
+void speck::scatter_chunk( T* big_vol, const std::array<size_t, 3>& vol_dim,
+                           const buffer_type_d&         small_vol,
+                           const std::array<size_t, 6>& chunk )
+{
+    size_t idx = 0;
+    for( size_t z = chunk[4]; z < chunk[4] + chunk[5]; z++ ) {
+      const size_t plane_offset = z * vol_dim[0] * vol_dim[1];
+      for( size_t y = chunk[2]; y < chunk[2] + chunk[3]; y++ ) {
+        const size_t col_offset = plane_offset + y * vol_dim[0];
+        for( size_t x = chunk[0]; x < chunk[0] + chunk[1]; x++ )
+          big_vol[ col_offset + x ] = small_vol[ idx++ ];
+      }
+    }
+}
+template void speck::scatter_chunk( float*, const std::array<size_t, 3>&,
+                                    const buffer_type_d&, const std::array<size_t, 6>& );
+template void speck::scatter_chunk( double*, const std::array<size_t, 3>&,
+                                    const buffer_type_d&, const std::array<size_t, 6>& );
+
 
 
 

@@ -176,11 +176,23 @@ auto size_is( const std::pair<T, size_t>& smart_buf, size_t expected_size ) -> b
 
 
 // Given a whole volume size and a desired chunk size, this helper function returns
-// a list of chunks which are specified by their starting indices in the whole volume
-// and their actual sizes (which might differ from the desired chunk size).
+// a list of chunks specified by 6 integers:
+// chunk[0], [2], [4]: starting index of this chunk 
+// chunk[1], [3], [5]: length of this chunk
 auto chunk_volume( const std::array<size_t, 3>& vol_dim, 
                    const std::array<size_t, 3>& chunk_dim )
                    -> std::vector< std::array<size_t, 6> >;
+
+// Gather a chunk from a bigger volume
+template<typename T>
+auto gather_chunk( const T* vol, const std::array<size_t, 3>& vol_dim, 
+                   const std::array<size_t, 6>& chunk ) -> buffer_type_d;
+
+// Put this chunk to a bigger volume
+template<typename T>
+void scatter_chunk( T* big_vol,  const std::array<size_t, 3>& vol_dim,
+                    const buffer_type_d&         small_vol,
+                    const std::array<size_t, 6>& chunk);
 
 };  // End of speck namespace.
 
