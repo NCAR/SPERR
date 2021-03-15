@@ -75,9 +75,9 @@ list( APPEND SPECK3D_LIBS SPECK3D_Decompressor )
 list( APPEND SPECK3D_LIBS SPECK3D              )
 list( APPEND SPECK3D_LIBS OpenMP::OpenMP_CXX   )
 
-# list( APPEND SPECK2D_LIBS SPECK2D_Compressor   )
-# list( APPEND SPECK2D_LIBS SPECK2D_Decompressor )
-# list( APPEND SPECK2D_LIBS SPECK2D              )
+list( APPEND SPECK2D_LIBS SPECK2D_Compressor   )
+list( APPEND SPECK2D_LIBS SPECK2D_Decompressor )
+list( APPEND SPECK2D_LIBS SPECK2D              )
 
 list( APPEND SPERR_LIBS SPERR )
 
@@ -167,14 +167,14 @@ if( BUILD_UNIT_TESTS )
                                     PUBLIC gtest_main   )
     add_test( NAME test_dwt COMMAND test_dwt            )
 
-#    add_executable( test_speck2d
-#                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck2d_unit_test.cpp" )
-#    target_link_libraries( test_speck2d PUBLIC ${SPECK2D_LIBS}
-#                                        PUBLIC ${SPECK_Storage_LIBS} 
-#                                        PUBLIC ${CDF_LIBS} 
-#                                        PUBLIC ${HELPER_LIBS}
-#                                        PUBLIC gtest_main            )
-#    add_test( NAME test_speck2d COMMAND test_speck2d                 )
+    add_executable( test_speck2d
+                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck2d_unit_test.cpp" )
+    target_link_libraries( test_speck2d PUBLIC ${SPECK2D_LIBS}
+                                        PUBLIC ${SPECK_Storage_LIBS} 
+                                        PUBLIC ${CDF_LIBS} 
+                                        PUBLIC ${HELPER_LIBS}
+                                        PUBLIC gtest_main            )
+    add_test( NAME test_speck2d COMMAND test_speck2d                 )
 
     add_executable( test_speck3d
                     "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck3d_unit_test.cpp" )

@@ -16,20 +16,13 @@ using speck::RTNType;
 class SPECK2D_Compressor {
 
 public:
-    // Constructor
-    SPECK2D_Compressor( size_t x, size_t y );
 
     // Accept incoming data: copy from a raw memory block
     template< typename T >
-    auto copy_data( const T* p, size_t len ) -> RTNType;
+    auto copy_data( const T* p, size_t len, size_t dimx, size_t dimy ) -> RTNType;
 
     // Accept incoming data by taking ownership of the memory block
-    auto take_data( speck::buffer_type_d buf, size_t len ) -> RTNType;
-
-    // Accept incoming data by reading a file from disk.
-    // The file is supposed to contain blocks of 32-bit floating values, with
-    // X direction varying fastest, and Y direction varying slowest.
-    auto read_floats( const char* filename ) -> RTNType;
+    auto take_data( speck::buffer_type_d buf, size_t len, size_t dimx, size_t dimy ) -> RTNType;
 
 //#ifdef QZ_TERM
     //void set_qz_level( int32_t );
@@ -42,7 +35,9 @@ public:
     auto write_bitstream( const char* filename ) const -> RTNType;
 
 private:
-    const size_t            m_total_vals;
+    size_t                  m_dim_x;
+    size_t                  m_dim_y;
+    size_t                  m_total_vals;
     const size_t            m_meta_size = 2;
     speck::buffer_type_d    m_val_buf;
 

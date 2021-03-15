@@ -7,49 +7,43 @@
     #include "zstd.h"
 #endif
 
-SPECK2D_Compressor::SPECK2D_Compressor( size_t x, size_t y )
-                  : m_total_vals( x * y )
-{
-    m_encoder.set_dims( x, y );
-}
 
 template< typename T >
-auto SPECK2D_Compressor::copy_data( const T* p, size_t len ) -> RTNType
+auto SPECK2D_Compressor::copy_data( const T* p, size_t len, size_t dimx, size_t dimy) -> RTNType
 {
-    if( len != m_total_vals )
-        return RTNType::WrongSize;
-
     static_assert(std::is_floating_point<T>::value,
                   "!! Only floating point values are supported !!");
 
-    m_val_buf = std::make_unique<double[]>( len );
+    if( len != dimx * dimy )
+        return RTNType::DimMismatch;
+
+    if( m_val_buf == nullptr || m_total_vals != len ) {
+        m_val_buf    = std::make_unique<double[]>( len );
+        m_total_vals = len;
+    }
     std::copy( p, p + len, speck::begin(m_val_buf) );
 
-    return RTNType::Good;
-}
-template auto SPECK2D_Compressor::copy_data( const double*, size_t ) -> RTNType;
-template auto SPECK2D_Compressor::copy_data( const float*,  size_t ) -> RTNType;
-
-
-    
-auto SPECK2D_Compressor::take_data( speck::buffer_type_d buf, size_t len ) -> RTNType 
-{
-    if( len != m_total_vals )
-        return RTNType::WrongSize;
-
-    m_val_buf = std::move( buf );
+    m_dim_x = dimx;
+    m_dim_y = dimy;
 
     return RTNType::Good;
 }
-    
+template auto SPECK2D_Compressor::copy_data( const double*, size_t, size_t, size_t ) -> RTNType;
+template auto SPECK2D_Compressor::copy_data( const float*,  size_t, size_t, size_t ) -> RTNType;
 
-auto SPECK2D_Compressor::read_floats( const char* filename ) -> RTNType
+    
+auto SPECK2D_Compressor::take_data( speck::buffer_type_d buf, size_t len,
+                                    size_t dimx, size_t dimy ) -> RTNType 
 {
-    auto buf = speck::read_whole_file<float>( filename );
-    if( buf.first == nullptr || buf.second == 0 )
-        return RTNType::IOError;
-    else
-        return( this->copy_data( buf.first.get(), buf.second ) );
+    if( len != dimx * dimy )
+        return RTNType::DimMismatch;
+
+    m_dim_x      = dimx;
+    m_dim_y      = dimy;
+    m_total_vals = len;
+    m_val_buf    = std::move( buf );
+
+    return RTNType::Good;
 }
 
 
@@ -58,14 +52,14 @@ auto SPECK2D_Compressor::compress() -> RTNType
     if( m_val_buf == nullptr || m_total_vals == 0 )
         return RTNType::Error;
 
-    m_cdf.take_data( std::move(m_val_buf), m_total_vals );
+    m_cdf.take_data( std::move(m_val_buf), m_total_vals, m_dim_x, m_dim_y );
     m_cdf.dwt2d();
     auto cdf_out = m_cdf.release_data( );
-    if( cdf_out.first == nullptr || cdf_out.second != m_total_vals )
+    if( !speck::size_is( cdf_out, m_total_vals ) )
         return RTNType::Error;
 
     m_encoder.set_image_mean( m_cdf.get_mean() );
-    m_encoder.take_data( std::move(cdf_out.first), m_total_vals );
+    m_encoder.take_data( std::move(cdf_out.first), m_total_vals, m_dim_x, m_dim_y );
 
 //#ifdef QZ_TERM
     // m_encoder.set_quantization_term_level( m_qz_lev );

@@ -38,7 +38,6 @@ public:
     SPECK2D();
 
     // trivial input
-    void set_dims(size_t, size_t);    // Accepts plane dimension
     void set_bit_budget(size_t);      // How many bits does speck process?
 
     // core operations

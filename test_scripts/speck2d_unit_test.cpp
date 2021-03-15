@@ -41,8 +41,12 @@ public:
         //
         // Use a compressor
         //
-        SPECK2D_Compressor compressor( m_dim_x, m_dim_y );
-        if( compressor.read_floats( m_input_name.c_str() ) != RTNType::Good )
+        auto in_buf = speck::read_whole_file<float>( m_input_name.c_str() );
+        if( !speck::size_is(in_buf, total_vals) )
+            return 1;
+        SPECK2D_Compressor compressor;
+        if( compressor.copy_data( in_buf.first.get(), total_vals, m_dim_x, m_dim_y ) 
+            != RTNType::Good )
             return 1;
         if( compressor.set_bpp( bpp ) != RTNType::Good )
             return 1;
@@ -60,18 +64,14 @@ public:
         if( decompressor.decompress() != RTNType::Good )
             return 1;
         auto slice = decompressor.get_decompressed_slice_f();
-        if( slice.first == nullptr || slice.second != total_vals )
+        if( !speck::size_is( slice, total_vals ) )
             return 1;
 
         //
         // Compare results 
         //
-
-        auto orig = std::make_unique<float[]>( total_vals );
-        if( speck::read_n_bytes( m_input_name.c_str(), 4 * total_vals, orig.get() ) != speck::RTNType::Good )
-            return 1;
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( orig.get(), slice.first.get(), total_vals,
+        speck::calc_stats( in_buf.first.get(), slice.first.get(), total_vals,
                            &rmse, &lmax, &psnr, &arr1min, &arr1max );
         m_psnr = psnr;
         m_lmax = lmax;

@@ -23,7 +23,7 @@ void SPECK2D_Decompressor::take_bitstream( speck::buffer_type_uint8 buf, size_t 
     m_entire_stream_len = len;
     m_metadata_parsed = false;
 }
-    
+
 
 auto SPECK2D_Decompressor::read_bitstream( const char* filename ) -> RTNType
 {
@@ -65,7 +65,7 @@ auto SPECK2D_Decompressor::decompress() -> RTNType
         return rtn;
 
     auto coeffs = m_decoder.release_data();
-    if( coeffs.first == nullptr || coeffs.second != total_vals )
+    if( !speck::size_is(coeffs, total_vals) )
         return RTNType::Error;
     m_cdf.take_data( std::move(coeffs.first), total_vals, dims[0], dims[1] );
     m_cdf.set_mean( m_decoder.get_image_mean() );
