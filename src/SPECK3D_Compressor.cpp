@@ -156,18 +156,22 @@ auto SPECK3D_Compressor::compress() -> RTNType
     m_speck_stream = {nullptr, 0};
     m_sperr_stream = {nullptr, 0};
 
-    m_cdf.take_data( std::move(m_val_buf), m_total_vals );
-    m_val_buf = nullptr; // give the moved-from object a specified state
+    RTNType rtn;
+    rtn = m_cdf.take_data( std::move(m_val_buf), m_total_vals, m_dim_x, m_dim_y, m_dim_z );
+    if( rtn != RTNType::Good )
+        return rtn;
     m_cdf.dwt3d();
     auto cdf_out = m_cdf.release_data();
     if( cdf_out.first == nullptr || cdf_out.second != m_total_vals )
         return RTNType::Error;
 
     m_encoder.set_image_mean( m_cdf.get_mean() );
-    m_encoder.take_data( std::move(cdf_out.first), cdf_out.second );
+    rtn = m_encoder.take_data(std::move(cdf_out.first), cdf_out.second, m_dim_x, m_dim_y, m_dim_z);
+    if( rtn != RTNType::Good )
+        return rtn;
     m_encoder.set_bit_budget( size_t(m_bpp * m_total_vals) );
 
-    auto rtn = m_encoder.encode();
+    rtn = m_encoder.encode();
     if( rtn != RTNType::Good )
         return rtn;
     else {
