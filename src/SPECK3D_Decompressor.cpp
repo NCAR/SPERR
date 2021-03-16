@@ -122,7 +122,7 @@ auto SPECK3D_Decompressor::get_decompressed_volume() const ->
 
     auto out_buf = std::make_unique<T[]>( len );
     auto begin   = speck::begin( vol );
-    auto end     = speck::end( vol, len );
+    auto end     = begin + len;
     std::copy( begin, end, speck::begin(out_buf) );
 
 #ifdef QZ_TERM

@@ -84,7 +84,7 @@ auto SPECK2D_Decompressor::get_decompressed_slice_f() const
 
     auto out_buf = std::make_unique<float[]>(slice.second);
     auto begin = speck::begin( slice.first );
-    auto end   = speck::end(   slice.first, slice.second );
+    auto end   = begin + slice.second;
     std::copy( begin, end, speck::begin( out_buf ) );
 
     return {std::move(out_buf), slice.second};

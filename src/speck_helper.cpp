@@ -115,7 +115,7 @@ auto speck::unpack_booleans( std::vector<bool>& dest,
     const size_t num_of_bytes = src_len - src_offset;
     const size_t num_of_bools = num_of_bytes * 8;
     if( dest.size() != num_of_bools )
-        dest.resize( num_of_bools );
+        dest.assign( num_of_bools, false );
 
     const uint8_t* src_ptr = reinterpret_cast<const uint8_t*>(src) + src_offset;
     const uint64_t magic   = 0x8040201008040201;
@@ -176,15 +176,8 @@ auto speck::begin( const std::unique_ptr<T[]>& uptr ) -> ptr_iterator<T>
 {
     return ptr_iterator<T>( uptr.get() );
 }
-template<typename T>
-auto speck::end( const std::unique_ptr<T[]>& uptr, size_t length ) -> ptr_iterator<T>
-{
-    return ptr_iterator<T>( uptr.get() + length );
-}
 template auto speck::begin(const speck::buffer_type_f& )         -> ptr_iterator<float >;
 template auto speck::begin(const speck::buffer_type_d& )         -> ptr_iterator<double>;
-template auto speck::end(  const speck::buffer_type_f&, size_t ) -> ptr_iterator<float >;
-template auto speck::end(  const speck::buffer_type_d&, size_t ) -> ptr_iterator<double>;
 
 
 template<typename T>

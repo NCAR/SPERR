@@ -137,7 +137,7 @@ auto speck::SPECK3D::decode() -> RTNType
     if( m_coeff_buf == nullptr )
         m_coeff_buf = std::make_unique<double[]>(m_coeff_len);
     auto begin = speck::begin( m_coeff_buf );
-    auto end   = speck::end( m_coeff_buf, m_coeff_len );
+    auto end   = begin + m_coeff_len;
     std::fill( begin, end, 0.0 );
     m_sign_array.assign(m_coeff_len, true);
 

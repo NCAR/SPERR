@@ -96,11 +96,9 @@ public:
 // Helper functions to generate a ptr_iterator from a unique_ptr.
 // (Their names resemble std::begin() and std::end().)
 // For an array with size N, the begin and end iterators are:
-// auto begin = speck::begin( buf ); auto end = speck::end( buf, N );
+// auto begin = speck::begin( buf ); auto end = speck::begin( buf ) + N;
 template<typename T>
 auto begin( const std::unique_ptr<T[]>& ) -> ptr_iterator<T>;
-template<typename T>
-auto end( const std::unique_ptr<T[]>&, size_t length ) -> ptr_iterator<T>;
 // Generate a ptr_iterator from a smart_buffer.
 template<typename T>
 auto begin( const std::pair<std::unique_ptr<T[]>, size_t>& ) -> ptr_iterator<T>;
