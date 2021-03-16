@@ -11,15 +11,13 @@
 #include <cstring>
 #include <iostream>
 #include <chrono>
-#include <cctype>   // std::tolower
-#include <numeric>  // std::inner_product
-#include <functional>  // std::plus<>
+#include <cctype>       // std::tolower()
 
 
 #ifdef QZ_TERM
+//
 // This file should only be compiled in QZ_TERM mode.
-
-
+//
 auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, 
                              int32_t qz_level, double tolerance,
                              size_t  omp_num_threads ) -> int 

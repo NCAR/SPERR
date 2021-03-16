@@ -4,6 +4,7 @@
 #include <cstring>
 #include <numeric>   // std::accumulate()
 #include <algorithm> // std::all_of()
+#include <omp.h>
 
 
 void SPECK3D_OMP_C::set_dims( size_t x, size_t y, size_t z )
@@ -78,28 +79,25 @@ auto SPECK3D_OMP_C::use_volume( const T* vol, size_t len ) -> RTNType
     }
 
     // Block the volume into smaller chunks
-    auto chunks = speck::chunk_volume( {m_dim_x, m_dim_y, m_dim_z}, 
+    auto chunks = speck::chunk_volume( {m_dim_x,   m_dim_y,   m_dim_z}, 
                                        {m_chunk_x, m_chunk_y, m_chunk_z} );
     const auto num_chunks = chunks.size();
-
-    // Create many compressor instances
-    m_compressors.clear();
-    m_compressors.reserve( num_chunks );
-    for( size_t i = 0; i < num_chunks; i++ )
-        m_compressors.emplace_back( chunks[i][1], chunks[i][3], chunks[i][5] );
-
-    // Ask these compressor instances to go grab their own chunks
-    auto gather_rtn = std::vector<RTNType>( num_chunks, RTNType::Good );
+    m_chunk_buffers.resize( num_chunks );
+    for( auto& buf : m_chunk_buffers )
+        buf.reset(nullptr);
 
     #pragma omp parallel for num_threads(m_num_threads)
     for( size_t i = 0; i < num_chunks; i++ ) {
-        gather_rtn[i] = m_compressors[i].gather_chunk(vol, {m_dim_x, m_dim_y, m_dim_z}, chunks[i]);
+        auto buf = speck::gather_chunk( vol, {m_dim_x, m_dim_y, m_dim_z}, chunks[i] );
+        m_chunk_buffers[i] = std::move(buf);
     }
 
-    if(std::all_of( gather_rtn.begin(), gather_rtn.end(), [](auto r){return r == RTNType::Good;} ))
-        return RTNType::Good;
-    else
+    if(std::any_of( m_chunk_buffers.begin(), m_chunk_buffers.end(), 
+                    [](const auto& r){return r == nullptr;} ))
         return RTNType::Error;
+    else
+        return RTNType::Good;
+
 }
 template auto SPECK3D_OMP_C::use_volume( const float* ,  size_t ) -> RTNType;
 template auto SPECK3D_OMP_C::use_volume( const double* , size_t ) -> RTNType;
@@ -107,23 +105,38 @@ template auto SPECK3D_OMP_C::use_volume( const double* , size_t ) -> RTNType;
 
 auto SPECK3D_OMP_C::compress() -> RTNType
 {
-    // Need to make sure that the compressor list isn't empty.
-    const auto num_chunks = m_compressors.size();
-    if( num_chunks == 0 )
+    // Need to make sure that the chunks are ready! 
+    auto chunks = speck::chunk_volume( {m_dim_x,   m_dim_y,   m_dim_z}, 
+                                       {m_chunk_x, m_chunk_y, m_chunk_z} );
+    const auto num_chunks = chunks.size();
+    if( m_chunk_buffers.size() != num_chunks )
+        return RTNType::Error;
+    if(std::any_of( m_chunk_buffers.begin(), m_chunk_buffers.end(), 
+                    [](const auto& r){return r == nullptr;} ))
         return RTNType::Error;
 
-    auto compressor_rtn = std::vector<RTNType>( num_chunks, RTNType::Good );
+    // Let's prepare some data structures for compression!
+    auto compressors = std::vector<SPECK3D_Compressor>( m_num_threads );
+    auto chunk_rtn   = std::vector<RTNType>( num_chunks, RTNType::Good );
     m_encoded_streams.clear();
-    m_encoded_streams.reserve( num_chunks );
-    for( size_t i = 0; i < num_chunks; i++ )
-        m_encoded_streams.emplace_back(nullptr, 0);
+    m_encoded_streams.resize( num_chunks );
+    for( auto& s : m_encoded_streams )
+        s = {nullptr, 0};
+#ifdef QZ_TERM
+    m_outlier_stats.clear();
+    m_outlier_stats.assign( num_chunks, {0, 0} );
+#endif
 
+    // Each thread uses a compressor instance to work on a chunk.
+    //
     #pragma omp parallel for num_threads(m_num_threads)
-    for( size_t i = 0; i < num_chunks; i++ ) {
-        auto& compressor = m_compressors[i];
+    for( size_t i  = 0; i < num_chunks; i++ ) {
+        auto& compressor = compressors[ omp_get_thread_num() ];
+        const auto buf_len = chunks[i][1] * chunks[i][3] * chunks[i][5];
 
-        // Note that we have already made sure that `m_tol` and `m_bpp` are valid, so
-        // we don't need to check return values here.
+        // The following few operations have no chance to fail.
+        compressor.take_data( std::move(m_chunk_buffers[i]), buf_len,
+                              chunks[i][1], chunks[i][3], chunks[i][5] );
 #ifdef QZ_TERM
         compressor.set_qz_level(  m_qz_lev );
         compressor.set_tolerance( m_tol );
@@ -131,28 +144,20 @@ auto SPECK3D_OMP_C::compress() -> RTNType
         compressor.set_bpp( m_bpp );
 #endif
 
-        compressor_rtn[i]    = compressor.compress();
-        m_encoded_streams[i] = std::move(compressor.get_encoded_bitstream());
-    }
-
-    if( std::any_of( compressor_rtn.begin(), compressor_rtn.end(), 
-        [](const auto& r){return r != RTNType::Good;} ) )
-        return RTNType::Error;
-    if( std::any_of( m_encoded_streams.begin(), m_encoded_streams.end(),
-        [](const auto& s){return speck::empty_buf(s);} ) )
-        return RTNType::Error;
+        chunk_rtn[i]         = compressor.compress();
+        m_encoded_streams[i] = compressor.get_encoded_bitstream();
 
 #ifdef QZ_TERM
-    // Let's collect some outlier statistics
-    m_outlier_stats.clear();
-    m_outlier_stats.reserve( num_chunks );
-    for( const auto& c : m_compressors ) {
-        m_outlier_stats.push_back( c.get_outlier_stats() );
-    }
+        m_outlier_stats[i] = compressor.get_outlier_stats();
 #endif
+    }
 
-    // Let's destroy the compressor instances to free up some memory
-    m_compressors.clear();
+    if( std::any_of( chunk_rtn.begin(), chunk_rtn.end(), 
+                     [](const auto& r){return r != RTNType::Good;} ) )
+        return RTNType::Error;
+    if( std::any_of( m_encoded_streams.begin(), m_encoded_streams.end(),
+                     [](const auto& s){return speck::empty_buf(s);} ) )
+        return RTNType::Error;
 
     return RTNType::Good;
 }
