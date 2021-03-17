@@ -26,7 +26,7 @@ auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims,
     const size_t total_vals = dims[0] * dims[1] * dims[2];
     SPECK3D_OMP_C compressor;
     compressor.set_dims(dims[0], dims[1], dims[2]);
-    compressor.prefer_chunk_size( 64, 64, 64 );
+    compressor.prefer_chunk_size( 40, 40, 40 );
     compressor.set_num_threads( omp_num_threads );
     auto rtn = compressor.use_volume( in_buf, total_vals );
     if(  rtn != RTNType::Good )
@@ -72,7 +72,7 @@ auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims,
         return 1;
 
     start_time = std::chrono::steady_clock::now();
-    rtn = decompressor.decompress();
+    rtn = decompressor.decompress( encoded_stream.first.get() );
     if(  rtn != RTNType::Good )
         return 1;
     end_time = std::chrono::steady_clock::now();
@@ -100,8 +100,8 @@ auto test_configuration_single_block( const float* in_buf, std::array<size_t, 3>
 {
     // Setup
     const size_t total_vals = dims[0] * dims[1] * dims[2];
-    SPECK3D_Compressor compressor( dims[0], dims[1], dims[2] );
-    compressor.copy_data( in_buf, total_vals );
+    SPECK3D_Compressor compressor;
+    compressor.copy_data( in_buf, total_vals, dims[0], dims[1], dims[2] );
     compressor.set_qz_level( qz_level );
     compressor.set_tolerance( tolerance );
 

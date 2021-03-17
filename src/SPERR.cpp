@@ -131,6 +131,7 @@ auto speck::SPERR::encode() -> RTNType
     std::sort( m_LOS.begin(), m_LOS.end(), [](auto& a, auto& b){return a.location < b.location;} );
     if (!m_ready_to_encode())
         return RTNType::InvalidParam;
+    m_bit_buffer.clear();
     m_encode_mode = true;
 
     m_initialize_LIS();
@@ -390,6 +391,8 @@ auto speck::SPERR::m_process_S_decoding(size_t  idx1,    size_t idx2,
     if( input ) {
         is_sig = m_bit_buffer[m_bit_idx++];
         // Sanity check: the bit buffer should NOT be depleted at this point
+        if( m_bit_idx == m_bit_buffer.size() )
+            printf("m_bit_idx == %ld\n", m_bit_idx);
         assert(m_bit_idx < m_bit_buffer.size());
     }
 
@@ -479,12 +482,16 @@ auto speck::SPERR::get_encoded_bitstream() const -> smart_buffer_uint8
     
     // Fill header
     size_t pos = 0;
+
     std::memcpy( buf.get(), &m_total_len, sizeof(m_total_len) );
     pos += sizeof(m_total_len);
+
     std::memcpy( buf.get() + pos, &m_max_coeff_bits, sizeof(m_max_coeff_bits) );
     pos += sizeof(m_max_coeff_bits);
+
     std::memcpy( buf.get() + pos, &num_bits, sizeof(num_bits) );
     pos += sizeof(num_bits);
+
     assert( pos == m_header_size );
 
     // Assemble the bitstream into bytes
@@ -506,12 +513,16 @@ auto speck::SPERR::parse_encoded_bitstream( const void* buf, size_t len ) -> RTN
 
     // Parse header
     uint64_t num_bits, pos = 0;
+
     std::memcpy( &m_total_len, ptr, sizeof(m_total_len) );
     pos += sizeof(m_total_len);
+
     std::memcpy( &m_max_coeff_bits, ptr + pos, sizeof(m_max_coeff_bits) );
     pos += sizeof(m_max_coeff_bits);
+
     std::memcpy( &num_bits, ptr + pos, sizeof(num_bits) );
     pos += sizeof(num_bits);
+
     assert( pos == m_header_size );
 
     // Unpack bits

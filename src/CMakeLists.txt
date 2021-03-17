@@ -28,8 +28,8 @@ target_include_directories( SPECK2D_Compressor   INTERFACE ${CMAKE_CURRENT_SOURC
 target_include_directories( SPECK2D_Decompressor INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 
 
-# target_compile_options( SPECK3D_OMP_C PUBLIC ${OpenMP_CXX_FLAGS} )
-# target_compile_options( SPECK3D_OMP_D PUBLIC ${OpenMP_CXX_FLAGS} )
+target_compile_options( SPECK3D_OMP_C PUBLIC ${OpenMP_CXX_FLAGS} )
+target_compile_options( SPECK3D_OMP_D PUBLIC ${OpenMP_CXX_FLAGS} )
     
 
 if( USE_ZSTD )
