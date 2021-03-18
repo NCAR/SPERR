@@ -36,7 +36,7 @@ if( USE_ZSTD )
     include(ExternalProject)
     ExternalProject_Add( zstd-download
       GIT_REPOSITORY    git@github.com:facebook/zstd.git
-      GIT_TAG           master
+      GIT_TAG           release
       GIT_SHALLOW       "True"
       PREFIX            "${CMAKE_CURRENT_BINARY_DIR}/zstd"
       UPDATE_DISCONNECTED "True"                        # Skip update from git step
