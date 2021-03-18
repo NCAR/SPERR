@@ -55,12 +55,13 @@ private:
     speck::smart_buffer_uint8   m_sperr_stream = {nullptr, 0};
 
 #ifdef QZ_TERM
-    speck::SPERR    m_sperr;
-    int32_t         m_qz_lev      = 0;
-    double          m_tol         = 0.0; // tolerance used in error correction
-    size_t          m_num_outlier = 0;
+    speck::SPERR                m_sperr;
+    int32_t                     m_qz_lev      = 0;
+    double                      m_tol         = 0.0; // tolerance used in error correction
+    size_t                      m_num_outlier = 0;
+    std::vector<speck::Outlier> m_LOS; // List of OutlierS
 #else
-    float           m_bpp         = 0.0;
+    float                       m_bpp         = 0.0;
 #endif
 };
 

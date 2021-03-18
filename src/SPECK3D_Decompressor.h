@@ -45,7 +45,7 @@ private:
 #ifdef QZ_TERM
     speck::SPERR                m_sperr;
     speck::smart_buffer_uint8   m_sperr_stream      = {nullptr, 0};
-    std::vector<speck::Outlier> m_sperr_los;
+    std::vector<speck::Outlier> m_LOS;
 #endif
 
 };

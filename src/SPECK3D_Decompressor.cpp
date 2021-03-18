@@ -52,7 +52,7 @@ auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
         buf = std::make_unique<uint8_t[]>( sperr_size );
         std::memcpy( buf.get(), sperr_p, sperr_size );
         m_sperr_stream = {std::move(buf), sperr_size};
-        m_sperr_los.clear();
+        m_LOS.clear();
     }
 #endif
 
@@ -96,7 +96,7 @@ auto SPECK3D_Decompressor::decompress( ) -> RTNType
     // Step 3: If there's SPERR data, then do the correction.
     // This condition occurs only in QZ_TERM mode.
 #ifdef QZ_TERM
-    m_sperr_los.clear();
+    m_LOS.clear();
     if( !speck::empty_buf(m_sperr_stream) ) {
         rtn = m_sperr.parse_encoded_bitstream(m_sperr_stream.first.get(), 
                                               m_sperr_stream.second);
@@ -105,7 +105,7 @@ auto SPECK3D_Decompressor::decompress( ) -> RTNType
         rtn = m_sperr.decode();
         if( rtn != RTNType::Good )
             return rtn;
-        m_sperr_los = m_sperr.release_outliers();
+        m_LOS = m_sperr.release_outliers();
     }
 #endif
 
@@ -128,7 +128,7 @@ auto SPECK3D_Decompressor::get_decompressed_volume() const ->
 
 #ifdef QZ_TERM
     // If there are corrections for outliers, do it now!
-    for( const auto& outlier : m_sperr_los ) {
+    for( const auto& outlier : m_LOS ) {
         out_buf[outlier.location] += outlier.error;
     }
 #endif

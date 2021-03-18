@@ -90,18 +90,18 @@ auto SPECK3D_Compressor::compress() -> RTNType
     auto vol = m_cdf.get_read_only_data();
     if( !speck::size_is( vol, m_total_vals ) )
         return RTNType::Error;
-    std::vector<speck::Outlier> LOS; // List of OutlierS
+    m_LOS.clear();
     for( size_t i = 0; i < m_total_vals; i++ ) {
         auto diff = m_val_buf[i] - vol.first[i];
         if( std::abs(diff) > m_tol )
-            LOS.emplace_back( i, diff );
+            m_LOS.emplace_back( i, diff );
     }
 
     // Now we encode any outlier that's found.
-    if( !LOS.empty() ) {
-        m_num_outlier = LOS.size();
+    if( !m_LOS.empty() ) {
+        m_num_outlier = m_LOS.size();
         m_sperr.set_length( m_total_vals );
-        m_sperr.use_outlier_list( std::move(LOS) );
+        m_sperr.use_outlier_list( m_LOS );
         rtn = m_sperr.encode();
         if( rtn != RTNType::Good )
             return rtn;
