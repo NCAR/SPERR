@@ -124,12 +124,14 @@ auto SPECK3D_OMP_D::decompress( const void* p ) -> RTNType
     auto chunk_rtn     = std::vector<RTNType>( num_chunks * 3, RTNType::Good );
 
     // Each compressor instance takes on a chunk
+    //
     #pragma omp parallel for num_threads(m_num_threads)
     for( size_t i = 0; i < num_chunks; i++ ) {
         auto& decompressor = decompressors[ omp_get_thread_num() ];
         decompressor.set_bpp( m_bpp );
         chunk_rtn[ i * 3 ] = decompressor.use_bitstream( m_bitstream_ptr + m_offsets[i],
                                                          m_offsets[i+1]  - m_offsets[i] );
+
         chunk_rtn[ i*3+1 ] = decompressor.decompress();
         auto small_vol     = decompressor.get_decompressed_volume<double>();
         if( speck::empty_buf( small_vol ) )

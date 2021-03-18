@@ -70,9 +70,8 @@ auto speck::CDF97::release_data() -> std::pair<buffer_type_d, size_t>
 void speck::CDF97::dwt1d()
 {
     m_calc_mean();
-    auto m_data_begin = speck::begin( m_data_buf );
-    std::for_each( m_data_begin, m_data_begin + m_buf_len,
-                   [tmp = m_data_mean](auto& val){val -= tmp;} );
+    auto begin = speck::begin( m_data_buf );
+    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val -= tmp;} );
 
     size_t num_xforms = speck::num_of_xforms(m_dim_x);
     m_dwt1d(m_data_buf.get(), m_buf_len, num_xforms);
@@ -83,17 +82,15 @@ void speck::CDF97::idwt1d()
     size_t num_xforms = speck::num_of_xforms(m_dim_x);
     m_idwt1d(m_data_buf.get(), m_buf_len, num_xforms);
 
-    auto m_data_begin = speck::begin( m_data_buf );
-    std::for_each( m_data_begin, m_data_begin + m_buf_len,
-                   [tmp = m_data_mean](auto& val){val += tmp;} );
+    auto begin = speck::begin( m_data_buf );
+    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val += tmp;} );
 }
 
 void speck::CDF97::dwt2d()
 {
     m_calc_mean();
-    auto m_data_begin = speck::begin( m_data_buf );
-    std::for_each( m_data_begin, m_data_begin + m_buf_len,
-                   [tmp = m_data_mean](auto& val){val -= tmp;} );
+    auto begin = speck::begin( m_data_buf );
+    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val -= tmp;} );
 
     size_t     num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
     const auto max_dim       = std::max(m_dim_x, m_dim_y);
@@ -108,17 +105,15 @@ void speck::CDF97::idwt2d()
     size_t     num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
     m_idwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, tmp_buf.get());
 
-    auto m_data_begin = speck::begin( m_data_buf );
-    std::for_each( m_data_begin, m_data_begin + m_buf_len,
-                   [tmp = m_data_mean](auto& val){val += tmp;} );
+    auto begin = speck::begin( m_data_buf );
+    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val += tmp;} );
 }
 
 void speck::CDF97::dwt3d()
 {
     m_calc_mean();
-    auto m_data_begin = speck::begin( m_data_buf );
-    std::for_each( m_data_begin, m_data_begin + m_buf_len,
-                   [tmp = m_data_mean](auto& val){val -= tmp;} );
+    auto begin = speck::begin( m_data_buf );
+    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val -= tmp;} );
 
     size_t num_threads = 1;
 //
@@ -323,9 +318,8 @@ void speck::CDF97::idwt3d()
     }
 
     // Finally, add back the mean which was subtracted earlier.
-    auto m_data_begin = speck::begin( m_data_buf );
-    std::for_each( m_data_begin, m_data_begin + m_buf_len,
-                   [tmp = m_data_mean](auto& val){val += tmp;} );
+    auto begin = speck::begin( m_data_buf );
+    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val += tmp;} );
 }
 
 

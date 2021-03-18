@@ -773,7 +773,7 @@ auto speck::SPECK3D::m_ready_to_decode() const -> bool
 {
     if (m_bit_buffer.empty())
         return false;
-    if (m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0)
+    if (m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0 || m_coeff_len == 0)
         return false;
 
     return true;

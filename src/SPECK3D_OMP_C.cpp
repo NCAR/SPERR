@@ -144,6 +144,7 @@ auto SPECK3D_OMP_C::compress() -> RTNType
         compressor.set_bpp( m_bpp );
 #endif
 
+        // Action items
         chunk_rtn[i]         = compressor.compress();
         m_encoded_streams[i] = compressor.get_encoded_bitstream();
 

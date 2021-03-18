@@ -71,7 +71,7 @@ auto SPECK3D_Decompressor::set_bpp( float bpp ) -> RTNType
 }
 
 
-auto SPECK3D_Decompressor::decompress() -> RTNType
+auto SPECK3D_Decompressor::decompress( ) -> RTNType
 {
     // Step 1: SPECK decode.
     if( speck::empty_buf(m_speck_stream) )
@@ -96,6 +96,7 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
     // Step 3: If there's SPERR data, then do the correction.
     // This condition occurs only in QZ_TERM mode.
 #ifdef QZ_TERM
+    m_sperr_los.clear();
     if( !speck::empty_buf(m_sperr_stream) ) {
         rtn = m_sperr.parse_encoded_bitstream(m_sperr_stream.first.get(), 
                                               m_sperr_stream.second);

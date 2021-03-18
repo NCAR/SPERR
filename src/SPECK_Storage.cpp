@@ -49,9 +49,7 @@ auto speck::SPECK_Storage::take_data(buffer_type_d coeffs, size_t len,
 
 auto speck::SPECK_Storage::release_data() -> std::pair<buffer_type_d, size_t>
 {
-    const auto tmp = m_coeff_len;
-    m_coeff_len = 0;
-    return {std::move(m_coeff_buf), tmp};
+    return {std::move(m_coeff_buf), m_coeff_len};
 }
 
 void speck::SPECK_Storage::set_image_mean(double mean)

@@ -76,6 +76,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     }
 
     // Now we perform a decompression pass reusing the same object states and memory blocks.
+    m_encoder.set_bit_budget( 0 );
     rtn = m_encoder.decode();    
     if( rtn != RTNType::Good )
         return rtn;
@@ -101,7 +102,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
         m_num_outlier = LOS.size();
         m_sperr.set_length( m_total_vals );
         m_sperr.use_outlier_list( std::move(LOS) );
-        rtn  = m_sperr.encode();
+        rtn = m_sperr.encode();
         if( rtn != RTNType::Good )
             return rtn;
         m_sperr_stream = m_sperr.get_encoded_bitstream();
