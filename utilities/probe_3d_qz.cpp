@@ -26,7 +26,7 @@ auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims,
     const size_t total_vals = dims[0] * dims[1] * dims[2];
     SPECK3D_OMP_C compressor;
     compressor.set_dims(dims[0], dims[1], dims[2]);
-    compressor.prefer_chunk_size( 64, 64, 91 );
+    compressor.prefer_chunk_size( 64, 64, 64 );
     compressor.set_num_threads( omp_num_threads );
     auto rtn = compressor.use_volume( in_buf, total_vals );
     if(  rtn != RTNType::Good )
@@ -95,6 +95,7 @@ auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims,
 }
 
 
+#if 0
 auto test_configuration_single_block( const float* in_buf, std::array<size_t, 3> dims, 
                                       int32_t qz_level, double tolerance ) -> int 
 {
@@ -157,6 +158,7 @@ auto test_configuration_single_block( const float* in_buf, std::array<size_t, 3>
 
     return 0;
 }
+#endif
 
 
 int main( int argc, char* argv[] )
@@ -243,7 +245,6 @@ int main( int argc, char* argv[] )
     //
     // Now it enters the interactive session
     //
-#if 0
     char answer;
     std::cout << "Do you want to explore other quantization levels? [y/n]:  ";
     std::cin >> answer;
@@ -271,7 +272,6 @@ int main( int argc, char* argv[] )
             answer = std::tolower(answer);
         }
     }
-#endif
     
     std::cout << "\nHave a good day! \n";
     

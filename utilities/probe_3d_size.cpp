@@ -15,13 +15,13 @@
 // This file should only be compiled in non QZ_TERM mode.
 #ifndef QZ_TERM
 
-
+#if 0
 auto use_compressor( const float* in_buf, std::array<size_t, 3> dims, float bpp )
                     -> speck::smart_buffer_uint8 
 {
     const size_t total_vals = dims[0] * dims[1] * dims[2];
-    SPECK3D_Compressor compressor ( dims[0], dims[1], dims[2] );
-    if( compressor.copy_data( in_buf, total_vals ) != speck::RTNType::Good ) {
+    SPECK3D_Compressor compressor;
+    if( compressor.copy_data( in_buf, total_vals, dims[0], dims[1], dims[2] ) != speck::RTNType::Good ) {
         std::cerr << "  -- copying data failed!" << std::endl;
         return {nullptr, 0};
     }
@@ -96,6 +96,7 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, float 
     
     return 0;
 }
+#endif
 
 
 auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, float bpp,
@@ -107,11 +108,10 @@ auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, fl
     compressor.set_dims(dims[0], dims[1], dims[2]);
     compressor.prefer_chunk_size( 64, 64, 64 );
     compressor.set_num_threads( omp_num_threads );
+    compressor.set_bpp( bpp );
     auto rtn = compressor.use_volume( in_buf, total_vals );
     if(  rtn != RTNType::Good )
         return 1;
-
-    compressor.set_bpp( bpp );
 
     // Perform actual compression work
     auto start_time = std::chrono::steady_clock::now();
@@ -138,7 +138,7 @@ auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, fl
         return 1;
 
     start_time = std::chrono::steady_clock::now();
-    rtn = decompressor.decompress();
+    rtn = decompressor.decompress( encoded_stream.first.get() );
     if(  rtn != RTNType::Good )
         return 1;
     end_time = std::chrono::steady_clock::now();
