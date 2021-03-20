@@ -30,10 +30,11 @@ auto speck::CDF97::copy_data(const T* data, size_t len, size_t dimx, size_t dimy
     m_dim_z = dimz;
 
     auto col = std::max( std::max(dimx, dimy), dimz );
-    if( m_col_buf.second != col * 2 )
+    if( !speck::size_is(m_col_buf, col * 2) )
         m_col_buf = { std::make_unique<double[]>(col * 2), col * 2 };
+
     auto slice = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
-    if( m_slice_buf.second != slice )
+    if( !speck::size_is(m_slice_buf, slice) )
         m_slice_buf = { std::make_unique<double[]>(slice), slice };
 
     return RTNType::Good;
@@ -55,10 +56,11 @@ auto speck::CDF97::take_data(buffer_type_d ptr, size_t len, size_t dimx, size_t 
     m_dim_z    = dimz;
 
     auto col = std::max( std::max(dimx, dimy), dimz );
-    if( m_col_buf.second != col * 2 )
+    if( !speck::size_is(m_col_buf, col * 2) )
         m_col_buf = { std::make_unique<double[]>(col * 2), col * 2 };
+
     auto slice = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
-    if( m_slice_buf.second != slice )
+    if( !speck::size_is(m_slice_buf, slice) )
         m_slice_buf = { std::make_unique<double[]>(slice), slice };
 
     return RTNType::Good;
