@@ -48,6 +48,10 @@ auto speck::SPERR::release_outliers() -> std::vector<Outlier>
 {
     return std::move(m_LOS);
 }
+auto speck::SPERR::view_outliers() -> const std::vector<Outlier>&
+{
+    return m_LOS;
+}
 
 
 auto speck::SPERR::m_part_set(const SPECKSet1D& set) const -> std::array<SPECKSet1D, 2>
@@ -448,11 +452,6 @@ auto speck::SPERR::num_of_outliers() const -> size_t
 auto speck::SPERR::num_of_bits() const -> size_t
 {
     return m_bit_buffer.size();
-}
-
-auto speck::SPERR::ith_outlier(size_t idx) const -> Outlier
-{
-    return m_LOS[idx];
 }
 
 auto speck::SPERR::max_coeff_bits() const -> int32_t

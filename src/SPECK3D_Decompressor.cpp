@@ -105,7 +105,7 @@ auto SPECK3D_Decompressor::decompress( ) -> RTNType
         rtn = m_sperr.decode();
         if( rtn != RTNType::Good )
             return rtn;
-        m_LOS = m_sperr.release_outliers();
+        m_LOS = m_sperr.view_outliers();
     }
 #endif
 

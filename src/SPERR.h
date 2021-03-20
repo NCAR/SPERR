@@ -52,7 +52,7 @@ public:
 
     // Output
     auto release_outliers() -> std::vector<Outlier>; // Release ownership of decoded outliers
-    auto ith_outlier(size_t) const -> Outlier;       // Get a single outlier (No range check here!)
+    auto view_outliers() -> const std::vector<Outlier>&;
     auto num_of_outliers() const -> size_t;          // How many outliers are decoded?
     auto num_of_bits() const -> size_t;              // How many bits are generated?
     auto max_coeff_bits() const -> int32_t;          // Will be used when decoding.
