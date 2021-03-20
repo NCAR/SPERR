@@ -124,6 +124,7 @@ void speck::SPECK2D::m_initialize_sets_lists()
     const auto num_of_xforms = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
 
     // prepare m_LIS
+    // Note that `m_LIS` can only grow in size.
     if( m_LIS.size() < num_of_parts + 1 )
         m_LIS.resize(num_of_parts + 1);
     for( auto& list : m_LIS )
