@@ -6,12 +6,9 @@
 #include <numeric> // for std::accumulate()
 #include <type_traits>
 
-//
-// Uncomment the following lines to enable OpenMP
-//
-// #ifdef USE_OMP
-//    #include <omp.h>
-// #endif
+#ifdef USE_OMP
+   #include <omp.h>
+#endif
 
 template <typename T>
 auto speck::CDF97::copy_data(const T* data, size_t len, size_t dimx, size_t dimy, size_t dimz) -> RTNType
@@ -32,10 +29,12 @@ auto speck::CDF97::copy_data(const T* data, size_t len, size_t dimx, size_t dimy
     m_dim_y = dimy;
     m_dim_z = dimz;
 
-    auto col    = std::max( std::max(dimx, dimy), dimz );
-    m_col_buf   = { std::make_unique<double[]>(col * 2), col * 2 };
-    auto slice  = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
-    m_slice_buf = { std::make_unique<double[]>(slice), slice };
+    auto col = std::max( std::max(dimx, dimy), dimz );
+    if( m_col_buf.second != col * 2 )
+        m_col_buf = { std::make_unique<double[]>(col * 2), col * 2 };
+    auto slice = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
+    if( m_slice_buf.second != slice )
+        m_slice_buf = { std::make_unique<double[]>(slice), slice };
 
     return RTNType::Good;
 }
@@ -55,10 +54,12 @@ auto speck::CDF97::take_data(buffer_type_d ptr, size_t len, size_t dimx, size_t 
     m_dim_y    = dimy;
     m_dim_z    = dimz;
 
-    auto col    = std::max( std::max(dimx, dimy), dimz );
-    m_col_buf   = { std::make_unique<double[]>(col * 2), col * 2 };
-    auto slice  = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
-    m_slice_buf = { std::make_unique<double[]>(slice), slice };
+    auto col = std::max( std::max(dimx, dimy), dimz );
+    if( m_col_buf.second != col * 2 )
+        m_col_buf = { std::make_unique<double[]>(col * 2), col * 2 };
+    auto slice = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
+    if( m_slice_buf.second != slice )
+        m_slice_buf = { std::make_unique<double[]>(slice), slice };
 
     return RTNType::Good;
 }
@@ -157,9 +158,10 @@ void speck::CDF97::dwt3d()
     /*
      * Note on the order of performing transforms in 3 dimensions:
      * this implementation follows QccPack's example.
-     *
-     * First transform along the Z dimension
      */
+
+     // First transform along the Z dimension
+     //
 
 #ifdef USE_OMP
     buffer_type_d z_column_pool = std::make_unique<double[]>(m_dim_x * m_dim_z * num_threads);
@@ -223,41 +225,38 @@ void speck::CDF97::dwt3d()
 
 void speck::CDF97::idwt3d()
 {
-    size_t num_threads = 1;
-//
-// Uncomment the following lines to enable OpenMP
-//
-// #ifdef USE_OMP
-//    #pragma omp parallel
-//    {
-//        if( omp_get_thread_num() == 0 )
-//            num_threads = omp_get_num_threads();
-//    }
-// #endif
 
-    size_t max_dim              = std::max(m_dim_x, m_dim_y);
-    max_dim                     = std::max(max_dim, m_dim_z);
+#ifdef USE_OMP
+    size_t num_threads = 1;
+    #pragma omp parallel
+    {
+        if( omp_get_thread_num() == 0 )
+            num_threads = omp_get_num_threads();
+    }
+    const size_t max_dim        = std::max( std::max(m_dim_x, m_dim_y), m_dim_z );
     buffer_type_d tmp_buf_pool  = std::make_unique<double[]>(max_dim * 2 * num_threads);
+    double* const tmp_buf       = tmp_buf_pool.get();
+#else
+    double* const tmp_buf       = m_col_buf.first.get();
+#endif
+
     const size_t  plane_size_xy = m_dim_x * m_dim_y;
 
     // First, inverse transform each plane
+    //
     auto num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
 
-    //
-    // Uncomment the following lines to enable OpenMP
-    //
     // #pragma omp parallel for
     for (size_t i = 0; i < m_dim_z; i++) {
         const size_t offset  = plane_size_xy * i;
-//
-// Uncomment the following lines to enable OpenMP
-//
-// #ifdef USE_OMP
-//        const size_t my_rank = omp_get_thread_num();
-// #else
-        const size_t my_rank = 0;
-// #endif
-        double* const my_tmp_buf = tmp_buf_pool.get() + max_dim * 2 * my_rank;
+
+#ifdef USE_OMP
+        const size_t  my_rank    = omp_get_thread_num();
+        double* const my_tmp_buf = tmp_buf + max_dim * 2 * my_rank;
+#else
+        double* const my_tmp_buf = tmp_buf;
+#endif
+
         m_idwt2d(m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, my_tmp_buf);
     }
 
@@ -281,25 +280,29 @@ void speck::CDF97::idwt3d()
      */
 
     // Process one XZ slice at a time
+    //
+
+#ifdef USE_OMP
     buffer_type_d z_column_pool = std::make_unique<double[]>(m_dim_x * m_dim_z * num_threads);
+    double* const z_columns_ptr = z_column_pool.get();
+#else
+    double* const z_columns_ptr = m_slice_buf.first.get();
+#endif
+
     const auto    num_xforms_z  = speck::num_of_xforms(m_dim_z);
 
-    //
-    // Uncomment the following lines to enable OpenMP
-    //
     // #pragma omp parallel for
     for (size_t y = 0; y < m_dim_y; y++) {
         const auto y_offset  = y * m_dim_x;
-//
-// Uncomment the following lines to enable OpenMP
-//
-// #ifdef USE_OMP
-//        const size_t my_rank = omp_get_thread_num();
-// #else
-        const size_t my_rank = 0;
-// #endif
-        double* const my_z_col   = z_column_pool.get() + m_dim_x * m_dim_z * my_rank;
-        double* const my_tmp_buf = tmp_buf_pool.get() + max_dim * 2 * my_rank;
+
+#ifdef USE_OMP
+        const size_t  my_rank    = omp_get_thread_num();
+        double* const my_z_col   = z_columns_ptr + m_dim_x * m_dim_z * my_rank;
+        double* const my_tmp_buf = tmp_buf + max_dim * 2 * my_rank;
+#else
+        double* const my_z_col   = z_columns_ptr;
+        double* const my_tmp_buf = tmp_buf;
+#endif
 
         // Re-arrange values on one slice so that they form many z_columns
         for (size_t z = 0; z < m_dim_z; z++) {

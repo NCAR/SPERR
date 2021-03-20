@@ -130,8 +130,9 @@ private:
     size_t        m_dim_z     = 0;
     size_t        m_buf_len   = 0;
 
-    smart_buffer_d  m_col_buf;    // Temporary buffer that's big enough for any 1D column * 2
-    smart_buffer_d  m_slice_buf;  // Temporary buffer that's big enough for any 2D slice
+    // Temporary buffer that's big enough for any (1D column * 2) or any 2D slice.
+    smart_buffer_d  m_col_buf   = {nullptr, 0};
+    smart_buffer_d  m_slice_buf = {nullptr, 0};
 
     /*
      * Note on the coefficients and constants:
