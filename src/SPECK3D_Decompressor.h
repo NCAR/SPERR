@@ -37,14 +37,14 @@ private:
     size_t                      m_dim_y             = 0;
     size_t                      m_dim_z             = 0;
 
-    speck::smart_buffer_uint8   m_speck_stream      = {nullptr, 0};
+    std::vector<uint8_t>        m_speck_stream;
 
     speck::CDF97                m_cdf;
     speck::SPECK3D              m_decoder;
 
 #ifdef QZ_TERM
     speck::SPERR                m_sperr;
-    speck::smart_buffer_uint8   m_sperr_stream      = {nullptr, 0};
+    std::vector<uint8_t>        m_sperr_stream;
     std::vector<speck::Outlier> m_LOS;
 #endif
 

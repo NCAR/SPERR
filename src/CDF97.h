@@ -55,33 +55,31 @@ private:
     void m_dwt1d(double* array,
                  size_t  array_len,
                  size_t  num_of_xforms,
-                 double* tmp_buf = nullptr);
+                 double* tmp_buf);
     // Multiple levels of 2D DWT on a given array of length len.
-    // An optional buffer space (tmp_buf) could be passed in for
-    // this method to work on. If so, its memory space should be
-    // already allocated with at least array_len in size.
+    // A buffer space (tmp_buf) should be passed in for
+    // this method to work on with length at least `array_len`.
     void m_idwt1d(double* array,
                   size_t  array_len,
                   size_t  num_of_xforms,
-                  double* tmp_buf = nullptr);
+                  double* tmp_buf);
     // Multiple levels of 2D IDWT on a given array of length len.
     // Refer to m_dwt1d() for the requirement of tmp_buf.
     void m_dwt2d(double* plane,
                  size_t  len_x,
                  size_t  len_y,
                  size_t  num_of_xforms,
-                 double* tmp_buf = nullptr);
+                 double* tmp_buf);
     // Multiple levels of 2D DWT on a given plane by repeatedly
     // invoking m_dwt2d_one_level().
     // The plane has a dimension (len_x, len_y).
-    // An optional buffer space (tmp_buf) could be passed in for
-    // this method to work on. If so, its memory space should be
-    // already allocated with at least 2*max(len_x, len_y) in size.
+    // A buffer space (tmp_buf) should be passed in for
+    // this method to work on with length at least 2*max(len_x, len_y).
     void m_idwt2d(double* plane,
                   size_t  len_x,
                   size_t  len_y,
                   size_t  num_of_xforms,
-                  double* tmp_buf = nullptr);
+                  double* tmp_buf);
     // Multiple levels of 2D IDWT on a given plane by repeatedly
     // invoking m_idwt2d_one_level().
     // The plane has a dimension (len_x, len_y).
@@ -89,16 +87,15 @@ private:
     void m_dwt2d_one_level(double* plane,
                            size_t  len_x,
                            size_t  len_y,
-                           double* tmp_buf = nullptr);
+                           double* tmp_buf);
     // Perform one level of 2D dwt on a given plane (dim_x, dim_y),
     // specifically on its top left (len_x, len_y) subset.
-    // An optional buffer space (tmp_buf) could be passed in for
-    // this method to work on. If so, its memory space should be
-    // already allocated with at least 2*max(len_x, len_y) in size.
+    // A buffer space (tmp_buf) should be passed in for
+    // this method to work on with length at least 2*max(len_x, len_y).
     void m_idwt2d_one_level(double* plane,
                             size_t  len_x,
                             size_t  len_y,
-                            double* tmp_buf = nullptr);
+                            double* tmp_buf);
     // Perform one level of 2D idwt on a given plane (dim_x, dim_y),
     // specifically on its top left (len_x, len_y) subset.
     // Refer to m_idwt2d_one_level() for the requirement of tmp_buf.
@@ -132,6 +129,9 @@ private:
     size_t        m_dim_y     = 0;
     size_t        m_dim_z     = 0;
     size_t        m_buf_len   = 0;
+
+    smart_buffer_d  m_col_buf;    // Temporary buffer that's big enough for any 1D column * 2
+    smart_buffer_d  m_slice_buf;  // Temporary buffer that's big enough for any 2D slice
 
     /*
      * Note on the coefficients and constants:

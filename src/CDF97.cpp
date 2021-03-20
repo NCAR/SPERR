@@ -32,6 +32,11 @@ auto speck::CDF97::copy_data(const T* data, size_t len, size_t dimx, size_t dimy
     m_dim_y = dimy;
     m_dim_z = dimz;
 
+    auto col    = std::max( std::max(dimx, dimy), dimz );
+    m_col_buf   = {std::make_unique<double[]>(col * 2), col * 2};
+    auto slice  = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
+    m_slice_buf = {std::make_unique<double[]>(slice), slice};
+
     return RTNType::Good;
 }
 template auto speck::CDF97::copy_data(const float*,  size_t, size_t, size_t, size_t) -> RTNType;
@@ -49,6 +54,11 @@ auto speck::CDF97::take_data(buffer_type_d ptr, size_t len, size_t dimx, size_t 
     m_dim_x    = dimx;
     m_dim_y    = dimy;
     m_dim_z    = dimz;
+
+    auto col    = std::max( std::max(dimx, dimy), dimz );
+    m_col_buf   = {std::make_unique<double[]>(col), col};
+    auto slice  = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
+    m_slice_buf = {std::make_unique<double[]>(slice), slice};
 
     return RTNType::Good;
 }
@@ -74,13 +84,13 @@ void speck::CDF97::dwt1d()
     std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val -= tmp;} );
 
     size_t num_xforms = speck::num_of_xforms(m_dim_x);
-    m_dwt1d(m_data_buf.get(), m_buf_len, num_xforms);
+    m_dwt1d(m_data_buf.get(), m_buf_len, num_xforms, m_col_buf.first.get());
 }
 
 void speck::CDF97::idwt1d()
 {
     size_t num_xforms = speck::num_of_xforms(m_dim_x);
-    m_idwt1d(m_data_buf.get(), m_buf_len, num_xforms);
+    m_idwt1d(m_data_buf.get(), m_buf_len, num_xforms, m_col_buf.first.get());
 
     auto begin = speck::begin( m_data_buf );
     std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val += tmp;} );
@@ -93,17 +103,13 @@ void speck::CDF97::dwt2d()
     std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val -= tmp;} );
 
     size_t     num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
-    const auto max_dim       = std::max(m_dim_x, m_dim_y);
-    auto       tmp_buf       = std::make_unique<double[]>(max_dim * 2);
-    m_dwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, tmp_buf.get());
+    m_dwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, m_col_buf.first.get());
 }
 
 void speck::CDF97::idwt2d()
 {
-    const auto max_dim       = std::max(m_dim_x, m_dim_y);
-    auto       tmp_buf       = std::make_unique<double[]>(max_dim * 2);
     size_t     num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
-    m_idwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, tmp_buf.get());
+    m_idwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, m_col_buf.first.get());
 
     auto begin = speck::begin( m_data_buf );
     std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val += tmp;} );
@@ -115,21 +121,20 @@ void speck::CDF97::dwt3d()
     auto begin = speck::begin( m_data_buf );
     std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val -= tmp;} );
 
+#ifdef USE_OMP
     size_t num_threads = 1;
-//
-// Uncomment the following lines to enable OpenMP
-//
-// #ifdef USE_OMP
-//    #pragma omp parallel
-//    {
-//      if( omp_get_thread_num() == 0 )
-//        num_threads = omp_get_num_threads();
-//    }
-// #endif
-
-    size_t max_dim              = std::max(m_dim_x, m_dim_y);
-    max_dim                     = std::max(max_dim, m_dim_z);
+    #pragma omp parallel
+    {
+      if( omp_get_thread_num() == 0 )
+        num_threads = omp_get_num_threads();
+    }
+    size_t max_dim              = std::max( std::max(m_dim_x, m_dim_y), m_dim_z );
     buffer_type_d tmp_buf_pool  = std::make_unique<double[]>(max_dim * 2 * num_threads);
+    double* const tmp_buf       = tmp_buf_pool.get();
+#else
+    double* const tmp_buf       = m_col_buf.first.get();
+#endif
+
     const size_t  plane_size_xy = m_dim_x * m_dim_y;
 
     /*
@@ -156,26 +161,27 @@ void speck::CDF97::dwt3d()
      * First transform along the Z dimension
      */
 
-    // Process one XZ slice at a time
+#ifdef USE_OMP
     buffer_type_d z_column_pool = std::make_unique<double[]>(m_dim_x * m_dim_z * num_threads);
+    double* const z_columns_ptr = z_column_pool.get();
+#else
+    double* const z_columns_ptr = m_slice_buf.first.get();
+#endif
+
     const auto    num_xforms_z   = speck::num_of_xforms(m_dim_z);
 
-    //
-    // Uncomment the following lines to enable OpenMP
-    //
     // #pragma omp parallel for
     for (size_t y = 0; y < m_dim_y; y++) {
         const auto    y_offset    = y * m_dim_x;
-//
-// Uncomment the following lines to enable OpenMP
-//
-// #ifdef USE_OMP
-//        const size_t  my_rank     = omp_get_thread_num();
-// #else
-        const size_t  my_rank     = 0;
-// #endif
-        double* const my_z_col    = z_column_pool.get() + my_rank * m_dim_x * m_dim_z;
-        double* const my_tmp_buf  = tmp_buf_pool.get() + my_rank * max_dim * 2;
+
+#ifdef USE_OMP
+        const size_t  my_rank     = omp_get_thread_num();
+        double* const my_z_col    = z_columns_ptr + my_rank * m_dim_x * m_dim_z;
+        double* const my_tmp_buf  = tmp_buf + my_rank * max_dim * 2;
+#else
+        double* const my_z_col    = z_columns_ptr;
+        double* const my_tmp_buf  = tmp_buf;
+#endif
 
         // Re-arrange values of one XZ slice so that they form many z_columns
         for (size_t z = 0; z < m_dim_z; z++) {
@@ -197,22 +203,19 @@ void speck::CDF97::dwt3d()
     }
 
     // Second transform each plane
+    //
     const auto num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
 
-    //
-    // Uncomment the following lines to enable OpenMP
-    //
     // #pragma omp parallel for
     for (size_t z = 0; z < m_dim_z; z++) {
-//
-// Uncomment the following lines to enable OpenMP
-//
-// #ifdef USE_OMP
-//        const size_t  my_rank     = omp_get_thread_num();
-// #else
-        const size_t  my_rank     = 0;
-// #endif
+
+#ifdef USE_OMP
+        const size_t  my_rank     = omp_get_thread_num();
         double* const my_tmp_buf  = tmp_buf_pool.get() + my_rank * max_dim * 2;
+#else
+        double* const my_tmp_buf  = tmp_buf;
+#endif
+
         const size_t  offset      = plane_size_xy * z;
         m_dwt2d(m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, my_tmp_buf);
     }
@@ -383,15 +386,7 @@ void speck::CDF97::m_dwt1d(double* array,
                            size_t  num_of_lev,
                            double* tmp_buf)
 {
-    double*       ptr;
-    buffer_type_d buf;
-    if (tmp_buf != nullptr) {
-        ptr = tmp_buf;
-    } else {
-        buf = std::make_unique<double[]>(array_len);
-        ptr = buf.get();
-    }
-
+    double* const ptr = tmp_buf;
     std::array<size_t, 2> approx;
     for (size_t lev = 0; lev < num_of_lev; lev++) {
         speck::calc_approx_detail_len(array_len, lev, approx);
@@ -411,15 +406,7 @@ void speck::CDF97::m_idwt1d(double* array,
                             size_t  num_of_lev,
                             double* tmp_buf)
 {
-    double*       ptr;
-    buffer_type_d buf;
-    if (tmp_buf != nullptr) {
-        ptr = tmp_buf;
-    } else {
-        buf = std::make_unique<double[]>(array_len);
-        ptr = buf.get();
-    }
-
+    double* const ptr = tmp_buf;
     std::array<size_t, 2> approx;
     for (size_t lev = num_of_lev; lev > 0; lev--) {
         speck::calc_approx_detail_len(array_len, lev - 1, approx);
@@ -439,18 +426,10 @@ void speck::CDF97::m_dwt2d_one_level(double* plane,
                                      size_t  len_y,
                                      double* tmp_buf)
 {
-    // Create/specify temporary buffers to work on
-    size_t        len_xy = std::max(len_x, len_y);
-    double *      buf_ptr, *buf_ptr2;
-    buffer_type_d buffer;
-    if (tmp_buf != nullptr) {
-        buf_ptr  = tmp_buf;          // First half of the array
-        buf_ptr2 = tmp_buf + len_xy; // Second half of the array
-    } else {
-        buffer   = std::make_unique<double[]>(len_xy * 2);
-        buf_ptr  = buffer.get();     // First half of the array
-        buf_ptr2 = buf_ptr + len_xy; // Second half of the array
-    }
+    // Specify temporary buffers to work on
+    size_t        len_xy   = std::max(len_x, len_y);
+    double* const buf_ptr  = tmp_buf;          // First half of the array
+    double* const buf_ptr2 = tmp_buf + len_xy; // Second half of the array
 
     // First, perform DWT along X for every row
     if (len_x % 2 == 0) // Even length
@@ -510,18 +489,10 @@ void speck::CDF97::m_idwt2d_one_level(double* plane,
                                       size_t  len_y,
                                       double* tmp_buf)
 {
-    // Create/specify temporary buffers to work on
-    size_t        len_xy = std::max(len_x, len_y);
-    double *      buf_ptr, *buf_ptr2;
-    buffer_type_d buffer;
-    if (tmp_buf != nullptr) {
-        buf_ptr  = tmp_buf;          // First half of the array
-        buf_ptr2 = tmp_buf + len_xy; // Second half of the array
-    } else {
-        buffer   = std::make_unique<double[]>(len_xy * 2);
-        buf_ptr  = buffer.get();     // First half of the array
-        buf_ptr2 = buf_ptr + len_xy; // Second half of the array
-    }
+    // Specify temporary buffers to work on
+    size_t        len_xy   = std::max(len_x, len_y);
+    double* const buf_ptr  = tmp_buf;          // First half of the array
+    double* const buf_ptr2 = tmp_buf + len_xy; // Second half of the array
 
     // First, perform IDWT along Y for every column
     if (len_y % 2 == 0) // Even length

@@ -27,13 +27,12 @@ auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
 #endif
 
     // Step 1: extract SPECK stream from it
-    m_speck_stream = {nullptr, 0};
+    m_speck_stream.clear();
     const auto speck_size = m_decoder.get_speck_stream_size(ptr);
     if( speck_size > ptr_len )
         return RTNType::WrongSize;
-    auto buf = std::make_unique<uint8_t[]>( speck_size );
-    std::memcpy( buf.get(), ptr, speck_size );
-    m_speck_stream = {std::move(buf), speck_size};
+    m_speck_stream.resize( speck_size, 0 );
+    std::copy( ptr, ptr + speck_size, m_speck_stream.begin() );
 
     // Step 2: keep the volume dimension from the header
     auto dims = m_decoder.get_speck_stream_dims( ptr );
@@ -43,16 +42,14 @@ auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
 
     // Step 3: extract SPERR stream from it
 #ifdef QZ_TERM
-    m_sperr_stream = {nullptr, 0};
+    m_sperr_stream.clear();
     if( speck_size < ptr_len ) {
         const uint8_t* const sperr_p = ptr + speck_size;
         const auto sperr_size = m_sperr.get_sperr_stream_size( sperr_p );
         if( sperr_size != ptr_len - speck_size )
             return RTNType::WrongSize;
-        buf = std::make_unique<uint8_t[]>( sperr_size );
-        std::memcpy( buf.get(), sperr_p, sperr_size );
-        m_sperr_stream = {std::move(buf), sperr_size};
-        m_LOS.clear();
+        m_sperr_stream.resize( sperr_size, 0 );
+        std::copy( sperr_p, sperr_p + sperr_size, m_sperr_stream.begin() );
     }
 #endif
 
@@ -74,11 +71,10 @@ auto SPECK3D_Decompressor::set_bpp( float bpp ) -> RTNType
 auto SPECK3D_Decompressor::decompress( ) -> RTNType
 {
     // Step 1: SPECK decode.
-    if( speck::empty_buf(m_speck_stream) )
+    if( m_speck_stream.empty() )
         return RTNType::Error;
     
-    auto rtn = m_decoder.parse_encoded_bitstream( m_speck_stream.first.get(),
-                                                  m_speck_stream.second );
+    auto rtn = m_decoder.parse_encoded_bitstream(m_speck_stream.data(), m_speck_stream.size());
     if( rtn != RTNType::Good )
         return rtn;
 
@@ -97,9 +93,8 @@ auto SPECK3D_Decompressor::decompress( ) -> RTNType
     // This condition occurs only in QZ_TERM mode.
 #ifdef QZ_TERM
     m_LOS.clear();
-    if( !speck::empty_buf(m_sperr_stream) ) {
-        rtn = m_sperr.parse_encoded_bitstream(m_sperr_stream.first.get(), 
-                                              m_sperr_stream.second);
+    if( !m_sperr_stream.empty() ) {
+        rtn = m_sperr.parse_encoded_bitstream(m_sperr_stream.data(), m_sperr_stream.size());
         if( rtn != RTNType::Good )
             return rtn;
         rtn = m_sperr.decode();
