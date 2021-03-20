@@ -341,17 +341,17 @@ void speck::CDF97::m_calc_mean()
     //
     assert(m_dim_x > 0 && m_dim_y > 0 && m_dim_z > 0);
 
-    auto slice_means        = std::make_unique<double[]>(m_dim_z);
     const size_t slice_size = m_dim_x * m_dim_y;
 
     for (size_t z = 0; z < m_dim_z; z++) {
         auto begin = speck::begin( m_data_buf ) + slice_size * z;
         auto end   = begin + slice_size;
-        slice_means[z] = std::accumulate( begin, end, double{0.0} ) / double(slice_size);
+        m_col_buf.first[z] = std::accumulate( begin, end, double{0.0} ) / double(slice_size);
     }
 
-    auto begin = speck::begin( slice_means );
-    double sum = std::accumulate( begin, begin + m_dim_z, double{0.0} );
+    auto begin = speck::begin( m_col_buf );
+    auto end   = begin + m_dim_z;   // Note that we only filled in `m_dim_z` values.
+    double sum = std::accumulate( begin, end, double{0.0} );
 
     m_data_mean = sum / double(m_dim_z);
 }
