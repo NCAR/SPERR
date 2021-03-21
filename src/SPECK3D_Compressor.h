@@ -63,6 +63,11 @@ private:
 #else
     float                       m_bpp         = 0.0;
 #endif
+
+#ifdef USE_ZSTD
+    mutable std::vector<uint8_t>  m_tmp_buf;  // Reused to facilitate ZSTD
+#endif
+
 };
 
 

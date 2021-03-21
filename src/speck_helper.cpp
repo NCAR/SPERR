@@ -190,10 +190,12 @@ auto speck::end( const std::pair<std::unique_ptr<T[]>, size_t>& sbf ) -> ptr_ite
 {
     return ptr_iterator<T>( sbf.first.get() + sbf.second );
 }
-template auto speck::begin( const speck::smart_buffer_f& ) -> ptr_iterator<float >;
-template auto speck::begin( const speck::smart_buffer_d& ) -> ptr_iterator<double>;
-template auto speck::end(   const speck::smart_buffer_f& ) -> ptr_iterator<float >;
-template auto speck::end(   const speck::smart_buffer_d& ) -> ptr_iterator<double>;
+template auto speck::begin( const speck::smart_buffer_f& )     -> ptr_iterator<float >;
+template auto speck::begin( const speck::smart_buffer_d& )     -> ptr_iterator<double>;
+template auto speck::begin( const speck::smart_buffer_uint8& ) -> ptr_iterator<uint8_t>;
+template auto speck::end(   const speck::smart_buffer_f& )     -> ptr_iterator<float >;
+template auto speck::end(   const speck::smart_buffer_d& )     -> ptr_iterator<double>;
+template auto speck::end(   const speck::smart_buffer_uint8& ) -> ptr_iterator<uint8_t>;
 
 
 auto speck::read_n_bytes( const char* filename, size_t n_bytes, void* buffer ) -> RTNType

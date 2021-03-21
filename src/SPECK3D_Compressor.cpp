@@ -149,6 +149,25 @@ auto SPECK3D_Compressor::compress() -> RTNType
 auto SPECK3D_Compressor::get_encoded_bitstream() const -> speck::smart_buffer_uint8
 {
     const size_t total_size = m_speck_stream.second + m_sperr_stream.second;
+
+#ifdef USE_ZSTD
+    m_tmp_buf.resize( total_size, 0 );
+    std::copy( speck::begin(m_speck_stream), speck::end(m_speck_stream), m_tmp_buf.begin() );
+    if( !speck::empty_buf(m_sperr_stream) ) { // Not sure about nullptr, so we do the test.
+        std::copy(  speck::begin(m_sperr_stream), speck::end(m_sperr_stream),
+                    m_tmp_buf.begin() + m_speck_stream.second );
+    }
+
+    const size_t comp_buf_size = ZSTD_compressBound( total_size );
+    auto comp_buf = std::make_unique<uint8_t[]>( comp_buf_size );
+    const size_t comp_size = ZSTD_compress( comp_buf.get(),     comp_buf_size, 
+                                            m_tmp_buf.data(),   total_size,
+                                            ZSTD_CLEVEL_DEFAULT + 6 );
+    if( ZSTD_isError( comp_size ) )
+        return {nullptr, 0};
+    else
+        return {std::move(comp_buf), comp_size};
+#else
     auto buf = std::make_unique<uint8_t[]>( total_size );
     std::memcpy( buf.get(), m_speck_stream.first.get(), m_speck_stream.second );
     if( !speck::empty_buf(m_sperr_stream) ) { // UB to memcpy nullptr, so we do the test.
@@ -156,17 +175,6 @@ auto SPECK3D_Compressor::get_encoded_bitstream() const -> speck::smart_buffer_ui
                      m_sperr_stream.first.get(),
                      m_sperr_stream.second );
     }
-
-#ifdef USE_ZSTD
-    const size_t comp_buf_size = ZSTD_compressBound( total_size );
-    auto comp_buf = std::make_unique<uint8_t[]>( comp_buf_size );
-    const size_t comp_size = ZSTD_compress( comp_buf.get(), comp_buf_size, buf.get(), total_size,
-                                            ZSTD_CLEVEL_DEFAULT + 6 );
-    if( ZSTD_isError( comp_size ) )
-        return {nullptr, 0};
-    else
-        return {std::move(comp_buf), comp_size};
-#else
     return {std::move(buf), total_size};
 #endif
 }
