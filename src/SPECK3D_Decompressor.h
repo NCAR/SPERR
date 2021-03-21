@@ -48,6 +48,10 @@ private:
     std::vector<speck::Outlier> m_LOS;
 #endif
 
+#ifdef USE_ZSTD
+    speck::smart_buffer_uint8   m_tmp_buf = {nullptr, 0};  // Reused to facilitate ZSTD
+#endif
+
 };
 
 

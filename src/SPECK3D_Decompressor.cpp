@@ -15,11 +15,18 @@ auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
     const size_t content_size = ZSTD_getFrameContentSize( p, len );
     if( content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN )
         return RTNType::ZSTDError;
-    auto content_buf = std::make_unique<uint8_t[]>( content_size );
-    const auto decomp_size = ZSTD_decompress( content_buf.get(), content_size, p, len );
+
+    // If `m_tmp_buf` is not big enough for the decompressed buffer, we re-size it using
+    // the same strategy as std::vector .
+    if( content_size  > m_tmp_buf.second ) {
+        auto tmp_size = std::max( content_size, m_tmp_buf.second * 2 );
+        m_tmp_buf     = {std::make_unique<uint8_t[]>(tmp_size), tmp_size};
+    }
+
+    const auto decomp_size = ZSTD_decompress( m_tmp_buf.first.get(), content_size, p, len );
     if( ZSTD_isError( decomp_size ) || decomp_size != content_size )
         return RTNType::ZSTDError;
-    const uint8_t* const ptr     = content_buf.get();
+    const uint8_t* const ptr     = m_tmp_buf.first.get();
     const size_t         ptr_len = decomp_size;
 #else
     const uint8_t* const ptr     = static_cast<const uint8_t*>(p);
