@@ -11,6 +11,11 @@
 #include "SPECK3D.h"
 #include "SPERR.h"
 
+#ifdef USE_ZSTD
+  #include "zstd.h"
+#endif
+
+
 using speck::RTNType;
 
 class SPECK3D_Compressor
@@ -65,7 +70,10 @@ private:
 #endif
 
 #ifdef USE_ZSTD
-    mutable std::vector<uint8_t>  m_tmp_buf;  // Reused to facilitate ZSTD
+    // The following resources are used repeatedly during the lifespan of an instance.
+    mutable std::vector<uint8_t>  m_tmp_buf;
+    mutable std::unique_ptr<ZSTD_CCtx, decltype(&ZSTD_freeCCtx)>  m_cctx =
+            {nullptr, &ZSTD_freeCCtx};
 #endif
 
 };

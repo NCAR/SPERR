@@ -3,10 +3,6 @@
 #include <cstring>
 #include <cassert>
 
-#ifdef USE_ZSTD
-  #include "zstd.h"
-#endif
-
 
 auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
 {
@@ -17,7 +13,7 @@ auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
         return RTNType::ZSTDError;
 
     // If `m_tmp_buf` is not big enough for the decompressed buffer, we re-size it using
-    // the same strategy as std::vector .
+    // the same strategy as std::vector.
     if( content_size  > m_tmp_buf.second ) {
         auto tmp_size = std::max( content_size, m_tmp_buf.second * 2 );
         m_tmp_buf     = {std::make_unique<uint8_t[]>(tmp_size), tmp_size};

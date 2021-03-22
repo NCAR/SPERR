@@ -32,9 +32,3 @@ target_compile_options( SPECK3D_OMP_C PUBLIC ${OpenMP_CXX_FLAGS} )
 target_compile_options( SPECK3D_OMP_D PUBLIC ${OpenMP_CXX_FLAGS} )
     
 
-if( USE_ZSTD )
-    add_dependencies( SPECK3D_Compressor   zstd-download )
-    add_dependencies( SPECK3D_Decompressor zstd-download )
-    ExternalProject_Get_Property( zstd-download INSTALL_DIR )
-    include_directories("${INSTALL_DIR}/include")
-endif()

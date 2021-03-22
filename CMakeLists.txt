@@ -53,6 +53,9 @@ if( USE_ZSTD )
       LOG_BUILD         "True"      # Save output in a file, instead of the terminal.
       LOG_INSTALL       "True"      # Save output in a file, instead of the terminal.
     )
+
+    ExternalProject_Get_Property( zstd-download INSTALL_DIR )
+    include_directories("${INSTALL_DIR}/include")
 endif()
 
 
@@ -63,23 +66,19 @@ file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/download/v1.9.1/CLI11.h
               "${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp" )
 
 add_subdirectory( src )
+
 list( APPEND HELPER_LIBS speck_helper    )
-
 list( APPEND CDF_LIBS CDF97 )
-
 list( APPEND SPECK_Storage_LIBS SPECK_Storage   )
-
 list( APPEND SPECK3D_LIBS SPECK3D_OMP_C        )
 list( APPEND SPECK3D_LIBS SPECK3D_OMP_D        )
 list( APPEND SPECK3D_LIBS SPECK3D_Compressor   )
 list( APPEND SPECK3D_LIBS SPECK3D_Decompressor )
 list( APPEND SPECK3D_LIBS SPECK3D              )
 list( APPEND SPECK3D_LIBS OpenMP::OpenMP_CXX   )
-
 list( APPEND SPECK2D_LIBS SPECK2D_Compressor   )
 list( APPEND SPECK2D_LIBS SPECK2D_Decompressor )
 list( APPEND SPECK2D_LIBS SPECK2D              )
-
 list( APPEND SPERR_LIBS SPERR )
 
 if( USE_ZSTD )

@@ -12,6 +12,11 @@
 #include "SPECK3D.h"
 #include "SPERR.h"
 
+#ifdef USE_ZSTD
+  #include "zstd.h"
+#endif
+
+
 using speck::RTNType;
 
 class SPECK3D_Decompressor {
