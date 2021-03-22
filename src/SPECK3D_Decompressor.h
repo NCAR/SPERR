@@ -54,7 +54,9 @@ private:
 #endif
 
 #ifdef USE_ZSTD
-    speck::smart_buffer_uint8   m_tmp_buf = {nullptr, 0};  // Reused to facilitate ZSTD
+    // The following resources are used repeatedly during the lifespan of an instance.
+    speck::smart_buffer_uint8                             m_tmp_buf = {nullptr, 0};
+    std::unique_ptr<ZSTD_DCtx, decltype(&ZSTD_freeDCtx)>  m_dctx = {nullptr, &ZSTD_freeDCtx};
 #endif
 
 };

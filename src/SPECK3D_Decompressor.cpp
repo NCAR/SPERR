@@ -7,7 +7,15 @@
 auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
 {
 #ifdef USE_ZSTD
-    // Preprocessing: if ZSTD is enabled, we need to run ZSTD decompression first!
+    // Make sure that we have a ZSTD Decompression Context first
+    if( m_dctx == nullptr ) {
+        auto* ctx_p = ZSTD_createDCtx();
+        if( ctx_p  == nullptr )
+            return RTNType::ZSTDError;
+        else
+            m_dctx.reset(ctx_p);
+    }
+
     const size_t content_size = ZSTD_getFrameContentSize( p, len );
     if( content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN )
         return RTNType::ZSTDError;
@@ -19,7 +27,9 @@ auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
         m_tmp_buf     = {std::make_unique<uint8_t[]>(tmp_size), tmp_size};
     }
 
-    const auto decomp_size = ZSTD_decompress( m_tmp_buf.first.get(), content_size, p, len );
+    const auto decomp_size = ZSTD_decompressDCtx( m_dctx.get(),
+                                                  m_tmp_buf.first.get(), content_size, 
+                                                  p, len );
     if( ZSTD_isError( decomp_size ) || decomp_size != content_size )
         return RTNType::ZSTDError;
     const uint8_t* const ptr     = m_tmp_buf.first.get();
