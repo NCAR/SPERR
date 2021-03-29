@@ -1,5 +1,9 @@
 #include "SPECK3D_Compressor.h"
 #include "SPECK3D_Decompressor.h"
+
+#include "SPECK3D_OMP_C.h"
+#include "SPECK3D_OMP_D.h"
+
 #include <cstring>
 #include "gtest/gtest.h"
 
@@ -9,18 +13,11 @@ namespace
 using speck::RTNType;
 
 // Create a class that executes the entire pipeline, and calculates the error metrics
+// This class tests objects SPECK3D_Compressor and SPECK3D_Decompressor
 class speck_tester
 {
 public:
     speck_tester( const char* in, size_t x, size_t y, size_t z )
-    {
-        m_input_name = in;
-        m_dim_x      = x;
-        m_dim_y      = y;
-        m_dim_z      = z;
-    }
-
-    void reset( const char* in, size_t x, size_t y, size_t z )
     {
         m_input_name = in;
         m_dim_x      = x;
@@ -79,7 +76,6 @@ public:
         if( speck::empty_buf(stream) )
             return 1;
 
-        
         //
         // Use a decompressor 
         //
@@ -116,6 +112,115 @@ private:
     size_t m_dim_x, m_dim_y, m_dim_z;
     std::string m_output_name = "output.tmp";
     float m_psnr, m_lmax;
+};
+
+
+// Create a class that executes the entire pipeline, and calculates the error metrics
+// This class tests objects SPECK3D_OMP_C and SPECK3D_OMP_D
+class speck_tester_omp
+{
+public:
+    speck_tester_omp( const char* in, size_t x, size_t y, size_t z, int num_t )
+    {
+        m_input_name = in;
+        m_dim_x      = x;
+        m_dim_y      = y;
+        m_dim_z      = z;
+        m_num_t      = num_t;
+    }
+
+    float get_psnr() const
+    {
+        return m_psnr;
+    }
+
+    float get_lmax() const
+    {
+        return m_lmax;
+    }
+
+    //
+    // Execute the compression/decompression pipeline. Return 0 on success
+    //
+
+#ifdef QZ_TERM
+    int execute( int32_t qz_level, double tol )
+#else
+    int execute( float bpp )
+#endif
+
+    {
+        // Reset lmax and psnr
+        m_psnr = 0.0;
+        m_lmax = 1000.0;
+        
+        const size_t  total_vals = m_dim_x * m_dim_y * m_dim_z;
+
+        //
+        // Use a compressor 
+        //
+        auto in_buf = speck::read_whole_file<float>( m_input_name.c_str() );
+        if( !speck::size_is(in_buf, total_vals) )
+            return 1;
+
+        SPECK3D_OMP_C compressor;
+        compressor.set_dims( m_dim_x, m_dim_y, m_dim_z );
+        compressor.prefer_chunk_size( 64, 64, 64 );
+        compressor.set_num_threads( m_num_t );
+
+        if( compressor.use_volume( in_buf.first.get(), total_vals ) != RTNType::Good )
+            return 1;
+
+#ifdef QZ_TERM
+        compressor.set_qz_level( qz_level );
+        compressor.set_tolerance( tol );
+#else
+        compressor.set_bpp( bpp );
+#endif
+
+        if( compressor.compress() != RTNType::Good )
+            return 1;
+        auto stream = compressor.get_encoded_bitstream();
+        if( speck::empty_buf(stream) )
+            return 1;
+
+        //
+        // Use a decompressor 
+        //
+        SPECK3D_OMP_D decompressor;
+        decompressor.set_num_threads( m_num_t );
+        if( decompressor.use_bitstream( stream.first.get(), stream.second ) != RTNType::Good )
+            return 1;
+        if( decompressor.decompress( stream.first.get() ) != RTNType::Good )
+            return 1;
+        auto vol = decompressor.get_data_volume<float>();
+        if( !speck::size_is( vol, total_vals ) )
+            return 1;
+
+        //
+        // Compare results
+        //
+        const size_t nbytes = sizeof(float) * total_vals;
+        auto orig = std::make_unique<float[]>(total_vals);
+        if( speck::read_n_bytes( m_input_name.c_str(), nbytes, orig.get() ) != 
+            speck::RTNType::Good )
+            return 1;
+
+        float rmse, lmax, psnr, arr1min, arr1max;
+        speck::calc_stats( orig.get(), vol.first.get(), total_vals,
+                           &rmse, &lmax, &psnr, &arr1min, &arr1max );
+        m_psnr = psnr;
+        m_lmax = lmax;
+
+        return 0;
+    }
+
+private:
+    std::string m_input_name;
+    size_t m_dim_x, m_dim_y, m_dim_z;
+    std::string m_output_name = "output.tmp";
+    float m_psnr, m_lmax;
+    int   m_num_t;
 };
 
 
@@ -161,19 +266,59 @@ TEST( speck3d_qz_term, small_tolerance )
 TEST( speck3d_qz_term, narrow_data_range)
 {
     speck_tester tester( "../test_data/vorticity.128_128_41", 128, 128, 41 );
-    tester.execute( -16, 4e-5 );
+    tester.execute( -16, 3e-5 );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 42.292308 );
-    EXPECT_LT( lmax, 3.168651e-5 );
+    EXPECT_GT( psnr, 42.293655 );
+    EXPECT_LT( psnr, 42.293656 );
+    EXPECT_LT( lmax, 2.983993e-05 );
 
-    tester.execute( -18, 4e-5 );
+    tester.execute( -18, 7e-6 );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 50.513606 );
-    EXPECT_LT( lmax, 8.966978e-6 );
+    EXPECT_GT( psnr, 50.522224 );
+    EXPECT_LT( psnr, 50.522225 );
+    EXPECT_LT( lmax, 6.997870e-06 );
 }
+TEST( speck3d_qz_term_omp, narrow_data_range)
+{
+    // We specify to use 1 thread to make sure that object re-use has no side effects.
+    speck_tester_omp tester( "../test_data/vorticity.128_128_41", 128, 128, 41, 1 );
+    tester.execute( -16, 3e-5 );
+    float psnr = tester.get_psnr();
+    float lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 42.207504 );
+    EXPECT_LT( psnr, 42.207505 );
+    EXPECT_LT( lmax, 2.987783e-05 );
+
+    tester.execute( -18, 7e-6 );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 50.486732 );
+    EXPECT_LT( psnr, 50.486733 );
+    EXPECT_LT( lmax, 6.991625e-06 );
+}
+TEST( speck3d_qz_term_omp, small_tolerance )
+{
+    speck_tester_omp tester( "../test_data/wmag128.float", 128, 128, 128, 3 );
+    tester.execute( -3, 0.07);
+    float psnr = tester.get_psnr();
+    float lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 81.436264 );
+    EXPECT_LT( psnr, 81.436265 );
+    EXPECT_LT( lmax, 6.999970e-02 );
+
+    tester.execute( -5, 0.05 );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 91.552566 );
+    EXPECT_LT( psnr, 91.552567 );
+    EXPECT_LT( lmax, 4.975510e-02 );
+}
+
 #else
+// fixed-size mode
+
 TEST( speck3d_bit_rate, small )
 {
     speck_tester tester( "../test_data/wmag17.float", 17, 17, 17 );

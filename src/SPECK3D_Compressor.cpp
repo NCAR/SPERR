@@ -155,7 +155,7 @@ auto SPECK3D_Compressor::get_encoded_bitstream() const -> speck::smart_buffer_ui
         else
             m_cctx.reset(ctx_p);
     }
-        
+
     m_tmp_buf.resize( total_size, 0 );
     std::copy( speck::begin(m_speck_stream), speck::end(m_speck_stream), m_tmp_buf.begin() );
     if( !speck::empty_buf(m_sperr_stream) ) { // Not sure about nullptr, so we do the test.

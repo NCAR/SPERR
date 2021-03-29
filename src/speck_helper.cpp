@@ -375,33 +375,33 @@ auto speck::chunk_volume( const std::array<size_t, 3>& vol_dim,
                           const std::array<size_t, 3>& chunk_dim )
                           -> std::vector< std::array<size_t, 6> >
 {
-    for( size_t i = 0; i < 3; i++ )
-        if( vol_dim[i] < chunk_dim[i] )
-            return {};
-
     // Step 1: figure out how many segments are there along each axis.
     auto n_segs = std::array<size_t, 3>();
     for( size_t i = 0; i < 3; i++ ) {
         n_segs[i] = vol_dim[i] / chunk_dim[i];
         if( (vol_dim[i] % chunk_dim[i]) > (chunk_dim[i] / 2) )
             n_segs[i]++;
+        // In case the volume has one dimension that's too small, let's make it
+        // at least one segment anyway.
+        if( n_segs[i] == 0 )
+            n_segs[i] =  1;
     }
 
     // Step 2: calculate the starting indices of each segment along each axis.
     auto x_tics = std::vector<size_t>( n_segs[0] + 1 );
     for( size_t i = 0; i < n_segs[0]; i++ )
         x_tics[i] = i * chunk_dim[0];
-    x_tics[n_segs[0]] = vol_dim[0];
+    x_tics[n_segs[0]] = vol_dim[0]; // the last tic is the length in X
 
     auto y_tics = std::vector<size_t>( n_segs[1] + 1 );
     for( size_t i = 0; i < n_segs[1]; i++ )
         y_tics[i] = i * chunk_dim[1];
-    y_tics[n_segs[1]] = vol_dim[1];
+    y_tics[n_segs[1]] = vol_dim[1]; // the last tic is the length in Y
 
     auto z_tics = std::vector<size_t>( n_segs[2] + 1 );
     for( size_t i = 0; i < n_segs[2]; i++ )
         z_tics[i] = i * chunk_dim[2];
-    z_tics[n_segs[2]] = vol_dim[2];
+    z_tics[n_segs[2]] = vol_dim[2]; // the last tic is the length in Z
 
     // Step 3: fill in details of each chunk
     auto n_chunks = n_segs[0] * n_segs[1] * n_segs[2];

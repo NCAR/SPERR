@@ -31,6 +31,8 @@ auto SPECK3D_OMP_D::use_bitstream( const void* p, size_t total_len ) -> RTNType
     // This method parses the header of a bitstream and puts volume dimension and 
     // chunk size information in respective member variables.
     // It also stores the offset number to reach all chunks.
+    // It does not, however, read the actual bitstream. The actual bitstream
+    // will be provided when the decompress() method is called.
 
     const uint8_t* u8p = static_cast<const uint8_t*>( p );
     size_t loc = 0;
