@@ -345,7 +345,6 @@ TEST( speck3d_bit_rate, small )
     EXPECT_LT( lmax, 12.639985 );
 }
 
-
 TEST( speck3d_bit_rate, big )
 {
     speck_tester tester( "../test_data/wmag128.float", 128, 128, 128 );
@@ -378,7 +377,6 @@ TEST( speck3d_bit_rate, big )
     EXPECT_LT( psnr, 39.216408 );
     EXPECT_LT( lmax, 44.297326 );
 }
-
 
 TEST( speck3d_bit_rate, narrow_data_range )
 {
@@ -419,6 +417,45 @@ TEST( speck3d_bit_rate, narrow_data_range )
     EXPECT_LT( psnr, 41.7556191 ); // to satisfy both mac and linux
     EXPECT_LT( lmax, 3.329716e-05 );
 }
+
+TEST( speck3d_bit_rate_omp, narrow_data_range )
+{
+    speck_tester_omp tester( "../test_data/vorticity.128_128_41", 128, 128, 41, 1 );
+
+    tester.execute( 4.0f );
+    float psnr = tester.get_psnr();
+    float lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 67.823394 );
+    EXPECT_LT( psnr, 67.823395 );
+    EXPECT_LT( lmax, 1.108655e-06 );
+
+    tester.execute( 1.0f );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 48.912769 );
+    EXPECT_LT( psnr, 48.912770 );
+    EXPECT_LT( lmax, 1.396333e-05 );
+}
+
+TEST( speck3d_bit_rate_omp, big )
+{
+    speck_tester_omp tester( "../test_data/wmag128.float", 128, 128, 128, 4 );
+
+    tester.execute( 2.0f );
+    float psnr = tester.get_psnr();
+    float lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 53.051445 );
+    EXPECT_LT( psnr, 53.051446 );
+    EXPECT_LT( lmax, 7.618779 );
+
+    tester.execute( 1.0f );
+    psnr = tester.get_psnr();
+    lmax = tester.get_lmax();
+    EXPECT_GT( psnr, 46.484378 );
+    EXPECT_LT( psnr, 46.484379 );
+    EXPECT_LT( lmax, 20.604335 );
+}
+
 #endif
 
 }
