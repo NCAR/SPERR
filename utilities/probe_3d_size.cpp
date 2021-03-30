@@ -99,14 +99,15 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, float 
 #endif
 
 
-auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, float bpp,
-                             size_t omp_num_threads ) -> int
+auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, 
+                             std::array<size_t, 3> chunks,
+                             float bpp, size_t omp_num_threads ) -> int
 {
     // Setup
     const size_t total_vals = dims[0] * dims[1] * dims[2];
     SPECK3D_OMP_C compressor;
     compressor.set_dims(dims[0], dims[1], dims[2]);
-    compressor.prefer_chunk_size( 64, 64, 64 );
+    compressor.prefer_chunk_size( chunks[0], chunks[0], chunks[0] );
     compressor.set_num_threads( omp_num_threads );
     compressor.set_bpp( bpp );
     auto rtn = compressor.use_volume( in_buf, total_vals );
@@ -177,6 +178,11 @@ int main( int argc, char* argv[] )
     app.add_option("--dims", dims_v, "Dimensions of the input volume.\n"
             "For example, `--dims 128 128 128`.\n")->required()->expected(3);
 
+    std::vector<size_t> chunks_v{ 64, 64, 64 };
+    app.add_option("--chunks", chunks_v, "Dimensions of the preferred chunk size. "
+            "E.g., `--chunks 64 64 64`.\n"
+            "If not specified, then 64^3 will be used\n")->expected(3);
+
     float bpp;
     auto* bpp_ptr = app.add_option("--bpp", bpp, "Target bit-per-pixel value.\n"
                     "For example, `--bpp 0.5`.\n")->check(CLI::Range(0.0f, 64.0f));
@@ -206,7 +212,8 @@ int main( int argc, char* argv[] )
         bpp = 4.0; // We decide to use 4 bpp for initial analysis
     }
     printf("Initial analysis: compression at %.2f bit-per-pixel...  \n", bpp);
-    int rtn = test_configuration_omp( input_buf.get(), dims, bpp, omp_num_threads );
+    int rtn = test_configuration_omp( input_buf.get(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
+                                      bpp, omp_num_threads );
     if( rtn != 0 )
         return rtn;
 
@@ -226,7 +233,8 @@ int main( int argc, char* argv[] )
         }
         printf("\nNow testing bpp = %.2f ...\n", bpp);
     
-        rtn = test_configuration_omp( input_buf.get(), dims, bpp, omp_num_threads );
+        rtn = test_configuration_omp( input_buf.get(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
+                                      bpp, omp_num_threads );
         if ( rtn != 0 )
             return rtn;
 

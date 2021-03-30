@@ -19,6 +19,7 @@
 // This file should only be compiled in QZ_TERM mode.
 //
 auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, 
+                             std::array<size_t, 3> chunks,
                              int32_t qz_level, double tolerance,
                              size_t  omp_num_threads ) -> int 
 {
@@ -26,7 +27,7 @@ auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims,
     const size_t total_vals = dims[0] * dims[1] * dims[2];
     SPECK3D_OMP_C compressor;
     compressor.set_dims(dims[0], dims[1], dims[2]);
-    compressor.prefer_chunk_size( 64, 64, 64 );
+    compressor.prefer_chunk_size( chunks[0], chunks[1], chunks[2] );
     compressor.set_num_threads( omp_num_threads );
     auto rtn = compressor.use_volume( in_buf, total_vals );
     if(  rtn != RTNType::Good )
@@ -176,6 +177,11 @@ int main( int argc, char* argv[] )
     app.add_option("--dims", dims_v, "Dimensions of the input volume. "
             "E.g., `--dims 128 128 128`.\n")->required()->expected(3);
 
+    std::vector<size_t> chunks_v{ 64, 64, 64 };
+    app.add_option("--chunks", chunks_v, "Dimensions of the preferred chunk size. "
+            "E.g., `--chunks 64 64 64`.\n"
+            "If not specified, then 64^3 will be used\n")->expected(3);
+
     double tolerance = 0.0;
     app.add_option("-t", tolerance, "Maximum point-wise error tolerance. E.g., `-t 0.001`.\n"
                    "By default, it takes the input as an absolute error tolerance.\n"
@@ -238,7 +244,8 @@ int main( int argc, char* argv[] )
 
     printf("Initial analysis: absolute error tolerance = %.2e, quantization level = %d ...  \n", 
             tolerance, qz_level);
-    int rtn = test_configuration_omp( input_buf.get(), dims, qz_level, tolerance, omp_num_threads );
+    int rtn = test_configuration_omp( input_buf.get(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
+                                      qz_level, tolerance, omp_num_threads );
     if( rtn != 0 )
         return rtn;
 
@@ -259,7 +266,8 @@ int main( int argc, char* argv[] )
         qz_level = tmp;
         printf("\nNow testing qz level = %d ...\n", qz_level);
     
-        rtn = test_configuration_omp( input_buf.get(), dims, qz_level, tolerance, omp_num_threads );
+        rtn = test_configuration_omp( input_buf.get(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
+                                      qz_level, tolerance, omp_num_threads );
         if ( rtn != 0 )
             return rtn;
 
