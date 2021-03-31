@@ -29,9 +29,10 @@ void speck::SPERR::add_outlier(size_t pos, double e)
     m_LOS.emplace_back(pos, e);
 }
 
-void speck::SPERR::use_outlier_list(std::vector<Outlier> list)
+void speck::SPERR::use_outlier_list( const std::vector<Outlier>& list)
 {
-    m_LOS = std::move(list);
+    m_LOS.resize( list.size() );
+    std::copy( list.begin(), list.end(), m_LOS.begin() );
 }
 
 void speck::SPERR::set_length(uint64_t len)

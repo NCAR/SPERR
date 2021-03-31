@@ -43,12 +43,12 @@ public:
     //
     // Important note on the outliers: each one must live at a unique location,
     // and each error value must be greater than the tolerance.
-    void add_outlier(size_t, double);            // add a single outlier.
-                                                 // Does not affect existing outliers.
-    void use_outlier_list(std::vector<Outlier>); // use a given list of outliers.
-                                                 // Existing outliers are erased.
-    void set_length(uint64_t);                   // set 1D array length
-    void set_tolerance(double);                  // set error tolerance (Must be positive)
+    void add_outlier(size_t, double);                    // add a single outlier.
+                                                         // Does not affect existing outliers.
+    void use_outlier_list(const std::vector<Outlier>& ); // use a given list of outliers.
+                                                         // Existing outliers are erased.
+    void set_length(uint64_t);                       // set 1D array length
+    void set_tolerance(double);                      // set error tolerance (Must be positive)
 
     // Output
     auto release_outliers() -> std::vector<Outlier>; // Release ownership of decoded outliers

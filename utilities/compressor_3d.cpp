@@ -76,6 +76,13 @@ int main( int argc, char* argv[] )
     compressor.prefer_chunk_size( chunks[0], chunks[1], chunks[2] );
     compressor.set_num_threads( omp_num_threads );
 
+#ifdef QZ_TERM
+    compressor.set_qz_level( qz_level );
+    compressor.set_tolerance( tolerance );
+#else
+    compressor.set_bpp( bpp );
+#endif
+
     auto orig = speck::read_whole_file<float>( input_file.c_str() );
     if( !speck::size_is(orig, total_vals) ) {
         std::cerr << "Read input file error: " << input_file << std::endl;
@@ -86,12 +93,8 @@ int main( int argc, char* argv[] )
         return 1;
     }
 
-#ifdef QZ_TERM
-    compressor.set_qz_level( qz_level );
-    compressor.set_tolerance( tolerance );
-#else
-    compressor.set_bpp( bpp );
-#endif
+    // Free memory taken by `orig` since the volume has been put into chunks.
+    orig = {nullptr, 0};
 
     if( compressor.compress() != speck::RTNType::Good ) {
         std::cerr << "Compression failed!" << std::endl;
