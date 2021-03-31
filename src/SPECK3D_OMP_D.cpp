@@ -144,6 +144,7 @@ auto SPECK3D_OMP_D::decompress( const void* p ) -> RTNType
                                   small_vol.first, chunks[i] );
         }
     }
+
     if(std::any_of( chunk_rtn.begin(), chunk_rtn.end(), [](auto r){return r != RTNType::Good;} ))
         return RTNType::Error; 
     else

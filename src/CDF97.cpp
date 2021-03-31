@@ -11,7 +11,8 @@
 #endif
 
 template <typename T>
-auto speck::CDF97::copy_data(const T* data, size_t len, size_t dimx, size_t dimy, size_t dimz) -> RTNType
+auto speck::CDF97::copy_data(const T* data, size_t len, size_t dimx, size_t dimy, size_t dimz) 
+                 -> RTNType
 {
     static_assert(std::is_floating_point<T>::value,
                   "!! Only floating point values are supported !!");
@@ -31,11 +32,11 @@ auto speck::CDF97::copy_data(const T* data, size_t len, size_t dimx, size_t dimy
 
     auto col = std::max( std::max(dimx, dimy), dimz );
     if( !speck::size_is(m_col_buf, col * 2) )
-        m_col_buf = { std::make_unique<double[]>(col * 2), col * 2 };
+        m_col_buf = {std::make_unique<double[]>(col * 2), col * 2};
 
     auto slice = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
     if( !speck::size_is(m_slice_buf, slice) )
-        m_slice_buf = { std::make_unique<double[]>(slice), slice };
+        m_slice_buf = {std::make_unique<double[]>(slice), slice};
 
     return RTNType::Good;
 }
@@ -57,16 +58,16 @@ auto speck::CDF97::take_data(buffer_type_d ptr, size_t len, size_t dimx, size_t 
 
     auto col = std::max( std::max(dimx, dimy), dimz );
     if( !speck::size_is(m_col_buf, col * 2) )
-        m_col_buf = { std::make_unique<double[]>(col * 2), col * 2 };
+        m_col_buf = {std::make_unique<double[]>(col * 2), col * 2};
 
     auto slice = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
     if( !speck::size_is(m_slice_buf, slice) )
-        m_slice_buf = { std::make_unique<double[]>(slice), slice };
+        m_slice_buf = {std::make_unique<double[]>(slice), slice};
 
     return RTNType::Good;
 }
 
-auto speck::CDF97::get_read_only_data() const -> std::pair<const buffer_type_d&, size_t>
+auto speck::CDF97::view_data() const -> std::pair<const buffer_type_d&, size_t>
 {
     return std::make_pair(std::cref(m_data_buf), m_buf_len);
     // Note: the following syntax would also work, but the code above better expresses intent. 

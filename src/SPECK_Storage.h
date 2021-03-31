@@ -23,7 +23,8 @@ public:
     template <typename T>
     auto copy_data(const T*, size_t len, size_t dimx, size_t dimy, size_t dimz = 1) -> RTNType;
     auto take_data(buffer_type_d, size_t len, size_t dimx, size_t dimy, size_t dimz = 1) -> RTNType;
-    auto release_data() -> smart_buffer_d; // Release ownership
+    auto release_data() -> smart_buffer_d;                              // Release ownership
+    auto view_data() const -> std::pair<const buffer_type_d&, size_t>;  // Keep ownership
 
     // Get the encoded bitstream.
     // The returned memory block could be written to disk by other programs.

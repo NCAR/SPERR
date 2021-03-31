@@ -26,10 +26,10 @@ public:
     //
     // Output
     //
-    auto get_read_only_data() const -> std::pair<const buffer_type_d&, size_t>; // Keep ownership
-    auto release_data()             -> std::pair<buffer_type_d, size_t>;     // Release ownership
-    auto get_mean() const -> double;
-    auto get_dims() const -> std::array<size_t, 3>; // In 2D case, the 3rd value equals 1.
+    auto view_data() const -> std::pair<const buffer_type_d&, size_t>;  // Keep ownership
+    auto release_data()    -> std::pair<buffer_type_d, size_t>;         // Release ownership
+    auto get_mean() const  -> double;
+    auto get_dims() const  -> std::array<size_t, 3>; // In 2D case, the 3rd value equals 1.
 
     // Action items
     void dwt2d();  // 1) calculates the number of levels of dwt,

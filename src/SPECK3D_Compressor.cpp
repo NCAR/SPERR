@@ -83,7 +83,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     m_cdf.idwt3d();
 
     // Now we find all the outliers!
-    auto vol = m_cdf.get_read_only_data();
+    auto vol = m_cdf.view_data();
     if( !speck::size_is( vol, m_total_vals ) )
         return RTNType::Error;
     m_LOS.clear();

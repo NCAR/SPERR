@@ -97,8 +97,11 @@ auto SPECK3D_Decompressor::decompress( ) -> RTNType
         return rtn;
 
     // Step 2: Inverse Wavelet Transform
-    auto coeffs = m_decoder.release_data();
-    m_cdf.take_data( std::move(coeffs.first), coeffs.second, m_dim_x, m_dim_y, m_dim_z );
+    //
+    // (Here we ask `m_cdf` to make a copy of coefficients from `m_decoder` instead of
+    //  transfer the ownership, because `m_decoder` will reuse that chunk of memory.)
+    auto coeffs = m_decoder.view_data();
+    m_cdf.copy_data( coeffs.first.get(), coeffs.second, m_dim_x, m_dim_y, m_dim_z );
     m_cdf.set_mean( m_decoder.get_image_mean() );
     m_cdf.idwt3d();
 
@@ -125,7 +128,7 @@ template<typename T>
 auto SPECK3D_Decompressor::get_decompressed_volume() const ->
                            std::pair<std::unique_ptr<T[]>, size_t>
 {
-    auto [vol, len]  = m_cdf.get_read_only_data();
+    auto [vol, len]  = m_cdf.view_data();
     if( vol == nullptr || len == 0 )
         return {nullptr, 0};
 

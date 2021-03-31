@@ -65,6 +65,10 @@ int main( int argc, char* argv[] )
         return 1;
     }
 
+    // Let's free up some memory here
+    const auto in_stream_bytes = in_stream.second;
+    in_stream = {nullptr, 0};
+
     auto vol = decompressor.get_data_volume<float>();
     if( speck::empty_buf(vol) )
         return 1;
@@ -82,6 +86,8 @@ int main( int argc, char* argv[] )
                          "with the decompressed file!" << std::endl;
             return 1;
         }
+
+        printf("Average bit-per-pixel = %.2f\n", in_stream_bytes * 8.0f / orig.second);
 
         float rmse, lmax, psnr, arr1min, arr1max;
         speck::calc_stats( orig.first.get(), vol.first.get(), orig.second,

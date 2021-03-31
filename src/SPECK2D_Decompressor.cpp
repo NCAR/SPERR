@@ -78,7 +78,7 @@ auto SPECK2D_Decompressor::decompress() -> RTNType
 auto SPECK2D_Decompressor::get_decompressed_slice_f() const 
                            -> std::pair<speck::buffer_type_f, size_t>
 {
-    auto slice = m_cdf.get_read_only_data( );
+    auto slice = m_cdf.view_data( );
     if( slice.first == nullptr || slice.second == 0 )
         return {nullptr, 0};
 
@@ -94,7 +94,7 @@ auto SPECK2D_Decompressor::get_decompressed_slice_f() const
 auto SPECK2D_Decompressor::get_decompressed_slice_d() const
                            -> std::pair<speck::buffer_type_d, size_t> 
 {
-    auto slice = m_cdf.get_read_only_data();
+    auto slice = m_cdf.view_data();
     if( slice.first == nullptr || slice.second == 0 )
         return {nullptr, 0};
 
@@ -108,7 +108,7 @@ auto SPECK2D_Decompressor::get_decompressed_slice_d() const
 auto SPECK2D_Decompressor::write_slice_d( const char* filename ) const -> RTNType
 {
     // Get a read-only handle of the slice from m_cdf, and then write it to disk.
-    auto slice = m_cdf.get_read_only_data( );
+    auto slice = m_cdf.view_data( );
     if( slice.first == nullptr || slice.second == 0 )
         return RTNType::Error;
 
