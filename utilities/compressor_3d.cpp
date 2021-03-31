@@ -1,4 +1,4 @@
-#include "SPECK3D_Compressor.h"
+#include "SPECK3D_OMP_C.h"
 
 #include "CLI11.hpp"
 
@@ -18,7 +18,16 @@ int main( int argc, char* argv[] )
 
     std::vector<size_t> dims;
     app.add_option("--dims", dims, "Dimensions of the input volume\n"
-                   "E.g., `--dims 128 128 128`")->expected(3)->required();
+                   "E.g., `--dims 128 128 128`\n")->expected(3)->required();
+
+    std::vector<size_t> chunks{ 64, 64, 64 };
+    app.add_option("--chunks", chunks, "Dimensions of the preferred chunk size.\n"
+                   "If not specified, then 64^3 will be used\n"
+                   "E.g., `--chunks 64 64 64`.\n")->expected(3);
+
+    size_t omp_num_threads = 4;
+    auto* omp_ptr = app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. "
+                                   "Default: 4\n");
 
 #ifdef QZ_TERM
     int32_t qz_level = 0;
@@ -30,7 +39,7 @@ int main( int argc, char* argv[] )
             ->group("Compression Parameters")->required();
     double tolerance = 0.0;
     auto* tol_ptr = app.add_option("-t,--tolerance", tolerance, 
-                                   "Maximum point-wise error tolerance\nI.e., `-t 1e-2`")
+                                   "Maximum point-wise error tolerance\nE.g., `-t 1e-2`")
                                    ->group("Compression Parameters")->required();
 #else
     float bpp;
@@ -50,6 +59,11 @@ int main( int argc, char* argv[] )
         std::cerr << "Tolerance must be a positive value!\n";
         return 1;
     }
+#else
+    if( bpp < 0.0 || bpp > 32.0 ) {
+        std::cerr << "Bit-per-pixel must be in the range (0.0, 32.0)!\n";
+        return 1;
+    }
 #endif
 
 
@@ -57,28 +71,27 @@ int main( int argc, char* argv[] )
     // Let's do the actual work
     //
     const size_t total_vals = dims[0] * dims[1] * dims[2];
-    SPECK3D_Compressor compressor ( dims[0], dims[1], dims[2] );
+    SPECK3D_OMP_C compressor;
+    compressor.set_dims(dims[0], dims[1], dims[2]);
+    compressor.prefer_chunk_size( chunks[0], chunks[1], chunks[2] );
+    compressor.set_num_threads( omp_num_threads );
+
     auto orig = speck::read_whole_file<float>( input_file.c_str() );
     if( !speck::size_is(orig, total_vals) ) {
         std::cerr << "Read input file error: " << input_file << std::endl;
         return 1;
     }
-    if( compressor.copy_data( orig.first.get(), orig.second ) != speck::RTNType::Good ) {
+    if( compressor.use_volume( orig.first.get(), orig.second ) != speck::RTNType::Good ) {
         std::cerr << "Copy data failed!" << std::endl;
         return 1;
     }
 
 #ifdef QZ_TERM
     compressor.set_qz_level( qz_level );
-    auto rtn = compressor.set_tolerance( tolerance );
+    compressor.set_tolerance( tolerance );
 #else
-    auto rtn = compressor.set_bpp( bpp );
+    compressor.set_bpp( bpp );
 #endif
-
-    if( rtn != RTNType::Good ) {
-        std::cerr << "Compressor parameters invalid!" << std::endl;
-        return 1;
-    }
 
     if( compressor.compress() != speck::RTNType::Good ) {
         std::cerr << "Compression failed!" << std::endl;

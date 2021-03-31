@@ -1,4 +1,4 @@
-#include "SPECK3D_Decompressor.h"
+#include "SPECK3D_OMP_D.h"
 
 #include "CLI11.hpp"
 
@@ -27,7 +27,11 @@ int main( int argc, char* argv[] )
 #endif
 
     std::string output_file;
-    app.add_option("-o", output_file, "Output filename")->required();
+    app.add_option("-o", output_file, "Output filename\n")->required();
+
+    size_t omp_num_threads = 4;
+    auto* omp_ptr = app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use."
+                                   " Default: 4\n");
 
     std::string compare_file;
     auto* compare_file_ptr = app.add_option("--compare", compare_file,
@@ -44,7 +48,8 @@ int main( int argc, char* argv[] )
     auto in_stream = speck::read_whole_file<uint8_t>( input_file.c_str() );
     if( speck::empty_buf(in_stream) )
         return 1;
-    SPECK3D_Decompressor decompressor;
+    SPECK3D_OMP_D decompressor;
+    decompressor.set_num_threads( omp_num_threads );
     if( decompressor.use_bitstream(in_stream.first.get(), in_stream.second) != 
         speck::RTNType::Good ) {
         std::cerr << "Read compressed file error: " << input_file << std::endl;
@@ -55,12 +60,12 @@ int main( int argc, char* argv[] )
     decompressor.set_bpp( decomp_bpp );
 #endif
 
-    if( decompressor.decompress() != speck::RTNType::Good ) {
+    if( decompressor.decompress( in_stream.first.get() ) != speck::RTNType::Good ) {
         std::cerr << "Decompression failed!" << std::endl;
         return 1;
     }
 
-    auto vol = decompressor.get_decompressed_volume<float>();
+    auto vol = decompressor.get_data_volume<float>();
     if( speck::empty_buf(vol) )
         return 1;
     if( speck::write_n_bytes( output_file.c_str(), vol.second * sizeof(float), 
@@ -72,15 +77,14 @@ int main( int argc, char* argv[] )
     // Compare with the original data if user specifies
     if( *compare_file_ptr ) {
         auto orig = speck::read_whole_file<float>( compare_file.c_str() );
-        auto decomp = decompressor.get_decompressed_volume<float>();
-        if( orig.second != decomp.second ) {
+        if( orig.second != vol.second ) {
             std::cerr << "File to compare with has difference size "
                          "with the decompressed file!" << std::endl;
             return 1;
         }
 
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( orig.first.get(), decomp.first.get(), orig.second,
+        speck::calc_stats( orig.first.get(), vol.first.get(), orig.second,
                            &rmse, &lmax, &psnr, &arr1min, &arr1max);
         printf("Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
         printf("Decompressed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);

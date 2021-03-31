@@ -187,15 +187,13 @@ int main( int argc, char* argv[] )
     auto* bpp_ptr = app.add_option("--bpp", bpp, "Target bit-per-pixel value.\n"
                     "For example, `--bpp 0.5`.\n")->check(CLI::Range(0.0f, 64.0f));
 
-    size_t omp_num_threads = 0;
+    size_t omp_num_threads = 4;
     auto* omp_ptr = app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. "
                                    "Default: 4\n"); 
 
     CLI11_PARSE(app, argc, argv);
 
     const std::array<size_t, 3> dims = {dims_v[0], dims_v[1], dims_v[2]};
-    if( omp_num_threads == 0 )
-        omp_num_threads = 4;
 
     // Read and keep a copy of input data (will be used for evaluation)
     const size_t total_vals = dims[0] * dims[1] * dims[2];
