@@ -125,6 +125,11 @@ private:
     std::vector<bool>    m_sig_map;         // encoding only
 
     std::vector<std::vector<SPECKSet1D>> m_LIS;
+    
+    // Keep this temporary object a class member to reuse its storage when 
+    // this SPERR object is reused.
+    // It's OK to be mutable since it serves as a temporary object anyway.
+    mutable std::vector<bool>  m_bvec_tmp;
 };
 
 };

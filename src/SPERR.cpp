@@ -470,14 +470,14 @@ auto speck::SPERR::get_encoded_bitstream() const -> smart_buffer_uint8
     const uint64_t num_bits = m_bit_buffer.size();
 
     // Create a copy of the current bit buffer with length being multiples of 8.
-    // The purpose is to not mess up with the useful container.
-    std::vector<bool> tmp_buf;
-    tmp_buf.reserve( num_bits + 8 ); // No need to re-allocate when padding.
-    tmp_buf = m_bit_buffer;
-    while( tmp_buf.size() % 8 != 0 )
-        tmp_buf.push_back(false);
+    // The purpose is to not mess up with `m_bit_buffer`.
+    // Also because vector<bool> is stored internally as 64-bit integers,
+    // It's very likely that our padding won't trigger a re-allocation.
+    m_bvec_tmp = m_bit_buffer;
+    while( m_bvec_tmp.size() % 8 != 0 )
+        m_bvec_tmp.push_back(false);
 
-    const size_t buf_len = m_header_size + tmp_buf.size() / 8;
+    const size_t buf_len = m_header_size + m_bvec_tmp.size() / 8;
     auto buf = std::make_unique<uint8_t[]>( buf_len );
     
     // Fill header
@@ -495,7 +495,7 @@ auto speck::SPERR::get_encoded_bitstream() const -> smart_buffer_uint8
     assert( pos == m_header_size );
 
     // Assemble the bitstream into bytes
-    auto rtn = speck::pack_booleans( buf, tmp_buf, pos );
+    auto rtn = speck::pack_booleans( buf, m_bvec_tmp, pos );
     if( rtn != RTNType::Good )
         return {nullptr, 0};
     else
