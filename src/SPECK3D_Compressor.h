@@ -70,7 +70,8 @@ private:
 #endif
 
 #ifdef USE_ZSTD
-    // The following resources are used repeatedly during the lifespan of an instance.
+    // The following resources are used repeatedly during the lifespan of an instance,
+    // but they only play temporary roles, so OK to be mutable.
     mutable std::vector<uint8_t>  m_tmp_buf;
     mutable std::unique_ptr<ZSTD_CCtx, decltype(&ZSTD_freeCCtx)>  m_cctx =
             {nullptr, &ZSTD_freeCCtx};
