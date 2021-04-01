@@ -33,19 +33,15 @@ auto speck::CDF97::copy_data(const T* data, size_t len, size_t dimx, size_t dimy
     auto max_col = std::max( std::max(dimx, dimy), dimz );
     // Notice that this buffer needs to hold two columns.
     if( !speck::size_is(m_col_buf, max_col * 2) ) {
-        // Weird clang behavior that doesn't link the following line.
+        // Weird clang behavior (clang version 11.1.0 on MacOS)
+        // that doesn't allow the following line to link.
         // m_col_buf = {std::make_unique<double[]>(max_col * 2), max_col * 2};
-        m_col_buf.first  = std::make_unique<double[]>(max_col * 2);
-        m_col_buf.second = max_col * 2;
+        m_col_buf = std::make_pair(std::make_unique<double[]>(max_col * 2), max_col * 2);
     }
 
     auto max_slice = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
-    if( !speck::size_is(m_slice_buf, max_slice) ) {
-        // Weird clang behavior that doesn't link the following line.
-        // m_slice_buf = {std::make_unique<double[]>(max_slice), max_slice};
-        m_slice_buf.first  = std::make_unique<double[]>(max_slice);
-        m_slice_buf.second = max_slice;
-    }
+    if( !speck::size_is(m_slice_buf, max_slice) )
+        m_slice_buf = {std::make_unique<double[]>(max_slice), max_slice};
 
     return RTNType::Good;
 }
