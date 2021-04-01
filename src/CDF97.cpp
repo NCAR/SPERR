@@ -33,7 +33,7 @@ auto speck::CDF97::copy_data(const T* data, size_t len, size_t dimx, size_t dimy
     auto max_col = std::max( std::max(dimx, dimy), dimz );
     // Notice that this buffer needs to hold two columns.
     if( !speck::size_is(m_col_buf, max_col * 2) ) {
-        // Weird clang behavior (clang version 11.1.0 on MacOS)
+        // Weird clang behavior (clang version 11.1.0 on MacOS, clang version 10.0.0-4ubuntu1)
         // that doesn't allow the following line to link.
         // m_col_buf = {std::make_unique<double[]>(max_col * 2), max_col * 2};
         m_col_buf = std::make_pair(std::make_unique<double[]>(max_col * 2), max_col * 2);
