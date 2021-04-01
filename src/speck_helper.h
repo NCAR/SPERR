@@ -8,6 +8,7 @@
 #include <array>
 #include <cstddef> // size_t
 #include <cstdlib>
+#include <utility> // std::pair
 #include <memory>
 #include <vector>
 #include <iterator>

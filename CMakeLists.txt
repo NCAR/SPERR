@@ -67,19 +67,19 @@ file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/download/v1.9.1/CLI11.h
 
 add_subdirectory( src )
 
-list( APPEND HELPER_LIBS speck_helper    )
-list( APPEND CDF_LIBS CDF97 )
-list( APPEND SPECK_Storage_LIBS SPECK_Storage   )
-list( APPEND SPECK3D_LIBS SPECK3D_OMP_C        )
-list( APPEND SPECK3D_LIBS SPECK3D_OMP_D        )
-list( APPEND SPECK3D_LIBS SPECK3D_Compressor   )
-list( APPEND SPECK3D_LIBS SPECK3D_Decompressor )
-list( APPEND SPECK3D_LIBS SPECK3D              )
-list( APPEND SPECK3D_LIBS OpenMP::OpenMP_CXX   )
-list( APPEND SPECK2D_LIBS SPECK2D_Compressor   )
-list( APPEND SPECK2D_LIBS SPECK2D_Decompressor )
-list( APPEND SPECK2D_LIBS SPECK2D              )
-list( APPEND SPERR_LIBS SPERR )
+list( APPEND HELPER_LIBS    speck_helper         )
+list( APPEND CDF_LIBS       CDF97                )
+list( APPEND SPECK_Storage_LIBS SPECK_Storage    )
+list( APPEND SPECK3D_LIBS   SPECK3D_OMP_C        )
+list( APPEND SPECK3D_LIBS   SPECK3D_OMP_D        )
+list( APPEND SPECK3D_LIBS   SPECK3D_Compressor   )
+list( APPEND SPECK3D_LIBS   SPECK3D_Decompressor )
+list( APPEND SPECK3D_LIBS   SPECK3D              )
+list( APPEND SPECK3D_LIBS   OpenMP::OpenMP_CXX   )
+list( APPEND SPECK2D_LIBS   SPECK2D_Compressor   )
+list( APPEND SPECK2D_LIBS   SPECK2D_Decompressor )
+list( APPEND SPECK2D_LIBS   SPECK2D              )
+list( APPEND SPERR_LIBS     SPERR )
 
 if( USE_ZSTD )
     ExternalProject_Get_Property( zstd-download INSTALL_DIR )
@@ -162,7 +162,6 @@ if( BUILD_UNIT_TESTS )
     add_executable( test_dwt
                     "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/dwt_unit_test.cpp" )
     target_link_libraries( test_dwt PUBLIC ${CDF_LIBS}
-                                    PUBLIC ${SPECK_LIBS} 
                                     PUBLIC ${HELPER_LIBS}
                                     PUBLIC gtest_main   )
     add_test( NAME test_dwt COMMAND test_dwt            )
