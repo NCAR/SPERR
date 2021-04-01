@@ -155,7 +155,8 @@ TEST( speck2d, small_data_range )
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 71.289441 );
+    EXPECT_GT( psnr, 71.289436 );
+    EXPECT_LT( psnr, 71.289437 );
     EXPECT_LT( lmax, 0.000002  );
 
     tester.execute( 2.0f );
