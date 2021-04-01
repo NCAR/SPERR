@@ -317,11 +317,11 @@ void speck::calc_stats( const T* arr1,   const T* arr2,  size_t len,
     // http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/VELDHUIZEN/node18.html
     // Also refer to https://www.mathworks.com/help/vision/ref/psnr.html
     //
-    const auto avg = speck::kahan_summation( sum_vec.data(), sum_vec.size() ) / T(len);
-    *rmse    = std::sqrt( avg );
+    const auto msr = speck::kahan_summation( sum_vec.data(), sum_vec.size() ) / T(len);
+    *rmse = std::sqrt( msr );
     auto range_sq = *minmax.first - *minmax.second;
     range_sq *= range_sq;
-    *psnr = T(-10.0) * std::log10( avg / range_sq );
+    *psnr = std::log10( range_sq / msr ) * 10.0;
 }
 template void speck::calc_stats( const float*, const float*, size_t, 
                                  float*, float*, float*, float*, float* );
