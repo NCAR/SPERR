@@ -11,25 +11,24 @@
 #include "SPECK3D.h"
 #include "SPERR.h"
 
+#ifdef USE_ZSTD
+  #include "zstd.h"
+#endif
+
+
 using speck::RTNType;
 
 class SPECK3D_Compressor
 {
 public:
-    // Constructor
-    SPECK3D_Compressor( size_t x, size_t y, size_t z );
 
     // Accept incoming data: copy from a raw memory block
     template< typename T >
-    auto copy_data( const T* p, size_t len ) -> RTNType;
+    auto copy_data( const T* p, size_t len, size_t dimx, size_t dimy, size_t dimz ) -> RTNType;
 
     // Accept incoming data: take ownership of a memory block
-    auto take_data( speck::buffer_type_d buf, size_t len ) -> RTNType;
-
-    // Accept incoming data: gather a chunk from a bigger volume
-    template<typename T>
-    auto gather_chunk( const T* vol, const std::array<size_t, 3>& vol_dim, 
-                       const std::array<size_t, 6>& chunk ) -> RTNType;
+    auto take_data( speck::buffer_type_d buf, size_t len, size_t dimx, size_t dimy, size_t dimz ) 
+                    -> RTNType;
 
 #ifdef QZ_TERM
     void set_qz_level( int32_t );
@@ -47,10 +46,10 @@ public:
 
 
 private:
-    const size_t                m_dim_x;
-    const size_t                m_dim_y;
-    const size_t                m_dim_z;
-    const size_t                m_total_vals;
+    size_t                      m_dim_x;
+    size_t                      m_dim_y;
+    size_t                      m_dim_z;
+    size_t                      m_total_vals;
     speck::buffer_type_d        m_val_buf;
 
     speck::CDF97                m_cdf;
@@ -61,13 +60,23 @@ private:
     speck::smart_buffer_uint8   m_sperr_stream = {nullptr, 0};
 
 #ifdef QZ_TERM
-    speck::SPERR    m_sperr;
-    int32_t         m_qz_lev      = 0;
-    double          m_tol         = 0.0; // tolerance used in error correction
-    size_t          m_num_outlier = 0;
+    speck::SPERR                m_sperr;
+    int32_t                     m_qz_lev      = 0;
+    double                      m_tol         = 0.0; // tolerance used in error correction
+    size_t                      m_num_outlier = 0;
+    std::vector<speck::Outlier> m_LOS; // List of OutlierS
 #else
-    float           m_bpp         = 0.0;
+    float                       m_bpp         = 0.0;
 #endif
+
+#ifdef USE_ZSTD
+    // The following resources are used repeatedly during the lifespan of an instance,
+    // but they only play temporary roles, so OK to be mutable.
+    mutable std::vector<uint8_t>  m_tmp_buf;
+    mutable std::unique_ptr<ZSTD_CCtx, decltype(&ZSTD_freeCCtx)>  m_cctx =
+            {nullptr, &ZSTD_freeCCtx};
+#endif
+
 };
 
 

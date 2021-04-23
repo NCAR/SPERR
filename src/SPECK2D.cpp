@@ -6,6 +6,21 @@
 #include <cstring>
 #include <iostream>
 
+
+//
+// Class SPECKSet2D
+//
+auto speck::SPECKSet2D::is_pixel() const -> bool
+{
+    return (length_x == 1 && length_y == 1);
+}
+
+auto speck::SPECKSet2D::is_empty() const -> bool
+{
+    return (length_x == 0 || length_y == 0);
+}
+
+
 // Constructor
 speck::SPECK2D::SPECK2D()
 {
@@ -13,14 +28,6 @@ speck::SPECK2D::SPECK2D()
     m_dim_z  = 1;
 }
 
-void speck::SPECK2D::set_dims(size_t dx, size_t dy)
-{
-    // Sanity Check
-    assert(m_coeff_len == 0 || m_coeff_len == dx * dy);
-    m_dim_x     = dx;
-    m_dim_y     = dy;
-    m_coeff_len = dx * dy;
-}
 
 void speck::SPECK2D::set_bit_budget(size_t budget)
 {
@@ -117,8 +124,11 @@ void speck::SPECK2D::m_initialize_sets_lists()
     const auto num_of_xforms = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
 
     // prepare m_LIS
-    m_LIS.clear();
-    m_LIS.resize(num_of_parts + 1);
+    // Note that `m_LIS` can only grow in size.
+    if( m_LIS.size() < num_of_parts + 1 )
+        m_LIS.resize(num_of_parts + 1);
+    for( auto& list : m_LIS )
+        list.clear();
     m_LIS_garbage_cnt.assign(num_of_parts + 1, 0);
 
     // prepare the root, S
@@ -696,15 +706,3 @@ void speck::SPECK2D::m_print_set(const char* str, const SPECKSet2D& set) const
 }
 #endif
 
-//
-// Class SPECKSet2D
-//
-auto speck::SPECKSet2D::is_pixel() const -> bool
-{
-    return (length_x == 1 && length_y == 1);
-}
-
-auto speck::SPECKSet2D::is_empty() const -> bool
-{
-    return (length_x == 0 || length_y == 0);
-}

@@ -115,7 +115,7 @@ auto speck::unpack_booleans( std::vector<bool>& dest,
     const size_t num_of_bytes = src_len - src_offset;
     const size_t num_of_bools = num_of_bytes * 8;
     if( dest.size() != num_of_bools )
-        dest.resize( num_of_bools );
+        dest.assign( num_of_bools, false );
 
     const uint8_t* src_ptr = reinterpret_cast<const uint8_t*>(src) + src_offset;
     const uint64_t magic   = 0x8040201008040201;
@@ -176,15 +176,8 @@ auto speck::begin( const std::unique_ptr<T[]>& uptr ) -> ptr_iterator<T>
 {
     return ptr_iterator<T>( uptr.get() );
 }
-template<typename T>
-auto speck::end( const std::unique_ptr<T[]>& uptr, size_t length ) -> ptr_iterator<T>
-{
-    return ptr_iterator<T>( uptr.get() + length );
-}
 template auto speck::begin(const speck::buffer_type_f& )         -> ptr_iterator<float >;
 template auto speck::begin(const speck::buffer_type_d& )         -> ptr_iterator<double>;
-template auto speck::end(  const speck::buffer_type_f&, size_t ) -> ptr_iterator<float >;
-template auto speck::end(  const speck::buffer_type_d&, size_t ) -> ptr_iterator<double>;
 
 
 template<typename T>
@@ -197,10 +190,12 @@ auto speck::end( const std::pair<std::unique_ptr<T[]>, size_t>& sbf ) -> ptr_ite
 {
     return ptr_iterator<T>( sbf.first.get() + sbf.second );
 }
-template auto speck::begin( const speck::smart_buffer_f& ) -> ptr_iterator<float >;
-template auto speck::begin( const speck::smart_buffer_d& ) -> ptr_iterator<double>;
-template auto speck::end(   const speck::smart_buffer_f& ) -> ptr_iterator<float >;
-template auto speck::end(   const speck::smart_buffer_d& ) -> ptr_iterator<double>;
+template auto speck::begin( const speck::smart_buffer_f& )     -> ptr_iterator<float >;
+template auto speck::begin( const speck::smart_buffer_d& )     -> ptr_iterator<double>;
+template auto speck::begin( const speck::smart_buffer_uint8& ) -> ptr_iterator<uint8_t>;
+template auto speck::end(   const speck::smart_buffer_f& )     -> ptr_iterator<float >;
+template auto speck::end(   const speck::smart_buffer_d& )     -> ptr_iterator<double>;
+template auto speck::end(   const speck::smart_buffer_uint8& ) -> ptr_iterator<uint8_t>;
 
 
 auto speck::read_n_bytes( const char* filename, size_t n_bytes, void* buffer ) -> RTNType
@@ -322,11 +317,11 @@ void speck::calc_stats( const T* arr1,   const T* arr2,  size_t len,
     // http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/VELDHUIZEN/node18.html
     // Also refer to https://www.mathworks.com/help/vision/ref/psnr.html
     //
-    const auto avg = speck::kahan_summation( sum_vec.data(), sum_vec.size() ) / T(len);
-    *rmse    = std::sqrt( avg );
+    const auto msr = speck::kahan_summation( sum_vec.data(), sum_vec.size() ) / T(len);
+    *rmse = std::sqrt( msr );
     auto range_sq = *minmax.first - *minmax.second;
     range_sq *= range_sq;
-    *psnr = T(-10.0) * std::log10( avg / range_sq );
+    *psnr = std::log10( range_sq / msr ) * 10.0;
 }
 template void speck::calc_stats( const float*, const float*, size_t, 
                                  float*, float*, float*, float*, float* );
@@ -354,57 +349,59 @@ template auto speck::kahan_summation( const double*, size_t ) -> double;
 
 
 template <typename T>
-auto speck::empty_buf( const std::pair<std::unique_ptr<T[]>, size_t>& buf ) -> bool
+auto speck::empty_buf( const std::pair<T, size_t>& buf ) -> bool
 {
     return (buf.first == nullptr || buf.second == 0);
 }
 template auto speck::empty_buf( const smart_buffer_d&     ) -> bool;
 template auto speck::empty_buf( const smart_buffer_f&     ) -> bool;
 template auto speck::empty_buf( const smart_buffer_uint8& ) -> bool;
+template auto speck::empty_buf( const std::pair<const buffer_type_d&, size_t>& ) -> bool;
 
 
 template <typename T>
-auto speck::size_is( const  std::pair<std::unique_ptr<T[]>, size_t>& buf,
+auto speck::size_is( const  std::pair<T, size_t>& buf,
                      size_t expected_size ) -> bool
 {
     return (buf.first != nullptr && buf.second == expected_size);
 }
-template auto speck::size_is( const smart_buffer_d&, size_t     ) -> bool;
-template auto speck::size_is( const smart_buffer_f&, size_t     ) -> bool;
+template auto speck::size_is( const smart_buffer_d&,     size_t ) -> bool;
+template auto speck::size_is( const smart_buffer_f&,     size_t ) -> bool;
 template auto speck::size_is( const smart_buffer_uint8&, size_t ) -> bool;
+template auto speck::size_is( const std::pair<const buffer_type_d&, size_t>&, size_t ) -> bool;
 
 
 auto speck::chunk_volume( const std::array<size_t, 3>& vol_dim, 
                           const std::array<size_t, 3>& chunk_dim )
                           -> std::vector< std::array<size_t, 6> >
 {
-    for( size_t i = 0; i < 3; i++ )
-        if( vol_dim[i] < chunk_dim[i] )
-            return {};
-
     // Step 1: figure out how many segments are there along each axis.
     auto n_segs = std::array<size_t, 3>();
     for( size_t i = 0; i < 3; i++ ) {
         n_segs[i] = vol_dim[i] / chunk_dim[i];
         if( (vol_dim[i] % chunk_dim[i]) > (chunk_dim[i] / 2) )
             n_segs[i]++;
+        // In case the volume has one dimension that's too small, let's make it
+        // at least one segment anyway.
+        if( n_segs[i] == 0 )
+            n_segs[i] =  1;
     }
 
     // Step 2: calculate the starting indices of each segment along each axis.
     auto x_tics = std::vector<size_t>( n_segs[0] + 1 );
     for( size_t i = 0; i < n_segs[0]; i++ )
         x_tics[i] = i * chunk_dim[0];
-    x_tics[n_segs[0]] = vol_dim[0];
+    x_tics[n_segs[0]] = vol_dim[0]; // the last tic is the length in X
 
     auto y_tics = std::vector<size_t>( n_segs[1] + 1 );
     for( size_t i = 0; i < n_segs[1]; i++ )
         y_tics[i] = i * chunk_dim[1];
-    y_tics[n_segs[1]] = vol_dim[1];
+    y_tics[n_segs[1]] = vol_dim[1]; // the last tic is the length in Y
 
     auto z_tics = std::vector<size_t>( n_segs[2] + 1 );
     for( size_t i = 0; i < n_segs[2]; i++ )
         z_tics[i] = i * chunk_dim[2];
-    z_tics[n_segs[2]] = vol_dim[2];
+    z_tics[n_segs[2]] = vol_dim[2]; // the last tic is the length in Z
 
     // Step 3: fill in details of each chunk
     auto n_chunks = n_segs[0] * n_segs[1] * n_segs[2];
@@ -425,6 +422,56 @@ auto speck::chunk_volume( const std::array<size_t, 3>& vol_dim,
     return std::move(chunks);
 }
 
+
+template<typename T>
+auto speck::gather_chunk( const T* vol, const std::array<size_t, 3>& vol_dim,
+                          const std::array<size_t, 6>& chunk ) -> buffer_type_d
+{
+    if( chunk[0] + chunk[1] > vol_dim[0] || 
+        chunk[2] + chunk[3] > vol_dim[1] ||
+        chunk[4] + chunk[5] > vol_dim[2] )
+        return {};
+
+    auto len = chunk[1] * chunk[3] * chunk[5];
+    auto buf = std::make_unique<double[]>( len );
+
+    size_t idx = 0;
+    for( size_t z = chunk[4]; z < chunk[4] + chunk[5]; z++ ) {
+      const size_t plane_offset = z * vol_dim[0] * vol_dim[1];
+      for( size_t y = chunk[2]; y < chunk[2] + chunk[3]; y++ ) {
+        const size_t col_offset = plane_offset + y * vol_dim[0];
+        for( size_t x = chunk[0]; x < chunk[0] + chunk[1]; x++ )
+          buf[idx++] = vol[ col_offset + x ];
+      }
+    }
+
+    return std::move(buf);
+}
+template auto speck::gather_chunk( const double*, const std::array<size_t, 3>&,
+                                   const std::array<size_t, 6>& ) -> buffer_type_d;
+template auto speck::gather_chunk( const float*, const std::array<size_t, 3>&,
+                                   const std::array<size_t, 6>& ) -> buffer_type_d;
+
+
+template<typename T>
+void speck::scatter_chunk( T* big_vol, const std::array<size_t, 3>& vol_dim,
+                           const buffer_type_d&         small_vol,
+                           const std::array<size_t, 6>& chunk )
+{
+    size_t idx = 0;
+    for( size_t z = chunk[4]; z < chunk[4] + chunk[5]; z++ ) {
+      const size_t plane_offset = z * vol_dim[0] * vol_dim[1];
+      for( size_t y = chunk[2]; y < chunk[2] + chunk[3]; y++ ) {
+        const size_t col_offset = plane_offset + y * vol_dim[0];
+        for( size_t x = chunk[0]; x < chunk[0] + chunk[1]; x++ )
+          big_vol[ col_offset + x ] = small_vol[ idx++ ];
+      }
+    }
+}
+template void speck::scatter_chunk( float*, const std::array<size_t, 3>&,
+                                    const buffer_type_d&, const std::array<size_t, 6>& );
+template void speck::scatter_chunk( double*, const std::array<size_t, 3>&,
+                                    const buffer_type_d&, const std::array<size_t, 6>& );
 
 
 

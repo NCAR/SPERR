@@ -15,13 +15,13 @@
 // This file should only be compiled in non QZ_TERM mode.
 #ifndef QZ_TERM
 
-
+#if 0
 auto use_compressor( const float* in_buf, std::array<size_t, 3> dims, float bpp )
                     -> speck::smart_buffer_uint8 
 {
     const size_t total_vals = dims[0] * dims[1] * dims[2];
-    SPECK3D_Compressor compressor ( dims[0], dims[1], dims[2] );
-    if( compressor.copy_data( in_buf, total_vals ) != speck::RTNType::Good ) {
+    SPECK3D_Compressor compressor;
+    if( compressor.copy_data( in_buf, total_vals, dims[0], dims[1], dims[2] ) != speck::RTNType::Good ) {
         std::cerr << "  -- copying data failed!" << std::endl;
         return {nullptr, 0};
     }
@@ -96,22 +96,23 @@ auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, float 
     
     return 0;
 }
+#endif
 
 
-auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, float bpp,
-                             size_t omp_num_threads ) -> int
+auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, 
+                             std::array<size_t, 3> chunks,
+                             float bpp, size_t omp_num_threads ) -> int
 {
     // Setup
     const size_t total_vals = dims[0] * dims[1] * dims[2];
     SPECK3D_OMP_C compressor;
     compressor.set_dims(dims[0], dims[1], dims[2]);
-    compressor.prefer_chunk_size( 64, 64, 64 );
+    compressor.prefer_chunk_size( chunks[0], chunks[0], chunks[0] );
     compressor.set_num_threads( omp_num_threads );
+    compressor.set_bpp( bpp );
     auto rtn = compressor.use_volume( in_buf, total_vals );
     if(  rtn != RTNType::Good )
         return 1;
-
-    compressor.set_bpp( bpp );
 
     // Perform actual compression work
     auto start_time = std::chrono::steady_clock::now();
@@ -138,7 +139,7 @@ auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, fl
         return 1;
 
     start_time = std::chrono::steady_clock::now();
-    rtn = decompressor.decompress();
+    rtn = decompressor.decompress( encoded_stream.first.get() );
     if(  rtn != RTNType::Good )
         return 1;
     end_time = std::chrono::steady_clock::now();
@@ -177,19 +178,22 @@ int main( int argc, char* argv[] )
     app.add_option("--dims", dims_v, "Dimensions of the input volume.\n"
             "For example, `--dims 128 128 128`.\n")->required()->expected(3);
 
+    std::vector<size_t> chunks_v{ 64, 64, 64 };
+    app.add_option("--chunks", chunks_v, "Dimensions of the preferred chunk size. "
+            "E.g., `--chunks 64 64 64`.\n"
+            "If not specified, then 64^3 will be used\n")->expected(3);
+
     float bpp;
     auto* bpp_ptr = app.add_option("--bpp", bpp, "Target bit-per-pixel value.\n"
                     "For example, `--bpp 0.5`.\n")->check(CLI::Range(0.0f, 64.0f));
 
-    size_t omp_num_threads = 0;
+    size_t omp_num_threads = 4;
     auto* omp_ptr = app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. "
                                    "Default: 4\n"); 
 
     CLI11_PARSE(app, argc, argv);
 
     const std::array<size_t, 3> dims = {dims_v[0], dims_v[1], dims_v[2]};
-    if( omp_num_threads == 0 )
-        omp_num_threads = 4;
 
     // Read and keep a copy of input data (will be used for evaluation)
     const size_t total_vals = dims[0] * dims[1] * dims[2];
@@ -206,7 +210,8 @@ int main( int argc, char* argv[] )
         bpp = 4.0; // We decide to use 4 bpp for initial analysis
     }
     printf("Initial analysis: compression at %.2f bit-per-pixel...  \n", bpp);
-    int rtn = test_configuration_omp( input_buf.get(), dims, bpp, omp_num_threads );
+    int rtn = test_configuration_omp( input_buf.get(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
+                                      bpp, omp_num_threads );
     if( rtn != 0 )
         return rtn;
 
@@ -226,7 +231,8 @@ int main( int argc, char* argv[] )
         }
         printf("\nNow testing bpp = %.2f ...\n", bpp);
     
-        rtn = test_configuration_omp( input_buf.get(), dims, bpp, omp_num_threads );
+        rtn = test_configuration_omp( input_buf.get(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
+                                      bpp, omp_num_threads );
         if ( rtn != 0 )
             return rtn;
 

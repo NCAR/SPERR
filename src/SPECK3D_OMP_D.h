@@ -16,14 +16,14 @@ class SPECK3D_OMP_D
 {
 public:
 
-    // Parse and separate data segments for each chunk.
-    // Individual decompressors will then hold segments of the bitstream.
+    // Parse the header of this stream, and stores the pointer.
     auto use_bitstream( const void*, size_t ) -> RTNType;
 
     auto set_bpp(float) -> RTNType;
     void set_num_threads( size_t );
 
-    auto decompress() -> RTNType;
+    // The pointer passed in here MUST be the same as the one passed to `use_bitstream`.
+    auto decompress( const void* ) -> RTNType;
 
     // Give up the copy that this class holds
     auto release_data_volume() -> speck::smart_buffer_d;
@@ -41,19 +41,15 @@ private:
     size_t      m_chunk_x     = 0;  // Preferred dimension for a chunk.
     size_t      m_chunk_y     = 0;  // Preferred dimension for a chunk.
     size_t      m_chunk_z     = 0;  // Preferred dimension for a chunk.
-    size_t      m_num_threads = 1; // number of theads to use in OpenMP sections
-
+    size_t      m_total_vals  = 0;
+    size_t      m_num_threads = 1;  // number of theads to use in OpenMP sections
     float       m_bpp         = 0.0;
     
     const size_t m_header_magic = 26; // header size would be this number + num_chunks * 4
 
-    std::vector<SPECK3D_Decompressor>   m_decompressors;
-    speck::smart_buffer_d               m_vol_buf;
-
-    //
-    // Private methods
-    //
-    auto m_parse_header( const void*, size_t ) -> std::vector<size_t>;
+    speck::buffer_type_d    m_vol_buf;
+    const uint8_t*          m_bitstream_ptr = nullptr;
+    std::vector<size_t>     m_offsets;
 
 };
 

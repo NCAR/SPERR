@@ -19,9 +19,8 @@ public:
     void prefer_chunk_size( size_t, size_t, size_t );
     void set_num_threads( size_t );
 
-    // Upon receiving incoming data, a chunking scheme is decided, multiple instances
-    // of SPECK3D_Compressor are created, and they retrieve chunks from the source.
-    // Thus, SPECK3D_OMP_C doesn't keep a copy of the incoming data.
+    // Upon receiving incoming data, a chunking scheme is decided, and the volume
+    // is divided and kept in separate chunks.
     template<typename T>
     auto use_volume( const T*, size_t ) -> RTNType;
 
@@ -49,7 +48,7 @@ private:
     size_t      m_chunk_z     = 0; // Dimension of the preferred chunk size
     size_t      m_num_threads = 1; // number of theads to use in OpenMP sections
 
-    std::vector<SPECK3D_Compressor>         m_compressors;
+    std::vector<speck::buffer_type_d>       m_chunk_buffers;
     std::vector<speck::smart_buffer_uint8>  m_encoded_streams;
 
     const size_t m_header_magic = 26; // header size would be this number + num_chunks * 4
@@ -57,6 +56,7 @@ private:
 #ifdef QZ_TERM
     int32_t     m_qz_lev      = 0;
     double      m_tol         = 0.0;
+    // Outlier stats include 1) the number of outliers, and 2) the num of bytes to encode them.
     std::vector<std::pair<size_t, size_t>>  m_outlier_stats;
 #else
     float       m_bpp         = 0.0;
@@ -68,6 +68,5 @@ private:
     auto m_generate_header() const -> speck::smart_buffer_uint8;
 
 };
-
 
 #endif

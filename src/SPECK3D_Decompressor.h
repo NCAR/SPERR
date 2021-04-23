@@ -12,6 +12,11 @@
 #include "SPECK3D.h"
 #include "SPERR.h"
 
+#ifdef USE_ZSTD
+  #include "zstd.h"
+#endif
+
+
 using speck::RTNType;
 
 class SPECK3D_Decompressor {
@@ -29,11 +34,6 @@ public:
     template<typename T>
     auto get_decompressed_volume() const -> std::pair<std::unique_ptr<T[]>, size_t>;
 
-    // Put this chunk to a bigger volume
-    template<typename T>
-    auto scatter_chunk( T* vol,  const std::array<size_t, 3>& vol_dim,
-                        const std::array<size_t, 6>& chunk) const -> RTNType;
-
     auto get_dims() const -> std::array<size_t, 3>;
 
 private:
@@ -42,15 +42,23 @@ private:
     size_t                      m_dim_y             = 0;
     size_t                      m_dim_z             = 0;
 
-    speck::smart_buffer_uint8   m_speck_stream      = {nullptr, 0};
+    std::vector<uint8_t>        m_speck_stream;
 
     speck::CDF97                m_cdf;
     speck::SPECK3D              m_decoder;
 
 #ifdef QZ_TERM
     speck::SPERR                m_sperr;
-    speck::smart_buffer_uint8   m_sperr_stream      = {nullptr, 0};
-    std::vector<speck::Outlier> m_sperr_los;
+    std::vector<uint8_t>        m_sperr_stream;
+    std::vector<speck::Outlier> m_LOS;
+#endif
+
+#ifdef USE_ZSTD
+    // The following resources are used repeatedly during the lifespan of an instance.
+    // Note that `m_tmp_buf` will be written to using direct pointer access, so not
+    // using a std::vector<uint_8> type here.
+    speck::smart_buffer_uint8                             m_tmp_buf = {nullptr, 0};
+    std::unique_ptr<ZSTD_DCtx, decltype(&ZSTD_freeDCtx)>  m_dctx = {nullptr, &ZSTD_freeDCtx};
 #endif
 
 };

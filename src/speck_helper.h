@@ -8,6 +8,7 @@
 #include <array>
 #include <cstddef> // size_t
 #include <cstdlib>
+#include <utility> // std::pair
 #include <memory>
 #include <vector>
 #include <iterator>
@@ -96,11 +97,9 @@ public:
 // Helper functions to generate a ptr_iterator from a unique_ptr.
 // (Their names resemble std::begin() and std::end().)
 // For an array with size N, the begin and end iterators are:
-// auto begin = speck::begin( buf ); auto end = speck::end( buf, N );
+// auto begin = speck::begin( buf ); auto end = speck::begin( buf ) + N;
 template<typename T>
 auto begin( const std::unique_ptr<T[]>& ) -> ptr_iterator<T>;
-template<typename T>
-auto end( const std::unique_ptr<T[]>&, size_t length ) -> ptr_iterator<T>;
 // Generate a ptr_iterator from a smart_buffer.
 template<typename T>
 auto begin( const std::pair<std::unique_ptr<T[]>, size_t>& ) -> ptr_iterator<T>;
@@ -168,20 +167,31 @@ auto kahan_summation( const T*, size_t ) -> T;
 
 // Test if a smart_buffer is empty. Might support other types of buffers in the future.
 template <typename T>
-auto empty_buf( const std::pair<std::unique_ptr<T[]>, size_t>& smart_buf) -> bool;
+auto empty_buf( const std::pair<T, size_t>& smart_buf) -> bool;
 
 // Test if a smart_buffer is non-empty, AND correct in size.
 template <typename T>
-auto size_is( const  std::pair<std::unique_ptr<T[]>, size_t>& smart_buf, 
-              size_t expected_size ) -> bool;
+auto size_is( const std::pair<T, size_t>& smart_buf, size_t expected_size ) -> bool;
 
 
 // Given a whole volume size and a desired chunk size, this helper function returns
-// a list of chunks which are specified by their starting indices in the whole volume
-// and their actual sizes (which might differ from the desired chunk size).
+// a list of chunks specified by 6 integers:
+// chunk[0], [2], [4]: starting index of this chunk 
+// chunk[1], [3], [5]: length of this chunk
 auto chunk_volume( const std::array<size_t, 3>& vol_dim, 
                    const std::array<size_t, 3>& chunk_dim )
                    -> std::vector< std::array<size_t, 6> >;
+
+// Gather a chunk from a bigger volume
+template<typename T>
+auto gather_chunk( const T* vol, const std::array<size_t, 3>& vol_dim, 
+                   const std::array<size_t, 6>& chunk ) -> buffer_type_d;
+
+// Put this chunk to a bigger volume
+template<typename T>
+void scatter_chunk( T* big_vol,  const std::array<size_t, 3>& vol_dim,
+                    const buffer_type_d&         small_vol,
+                    const std::array<size_t, 6>& chunk);
 
 };  // End of speck namespace.
 

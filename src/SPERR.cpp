@@ -29,9 +29,11 @@ void speck::SPERR::add_outlier(size_t pos, double e)
     m_LOS.emplace_back(pos, e);
 }
 
-void speck::SPERR::use_outlier_list(std::vector<Outlier> list)
+void speck::SPERR::use_outlier_list( const std::vector<Outlier>& list)
 {
-    m_LOS = std::move(list);
+    // Not using the "pass by value and move" idiom because we want to 
+    // reuse the storage of `m_LOS` here.
+    m_LOS = list;
 }
 
 void speck::SPERR::set_length(uint64_t len)
@@ -47,6 +49,10 @@ void speck::SPERR::set_tolerance(double t)
 auto speck::SPERR::release_outliers() -> std::vector<Outlier>
 {
     return std::move(m_LOS);
+}
+auto speck::SPERR::view_outliers() -> const std::vector<Outlier>&
+{
+    return m_LOS;
 }
 
 
@@ -67,14 +73,15 @@ auto speck::SPERR::m_part_set(const SPECKSet1D& set) const -> std::array<SPECKSe
 
 void speck::SPERR::m_initialize_LIS()
 {
-    // To initialize this 1D array, just calculate how many partitions can be performed,
-    // and partition this long array to 2 parts.
-
-    // Initialize LIS with possible length values
+    // Note that `m_LIS` is a 2D array. In order to avoid unnecessary memory allocation, 
+    // we don't clear `m_LIS` itself, but clear every secondary array it holds.
+    // This is OK as long as the extra secondary arrays are cleared.
     auto num_of_parts = speck::num_of_partitions(m_total_len);
-    auto num_of_sizes = num_of_parts + 1;
-    m_LIS.clear();
-    m_LIS.resize(num_of_sizes);
+    auto num_of_lists = num_of_parts + 1;
+    if( m_LIS.size() < num_of_lists )
+        m_LIS.resize( num_of_lists );
+    for( auto& list : m_LIS )
+        list.clear();
 
     // Put in two sets, each representing a half of the long array.
     SPECKSet1D set ( 0, m_total_len, 0 ); // the whole 1D array
@@ -130,6 +137,7 @@ auto speck::SPERR::encode() -> RTNType
     std::sort( m_LOS.begin(), m_LOS.end(), [](auto& a, auto& b){return a.location < b.location;} );
     if (!m_ready_to_encode())
         return RTNType::InvalidParam;
+    m_bit_buffer.clear();
     m_encode_mode = true;
 
     m_initialize_LIS();
@@ -389,6 +397,8 @@ auto speck::SPERR::m_process_S_decoding(size_t  idx1,    size_t idx2,
     if( input ) {
         is_sig = m_bit_buffer[m_bit_idx++];
         // Sanity check: the bit buffer should NOT be depleted at this point
+        if( m_bit_idx == m_bit_buffer.size() )
+            printf("m_bit_idx == %ld\n", m_bit_idx);
         assert(m_bit_idx < m_bit_buffer.size());
     }
 
@@ -446,11 +456,6 @@ auto speck::SPERR::num_of_bits() const -> size_t
     return m_bit_buffer.size();
 }
 
-auto speck::SPERR::ith_outlier(size_t idx) const -> Outlier
-{
-    return m_LOS[idx];
-}
-
 auto speck::SPERR::max_coeff_bits() const -> int32_t
 {
     return m_max_coeff_bits;
@@ -466,28 +471,32 @@ auto speck::SPERR::get_encoded_bitstream() const -> smart_buffer_uint8
     const uint64_t num_bits = m_bit_buffer.size();
 
     // Create a copy of the current bit buffer with length being multiples of 8.
-    // The purpose is to not mess up with the useful container.
-    std::vector<bool> tmp_buf;
-    tmp_buf.reserve( num_bits + 8 ); // No need to re-allocate when padding.
-    tmp_buf = m_bit_buffer;
-    while( tmp_buf.size() % 8 != 0 )
-        tmp_buf.push_back(false);
+    // The purpose is to not mess up with `m_bit_buffer`.
+    // Also because vector<bool> is stored internally as 64-bit integers,
+    // It's very likely that our padding won't trigger a re-allocation.
+    m_bvec_tmp = m_bit_buffer;
+    while( m_bvec_tmp.size() % 8 != 0 )
+        m_bvec_tmp.push_back(false);
 
-    const size_t buf_len = m_header_size + tmp_buf.size() / 8;
+    const size_t buf_len = m_header_size + m_bvec_tmp.size() / 8;
     auto buf = std::make_unique<uint8_t[]>( buf_len );
     
     // Fill header
     size_t pos = 0;
+
     std::memcpy( buf.get(), &m_total_len, sizeof(m_total_len) );
     pos += sizeof(m_total_len);
+
     std::memcpy( buf.get() + pos, &m_max_coeff_bits, sizeof(m_max_coeff_bits) );
     pos += sizeof(m_max_coeff_bits);
+
     std::memcpy( buf.get() + pos, &num_bits, sizeof(num_bits) );
     pos += sizeof(num_bits);
+
     assert( pos == m_header_size );
 
     // Assemble the bitstream into bytes
-    auto rtn = speck::pack_booleans( buf, tmp_buf, pos );
+    auto rtn = speck::pack_booleans( buf, m_bvec_tmp, pos );
     if( rtn != RTNType::Good )
         return {nullptr, 0};
     else
@@ -505,12 +514,16 @@ auto speck::SPERR::parse_encoded_bitstream( const void* buf, size_t len ) -> RTN
 
     // Parse header
     uint64_t num_bits, pos = 0;
+
     std::memcpy( &m_total_len, ptr, sizeof(m_total_len) );
     pos += sizeof(m_total_len);
+
     std::memcpy( &m_max_coeff_bits, ptr + pos, sizeof(m_max_coeff_bits) );
     pos += sizeof(m_max_coeff_bits);
+
     std::memcpy( &num_bits, ptr + pos, sizeof(num_bits) );
     pos += sizeof(num_bits);
+
     assert( pos == m_header_size );
 
     // Unpack bits

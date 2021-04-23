@@ -3,23 +3,36 @@
 #include <cstring>
 #include <cassert>
 
-#ifdef USE_ZSTD
-  #include "zstd.h"
-#endif
-
 
 auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
 {
 #ifdef USE_ZSTD
-    // Preprocessing: if ZSTD is enabled, we need to run ZSTD decompression first!
+    // Make sure that we have a ZSTD Decompression Context first
+    if( m_dctx == nullptr ) {
+        auto* ctx_p = ZSTD_createDCtx();
+        if( ctx_p  == nullptr )
+            return RTNType::ZSTDError;
+        else
+            m_dctx.reset(ctx_p);
+    }
+
     const size_t content_size = ZSTD_getFrameContentSize( p, len );
     if( content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN )
         return RTNType::ZSTDError;
-    auto content_buf = std::make_unique<uint8_t[]>( content_size );
-    const auto decomp_size = ZSTD_decompress( content_buf.get(), content_size, p, len );
+
+    // If `m_tmp_buf` is not big enough for the decompressed buffer, we re-size it using
+    // the same strategy as std::vector.
+    if( content_size  > m_tmp_buf.second ) {
+        auto tmp_size = std::max( content_size, m_tmp_buf.second * 2 );
+        m_tmp_buf     = {std::make_unique<uint8_t[]>(tmp_size), tmp_size};
+    }
+
+    const auto decomp_size = ZSTD_decompressDCtx( m_dctx.get(),
+                                                  m_tmp_buf.first.get(), content_size, 
+                                                  p, len );
     if( ZSTD_isError( decomp_size ) || decomp_size != content_size )
         return RTNType::ZSTDError;
-    const uint8_t* const ptr     = content_buf.get();
+    const uint8_t* const ptr     = m_tmp_buf.first.get();
     const size_t         ptr_len = decomp_size;
 #else
     const uint8_t* const ptr     = static_cast<const uint8_t*>(p);
@@ -27,13 +40,12 @@ auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
 #endif
 
     // Step 1: extract SPECK stream from it
-    m_speck_stream = {nullptr, 0};
+    m_speck_stream.clear();
     const auto speck_size = m_decoder.get_speck_stream_size(ptr);
     if( speck_size > ptr_len )
         return RTNType::WrongSize;
-    auto buf = std::make_unique<uint8_t[]>( speck_size );
-    std::memcpy( buf.get(), ptr, speck_size );
-    m_speck_stream = {std::move(buf), speck_size};
+    m_speck_stream.resize( speck_size, 0 );
+    std::copy( ptr, ptr + speck_size, m_speck_stream.begin() );
 
     // Step 2: keep the volume dimension from the header
     auto dims = m_decoder.get_speck_stream_dims( ptr );
@@ -43,16 +55,14 @@ auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
 
     // Step 3: extract SPERR stream from it
 #ifdef QZ_TERM
-    m_sperr_stream = {nullptr, 0};
+    m_sperr_stream.clear();
     if( speck_size < ptr_len ) {
         const uint8_t* const sperr_p = ptr + speck_size;
         const auto sperr_size = m_sperr.get_sperr_stream_size( sperr_p );
         if( sperr_size != ptr_len - speck_size )
             return RTNType::WrongSize;
-        buf = std::make_unique<uint8_t[]>( sperr_size );
-        std::memcpy( buf.get(), sperr_p, sperr_size );
-        m_sperr_stream = {std::move(buf), sperr_size};
-        m_sperr_los.clear();
+        m_sperr_stream.resize( sperr_size, 0 );
+        std::copy( sperr_p, sperr_p + sperr_size, m_sperr_stream.begin() );
     }
 #endif
 
@@ -71,14 +81,13 @@ auto SPECK3D_Decompressor::set_bpp( float bpp ) -> RTNType
 }
 
 
-auto SPECK3D_Decompressor::decompress() -> RTNType
+auto SPECK3D_Decompressor::decompress( ) -> RTNType
 {
     // Step 1: SPECK decode.
-    if( speck::empty_buf(m_speck_stream) )
+    if( m_speck_stream.empty() )
         return RTNType::Error;
     
-    auto rtn = m_decoder.parse_encoded_bitstream( m_speck_stream.first.get(),
-                                                  m_speck_stream.second );
+    auto rtn = m_decoder.parse_encoded_bitstream(m_speck_stream.data(), m_speck_stream.size());
     if( rtn != RTNType::Good )
         return rtn;
 
@@ -88,24 +97,26 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
         return rtn;
 
     // Step 2: Inverse Wavelet Transform
-    m_cdf.set_dims( m_dim_x, m_dim_y, m_dim_z );
+    //
+    // (Here we ask `m_cdf` to make a copy of coefficients from `m_decoder` instead of
+    //  transfer the ownership, because `m_decoder` will reuse that chunk of memory.)
+    auto coeffs = m_decoder.view_data();
+    m_cdf.copy_data( coeffs.first.get(), coeffs.second, m_dim_x, m_dim_y, m_dim_z );
     m_cdf.set_mean( m_decoder.get_image_mean() );
-    auto coeffs = m_decoder.release_data();
-    m_cdf.take_data( std::move(coeffs.first), coeffs.second );
     m_cdf.idwt3d();
 
     // Step 3: If there's SPERR data, then do the correction.
     // This condition occurs only in QZ_TERM mode.
 #ifdef QZ_TERM
-    if( !speck::empty_buf(m_sperr_stream) ) {
-        rtn = m_sperr.parse_encoded_bitstream(m_sperr_stream.first.get(), 
-                                              m_sperr_stream.second);
+    m_LOS.clear();
+    if( !m_sperr_stream.empty() ) {
+        rtn = m_sperr.parse_encoded_bitstream(m_sperr_stream.data(), m_sperr_stream.size());
         if( rtn != RTNType::Good )
             return rtn;
         rtn = m_sperr.decode();
         if( rtn != RTNType::Good )
             return rtn;
-        m_sperr_los = m_sperr.release_outliers();
+        m_LOS = m_sperr.view_outliers();
     }
 #endif
 
@@ -117,18 +128,18 @@ template<typename T>
 auto SPECK3D_Decompressor::get_decompressed_volume() const ->
                            std::pair<std::unique_ptr<T[]>, size_t>
 {
-    auto [vol, len]  = m_cdf.get_read_only_data();
+    auto [vol, len]  = m_cdf.view_data();
     if( vol == nullptr || len == 0 )
         return {nullptr, 0};
 
     auto out_buf = std::make_unique<T[]>( len );
     auto begin   = speck::begin( vol );
-    auto end     = speck::end( vol, len );
+    auto end     = begin + len;
     std::copy( begin, end, speck::begin(out_buf) );
 
 #ifdef QZ_TERM
     // If there are corrections for outliers, do it now!
-    for( const auto& outlier : m_sperr_los ) {
+    for( const auto& outlier : m_LOS ) {
         out_buf[outlier.location] += outlier.error;
     }
 #endif
@@ -139,142 +150,9 @@ template auto SPECK3D_Decompressor::get_decompressed_volume() const -> speck::sm
 template auto SPECK3D_Decompressor::get_decompressed_volume() const -> speck::smart_buffer_d;
 
 
-template<typename T>
-auto SPECK3D_Decompressor::scatter_chunk( T* big_vol, const std::array<size_t, 3>& vol_dim,
-                                          const std::array<size_t, 6>& chunk ) const -> RTNType
-{
-    if( chunk[1] != m_dim_x || chunk[3] != m_dim_y || chunk[5] != m_dim_z )
-        return RTNType::DimMismatch;
-
-    auto [small_vol, len] = this->get_decompressed_volume<T>();
-    size_t idx = 0;
-    for( size_t z = chunk[4]; z < chunk[4] + chunk[5]; z++ ) {
-      const size_t plane_offset = z * vol_dim[0] * vol_dim[1];
-      for( size_t y = chunk[2]; y < chunk[2] + chunk[3]; y++ ) {
-        const size_t col_offset = plane_offset + y * vol_dim[0];
-        for( size_t x = chunk[0]; x < chunk[0] + chunk[1]; x++ )
-          big_vol[ col_offset + x ] = small_vol[ idx++ ];
-      }
-    }
-
-    return RTNType::Good;
-}
-template auto SPECK3D_Decompressor::scatter_chunk( float*, const std::array<size_t, 3>&,
-                                                   const std::array<size_t, 6>& ) const -> RTNType;
-template auto SPECK3D_Decompressor::scatter_chunk( double*, const std::array<size_t, 3>&,
-                                                   const std::array<size_t, 6>& ) const -> RTNType;
-
-
 auto SPECK3D_Decompressor::get_dims() const -> std::array<size_t, 3>
 {
     return {m_dim_x, m_dim_y, m_dim_z};
 }
-
-
-#if 0
-auto SPECK3D_Decompressor::m_parse_metadata() -> RTNType
-{
-    // This method parses the metadata of a bitstream and performs the following tasks:
-    // Note: the definition of metadata is documented in the file SPECK3D_Compressor.cpp
-    // 1) Verify if the major version number is consistant.
-    // 2) Verify that the application of ZSTD is consistant, and apply ZSTD if needed.
-    // 3) Make sure if the bitstream is for 3D encoding.
-    // 4) Fill `m_speck_stream` and `m_sperr_stream` as appropriate and empty `m_entire_stream`.
-
-    assert( !speck::empty_buf(m_entire_stream) && speck::empty_buf(m_speck_stream) );
-#ifdef QZ_TERM
-    assert( speck::empty_buf(m_sperr_stream) );
-#endif
-
-    // Helper alias
-    const uint8_t* entire_ptr  = m_entire_stream.first.get();
-    size_t         entire_size = m_entire_stream.second;
-
-    uint8_t meta[2];
-    assert( sizeof(meta) == m_meta_size );
-    bool    metabool[8];
-    std::memcpy( meta, entire_ptr, sizeof(meta) );
-    speck::unpack_8_booleans( metabool, meta[1] );
-
-    // Task 1)
-    if( meta[0] != uint8_t(SPECK_VERSION_MAJOR) )
-        return RTNType::VersionMismatch;
-
-    // Task 3)
-    if( metabool[1] != true ) // true means it's 3D
-        return RTNType::DimMismatch;
-
-    // Task 2)
-#ifdef USE_ZSTD
-    if( metabool[0] == false )
-        return RTNType::ZSTDMismatch;
-
-    const auto content_size = ZSTD_getFrameContentSize( entire_ptr  + m_meta_size,
-                                                        entire_size - m_meta_size );
-    if( content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN )
-        return RTNType::ZSTDError;
-
-    auto content_buf = std::make_unique<uint8_t[]>( m_meta_size + content_size );
-    const auto decomp_size = ZSTD_decompress( content_buf.get() + m_meta_size, 
-                                              content_size,
-                                              entire_ptr  + m_meta_size,
-                                              entire_size - m_meta_size );
-    if( ZSTD_isError( decomp_size ) || decomp_size != content_size )
-        return RTNType::ZSTDError;
-
-    // Replace `m_entire_stream` with the decompressed version.
-    std::memcpy( content_buf.get(), meta, sizeof(meta) );
-    m_entire_stream.first  = std::move( content_buf );
-    m_entire_stream.second = m_meta_size + decomp_size;
-    entire_ptr             = m_entire_stream.first.get();
-    entire_size            = m_entire_stream.second;
-#else
-    if( metabool[0] == true )
-        return RTNType::ZSTDMismatch;
-#endif
-        
-    // Task 4)
-    const auto speck_size = m_decoder.get_speck_stream_size(entire_ptr + m_meta_size);
-    if( metabool[2] ) { 
-        // There is SPERR bitstream, which could only happen in QZ_TERM mode.
-#ifdef QZ_TERM
-        assert( m_meta_size + speck_size <= entire_size );
-
-        auto buf = std::make_unique<uint8_t[]>( speck_size );
-        std::memcpy( buf.get(), entire_ptr + m_meta_size, speck_size );
-        m_speck_stream = {std::move(buf), speck_size};
-
-        auto sperr_size = entire_size - m_meta_size - speck_size;
-        buf = std::make_unique<uint8_t[]>( sperr_size );
-        std::memcpy( buf.get(), entire_ptr + m_meta_size + speck_size, sperr_size );
-        m_sperr_stream = {std::move(buf), sperr_size};
-#else
-        return RTNType::InvalidParam;
-#endif
-    }
-    else {
-        // There is no SPERR bitstream. This condition could occur in either QZ_TERM or not.
-        assert( m_meta_size + speck_size == entire_size );
-
-        auto buf = std::make_unique<uint8_t[]>( speck_size );
-        std::memcpy( buf.get(), entire_ptr + m_meta_size, speck_size );
-        m_speck_stream = {std::move(buf), speck_size};
-    }
-        
-    // Clean up work
-    m_entire_stream = {nullptr, 0};
-    entire_ptr      = nullptr;
-    entire_size     = 0;
-
-    return RTNType::Good;
-}
-#endif
-
-
-
-
-
-
-
 
 

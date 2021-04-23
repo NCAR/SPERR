@@ -2,39 +2,77 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cstring> // for std::memcpy()
-#include <numeric> // for std::accumulate()
+#include <cstring> // std::memcpy()
+#include <numeric> // std::accumulate()
 #include <type_traits>
 
-//
-// Uncomment the following lines to enable OpenMP
-//
-// #ifdef USE_OMP
-//    #include <omp.h>
-// #endif
+#ifdef USE_OMP
+   #include <omp.h>
+#endif
 
 template <typename T>
-void speck::CDF97::copy_data(const T* data, size_t len)
+auto speck::CDF97::copy_data(const T* data, size_t len, size_t dimx, size_t dimy, size_t dimz) 
+                 -> RTNType
 {
     static_assert(std::is_floating_point<T>::value,
                   "!! Only floating point values are supported !!");
+    if( len != dimx * dimy * dimz )
+        return RTNType::DimMismatch;
 
-    assert(m_dim_x * m_dim_y * m_dim_z == 0 || m_dim_x * m_dim_y * m_dim_z == len);
-    m_buf_len  = len;
-    m_data_buf = std::make_unique<double[]>(len);
+    // If `m_data_buf` is empty, or having a different length, we need to allocate memory!
+    if( m_data_buf == nullptr || m_buf_len != len ) {
+        m_buf_len  = len;
+        m_data_buf = std::make_unique<double[]>(len); 
+    }
     std::copy( data, data + len, speck::begin(m_data_buf) );
-}
-template void speck::CDF97::copy_data(const float*, size_t);
-template void speck::CDF97::copy_data(const double*, size_t);
 
-void speck::CDF97::take_data(buffer_type_d ptr, size_t len)
+    m_dim_x = dimx;
+    m_dim_y = dimy;
+    m_dim_z = dimz;
+
+    auto max_col = std::max( std::max(dimx, dimy), dimz );
+    // Notice that this buffer needs to hold two columns.
+    if( !speck::size_is(m_col_buf, max_col * 2) ) {
+        // Weird clang behavior (clang version 11.1.0 on MacOS, clang version 10.0.0-4ubuntu1)
+        // that doesn't allow the following line to link.
+        // m_col_buf = {std::make_unique<double[]>(max_col * 2), max_col * 2};
+        m_col_buf = std::make_pair(std::make_unique<double[]>(max_col * 2), max_col * 2);
+    }
+
+    auto max_slice = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
+    if( !speck::size_is(m_slice_buf, max_slice) )
+        m_slice_buf = {std::make_unique<double[]>(max_slice), max_slice};
+
+    return RTNType::Good;
+}
+template auto speck::CDF97::copy_data(const float*,  size_t, size_t, size_t, size_t) -> RTNType;
+template auto speck::CDF97::copy_data(const double*, size_t, size_t, size_t, size_t) -> RTNType;
+
+
+auto speck::CDF97::take_data(buffer_type_d ptr, size_t len, size_t dimx, size_t dimy, size_t dimz)
+                 -> RTNType
 {
-    assert(m_dim_x * m_dim_y * m_dim_z == 0 || m_dim_x * m_dim_y * m_dim_z == len);
-    m_buf_len  = len;
+    if( len != dimx * dimy * dimz )
+        return RTNType::DimMismatch;
+
     m_data_buf = std::move(ptr);
+    m_buf_len  = len;
+    m_dim_x    = dimx;
+    m_dim_y    = dimy;
+    m_dim_z    = dimz;
+
+    auto max_col = std::max( std::max(dimx, dimy), dimz );
+    if( !speck::size_is(m_col_buf, max_col * 2) )
+        m_col_buf = {std::make_unique<double[]>(max_col * 2), max_col * 2};
+
+    auto max_slice = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
+    if( !speck::size_is(m_slice_buf, max_slice) )
+        m_slice_buf = {std::make_unique<double[]>(max_slice), max_slice};
+
+    return RTNType::Good;
 }
 
-auto speck::CDF97::get_read_only_data() const -> std::pair<const buffer_type_d&, size_t>
+auto speck::CDF97::view_data() const -> std::pair<const buffer_type_d&, size_t>
 {
     return std::make_pair(std::cref(m_data_buf), m_buf_len);
     // Note: the following syntax would also work, but the code above better expresses intent. 
@@ -51,71 +89,61 @@ auto speck::CDF97::release_data() -> std::pair<buffer_type_d, size_t>
 void speck::CDF97::dwt1d()
 {
     m_calc_mean();
-    auto m_data_begin = speck::begin( m_data_buf );
-    std::for_each( m_data_begin, m_data_begin + m_buf_len,
-                   [tmp = m_data_mean](auto& val){val -= tmp;} );
+    auto begin = speck::begin( m_data_buf );
+    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val -= tmp;} );
 
     size_t num_xforms = speck::num_of_xforms(m_dim_x);
-    m_dwt1d(m_data_buf.get(), m_buf_len, num_xforms);
+    m_dwt1d(m_data_buf.get(), m_buf_len, num_xforms, m_col_buf.first.get());
 }
 
 void speck::CDF97::idwt1d()
 {
     size_t num_xforms = speck::num_of_xforms(m_dim_x);
-    m_idwt1d(m_data_buf.get(), m_buf_len, num_xforms);
+    m_idwt1d(m_data_buf.get(), m_buf_len, num_xforms, m_col_buf.first.get());
 
-    auto m_data_begin = speck::begin( m_data_buf );
-    std::for_each( m_data_begin, m_data_begin + m_buf_len,
-                   [tmp = m_data_mean](auto& val){val += tmp;} );
+    auto begin = speck::begin( m_data_buf );
+    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val += tmp;} );
 }
 
 void speck::CDF97::dwt2d()
 {
     m_calc_mean();
-    auto m_data_begin = speck::begin( m_data_buf );
-    std::for_each( m_data_begin, m_data_begin + m_buf_len,
-                   [tmp = m_data_mean](auto& val){val -= tmp;} );
+    auto begin = speck::begin( m_data_buf );
+    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val -= tmp;} );
 
     size_t     num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
-    const auto max_dim       = std::max(m_dim_x, m_dim_y);
-    auto       tmp_buf       = std::make_unique<double[]>(max_dim * 2);
-    m_dwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, tmp_buf.get());
+    m_dwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, m_col_buf.first.get());
 }
 
 void speck::CDF97::idwt2d()
 {
-    const auto max_dim       = std::max(m_dim_x, m_dim_y);
-    auto       tmp_buf       = std::make_unique<double[]>(max_dim * 2);
     size_t     num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
-    m_idwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, tmp_buf.get());
+    m_idwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, m_col_buf.first.get());
 
-    auto m_data_begin = speck::begin( m_data_buf );
-    std::for_each( m_data_begin, m_data_begin + m_buf_len,
-                   [tmp = m_data_mean](auto& val){val += tmp;} );
+    auto begin = speck::begin( m_data_buf );
+    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val += tmp;} );
 }
 
 void speck::CDF97::dwt3d()
 {
     m_calc_mean();
-    auto m_data_begin = speck::begin( m_data_buf );
-    std::for_each( m_data_begin, m_data_begin + m_buf_len,
-                   [tmp = m_data_mean](auto& val){val -= tmp;} );
+    auto begin = speck::begin( m_data_buf );
+    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val -= tmp;} );
 
+#ifdef USE_OMP
     size_t num_threads = 1;
-//
-// Uncomment the following lines to enable OpenMP
-//
-// #ifdef USE_OMP
-//    #pragma omp parallel
-//    {
-//      if( omp_get_thread_num() == 0 )
-//        num_threads = omp_get_num_threads();
-//    }
-// #endif
-
-    size_t max_dim              = std::max(m_dim_x, m_dim_y);
-    max_dim                     = std::max(max_dim, m_dim_z);
+    #pragma omp parallel
+    {
+      if( omp_get_thread_num() == 0 )
+        num_threads = omp_get_num_threads();
+    }
+    size_t max_dim              = std::max( std::max(m_dim_x, m_dim_y), m_dim_z );
     buffer_type_d tmp_buf_pool  = std::make_unique<double[]>(max_dim * 2 * num_threads);
+    double* const tmp_buf       = tmp_buf_pool.get();
+#else
+    double* const tmp_buf       = m_col_buf.first.get();
+#endif
+
     const size_t  plane_size_xy = m_dim_x * m_dim_y;
 
     /*
@@ -138,30 +166,32 @@ void speck::CDF97::dwt3d()
     /*
      * Note on the order of performing transforms in 3 dimensions:
      * this implementation follows QccPack's example.
-     *
-     * First transform along the Z dimension
      */
 
-    // Process one XZ slice at a time
+     // First transform along the Z dimension
+     //
+
+#ifdef USE_OMP
     buffer_type_d z_column_pool = std::make_unique<double[]>(m_dim_x * m_dim_z * num_threads);
+    double* const z_columns_ptr = z_column_pool.get();
+#else
+    double* const z_columns_ptr = m_slice_buf.first.get();
+#endif
+
     const auto    num_xforms_z   = speck::num_of_xforms(m_dim_z);
 
-    //
-    // Uncomment the following lines to enable OpenMP
-    //
     // #pragma omp parallel for
     for (size_t y = 0; y < m_dim_y; y++) {
         const auto    y_offset    = y * m_dim_x;
-//
-// Uncomment the following lines to enable OpenMP
-//
-// #ifdef USE_OMP
-//        const size_t  my_rank     = omp_get_thread_num();
-// #else
-        const size_t  my_rank     = 0;
-// #endif
-        double* const my_z_col    = z_column_pool.get() + my_rank * m_dim_x * m_dim_z;
-        double* const my_tmp_buf  = tmp_buf_pool.get() + my_rank * max_dim * 2;
+
+#ifdef USE_OMP
+        const size_t  my_rank     = omp_get_thread_num();
+        double* const my_z_col    = z_columns_ptr + my_rank * m_dim_x * m_dim_z;
+        double* const my_tmp_buf  = tmp_buf + my_rank * max_dim * 2;
+#else
+        double* const my_z_col    = z_columns_ptr;
+        double* const my_tmp_buf  = tmp_buf;
+#endif
 
         // Re-arrange values of one XZ slice so that they form many z_columns
         for (size_t z = 0; z < m_dim_z; z++) {
@@ -183,22 +213,19 @@ void speck::CDF97::dwt3d()
     }
 
     // Second transform each plane
+    //
     const auto num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
 
-    //
-    // Uncomment the following lines to enable OpenMP
-    //
     // #pragma omp parallel for
     for (size_t z = 0; z < m_dim_z; z++) {
-//
-// Uncomment the following lines to enable OpenMP
-//
-// #ifdef USE_OMP
-//        const size_t  my_rank     = omp_get_thread_num();
-// #else
-        const size_t  my_rank     = 0;
-// #endif
+
+#ifdef USE_OMP
+        const size_t  my_rank     = omp_get_thread_num();
         double* const my_tmp_buf  = tmp_buf_pool.get() + my_rank * max_dim * 2;
+#else
+        double* const my_tmp_buf  = tmp_buf;
+#endif
+
         const size_t  offset      = plane_size_xy * z;
         m_dwt2d(m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, my_tmp_buf);
     }
@@ -206,41 +233,38 @@ void speck::CDF97::dwt3d()
 
 void speck::CDF97::idwt3d()
 {
-    size_t num_threads = 1;
-//
-// Uncomment the following lines to enable OpenMP
-//
-// #ifdef USE_OMP
-//    #pragma omp parallel
-//    {
-//        if( omp_get_thread_num() == 0 )
-//            num_threads = omp_get_num_threads();
-//    }
-// #endif
 
-    size_t max_dim              = std::max(m_dim_x, m_dim_y);
-    max_dim                     = std::max(max_dim, m_dim_z);
+#ifdef USE_OMP
+    size_t num_threads = 1;
+    #pragma omp parallel
+    {
+        if( omp_get_thread_num() == 0 )
+            num_threads = omp_get_num_threads();
+    }
+    const size_t max_dim        = std::max( std::max(m_dim_x, m_dim_y), m_dim_z );
     buffer_type_d tmp_buf_pool  = std::make_unique<double[]>(max_dim * 2 * num_threads);
+    double* const tmp_buf       = tmp_buf_pool.get();
+#else
+    double* const tmp_buf       = m_col_buf.first.get();
+#endif
+
     const size_t  plane_size_xy = m_dim_x * m_dim_y;
 
     // First, inverse transform each plane
+    //
     auto num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
 
-    //
-    // Uncomment the following lines to enable OpenMP
-    //
     // #pragma omp parallel for
     for (size_t i = 0; i < m_dim_z; i++) {
         const size_t offset  = plane_size_xy * i;
-//
-// Uncomment the following lines to enable OpenMP
-//
-// #ifdef USE_OMP
-//        const size_t my_rank = omp_get_thread_num();
-// #else
-        const size_t my_rank = 0;
-// #endif
-        double* const my_tmp_buf = tmp_buf_pool.get() + max_dim * 2 * my_rank;
+
+#ifdef USE_OMP
+        const size_t  my_rank    = omp_get_thread_num();
+        double* const my_tmp_buf = tmp_buf + max_dim * 2 * my_rank;
+#else
+        double* const my_tmp_buf = tmp_buf;
+#endif
+
         m_idwt2d(m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, my_tmp_buf);
     }
 
@@ -264,25 +288,29 @@ void speck::CDF97::idwt3d()
      */
 
     // Process one XZ slice at a time
+    //
+
+#ifdef USE_OMP
     buffer_type_d z_column_pool = std::make_unique<double[]>(m_dim_x * m_dim_z * num_threads);
+    double* const z_columns_ptr = z_column_pool.get();
+#else
+    double* const z_columns_ptr = m_slice_buf.first.get();
+#endif
+
     const auto    num_xforms_z  = speck::num_of_xforms(m_dim_z);
 
-    //
-    // Uncomment the following lines to enable OpenMP
-    //
     // #pragma omp parallel for
     for (size_t y = 0; y < m_dim_y; y++) {
         const auto y_offset  = y * m_dim_x;
-//
-// Uncomment the following lines to enable OpenMP
-//
-// #ifdef USE_OMP
-//        const size_t my_rank = omp_get_thread_num();
-// #else
-        const size_t my_rank = 0;
-// #endif
-        double* const my_z_col   = z_column_pool.get() + m_dim_x * m_dim_z * my_rank;
-        double* const my_tmp_buf = tmp_buf_pool.get() + max_dim * 2 * my_rank;
+
+#ifdef USE_OMP
+        const size_t  my_rank    = omp_get_thread_num();
+        double* const my_z_col   = z_columns_ptr + m_dim_x * m_dim_z * my_rank;
+        double* const my_tmp_buf = tmp_buf + max_dim * 2 * my_rank;
+#else
+        double* const my_z_col   = z_columns_ptr;
+        double* const my_tmp_buf = tmp_buf;
+#endif
 
         // Re-arrange values on one slice so that they form many z_columns
         for (size_t z = 0; z < m_dim_z; z++) {
@@ -304,9 +332,8 @@ void speck::CDF97::idwt3d()
     }
 
     // Finally, add back the mean which was subtracted earlier.
-    auto m_data_begin = speck::begin( m_data_buf );
-    std::for_each( m_data_begin, m_data_begin + m_buf_len,
-                   [tmp = m_data_mean](auto& val){val += tmp;} );
+    auto begin = speck::begin( m_data_buf );
+    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val += tmp;} );
 }
 
 
@@ -322,17 +349,17 @@ void speck::CDF97::m_calc_mean()
     //
     assert(m_dim_x > 0 && m_dim_y > 0 && m_dim_z > 0);
 
-    auto slice_means        = std::make_unique<double[]>(m_dim_z);
     const size_t slice_size = m_dim_x * m_dim_y;
 
     for (size_t z = 0; z < m_dim_z; z++) {
         auto begin = speck::begin( m_data_buf ) + slice_size * z;
         auto end   = begin + slice_size;
-        slice_means[z] = std::accumulate( begin, end, double{0.0} ) / double(slice_size);
+        m_col_buf.first[z] = std::accumulate( begin, end, double{0.0} ) / double(slice_size);
     }
 
-    auto begin = speck::begin( slice_means );
-    double sum = std::accumulate( begin, begin + m_dim_z, double{0.0} );
+    auto begin = speck::begin( m_col_buf );
+    auto end   = begin + m_dim_z;   // Note that we only filled in `m_dim_z` values.
+    double sum = std::accumulate( begin, end, double{0.0} );
 
     m_data_mean = sum / double(m_dim_z);
 }
@@ -370,15 +397,7 @@ void speck::CDF97::m_dwt1d(double* array,
                            size_t  num_of_lev,
                            double* tmp_buf)
 {
-    double*       ptr;
-    buffer_type_d buf;
-    if (tmp_buf != nullptr) {
-        ptr = tmp_buf;
-    } else {
-        buf = std::make_unique<double[]>(array_len);
-        ptr = buf.get();
-    }
-
+    double* const ptr = tmp_buf;
     std::array<size_t, 2> approx;
     for (size_t lev = 0; lev < num_of_lev; lev++) {
         speck::calc_approx_detail_len(array_len, lev, approx);
@@ -398,15 +417,7 @@ void speck::CDF97::m_idwt1d(double* array,
                             size_t  num_of_lev,
                             double* tmp_buf)
 {
-    double*       ptr;
-    buffer_type_d buf;
-    if (tmp_buf != nullptr) {
-        ptr = tmp_buf;
-    } else {
-        buf = std::make_unique<double[]>(array_len);
-        ptr = buf.get();
-    }
-
+    double* const ptr = tmp_buf;
     std::array<size_t, 2> approx;
     for (size_t lev = num_of_lev; lev > 0; lev--) {
         speck::calc_approx_detail_len(array_len, lev - 1, approx);
@@ -426,18 +437,10 @@ void speck::CDF97::m_dwt2d_one_level(double* plane,
                                      size_t  len_y,
                                      double* tmp_buf)
 {
-    // Create/specify temporary buffers to work on
-    size_t        len_xy = std::max(len_x, len_y);
-    double *      buf_ptr, *buf_ptr2;
-    buffer_type_d buffer;
-    if (tmp_buf != nullptr) {
-        buf_ptr  = tmp_buf;          // First half of the array
-        buf_ptr2 = tmp_buf + len_xy; // Second half of the array
-    } else {
-        buffer   = std::make_unique<double[]>(len_xy * 2);
-        buf_ptr  = buffer.get();     // First half of the array
-        buf_ptr2 = buf_ptr + len_xy; // Second half of the array
-    }
+    // Specify temporary buffers to work on
+    size_t        len_xy   = std::max(len_x, len_y);
+    double* const buf_ptr  = tmp_buf;          // First half of the array
+    double* const buf_ptr2 = tmp_buf + len_xy; // Second half of the array
 
     // First, perform DWT along X for every row
     if (len_x % 2 == 0) // Even length
@@ -497,18 +500,10 @@ void speck::CDF97::m_idwt2d_one_level(double* plane,
                                       size_t  len_y,
                                       double* tmp_buf)
 {
-    // Create/specify temporary buffers to work on
-    size_t        len_xy = std::max(len_x, len_y);
-    double *      buf_ptr, *buf_ptr2;
-    buffer_type_d buffer;
-    if (tmp_buf != nullptr) {
-        buf_ptr  = tmp_buf;          // First half of the array
-        buf_ptr2 = tmp_buf + len_xy; // Second half of the array
-    } else {
-        buffer   = std::make_unique<double[]>(len_xy * 2);
-        buf_ptr  = buffer.get();     // First half of the array
-        buf_ptr2 = buf_ptr + len_xy; // Second half of the array
-    }
+    // Specify temporary buffers to work on
+    size_t        len_xy   = std::max(len_x, len_y);
+    double* const buf_ptr  = tmp_buf;          // First half of the array
+    double* const buf_ptr2 = tmp_buf + len_xy; // Second half of the array
 
     // First, perform IDWT along Y for every column
     if (len_y % 2 == 0) // Even length
@@ -719,20 +714,12 @@ void speck::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double* signal,
         signal[index] *= (-INV_EPSILON);
 }
 
+
 void speck::CDF97::set_mean(double m)
 {
     m_data_mean = m;
 }
 
-void speck::CDF97::set_dims(size_t x, size_t y, size_t z)
-{
-    assert(m_buf_len == x * y * z || m_buf_len == 0);
-
-    m_dim_x   = x;
-    m_dim_y   = y;
-    m_dim_z   = z;
-    m_buf_len = x * y * z;
-}
 
 auto speck::CDF97::get_mean() const -> double
 {
@@ -746,12 +733,3 @@ auto speck::CDF97::get_dims() const -> std::array<size_t, 3>
     return {m_dim_x, m_dim_y, m_dim_z};
 }
 
-void speck::CDF97::reset()
-{
-    m_dim_x     = 0;
-    m_dim_y     = 0;
-    m_dim_z     = 0;
-    m_buf_len   = 0;
-    m_data_mean = 0.0;
-    m_data_buf.reset();
-}

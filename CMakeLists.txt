@@ -36,7 +36,7 @@ if( USE_ZSTD )
     include(ExternalProject)
     ExternalProject_Add( zstd-download
       GIT_REPOSITORY    git@github.com:facebook/zstd.git
-      GIT_TAG           master
+      GIT_TAG           release
       GIT_SHALLOW       "True"
       PREFIX            "${CMAKE_CURRENT_BINARY_DIR}/zstd"
       UPDATE_DISCONNECTED "True"                        # Skip update from git step
@@ -45,6 +45,7 @@ if( USE_ZSTD )
       CMAKE_ARGS        "-DZSTD_MULTITHREAD_SUPPORT=False"
       CMAKE_ARGS        "-DZSTD_BUILD_PROGRAMS=False"   # Don't build zstd command line utilities
       CMAKE_ARGS        "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/zstd/install"
+      CMAKE_ARGS        "-DCMAKE_INSTALL_LIBDIR=lib"
       INSTALL_DIR       "${CMAKE_CURRENT_BINARY_DIR}/zstd/install"
         # !! <INSTALL_DIR> doesn't contain any value now !!
         # But it can be used later by others to retrieve where the installation is.
@@ -52,6 +53,9 @@ if( USE_ZSTD )
       LOG_BUILD         "True"      # Save output in a file, instead of the terminal.
       LOG_INSTALL       "True"      # Save output in a file, instead of the terminal.
     )
+
+    ExternalProject_Get_Property( zstd-download INSTALL_DIR )
+    include_directories("${INSTALL_DIR}/include")
 endif()
 
 
@@ -62,24 +66,20 @@ file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/download/v1.9.1/CLI11.h
               "${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp" )
 
 add_subdirectory( src )
-list( APPEND HELPER_LIBS speck_helper    )
 
-list( APPEND CDF_LIBS CDF97 )
-
-list( APPEND SPECK_Storage_LIBS SPECK_Storage   )
-
-list( APPEND SPECK3D_LIBS SPECK3D_OMP_C        )
-list( APPEND SPECK3D_LIBS SPECK3D_OMP_D        )
-list( APPEND SPECK3D_LIBS SPECK3D_Compressor   )
-list( APPEND SPECK3D_LIBS SPECK3D_Decompressor )
-list( APPEND SPECK3D_LIBS SPECK3D              )
-list( APPEND SPECK3D_LIBS OpenMP::OpenMP_CXX   )
-
-list( APPEND SPECK2D_LIBS SPECK2D_Compressor   )
-list( APPEND SPECK2D_LIBS SPECK2D_Decompressor )
-list( APPEND SPECK2D_LIBS SPECK2D              )
-
-list( APPEND SPERR_LIBS SPERR )
+list( APPEND HELPER_LIBS    speck_helper         )
+list( APPEND CDF_LIBS       CDF97                )
+list( APPEND SPECK_Storage_LIBS SPECK_Storage    )
+list( APPEND SPECK3D_LIBS   SPECK3D_OMP_C        )
+list( APPEND SPECK3D_LIBS   SPECK3D_OMP_D        )
+list( APPEND SPECK3D_LIBS   SPECK3D_Compressor   )
+list( APPEND SPECK3D_LIBS   SPECK3D_Decompressor )
+list( APPEND SPECK3D_LIBS   SPECK3D              )
+list( APPEND SPECK3D_LIBS   OpenMP::OpenMP_CXX   )
+list( APPEND SPECK2D_LIBS   SPECK2D_Compressor   )
+list( APPEND SPECK2D_LIBS   SPECK2D_Decompressor )
+list( APPEND SPECK2D_LIBS   SPECK2D              )
+list( APPEND SPERR_LIBS     SPERR )
 
 if( USE_ZSTD )
     ExternalProject_Get_Property( zstd-download INSTALL_DIR )
@@ -105,12 +105,12 @@ target_link_libraries(      decompressor_3d PUBLIC ${SPECK3D_LIBS}
                                             PUBLIC ${CDF_LIBS}
                                             PUBLIC ${HELPER_LIBS} )
 
-add_executable( compressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_2d.cpp" )
-target_include_directories( compressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
-target_link_libraries(      compressor_2d PUBLIC ${SPECK2D_LIBS}
-                                          PUBLIC ${SPECK_Storage_LIBS}
-                                          PUBLIC ${CDF_LIBS}
-                                          PUBLIC ${HELPER_LIBS} )
+# add_executable( compressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_2d.cpp" )
+# target_include_directories( compressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
+# target_link_libraries(      compressor_2d PUBLIC ${SPECK2D_LIBS}
+#                                           PUBLIC ${SPECK_Storage_LIBS}
+#                                           PUBLIC ${CDF_LIBS}
+#                                           PUBLIC ${HELPER_LIBS} )
 
 if( QZ_TERM )
   add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_qz.cpp" )
@@ -162,7 +162,6 @@ if( BUILD_UNIT_TESTS )
     add_executable( test_dwt
                     "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/dwt_unit_test.cpp" )
     target_link_libraries( test_dwt PUBLIC ${CDF_LIBS}
-                                    PUBLIC ${SPECK_LIBS} 
                                     PUBLIC ${HELPER_LIBS}
                                     PUBLIC gtest_main   )
     add_test( NAME test_dwt COMMAND test_dwt            )

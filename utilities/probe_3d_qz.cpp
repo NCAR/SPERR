@@ -11,16 +11,15 @@
 #include <cstring>
 #include <iostream>
 #include <chrono>
-#include <cctype>   // std::tolower
-#include <numeric>  // std::inner_product
-#include <functional>  // std::plus<>
+#include <cctype>       // std::tolower()
 
 
 #ifdef QZ_TERM
+//
 // This file should only be compiled in QZ_TERM mode.
-
-
+//
 auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, 
+                             std::array<size_t, 3> chunks,
                              int32_t qz_level, double tolerance,
                              size_t  omp_num_threads ) -> int 
 {
@@ -28,7 +27,7 @@ auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims,
     const size_t total_vals = dims[0] * dims[1] * dims[2];
     SPECK3D_OMP_C compressor;
     compressor.set_dims(dims[0], dims[1], dims[2]);
-    compressor.prefer_chunk_size( 64, 64, 64 );
+    compressor.prefer_chunk_size( chunks[0], chunks[1], chunks[2] );
     compressor.set_num_threads( omp_num_threads );
     auto rtn = compressor.use_volume( in_buf, total_vals );
     if(  rtn != RTNType::Good )
@@ -74,7 +73,7 @@ auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims,
         return 1;
 
     start_time = std::chrono::steady_clock::now();
-    rtn = decompressor.decompress();
+    rtn = decompressor.decompress( encoded_stream.first.get() );
     if(  rtn != RTNType::Good )
         return 1;
     end_time = std::chrono::steady_clock::now();
@@ -97,13 +96,14 @@ auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims,
 }
 
 
+#if 0
 auto test_configuration_single_block( const float* in_buf, std::array<size_t, 3> dims, 
                                       int32_t qz_level, double tolerance ) -> int 
 {
     // Setup
     const size_t total_vals = dims[0] * dims[1] * dims[2];
-    SPECK3D_Compressor compressor( dims[0], dims[1], dims[2] );
-    compressor.copy_data( in_buf, total_vals );
+    SPECK3D_Compressor compressor;
+    compressor.copy_data( in_buf, total_vals, dims[0], dims[1], dims[2] );
     compressor.set_qz_level( qz_level );
     compressor.set_tolerance( tolerance );
 
@@ -159,6 +159,7 @@ auto test_configuration_single_block( const float* in_buf, std::array<size_t, 3>
 
     return 0;
 }
+#endif
 
 
 int main( int argc, char* argv[] )
@@ -176,6 +177,11 @@ int main( int argc, char* argv[] )
     app.add_option("--dims", dims_v, "Dimensions of the input volume. "
             "E.g., `--dims 128 128 128`.\n")->required()->expected(3);
 
+    std::vector<size_t> chunks_v{ 64, 64, 64 };
+    app.add_option("--chunks", chunks_v, "Dimensions of the preferred chunk size. "
+            "E.g., `--chunks 64 64 64`.\n"
+            "If not specified, then 64^3 will be used\n")->expected(3);
+
     double tolerance = 0.0;
     app.add_option("-t", tolerance, "Maximum point-wise error tolerance. E.g., `-t 0.001`.\n"
                    "By default, it takes the input as an absolute error tolerance.\n"
@@ -192,15 +198,13 @@ int main( int argc, char* argv[] )
                          "Integer quantization level to test. E.g., `-q -10`. \n"
                          "If not specified, the probe will pick one for you.\n");
 
-    size_t omp_num_threads = 0;
+    size_t omp_num_threads = 4;
     auto* omp_ptr = app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. "
                                    "Default: 4"); 
 
     CLI11_PARSE(app, argc, argv);
 
     const std::array<size_t, 3> dims = {dims_v[0], dims_v[1], dims_v[2]};
-    if( omp_num_threads == 0 )
-        omp_num_threads = 4;
 
     // Read and keep a copy of input data (will be used for evaluation)
     const size_t total_vals = dims[0] * dims[1] * dims[2];
@@ -238,7 +242,8 @@ int main( int argc, char* argv[] )
 
     printf("Initial analysis: absolute error tolerance = %.2e, quantization level = %d ...  \n", 
             tolerance, qz_level);
-    int rtn = test_configuration_omp( input_buf.get(), dims, qz_level, tolerance, omp_num_threads );
+    int rtn = test_configuration_omp( input_buf.get(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
+                                      qz_level, tolerance, omp_num_threads );
     if( rtn != 0 )
         return rtn;
 
@@ -259,7 +264,8 @@ int main( int argc, char* argv[] )
         qz_level = tmp;
         printf("\nNow testing qz level = %d ...\n", qz_level);
     
-        rtn = test_configuration_omp( input_buf.get(), dims, qz_level, tolerance, omp_num_threads );
+        rtn = test_configuration_omp( input_buf.get(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
+                                      qz_level, tolerance, omp_num_threads );
         if ( rtn != 0 )
             return rtn;
 
