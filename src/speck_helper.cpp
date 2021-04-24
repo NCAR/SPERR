@@ -81,7 +81,7 @@ auto speck::pack_booleans( buffer_type_uint8&       dest,
                            const std::vector<bool>& src,
                            size_t                   offset ) -> RTNType
 {
-    if( src.size() % 8 != 0 )
+    if( src.size() % 8 != 0 ) // `src` has to have a size of multiples of 8.
         return RTNType::WrongSize;
 
     const uint64_t magic = 0x8040201008040201;
@@ -107,6 +107,9 @@ auto speck::unpack_booleans( std::vector<bool>& dest,
                              size_t             src_len,
                              size_t             src_offset ) -> RTNType
 {
+    if( src == nullptr )
+        return RTNType::InvalidParam;
+
     if( src_len < src_offset )
         return RTNType::WrongSize;
 
@@ -154,8 +157,8 @@ auto speck::unpack_booleans( std::vector<bool>& dest,
 
 void speck::pack_8_booleans( uint8_t& dest, const bool* src )
 {
-    const uint64_t magic = 0x8040201008040201;
-    uint64_t       t;
+    const uint64_t  magic = 0x8040201008040201;
+    uint64_t        t;
     std::memcpy(&t, src, 8);
     dest = (magic * t) >> 56;
 }
