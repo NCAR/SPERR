@@ -36,7 +36,7 @@ void speck::calc_approx_detail_len(size_t orig_len, size_t lev,
 {
     size_t low_len  = orig_len;
     size_t high_len = 0;
-    size_t new_low;
+    size_t new_low  = 0;
     for (size_t i = 0; i < lev; i++) {
         new_low  = low_len % 2 == 0 ? low_len / 2 : (low_len + 1) / 2;
         high_len = low_len - new_low;
@@ -67,10 +67,12 @@ auto speck::make_coeff_positive(BufferType& buf, size_t len, std::vector<bool>& 
 
     return max;
 }
-template speck::buffer_type_d::element_type
-speck::make_coeff_positive(buffer_type_d&, size_t, std::vector<bool>&);
-template speck::buffer_type_f::element_type
-speck::make_coeff_positive(buffer_type_f&, size_t, std::vector<bool>&);
+template
+auto speck::make_coeff_positive(buffer_type_d&, size_t, std::vector<bool>&)
+                                -> speck::buffer_type_d::element_type;
+template 
+auto speck::make_coeff_positive(buffer_type_f&, size_t, std::vector<bool>&)
+                                -> speck::buffer_type_f::element_type;
 
 
 // Good solution to deal with bools and unsigned chars
