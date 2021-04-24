@@ -69,7 +69,7 @@ private:
     T* m_pos       = nullptr;
 
 public:
-    explicit ptr_iterator(T* p) : m_pos(p) {}
+    explicit ptr_iterator(T* p) : m_pos(p) {} // prevent any other pointer types being converted to T* .
     ptr_iterator()                                   = default;
     ptr_iterator           (const ptr_iterator<T>& ) = default;
     ptr_iterator           (      ptr_iterator<T>&&) = default;
@@ -100,9 +100,11 @@ public:
 // auto begin = speck::begin( buf ); auto end = speck::begin( buf ) + N;
 template<typename T>
 auto begin( const std::unique_ptr<T[]>& ) -> ptr_iterator<T>;
+
 // Generate a ptr_iterator from a smart_buffer.
 template<typename T>
 auto begin( const std::pair<std::unique_ptr<T[]>, size_t>& ) -> ptr_iterator<T>;
+
 template<typename T>
 auto end(   const std::pair<std::unique_ptr<T[]>, size_t>& ) -> ptr_iterator<T>;
 
@@ -127,8 +129,9 @@ void calc_approx_detail_len(size_t orig_len, size_t lev, // input
 // 1) fill sign_array based on coeff_buffer signs, and
 // 2) make coeff_buffer containing all positive values.
 // 3) returns the maximum magnitude of all encountered values.
-template <typename U>
-auto make_coeff_positive(U& buf, size_t len, std::vector<bool>&) -> typename U::element_type;
+template <typename BufferType>
+auto make_coeff_positive(BufferType& buf, size_t len, std::vector<bool>&) 
+                         -> typename BufferType::element_type;
 
 // Pack and unpack booleans to array of chars. 
 // When packing, the caller should make sure the number of booleans is a multiplier of 8.

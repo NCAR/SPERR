@@ -16,10 +16,8 @@ auto speck::num_of_xforms(size_t len) -> size_t
 {
     assert(len > 0);
     // I decide 8 is the minimal length to do one level of xform.
-    float  f             = std::log2(float(len) / 8.0f);
-    size_t num_of_xforms = f < 0.0f ? 0 : size_t(f) + 1;
-
-    return num_of_xforms;
+    float  f = std::log2(float(len) / 8.0f);
+    return ( f < 0.0f ? 0 : size_t(f) + 1 );
 }
 
 auto speck::num_of_partitions(size_t len) -> size_t
@@ -49,17 +47,15 @@ void speck::calc_approx_detail_len(size_t orig_len, size_t lev,
     approx_detail_len[1] = high_len;
 }
 
-template <typename U>
-auto speck::make_coeff_positive(U& buf, size_t len, std::vector<bool>& sign_array) 
-     -> typename U::element_type
+template <typename BufferType>
+auto speck::make_coeff_positive(BufferType& buf, size_t len, std::vector<bool>& sign_array) 
+                                -> typename BufferType::element_type
 {
     sign_array.assign(len, true);
     auto max                = std::abs(buf[0]);
-    using element_type      = typename U::element_type;
+    using element_type      = typename BufferType::element_type;
     const element_type zero = 0.0;
 
-    // Notice that the use of std::vector<bool> for sign_array prevents 
-    //   this loop been parallelized using OpenMP.
     for (size_t i = 0; i < len; i++) {
         if (buf[i] < zero) {
             buf[i]        = -buf[i];
