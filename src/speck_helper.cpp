@@ -122,15 +122,22 @@ auto speck::unpack_booleans( std::vector<bool>& dest,
     const uint64_t magic   = 0x8040201008040201;
     const uint64_t mask    = 0x8080808080808080;
 
+#ifndef OMP_UNPACK_BOOLEANS
+    bool a[8];
+    for( size_t byte_idx = 0; byte_idx < num_of_bytes; byte_idx++ ) {
+        const uint8_t* ptr = src_ptr + byte_idx;
+        const uint64_t t   = (( magic * (*ptr) ) & mask) >> 7;
+        std::memcpy( a, &t, 8 );
+        for( size_t i = 0; i < 8; i++ )
+            dest[ byte_idx * 8 + i ] = a[i];
+    }
+#else
     // Because in most implementations std::vector<bool> is stored as uint64_t values,
-    //   we parallel in strides of 64 bits, or 8 bytes..
-    const size_t stride_size = 8;
-    const size_t num_of_strides  = num_of_bytes / stride_size;
+    //   we parallel in strides of 64 bits, or 8 bytes.
+    const size_t stride_size    = 8;
+    const size_t num_of_strides = num_of_bytes / stride_size;
 
-    //
-    // Uncomment the following line to enable OpenMP
-    //
-    // #pragma omp parallel for
+    #pragma omp parallel for
     for( size_t stride = 0; stride < num_of_strides; stride++ ) {
         bool a[64];
         for( size_t byte = 0; byte < stride_size; byte++ ) {
@@ -141,16 +148,16 @@ auto speck::unpack_booleans( std::vector<bool>& dest,
         for( size_t i = 0; i < 64; i++ )
             dest[ stride * 64 + i ] = a[i];
     }
-
     // This loop is at most 7 iterations, so not to worry about parallel anymore.
     for( size_t byte_idx = stride_size * num_of_strides; byte_idx < num_of_bytes; byte_idx++ ) {
         const uint8_t* ptr = src_ptr + byte_idx;
-        const uint64_t t = (( magic * (*ptr) ) & mask) >> 7;
+        const uint64_t t   = (( magic * (*ptr) ) & mask) >> 7;
         bool  a[8];
         std::memcpy( a, &t, 8 );
         for( size_t i = 0; i < 8; i++ )
             dest[ byte_idx * 8 + i ] = a[i];
     }
+#endif
 
     return RTNType::Good;
 }
