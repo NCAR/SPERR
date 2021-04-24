@@ -67,12 +67,10 @@ auto speck::make_coeff_positive(BufferType& buf, size_t len, std::vector<bool>& 
 
     return max;
 }
-template
-auto speck::make_coeff_positive(buffer_type_d&, size_t, std::vector<bool>&)
-                                -> speck::buffer_type_d::element_type;
-template 
-auto speck::make_coeff_positive(buffer_type_f&, size_t, std::vector<bool>&)
-                                -> speck::buffer_type_f::element_type;
+template auto speck::make_coeff_positive(buffer_type_d&, size_t, std::vector<bool>&)
+                                        -> speck::buffer_type_d::element_type;
+template auto speck::make_coeff_positive(buffer_type_f&, size_t, std::vector<bool>&)
+                                        -> speck::buffer_type_f::element_type;
 
 
 // Good solution to deal with bools and unsigned chars
@@ -184,8 +182,8 @@ auto speck::begin( const std::unique_ptr<T[]>& uptr ) -> ptr_iterator<T>
 {
     return ptr_iterator<T>( uptr.get() );
 }
-template auto speck::begin(const speck::buffer_type_f& )         -> ptr_iterator<float >;
-template auto speck::begin(const speck::buffer_type_d& )         -> ptr_iterator<double>;
+template auto speck::begin(const speck::buffer_type_f& ) -> ptr_iterator<float >;
+template auto speck::begin(const speck::buffer_type_d& ) -> ptr_iterator<double>;
 
 
 template<typename T>
