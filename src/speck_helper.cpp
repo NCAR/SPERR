@@ -84,15 +84,11 @@ auto speck::pack_booleans( buffer_type_uint8&       dest,
 
     const uint64_t magic = 0x8040201008040201;
 
-    //
-    // Uncomment the following line to enable OpenMP
-    //
-    // #pragma omp parallel for
+    bool     a[8];
+    uint64_t t = 0;
     for( size_t i = 0; i < src.size(); i += 8 ) {
-        bool a[8];
         for( size_t j = 0; j < 8; j++ )
             a[j] = src[i + j];
-        uint64_t t;
         std::memcpy( &t, a, 8 );
         dest[ offset + i / 8 ] = (magic * t) >> 56;
     }
@@ -121,10 +117,11 @@ auto speck::unpack_booleans( std::vector<bool>& dest,
     const uint64_t mask    = 0x8080808080808080;
 
 #ifndef OMP_UNPACK_BOOLEANS
-    bool a[8];
+    bool     a[8];
+    uint64_t t = 0;
     for( size_t byte_idx = 0; byte_idx < num_of_bytes; byte_idx++ ) {
         const uint8_t* ptr = src_ptr + byte_idx;
-        const uint64_t t   = (( magic * (*ptr) ) & mask) >> 7;
+        t = (( magic * (*ptr) ) & mask) >> 7;
         std::memcpy( a, &t, 8 );
         for( size_t i = 0; i < 8; i++ )
             dest[ byte_idx * 8 + i ] = a[i];
