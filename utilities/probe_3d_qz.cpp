@@ -255,14 +255,14 @@ int main( int argc, char* argv[] )
     std::cin >> answer;
     while ( std::tolower(answer) == 'y' ) {
         int32_t tmp;
-        std::cout << "Please input a new qz level to test: ";
+        std::cout << std::endl << "Please input a new qz level to test: ";
         std::cin >> tmp;
-        while (tmp < qz_level - 10 || tmp > qz_level + 10) {
-            printf("Please input a qz level within (-10, 10) of %d:  ", qz_level);
+        while (tmp < qz_level - 15 || tmp > qz_level + 15) {
+            printf("Please input a qz_level within (-15, 15) of %d:  ", qz_level);
             std::cin >> tmp;
         }
         qz_level = tmp;
-        printf("\nNow testing qz level = %d ...\n", qz_level);
+        printf("\nNow testing qz_level = %d ...\n", qz_level);
     
         rtn = test_configuration_omp( input_buf.get(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
                                       qz_level, tolerance, omp_num_threads );
@@ -273,7 +273,7 @@ int main( int argc, char* argv[] )
         std::cin >> answer;
         answer = std::tolower(answer);
         while( answer != 'y' && answer != 'n' ) {
-            std::cout << "Do you want to try other qz level? [y/n]:  ";
+            std::cout << "Do you want to try other qz_level? [y/n]:  ";
             std::cin >> answer;
             answer = std::tolower(answer);
         }

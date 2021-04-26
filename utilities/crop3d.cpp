@@ -1,72 +1,26 @@
-#include <iostream>
+#include <array>
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
+#include <memory>
 
 #define FLOAT float
 
-using namespace std;
-
-/* 
- * Opens a file to read and returns the length of the file in byte.
- */
-long int OpenFileRead( FILE* &file, char* filename )
+size_t translate_idx( const std::array<size_t, 3>& dims, std::array<size_t, 3> ijk )
 {
-    file = fopen( filename, "rb" );
-    if( file == NULL ) {
-        cerr << "File open error: " << filename << endl;
-        exit(1);
-    }
-    fseek( file, 0, SEEK_END );
-    long size = ftell( file );
-    fseek( file, 0, SEEK_SET );
-
-    return size;
-}
-
-/*
- * Read a data chunk from the binary file.
- * Both offset and count are in the number of floats (not bytes).
- */
-void ReadChunk( FILE* file, long offset, long count, FLOAT* buf )
-{
-    long rt = fseek( file, sizeof(FLOAT) * offset, SEEK_SET );
-    if( rt != 0 ){
-        cerr << "File seek error! " << endl;
-        exit(1);
-    }
-    rt = fread( buf, sizeof(FLOAT), count, file );
-    if( rt != count ) {
-        printf("want to read = %ld, actual read = %ld\n", count, rt);
-        cerr << "File read error! " << endl;
-        exit(1);
-    }
-}
-
-/*
- * Writes a data chunk into the end of a binary file.
- */
-void WriteChunk( FILE* file, long count, FLOAT* buf )
-{
-    long rt = fseek( file, 0, SEEK_END );
-    if( rt != 0 ){
-        cerr << "File seek error! " << endl;
-        exit(1);
-    }
-    rt = fwrite( buf, sizeof(FLOAT), count, file );
-    if( rt != count ) {
-        cerr << "File write error! " << endl;
-        exit(1);
-    }
+    const auto plane = ijk[2] * dims[0] * dims[1];
+    const auto col   = ijk[1] * dims[0];
+    return (ijk[0] + col + plane);
 }
 
 int main(int argc, char* argv[]) {
 
     if( argc != 12 ){
-        cerr << "Usage: InFileName, InFileNX, InFileNY, InFileNZ, "
+        std::cerr << "Usage: InFileName, InFileNX, InFileNY, InFileNZ, "
              << "OutFileName, OutStartX, OutFinishX, "
-             << "OutStartY, OutFinishY, OutStartZ, OutFinishZ. " << endl
+             << "OutStartY, OutFinishY, OutStartZ, OutFinishZ. " << std::endl
              << "For example, if you want to crop from index 64 "
-             << "to index 127 in X dimension, just type 64 and 127!" << endl;
+             << "to index 128 (exclusive) in X dimension, just type 64 and 128!" << std::endl;
         exit (1);
     }
 
@@ -74,40 +28,55 @@ int main(int argc, char* argv[]) {
      * It is the user's responsibility to make sure the range to crop 
      * is within the range of input file.
      */
-    int inNX  = atoi( argv[2] );
-    int inNY  = atoi( argv[3] );
-    int inNZ  = atoi( argv[4] );
-    int outStartX  = atoi( argv[6] );
-    int outFinishX = atoi( argv[7] );
-    int outStartY  = atoi( argv[8] );
-    int outFinishY = atoi( argv[9] );
-    int outStartZ  = atoi( argv[10] );
-    int outFinishZ = atoi( argv[11] );
+    auto inDims = std::array<size_t, 3>{std::atol( argv[2] ), std::atol( argv[3] ), std::atol( argv[4] )};
+    auto inValNum = inDims[0] * inDims[1] * inDims[2];
+    size_t outStartX  = std::atol( argv[6] );
+    size_t outFinishX = std::atol( argv[7] );
+    size_t outStartY  = std::atol( argv[8] );
+    size_t outFinishY = std::atol( argv[9] );
+    size_t outStartZ  = std::atol( argv[10] );
+    size_t outFinishZ = std::atol( argv[11] );
+    auto outDims = std::array<size_t, 3>{ outFinishX - outStartX,
+                                          outFinishY - outStartY,    
+                                          outFinishZ - outStartZ };
+    auto outValNum = outDims[0] * outDims[1] * outDims[2];
 
-    FILE* infile  = fopen( argv[1], "rb" );
-    if( infile == NULL ) {
-        cerr << "output file open error: " << argv[1] << endl;
+    std::FILE* infile  = std::fopen( argv[1], "rb" );
+    if( infile == nullptr ) {
+        std::cerr << "input file open error: " << argv[1] << std::endl;
         exit (1);
     }
-    FILE* outfile = fopen( argv[5], "wb" );  
-    if( outfile == NULL ) {
-        cerr << "output file open error: " << argv[5] << endl;
+    
+    auto inbuf = std::make_unique<FLOAT[]>( inValNum );
+    auto cnt   = std::fread( inbuf.get(), sizeof(FLOAT), inValNum, infile );
+    if( cnt != inValNum ) {
+        std::cerr << "input file read error: " << argv[1] << std::endl;
         exit (1);
     }
 
-    int outNX = outFinishX - outStartX + 1;
-    FLOAT* buf = new FLOAT[ outNX ];
+    auto outbuf = std::make_unique<FLOAT[]>( outValNum );
+    size_t counter = 0;
+    for( size_t z = outStartZ; z < outFinishZ; z++ ) {
+    for( size_t y = outStartY; y < outFinishY; y++ ) {
+    for( size_t x = outStartX; x < outFinishX; x++ ) {
+        auto idx = translate_idx( inDims, {x, y, z} );
+        outbuf[counter++] = inbuf[idx];
+    } } }
 
-    for( int z = outStartZ; z <= outFinishZ; z++ )
-        for( int y = outStartY; y <= outFinishY; y++ ) {
-            long offset = z*inNX*inNY + y*inNX;
-            ReadChunk( infile, offset, outNX, buf );
-            WriteChunk( outfile, outNX, buf );
-        }
+    std::FILE* outfile = std::fopen( argv[5], "wb" );  
+    if( outfile == nullptr ) {
+        std::cerr << "output file open error: " << argv[5] << std::endl;
+        exit (1);
+    }
 
-    delete[] buf;
-    fclose( infile );
-    fclose( outfile );
+    cnt = std::fwrite( outbuf.get(), sizeof(FLOAT), outValNum, outfile );
+    if( cnt != outValNum ) {
+        std::cerr << "output file write error: " << argv[5] << std::endl;
+        exit (1);
+    }
+
+    std::fclose( infile );
+    std::fclose( outfile );
 
     return 0;
 }
