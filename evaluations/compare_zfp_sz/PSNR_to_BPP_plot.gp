@@ -121,7 +121,7 @@ set cbtics  norangelimit autofreq
 set rtics axis in scale 1,0.5 nomirror norotate  autojustify
 set rtics  norangelimit autofreq 
 unset ttics
-set title "PSNR to BPP Plot" 
+set title "Rate-Distortion w/ Error Bounding\n{/*0.8 Magnitude of Vorticity}"
 set title  font "" textcolor lt -1 norotate
 set timestamp bottom 
 set timestamp "" 
@@ -174,6 +174,5 @@ set psdir
 set fit brief errorvariables nocovariancevariables errorscaling prescale nowrap v5
 GNUTERM = "qt"
 VoxelDistance = {9.00500479207635e-308, 1.97626258336499e-323}
-## Last datafile plotted: "PSNR-BPP.data"
 plot "PSNR-BPP.data" using 1:2 w linespoints lw 2 title " SPECK", "PSNR-BPP.data" using 3:4 w linespoints lw 2 title "ZFP", "PSNR-BPP.data" using 5:6 w linespoints lw 2 title "SZ"
 #    EOF
