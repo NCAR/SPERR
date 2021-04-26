@@ -10,7 +10,7 @@
 #    	gnuplot home:     http://www.gnuplot.info
 #    	faq, bugs, etc:   type "help FAQ"
 #    	immediate help:   type "help"  (plot window: hit 'h')
-# set terminal qt 0 font "Helvetica,18"
+set terminal qt 0 font "Helvetica,18"
 # set output
 unset clip points
 set clip one
@@ -175,5 +175,5 @@ set fit brief errorvariables nocovariancevariables errorscaling prescale nowrap 
 GNUTERM = "qt"
 VoxelDistance = {9.00500479207635e-308, 1.97626258336499e-323}
 ## Last datafile plotted: "PSNR-BPP.data"
-plot "PSNR-BPP.data" using 1:2 w linespoints lw 2 title "SPECK (8-core)", "PSNR-BPP.data" using 3:4 w linespoints lw 2 title "ZFP (8-core)", "PSNR-BPP.data" using 5:6 w linespoints lw 2 title "SZ (Serial)"
+plot "PSNR-BPP.data" using 1:2 w linespoints lw 2 title " SPECK", "PSNR-BPP.data" using 3:4 w linespoints lw 2 title "ZFP", "PSNR-BPP.data" using 5:6 w linespoints lw 2 title "SZ"
 #    EOF
