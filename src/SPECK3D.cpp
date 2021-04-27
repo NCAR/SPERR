@@ -660,17 +660,18 @@ auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2,
 {
     auto  subsets = m_partition_S_XYZ( m_LIS[idx1][idx2] );
 
-    // Since some subsets could be empty, let's put empty sets at the end
-    // Also need to organize `subset_sigs` to maintain the relative order
+    // Since some subsets could be empty, let's put empty sets at the end.
     for( size_t i = 0; i < 8; i++ ) {
         if( subsets[i].is_empty() )
             subset_sigs[i] = SigType::Garbage;
             // Value SigType::Garbage is only used here locally.
     }
+    // Also need to organize `subset_sigs` to maintain the relative order with subsets.
+    std::remove( subset_sigs.begin(), subset_sigs.end(), SigType::Garbage );
+
     const auto set_end    = std::remove_if( subsets.begin(), subsets.end(),
                             [](const auto& s){return s.is_empty();} );
     const auto set_end_m1 = set_end - 1;
-    std::remove( subset_sigs.begin(), subset_sigs.end(), SigType::Garbage );
 
     auto sig_it = subset_sigs.begin();
     size_t sig_counter = 0;
