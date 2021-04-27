@@ -669,13 +669,12 @@ auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2,
     }
     const auto set_end    = std::remove_if( subsets.begin(), subsets.end(),
                             [](const auto& s){return s.is_empty();} );
-    const auto sig_end    = std::remove( subset_sigs.begin(), subset_sigs.end(), 
-                            SigType::Garbage );
     const auto set_end_m1 = set_end - 1;
+    std::remove( subset_sigs.begin(), subset_sigs.end(), SigType::Garbage );
 
     auto sig_it = subset_sigs.begin();
     size_t sig_counter = 0;
-    for( auto it = subsets.begin(); it <= set_end_m1; ++it ) {
+    for( auto it = subsets.begin(); it < set_end; ++it ) {
         // If we're looking at the last subset, and no prior subset is found to be
         // significant, then we know that this last one *is* significant.
         bool output = true;
@@ -723,7 +722,7 @@ auto speck::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
     const auto set_end_m1  = set_end - 1;
     size_t     sig_counter = 0;
 
-    for( auto it = subsets.begin(); it <= set_end_m1; ++it ) {
+    for( auto it = subsets.begin(); it < set_end; ++it ) {
         // If we're looking at the last subset, and no prior subset is found to be
         // significant, then we know that this last one *is* significant.
         bool read = true;
