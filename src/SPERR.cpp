@@ -1,6 +1,6 @@
 #include "SPERR.h"
 
-#include <algorithm>
+#include <algorithm> // std::lower_bound()
 #include <cassert>
 #include <cmath>
 #include <cstring>

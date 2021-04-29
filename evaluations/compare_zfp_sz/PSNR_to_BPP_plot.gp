@@ -174,5 +174,5 @@ set psdir
 set fit brief errorvariables nocovariancevariables errorscaling prescale nowrap v5
 GNUTERM = "qt"
 VoxelDistance = {9.00500479207635e-308, 1.97626258336499e-323}
-plot "PSNR-BPP.data" using 1:2 w linespoints lw 2 title " SPECK", "PSNR-BPP.data" using 3:4 w linespoints lw 2 title "ZFP", "PSNR-BPP.data" using 5:6 w linespoints lw 2 title "SZ"
+plot "PSNR-BPP.data" using 1:2 w linespoints lw 2 title " SPERR", "PSNR-BPP.data" using 3:4 w linespoints lw 2 title "ZFP", "PSNR-BPP.data" using 5:6 w linespoints lw 2 title "SZ"
 #    EOF
