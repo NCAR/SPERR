@@ -30,19 +30,7 @@ the encoding algorithm will terminate when a user-defined storage budget is met.
 If set `On`, then the encoding algorithm will terminate after processing a user-defined 
 quantization level. In this case, the output size is non-deterministic.
 
-3. `USE_OMP`. Determines if the program should be compiled with OpenMP enabled. 
-Experiments show that OpenMP provides *limited* benefit, and does *not* scale well after 2 threads.
-    - In one case where serial execution takes 38s, OpenMP with 2 cores takes 28s, OpenMP with 3 cores take 26s,
-      and OpenMP with 4 cores takes 24s.
-
-4. `USE_PMR`. Determines if the encoder uses an [`std::pmr::unsynchronized_pool_resource`] for 
-its internal containers (mainly `std::vector`). Experiments show that this feature provides 
-little to no performance benefit (< 5%) at this point.
-
-5. `USE_ZSTD`. Determines if the SPECK output bitstream further goes through an [ZSTD] compression.
+3. `USE_ZSTD`. Determines if the SPECK output bitstream further goes through an [ZSTD] compression.
 Experiments show that this step can further reduce the output size by ~ 5% without obvious
 performance impact.
 
-
-[`std::pmr::unsynchronized_pool_resource`]: https://en.cppreference.com/w/cpp/memory/unsynchronized_pool_resource
-[ZSTD]: https://facebook.github.io/zstd/
