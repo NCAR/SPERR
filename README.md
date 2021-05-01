@@ -15,11 +15,11 @@ make -j 4
 ```
 
 ## Default Executables
-After building it, there will be 6 executable in the current directory:
-4 examples (`example_xxx`), 1 compressor (`compressor_3d`),
-and 1 decompressor (`compressor_3d`).
-The examples showcase how to use key functions and to perform various tasks,
-while the compressor and decompressor could be used in production settings.
+After building it, there will be 3 executable in the current directory:
+`compressor_3d`, `decompressor_3d`, and `probe_3d`.
+While the compressor and decompressor are supposed to be used in production,
+the probe is supposed to provide richer information (PSNR, L-Infty, etc.) 
+on how well SPERR works on a particular data with a particular setting. 
 
 ## Optional Configurations
 A user could use `ccmake` to toggle optional configurations.
