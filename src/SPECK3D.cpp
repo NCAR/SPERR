@@ -663,8 +663,7 @@ auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2,
     // Since some subsets could be empty, let's put empty sets at the end.
     for( size_t i = 0; i < 8; i++ ) {
         if( subsets[i].is_empty() )
-            subset_sigs[i] = SigType::Garbage;
-            // Value SigType::Garbage is only used here locally.
+            subset_sigs[i] = SigType::Garbage; // SigType::Garbage is only used locally here.
     }
     // Also need to organize `subset_sigs` to maintain the relative order with subsets.
     std::remove( subset_sigs.begin(), subset_sigs.end(), SigType::Garbage );
@@ -883,6 +882,10 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
     sub7.start_z  = set.start_z + split_z[0];
     sub7.length_z = split_z[1];
 
+    //
+    // My research and tests show that this return is subject to NRVO (Named
+    // Return Value Optimization) even without optimization turned on.
+    //
     return subsets;
 }
 

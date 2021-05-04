@@ -38,7 +38,7 @@ void speck::calc_approx_detail_len(size_t orig_len, size_t lev,
     size_t high_len = 0;
     for (size_t i = 0; i < lev; i++) {
         high_len = low_len / 2;
-        low_len  = low_len - high_len;
+        low_len -= high_len;
     }
 
     approx_detail_len[0] = low_len;
