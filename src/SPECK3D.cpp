@@ -211,7 +211,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
 
     while (xf < num_of_xforms_xy && xf < num_of_xforms_z) {
         auto subsets = m_partition_S_XYZ(big);
-        big = subsets[0];
+        big = subsets[0]; // Reference `m_partition_S_XYZ()` for subset ordering
         // Iterate the rest subsets.
         for (size_t i = 1; i < subsets.size(); i++) {
             const auto parts = subsets[i].part_level;
@@ -658,7 +658,7 @@ auto speck::SPECK3D::m_process_S_decode(size_t  idx1,    size_t idx2,
 auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2, 
                                      std::array<SigType, 8> subset_sigs) -> RTNType
 {
-    auto  subsets = m_partition_S_XYZ( m_LIS[idx1][idx2] );
+    auto subsets = m_partition_S_XYZ( m_LIS[idx1][idx2] );
 
     // Since some subsets could be empty, let's put empty sets at the end.
     for( size_t i = 0; i < 8; i++ ) {
@@ -798,13 +798,14 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
             s.part_level++;
     }
 
+    constexpr size_t offsets[3] { 1, 2, 4 };
+
     //
     // The actual figuring out where it starts/ends part...
     //
-    const size_t offsets[3] { 1, 2, 4 };
     // subset (0, 0, 0)
-    size_t sub_i  = 0 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
-    auto&  sub0   = subsets[sub_i];
+    constexpr auto idx0 = 0 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
+    auto&  sub0   = subsets[idx0];
     sub0.start_x  = set.start_x;
     sub0.length_x = split_x[0];
     sub0.start_y  = set.start_y;
@@ -813,8 +814,8 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
     sub0.length_z = split_z[0];
 
     // subset (1, 0, 0)
-    sub_i         = 1 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
-    auto& sub1    = subsets[sub_i];
+    constexpr auto idx1 = 1 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
+    auto& sub1    = subsets[idx1];
     sub1.start_x  = set.start_x + split_x[0];
     sub1.length_x = split_x[1];
     sub1.start_y  = set.start_y;
@@ -823,8 +824,8 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
     sub1.length_z = split_z[0];
 
     // subset (0, 1, 0)
-    sub_i         = 0 * offsets[0] + 1 * offsets[1] + 0 * offsets[2];
-    auto& sub2    = subsets[sub_i];
+    constexpr auto idx2 = 0 * offsets[0] + 1 * offsets[1] + 0 * offsets[2];
+    auto& sub2    = subsets[idx2];
     sub2.start_x  = set.start_x;
     sub2.length_x = split_x[0];
     sub2.start_y  = set.start_y + split_y[0];
@@ -833,8 +834,8 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
     sub2.length_z = split_z[0];
 
     // subset (1, 1, 0)
-    sub_i         = 1 * offsets[0] + 1 * offsets[1] + 0 * offsets[2];
-    auto& sub3    = subsets[sub_i];
+    constexpr auto idx3 = 1 * offsets[0] + 1 * offsets[1] + 0 * offsets[2];
+    auto& sub3    = subsets[idx3];
     sub3.start_x  = set.start_x + split_x[0];
     sub3.length_x = split_x[1];
     sub3.start_y  = set.start_y + split_y[0];
@@ -843,8 +844,8 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
     sub3.length_z = split_z[0];
 
     // subset (0, 0, 1)
-    sub_i         = 0 * offsets[0] + 0 * offsets[1] + 1 * offsets[2];
-    auto& sub4    = subsets[sub_i];
+    constexpr auto idx4 = 0 * offsets[0] + 0 * offsets[1] + 1 * offsets[2];
+    auto& sub4    = subsets[idx4];
     sub4.start_x  = set.start_x;
     sub4.length_x = split_x[0];
     sub4.start_y  = set.start_y;
@@ -853,8 +854,8 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
     sub4.length_z = split_z[1];
 
     // subset (1, 0, 1)
-    sub_i         = 1 * offsets[0] + 0 * offsets[1] + 1 * offsets[2];
-    auto& sub5    = subsets[sub_i];
+    constexpr auto idx5 = 1 * offsets[0] + 0 * offsets[1] + 1 * offsets[2];
+    auto& sub5    = subsets[idx5];
     sub5.start_x  = set.start_x + split_x[0];
     sub5.length_x = split_x[1];
     sub5.start_y  = set.start_y;
@@ -863,8 +864,8 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
     sub5.length_z = split_z[1];
 
     // subset (0, 1, 1)
-    sub_i         = 0 * offsets[0] + 1 * offsets[1] + 1 * offsets[2];
-    auto& sub6    = subsets[sub_i];
+    constexpr auto idx6 = 0 * offsets[0] + 1 * offsets[1] + 1 * offsets[2];
+    auto& sub6    = subsets[idx6];
     sub6.start_x  = set.start_x;
     sub6.length_x = split_x[0];
     sub6.start_y  = set.start_y + split_y[0];
@@ -873,8 +874,8 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
     sub6.length_z = split_z[1];
 
     // subset (1, 1, 1)
-    sub_i         = 1 * offsets[0] + 1 * offsets[1] + 1 * offsets[2];
-    auto& sub7    = subsets[sub_i];
+    constexpr auto idx7 = 1 * offsets[0] + 1 * offsets[1] + 1 * offsets[2];
+    auto& sub7    = subsets[idx7];
     sub7.start_x  = set.start_x + split_x[0];
     sub7.length_x = split_x[1];
     sub7.start_y  = set.start_y + split_y[0];
