@@ -385,7 +385,7 @@ TEST( speck3d_bit_rate, narrow_data_range )
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 69.043655 );
+    EXPECT_GT( psnr, 69.043647 );
     EXPECT_LT( psnr, 69.043656 );
     EXPECT_LT( lmax, 9.103715e-07 );
 
