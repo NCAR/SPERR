@@ -92,7 +92,7 @@ auto SPECK2D_Compressor::get_encoded_bitstream() const
     // bool_byte[2]  : if there is error-bound data after the SPECK stream.
     // bool_byte[3-7]: unused 
     //
-    uint8_t meta[2] = {uint8_t(SPECK_VERSION_MAJOR), 0};
+    uint8_t meta[2] = {uint8_t(SPERR_VERSION_MAJOR), 0};
     assert( sizeof(meta) == m_meta_size );
     bool metabool[8];
 #ifdef USE_ZSTD

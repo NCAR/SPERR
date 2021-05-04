@@ -155,7 +155,7 @@ auto SPECK2D_Decompressor::m_parse_metadata() -> RTNType
     speck::unpack_8_booleans( metabool, meta[1] );
 
     // Task 1)
-    if( meta[0] != uint8_t(SPECK_VERSION_MAJOR) )
+    if( meta[0] != uint8_t(SPERR_VERSION_MAJOR) )
         return RTNType::VersionMismatch;
 
     // Task 2)

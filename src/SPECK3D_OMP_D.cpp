@@ -41,7 +41,7 @@ auto SPECK3D_OMP_D::use_bitstream( const void* p, size_t total_len ) -> RTNType
     uint8_t ver;
     std::memcpy( &ver, u8p + loc, sizeof(ver) );
     loc += sizeof(ver);
-    if( ver / 10 != SPECK_VERSION_MAJOR )
+    if( ver / 10 != SPERR_VERSION_MAJOR )
         return RTNType::VersionMismatch;
 
     // Parse Step 2: ZSTD application needs to be consistent.

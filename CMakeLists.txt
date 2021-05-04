@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-project(SPECK VERSION 0.1)
+project(SPERR VERSION 0.1)
 
 # specify the C++ standard
 # CMake will try to add a -std=c++17 flag if the compiler supports, but if it doesn't,
@@ -28,7 +28,7 @@ endif()
 #
 # configure a header file to pass some of the CMake settings to the source code
 #
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/SpeckConfig.h.in" "SpeckConfig.h")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/SperrConfig.h.in" "SperrConfig.h")
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if( USE_ZSTD )
@@ -123,6 +123,7 @@ target_link_libraries(      probe_3d PUBLIC ${SPECK3D_LIBS}
                                      PUBLIC ${SPERR_LIBS}
                                      PUBLIC ${CDF_LIBS}
                                      PUBLIC ${HELPER_LIBS} )
+
 
 if( BUILD_UNIT_TESTS )
     # Download and unpack googletest at configure time

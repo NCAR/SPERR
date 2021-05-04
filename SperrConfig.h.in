@@ -1,0 +1,10 @@
+#ifndef SPERR_CONFIG
+#define SPERR_CONFIG
+
+#define SPERR_VERSION_MAJOR @SPERR_VERSION_MAJOR@
+#define SPERR_VERSION_MINOR @SPERR_VERSION_MINOR@
+
+#cmakedefine USE_ZSTD
+#cmakedefine QZ_TERM
+
+#endif

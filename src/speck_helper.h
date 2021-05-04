@@ -12,7 +12,7 @@
 #include <memory>
 #include <vector>
 #include <iterator>
-#include "SpeckConfig.h"
+#include "SperrConfig.h"
 
 namespace speck {
 

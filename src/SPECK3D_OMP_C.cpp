@@ -207,7 +207,7 @@ auto SPECK3D_OMP_C::m_generate_header() const -> speck::smart_buffer_uint8
     size_t loc = 0;
 
     // Version number
-    uint8_t ver = 10 * SPECK_VERSION_MAJOR + SPECK_VERSION_MINOR;
+    uint8_t ver = 10 * SPERR_VERSION_MAJOR + SPERR_VERSION_MINOR;
     std::memcpy( header.get() + loc, &ver, sizeof(ver) );
     loc += sizeof(ver);
 

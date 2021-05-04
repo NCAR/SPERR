@@ -1,3 +1,6 @@
+#
+# Core SPERR libraries
+#
 add_library( speck_helper   speck_helper.cpp  )
 add_library( CDF97          CDF97.cpp         )
 add_library( SPECK_Storage  SPECK_Storage.cpp ) 
@@ -13,6 +16,9 @@ target_include_directories( SPECK3D       INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} 
 target_include_directories( SPERR         INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 
 
+#
+# Wraps core libraries with easy-to-use interfaces
+#
 add_library( SPECK3D_Compressor   SPECK3D_Compressor.cpp   ) 
 add_library( SPECK3D_Decompressor SPECK3D_Decompressor.cpp ) 
 add_library( SPECK3D_OMP_C        SPECK3D_OMP_C.cpp        ) 
@@ -27,8 +33,21 @@ target_include_directories( SPECK3D_OMP_D        INTERFACE ${CMAKE_CURRENT_SOURC
 target_include_directories( SPECK2D_Compressor   INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( SPECK2D_Decompressor INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 
-
 target_compile_options( SPECK3D_OMP_C PUBLIC ${OpenMP_CXX_FLAGS} )
 target_compile_options( SPECK3D_OMP_D PUBLIC ${OpenMP_CXX_FLAGS} )
+
+#
+# Though zstd libraries won't be needed until link time,
+# those zstd headers are needed at compile time.
+# So declare dependency.
+#
+if( USE_ZSTD )
+    add_dependencies( SPECK2D_Compressor   zstd-download )
+    add_dependencies( SPECK2D_Decompressor zstd-download )
+    add_dependencies( SPECK3D_Compressor   zstd-download )
+    add_dependencies( SPECK3D_Decompressor zstd-download )
+    add_dependencies( SPECK3D_OMP_C        zstd-download )
+    add_dependencies( SPECK3D_OMP_D        zstd-download )
+endif()
     
 
