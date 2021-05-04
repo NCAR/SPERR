@@ -67,7 +67,7 @@ int sam_get_statsf( const float* arr1, const float* arr2, size_t len,/* input  *
     *rmse = sqrtf( sum );   /* single precision version of sqrt() */
 
     float range2 = (*arr1max - *arr1min) * (*arr1max - *arr1min );
-    *psnr = -10.0f * log10f( sum / range2 ); /* single precision version of log10() */
+    *psnr = 10.0f * log10f( range2 / sum ); /* single precision version of log10() */
     
     return  0;
 }
