@@ -29,7 +29,7 @@ void speck::SPERR::add_outlier(size_t pos, double e)
     m_LOS.emplace_back(pos, e);
 }
 
-void speck::SPERR::use_outlier_list( const std::vector<Outlier>& list)
+void speck::SPERR::copy_outlier_list( const std::vector<Outlier>& list)
 {
     // Not using the "pass by value and move" idiom because we want to 
     // reuse the storage of `m_LOS` here.

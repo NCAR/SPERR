@@ -48,7 +48,7 @@ public:
         speck::SPERR encoder;
         encoder.set_length( length );
         encoder.set_tolerance( tolerance );
-        encoder.use_outlier_list( LOS );
+        encoder.copy_outlier_list( LOS );
 
         if( encoder.encode() != RTNType::Good )
             return;

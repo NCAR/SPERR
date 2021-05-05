@@ -97,7 +97,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     if( !m_LOS.empty() ) {
         m_num_outlier = m_LOS.size();
         m_sperr.set_length( m_total_vals );
-        m_sperr.use_outlier_list( m_LOS );
+        m_sperr.copy_outlier_list( m_LOS );
         rtn = m_sperr.encode();
         if( rtn != RTNType::Good )
             return rtn;
