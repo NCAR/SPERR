@@ -20,7 +20,7 @@ option( QZ_TERM  "Operational mode which terminates by quantization level" ON)
 
 find_package(OpenMP REQUIRED)
 if( OpenMP_CXX_FOUND AND OpenMP_CXX_FLAGS )
-    message(STATUS "OpenMP found! (${OpenMP_CXX_LIB_NAMES})")
+    message(STATUS "OpenMP found! (${OpenMP_CXX_LIB_NAMES} ${OpenMP_CXX_VERSION}: ${OpenMP_CXX_FLAGS})")
 else()
     message(STATUS "OpenMP NOT found!")
 endif()
