@@ -604,53 +604,49 @@ void speck::CDF97::m_scatter_odd(double* dest, const double* orig, size_t len) c
 void speck::CDF97::QccWAVCDF97AnalysisSymmetricEvenEven(double* signal,
                                                         size_t  signal_length)
 {
-    size_t index;
-
-    for (index = 1; index < signal_length - 2; index += 2)
+    for (size_t index = 1; index < signal_length - 2; index += 2)
         signal[index] += ALPHA * (signal[index - 1] + signal[index + 1]);
 
     signal[signal_length - 1] += 2.0 * ALPHA * signal[signal_length - 2];
     signal[0] += 2.0 * BETA * signal[1];
 
-    for (index = 2; index < signal_length; index += 2)
+    for (size_t index = 2; index < signal_length; index += 2)
         signal[index] += BETA * (signal[index + 1] + signal[index - 1]);
 
-    for (index = 1; index < signal_length - 2; index += 2)
+    for (size_t index = 1; index < signal_length - 2; index += 2)
         signal[index] += GAMMA * (signal[index - 1] + signal[index + 1]);
 
     signal[signal_length - 1] += 2.0 * GAMMA * signal[signal_length - 2];
     signal[0] = EPSILON * (signal[0] + 2.0 * DELTA * signal[1]);
 
-    for (index = 2; index < signal_length; index += 2)
+    for (size_t index = 2; index < signal_length; index += 2)
         signal[index] = EPSILON * (signal[index] + DELTA * (signal[index + 1] + signal[index - 1]));
 
-    for (index = 1; index < signal_length; index += 2)
+    for (size_t index = 1; index < signal_length; index += 2)
         signal[index] *= -INV_EPSILON;
 }
 
 void speck::CDF97::QccWAVCDF97SynthesisSymmetricEvenEven(double* signal,
                                                          size_t  signal_length)
 {
-    size_t index;
-
-    for (index = 1; index < signal_length; index += 2)
+    for (size_t index = 1; index < signal_length; index += 2)
         signal[index] *= (-EPSILON);
 
     signal[0] = signal[0] * INV_EPSILON - 2.0 * DELTA * signal[1];
 
-    for (index = 2; index < signal_length; index += 2)
+    for (size_t index = 2; index < signal_length; index += 2)
         signal[index] = signal[index] * INV_EPSILON - DELTA * (signal[index + 1] + signal[index - 1]);
 
-    for (index = 1; index < signal_length - 2; index += 2)
+    for (size_t index = 1; index < signal_length - 2; index += 2)
         signal[index] -= GAMMA * (signal[index - 1] + signal[index + 1]);
 
     signal[signal_length - 1] -= 2.0 * GAMMA * signal[signal_length - 2];
     signal[0] -= 2.0 * BETA * signal[1];
 
-    for (index = 2; index < signal_length; index += 2)
+    for (size_t index = 2; index < signal_length; index += 2)
         signal[index] -= BETA * (signal[index + 1] + signal[index - 1]);
 
-    for (index = 1; index < signal_length - 2; index += 2)
+    for (size_t index = 1; index < signal_length - 2; index += 2)
         signal[index] -= ALPHA * (signal[index - 1] + signal[index + 1]);
 
     signal[signal_length - 1] -= 2.0 * ALPHA * signal[signal_length - 2];
@@ -659,58 +655,56 @@ void speck::CDF97::QccWAVCDF97SynthesisSymmetricEvenEven(double* signal,
 void speck::CDF97::QccWAVCDF97SynthesisSymmetricOddEven(double* signal,
                                                         size_t  signal_length)
 {
-    size_t index;
-
-    for (index = 1; index < signal_length - 1; index += 2)
+    for (size_t index = 1; index < signal_length - 1; index += 2)
         signal[index] *= (-EPSILON);
 
     signal[0] = signal[0] * INV_EPSILON - 2.0 * DELTA * signal[1];
 
-    for (index = 2; index < signal_length - 2; index += 2)
+    for (size_t index = 2; index < signal_length - 2; index += 2)
         signal[index] = signal[index] * INV_EPSILON - DELTA * (signal[index + 1] + signal[index - 1]);
 
-    signal[signal_length - 1] = signal[signal_length - 1] * INV_EPSILON - 2.0 * DELTA * signal[signal_length - 2];
+    signal[signal_length - 1] = signal[signal_length - 1] * INV_EPSILON - 
+                                2.0 * DELTA * signal[signal_length - 2];
 
-    for (index = 1; index < signal_length - 1; index += 2)
+    for (size_t index = 1; index < signal_length - 1; index += 2)
         signal[index] -= GAMMA * (signal[index - 1] + signal[index + 1]);
 
     signal[0] -= 2.0 * BETA * signal[1];
 
-    for (index = 2; index < signal_length - 2; index += 2)
+    for (size_t index = 2; index < signal_length - 2; index += 2)
         signal[index] -= BETA * (signal[index + 1] + signal[index - 1]);
 
     signal[signal_length - 1] -= 2.0 * BETA * signal[signal_length - 2];
 
-    for (index = 1; index < signal_length - 1; index += 2)
+    for (size_t index = 1; index < signal_length - 1; index += 2)
         signal[index] -= ALPHA * (signal[index - 1] + signal[index + 1]);
 }
 
 void speck::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double* signal,
                                                        size_t  signal_length)
 {
-    size_t index;
-
-    for (index = 1; index < signal_length - 1; index += 2)
+    for (size_t index = 1; index < signal_length - 1; index += 2)
         signal[index] += ALPHA * (signal[index - 1] + signal[index + 1]);
 
     signal[0] += 2.0 * BETA * signal[1];
 
-    for (index = 2; index < signal_length - 2; index += 2)
+    for (size_t index = 2; index < signal_length - 2; index += 2)
         signal[index] += BETA * (signal[index + 1] + signal[index - 1]);
 
     signal[signal_length - 1] += 2.0 * BETA * signal[signal_length - 2];
 
-    for (index = 1; index < signal_length - 1; index += 2)
+    for (size_t index = 1; index < signal_length - 1; index += 2)
         signal[index] += GAMMA * (signal[index - 1] + signal[index + 1]);
 
     signal[0] = EPSILON * (signal[0] + 2.0 * DELTA * signal[1]);
 
-    for (index = 2; index < signal_length - 2; index += 2)
+    for (size_t index = 2; index < signal_length - 2; index += 2)
         signal[index] = EPSILON * (signal[index] + DELTA * (signal[index + 1] + signal[index - 1]));
 
-    signal[signal_length - 1] = EPSILON * (signal[signal_length - 1] + 2 * DELTA * signal[signal_length - 2]);
+    signal[signal_length - 1] = EPSILON * (signal[signal_length - 1] + 
+                                2.0 * DELTA * signal[signal_length - 2]);
 
-    for (index = 1; index < signal_length - 1; index += 2)
+    for (size_t index = 1; index < signal_length - 1; index += 2)
         signal[index] *= (-INV_EPSILON);
 }
 
