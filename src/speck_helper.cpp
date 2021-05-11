@@ -85,6 +85,7 @@ auto speck::pack_booleans( buffer_type_uint8&       dest,
     bool     a[8];
     uint64_t t = 0;
     for( size_t i = 0; i < src.size(); i += 8 ) {
+        #pragma GCC unroll 8
         for( size_t j = 0; j < 8; j++ )
             a[j] = src[i + j];
         std::memcpy( &t, a, 8 );
@@ -121,6 +122,7 @@ auto speck::unpack_booleans( std::vector<bool>& dest,
         const uint8_t* ptr = src_ptr + byte_idx;
         t = (( magic * (*ptr) ) & mask) >> 7;
         std::memcpy( a, &t, 8 );
+        #pragma GCC unroll 8
         for( size_t i = 0; i < 8; i++ )
             dest[ byte_idx * 8 + i ] = a[i];
     }

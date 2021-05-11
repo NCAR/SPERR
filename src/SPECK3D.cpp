@@ -781,12 +781,13 @@ auto speck::SPECK3D::m_ready_to_decode() const -> bool
 
 auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::array<SPECKSet3D, 8>
 {
-    std::array<SPECKSet3D, 8> subsets;
-
     const uint32_t split_x[2] { set.length_x - set.length_x / 2, set.length_x / 2 };
     const uint32_t split_y[2] { set.length_y - set.length_y / 2, set.length_y / 2 };
     const uint32_t split_z[2] { set.length_z - set.length_z / 2, set.length_z / 2 };
 
+    std::array<SPECKSet3D, 8> subsets;
+
+    #pragma GCC unroll 8
     for (auto& s : subsets) {
         s.part_level = set.part_level;
         if (split_x[1] > 0)
