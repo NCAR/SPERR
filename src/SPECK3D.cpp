@@ -785,18 +785,15 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
     const uint32_t split_y[2] { set.length_y - set.length_y / 2, set.length_y / 2 };
     const uint32_t split_z[2] { set.length_z - set.length_z / 2, set.length_z / 2 };
 
-    std::array<SPECKSet3D, 8> subsets;
+    auto next_part_lev = set.part_level;
+    next_part_lev     += split_x[1] > 0 ? 1 : 0;
+    next_part_lev     += split_y[1] > 0 ? 1 : 0;
+    next_part_lev     += split_z[1] > 0 ? 1 : 0;
 
+    std::array<SPECKSet3D, 8> subsets;
     #pragma GCC unroll 8
-    for (auto& s : subsets) {
-        s.part_level = set.part_level;
-        if (split_x[1] > 0)
-            s.part_level++;
-        if (split_y[1] > 0)
-            s.part_level++;
-        if (split_z[1] > 0)
-            s.part_level++;
-    }
+    for (auto& s : subsets)
+        s.part_level = next_part_lev;
 
     constexpr size_t offsets[3] { 1, 2, 4 };
 
