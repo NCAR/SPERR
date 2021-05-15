@@ -467,7 +467,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t  loc,  SigType sig,
 }
 
 auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
-                                            std::array<uint32_t, 4>& xyz ) const -> SigType
+                                            std::array<uint32_t, 3>& xyz ) const -> SigType
 {
     // In this implementation, when we know that a line [set.start_x, set.start_x + set.length_x) 
     // has a significant pixel, we try to identify if there is another significant pixel
@@ -490,22 +490,6 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
             xyz[0] = x - set.start_x;
             xyz[1] = y - set.start_y;
             xyz[2] = z - set.start_z;
-
-            // Fill in the same x value for the next occurance at index=3 location
-            xyz[3] = xyz[0];
-
-            // If the identified pixel is at the 1st half of the line, we scan the 
-            // 2nd half of the line attempting to find the next significant pixel
-            auto first_len = set.length_x - set.length_x / 2;
-            if( xyz[0] < first_len ) {
-              for( auto x2 = set.start_x + first_len;
-                        x2 < set.start_x + set.length_x; x2++ ) {
-                if( m_coeff_buf[col_offset + x2] >= m_threshold ) {
-                  xyz[3] = x2 - set.start_x;
-                  break;
-                }
-              }
-            }
 
             return SigType::Sig;
           }
@@ -536,26 +520,17 @@ auto speck::SPECK3D::m_process_S_encode(size_t  idx1,    size_t idx2, SigType si
     subset_sigs.fill( SigType::Dunno );
 
     if( sig == SigType::Dunno ) {
-        std::array<uint32_t, 4> xyz;
+        std::array<uint32_t, 3> xyz;
         set.signif = m_decide_significance( set, xyz );
         if (set.signif == SigType::Sig) {
             // Try to deduce the significance of some of its subsets.
-            // Step 1: which one (or 2) of the 8 subsets is significant?
+            // Step 1: which one of the 8 subsets makes it significant?
             //         (Refer to m_partition_S_XYZ() for subset ordering.)
             size_t sub_i = 0;
             sub_i += (xyz[0] < (set.length_x - set.length_x / 2)) ? 0 : 1;
             sub_i += (xyz[1] < (set.length_y - set.length_y / 2)) ? 0 : 2;
             sub_i += (xyz[2] < (set.length_z - set.length_z / 2)) ? 0 : 4;
             subset_sigs[sub_i] = SigType::Sig;
-
-            // Another potential significant pixel has the same y, z index.
-            if( xyz[3] != xyz[0] ) {
-                sub_i  = 0;
-                sub_i += (xyz[3] < (set.length_x - set.length_x / 2)) ? 0 : 1;
-                sub_i += (xyz[1] < (set.length_y - set.length_y / 2)) ? 0 : 2;
-                sub_i += (xyz[2] < (set.length_z - set.length_z / 2)) ? 0 : 4;
-                subset_sigs[sub_i] = SigType::Sig;
-            }
 
             // Step 2: if it's the 5th, 6th, 7th, or 8th subset significant, then 
             //         the first four subsets must be insignificant. Again, this is
