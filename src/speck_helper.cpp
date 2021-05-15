@@ -82,7 +82,11 @@ auto speck::pack_booleans( buffer_type_uint8&       dest,
 
     const uint64_t magic = 0x8040201008040201;
 
-    bool     a[8];
+    // It turns out C++ doesn't specify bool to be 1 byte, so we have to use
+    // uint8_t here which is definitely 1 byte in size.
+    // Also, C++ guarantees conversion between booleans and integers:
+    // true <--> 1, false <--> 0.
+    uint8_t  a[8]{0};
     uint64_t t = 0;
     for( size_t i = 0; i < src.size(); i += 8 ) {
         #pragma GCC unroll 8
@@ -116,7 +120,7 @@ auto speck::unpack_booleans( std::vector<bool>& dest,
     const uint64_t mask    = 0x8080808080808080;
 
 #ifndef OMP_UNPACK_BOOLEANS
-    bool     a[8];
+    uint8_t  a[8]{0};
     uint64_t t = 0;
     for( size_t byte_idx = 0; byte_idx < num_of_bytes; byte_idx++ ) {
         const uint8_t* ptr = src_ptr + byte_idx;
@@ -134,7 +138,7 @@ auto speck::unpack_booleans( std::vector<bool>& dest,
 
     #pragma omp parallel for
     for( size_t stride = 0; stride < num_of_strides; stride++ ) {
-        bool a[64];
+        uint8_t a[64]{0};
         for( size_t byte = 0; byte < stride_size; byte++ ) {
             const uint8_t* ptr = src_ptr + stride * stride_size + byte;
             const uint64_t t = (( magic * (*ptr) ) & mask) >> 7;
@@ -147,7 +151,7 @@ auto speck::unpack_booleans( std::vector<bool>& dest,
     for( size_t byte_idx = stride_size * num_of_strides; byte_idx < num_of_bytes; byte_idx++ ) {
         const uint8_t* ptr = src_ptr + byte_idx;
         const uint64_t t   = (( magic * (*ptr) ) & mask) >> 7;
-        bool  a[8];
+        uint8_t a[8]{0};
         std::memcpy( a, &t, 8 );
         for( size_t i = 0; i < 8; i++ )
             dest[ byte_idx * 8 + i ] = a[i];
@@ -160,8 +164,11 @@ auto speck::unpack_booleans( std::vector<bool>& dest,
 void speck::pack_8_booleans( uint8_t& dest, const bool* src )
 {
     const uint64_t  magic = 0x8040201008040201;
-    uint64_t        t;
-    std::memcpy(&t, src, 8);
+    uint64_t t = 0;
+    uint8_t  a[8]{0};
+    for( size_t i = 0; i < 8; i++ )
+        a[i] = src[i];
+    std::memcpy(&t, a, 8);
     dest = (magic * t) >> 56;
 }
 
@@ -170,7 +177,10 @@ void speck::unpack_8_booleans( bool* dest, uint8_t src )
     const uint64_t magic = 0x8040201008040201;
     const uint64_t mask  = 0x8080808080808080;
     uint64_t t = ((magic * src) & mask) >> 7;
-    std::memcpy( dest, &t, 8 );
+    uint8_t  a[8]{0};
+    std::memcpy( a, &t, 8 );
+    for( size_t i = 0; i < 8; i++ )
+        dest[i] = a[i];
 }
 
 
