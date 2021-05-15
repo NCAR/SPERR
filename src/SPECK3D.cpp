@@ -405,8 +405,7 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
     const double one_half_T = m_threshold *  1.5;
 
     for( size_t i = 0; i < num_bits; i++ )
-        m_coeff_buf[ m_LSP_old[i] ] += m_bit_buffer.peek(m_bit_idx + i) ? half_T : neg_half_T;
-        //m_coeff_buf[ m_LSP_old[i] ] += m_bit_buffer[m_bit_idx + i] ? half_T : neg_half_T;
+        m_coeff_buf[ m_LSP_old[i] ] += m_bit_buffer[m_bit_idx + i] ? half_T : neg_half_T;
     m_bit_idx += num_bits;
     if (m_bit_idx >= m_budget)
         return RTNType::BitBudgetMet;
@@ -602,8 +601,7 @@ auto speck::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) 
         // When decoding, check bit budget before attempting to read a bit
         if (m_bit_idx >= m_budget )
             return RTNType::BitBudgetMet;
-        is_sig = m_bit_buffer.peek(m_bit_idx++);
-        //is_sig = m_bit_buffer[m_bit_idx++];
+        is_sig = m_bit_buffer[m_bit_idx++];
     }
     else {
         is_sig = true;
@@ -617,8 +615,7 @@ auto speck::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) 
         // When decoding, check bit budget before attempting to read a bit
         if (m_bit_idx >= m_budget )
             return RTNType::BitBudgetMet;
-        if( !m_bit_buffer.peek(m_bit_idx++) )
-        //if( !m_bit_buffer[m_bit_idx++] )
+        if( !m_bit_buffer[m_bit_idx++] )
             m_sign_array[pixel_idx] = false;
 
         // This pixel is moved to `m_LSP_new` from `m_LIP`.
@@ -637,8 +634,7 @@ auto speck::SPECK3D::m_process_S_decode(size_t  idx1,    size_t idx2,
     if( read ) {
         if (m_bit_idx >= m_budget)
             return RTNType::BitBudgetMet;
-        set.signif = m_bit_buffer.peek(m_bit_idx++) ? SigType::Sig : SigType::Insig;
-        //set.signif = m_bit_buffer[m_bit_idx++] ? SigType::Sig : SigType::Insig;
+        set.signif = m_bit_buffer[m_bit_idx++] ? SigType::Sig : SigType::Insig;
     }
     else {
         set.signif = SigType::Sig;

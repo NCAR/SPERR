@@ -10,7 +10,6 @@
 #include <string>
 #include <utility> // std::pair<>
 #include "speck_helper.h"
-#include "bit_buffer.h"
 
 namespace speck {
 
@@ -62,7 +61,7 @@ protected:
     size_t          m_dim_z          = 0;
     int32_t         m_max_coeff_bits = 0;
 
-    bit_buffer      m_bit_buffer;
+    std::vector<bool>   m_bit_buffer;
 
 };
 
