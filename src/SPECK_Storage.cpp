@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <cstring>
-#include <cstdio>
 
 
 template <typename T>

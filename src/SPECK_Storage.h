@@ -61,7 +61,7 @@ protected:
     size_t          m_dim_z          = 0;
     int32_t         m_max_coeff_bits = 0;
 
-    std::vector<bool>  m_bit_buffer;
+    std::vector<bool>   m_bit_buffer;
 
 };
 

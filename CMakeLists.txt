@@ -68,6 +68,7 @@ file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/download/v1.9.1/CLI11.h
 add_subdirectory( src )
 
 list( APPEND HELPER_LIBS    speck_helper         )
+list( APPEND HELPER_LIBS    bit_buffer           )
 list( APPEND CDF_LIBS       CDF97                )
 list( APPEND SPECK_Storage_LIBS SPECK_Storage    )
 list( APPEND SPECK3D_LIBS   SPECK3D_OMP_C        )
@@ -192,6 +193,13 @@ if( BUILD_UNIT_TESTS )
                                       PUBLIC ${HELPER_LIBS}
                                       PUBLIC gtest_main             )
     add_test( NAME test_sperr COMMAND test_sperr                    )
+
+    add_executable( test_bit_buffer
+                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/bit_buffer_unit_test.cpp" )
+    target_link_libraries( test_bit_buffer PUBLIC ${HELPER_LIBS}
+                                           PUBLIC gtest_main        )
+    add_test( NAME test_bit_buffer COMMAND test_bit_buffer          )
+    
 
 endif()
 

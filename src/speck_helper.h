@@ -7,6 +7,7 @@
 
 #include <array>
 #include <cstddef> // size_t
+#include <cstdint> // fixed width integers
 #include <cstdlib>
 #include <utility> // std::pair
 #include <memory>
@@ -139,6 +140,7 @@ auto make_coeff_positive(BufferType& buf, size_t len, std::vector<bool>&)
 //
 // Note: unpack_booleans() takes a raw pointer because it accesses memory provided by others,
 //       and others most likely provide it by raw pointers.
+// Note: these two methods only work on little endian machines.
 auto pack_booleans( buffer_type_uint8& dest, // !!This space should be allocated by the caller!!
                     const std::vector<bool>&  src,
                     size_t                    dest_offset = 0 ) -> RTNType;
@@ -148,8 +150,9 @@ auto unpack_booleans( std::vector<bool>&      dest,
                       size_t                  src_offset = 0 ) -> RTNType;
 
 // Pack and unpack exactly 8 booleans to/from a single byte
-// Note that memory for the 8 booleans should already be allocated!
-// Note on the choice of using bool* instead of std::array<bool, 8>: the former is less pixie dust
+// Note: memory for the 8 booleans should already be allocated!
+// Note: the choice of using bool* instead of std::array<bool, 8>, hmm, the former is less pixie dust
+// Note: these two methods only work on little endian machines.
 void pack_8_booleans(   uint8_t& dest,  const bool* src );
 void unpack_8_booleans( bool* dest,     uint8_t src );
 
