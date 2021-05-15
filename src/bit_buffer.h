@@ -37,8 +37,8 @@ public:
     auto data_size() const noexcept -> size_t;
 
     // Serial and parallel data access methods
-    auto peep    ( size_t ) const -> bool;
-    auto par_peep( size_t ) const -> bool;
+    auto peek    ( size_t ) const -> bool;
+    auto par_peek( size_t ) const -> bool;
     
     // Populate this bit_buffer using a chunk of raw bytes.
     // Existing content of this bit_buffer will be destroyed.

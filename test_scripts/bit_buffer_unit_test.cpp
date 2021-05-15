@@ -24,8 +24,8 @@ public:
         }
 
         for( size_t i = 0; i < a.size(); i++ ) {
-            if( a[i] != b.peep(i) ) {
-                printf("a[i] = %d, b.peep(i) = %d\n", int(a[i]), int(b.peep(i)));
+            if( a[i] != b.peek(i) ) {
+                printf("a[i] = %d, b.peek(i) = %d\n", int(a[i]), int(b.peek(i)));
                 return false;        
             }
         }
@@ -42,12 +42,12 @@ public:
                 a.push_back( i % 2 );
                 b.push_back( i % 2 );
             }
-            // 25% chance: peep
+            // 25% chance: peek
             else if( action < 85 ) {
                 if( a.empty() ) continue;
                 auto idx = i % a.size();
-                if( a[idx] != b.peep(idx) )
-                    printf("a[idx] = %d, b.peep(idx) = %d\n", int(a[idx]), int(b.peep(idx)));
+                if( a[idx] != b.peek(idx) )
+                    printf("a[idx] = %d, b.peek(idx) = %d\n", int(a[idx]), int(b.peek(idx)));
             }
             // 10% chance: populate from raw memory
             else if( action < 95 ) {

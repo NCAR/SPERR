@@ -101,7 +101,7 @@ auto speck::bit_buffer::data_size() const noexcept -> size_t
 }
 
 
-auto speck::bit_buffer::peep( size_t idx ) const -> bool
+auto speck::bit_buffer::peek( size_t idx ) const -> bool
 {
     auto byte_idx  = idx / 8;
     auto cache_idx = idx % 8;
@@ -125,7 +125,7 @@ auto speck::bit_buffer::peep( size_t idx ) const -> bool
 }
 
 
-auto speck::bit_buffer::par_peep( size_t idx ) const -> bool
+auto speck::bit_buffer::par_peek( size_t idx ) const -> bool
 {
     auto byte_idx  = idx / 8;
     auto cache_idx = idx % 8;

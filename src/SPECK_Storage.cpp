@@ -96,11 +96,13 @@ auto speck::SPECK_Storage::get_encoded_bitstream() const -> smart_buffer_uint8
     assert( pos == m_header_size );
 
     // Assemble the bitstream into bytes
-    auto rtn = speck::pack_booleans( tmp_buf, m_bit_buffer, pos );
-    if( rtn != RTNType::Good )
-        return {nullptr, 0};
-    else
-        return {std::move(tmp_buf), total_size};
+    //auto rtn = speck::pack_booleans( tmp_buf, m_bit_buffer, pos );
+    //if( rtn != RTNType::Good )
+    //    return {nullptr, 0};
+    //else
+    //    return {std::move(tmp_buf), total_size};
+    std::memcpy( tmp_buf.get() + pos, m_bit_buffer.data(), bit_in_byte );
+    return {std::move(tmp_buf), total_size};
 }
 
 
@@ -127,9 +129,12 @@ auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t
     pos += sizeof(bit_in_byte);
 
     // Unpack bits
-    auto rtn = speck::unpack_booleans( m_bit_buffer, comp_buf, comp_size, pos );
-    if( rtn != RTNType::Good )
-        return rtn;
+    //auto rtn = speck::unpack_booleans( m_bit_buffer, comp_buf, comp_size, pos );
+    //if( rtn != RTNType::Good )
+    //    return rtn;
+    const auto nbytes = comp_size - pos;
+    const auto nbits  = nbytes * 8;
+    m_bit_buffer.populate( ptr + pos, nbytes, nbits );
 
     m_dim_x = dims[0]; 
     m_dim_y = dims[1]; 
