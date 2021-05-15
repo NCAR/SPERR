@@ -1,10 +1,10 @@
 #include "speck_helper.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-#include <algorithm>
 
 //
 // Uncomment the following lines to enable OpenMP
@@ -88,12 +88,13 @@ auto speck::pack_booleans( buffer_type_uint8&       dest,
     // true <--> 1, false <--> 0.
     uint8_t  a[8]{0};
     uint64_t t = 0;
+    size_t   dest_idx = offset;
     for( size_t i = 0; i < src.size(); i += 8 ) {
         #pragma GCC unroll 8
         for( size_t j = 0; j < 8; j++ )
             a[j] = src[i + j];
         std::memcpy( &t, a, 8 );
-        dest[ offset + i / 8 ] = (magic * t) >> 56;
+        dest[ dest_idx++ ] = (magic * t) >> 56;
     }
 
     return RTNType::Good;
@@ -122,13 +123,15 @@ auto speck::unpack_booleans( std::vector<bool>& dest,
 #ifndef OMP_UNPACK_BOOLEANS
     uint8_t  a[8]{0};
     uint64_t t = 0;
+    size_t   dest_idx = 0;
     for( size_t byte_idx = 0; byte_idx < num_of_bytes; byte_idx++ ) {
         const uint8_t* ptr = src_ptr + byte_idx;
         t = (( magic * (*ptr) ) & mask) >> 7;
         std::memcpy( a, &t, 8 );
         #pragma GCC unroll 8
         for( size_t i = 0; i < 8; i++ )
-            dest[ byte_idx * 8 + i ] = a[i];
+            dest[ dest_idx + i ] = a[i];
+        dest_idx += 8;
     }
 #else
     // Because in most implementations std::vector<bool> is stored as uint64_t values,
