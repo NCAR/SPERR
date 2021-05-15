@@ -492,12 +492,13 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
             xyz[2] = z - set.start_z;
 
             // Fill in the same x value for the next occurance at index=3 location
-            xyz[3] = x - set.start_x;
+            xyz[3] = xyz[0];
 
             // If the identified pixel is at the 1st half of the line, we scan the 
             // 2nd half of the line attempting to find the next significant pixel
-            if( x < set.length_x - set.length_x / 2 ) {
-              for( auto x2 = set.start_x + set.length_x / 2;
+            auto first_len = set.length_x - set.length_x / 2;
+            if( xyz[0] < first_len ) {
+              for( auto x2 = set.start_x + first_len;
                         x2 < set.start_x + set.length_x; x2++ ) {
                 if( m_coeff_buf[col_offset + x2] >= m_threshold ) {
                   xyz[3] = x2 - set.start_x;
@@ -509,6 +510,7 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
             return SigType::Sig;
           }
         } // End of processing a line
+
       }
     }
 
