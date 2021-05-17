@@ -78,17 +78,14 @@ auto speck::SPECK3D::encode() -> RTNType
     m_threshold      = std::pow(2.0, double(m_max_coeff_bits));
 
 #ifdef QZ_TERM
-    // If the requested termination level is already above max_coeff_bits, directly return. 
+    // If the requested termination level is already above max_coeff_bits, return right away. 
     if( m_qz_term_lev > m_max_coeff_bits )
         return RTNType::InvalidParam;
 
     int32_t current_qz_level = m_max_coeff_bits;
-#endif
 
     // We say that we run 128 iterations at most.
     for( int iteration = 0; iteration < 128; iteration++ ) {
-
-#ifdef QZ_TERM
         // The actual encoding steps
         // Note that in QZ_TERM mode, only check termination at the end of bitplanes.
         m_sorting_pass_encode();
@@ -98,30 +95,38 @@ auto speck::SPECK3D::encode() -> RTNType
         if ( current_qz_level <= m_qz_term_lev )
             break;
         current_qz_level--;
-#else
-        // The following two functions only return `BitBudgetMet` or `Good`.
-        if (m_sorting_pass_encode() == RTNType::BitBudgetMet )
-            break;
-
-        if (m_refinement_pass_encode() == RTNType::BitBudgetMet )
-            break;
-#endif
 
         m_threshold *= 0.5;
         m_clean_LIS();
     }
 
-#ifdef QZ_TERM
     // If the bit buffer has the last byte empty, let's fill in zero's.
     // When decoding, these padded zero's will trigger an extra iteration, and 
     // they will be interpreted as indicating *insignificant* pixels and sets,
     // thus posing no change to the decoded values.
     while( m_bit_buffer.size() % 8 != 0 )
         m_bit_buffer.push_back( false );
+
+#else
+
+    // We say that we run 128 iterations at most.
+    for( int iteration = 0; iteration < 128; iteration++ ) {
+
+        // The following two functions only return `BitBudgetMet` or `Good`.
+        if (m_sorting_pass_encode() == RTNType::BitBudgetMet )
+            break;
+
+        if (m_refinement_pass_encode() == RTNType::BitBudgetMet )
+            break;
+
+        m_threshold *= 0.5;
+        m_clean_LIS();
+    }
 #endif
 
     return RTNType::Good;
 }
+
 
 auto speck::SPECK3D::decode() -> RTNType
 {
@@ -176,6 +181,7 @@ auto speck::SPECK3D::decode() -> RTNType
 
     return RTNType::Good;
 }
+
 
 void speck::SPECK3D::m_initialize_sets_lists()
 {
