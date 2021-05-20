@@ -65,6 +65,8 @@ private:
     double                      m_tol         = 0.0; // tolerance used in error correction
     size_t                      m_num_outlier = 0;
     std::vector<speck::Outlier> m_LOS; // List of OutlierS
+    // A temporary buffer space that will be re-used
+    speck::smart_buffer_d       m_tmp_diff    = {nullptr, 0};
 #else
     float                       m_bpp         = 0.0;
 #endif

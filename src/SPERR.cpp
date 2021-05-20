@@ -58,17 +58,19 @@ auto speck::SPERR::view_outliers() -> const std::vector<Outlier>&
 
 auto speck::SPERR::m_part_set(const SPECKSet1D& set) const -> std::array<SPECKSet1D, 2>
 {
-    SPECKSet1D set1, set2;
+    std::array<SPECKSet1D, 2> subsets;
     // Prepare the 1st set
+    auto& set1      = subsets[0];
     set1.start      = set.start;
-    set1.length     = set.length / 2;
+    set1.length     = set.length - set.length / 2;
     set1.part_level = set.part_level + 1;
     // Prepare the 2nd set
+    auto& set2      = subsets[1];
     set2.start      = set1.start + set1.length;
     set2.length     = set.length - set1.length;
     set2.part_level = set.part_level + 1;
 
-    return {set1, set2};
+    return subsets;
 }
 
 void speck::SPERR::m_initialize_LIS()
@@ -108,14 +110,16 @@ auto speck::SPERR::m_ready_to_encode() const -> bool
     if (m_LOS.empty())
         return false;
 
-    // Make sure each outlier to process is a valid outlier.
-    if( std::any_of( m_LOS.begin(), m_LOS.end(),
-        [len = m_total_len, tol = m_tolerance](auto& out)
-        {return out.location >= len || std::abs(out.error) <= tol;}))
+    // Make sure each outlier to process has an error greater or equal to the tolerance.
+    if( !std::all_of( m_LOS.begin(), m_LOS.end(),
+        [tol = m_tolerance](auto& out) {return std::abs(out.error) >= tol;}))
         return false;
 
-    // Make sure there are no duplicate locations in the outlier list.
+    // Make sure there are no duplicate locations in the outlier list,
+    // and the largest location is still within range.
     // Note that the list of outliers is already sorted at the beginning of encoding.
+    if( m_LOS.back().location >= m_total_len )
+        return false;
     auto adj = std::adjacent_find( m_LOS.begin(), m_LOS.end(), [](auto& a, auto& b)
                                    {return a.location == b.location;} );
     return (adj == m_LOS.end());
@@ -345,7 +349,7 @@ auto speck::SPERR::m_refinement_pass_encoding() -> bool
         // Note that every refinement pass generates exactly 1 bit for each pixel in
         // `m_LSP_old` no matter if that pixel value is within error tolerance or not.
         auto diff        = m_err_hat[idx] - std::abs(m_LOS[idx].error);
-        auto was_outlier = std::abs(diff) > m_tolerance;
+        auto was_outlier = std::abs(diff) >= m_tolerance;
         auto need_refine = m_q[idx] >= m_threshold;
         m_bit_buffer.push_back(need_refine);
         if (need_refine)
@@ -355,7 +359,7 @@ auto speck::SPERR::m_refinement_pass_encoding() -> bool
         if (was_outlier) {
             m_err_hat[idx] += need_refine ? m_threshold * 0.5 : m_threshold * -0.5;
             diff            = m_err_hat[idx] - std::abs(m_LOS[idx].error);
-            auto is_outlier = std::abs(diff) > m_tolerance;
+            auto is_outlier = std::abs(diff) >= m_tolerance;
             if (!is_outlier) {
                 m_outlier_cnt--;
                 if (m_outlier_cnt == 0)
@@ -380,7 +384,7 @@ auto speck::SPERR::m_refinement_new_SP(size_t idx) -> bool
     // Because a NewlySig pixel must be an outlier previously, so we only need to test
     // if it is currently an outlier.
     auto diff       = m_err_hat[idx] - std::abs(m_LOS[idx].error);
-    auto is_outlier = std::abs(diff) > m_tolerance;
+    auto is_outlier = std::abs(diff) >= m_tolerance;
     if (!is_outlier)
         m_outlier_cnt--;
 
