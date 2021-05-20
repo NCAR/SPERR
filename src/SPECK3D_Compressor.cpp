@@ -87,11 +87,26 @@ auto SPECK3D_Compressor::compress() -> RTNType
     if( !speck::size_is( vol, m_total_vals ) )
         return RTNType::Error;
     m_LOS.clear();
+    //
+    // Observation: for some data points, the reconstruction error in double falls
+    // below `m_tol`, while in float would fall above `m_tol`. (Github issue #78).
+    // Solution: find those data points, and use their slightly reduced error as the new tolerance.
+    //
+    auto new_tol  = m_tol;
+    if( !speck::size_is( m_tmp_diff, m_total_vals ) )
+        m_tmp_diff = std::make_pair(std::make_unique<double[]>(m_total_vals), m_total_vals);
+    auto& diff_v = m_tmp_diff.first;
     for( size_t i = 0; i < m_total_vals; i++ ) {
-        auto diff = m_val_buf[i] - vol.first[i];
-        if( std::abs(diff) > m_tol )
-            m_LOS.emplace_back( i, diff );
+        diff_v[i] = m_val_buf[i] - vol.first[i];
+        auto  f   = std::abs( float(m_val_buf[i]) - float(vol.first[i]) );
+        if( f > m_tol && std::abs(diff_v[i]) <= m_tol )
+            new_tol = std::min( new_tol, std::abs(diff_v[i]) );
     }
+    for( size_t i = 0; i < m_total_vals; i++ ) {
+        if( std::abs(diff_v[i]) >= new_tol )
+            m_LOS.emplace_back( i, diff_v[i] );
+    }
+    m_sperr.set_tolerance( new_tol ); // Don't forget to pass in the new tolerance value!
 
     // Now we encode any outlier that's found.
     if( !m_LOS.empty() ) {
