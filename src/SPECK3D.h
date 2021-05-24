@@ -114,7 +114,7 @@ private:
     int32_t m_qz_term_lev   = 0;  // At which quantization level does encoding terminate?
 #endif
 
-    int32_t                 m_curr_qz_lev   = 0;
+    int32_t                 m_threshold_idx = 0;
     std::array<double, 64>  m_threshold_arr = {0.0};
 
 };

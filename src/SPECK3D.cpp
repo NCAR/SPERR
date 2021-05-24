@@ -75,7 +75,7 @@ auto speck::SPECK3D::encode() -> RTNType
     // have a pretty big magnitude, so we use int32_t here.
     //
     m_max_coeff_bits    = int32_t(std::floor(std::log2(max_coeff)));
-    m_curr_qz_lev       = 0;
+    m_threshold_idx     = 0;
     m_threshold_arr[0]  = std::pow(2.0, double(m_max_coeff_bits));
     for( size_t i = 1; i < m_threshold_arr.size(); i++ )
         m_threshold_arr[i] = m_threshold_arr[i-1] * 0.5;
@@ -90,7 +90,7 @@ auto speck::SPECK3D::encode() -> RTNType
         m_sorting_pass_encode();
         m_refinement_pass_encode();
         
-        m_curr_qz_lev++;
+        m_threshold_idx++;
         m_clean_LIS();
     }
 
@@ -113,7 +113,7 @@ auto speck::SPECK3D::encode() -> RTNType
         if (m_refinement_pass_encode() == RTNType::BitBudgetMet )
             break;
 
-        m_curr_qz_lev++;
+        m_threshold_idx++;
         m_clean_LIS();
     }
 #endif
@@ -143,7 +143,7 @@ auto speck::SPECK3D::decode() -> RTNType
     m_initialize_sets_lists();
 
     m_bit_idx           = 0;
-    m_curr_qz_lev       = 0;
+    m_threshold_idx     = 0;
     m_threshold_arr[0]  = std::pow(2.0, double(m_max_coeff_bits));
     for( size_t i = 1; i < m_threshold_arr.size(); i++ )
         m_threshold_arr[i] = m_threshold_arr[i-1] * 0.5;
@@ -161,7 +161,7 @@ auto speck::SPECK3D::decode() -> RTNType
             break;
         assert( rtn == RTNType::Good );
 
-        m_curr_qz_lev++;
+        m_threshold_idx++;
 
         m_clean_LIS();
     }
@@ -169,7 +169,7 @@ auto speck::SPECK3D::decode() -> RTNType
     // If the loop above aborted before all newly significant pixels are initialized,
     // we finish them here!
     for( auto idx : m_LSP_new )
-        m_coeff_buf[idx] = m_threshold_arr[ m_curr_qz_lev ] * 1.5;
+        m_coeff_buf[idx] = m_threshold_arr[ m_threshold_idx ] * 1.5;
 
     // Restore coefficient signs by setting some of them negative
     for (size_t i = 0; i < m_sign_array.size(); i++) {
@@ -271,7 +271,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
         m_LSP_new.reserve( std::max(m_LSP_new.capacity() * 2, m_LIP.size()) );
     }
     for( auto& pixel_idx : m_LIP ) {
-        if( m_coeff_buf[pixel_idx] >= m_threshold_arr[ m_curr_qz_lev ] ) {
+        if( m_coeff_buf[pixel_idx] >= m_threshold_arr[ m_threshold_idx ] ) {
             // Record that this pixel is significant
             m_bit_buffer.push_back(true);
 #ifndef QZ_TERM
@@ -369,8 +369,8 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 #endif
     for( size_t i = 0; i < n_to_process; i++ ) {
         const auto loc = m_LSP_old[i];
-        if (m_coeff_buf[loc] >= m_threshold_arr[ m_curr_qz_lev ]) {
-            m_coeff_buf[loc] -= m_threshold_arr[ m_curr_qz_lev ];
+        if (m_coeff_buf[loc] >= m_threshold_arr[ m_threshold_idx ]) {
+            m_coeff_buf[loc] -= m_threshold_arr[ m_threshold_idx ];
             m_bit_buffer.push_back(true);
         }
         else
@@ -384,7 +384,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
     // Second, process `m_LSP_new`
     //
     for( auto loc : m_LSP_new )
-        m_coeff_buf[loc] -= m_threshold_arr[ m_curr_qz_lev ];
+        m_coeff_buf[loc] -= m_threshold_arr[ m_threshold_idx ];
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
     // (`m_LSP_old` has reserved `m_coeff_len` capacity in advance.)
@@ -404,9 +404,9 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
     // First, process `m_LSP_old`
     //
     const size_t num_bits   = std::min( m_budget - m_bit_idx, m_LSP_old.size() );
-    const double half_T     = m_threshold_arr[ m_curr_qz_lev ] *  0.5;
-    const double neg_half_T = m_threshold_arr[ m_curr_qz_lev ] * -0.5;
-    const double one_half_T = m_threshold_arr[ m_curr_qz_lev ] *  1.5;
+    const double half_T     = m_threshold_arr[ m_threshold_idx ] *  0.5;
+    const double neg_half_T = m_threshold_arr[ m_threshold_idx ] * -0.5;
+    const double one_half_T = m_threshold_arr[ m_threshold_idx ] *  1.5;
 
     for( size_t i = 0; i < num_bits; i++ )
         m_coeff_buf[ m_LSP_old[i] ] += m_bit_buffer[m_bit_idx + i] ? half_T : neg_half_T;
@@ -440,7 +440,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t  loc,  SigType sig,
     assert( sig != SigType::NewlySig );
     bool is_sig;
     if( sig == SigType::Dunno ) {
-        is_sig = (m_coeff_buf[pixel_idx] >= m_threshold_arr[ m_curr_qz_lev ]);
+        is_sig = (m_coeff_buf[pixel_idx] >= m_threshold_arr[ m_threshold_idx ]);
     }
     else {
         is_sig = (sig == SigType::Sig);
@@ -490,7 +490,7 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
         const size_t col_offset = slice_offset + y * m_dim_x;
 
         for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
-          if( m_coeff_buf[col_offset + x] >= m_threshold_arr[ m_curr_qz_lev ] ) {
+          if( m_coeff_buf[col_offset + x] >= m_threshold_arr[ m_threshold_idx ] ) {
             xyz[0] = x - set.start_x;
             xyz[1] = y - set.start_y;
             xyz[2] = z - set.start_z;
