@@ -78,24 +78,15 @@ auto speck::SPECK3D::encode() -> RTNType
     m_threshold      = std::pow(2.0, double(m_max_coeff_bits));
 
 #ifdef QZ_TERM
+
     // If the requested termination level is already above max_coeff_bits, return right away. 
     if( m_qz_term_lev > m_max_coeff_bits )
         return RTNType::InvalidParam;
 
-    int32_t current_qz_level = m_max_coeff_bits;
-
-    // We say that we run 128 iterations at most.
-    for( int iteration = 0; iteration < 128; iteration++ ) {
-        // The actual encoding steps
-        // Note that in QZ_TERM mode, only check termination at the end of bitplanes.
+    for( int32_t qz_lev = m_max_coeff_bits; qz_lev >= m_qz_term_lev; qz_lev-- ) {
         m_sorting_pass_encode();
         m_refinement_pass_encode();
         
-        // Let's test if we need to terminate
-        if ( current_qz_level <= m_qz_term_lev )
-            break;
-        current_qz_level--;
-
         m_threshold *= 0.5;
         m_clean_LIS();
     }
