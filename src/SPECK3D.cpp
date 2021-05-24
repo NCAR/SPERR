@@ -272,7 +272,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
                 return RTNType::BitBudgetMet;
 #endif
             // Record if this pixel is positive or negative
-            m_bit_buffer.push_back( m_sign_array[pixel_idx] ? true : false );
+            m_bit_buffer.push_back( m_sign_array[pixel_idx] );
 #ifndef QZ_TERM
             if( m_bit_buffer.size() >= m_budget )
                 return RTNType::BitBudgetMet;
