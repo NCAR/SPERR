@@ -93,7 +93,6 @@ private:
     //
     // Private data members
     //
-    double  m_threshold      = 0.0; // Threshold that's used for quantization
     size_t  m_budget         = 0;   // What's the budget for num of bits?
     size_t  m_bit_idx        = 0;   // Used for decode. Which bit we're at?
     bool    m_encode_mode    = true; // Encode (true) or Decode (false) mode?
@@ -114,6 +113,9 @@ private:
 #ifdef QZ_TERM
     int32_t m_qz_term_lev   = 0;  // At which quantization level does encoding terminate?
 #endif
+
+    int32_t                 m_curr_qz_lev   = 0;
+    std::array<double, 64>  m_threshold_arr = {0.0};
 
 };
 
