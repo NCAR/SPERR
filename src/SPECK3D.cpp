@@ -86,11 +86,11 @@ auto speck::SPECK3D::encode() -> RTNType
     if( m_qz_term_lev > m_max_coeff_bits )
         return RTNType::InvalidParam;
 
-    for( int32_t qz_lev = m_max_coeff_bits; qz_lev >= m_qz_term_lev; qz_lev-- ) {
+    auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
+
+    for( m_threshold_idx = 0; m_threshold_idx < num_qz_levs; m_threshold_idx++ ) {
         m_sorting_pass_encode();
         m_refinement_pass_encode();
-        
-        m_threshold_idx++;
         m_clean_LIS();
     }
 
@@ -275,24 +275,31 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
             // Record that this pixel is significant
             m_bit_buffer.push_back(true);
 #ifndef QZ_TERM
-            if( m_bit_buffer.size() >= m_budget )
+            if( m_bit_buffer.size() >= m_budget ) // Test bit budget
                 return RTNType::BitBudgetMet;
 #endif
             // Record if this pixel is positive or negative
             m_bit_buffer.push_back( m_sign_array[pixel_idx] );
 #ifndef QZ_TERM
-            if( m_bit_buffer.size() >= m_budget )
+            if( m_bit_buffer.size() >= m_budget ) // Test bit budget
                 return RTNType::BitBudgetMet;
 #endif
+
+//#ifndef QZ_TERM
             // Move this pixel from LIP to LSP.
             m_LSP_new.push_back(pixel_idx);
+//#else
+            // Quantize this pixel.
+//            m_quantize_P_encode( pixel_idx );
+//#endif
+            // Mark this pixel so it'll be cleaned.
             pixel_idx = m_u64_garbage_val;
         }
         else {
             // Record that this pixel isn't significant
             m_bit_buffer.push_back(false);
 #ifndef QZ_TERM
-            if( m_bit_buffer.size() >= m_budget )
+            if( m_bit_buffer.size() >= m_budget ) // Test bit budget
                 return RTNType::BitBudgetMet;
 #endif
         }
@@ -438,7 +445,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t  loc,  SigType sig,
 
     // Decide the significance of this pixel
     assert( sig != SigType::NewlySig );
-    bool is_sig;
+    bool is_sig = false;
     if( sig == SigType::Dunno ) {
         is_sig = (m_coeff_buf[pixel_idx] >= m_threshold_arr[ m_threshold_idx ]);
     }
@@ -449,7 +456,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t  loc,  SigType sig,
     if( output ) {
         m_bit_buffer.push_back(is_sig);
 #ifndef QZ_TERM
-        if (m_bit_buffer.size() >= m_budget) 
+        if (m_bit_buffer.size() >= m_budget) // Test bit budget
             return RTNType::BitBudgetMet;
 #endif
     }
@@ -469,6 +476,27 @@ auto speck::SPECK3D::m_process_P_encode(size_t  loc,  SigType sig,
 
     return RTNType::Good;
 }
+
+
+#ifdef QZ_TERM
+void speck::SPECK3D::m_quantize_P_encode( size_t idx )
+{
+    // Since only identified significant pixels come here, it's immediately
+    // subject to a QZ operation based on the current threshold.
+    m_coeff_buf[idx] -= m_threshold_arr[ m_threshold_idx ];
+
+    auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
+    for( auto i = m_threshold_idx + 1; i < num_qz_levs; i++ ) {
+        if( m_coeff_buf[idx] >= m_threshold_arr[i] ) {
+            m_coeff_buf[idx] -= m_threshold_arr[i];
+            m_bit_buffer.push_back(true);
+        }
+        else
+            m_bit_buffer.push_back(false);
+    }
+}
+#endif
+
 
 auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
                                             std::array<uint32_t, 3>& xyz ) const -> SigType

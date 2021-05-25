@@ -74,13 +74,17 @@ private:
     auto m_refinement_pass_decode() -> RTNType;
 
     // For the following 5 methods, indices are used to locate which set to process from m_LIS,
-    auto m_process_S_encode(size_t idx1, size_t idx2, SigType, size_t&, bool) -> RTNType;
+    // Note that when process_S or process_P is called from a code_S routine, code_S will
+    // pass in a counter to record how many subsets are discovered significant already.
+    // That counter, however, doesn't do anything if process_S or process_P is called from
+    // the sorting pass.
+    auto m_process_S_encode(size_t idx1, size_t idx2, SigType, size_t& counter, bool) -> RTNType;
     auto m_code_S_encode(   size_t idx1, size_t idx2, std::array<SigType, 8>) -> RTNType;
-    auto m_process_P_encode(size_t idx,  SigType, size_t&, bool) -> RTNType;
+    auto m_process_P_encode(size_t idx,  SigType, size_t& counter, bool) -> RTNType;
 
-    auto m_process_S_decode(size_t idx1, size_t idx2, size_t&, bool) -> RTNType;
+    auto m_process_S_decode(size_t idx1, size_t idx2, size_t& counter, bool) -> RTNType;
     auto m_code_S_decode(   size_t idx1, size_t idx2) -> RTNType;
-    auto m_process_P_decode(size_t idx,  size_t&, bool) -> RTNType;
+    auto m_process_P_decode(size_t idx,  size_t& counter, bool) -> RTNType;
 
     // Divide a SPECKSet3D into 8, 4, or 2 smaller subsets.
     auto m_partition_S_XYZ(const SPECKSet3D&) const -> std::array<SPECKSet3D, 8>;
@@ -89,6 +93,11 @@ private:
 
     // Decide if a set is significant or not
     auto m_decide_significance(const SPECKSet3D&, std::array<uint32_t, 3>& xyz) const -> SigType;
+
+#ifdef QZ_TERM
+    // Quantize a pixel to the specified m_qz_term_lev.
+    void m_quantize_P_encode( size_t idx );
+#endif
 
     //
     // Private data members
