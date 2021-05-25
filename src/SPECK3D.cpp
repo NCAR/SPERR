@@ -333,15 +333,22 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
     //
     // Note that a large portion of the content in `m_LIP` will go to `m_LSP_new`,
     //   and `m_LSP_new` is empty at this point, so cheapest to re-allocate right now!
-    size_t dummy = 0;
     if( m_LSP_new.capacity() < m_LIP.size() ) {
         m_LSP_new.reserve( std::max( m_LSP_new.capacity() * 2, m_LIP.size() ) );
     }
-    for (size_t i = 0; i < m_LIP.size(); i++) {
-        auto rtn = m_process_P_decode(i, dummy, true);
-        if( rtn == RTNType::BitBudgetMet )
-            return rtn;
-        assert( rtn == RTNType::Good );
+    for( auto& pixel_idx : m_LIP ) {
+        if( m_bit_idx >= m_budget ) // Check bit budget
+            return RTNType::BitBudgetMet;
+
+        // If this pixel is significant
+        if( m_bit_buffer[m_bit_idx++]) {
+            if( m_bit_idx >= m_budget ) // Check bit budget
+                return RTNType::BitBudgetMet;
+
+            m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];
+            m_LSP_new.push_back( pixel_idx );
+            pixel_idx = m_u64_garbage_val;
+        }
     }
 
     // Then we process regular sets in LIS.
@@ -349,6 +356,7 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
         // From the end of m_LIS to its front
         size_t idx1 = m_LIS.size() - tmp;
         for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
+            size_t dummy = 0;
             auto rtn = m_process_S_decode(idx1, idx2, dummy, true);
             if( rtn == RTNType::BitBudgetMet )
                 return rtn;
@@ -624,8 +632,7 @@ auto speck::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) 
         // When decoding, check bit budget before attempting to read a bit
         if (m_bit_idx >= m_budget )
             return RTNType::BitBudgetMet;
-        if( !m_bit_buffer[m_bit_idx++] )
-            m_sign_array[pixel_idx] = false;
+        m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];
 
         // This pixel is moved to `m_LSP_new` from `m_LIP`.
         m_LIP[loc] = m_u64_garbage_val;
