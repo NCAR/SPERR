@@ -60,6 +60,7 @@ protected:
     size_t          m_dim_y          = 0;
     size_t          m_dim_z          = 0;
     int32_t         m_max_coeff_bits = 0;
+    int32_t         m_qz_term_lev    = 0; // At which quantization level does encoding terminate?
 
     std::vector<bool>   m_bit_buffer;
 

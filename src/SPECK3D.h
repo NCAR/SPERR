@@ -97,6 +97,7 @@ private:
 #ifdef QZ_TERM
     // Quantize a pixel to the specified m_qz_term_lev.
     void m_quantize_P_encode( size_t idx );
+    void m_quantize_P_decode( size_t idx );
 #endif
 
     //
@@ -118,10 +119,6 @@ private:
 
     std::vector<std::vector<SPECKSet3D>>  m_LIS;
     std::vector<size_t>                   m_LIP; // List of insignificant pixels.
-
-#ifdef QZ_TERM
-    int32_t m_qz_term_lev   = 0;  // At which quantization level does encoding terminate?
-#endif
 
     int32_t                 m_threshold_idx = 0;
     std::array<double, 64>  m_threshold_arr = {0.0};

@@ -73,8 +73,8 @@ auto speck::SPECK_Storage::get_dims() const -> std::array<size_t, 3>
 auto speck::SPECK_Storage::get_encoded_bitstream() const -> smart_buffer_uint8
 {
     // Header definition:
-    // dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  bitstream_len (in byte)
-    // uint32_t,  uint32_t,  uint32_t,  double       int32_t,         uint64_t
+    // dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  qz_term_lev,  bitstream_len (in byte)
+    // uint32_t,  uint32_t,  uint32_t,  double       int16_t,         int16_t,      uint64_t
 
     uint32_t dims[3] { uint32_t(m_dim_x), uint32_t(m_dim_y), uint32_t(m_dim_z) };
     assert( m_bit_buffer.size() % 8 == 0 );
@@ -89,8 +89,12 @@ auto speck::SPECK_Storage::get_encoded_bitstream() const -> smart_buffer_uint8
     pos += sizeof(dims);
     std::memcpy(ptr + pos, &m_image_mean, sizeof(m_image_mean));
     pos += sizeof(m_image_mean);
-    std::memcpy(ptr + pos, &m_max_coeff_bits, sizeof(m_max_coeff_bits));
-    pos += sizeof(m_max_coeff_bits);
+    int16_t max_bits = int16_t(m_max_coeff_bits);   // int16_t is big enough
+    std::memcpy(ptr + pos, &max_bits, sizeof(max_bits));
+    pos += sizeof(max_bits);
+    int16_t qz_term = int16_t(m_qz_term_lev);       // int16_t is big enough
+    std::memcpy(ptr + pos, &qz_term, sizeof(qz_term));
+    pos += sizeof(qz_term);
     std::memcpy(ptr + pos, &bit_in_byte, sizeof(bit_in_byte));
     pos += sizeof(bit_in_byte);
     assert( pos == m_header_size );
@@ -104,8 +108,7 @@ auto speck::SPECK_Storage::get_encoded_bitstream() const -> smart_buffer_uint8
 }
 
 
-auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t comp_size) 
-            -> RTNType
+auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t comp_size) -> RTNType
 {
     // The buffer passed in is supposed to consist a header and then a compacted bitstream,
     // just like what was returned by `get_encoded_bitstream()`.
@@ -120,8 +123,14 @@ auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t
     pos += sizeof(dims);
     std::memcpy(&m_image_mean, ptr + pos, sizeof(m_image_mean));
     pos += sizeof(m_image_mean);
-    std::memcpy(&m_max_coeff_bits, ptr + pos, sizeof(m_max_coeff_bits));
-    pos += sizeof(m_max_coeff_bits);
+    int16_t max_bits;
+    std::memcpy(&max_bits, ptr + pos, sizeof(max_bits));
+    pos += sizeof(max_bits);
+    m_max_coeff_bits = max_bits;
+    int16_t qz_term;
+    std::memcpy(&qz_term, ptr + pos, sizeof(qz_term));
+    pos += sizeof(qz_term);
+    m_qz_term_lev = qz_term;
     uint64_t bit_in_byte;
     std::memcpy(&bit_in_byte, ptr + pos, sizeof(bit_in_byte));
     pos += sizeof(bit_in_byte);
