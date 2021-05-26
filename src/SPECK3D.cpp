@@ -85,7 +85,7 @@ auto speck::SPECK3D::encode() -> RTNType
     if( m_qz_term_lev > m_max_coeff_bits )
         return RTNType::InvalidParam;
 
-    auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
+    const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
 
     for( m_threshold_idx = 0; m_threshold_idx < num_qz_levs; m_threshold_idx++ ) {
         m_sorting_pass_encode();
@@ -266,7 +266,6 @@ void speck::SPECK3D::m_initialize_sets_lists()
 
 auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 {
-
 #ifndef QZ_TERM
     // Note that a large portion of the content in `m_LIP` will go to `m_LSP_new`,
     //   and `m_LSP_new` is empty at this point, so cheapest to re-allocate right now!
@@ -332,7 +331,6 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
 
 auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 {
-
 #ifndef QZ_TERM
     // Note that a large portion of the content in `m_LIP` will go to `m_LSP_new`,
     //   and `m_LSP_new` is empty at this point, so cheapest to re-allocate right now!
@@ -510,30 +508,31 @@ void speck::SPECK3D::m_quantize_P_encode( size_t idx )
 {
     // Since only identified significant pixels come here, it's immediately
     // subject to a QZ operation based on the current threshold.
-    m_coeff_buf[idx] -= m_threshold_arr[ m_threshold_idx ];
+    auto coeff = m_coeff_buf[idx] - m_threshold_arr[ m_threshold_idx ];
 
-    auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
+    const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
     for( auto i = m_threshold_idx + 1; i < num_qz_levs; i++ ) {
-        if( m_coeff_buf[idx] >= m_threshold_arr[i] ) {
-            m_coeff_buf[idx] -= m_threshold_arr[i];
+        if( coeff >= m_threshold_arr[i] ) {
+            coeff -= m_threshold_arr[i];
             m_bit_buffer.push_back(true);
         }
         else
             m_bit_buffer.push_back(false);
     }
+    m_coeff_buf[idx] = coeff;
 }
 
 void speck::SPECK3D::m_quantize_P_decode( size_t idx )
 {
     // Since only identified significant pixels come here, it's immediately
     // subject to a QZ operation based on the current threshold.
-    m_coeff_buf[ idx ] = m_threshold_arr[ m_threshold_idx ] * 1.5;
+    auto coeff = m_threshold_arr[ m_threshold_idx ] * 1.5;
 
-    auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
+    const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
     for( auto i = m_threshold_idx + 1; i < num_qz_levs; i++ ) {
-        m_coeff_buf[idx] += m_bit_buffer[ m_bit_idx++ ] ?
-                            m_threshold_arr[i] * 0.5 : m_threshold_arr[i] * -0.5;
+        coeff += m_bit_buffer[m_bit_idx++] ? m_threshold_arr[i] * 0.5 : m_threshold_arr[i] * -0.5;
     }
+    m_coeff_buf[idx] = coeff;
 }
 #endif
 
@@ -629,6 +628,7 @@ auto speck::SPECK3D::m_process_S_encode(size_t  idx1,    size_t idx2, SigType si
     if(is_sig) {
         // Let's increment the counter first!
         counter++;
+
 #ifdef QZ_TERM
         m_code_S_encode(idx1, idx2, subset_sigs);
 #else
@@ -746,6 +746,7 @@ auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2,
         if(it->is_pixel()) {
             m_LIP.push_back(it->start_z * m_dim_x * m_dim_y + 
                             it->start_y * m_dim_x + it->start_x);
+
 #ifdef QZ_TERM
             m_process_P_encode(m_LIP.size() - 1, *sig_it, sig_counter, output);
 #else
@@ -758,6 +759,7 @@ auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2,
             const auto newidx1 = it->part_level;
             m_LIS[newidx1].emplace_back(*it);
             const auto newidx2 = m_LIS[newidx1].size() - 1;
+
 #ifdef QZ_TERM
             m_process_S_encode(newidx1, newidx2, *sig_it, sig_counter, output);
 #else
