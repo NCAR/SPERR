@@ -70,17 +70,19 @@ private:
     void m_initialize_sets_lists();
     auto m_sorting_pass_encode()    -> RTNType;
     auto m_sorting_pass_decode()    -> RTNType;
-    auto m_refinement_pass_encode() -> RTNType;
-    auto m_refinement_pass_decode() -> RTNType;
 
     // For the following 5 methods, indices are used to locate which set to process from m_LIS,
-    auto m_process_S_encode(size_t idx1, size_t idx2, SigType, size_t&, bool) -> RTNType;
+    // Note that when process_S or process_P is called from a code_S routine, code_S will
+    // pass in a counter to record how many subsets are discovered significant already.
+    // That counter, however, doesn't do anything if process_S or process_P is called from
+    // the sorting pass.
+    auto m_process_S_encode(size_t idx1, size_t idx2, SigType, size_t& counter, bool) -> RTNType;
     auto m_code_S_encode(   size_t idx1, size_t idx2, std::array<SigType, 8>) -> RTNType;
-    auto m_process_P_encode(size_t idx,  SigType, size_t&, bool) -> RTNType;
+    auto m_process_P_encode(size_t idx,  SigType, size_t& counter, bool) -> RTNType;
 
-    auto m_process_S_decode(size_t idx1, size_t idx2, size_t&, bool) -> RTNType;
+    auto m_process_S_decode(size_t idx1, size_t idx2, size_t& counter, bool) -> RTNType;
     auto m_code_S_decode(   size_t idx1, size_t idx2) -> RTNType;
-    auto m_process_P_decode(size_t idx,  size_t&, bool) -> RTNType;
+    auto m_process_P_decode(size_t idx,  size_t& counter, bool) -> RTNType;
 
     // Divide a SPECKSet3D into 8, 4, or 2 smaller subsets.
     auto m_partition_S_XYZ(const SPECKSet3D&) const -> std::array<SPECKSet3D, 8>;
@@ -90,10 +92,19 @@ private:
     // Decide if a set is significant or not
     auto m_decide_significance(const SPECKSet3D&, std::array<uint32_t, 3>& xyz) const -> SigType;
 
+#ifdef QZ_TERM
+    // Quantize a pixel to the specified m_qz_term_lev.
+    void m_quantize_P_encode( size_t idx );
+    void m_quantize_P_decode( size_t idx );
+#else
+    // Quantize pixels bitplane by bitplane.
+    auto m_refinement_pass_encode() -> RTNType;
+    auto m_refinement_pass_decode() -> RTNType;
+#endif
+
     //
     // Private data members
     //
-    double  m_threshold      = 0.0; // Threshold that's used for quantization
     size_t  m_budget         = 0;   // What's the budget for num of bits?
     size_t  m_bit_idx        = 0;   // Used for decode. Which bit we're at?
     bool    m_encode_mode    = true; // Encode (true) or Decode (false) mode?
@@ -102,18 +113,18 @@ private:
     const uint8_t       m_false   = 0;
     const uint8_t       m_true    = 1;
     const uint8_t       m_discard = 2;
-
-    // List of significant pixels (recorded as locations).
-    std::vector<size_t> m_LSP_new; // Ones newly identified as significant
-    std::vector<size_t> m_LSP_old; // Ones previously identified as significant
     std::vector<bool>   m_sign_array;
 
     std::vector<std::vector<SPECKSet3D>>  m_LIS;
-    std::vector<size_t>                   m_LIP; // List of insignificant pixels.
+    std::vector<size_t>                   m_LIP;
 
-#ifdef QZ_TERM
-    int32_t m_qz_term_lev   = 0;  // At which quantization level does encoding terminate?
+#ifndef QZ_TERM
+    std::vector<size_t>                   m_LSP_new;
+    std::vector<size_t>                   m_LSP_old;
 #endif
+
+    int32_t                 m_threshold_idx = 0;
+    std::array<double, 64>  m_threshold_arr = {0.0};
 
 };
 
