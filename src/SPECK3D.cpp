@@ -323,7 +323,6 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
             if( rtn == RTNType::BitBudgetMet )  return rtn;
             assert( rtn == RTNType::Good );
 #endif
-
         }
     }
 
@@ -379,7 +378,6 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
             if( rtn == RTNType::BitBudgetMet )  return rtn;
             assert( rtn == RTNType::Good );
 #endif
-
         }
     }
 
@@ -670,13 +668,11 @@ auto speck::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) 
 #endif
         m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];
 
-
 #ifndef QZ_TERM
         m_LSP_new.push_back( pixel_idx );
 #else
         m_quantize_P_decode( pixel_idx );
 #endif
-
         pixel_idx = m_u64_garbage_val;
     }
 
