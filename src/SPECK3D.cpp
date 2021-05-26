@@ -530,7 +530,7 @@ void speck::SPECK3D::m_quantize_P_decode( size_t idx )
 
     const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
     for( auto i = m_threshold_idx + 1; i < num_qz_levs; i++ ) {
-        coeff += m_bit_buffer[m_bit_idx++] ? m_threshold_arr[i] * 0.5 : m_threshold_arr[i] * -0.5;
+        coeff += m_bit_buffer[m_bit_idx++] ? m_threshold_arr[i + 1] : -m_threshold_arr[i + 1];
     }
     m_coeff_buf[idx] = coeff;
 }
