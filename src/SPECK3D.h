@@ -70,8 +70,6 @@ private:
     void m_initialize_sets_lists();
     auto m_sorting_pass_encode()    -> RTNType;
     auto m_sorting_pass_decode()    -> RTNType;
-    auto m_refinement_pass_encode() -> RTNType;
-    auto m_refinement_pass_decode() -> RTNType;
 
     // For the following 5 methods, indices are used to locate which set to process from m_LIS,
     // Note that when process_S or process_P is called from a code_S routine, code_S will
@@ -98,6 +96,10 @@ private:
     // Quantize a pixel to the specified m_qz_term_lev.
     void m_quantize_P_encode( size_t idx );
     void m_quantize_P_decode( size_t idx );
+#else
+    // Quantize pixels bitplane by bitplane.
+    auto m_refinement_pass_encode() -> RTNType;
+    auto m_refinement_pass_decode() -> RTNType;
 #endif
 
     //
@@ -111,14 +113,15 @@ private:
     const uint8_t       m_false   = 0;
     const uint8_t       m_true    = 1;
     const uint8_t       m_discard = 2;
-
-    // List of significant pixels (recorded as locations).
-    std::vector<size_t> m_LSP_new; // Ones newly identified as significant
-    std::vector<size_t> m_LSP_old; // Ones previously identified as significant
     std::vector<bool>   m_sign_array;
 
     std::vector<std::vector<SPECKSet3D>>  m_LIS;
-    std::vector<size_t>                   m_LIP; // List of insignificant pixels.
+    std::vector<size_t>                   m_LIP;
+
+#ifndef QZ_TERM
+    std::vector<size_t>                   m_LSP_new;
+    std::vector<size_t>                   m_LSP_old;
+#endif
 
     int32_t                 m_threshold_idx = 0;
     std::array<double, 64>  m_threshold_arr = {0.0};
