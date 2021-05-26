@@ -33,17 +33,15 @@ void speck::SPECK3D::set_bit_budget(size_t budget)
 
 
 #ifdef QZ_TERM
-    void speck::SPECK3D::set_quantization_term_level( int32_t lev )
-    {
-        m_qz_term_lev   = lev;
-    }
-
+void speck::SPECK3D::set_quantization_term_level( int32_t lev )
+{
+    m_qz_term_lev   = lev;
+}
 #endif
 
 
 void speck::SPECK3D::m_clean_LIS()
 {
-    // This loop is in the order of one or two dozens, so not bother parallel here.
     for( size_t i = 0; i < m_LIS.size(); i++ ) {
         auto it = std::remove_if( m_LIS[i].begin(), m_LIS[i].end(),
                   [](const auto& s) { return s.type == SetType::Garbage; });
@@ -167,7 +165,10 @@ auto speck::SPECK3D::decode() -> RTNType
         m_clean_LIS();
     }
 
-#ifndef QZ_TERM
+#ifdef QZ_TERM
+    assert( m_bit_idx <= m_bit_buffer.size() );
+    assert( m_bit_buffer.size() - m_bit_idx < 8 );
+#else
     // If decoding finished before all newly-sig pixels are initialized, we finish them here!
     for( auto idx : m_LSP_new )
         m_coeff_buf[idx] = m_threshold_arr[ m_threshold_idx ] * 1.5;
@@ -290,10 +291,10 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
                 return RTNType::BitBudgetMet;
 #endif
 
-#ifndef QZ_TERM
-            m_LSP_new.push_back(pixel_idx);
-#else
+#ifdef QZ_TERM
             m_quantize_P_encode( pixel_idx );
+#else
+            m_LSP_new.push_back(pixel_idx);
 #endif
             pixel_idx = m_u64_garbage_val;
         }
@@ -353,10 +354,10 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 #endif
             m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++]; // What sign is this pixel
 
-#ifndef QZ_TERM
-            m_LSP_new.push_back( pixel_idx );
-#else
+#ifdef QZ_TERM
             m_quantize_P_decode( pixel_idx );
+#else
+            m_LSP_new.push_back( pixel_idx );
 #endif
             pixel_idx = m_u64_garbage_val;
         }
@@ -491,10 +492,10 @@ auto speck::SPECK3D::m_process_P_encode(size_t  loc,  SigType sig,
             return RTNType::BitBudgetMet;
 #endif
 
-#ifndef QZ_TERM
-        m_LSP_new.push_back( pixel_idx );
-#else
+#ifdef QZ_TERM
         m_quantize_P_encode( pixel_idx );
+#else
+        m_LSP_new.push_back( pixel_idx );
 #endif
         pixel_idx = m_u64_garbage_val;
     }
@@ -661,10 +662,10 @@ auto speck::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) 
 #endif
         m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];
 
-#ifndef QZ_TERM
-        m_LSP_new.push_back( pixel_idx );
-#else
+#ifdef QZ_TERM
         m_quantize_P_decode( pixel_idx );
+#else
+        m_LSP_new.push_back( pixel_idx );
 #endif
         pixel_idx = m_u64_garbage_val;
     }
