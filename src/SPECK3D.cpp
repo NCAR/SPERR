@@ -144,16 +144,18 @@ auto speck::SPECK3D::decode() -> RTNType
 
     for (size_t bitplane = 0; bitplane < 64; bitplane++) {
 
-        auto rtn = m_sorting_pass_decode();
-        if( rtn == RTNType::BitBudgetMet)
-            break;
-        assert( rtn == RTNType::Good );
-
 #ifdef QZ_TERM
+        m_sorting_pass_decode();
+        if( m_bit_idx > m_bit_buffer.size() )
+            return RTNType::Error;
         // This is the actual terminating condition in QZ_TERM mode.
         if( m_threshold_idx >= m_max_coeff_bits - m_qz_term_lev )
             break;
 #else
+        auto rtn = m_sorting_pass_decode();
+        if( rtn == RTNType::BitBudgetMet)
+            break;
+        assert( rtn == RTNType::Good );
         // We need to do a refinement pass in fixed size mode.
         rtn = m_refinement_pass_decode();
         if( rtn == RTNType::BitBudgetMet)
@@ -166,8 +168,8 @@ auto speck::SPECK3D::decode() -> RTNType
     }
 
 #ifdef QZ_TERM
-    assert( m_bit_idx <= m_bit_buffer.size() );
-    assert( m_bit_buffer.size() - m_bit_idx < 8 );
+    if( m_bit_idx > m_bit_buffer.size() || m_bit_buffer.size() - m_bit_idx >= 8 )
+        return RTNType::Error;
 #else
     // If decoding finished before all newly-sig pixels are initialized, we finish them here!
     for( auto idx : m_LSP_new )
