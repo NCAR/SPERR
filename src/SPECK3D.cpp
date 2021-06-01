@@ -513,13 +513,14 @@ void speck::SPECK3D::m_quantize_P_encode( size_t idx )
     // subject to a QZ operation based on the current threshold.
     auto coeff = m_coeff_buf[idx] - m_threshold_arr[ m_threshold_idx ];
 
+    double     tmpd[2] = {0.0, 0.0};
+    const bool tmpb[2] = {false, true};
     const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
     for( auto i = m_threshold_idx + 1; i < num_qz_levs; i++ ) {
         size_t idx = coeff >= m_threshold_arr[i]; // C++ guarantees this conversion
-        bool   tmp1[2] = {false, true};
-        m_bit_buffer.push_back( tmp1[idx] );
-        double tmp2[2] = {0.0, m_threshold_arr[i]};
-        coeff -= tmp2[idx];
+        m_bit_buffer.push_back( tmpb[idx] );
+        tmpd[1] = m_threshold_arr[i];
+        coeff  -= tmpd[idx];
     }
     m_coeff_buf[idx] = coeff;
 }
