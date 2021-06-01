@@ -517,10 +517,10 @@ void speck::SPECK3D::m_quantize_P_encode( size_t idx )
     const bool tmpb[2] = {false, true};
     const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
     for( auto i = m_threshold_idx + 1; i < num_qz_levs; i++ ) {
-        size_t idx = coeff >= m_threshold_arr[i]; // C++ guarantees this conversion
-        m_bit_buffer.push_back( tmpb[idx] );
         tmpd[1] = m_threshold_arr[i];
-        coeff  -= tmpd[idx];
+        size_t O1 = coeff >= m_threshold_arr[i]; // C++ guarantees this conversion
+        coeff    -= tmpd[O1];
+        m_bit_buffer.push_back( tmpb[O1] );
     }
     m_coeff_buf[idx] = coeff;
 }
