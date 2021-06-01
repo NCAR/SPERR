@@ -23,37 +23,13 @@ auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims,
                              int32_t qz_level, double tolerance,
                              size_t  omp_num_threads ) -> int 
 {
-    // Let's do a logarithm transform
-    const size_t total_vals = dims[0] * dims[1] * dims[2];
-    auto buf_d = std::make_unique<double[]>( total_vals );
-    auto signs = std::make_unique<uint8_t[]>( total_vals );
-    std::copy( in_buf, in_buf + total_vals, buf_d.get() );
-    for( size_t i = 0; i < total_vals; i++ ) {
-        if( buf_d[i] < 0.0 ) {
-            buf_d[i] = -buf_d[i];
-            signs[i] = 0;
-        }
-        else
-            signs[i] = 1;
-    }
-    std::for_each( buf_d.get(), buf_d.get() + total_vals, [](auto& v){ v = std::log(v); } );
-
-    //std::for_each( buf_d.get(), buf_d.get() + total_vals, [](auto& v){ v = std::exp(v); } );
-    //auto buf_inv = std::make_unique<float[]>( total_vals );
-    //for( size_t i = 0; i < total_vals; i++ ) {
-    //    if( signs[i]  == 0 )
-    //        buf_inv[i] = -buf_d[i];
-    //    else
-    //        buf_inv[i] = buf_d[i];
-    //}
-
     // Setup
-    //const size_t total_vals = dims[0] * dims[1] * dims[2];
+    const size_t total_vals = dims[0] * dims[1] * dims[2];
     SPECK3D_OMP_C compressor;
     compressor.set_dims(dims[0], dims[1], dims[2]);
     compressor.prefer_chunk_size( chunks[0], chunks[1], chunks[2] );
     compressor.set_num_threads( omp_num_threads );
-    auto rtn = compressor.use_volume( buf_d.get(), total_vals );
+    auto rtn = compressor.use_volume( in_buf, total_vals );
     if(  rtn != RTNType::Good )
         return 1;
 
@@ -104,27 +80,14 @@ auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims,
     diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
     std::cout << " -> Decompression takes time: " << diff_time << "ms\n";
 
-    auto decoded_vol = decompressor.get_data_volume<double>();
-    if( !speck::size_is( decoded_vol, total_vals ) )
+    auto decoded_volume = decompressor.get_data_volume<float>();
+    if( !speck::size_is( decoded_volume, total_vals ) )
         return 1;
 
-    // Let's do inverse logarithm transform and apply signs
-    std::for_each( decoded_vol.first.get(), decoded_vol.first.get() + total_vals,
-                   [](auto& v){ v = std::exp(v); } );
-    for( size_t i = 0; i < total_vals; i++ )
-        if( signs[i] == 0 )
-            decoded_vol.first[i] = -decoded_vol.first[i];
-
-    // Let's cast the volume from double to float
-    auto vol_f = std::make_unique<float[]>( total_vals );
-    std::copy( decoded_vol.first.get(), decoded_vol.first.get() + total_vals, vol_f.get() );
-    std::FILE* f = fopen("/glade/work/shaomeng/SPECK2020_Study/Matthias_raw/log/Bz.float", "wb");
-    std::fwrite( vol_f.get(), 4, total_vals, f );
-    std::fclose(f);
 
     // Collect statistics
     float rmse, lmax, psnr, arr1min, arr1max;
-    speck::calc_stats( in_buf, vol_f.get(), total_vals,
+    speck::calc_stats( in_buf, decoded_volume.first.get(), total_vals,
                        &rmse, &lmax, &psnr, &arr1min, &arr1max);
     printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
     printf("    Reconstructed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);

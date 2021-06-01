@@ -223,7 +223,7 @@ int main( int argc, char* argv[] )
     std::cin >> answer;
     while ( std::tolower(answer) == 'y' ) {
         bpp = -1.0;
-        std::cout << "\nPlease input a new bpp value to test [0.0 - 64.0]:  ";
+        std::cout << "Please input a new bpp value to test [0.0 - 64.0]:  ";
         std::cin >> bpp;
         while (bpp <= 0.0 || bpp >= 64.0 ) {
             std::cout << "Please input a bpp value inbetween [0.0 - 64.0]:  ";
