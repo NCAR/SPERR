@@ -515,12 +515,11 @@ void speck::SPECK3D::m_quantize_P_encode( size_t idx )
 
     const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
     for( auto i = m_threshold_idx + 1; i < num_qz_levs; i++ ) {
-        if( coeff >= m_threshold_arr[i] ) {
-            coeff -= m_threshold_arr[i];
-            m_bit_buffer.push_back(true);
-        }
-        else
-            m_bit_buffer.push_back(false);
+        size_t idx = coeff >= m_threshold_arr[i]; // C++ guarantees this conversion
+        bool   tmp1[2] = {false, true};
+        m_bit_buffer.push_back( tmp1[idx] );
+        double tmp2[2] = {0.0, m_threshold_arr[i]};
+        coeff -= tmp2[idx];
     }
     m_coeff_buf[idx] = coeff;
 }
@@ -533,7 +532,9 @@ void speck::SPECK3D::m_quantize_P_decode( size_t idx )
 
     const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
     for( auto i = m_threshold_idx + 1; i < num_qz_levs; i++ ) {
-        coeff += m_bit_buffer[m_bit_idx++] ? m_threshold_arr[i + 1] : -m_threshold_arr[i + 1];
+        // C++ standard guarantees the conversion between bool and int.
+        double tmp[2] = { -m_threshold_arr[i + 1], m_threshold_arr[i + 1] };
+        coeff += tmp[ m_bit_buffer[m_bit_idx++] ];
     }
     m_coeff_buf[idx] = coeff;
 }
