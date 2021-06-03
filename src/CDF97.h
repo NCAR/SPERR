@@ -2,8 +2,6 @@
 #define CDF97_H
 
 #include <cmath>
-#include <memory>
-#include <utility>  // std::pair<>
 
 #include "speck_helper.h"
 

@@ -70,7 +70,8 @@ private:
     T* m_pos       = nullptr;
 
 public:
-    explicit ptr_iterator(T* p) : m_pos(p) {} // prevent any other pointer types being converted to T* .
+    // explicit keyword prevents any other pointer types being converted to T*
+    explicit ptr_iterator(T* p) : m_pos(p) {}
     ptr_iterator()                                   = default;
     ptr_iterator           (const ptr_iterator<T>& ) = default;
     ptr_iterator           (      ptr_iterator<T>&&) = default;
