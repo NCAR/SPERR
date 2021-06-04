@@ -25,9 +25,10 @@ public:
     // bool[1] : divide by rms
     // bool[2-7] : unused
     // Accordingly, `inverse_condition()` takes a buffer of 17 bytes.
-    auto condition( buffer_type_d&, size_t ) const 
-                    -> std::pair<RTNType, std::array<uint8_t, 17>>;
-    auto inverse_condition( buffer_type_d&, size_t, const uint8_t* ) const -> RTNType;
+    template<typename T>
+    auto condition( T&, size_t ) const -> std::pair<RTNType, std::array<uint8_t, 17>>;
+    template<typename T>
+    auto inverse_condition( T&, size_t, const uint8_t* ) const -> RTNType;
 
 private:
     //
@@ -45,8 +46,10 @@ private:
 
     // Action items
     // Buffers passed in here are guaranteed to have correct lengths and conditions.
-    auto m_calc_mean( buffer_type_d& buf, size_t len ) const -> double;
-    auto m_calc_rms(  buffer_type_d& buf, size_t len ) const -> double;
+    template<typename T>
+    auto m_calc_mean( T& buf, size_t len ) const -> double;
+    template<typename T>
+    auto m_calc_rms(  T& buf, size_t len ) const -> double;
     // adjust the value of `m_num_strides` so it'll be a divisor of `len`
     void m_adjust_strides( size_t len ) const;
 };
