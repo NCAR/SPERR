@@ -12,9 +12,12 @@ namespace speck {
 class Conditioner {
 
 public:
+    Conditioner() = default;
+    Conditioner(bool sub_mean); // if subtract mean or not
+
     void toggle_subtract_mean( bool );
     void toggle_divide_by_rms( bool );
-    void set_num_strides( size_t ); // must be a divisor of the buffer length
+    auto get_meta_size() const -> size_t;
 
     // The 17 bytes returned by `condition()`: 1 byte (8 booleans) followed by two doubles.
     // The byte of booleans records if the following operation is applied:
@@ -26,7 +29,6 @@ public:
                     -> std::pair<RTNType, std::array<uint8_t, 17>>;
     auto inverse_condition( buffer_type_d&, size_t, const uint8_t* ) const -> RTNType;
 
-
 private:
     //
     // what treatments are applied?
@@ -35,10 +37,9 @@ private:
     bool m_d_rms   = false; // divide by rms
     //bool m_n_range = false; // normalize by range, so all values are in (-1.0, 1.0)
 
-    // Calculations are carried out by strides, so the number of strides
-    // is something configurable.
-    // The number of strides should be a divisor of the input data size though.
-    size_t m_num_strides  = 2048; // should be good enough for most applications.
+    // Calculations are carried out by strides, which 
+    // should be a divisor of the input data size.
+    mutable size_t m_num_strides  = 2048; // should be good enough for most applications.
     mutable std::vector<double> m_stride_buf;
     const size_t m_meta_size = 17;
 
@@ -46,7 +47,8 @@ private:
     // Buffers passed in here are guaranteed to have correct lengths and conditions.
     auto m_calc_mean( buffer_type_d& buf, size_t len ) const -> double;
     auto m_calc_rms(  buffer_type_d& buf, size_t len ) const -> double;
-
+    // adjust the value of `m_num_strides` so it'll be a divisor of `len`
+    void m_adjust_strides( size_t len ) const;
 };
 
 };

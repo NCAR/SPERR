@@ -88,10 +88,6 @@ auto speck::CDF97::release_data() -> std::pair<buffer_type_d, size_t>
 
 void speck::CDF97::dwt1d()
 {
-    m_calc_mean();
-    auto begin = speck::begin( m_data_buf );
-    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val -= tmp;} );
-
     size_t num_xforms = speck::num_of_xforms(m_dim_x);
     m_dwt1d(m_data_buf.get(), m_buf_len, num_xforms, m_col_buf.first.get());
 }
@@ -100,35 +96,22 @@ void speck::CDF97::idwt1d()
 {
     size_t num_xforms = speck::num_of_xforms(m_dim_x);
     m_idwt1d(m_data_buf.get(), m_buf_len, num_xforms, m_col_buf.first.get());
-
-    auto begin = speck::begin( m_data_buf );
-    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val += tmp;} );
 }
 
 void speck::CDF97::dwt2d()
 {
-    m_calc_mean();
-    auto begin = speck::begin( m_data_buf );
-    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val -= tmp;} );
-
-    size_t     num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
+    size_t num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
     m_dwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, m_col_buf.first.get());
 }
 
 void speck::CDF97::idwt2d()
 {
-    size_t     num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
+    size_t num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
     m_idwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, m_col_buf.first.get());
-
-    auto begin = speck::begin( m_data_buf );
-    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val += tmp;} );
 }
 
 void speck::CDF97::dwt3d()
 {
-    m_calc_mean();
-    auto begin = speck::begin( m_data_buf );
-    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val -= tmp;} );
 
 #ifdef USE_OMP
     size_t num_threads = 1;
@@ -330,39 +313,12 @@ void speck::CDF97::idwt3d()
                 m_data_buf[cube_start_idx + x] = my_z_col[z + x * m_dim_z];
         }
     }
-
-    // Finally, add back the mean which was subtracted earlier.
-    auto begin = speck::begin( m_data_buf );
-    std::for_each( begin, begin + m_buf_len, [tmp = m_data_mean](auto& val){val += tmp;} );
 }
 
 
 //
 // Private Methods
 //
-void speck::CDF97::m_calc_mean()
-{
-    //
-    // Here we calculate mean slice by slice to avoid too big sums.
-    // One test shows that this implementation is 4X faster than Kahan algorithm
-    // Another test shows that OpenMP actually slows down this calculation...
-    //
-    assert(m_dim_x > 0 && m_dim_y > 0 && m_dim_z > 0);
-
-    const size_t slice_size = m_dim_x * m_dim_y;
-
-    for (size_t z = 0; z < m_dim_z; z++) {
-        auto begin = speck::begin( m_data_buf ) + slice_size * z;
-        auto end   = begin + slice_size;
-        m_col_buf.first[z] = std::accumulate( begin, end, double{0.0} ) / double(slice_size);
-    }
-
-    auto begin = speck::begin( m_col_buf );
-    auto end   = begin + m_dim_z;   // Note that we only filled in `m_dim_z` values.
-    double sum = std::accumulate( begin, end, double{0.0} );
-
-    m_data_mean = sum / double(m_dim_z);
-}
 
 void speck::CDF97::m_dwt2d(double* plane,
                            size_t  len_x,
@@ -707,19 +663,6 @@ void speck::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double* signal,
     for (size_t index = 1; index < signal_length - 1; index += 2)
         signal[index] *= (-INV_EPSILON);
 }
-
-
-void speck::CDF97::set_mean(double m)
-{
-    m_data_mean = m;
-}
-
-
-auto speck::CDF97::get_mean() const -> double
-{
-    return m_data_mean;
-}
-
 
 
 auto speck::CDF97::get_dims() const -> std::array<size_t, 3>

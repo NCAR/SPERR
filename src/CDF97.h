@@ -19,23 +19,20 @@ public:
                    size_t   dimx, size_t dimy = 1, size_t dimz = 1) -> RTNType;
     auto take_data(buffer_type_d buf,  size_t len,
                    size_t dimx, size_t dimy = 1, size_t dimz = 1) -> RTNType;
-    void set_mean(double);
 
     //
     // Output
     //
     auto view_data() const -> std::pair<const buffer_type_d&, size_t>;  // Keep ownership
     auto release_data()    -> std::pair<buffer_type_d, size_t>;         // Release ownership
-    auto get_mean() const  -> double;
+    //auto get_mean() const  -> double;
     auto get_dims() const  -> std::array<size_t, 3>; // In 2D case, the 3rd value equals 1.
 
     // Action items
     void dwt2d();  // 1) calculates the number of levels of dwt,
-                   // 2) subtract mean of the data,
                    // 3) perform the actual dwt.
     void idwt2d(); // 1) calculates the number of levels of dwt,
                    // 2) perform the actual idwt
-                   // 3) add the mean back to the data
     void dwt1d();
     void idwt1d();
     void dwt3d();
@@ -49,7 +46,6 @@ private:
     //       beginning of an array or not ending at the actual end.
     //       Thus, raw pointers are used here.
     //
-    void m_calc_mean(); // Calculate m_data_mean from m_data_buf
     void m_dwt1d(double* array,
                  size_t  array_len,
                  size_t  num_of_xforms,
@@ -122,7 +118,6 @@ private:
     // Private data members
     //
     buffer_type_d m_data_buf  = nullptr; // Holds the entire input data.
-    double        m_data_mean = 0.0;     // Mean of the values in data_buf
     size_t        m_dim_x     = 0;       // Dimension of the data volume
     size_t        m_dim_y     = 0;
     size_t        m_dim_z     = 0;

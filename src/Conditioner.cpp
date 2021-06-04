@@ -6,6 +6,11 @@
 
 #include "Conditioner.h"
 
+speck::Conditioner::Conditioner(bool sub_mean)
+{
+    m_s_mean = sub_mean;
+}
+
 void speck::Conditioner::toggle_subtract_mean( bool b )
 {
     m_s_mean = b;
@@ -16,9 +21,9 @@ void speck::Conditioner::toggle_divide_by_rms( bool b )
     m_d_rms = b;
 }
 
-void speck::Conditioner::set_num_strides( size_t s )
+auto speck::Conditioner::get_meta_size() const -> size_t
 {
-    m_num_strides = s;
+    return m_meta_size;
 }
 
 auto speck::Conditioner::m_calc_mean( buffer_type_d& buf, size_t len ) const -> double
@@ -61,6 +66,35 @@ auto speck::Conditioner::m_calc_rms( buffer_type_d& buf, size_t len ) const -> d
     return rms;
 }
 
+void speck::Conditioner::m_adjust_strides( size_t len ) const
+{
+    // Let's say 2048 is a starting point
+    m_num_strides = 2048;
+    if( len % m_num_strides == 0 )
+        return;
+
+    size_t num = 0;
+
+    // First, try to increase till 2^14 = 16,384
+    for( num = m_num_strides; num <= 16'384; num++ ) {
+        if( len % num == 0 )
+            break;
+    }
+
+    if( len % num == 0 ) {
+        m_num_strides = num;
+        return;
+    }
+
+    // Second, try to decrease till 1, at which point it must work.
+    for( num = m_num_strides; num > 0; num-- ) {
+        if( len % num == 0 )
+            break;
+    }
+
+    m_num_strides = num;
+}
+
 auto speck::Conditioner::condition( buffer_type_d& buf, size_t len ) const
                          -> std::pair<RTNType, std::array<uint8_t, 17>>
 {
@@ -71,14 +105,13 @@ auto speck::Conditioner::condition( buffer_type_d& buf, size_t len ) const
     const auto begin = speck::begin(buf);
     const auto end   = begin + len;
 
-    if( len % m_num_strides != 0 )
-        return {RTNType::WrongSize, meta};
-
     // If divide_by_rms is requested, need to make sure rms is non-zero
     if( m_d_rms ) {
         if( std::all_of( begin, end, [](auto v){return v == 0.0;} ) )
             return {RTNType::Error, meta};
     }
+
+    m_adjust_strides( len );
 
     // Perform subtract mean first
     if( m_s_mean ) {
@@ -108,9 +141,6 @@ auto speck::Conditioner::condition( buffer_type_d& buf, size_t len ) const
 auto speck::Conditioner::inverse_condition( buffer_type_d& buf, size_t len, const uint8_t* meta ) const
                          -> RTNType
 {
-    if( len % m_num_strides != 0 )
-        return RTNType::WrongSize;
-
     // unpack meta
     bool   b8[8];
     speck::unpack_8_booleans( b8, meta[0] );
@@ -122,6 +152,8 @@ auto speck::Conditioner::inverse_condition( buffer_type_d& buf, size_t len, cons
     std::memcpy( &rms, meta + pos, sizeof(rms) );
     pos += sizeof(rms);
     assert( pos == m_meta_size );
+
+    m_adjust_strides( len );
 
     const auto begin = speck::begin(buf);
     const auto end   = begin + len;
