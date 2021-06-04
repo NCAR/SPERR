@@ -60,10 +60,6 @@ public:
     auto decode() -> RTNType;
     
 private:
-    //
-    // Note: for methods returning an integer, 0 means normal execution, and
-    // 1 means bit budget met.
-    //
     auto m_ready_to_encode() const  -> bool;
     auto m_ready_to_decode() const  -> bool;
     void m_clean_LIS(); // Clean garbage sets from m_LIS if too much garbage exists.
