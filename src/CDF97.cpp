@@ -72,11 +72,10 @@ auto speck::CDF97::take_data(buffer_type_d ptr, size_t len, size_t dimx, size_t 
     return RTNType::Good;
 }
 
-auto speck::CDF97::view_data() const -> std::pair<const buffer_type_d&, size_t>
+auto speck::CDF97::view_data() const -> std::pair<const double*, size_t>
 {
-    return std::make_pair(std::cref(m_data_buf), m_buf_len);
-    // Note: the following syntax would also work, but the code above better expresses intent. 
-    // return {m_data_buf, m_buf_len};
+    //return std::make_pair(std::cref(m_data_buf), m_buf_len);
+    return std::make_pair(m_data_buf.get(), m_buf_len);
 }
 
 auto speck::CDF97::release_data() -> std::pair<buffer_type_d, size_t>

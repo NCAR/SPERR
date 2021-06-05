@@ -106,7 +106,6 @@ auto begin( const std::unique_ptr<T[]>& ) -> ptr_iterator<T>;
 // Generate a ptr_iterator from a smart_buffer.
 template<typename T>
 auto begin( const std::pair<std::unique_ptr<T[]>, size_t>& ) -> ptr_iterator<T>;
-
 template<typename T>
 auto end(   const std::pair<std::unique_ptr<T[]>, size_t>& ) -> ptr_iterator<T>;
 
