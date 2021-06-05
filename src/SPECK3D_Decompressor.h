@@ -11,6 +11,7 @@
 #include "CDF97.h"
 #include "SPECK3D.h"
 #include "SPERR.h"
+#include "Conditioner.h"
 
 #ifdef USE_ZSTD
   #include "zstd.h"
@@ -42,8 +43,11 @@ private:
     size_t                      m_dim_y             = 0;
     size_t                      m_dim_z             = 0;
 
+    std::vector<uint8_t>        m_condi_stream;
     std::vector<uint8_t>        m_speck_stream;
+    std::vector<double>         m_val_buf;
 
+    speck::Conditioner          m_conditioner;
     speck::CDF97                m_cdf;
     speck::SPECK3D              m_decoder;
 

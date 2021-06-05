@@ -55,15 +55,6 @@ auto speck::SPECK_Storage::view_data() const -> std::pair<const buffer_type_d&, 
 {
     return std::make_pair(std::cref(m_coeff_buf), m_coeff_len);
 }
-
-void speck::SPECK_Storage::set_image_mean(double mean)
-{
-    m_image_mean = mean;
-}
-auto speck::SPECK_Storage::get_image_mean() const -> double
-{
-    return m_image_mean;
-}
 auto speck::SPECK_Storage::get_dims() const -> std::array<size_t, 3>
 {
     return {m_dim_x, m_dim_y, m_dim_z};
@@ -73,8 +64,8 @@ auto speck::SPECK_Storage::get_dims() const -> std::array<size_t, 3>
 auto speck::SPECK_Storage::get_encoded_bitstream() const -> smart_buffer_uint8
 {
     // Header definition:
-    // dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  qz_term_lev,  bitstream_len (in byte)
-    // uint32_t,  uint32_t,  uint32_t,  double       int16_t,         int16_t,      uint64_t
+    // dim_x,     dim_y,     dim_z,     max_coeff_bits,  qz_term_lev,  bitstream_len (in byte)
+    // uint32_t,  uint32_t,  uint32_t,  int16_t,         int16_t,      uint64_t
 
     uint32_t dims[3] { uint32_t(m_dim_x), uint32_t(m_dim_y), uint32_t(m_dim_z) };
     assert( m_bit_buffer.size() % 8 == 0 );
@@ -87,8 +78,6 @@ auto speck::SPECK_Storage::get_encoded_bitstream() const -> smart_buffer_uint8
     size_t pos = 0;
     std::memcpy(ptr, dims, sizeof(dims));
     pos += sizeof(dims);
-    std::memcpy(ptr + pos, &m_image_mean, sizeof(m_image_mean));
-    pos += sizeof(m_image_mean);
     int16_t max_bits = int16_t(m_max_coeff_bits);   // int16_t is big enough
     std::memcpy(ptr + pos, &max_bits, sizeof(max_bits));
     pos += sizeof(max_bits);
@@ -121,8 +110,6 @@ auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t
     size_t   pos = 0;
     std::memcpy(dims, ptr, sizeof(dims));
     pos += sizeof(dims);
-    std::memcpy(&m_image_mean, ptr + pos, sizeof(m_image_mean));
-    pos += sizeof(m_image_mean);
     int16_t max_bits;
     std::memcpy(&max_bits, ptr + pos, sizeof(max_bits));
     pos += sizeof(max_bits);
@@ -155,10 +142,10 @@ auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t
 auto speck::SPECK_Storage::get_speck_stream_size( const void* buf ) const -> uint64_t
 {
     // Given the header definition in `get_encoded_bitstream()`, directly
-    // go retrieve the value stored in byte 24-31.
+    // go retrieve the value stored in the last 8 bytes of the header
     const uint8_t* const ptr = static_cast<const uint8_t*>( buf );
     uint64_t bit_in_byte;
-    std::memcpy(&bit_in_byte, ptr + 24, sizeof(bit_in_byte));
+    std::memcpy(&bit_in_byte, ptr + m_header_size - 8, sizeof(bit_in_byte));
 
     return (m_header_size + size_t(bit_in_byte));
 }

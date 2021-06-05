@@ -59,7 +59,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     m_cdf.copy_data( m_val_buf.get(), m_total_vals, m_dim_x, m_dim_y, m_dim_z );
     m_cdf.dwt3d();
     auto cdf_out = m_cdf.release_data();
-    m_encoder.set_image_mean( m_cdf.get_mean() );
+    //m_encoder.set_image_mean( m_cdf.get_mean() );
     m_encoder.take_data( std::move(cdf_out.first), cdf_out.second, m_dim_x, m_dim_y, m_dim_z );
     m_encoder.set_quantization_term_level( m_qz_lev );
     auto rtn = m_encoder.encode();
@@ -93,7 +93,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     // Solution: find those data points, and use their slightly reduced error as the new tolerance.
     //
     auto new_tol  = m_tol;
-    if( !speck::size_is( m_tmp_diff, m_total_vals ) )
+    if( m_tmp_diff.second < m_total_vals )
         m_tmp_diff = std::make_pair(std::make_unique<double[]>(m_total_vals), m_total_vals);
     auto& diff_v = m_tmp_diff.first;
     for( size_t i = 0; i < m_total_vals; i++ ) {
@@ -129,9 +129,22 @@ auto SPECK3D_Compressor::compress() -> RTNType
     if( m_val_buf == nullptr || m_total_vals == 0 )
         return RTNType::Error;
     m_speck_stream = {nullptr, 0};
-    m_sperr_stream = {nullptr, 0};
 
-    RTNType rtn;
+    // Step 1: data goes through the conditioner 
+    m_conditioner.toggle_all_false();
+    m_conditioner.toggle_subtract_mean( true );
+    auto [rtn, condi_meta] = m_conditioner.condition( m_val_buf, m_total_vals );
+    if( rtn != RTNType::Good )
+        return rtn;
+
+    // Copy conditioner meta data to `m_condi_stream`
+    if( m_condi_stream.second != condi_meta.size() ) {
+        m_condi_stream.second  = condi_meta.size();
+        m_condi_stream.first   = std::make_unique<uint8_t[]>( condi_meta.size() ) ;
+    }
+    std::copy( condi_meta.begin(), condi_meta.end(), speck::begin(m_condi_stream) );
+
+    // Step 2: wavelet transform
     rtn = m_cdf.take_data( std::move(m_val_buf), m_total_vals, m_dim_x, m_dim_y, m_dim_z );
     if( rtn != RTNType::Good )
         return rtn;
@@ -140,7 +153,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     if( cdf_out.first == nullptr || cdf_out.second != m_total_vals )
         return RTNType::Error;
 
-    m_encoder.set_image_mean( m_cdf.get_mean() );
+    // Step 3: SPECK encoding
     rtn = m_encoder.take_data(std::move(cdf_out.first), cdf_out.second, m_dim_x, m_dim_y, m_dim_z);
     if( rtn != RTNType::Good )
         return rtn;
@@ -159,7 +172,11 @@ auto SPECK3D_Compressor::compress() -> RTNType
 
 auto SPECK3D_Compressor::get_encoded_bitstream() const -> speck::smart_buffer_uint8
 {
-    const size_t total_size = m_speck_stream.second + m_sperr_stream.second;
+#ifdef QZ_TERM
+    const size_t total_size = m_condi_stream.second + m_speck_stream.second + m_sperr_stream.second;
+#else
+    const size_t total_size = m_condi_stream.second + m_speck_stream.second;
+#endif
 
 #ifdef USE_ZSTD
     // Need to have a ZSTD Compression Context first
@@ -172,11 +189,16 @@ auto SPECK3D_Compressor::get_encoded_bitstream() const -> speck::smart_buffer_ui
     }
 
     m_tmp_buf.resize( total_size, 0 );
-    std::copy( speck::begin(m_speck_stream), speck::end(m_speck_stream), m_tmp_buf.begin() );
+    std::copy( speck::begin(m_condi_stream), speck::end(m_condi_stream), m_tmp_buf.begin() );
+    std::copy( speck::begin(m_speck_stream), speck::end(m_speck_stream), 
+               m_tmp_buf.begin() + m_condi_stream.second );
+
+#ifdef QZ_TERM
     if( !speck::empty_buf(m_sperr_stream) ) { // Not sure about nullptr, so we do the test.
         std::copy(  speck::begin(m_sperr_stream), speck::end(m_sperr_stream),
-                    m_tmp_buf.begin() + m_speck_stream.second );
+                    m_tmp_buf.begin() + (m_condi_stream.second + m_speck_stream.second) );
     }
+#endif
 
     const size_t comp_buf_size = ZSTD_compressBound( total_size );
     auto comp_buf = std::make_unique<uint8_t[]>( comp_buf_size );
@@ -188,14 +210,23 @@ auto SPECK3D_Compressor::get_encoded_bitstream() const -> speck::smart_buffer_ui
         return {nullptr, 0};
     else
         return {std::move(comp_buf), comp_size};
+
+// Finish the USE_ZSTD case
 #else
+// Start with the no-ZSTD case
+
     auto buf = std::make_unique<uint8_t[]>( total_size );
-    std::memcpy( buf.get(), m_speck_stream.first.get(), m_speck_stream.second );
-    if( !speck::empty_buf(m_sperr_stream) ) { // UB to memcpy nullptr, so we do the test.
-        std::memcpy( buf.get() + m_speck_stream.second,
-                     m_sperr_stream.first.get(),
-                     m_sperr_stream.second );
+    std::copy( speck::begin(m_condi_stream), speck::end(m_condi_stream), speck::begin(buf) );
+    std::copy( speck::begin(m_speck_stream), speck::end(m_speck_stream), 
+               speck::begin(buf) + m_condi_stream.second );
+
+#ifdef QZ_TERM
+    if( !speck::empty_buf(m_sperr_stream) ) { // Not sure about nullptr, so we do the test.
+        std::copy( speck::begin(m_sperr_stream), speck::end(m_sperr_stream),
+                   speck::begin(buf) + (m_condi_stream.second + m_speck_stream.second) );
     }
+#endif
+
     return {std::move(buf), total_size};
 #endif
 }

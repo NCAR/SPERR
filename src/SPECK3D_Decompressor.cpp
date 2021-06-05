@@ -39,30 +39,40 @@ auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
     const size_t         ptr_len = len;
 #endif
 
-    // Step 1: extract SPECK stream from it
+    // Step 1: extract conditioner stream from it
+    const auto condi_size = m_conditioner.get_meta_size();
+    if( condi_size > ptr_len )
+        return RTNType::WrongSize;
+    m_condi_stream.resize( condi_size, 0 );
+    std::copy( ptr, ptr + condi_size, m_condi_stream.begin() );
+    size_t pos = condi_size;
+
+    // Step 2: extract SPECK stream from it
     m_speck_stream.clear();
-    const auto speck_size = m_decoder.get_speck_stream_size(ptr);
-    if( speck_size > ptr_len )
+    const uint8_t* const speck_p = ptr +pos;
+    const auto speck_size = m_decoder.get_speck_stream_size(speck_p);
+    if( pos + speck_size > ptr_len )
         return RTNType::WrongSize;
     m_speck_stream.resize( speck_size, 0 );
-    std::copy( ptr, ptr + speck_size, m_speck_stream.begin() );
+    std::copy( speck_p, speck_p + speck_size, m_speck_stream.begin() );
+    pos += speck_size;
 
-    // Step 2: keep the volume dimension from the header
-    auto dims = m_decoder.get_speck_stream_dims( ptr );
+    // Step 3: keep the volume dimension from the header
+    auto dims = m_decoder.get_speck_stream_dims( m_speck_stream.data() );
     m_dim_x   = dims[0];
     m_dim_y   = dims[1];
     m_dim_z   = dims[2];
 
-    // Step 3: extract SPERR stream from it
 #ifdef QZ_TERM
+    // Step 4: extract SPERR stream from it
     m_sperr_stream.clear();
-    if( speck_size < ptr_len ) {
-        const uint8_t* const sperr_p = ptr + speck_size;
+    if( pos < ptr_len ) {
+        const uint8_t* const sperr_p = ptr + pos;
         const auto sperr_size = m_sperr.get_sperr_stream_size( sperr_p );
-        if( sperr_size != ptr_len - speck_size )
+        if( sperr_size != ptr_len - pos )
             return RTNType::WrongSize;
         m_sperr_stream.resize( sperr_size, 0 );
-        std::copy( sperr_p, sperr_p + sperr_size, m_sperr_stream.begin() );
+        std::copy( sperr_p, sperr_p + pos, m_sperr_stream.begin() );
     }
 #endif
 
@@ -99,15 +109,23 @@ auto SPECK3D_Decompressor::decompress( ) -> RTNType
     // Step 2: Inverse Wavelet Transform
     //
     // (Here we ask `m_cdf` to make a copy of coefficients from `m_decoder` instead of
-    //  transfer the ownership, because `m_decoder` will reuse that chunk of memory.)
-    auto coeffs = m_decoder.view_data();
-    m_cdf.copy_data( coeffs.first.get(), coeffs.second, m_dim_x, m_dim_y, m_dim_z );
-    m_cdf.set_mean( m_decoder.get_image_mean() );
+    //  transfer the ownership, because `m_decoder` will reuse that memory when processing
+    //  the next chunk. For the same reason, `m_cdf` keeps its memory.)
+    auto decoder_out = m_decoder.view_data();
+    m_cdf.copy_data( decoder_out.first.get(), decoder_out.second, m_dim_x, m_dim_y, m_dim_z );
     m_cdf.idwt3d();
 
-    // Step 3: If there's SPERR data, then do the correction.
-    // This condition occurs only in QZ_TERM mode.
+    // Step 3: Inverse Conditioning
+    auto cdf_out = m_cdf.view_data();
+    if( cdf_out.second != decoder_out.second )
+        return RTNType::WrongSize;
+    m_val_buf.resize( cdf_out.second, 0.0 );
+    std::copy( cdf_out.first, cdf_out.first + cdf_out.second, m_val_buf.begin() );
+    m_conditioner.inverse_condition( m_val_buf, m_val_buf.size(), m_condi_stream.data() );
+
 #ifdef QZ_TERM
+    // Step 4: If there's SPERR data, then do the correction.
+    // This condition occurs only in QZ_TERM mode.
     m_LOS.clear();
     if( !m_sperr_stream.empty() ) {
         rtn = m_sperr.parse_encoded_bitstream(m_sperr_stream.data(), m_sperr_stream.size());
@@ -117,6 +135,9 @@ auto SPECK3D_Decompressor::decompress( ) -> RTNType
         if( rtn != RTNType::Good )
             return rtn;
         m_LOS = m_sperr.view_outliers();
+    }
+    for( const auto& outlier : m_LOS ) {
+        m_val_buf[outlier.location] += outlier.error;
     }
 #endif
 
@@ -128,21 +149,12 @@ template<typename T>
 auto SPECK3D_Decompressor::get_decompressed_volume() const ->
                            std::pair<std::unique_ptr<T[]>, size_t>
 {
-    auto [vol, len]  = m_cdf.view_data();
-    if( vol == nullptr || len == 0 )
+    const auto len = m_val_buf.size();
+    if( len == 0 )
         return {nullptr, 0};
 
     auto out_buf = std::make_unique<T[]>( len );
-    auto begin   = speck::begin( vol );
-    auto end     = begin + len;
-    std::copy( begin, end, speck::begin(out_buf) );
-
-#ifdef QZ_TERM
-    // If there are corrections for outliers, do it now!
-    for( const auto& outlier : m_LOS ) {
-        out_buf[outlier.location] += outlier.error;
-    }
-#endif
+    std::copy( m_val_buf.begin(), m_val_buf.end(), speck::begin(out_buf) );
 
     return {std::move(out_buf), len};
 }

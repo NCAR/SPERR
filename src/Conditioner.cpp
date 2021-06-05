@@ -13,6 +13,12 @@ speck::Conditioner::Conditioner(bool sub_mean)
     m_s_mean = sub_mean;
 }
 
+void speck::Conditioner::toggle_all_false()
+{
+    m_s_mean = false;
+    m_d_rms  = false;
+}
+
 void speck::Conditioner::toggle_subtract_mean( bool b )
 {
     m_s_mean = b;

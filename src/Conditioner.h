@@ -15,6 +15,7 @@ public:
     Conditioner() = default;
     Conditioner(bool sub_mean); // if subtract mean or not
 
+    void toggle_all_false();
     void toggle_subtract_mean( bool );
     void toggle_divide_by_rms( bool );
     auto get_meta_size() const -> size_t;
@@ -36,7 +37,6 @@ private:
     //
     bool m_s_mean  = false; // subtract mean
     bool m_d_rms   = false; // divide by rms
-    //bool m_n_range = false; // normalize by range, so all values are in (-1.0, 1.0)
 
     // Calculations are carried out by strides, which 
     // should be a divisor of the input data size.

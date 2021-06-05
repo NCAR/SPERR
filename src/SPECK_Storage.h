@@ -25,6 +25,7 @@ public:
     auto take_data(buffer_type_d, size_t len, size_t dimx, size_t dimy, size_t dimz = 1) -> RTNType;
     auto release_data() -> smart_buffer_d;                              // Release ownership
     auto view_data() const -> std::pair<const buffer_type_d&, size_t>;  // Keep ownership
+    auto get_dims() const -> std::array<size_t, 3>;
 
     // Get the encoded bitstream.
     // The returned memory block could be written to disk by other programs.
@@ -37,10 +38,6 @@ public:
     //       and others most likely provide a raw pointer.
     auto parse_encoded_bitstream( const void*, size_t ) -> RTNType;
 
-    void set_image_mean(double mean);
-    auto get_image_mean() const -> double;
-    auto get_dims() const -> std::array<size_t, 3>;
-
     // Given a SPECK stream, tell how long the speck stream (including header) is in bytes,
     // and what the volume/slice dimension is in num. of elements.
     // Note: don't need to provide the buffer size because this function
@@ -52,10 +49,9 @@ protected:
     //
     // Member variables
     //
-    double          m_image_mean     = 0.0;
     size_t          m_coeff_len      = 0;
     buffer_type_d   m_coeff_buf      = nullptr;
-    const size_t    m_header_size    = 32;
+    const size_t    m_header_size    = 24;
     size_t          m_dim_x          = 0;
     size_t          m_dim_y          = 0;
     size_t          m_dim_z          = 0;

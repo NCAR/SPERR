@@ -10,6 +10,7 @@
 #include "CDF97.h"
 #include "SPECK3D.h"
 #include "SPERR.h"
+#include "Conditioner.h"
 
 #ifdef USE_ZSTD
   #include "zstd.h"
@@ -52,20 +53,21 @@ private:
     size_t                      m_total_vals;
     speck::buffer_type_d        m_val_buf;
 
+    speck::Conditioner          m_conditioner;
     speck::CDF97                m_cdf;
     speck::SPECK3D              m_encoder;
 
     // Store bitstreams from SPECK encoding and error correction if applicable
+    speck::smart_buffer_uint8   m_condi_stream = {nullptr, 0};
     speck::smart_buffer_uint8   m_speck_stream = {nullptr, 0};
-    speck::smart_buffer_uint8   m_sperr_stream = {nullptr, 0};
 
 #ifdef QZ_TERM
+    speck::smart_buffer_uint8   m_sperr_stream = {nullptr, 0};
     speck::SPERR                m_sperr;
     int32_t                     m_qz_lev      = 0;
     double                      m_tol         = 0.0; // tolerance used in error correction
     size_t                      m_num_outlier = 0;
     std::vector<speck::Outlier> m_LOS; // List of OutlierS
-    // A temporary buffer space that will be re-used
     speck::smart_buffer_d       m_tmp_diff    = {nullptr, 0};
 #else
     float                       m_bpp         = 0.0;
