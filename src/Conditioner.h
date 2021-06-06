@@ -30,6 +30,8 @@ public:
     auto condition( T&, size_t ) const -> std::pair<RTNType, std::array<uint8_t, 17>>;
     template<typename T>
     auto inverse_condition( T&, size_t, const uint8_t* ) const -> RTNType;
+    template<typename T>
+    auto inverse_condition( T&, size_t, const std::array<uint8_t, 17>& ) const -> RTNType;
 
 private:
     //

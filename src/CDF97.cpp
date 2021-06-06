@@ -19,29 +19,18 @@ auto speck::CDF97::copy_data(const T* data, size_t len, size_t dimx, size_t dimy
     if( len != dimx * dimy * dimz )
         return RTNType::DimMismatch;
 
-    // If `m_data_buf` is empty, or having a different length, we need to allocate memory!
-    if( m_data_buf == nullptr || m_buf_len != len ) {
-        m_buf_len  = len;
-        m_data_buf = std::make_unique<double[]>(len); 
-    }
-    std::copy( data, data + len, speck::begin(m_data_buf) );
+    m_data_buf.resize( len );
+    std::copy( data, data + len, m_data_buf.begin() );
 
     m_dim_x = dimx;
     m_dim_y = dimy;
     m_dim_z = dimz;
 
     auto max_col = std::max( std::max(dimx, dimy), dimz );
-    // Notice that this buffer needs to hold two columns.
-    if( !speck::size_is(m_col_buf, max_col * 2) ) {
-        // Weird clang behavior (clang version 11.1.0 on MacOS, clang version 10.0.0-4ubuntu1)
-        // that doesn't allow the following line to link.
-        // m_col_buf = {std::make_unique<double[]>(max_col * 2), max_col * 2};
-        m_col_buf = std::make_pair(std::make_unique<double[]>(max_col * 2), max_col * 2);
-    }
+    m_col_buf.resize( max_col * 2 );
 
     auto max_slice = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
-    if( !speck::size_is(m_slice_buf, max_slice) )
-        m_slice_buf = {std::make_unique<double[]>(max_slice), max_slice};
+    m_slice_buf.resize( max_slice );
 
     return RTNType::Good;
 }
@@ -49,83 +38,65 @@ template auto speck::CDF97::copy_data(const float*,  size_t, size_t, size_t, siz
 template auto speck::CDF97::copy_data(const double*, size_t, size_t, size_t, size_t) -> RTNType;
 
 
-auto speck::CDF97::take_data(buffer_type_d ptr, size_t len, size_t dimx, size_t dimy, size_t dimz)
+auto speck::CDF97::take_data( vecd_type&& buf, size_t dimx, size_t dimy, size_t dimz)
                  -> RTNType
 {
-    if( len != dimx * dimy * dimz )
+    if( buf.size() != dimx * dimy * dimz )
         return RTNType::DimMismatch;
 
-    m_data_buf = std::move(ptr);
-    m_buf_len  = len;
+    m_data_buf = std::move(buf);
     m_dim_x    = dimx;
     m_dim_y    = dimy;
     m_dim_z    = dimz;
 
     auto max_col = std::max( std::max(dimx, dimy), dimz );
-    if( !speck::size_is(m_col_buf, max_col * 2) )
-        m_col_buf = {std::make_unique<double[]>(max_col * 2), max_col * 2};
+    m_col_buf.resize( max_col * 2 );
 
     auto max_slice = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
-    if( !speck::size_is(m_slice_buf, max_slice) )
-        m_slice_buf = {std::make_unique<double[]>(max_slice), max_slice};
+    m_slice_buf.resize( max_slice );
 
     return RTNType::Good;
 }
 
-auto speck::CDF97::view_data() const -> std::pair<const double*, size_t>
+auto speck::CDF97::view_data() const -> const vecd_type&
 {
-    //return std::make_pair(std::cref(m_data_buf), m_buf_len);
-    return std::make_pair(m_data_buf.get(), m_buf_len);
+    return m_data_buf;
 }
 
-auto speck::CDF97::release_data() -> std::pair<buffer_type_d, size_t>
+auto speck::CDF97::release_data() -> vecd_type&&
 {
-    const auto tmp = m_buf_len;
-    m_buf_len = 0;
-    return {std::move(m_data_buf), tmp};
+    m_dim_x = 0;
+    m_dim_y = 0;
+    m_dim_z = 0;
+    return std::move(m_data_buf);
 }
 
 void speck::CDF97::dwt1d()
 {
     size_t num_xforms = speck::num_of_xforms(m_dim_x);
-    m_dwt1d(m_data_buf.get(), m_buf_len, num_xforms, m_col_buf.first.get());
+    m_dwt1d(m_data_buf.data(), m_data_buf.size(), num_xforms, m_col_buf.data());
 }
 
 void speck::CDF97::idwt1d()
 {
     size_t num_xforms = speck::num_of_xforms(m_dim_x);
-    m_idwt1d(m_data_buf.get(), m_buf_len, num_xforms, m_col_buf.first.get());
+    m_idwt1d(m_data_buf.data(), m_data_buf.size(), num_xforms, m_col_buf.data());
 }
 
 void speck::CDF97::dwt2d()
 {
     size_t num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
-    m_dwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, m_col_buf.first.get());
+    m_dwt2d(m_data_buf.data(), m_dim_x, m_dim_y, num_xforms_xy, m_col_buf.data());
 }
 
 void speck::CDF97::idwt2d()
 {
     size_t num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
-    m_idwt2d(m_data_buf.get(), m_dim_x, m_dim_y, num_xforms_xy, m_col_buf.first.get());
+    m_idwt2d(m_data_buf.data(), m_dim_x, m_dim_y, num_xforms_xy, m_col_buf.data());
 }
 
 void speck::CDF97::dwt3d()
 {
-
-#ifdef USE_OMP
-    size_t num_threads = 1;
-    #pragma omp parallel
-    {
-      if( omp_get_thread_num() == 0 )
-        num_threads = omp_get_num_threads();
-    }
-    size_t max_dim              = std::max( std::max(m_dim_x, m_dim_y), m_dim_z );
-    buffer_type_d tmp_buf_pool  = std::make_unique<double[]>(max_dim * 2 * num_threads);
-    double* const tmp_buf       = tmp_buf_pool.get();
-#else
-    double* const tmp_buf       = m_col_buf.first.get();
-#endif
-
     const size_t  plane_size_xy = m_dim_x * m_dim_y;
 
     /*
@@ -152,45 +123,27 @@ void speck::CDF97::dwt3d()
 
      // First transform along the Z dimension
      //
+    const auto num_xforms_z = speck::num_of_xforms(m_dim_z);
 
-#ifdef USE_OMP
-    buffer_type_d z_column_pool = std::make_unique<double[]>(m_dim_x * m_dim_z * num_threads);
-    double* const z_columns_ptr = z_column_pool.get();
-#else
-    double* const z_columns_ptr = m_slice_buf.first.get();
-#endif
-
-    const auto    num_xforms_z   = speck::num_of_xforms(m_dim_z);
-
-    // #pragma omp parallel for
     for (size_t y = 0; y < m_dim_y; y++) {
-        const auto    y_offset    = y * m_dim_x;
-
-#ifdef USE_OMP
-        const size_t  my_rank     = omp_get_thread_num();
-        double* const my_z_col    = z_columns_ptr + my_rank * m_dim_x * m_dim_z;
-        double* const my_tmp_buf  = tmp_buf + my_rank * max_dim * 2;
-#else
-        double* const my_z_col    = z_columns_ptr;
-        double* const my_tmp_buf  = tmp_buf;
-#endif
+        const auto y_offset = y * m_dim_x;
 
         // Re-arrange values of one XZ slice so that they form many z_columns
         for (size_t z = 0; z < m_dim_z; z++) {
             const auto cube_start_idx = z * plane_size_xy + y_offset;
             for (size_t x = 0; x < m_dim_x; x++)
-                my_z_col[z + x * m_dim_z] = m_data_buf[cube_start_idx + x];
+                m_slice_buf[z + x * m_dim_z] = m_data_buf[cube_start_idx + x];
         }
 
         // DWT1D on every z_column
         for (size_t x = 0; x < m_dim_x; x++)
-            m_dwt1d(my_z_col + x * m_dim_z, m_dim_z, num_xforms_z, my_tmp_buf);
+            m_dwt1d(m_slice_buf.data() + x * m_dim_z, m_dim_z, num_xforms_z, m_col_buf.data());
 
         // Put back values of the z_columns to the cube
         for (size_t z = 0; z < m_dim_z; z++) {
             const auto cube_start_idx = z * plane_size_xy + y_offset;
             for (size_t x = 0; x < m_dim_x; x++)
-                m_data_buf[cube_start_idx + x] = my_z_col[z + x * m_dim_z];
+                m_data_buf[cube_start_idx + x] = m_slice_buf[z + x * m_dim_z];
         }
     }
 
@@ -198,56 +151,23 @@ void speck::CDF97::dwt3d()
     //
     const auto num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
 
-    // #pragma omp parallel for
     for (size_t z = 0; z < m_dim_z; z++) {
-
-#ifdef USE_OMP
-        const size_t  my_rank     = omp_get_thread_num();
-        double* const my_tmp_buf  = tmp_buf_pool.get() + my_rank * max_dim * 2;
-#else
-        double* const my_tmp_buf  = tmp_buf;
-#endif
-
-        const size_t  offset      = plane_size_xy * z;
-        m_dwt2d(m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, my_tmp_buf);
+        const size_t offset = plane_size_xy * z;
+        m_dwt2d(m_data_buf.data() + offset, m_dim_x, m_dim_y, num_xforms_xy, m_col_buf.data());
     }
 }
 
 void speck::CDF97::idwt3d()
 {
-
-#ifdef USE_OMP
-    size_t num_threads = 1;
-    #pragma omp parallel
-    {
-        if( omp_get_thread_num() == 0 )
-            num_threads = omp_get_num_threads();
-    }
-    const size_t max_dim        = std::max( std::max(m_dim_x, m_dim_y), m_dim_z );
-    buffer_type_d tmp_buf_pool  = std::make_unique<double[]>(max_dim * 2 * num_threads);
-    double* const tmp_buf       = tmp_buf_pool.get();
-#else
-    double* const tmp_buf       = m_col_buf.first.get();
-#endif
-
-    const size_t  plane_size_xy = m_dim_x * m_dim_y;
+    const size_t plane_size_xy = m_dim_x * m_dim_y;
 
     // First, inverse transform each plane
     //
     auto num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
 
-    // #pragma omp parallel for
     for (size_t i = 0; i < m_dim_z; i++) {
         const size_t offset  = plane_size_xy * i;
-
-#ifdef USE_OMP
-        const size_t  my_rank    = omp_get_thread_num();
-        double* const my_tmp_buf = tmp_buf + max_dim * 2 * my_rank;
-#else
-        double* const my_tmp_buf = tmp_buf;
-#endif
-
-        m_idwt2d(m_data_buf.get() + offset, m_dim_x, m_dim_y, num_xforms_xy, my_tmp_buf);
+        m_idwt2d(m_data_buf.data() + offset, m_dim_x, m_dim_y, num_xforms_xy, m_col_buf.data());
     }
 
     /*
@@ -271,45 +191,27 @@ void speck::CDF97::idwt3d()
 
     // Process one XZ slice at a time
     //
+    const auto num_xforms_z = speck::num_of_xforms(m_dim_z);
 
-#ifdef USE_OMP
-    buffer_type_d z_column_pool = std::make_unique<double[]>(m_dim_x * m_dim_z * num_threads);
-    double* const z_columns_ptr = z_column_pool.get();
-#else
-    double* const z_columns_ptr = m_slice_buf.first.get();
-#endif
-
-    const auto    num_xforms_z  = speck::num_of_xforms(m_dim_z);
-
-    // #pragma omp parallel for
     for (size_t y = 0; y < m_dim_y; y++) {
         const auto y_offset  = y * m_dim_x;
-
-#ifdef USE_OMP
-        const size_t  my_rank    = omp_get_thread_num();
-        double* const my_z_col   = z_columns_ptr + m_dim_x * m_dim_z * my_rank;
-        double* const my_tmp_buf = tmp_buf + max_dim * 2 * my_rank;
-#else
-        double* const my_z_col   = z_columns_ptr;
-        double* const my_tmp_buf = tmp_buf;
-#endif
 
         // Re-arrange values on one slice so that they form many z_columns
         for (size_t z = 0; z < m_dim_z; z++) {
             const auto cube_start_idx = z * plane_size_xy + y_offset;
             for (size_t x = 0; x < m_dim_x; x++)
-                my_z_col[z + x * m_dim_z] = m_data_buf[cube_start_idx + x];
+                m_slice_buf[z + x * m_dim_z] = m_data_buf[cube_start_idx + x];
         }
 
         // IDWT1D on every z_column
         for (size_t x = 0; x < m_dim_x; x++)
-            m_idwt1d(my_z_col + x * m_dim_z, m_dim_z, num_xforms_z, my_tmp_buf);
+            m_idwt1d(m_slice_buf.data() + x * m_dim_z, m_dim_z, num_xforms_z, m_col_buf.data());
 
         // Put back values from the z_columns to the cube
         for (size_t z = 0; z < m_dim_z; z++) {
             const auto cube_start_idx = z * plane_size_xy + y_offset;
             for (size_t x = 0; x < m_dim_x; x++)
-                m_data_buf[cube_start_idx + x] = my_z_col[z + x * m_dim_z];
+                m_data_buf[cube_start_idx + x] = m_slice_buf[z + x * m_dim_z];
         }
     }
 }

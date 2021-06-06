@@ -249,7 +249,16 @@ template auto speck::Conditioner::inverse_condition( std::vector<double>&,
                                                      const uint8_t* ) const -> RTNType;
 
 
-
+template<typename T>
+auto speck::Conditioner::inverse_condition( T& buf, size_t len, 
+                         const std::array<uint8_t, 17>& meta ) const -> RTNType
+{
+    return this->inverse_condition( buf, len, meta.data() );
+}
+template auto speck::Conditioner::inverse_condition( buffer_type_d&, size_t, 
+                                  const std::array<uint8_t, 17>& ) const -> RTNType;
+template auto speck::Conditioner::inverse_condition( std::vector<double>&, size_t, 
+                                  const std::array<uint8_t, 17>& ) const -> RTNType;
 
 
 

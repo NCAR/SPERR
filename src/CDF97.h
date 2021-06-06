@@ -17,14 +17,14 @@ public:
     template <typename T>
     auto copy_data(const T* buf,  size_t len,
                    size_t   dimx, size_t dimy = 1, size_t dimz = 1) -> RTNType;
-    auto take_data(buffer_type_d buf,  size_t len,
+    auto take_data( std::vector<double>&& buf,
                    size_t dimx, size_t dimy = 1, size_t dimz = 1) -> RTNType;
 
     //
     // Output
     //
-    auto view_data() const -> std::pair<const double*, size_t>;  // Keep ownership
-    auto release_data()    -> std::pair<buffer_type_d, size_t>;  // Release ownership
+    auto view_data() const -> const std::vector<double>&;
+    auto release_data()    -> std::vector<double>&&;
     //auto get_mean() const  -> double;
     auto get_dims() const  -> std::array<size_t, 3>; // In 2D case, the 3rd value equals 1.
 
@@ -117,15 +117,14 @@ private:
     //
     // Private data members
     //
-    buffer_type_d m_data_buf  = nullptr; // Holds the entire input data.
-    size_t        m_dim_x     = 0;       // Dimension of the data volume
+    vecd_type     m_data_buf;       // Holds the entire input data.
+    size_t        m_dim_x     = 0;  // Dimension of the data volume
     size_t        m_dim_y     = 0;
     size_t        m_dim_z     = 0;
-    size_t        m_buf_len   = 0;
 
     // Temporary buffers that are big enough for any (1D column * 2) or any 2D slice.
-    smart_buffer_d  m_col_buf   = {nullptr, 0};
-    smart_buffer_d  m_slice_buf = {nullptr, 0};
+    vecd_type     m_col_buf;
+    vecd_type     m_slice_buf;
 
     /*
      * Note on the coefficients and constants:

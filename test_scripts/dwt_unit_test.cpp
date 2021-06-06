@@ -19,27 +19,27 @@ TEST( dwt1d, big_image_even )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and then use a conditioner
-    auto in_copy = std::make_unique<double[]>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, speck::begin(in_copy) );
+    auto in_copy = std::vector<double>( total_vals );
+    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
     speck::Conditioner condi( true );
     auto [rtn, meta] = condi.condition( in_copy, total_vals );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.take_data( std::move(in_copy), total_vals, dim_x );
+    cdf.take_data( std::move(in_copy), dim_x );
     cdf.dwt1d();
     cdf.idwt1d();
 
     // Claim that with single precision, the result is identical to the input
     auto result = cdf.release_data();
-    EXPECT_EQ( result.second, total_vals );
+    EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner
-    rtn = condi.inverse_condition( result.first, result.second, meta.data() );
+    rtn = condi.inverse_condition( result, result.size(), meta.data() );
 
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result.first[i]) );
+        EXPECT_EQ( in_buf[i], float(result[i]) );
     }
 }
 
@@ -55,27 +55,27 @@ TEST( dwt1d, big_image_odd )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
-    auto in_copy = std::make_unique<double[]>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, speck::begin(in_copy) );
+    auto in_copy = std::vector<double>( total_vals );
+    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
     speck::Conditioner condi( true );
     auto [rtn, meta] = condi.condition( in_copy, total_vals );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.take_data( std::move(in_copy), total_vals, dim_x );
+    cdf.take_data( std::move(in_copy), dim_x );
     cdf.dwt1d();
     cdf.idwt1d();
 
     // Claim that with single precision, the result is identical to the input
     auto result = cdf.release_data();
-    EXPECT_EQ( result.second, total_vals );
+    EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner again
-    rtn = condi.inverse_condition( result.first, result.second, meta.data() );
+    rtn = condi.inverse_condition( result, result.size(), meta );
 
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result.first[i]) );
+        EXPECT_EQ( in_buf[i], float(result[i]) );
     }
 }
 
@@ -91,27 +91,27 @@ TEST( dwt2d, small_image_even )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
-    auto in_copy = std::make_unique<double[]>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, speck::begin(in_copy) );
+    auto in_copy = std::vector<double>( total_vals );
+    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
     speck::Conditioner condi( true );
     auto [rtn, meta] = condi.condition( in_copy, total_vals );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.take_data( std::move(in_copy), dim_x * dim_y, dim_x, dim_y );
+    cdf.take_data( std::move(in_copy), dim_x, dim_y );
     cdf.dwt2d();
     cdf.idwt2d();
 
     // Claim that with single precision, the result is identical to the input
     auto result = cdf.release_data( );
-    EXPECT_EQ( result.second, total_vals );
+    EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner again
-    rtn = condi.inverse_condition( result.first, result.second, meta.data() );
+    rtn = condi.inverse_condition( result, result.size(), meta );
 
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result.first[i]) );
+        EXPECT_EQ( in_buf[i], float(result[i]) );
     }
 }
 
@@ -127,27 +127,27 @@ TEST( dwt2d, small_image_odd )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
-    auto in_copy = std::make_unique<double[]>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, speck::begin(in_copy) );
+    auto in_copy = std::vector<double>( total_vals );
+    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
     speck::Conditioner condi( true );
     auto [rtn, meta] = condi.condition( in_copy, total_vals );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.take_data( std::move(in_copy), dim_x * dim_y, dim_x, dim_y );
+    cdf.take_data( std::move(in_copy), dim_x, dim_y );
     cdf.dwt2d();
     cdf.idwt2d();
 
     // Claim that with single precision, the result is identical to the input
     auto result = cdf.release_data( );
-    EXPECT_EQ( result.second, total_vals );
+    EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner
-    rtn = condi.inverse_condition( result.first, result.second, meta.data() );
+    rtn = condi.inverse_condition( result, result.size(), meta );
 
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result.first[i]) );
+        EXPECT_EQ( in_buf[i], float(result[i]) );
     }
 }
 
@@ -163,27 +163,27 @@ TEST( dwt2d, big_image_even )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
-    auto in_copy = std::make_unique<double[]>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, speck::begin(in_copy) );
+    auto in_copy = std::vector<double>( total_vals );
+    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
     speck::Conditioner condi( true );
     auto [rtn, meta] = condi.condition( in_copy, total_vals );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.take_data( std::move(in_copy), dim_x * dim_y, dim_x, dim_y );
+    cdf.take_data( std::move(in_copy), dim_x, dim_y );
     cdf.dwt2d();
     cdf.idwt2d();
 
     // Claim that with single precision, the result is identical to the input
     auto result = cdf.release_data();
-    EXPECT_EQ( result.second, total_vals );
+    EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner
-    rtn = condi.inverse_condition( result.first, result.second, meta.data() );
+    rtn = condi.inverse_condition( result, result.size(), meta );
 
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result.first[i]) );
+        EXPECT_EQ( in_buf[i], float(result[i]) );
     }
 }
 
@@ -199,27 +199,27 @@ TEST( dwt2d, big_image_odd )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
-    auto in_copy = std::make_unique<double[]>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, speck::begin(in_copy) );
+    auto in_copy = std::vector<double>( total_vals );
+    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
     speck::Conditioner condi( true );
     auto [rtn, meta] = condi.condition( in_copy, total_vals );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.take_data( std::move(in_copy), dim_x * dim_y, dim_x * dim_y );
+    cdf.take_data( std::move(in_copy), dim_x * dim_y );
     cdf.dwt2d();
     cdf.idwt2d();
 
     // Claim that with single precision, the result is identical to the input
     auto result = cdf.release_data();
-    EXPECT_EQ( result.second, total_vals );
+    EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner
-    rtn = condi.inverse_condition( result.first, result.second, meta.data() );
+    rtn = condi.inverse_condition( result, result.size(), meta);
 
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result.first[i]) );
+        EXPECT_EQ( in_buf[i], float(result[i]) );
     }
 }
 
@@ -235,27 +235,27 @@ TEST( dwt3d, small_even_cube )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
-    auto in_copy = std::make_unique<double[]>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, speck::begin(in_copy) );
+    auto in_copy = std::vector<double>( total_vals );
+    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
     speck::Conditioner condi( true );
     auto [rtn, meta] = condi.condition( in_copy, total_vals );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.take_data( std::move(in_copy), total_vals, dim_x, dim_y, dim_z );
+    cdf.take_data( std::move(in_copy), dim_x, dim_y, dim_z );
     cdf.dwt3d();
     cdf.idwt3d();
 
     // Claim that with single precision, the result is identical to the input
     auto result = cdf.release_data( );
-    EXPECT_EQ( result.second, total_vals );
+    EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner
-    rtn = condi.inverse_condition( result.first, result.second, meta.data() );
+    rtn = condi.inverse_condition( result, result.size(), meta);
 
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result.first[i]) );
+        EXPECT_EQ( in_buf[i], float(result[i]) );
     }
 }
 
@@ -271,27 +271,27 @@ TEST( dwt3d, big_odd_cube )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
-    auto in_copy = std::make_unique<double[]>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, speck::begin(in_copy) );
+    auto in_copy = std::vector<double>( total_vals );
+    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
     speck::Conditioner condi( true );
     auto [rtn, meta] = condi.condition( in_copy, total_vals );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.take_data( std::move(in_copy), total_vals, dim_x, dim_y, dim_z );
+    cdf.take_data( std::move(in_copy), dim_x, dim_y, dim_z );
     cdf.dwt3d();
     cdf.idwt3d();
 
     // Claim that with single precision, the result is identical to the input
     auto result = cdf.release_data( );
-    EXPECT_EQ( result.second, total_vals );
+    EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner
-    rtn = condi.inverse_condition( result.first, result.second, meta.data() );
+    rtn = condi.inverse_condition( result, result.size(), meta );
 
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result.first[i]) );
+        EXPECT_EQ( in_buf[i], float(result[i]) );
     }
 }
 
@@ -307,27 +307,27 @@ TEST( dwt3d, big_even_cube )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
-    auto in_copy = std::make_unique<double[]>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, speck::begin(in_copy) );
+    auto in_copy = std::vector<double>( total_vals );
+    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
     speck::Conditioner condi( true );
     auto [rtn, meta] = condi.condition( in_copy, total_vals );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
-    cdf.take_data( std::move(in_copy), total_vals, dim_x, dim_y, dim_z );
+    cdf.take_data( std::move(in_copy), dim_x, dim_y, dim_z );
     cdf.dwt3d();
     cdf.idwt3d();
 
     // Claim that with single precision, the result is identical to the input
     auto result = cdf.release_data( );
-    EXPECT_EQ( result.second, total_vals );
+    EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner
-    rtn = condi.inverse_condition( result.first, result.second, meta.data() );
+    rtn = condi.inverse_condition( result, result.size(), meta);
 
     for( size_t i = 0; i < total_vals; i++ )
     {
-        EXPECT_EQ( in_buf[i], float(result.first[i]) );
+        EXPECT_EQ( in_buf[i], float(result[i]) );
     }
 }
 

@@ -27,6 +27,8 @@ using smart_buffer_d    = std::pair<buffer_type_d, size_t>; // It's smart becaus
 using smart_buffer_f    = std::pair<buffer_type_f, size_t>; // it knows its size.
 using smart_buffer_uint8= std::pair<buffer_type_uint8, size_t>;
 
+using vecd_type = std::vector<double>;
+
 //
 // Helper classes
 //
