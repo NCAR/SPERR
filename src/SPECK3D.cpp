@@ -64,7 +64,7 @@ auto speck::SPECK3D::encode() -> RTNType
 
     m_bit_buffer.clear();
     m_bit_buffer.reserve(m_budget);
-    auto max_coeff = speck::make_coeff_positive(m_coeff_buf, m_coeff_len, m_sign_array);
+    auto max_coeff = speck::make_coeff_positive(m_coeff_buf, m_sign_array);
 
     // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
     // negative value. std::floor() will always find the smaller integer value,
@@ -127,12 +127,9 @@ auto speck::SPECK3D::decode() -> RTNType
         m_budget = m_bit_buffer.size();
 
     // initialize coefficients to be zero, and sign array to be all positive
-    if( m_coeff_buf == nullptr )
-        m_coeff_buf = std::make_unique<double[]>(m_coeff_len);
-    auto begin = speck::begin( m_coeff_buf );
-    auto end   = begin + m_coeff_len;
-    std::fill( begin, end, 0.0 );
-    m_sign_array.assign(m_coeff_len, true);
+    const auto coeff_len = m_dim_x * m_dim_y * m_dim_z;
+    m_coeff_buf.assign(  coeff_len, 0.0 );
+    m_sign_array.assign( coeff_len, true);
 
     m_initialize_sets_lists();
 
@@ -262,7 +259,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // Note that `m_LSP_old` usually grow close to the full length, so we reserve space now.
     m_LSP_new.clear();
     m_LSP_old.clear();
-    m_LSP_old.reserve( m_coeff_len );
+    m_LSP_old.reserve( m_dim_x * m_dim_y * m_dim_z );
 #endif
 }
 
@@ -413,7 +410,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
         m_coeff_buf[loc] -= m_threshold_arr[ m_threshold_idx ];
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
-    // (`m_LSP_old` has reserved `m_coeff_len` capacity in advance.)
+    // (`m_LSP_old` has reserved the full coeff length capacity in advance.)
     //
     m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
 
@@ -447,7 +444,7 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
         m_coeff_buf[ idx ] = one_half_T;
 
     // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
-    // (`m_LSP_old` has reserved `m_coeff_len` capacity in advance.)
+    // (`m_LSP_old` has reserved the full coeff length capacity in advance.)
     //
     m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
 
@@ -819,13 +816,13 @@ auto speck::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
 
 auto speck::SPECK3D::m_ready_to_encode() const -> bool
 {
-    if (m_coeff_buf == nullptr)
+    if (m_coeff_buf.empty()) 
         return false;
     if (m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0 || m_dim_z == 1)
         return false;
 
 #ifndef QZ_TERM
-    if (m_budget == 0 || m_budget > m_coeff_len * 64)
+    if (m_budget == 0 || m_budget > m_dim_x * m_dim_y * m_dim_z * 64)
         return false;
 #endif
 
@@ -836,7 +833,7 @@ auto speck::SPECK3D::m_ready_to_decode() const -> bool
 {
     if (m_bit_buffer.empty())
         return false;
-    if (m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0 || m_coeff_len == 0)
+    if (m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0)
         return false;
 
     return true;

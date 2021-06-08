@@ -465,7 +465,7 @@ auto speck::SPERR::max_coeff_bits() const -> int32_t
     return m_max_coeff_bits;
 }
 
-auto speck::SPERR::get_encoded_bitstream() const -> smart_buffer_uint8
+auto speck::SPERR::get_encoded_bitstream() const -> std::vector<uint8_t>
 {
     // Header definition:
     // total_len  max_coeff_bits  num_of_bits
@@ -483,18 +483,18 @@ auto speck::SPERR::get_encoded_bitstream() const -> smart_buffer_uint8
         m_bvec_tmp.push_back(false);
 
     const size_t buf_len = m_header_size + m_bvec_tmp.size() / 8;
-    auto buf = std::make_unique<uint8_t[]>( buf_len );
+    auto buf = std::vector<uint8_t>( buf_len );
     
     // Fill header
     size_t pos = 0;
 
-    std::memcpy( buf.get(), &m_total_len, sizeof(m_total_len) );
+    std::memcpy( &buf[0], &m_total_len, sizeof(m_total_len) );
     pos += sizeof(m_total_len);
 
-    std::memcpy( buf.get() + pos, &m_max_coeff_bits, sizeof(m_max_coeff_bits) );
+    std::memcpy( &buf[pos], &m_max_coeff_bits, sizeof(m_max_coeff_bits) );
     pos += sizeof(m_max_coeff_bits);
 
-    std::memcpy( buf.get() + pos, &num_bits, sizeof(num_bits) );
+    std::memcpy( &buf[pos], &num_bits, sizeof(num_bits) );
     pos += sizeof(num_bits);
 
     assert( pos == m_header_size );
@@ -502,9 +502,9 @@ auto speck::SPERR::get_encoded_bitstream() const -> smart_buffer_uint8
     // Assemble the bitstream into bytes
     auto rtn = speck::pack_booleans( buf, m_bvec_tmp, pos );
     if( rtn != RTNType::Good )
-        return {nullptr, 0};
+        return std::vector<uint8_t>(0);
     else
-        return {std::move(buf), buf_len};
+        return std::move(buf);
 }
 
 

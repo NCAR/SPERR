@@ -14,11 +14,8 @@ auto SPECK3D_Compressor::copy_data( const T* p, size_t len, size_t dimx, size_t 
     if( len != dimx * dimy * dimz )
         return RTNType::DimMismatch;
 
-    if( m_val_buf == nullptr || m_total_vals != len ) {
-        m_total_vals = len;
-        m_val_buf = std::make_unique<double[]>( len );
-    }
-    std::copy( p, p + len, speck::begin(m_val_buf) );
+    m_val_buf.resize( len );
+    std::copy( p, p + len, m_val_buf.begin() );
 
     m_dim_x = dimx;
     m_dim_y = dimy;
@@ -30,14 +27,13 @@ template auto SPECK3D_Compressor::copy_data( const double*, size_t, size_t, size
 template auto SPECK3D_Compressor::copy_data( const float*,  size_t, size_t, size_t, size_t ) -> RTNType;
 
 
-auto SPECK3D_Compressor::take_data( speck::buffer_type_d buf, size_t len,
-                                    size_t dimx, size_t dimy, size_t dimz ) -> RTNType
+auto SPECK3D_Compressor::take_data( speck::vecd_type&& buf, size_t dimx, 
+                                    size_t dimy, size_t dimz ) -> RTNType
 {
-    if( len != dimx * dimy * dimz )
+    if( buf.size() != dimx * dimy * dimz )
         return RTNType::DimMismatch;
 
     m_val_buf    = std::move( buf );
-    m_total_vals = len;
     m_dim_x      = dimx;
     m_dim_y      = dimy;
     m_dim_z      = dimz;
@@ -49,17 +45,18 @@ auto SPECK3D_Compressor::take_data( speck::buffer_type_d buf, size_t len,
 #ifdef QZ_TERM
 auto SPECK3D_Compressor::compress() -> RTNType
 {
-    if( m_val_buf == nullptr || m_total_vals == 0 )
+    if( m_val_buf.empty() ) 
         return RTNType::Error;
-    m_speck_stream = {nullptr, 0};
-    m_sperr_stream = {nullptr, 0};
+    m_condi_stream.clear();
+    m_speck_stream.clear;
+    m_sperr_stream.clear;
     m_num_outlier  = 0;
+    const total_vals = m_dim_x, m_dim_y, m_dim_z;
 
     // Note that we keep the original buffer untouched for outlier calculations later.
-    m_cdf.copy_data( m_val_buf.get(), m_total_vals, m_dim_x, m_dim_y, m_dim_z );
+    m_cdf.copy_data( m_val_buf.data(), total_vals, m_dim_x, m_dim_y, m_dim_z );
     m_cdf.dwt3d();
     auto cdf_out = m_cdf.release_data();
-    //m_encoder.set_image_mean( m_cdf.get_mean() );
     m_encoder.take_data( std::move(cdf_out.first), cdf_out.second, m_dim_x, m_dim_y, m_dim_z );
     m_encoder.set_quantization_term_level( m_qz_lev );
     auto rtn = m_encoder.encode();
@@ -126,111 +123,115 @@ auto SPECK3D_Compressor::compress() -> RTNType
 #else
 auto SPECK3D_Compressor::compress() -> RTNType
 {
-    if( m_val_buf == nullptr || m_total_vals == 0 )
+    if( m_val_buf.empty() ) 
         return RTNType::Error;
-    m_speck_stream = {nullptr, 0};
+    m_speck_stream.clear(); 
+    const auto total_vals = m_dim_x * m_dim_y * m_dim_z;
 
     // Step 1: data goes through the conditioner 
     m_conditioner.toggle_all_false();
     m_conditioner.toggle_subtract_mean( true );
-    auto [rtn, condi_meta] = m_conditioner.condition( m_val_buf, m_total_vals );
+    auto [rtn, condi_meta] = m_conditioner.condition( m_val_buf, total_vals );
     if( rtn != RTNType::Good )
         return rtn;
 
     // Copy conditioner meta data to `m_condi_stream`
-    if( m_condi_stream.second != condi_meta.size() ) {
-        m_condi_stream.second  = condi_meta.size();
-        m_condi_stream.first   = std::make_unique<uint8_t[]>( condi_meta.size() ) ;
-    }
-    std::copy( condi_meta.begin(), condi_meta.end(), speck::begin(m_condi_stream) );
+    m_condi_stream.resize( condi_meta.size() );
+    std::copy( condi_meta.begin(), condi_meta.end(), m_condi_stream.begin() );
 
     // Step 2: wavelet transform
-    rtn = m_cdf.take_data( std::move(m_val_buf), m_total_vals, m_dim_x, m_dim_y, m_dim_z );
+    rtn = m_cdf.take_data( std::move(m_val_buf), m_dim_x, m_dim_y, m_dim_z );
     if( rtn != RTNType::Good )
         return rtn;
     m_cdf.dwt3d();
     auto cdf_out = m_cdf.release_data();
-    if( cdf_out.first == nullptr || cdf_out.second != m_total_vals )
-        return RTNType::Error;
 
     // Step 3: SPECK encoding
-    rtn = m_encoder.take_data(std::move(cdf_out.first), cdf_out.second, m_dim_x, m_dim_y, m_dim_z);
+    rtn = m_encoder.take_data(std::move(cdf_out), m_dim_x, m_dim_y, m_dim_z);
     if( rtn != RTNType::Good )
         return rtn;
-    m_encoder.set_bit_budget( size_t(m_bpp * m_total_vals) );
+    m_encoder.set_bit_budget( size_t(m_bpp * total_vals) );
 
     rtn = m_encoder.encode();
     if( rtn != RTNType::Good )
         return rtn;
-    else {
-        m_speck_stream = m_encoder.get_encoded_bitstream();
-        return (speck::empty_buf(m_speck_stream) ? RTNType::Error : RTNType::Good);
-    }
+
+
+    m_speck_stream = m_encoder.get_encoded_bitstream();
+    if( m_speck_stream.empty() )
+        return RTNType::Error;
+    else
+        return RTNType::Good;
 }
 #endif
 
 
-auto SPECK3D_Compressor::get_encoded_bitstream() const -> speck::smart_buffer_uint8
+#ifdef USE_ZSTD
+auto SPECK3D_Compressor::get_encoded_bitstream() const -> std::vector<uint8_t>
 {
 #ifdef QZ_TERM
-    const size_t total_size = m_condi_stream.second + m_speck_stream.second + m_sperr_stream.second;
+    const size_t total_size = m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
 #else
-    const size_t total_size = m_condi_stream.second + m_speck_stream.second;
+    const size_t total_size = m_condi_stream.size() + m_speck_stream.size();
 #endif
 
-#ifdef USE_ZSTD
     // Need to have a ZSTD Compression Context first
     if( m_cctx == nullptr ) {
         auto* ctx_p = ZSTD_createCCtx();
         if( ctx_p  == nullptr )
-            return {nullptr, 0};
+            return std::vector<uint8_t>(0);
         else
             m_cctx.reset(ctx_p);
     }
 
-    m_tmp_buf.resize( total_size, 0 );
-    std::copy( speck::begin(m_condi_stream), speck::end(m_condi_stream), m_tmp_buf.begin() );
-    std::copy( speck::begin(m_speck_stream), speck::end(m_speck_stream), 
-               m_tmp_buf.begin() + m_condi_stream.second );
+    m_zstd_buf.resize( total_size );
+    std::copy( m_condi_stream.begin(), m_condi_stream.end(), m_zstd_buf.begin() );
+    auto zstd_itr = m_zstd_buf.begin() + m_condi_stream.size();
+    std::copy( m_speck_stream.begin(), m_speck_stream.end(), zstd_itr );
+    zstd_itr += m_speck_stream.size();
 
 #ifdef QZ_TERM
-    if( !speck::empty_buf(m_sperr_stream) ) { // Not sure about nullptr, so we do the test.
-        std::copy(  speck::begin(m_sperr_stream), speck::end(m_sperr_stream),
-                    m_tmp_buf.begin() + (m_condi_stream.second + m_speck_stream.second) );
-    }
+    std::copy( m_sperr_stream.begin(), m_sperr_stream.end(), zstd_itr );
+    zstd_itr += m_sperr_stream.size();
 #endif
 
     const size_t comp_buf_size = ZSTD_compressBound( total_size );
-    auto comp_buf = std::make_unique<uint8_t[]>( comp_buf_size );
+    auto comp_buf = std::vector<uint8_t>( comp_buf_size );
     const size_t comp_size = ZSTD_compressCCtx( m_cctx.get(),
-                                                comp_buf.get(),   comp_buf_size,
-                                                m_tmp_buf.data(), total_size,
+                                                comp_buf.data(),  comp_buf_size,
+                                                m_zstd_buf.data(), total_size,
                                                 ZSTD_CLEVEL_DEFAULT + 6 );
     if( ZSTD_isError( comp_size ) )
-        return {nullptr, 0};
-    else
-        return {std::move(comp_buf), comp_size};
-
-// Finish the USE_ZSTD case
+        return std::vector<uint8_t>(0);
+    else {
+        comp_buf.resize( comp_size );
+        return std::move(comp_buf);
+    }
+} // Finish the USE_ZSTD case
 #else
-// Start with the no-ZSTD case
+  // Start the no-ZSTD case
+auto SPECK3D_Compressor::get_encoded_bitstream() const -> std::vector<uint8_t>
+{
+#ifdef QZ_TERM
+    const size_t total_size = m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
+#else
+    const size_t total_size = m_condi_stream.size() + m_speck_stream.size();
+#endif
 
-    auto buf = std::make_unique<uint8_t[]>( total_size );
-    std::copy( speck::begin(m_condi_stream), speck::end(m_condi_stream), speck::begin(buf) );
-    std::copy( speck::begin(m_speck_stream), speck::end(m_speck_stream), 
-               speck::begin(buf) + m_condi_stream.second );
+    auto buf = std::vector<uint8_t>( total_size );
+    std::copy( m_condi_stream.begin(), m_condi_stream.end(), buf.begin() );
+    auto buf_itr = buf.begin() + m_condi_stream.size();
+    std::copy( m_speck_stream.begin(), m_speck_stream.end(), buf_itr );
+    buf_itr += m_speck_stream.size();
 
 #ifdef QZ_TERM
-    if( !speck::empty_buf(m_sperr_stream) ) { // Not sure about nullptr, so we do the test.
-        std::copy( speck::begin(m_sperr_stream), speck::end(m_sperr_stream),
-                   speck::begin(buf) + (m_condi_stream.second + m_speck_stream.second) );
-    }
+    std::copy( m_sperr_stream.begin(), m_sperr_stream.end(), buf_itr );
+    buf_itr += m_sperr_stream.size();
 #endif
 
-    return {std::move(buf), total_size};
-#endif
+    return std::move(buf);
 }
-
+#endif
 
 
 #ifdef QZ_TERM

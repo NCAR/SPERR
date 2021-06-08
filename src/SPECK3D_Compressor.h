@@ -28,7 +28,7 @@ public:
     auto copy_data( const T* p, size_t len, size_t dimx, size_t dimy, size_t dimz ) -> RTNType;
 
     // Accept incoming data: take ownership of a memory block
-    auto take_data( speck::buffer_type_d buf, size_t len, size_t dimx, size_t dimy, size_t dimz ) 
+    auto take_data( std::vector<double>&& buf, size_t dimx, size_t dimy, size_t dimz ) 
                     -> RTNType;
 
 #ifdef QZ_TERM
@@ -43,32 +43,31 @@ public:
     auto compress() -> RTNType;
 
     // Provide a copy of the encoded bitstream to the caller with proper metadata
-    auto get_encoded_bitstream() const -> speck::smart_buffer_uint8;
+    auto get_encoded_bitstream() const -> std::vector<uint8_t>;
 
 
 private:
     size_t                      m_dim_x;
     size_t                      m_dim_y;
     size_t                      m_dim_z;
-    size_t                      m_total_vals;
-    speck::buffer_type_d        m_val_buf;
+    speck::vecd_type            m_val_buf;
 
     speck::Conditioner          m_conditioner;
     speck::CDF97                m_cdf;
     speck::SPECK3D              m_encoder;
 
     // Store bitstreams from SPECK encoding and error correction if applicable
-    speck::smart_buffer_uint8   m_condi_stream = {nullptr, 0};
-    speck::smart_buffer_uint8   m_speck_stream = {nullptr, 0};
+    std::vector<uint8_t>        m_condi_stream;
+    std::vector<uint8_t>        m_speck_stream;
 
 #ifdef QZ_TERM
-    speck::smart_buffer_uint8   m_sperr_stream = {nullptr, 0};
+    std::vector<uint8_t>        m_sperr_stream;
     speck::SPERR                m_sperr;
     int32_t                     m_qz_lev      = 0;
     double                      m_tol         = 0.0; // tolerance used in error correction
     size_t                      m_num_outlier = 0;
     std::vector<speck::Outlier> m_LOS; // List of OutlierS
-    speck::smart_buffer_d       m_tmp_diff    = {nullptr, 0};
+    speck::vecd_type            m_tmp_diff;
 #else
     float                       m_bpp         = 0.0;
 #endif
@@ -76,7 +75,7 @@ private:
 #ifdef USE_ZSTD
     // The following resources are used repeatedly during the lifespan of an instance,
     // but they only play temporary roles, so OK to be mutable.
-    mutable std::vector<uint8_t>  m_tmp_buf;
+    mutable std::vector<uint8_t>  m_zstd_buf;
     mutable std::unique_ptr<ZSTD_CCtx, decltype(&ZSTD_freeCCtx)>  m_cctx =
             {nullptr, &ZSTD_freeCCtx};
 #endif

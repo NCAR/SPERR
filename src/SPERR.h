@@ -57,7 +57,7 @@ public:
     auto num_of_bits() const -> size_t;              // How many bits are generated?
     auto max_coeff_bits() const -> int32_t;          // Will be used when decoding.
 
-    auto get_encoded_bitstream() const -> smart_buffer_uint8;
+    auto get_encoded_bitstream() const -> std::vector<uint8_t>;
     auto parse_encoded_bitstream( const void*, size_t ) -> RTNType;
 
     // Given a SPERR stream, tell how long the speck stream is.

@@ -52,8 +52,11 @@ auto speck::Conditioner::m_calc_mean( T& buf, size_t len ) const -> double
             auto end   = begin + stride_size;
             m_stride_buf[s] = std::accumulate( begin, end, double{0.0} ) / double(stride_size);
         }
-        else
-            m_stride_buf[s] = std::accumulate( buf.begin(), buf.end(), double{0.0} ) / double(stride_size);
+        else {
+            auto begin = buf.begin() + stride_size * s;
+            auto end   = begin + stride_size;
+            m_stride_buf[s] = std::accumulate( begin, end, double{0.0} ) / double(stride_size);
+        }
     }
 
     double sum = std::accumulate( m_stride_buf.begin(), m_stride_buf.end(), double{0.0} );
@@ -83,7 +86,9 @@ auto speck::Conditioner::m_calc_rms( T& buf, size_t len ) const -> double
                                [](auto a, auto b){return a + b * b;} );
         }
         else {
-            m_stride_buf[s]  = std::accumulate( buf.begin(), buf.end(), double{0.0}, 
+            auto begin = buf.begin() + stride_size * s;
+            auto end   = begin + stride_size;
+            m_stride_buf[s]  = std::accumulate( begin, end, double{0.0}, 
                                [](auto a, auto b){return a + b * b;} );
         }
 

@@ -22,15 +22,15 @@ public:
     //
     template <typename T>
     auto copy_data(const T*, size_t len, size_t dimx, size_t dimy, size_t dimz = 1) -> RTNType;
-    auto take_data(buffer_type_d, size_t len, size_t dimx, size_t dimy, size_t dimz = 1) -> RTNType;
-    auto release_data() -> smart_buffer_d;                              // Release ownership
-    auto view_data() const -> std::pair<const buffer_type_d&, size_t>;  // Keep ownership
+    auto take_data(vecd_type&&, size_t dimx, size_t dimy, size_t dimz = 1) -> RTNType;
+    auto release_data() -> vecd_type;               // Release ownership
+    auto view_data() const -> const vecd_type&;     // Keep ownership
     auto get_dims() const -> std::array<size_t, 3>;
 
     // Get the encoded bitstream.
     // The returned memory block could be written to disk by other programs.
     //
-    auto get_encoded_bitstream() const -> smart_buffer_uint8;
+    auto get_encoded_bitstream() const -> vec8_type;
 
     // Prepare internal states for a decompression operation from an encoded bitstream
     //
@@ -49,8 +49,6 @@ protected:
     //
     // Member variables
     //
-    size_t          m_coeff_len      = 0;
-    buffer_type_d   m_coeff_buf      = nullptr;
     const size_t    m_header_size    = 24;
     size_t          m_dim_x          = 0;
     size_t          m_dim_y          = 0;
@@ -58,6 +56,7 @@ protected:
     int32_t         m_max_coeff_bits = 0;
     int32_t         m_qz_term_lev    = 0; // At which quantization level does encoding terminate?
 
+    std::vector<double> m_coeff_buf;
     std::vector<bool>   m_bit_buffer;
 
 };

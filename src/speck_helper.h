@@ -28,6 +28,7 @@ using smart_buffer_f    = std::pair<buffer_type_f, size_t>; // it knows its size
 using smart_buffer_uint8= std::pair<buffer_type_uint8, size_t>;
 
 using vecd_type = std::vector<double>;
+using vec8_type = std::vector<uint8_t>;
 
 //
 // Helper classes
@@ -132,7 +133,7 @@ void calc_approx_detail_len(size_t orig_len, size_t lev, // input
 // 1) fill sign_array based on coeff_buffer signs, and
 // 2) make coeff_buffer containing all positive values.
 // 3) returns the maximum magnitude of all encountered values.
-auto make_coeff_positive(buffer_type_d& buf, size_t len, std::vector<bool>&) -> double;
+auto make_coeff_positive(vecd_type& buf, std::vector<bool>&) -> double;
 
 // Pack and unpack booleans to array of chars. 
 // When packing, the caller should make sure the number of booleans is a multiplier of 8.
@@ -141,7 +142,7 @@ auto make_coeff_positive(buffer_type_d& buf, size_t len, std::vector<bool>&) -> 
 // Note: unpack_booleans() takes a raw pointer because it accesses memory provided by others,
 //       and others most likely provide it by raw pointers.
 // Note: these two methods only work on little endian machines.
-auto pack_booleans( buffer_type_uint8& dest, // !!This space should be allocated by the caller!!
+auto pack_booleans( std::vector<uint8_t>&     dest,
                     const std::vector<bool>&  src,
                     size_t                    dest_offset = 0 ) -> RTNType;
 auto unpack_booleans( std::vector<bool>&      dest,
@@ -191,12 +192,11 @@ auto chunk_volume( const std::array<size_t, 3>& vol_dim,
 // Gather a chunk from a bigger volume
 template<typename T>
 auto gather_chunk( const T* vol, const std::array<size_t, 3>& vol_dim, 
-                   const std::array<size_t, 6>& chunk ) -> buffer_type_d;
+                   const std::array<size_t, 6>& chunk ) -> vecd_type;
 
 // Put this chunk to a bigger volume
-template<typename T>
-void scatter_chunk( T* big_vol,  const std::array<size_t, 3>& vol_dim,
-                    const buffer_type_d&         small_vol,
+void scatter_chunk( vecd_type& big_vol, const std::array<size_t, 3>& vol_dim,
+                    const vecd_type&    small_vol,
                     const std::array<size_t, 6>& chunk);
 
 };  // End of speck namespace.

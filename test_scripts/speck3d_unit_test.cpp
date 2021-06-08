@@ -73,32 +73,26 @@ public:
         if( compressor.compress() != RTNType::Good )
             return 1;
         auto stream = compressor.get_encoded_bitstream();
-        if( speck::empty_buf(stream) )
+        if( stream.empty() )
             return 1;
 
         //
         // Use a decompressor 
         //
         SPECK3D_Decompressor decompressor;
-        if( decompressor.use_bitstream( stream.first.get(), stream.second ) != RTNType::Good )
+        if( decompressor.use_bitstream( stream.data(), stream.size() ) != RTNType::Good )
             return 1;
         if( decompressor.decompress() != RTNType::Good )
             return 1;
-        auto vol = decompressor.get_decompressed_volume<float>();
-        if( !speck::size_is( vol, total_vals ) )
+        auto vol = decompressor.get_data<float>();
+        if( vol.size() != total_vals )
             return 1;
 
         //
         // Compare results
         //
-        const size_t nbytes = sizeof(float) * total_vals;
-        auto orig = std::make_unique<float[]>(total_vals);
-        if( speck::read_n_bytes( m_input_name.c_str(), nbytes, orig.get() ) != 
-            speck::RTNType::Good )
-            return 1;
-
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( orig.get(), vol.first.get(), total_vals,
+        speck::calc_stats( in_buf.first.get(), vol.data(), total_vals,
                            &rmse, &lmax, &psnr, &arr1min, &arr1max );
         m_psnr = psnr;
         m_lmax = lmax;
@@ -181,7 +175,7 @@ public:
         if( compressor.compress() != RTNType::Good )
             return 1;
         auto stream = compressor.get_encoded_bitstream();
-        if( speck::empty_buf(stream) )
+        if( stream.empty() )
             return 1;
 
         //
@@ -189,12 +183,12 @@ public:
         //
         SPECK3D_OMP_D decompressor;
         decompressor.set_num_threads( m_num_t );
-        if( decompressor.use_bitstream( stream.first.get(), stream.second ) != RTNType::Good )
+        if( decompressor.use_bitstream( stream.data(), stream.size() ) != RTNType::Good )
             return 1;
-        if( decompressor.decompress( stream.first.get() ) != RTNType::Good )
+        if( decompressor.decompress( stream.data() ) != RTNType::Good )
             return 1;
-        auto vol = decompressor.get_data_volume<float>();
-        if( !speck::size_is( vol, total_vals ) )
+        auto vol = decompressor.get_data<float>();
+        if( vol.size() != total_vals )
             return 1;
 
         //
@@ -207,7 +201,7 @@ public:
             return 1;
 
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( orig.get(), vol.first.get(), total_vals,
+        speck::calc_stats( orig.get(), vol.data(), total_vals,
                            &rmse, &lmax, &psnr, &arr1min, &arr1max );
         m_psnr = psnr;
         m_lmax = lmax;

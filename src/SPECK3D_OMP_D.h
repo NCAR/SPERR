@@ -19,18 +19,19 @@ public:
     // Parse the header of this stream, and stores the pointer.
     auto use_bitstream( const void*, size_t ) -> RTNType;
 
+#ifndef QZ_TERM
     auto set_bpp(float) -> RTNType;
+#endif
+
     void set_num_threads( size_t );
 
     // The pointer passed in here MUST be the same as the one passed to `use_bitstream`.
     auto decompress( const void* ) -> RTNType;
 
-    // Give up the copy that this class holds
-    auto release_data_volume() -> speck::smart_buffer_d;
-
-    // Make a copy and then return the copy as a speck::smart_pointer
+    auto release_data() -> std::vector<double>;
+    auto view_data() const -> const std::vector<double>&;
     template<typename T>
-    auto get_data_volume() const -> std::pair<std::unique_ptr<T[]>, size_t>;
+    auto get_data() const -> std::vector<T>;
 
 
 private:
@@ -41,16 +42,17 @@ private:
     size_t      m_chunk_x     = 0;  // Preferred dimension for a chunk.
     size_t      m_chunk_y     = 0;  // Preferred dimension for a chunk.
     size_t      m_chunk_z     = 0;  // Preferred dimension for a chunk.
-    size_t      m_total_vals  = 0;
     size_t      m_num_threads = 1;  // number of theads to use in OpenMP sections
+
+#ifndef QZ_TERM
     float       m_bpp         = 0.0;
+#endif
     
     const size_t m_header_magic = 26; // header size would be this number + num_chunks * 4
 
-    speck::buffer_type_d    m_vol_buf;
-    const uint8_t*          m_bitstream_ptr = nullptr;
+    std::vector<double>     m_vol_buf;
     std::vector<size_t>     m_offsets;
-
+    const uint8_t*          m_bitstream_ptr = nullptr;
 };
 
 #endif

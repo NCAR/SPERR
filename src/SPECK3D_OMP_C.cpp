@@ -83,20 +83,14 @@ auto SPECK3D_OMP_C::use_volume( const T* vol, size_t len ) -> RTNType
                                        {m_chunk_x, m_chunk_y, m_chunk_z} );
     const auto num_chunks = chunks.size();
     m_chunk_buffers.resize( num_chunks );
-    for( auto& buf : m_chunk_buffers )
-        buf.reset(nullptr);
+    std::for_each( m_chunk_buffers.begin(), m_chunk_buffers.end(), [](auto& v){v.clear();} );
 
     #pragma omp parallel for num_threads(m_num_threads)
     for( size_t i = 0; i < num_chunks; i++ ) {
-        auto buf = speck::gather_chunk( vol, {m_dim_x, m_dim_y, m_dim_z}, chunks[i] );
-        m_chunk_buffers[i] = std::move(buf);
+        m_chunk_buffers[i] = speck::gather_chunk( vol, {m_dim_x, m_dim_y, m_dim_z}, chunks[i] );
     }
 
-    if(std::any_of( m_chunk_buffers.begin(), m_chunk_buffers.end(), 
-                    [](const auto& r){return r == nullptr;} ))
-        return RTNType::Error;
-    else
-        return RTNType::Good;
+    return RTNType::Good;
 
 }
 template auto SPECK3D_OMP_C::use_volume( const float* ,  size_t ) -> RTNType;
@@ -111,17 +105,15 @@ auto SPECK3D_OMP_C::compress() -> RTNType
     const auto num_chunks = chunks.size();
     if( m_chunk_buffers.size() != num_chunks )
         return RTNType::Error;
-    if(std::any_of( m_chunk_buffers.begin(), m_chunk_buffers.end(), 
-                    [](const auto& r){return r == nullptr;} ))
+    if(std::any_of( m_chunk_buffers.begin(), m_chunk_buffers.end(), [](auto& v){return v.empty();}))
         return RTNType::Error;
 
     // Let's prepare some data structures for compression!
     auto compressors = std::vector<SPECK3D_Compressor>( m_num_threads );
     auto chunk_rtn   = std::vector<RTNType>( num_chunks, RTNType::Good );
-    m_encoded_streams.clear();
     m_encoded_streams.resize( num_chunks );
-    for( auto& s : m_encoded_streams )
-        s = {nullptr, 0};
+    std::for_each( m_encoded_streams.begin(), m_encoded_streams.end(), [](auto& v){v.clear();} );
+
 #ifdef QZ_TERM
     m_outlier_stats.clear();
     m_outlier_stats.assign( num_chunks, {0, 0} );
@@ -130,13 +122,13 @@ auto SPECK3D_OMP_C::compress() -> RTNType
     // Each thread uses a compressor instance to work on a chunk.
     //
     #pragma omp parallel for num_threads(m_num_threads)
-    for( size_t i  = 0; i < num_chunks; i++ ) {
+    for( size_t i = 0; i < num_chunks; i++ ) {
         auto& compressor = compressors[ omp_get_thread_num() ];
         const auto buf_len = chunks[i][1] * chunks[i][3] * chunks[i][5];
 
         // The following few operations have no chance to fail.
-        compressor.take_data( std::move(m_chunk_buffers[i]), buf_len,
-                              chunks[i][1], chunks[i][3], chunks[i][5] );
+        compressor.take_data(std::move(m_chunk_buffers[i]), chunks[i][1], chunks[i][3], chunks[i][5]);
+
 #ifdef QZ_TERM
         compressor.set_qz_level(  m_qz_lev );
         compressor.set_tolerance( m_tol );
@@ -154,42 +146,40 @@ auto SPECK3D_OMP_C::compress() -> RTNType
     }
 
     if( std::any_of( chunk_rtn.begin(), chunk_rtn.end(), 
-                     [](const auto& r){return r != RTNType::Good;} ) )
+                     [](auto r){return r != RTNType::Good;} ) )
         return RTNType::Error;
-    if( std::any_of( m_encoded_streams.begin(), m_encoded_streams.end(),
-                     [](const auto& s){return speck::empty_buf(s);} ) )
+    if( std::any_of(m_encoded_streams.begin(), m_encoded_streams.end(), [](auto& s){return s.empty();}))
         return RTNType::Error;
 
     return RTNType::Good;
 }
 
 
-auto SPECK3D_OMP_C::get_encoded_bitstream() const -> speck::smart_buffer_uint8
+auto SPECK3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
 {
     //
     // This method packs a header and chunk bitstreams together to the caller.
     //
     auto header = m_generate_header();
-    if( speck::empty_buf(header) )
-        return header;
+    if(  header.empty() )
+        return std::vector<uint8_t>(0);
 
-    auto total_size = header.second;
-    for( const auto& s : m_encoded_streams )
-        total_size += s.second;
-    auto buf = std::make_unique<uint8_t[]>( total_size );
+    auto total_size = std::accumulate(m_encoded_streams.begin(), m_encoded_streams.end(), 
+                                      header.size(), [](auto a, auto& b){return a + b.size();});
+    auto buf = std::vector<uint8_t>( total_size );
 
-    std::memcpy( buf.get(), header.first.get(), header.second );
-    auto loc = header.second;
+    std::copy( header.begin(), header.end(), buf.begin() );
+    auto itr = buf.begin() + header.size();
     for( const auto& s : m_encoded_streams ) {
-        std::memcpy( buf.get() + loc, s.first.get(), s.second );
-        loc += s.second;
+        std::copy( s.begin(), s.end(), itr );
+        itr += s.size();
     }
 
-    return {std::move(buf), total_size};
+    return std::move(buf);
 }
 
 
-auto SPECK3D_OMP_C::m_generate_header() const -> speck::smart_buffer_uint8
+auto SPECK3D_OMP_C::m_generate_header() const -> speck::vec8_type
 {
     // The header would contain the following information
     //  -- a version number                     (1 byte)
@@ -201,15 +191,13 @@ auto SPECK3D_OMP_C::m_generate_header() const -> speck::smart_buffer_uint8
                                        {m_chunk_x, m_chunk_y, m_chunk_z} );
     const auto num_chunks  = chunks.size();
     if( num_chunks != m_encoded_streams.size() )
-        return {nullptr, 0};
+        return std::vector<uint8_t>(0);
     const auto header_size = m_header_magic + num_chunks * 4;
-    auto header = std::make_unique<uint8_t[]>( header_size );
-    size_t loc = 0;
+    auto header = std::vector<uint8_t>( header_size );
 
     // Version number
-    uint8_t ver = 10 * SPERR_VERSION_MAJOR + SPERR_VERSION_MINOR;
-    std::memcpy( header.get() + loc, &ver, sizeof(ver) );
-    loc += sizeof(ver);
+    header[0] = 10 * SPERR_VERSION_MAJOR + SPERR_VERSION_MINOR;
+    size_t loc = 1;
 
     // 8 booleans: 
     // bool[0]  : if ZSTD is used
@@ -224,24 +212,20 @@ auto SPECK3D_OMP_C::m_generate_header() const -> speck::smart_buffer_uint8
     // Volume and chunk dimensions
     uint32_t vcdim[6] = {uint32_t(m_dim_x),   uint32_t(m_dim_y),   uint32_t(m_dim_z), 
                          uint32_t(m_chunk_x), uint32_t(m_chunk_y), uint32_t(m_chunk_z)};
-    std::memcpy( header.get() + loc, vcdim, sizeof(vcdim) );
+    std::memcpy( &header[loc], vcdim, sizeof(vcdim) );
     loc += sizeof(vcdim);
 
     // Length of bitstream for each chunk
     // Note that we use uint32_t to keep the length, and we need to make sure
     // that no chunk size is bigger than that.
     for( const auto& stream : m_encoded_streams ) {
-        if( stream.second >= std::numeric_limits<uint32_t>::max() )
-            return {nullptr, 0};
-    }
-    for( const auto& stream : m_encoded_streams ) {
-        uint32_t len = stream.second;
-        std::memcpy( header.get() + loc, &len, sizeof(len) );
+        uint32_t len = stream.size();
+        std::memcpy( &header[loc], &len, sizeof(len) );
         loc += sizeof(len);
     }
     assert( loc == header_size );
 
-    return {std::move(header), header_size};
+    return std::move(header);
 }
 
 
