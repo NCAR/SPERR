@@ -62,6 +62,7 @@ auto speck::SPECK3D::encode() -> RTNType
 
     m_initialize_sets_lists();
 
+    m_encoded_stream.clear();
     m_bit_buffer.clear();
     m_bit_buffer.reserve(m_budget);
     auto max_coeff = speck::make_coeff_positive(m_coeff_buf, m_sign_array);
@@ -112,7 +113,10 @@ auto speck::SPECK3D::encode() -> RTNType
     }
 #endif
 
-    return RTNType::Good;
+    // Finally we prepare the bitstream
+    auto rtn = m_prepare_encoded_bitstream();
+
+    return rtn;
 }
 
 

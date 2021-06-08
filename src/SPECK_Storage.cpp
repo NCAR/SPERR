@@ -59,7 +59,7 @@ auto speck::SPECK_Storage::get_dims() const -> std::array<size_t, 3>
 }
 
 
-auto speck::SPECK_Storage::get_encoded_bitstream() const -> vec8_type
+auto speck::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
 {
     // Header definition:
     // dim_x,     dim_y,     dim_z,     max_coeff_bits,  qz_term_lev,  bitstream_len (in byte)
@@ -69,8 +69,8 @@ auto speck::SPECK_Storage::get_encoded_bitstream() const -> vec8_type
     assert( m_bit_buffer.size() % 8 == 0 );
     const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
     const size_t total_size = m_header_size + bit_in_byte;
-    auto tmp_buf = std::vector<uint8_t>( total_size );
-    auto* const ptr = tmp_buf.data();
+    m_encoded_stream.resize( total_size );
+    auto* const ptr = m_encoded_stream.data();
 
     // Fill header 
     size_t pos = 0;
@@ -87,11 +87,8 @@ auto speck::SPECK_Storage::get_encoded_bitstream() const -> vec8_type
     assert( pos == m_header_size );
 
     // Assemble the bitstream into bytes
-    auto rtn = speck::pack_booleans( tmp_buf, m_bit_buffer, pos );
-    if( rtn != RTNType::Good )
-        return std::vector<uint8_t>(0);
-    else
-        return std::move(tmp_buf);
+    auto rtn = speck::pack_booleans( m_encoded_stream, m_bit_buffer, pos );
+    return rtn;
 }
 
 
@@ -130,7 +127,21 @@ auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t
     m_dim_z = dims[2];
     m_coeff_buf.resize(m_dim_x * m_dim_y * m_dim_z );
 
+    m_encoded_stream.clear();
+
     return RTNType::Good;
+}
+
+
+auto speck::SPECK_Storage::view_encoded_bitstream() const -> const vec8_type&
+{
+    return m_encoded_stream;
+}
+
+
+auto speck::SPECK_Storage::get_encoded_bitstream() -> vec8_type
+{
+    return std::move(m_encoded_stream);
 }
 
 

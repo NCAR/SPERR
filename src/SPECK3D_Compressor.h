@@ -42,8 +42,8 @@ public:
 
     auto compress() -> RTNType;
 
-    // Provide a copy of the encoded bitstream to the caller with proper metadata
-    auto get_encoded_bitstream() const -> std::vector<uint8_t>;
+    auto view_encoded_bitstream() const -> const std::vector<uint8_t>&;
+    auto get_encoded_bitstream() -> std::vector<uint8_t>;
 
 
 private:
@@ -80,6 +80,9 @@ private:
             {nullptr, &ZSTD_freeCCtx};
 #endif
 
+    speck::vec8_type    m_encoded_stream;
+
+    auto m_prepare_encoded_bitstream() -> speck::RTNType;
 };
 
 

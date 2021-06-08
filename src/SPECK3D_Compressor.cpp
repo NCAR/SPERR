@@ -41,6 +41,18 @@ auto SPECK3D_Compressor::take_data( speck::vecd_type&& buf, size_t dimx,
     return RTNType::Good;
 }
 
+
+auto SPECK3D_Compressor::view_encoded_bitstream() const -> const std::vector<uint8_t>&
+{
+    return m_encoded_stream;
+}
+
+
+auto SPECK3D_Compressor::get_encoded_bitstream() -> std::vector<uint8_t>
+{
+    return std::move(m_encoded_stream);
+}
+
  
 #ifdef QZ_TERM
 auto SPECK3D_Compressor::compress() -> RTNType
@@ -63,7 +75,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     if( rtn != RTNType::Good )
         return rtn;
     else {
-        m_speck_stream = m_encoder.get_encoded_bitstream();
+        m_speck_stream = m_encoder.view_encoded_bitstream();
         if( speck::empty_buf(m_speck_stream) )
             return RTNType::Error;
     }
@@ -118,7 +130,9 @@ auto SPECK3D_Compressor::compress() -> RTNType
             return RTNType::Error;
     }
 
-    return RTNType::Good;
+    auto rtn = m_prepare_encoded_bitstream();
+
+    return rtn;
 }
 #else
 auto SPECK3D_Compressor::compress() -> RTNType
@@ -156,18 +170,19 @@ auto SPECK3D_Compressor::compress() -> RTNType
     if( rtn != RTNType::Good )
         return rtn;
 
-
-    m_speck_stream = m_encoder.get_encoded_bitstream();
+    m_speck_stream = m_encoder.view_encoded_bitstream();
     if( m_speck_stream.empty() )
         return RTNType::Error;
-    else
-        return RTNType::Good;
+
+    rtn = m_prepare_encoded_bitstream();
+
+    return rtn;
 }
 #endif
 
 
 #ifdef USE_ZSTD
-auto SPECK3D_Compressor::get_encoded_bitstream() const -> std::vector<uint8_t>
+auto SPECK3D_Compressor::m_prepare_encoded_bitstream() -> RTNType
 {
 #ifdef QZ_TERM
     const size_t total_size = m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
@@ -179,7 +194,7 @@ auto SPECK3D_Compressor::get_encoded_bitstream() const -> std::vector<uint8_t>
     if( m_cctx == nullptr ) {
         auto* ctx_p = ZSTD_createCCtx();
         if( ctx_p  == nullptr )
-            return std::vector<uint8_t>(0);
+            return RTNType::ZSTDError;
         else
             m_cctx.reset(ctx_p);
     }
@@ -196,21 +211,23 @@ auto SPECK3D_Compressor::get_encoded_bitstream() const -> std::vector<uint8_t>
 #endif
 
     const size_t comp_buf_size = ZSTD_compressBound( total_size );
-    auto comp_buf = std::vector<uint8_t>( comp_buf_size );
+    m_encoded_stream.resize( comp_buf_size );
     const size_t comp_size = ZSTD_compressCCtx( m_cctx.get(),
-                                                comp_buf.data(),  comp_buf_size,
+                                                m_encoded_stream.data(),  comp_buf_size,
                                                 m_zstd_buf.data(), total_size,
                                                 ZSTD_CLEVEL_DEFAULT + 6 );
     if( ZSTD_isError( comp_size ) )
-        return std::vector<uint8_t>(0);
+        return RTNType::ZSTDError;
     else {
-        comp_buf.resize( comp_size );
-        return std::move(comp_buf);
+        m_encoded_stream.resize( comp_size );
+        return RTNType::Good;
     }
 } // Finish the USE_ZSTD case
+
 #else
-  // Start the no-ZSTD case
-auto SPECK3D_Compressor::get_encoded_bitstream() const -> std::vector<uint8_t>
+// Start the no-ZSTD case
+
+auto SPECK3D_Compressor::m_prepare_encoded_bitstream() -> RTNType
 {
 #ifdef QZ_TERM
     const size_t total_size = m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
@@ -218,9 +235,9 @@ auto SPECK3D_Compressor::get_encoded_bitstream() const -> std::vector<uint8_t>
     const size_t total_size = m_condi_stream.size() + m_speck_stream.size();
 #endif
 
-    auto buf = std::vector<uint8_t>( total_size );
-    std::copy( m_condi_stream.begin(), m_condi_stream.end(), buf.begin() );
-    auto buf_itr = buf.begin() + m_condi_stream.size();
+    m_encoded_stream.resize( total_size );
+    std::copy( m_condi_stream.begin(), m_condi_stream.end(), m_encoded_stream.begin() );
+    auto buf_itr = m_encoded_stream.begin() + m_condi_stream.size();
     std::copy( m_speck_stream.begin(), m_speck_stream.end(), buf_itr );
     buf_itr += m_speck_stream.size();
 
@@ -229,7 +246,7 @@ auto SPECK3D_Compressor::get_encoded_bitstream() const -> std::vector<uint8_t>
     buf_itr += m_sperr_stream.size();
 #endif
 
-    return std::move(buf);
+    return RTNType::Good;
 }
 #endif
 

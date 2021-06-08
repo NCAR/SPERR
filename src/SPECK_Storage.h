@@ -28,9 +28,8 @@ public:
     auto get_dims() const -> std::array<size_t, 3>;
 
     // Get the encoded bitstream.
-    // The returned memory block could be written to disk by other programs.
-    //
-    auto get_encoded_bitstream() const -> vec8_type;
+    auto view_encoded_bitstream() const -> const vec8_type&;
+    auto get_encoded_bitstream()  -> vec8_type;
 
     // Prepare internal states for a decompression operation from an encoded bitstream
     //
@@ -58,6 +57,9 @@ protected:
 
     std::vector<double> m_coeff_buf;
     std::vector<bool>   m_bit_buffer;
+    vec8_type           m_encoded_stream;
+
+    auto m_prepare_encoded_bitstream() -> RTNType;
 
 };
 

@@ -47,7 +47,7 @@ auto speck::SPECK2D::encode() -> RTNType
 
     m_initialize_sets_lists();
 
-    // Get ready for the quantization loop!
+    m_encoded_stream.clear();
     m_bit_buffer.clear();
     m_bit_buffer.reserve(m_budget);
     auto max_coeff = speck::make_coeff_positive(m_coeff_buf, m_coeff_len, m_sign_array);
@@ -68,6 +68,9 @@ auto speck::SPECK2D::encode() -> RTNType
         m_threshold *= 0.5;
         m_clean_LIS();
     }
+
+    // Finally we prepare the bitstream
+    auto rtn = m_prepare_encoded_bitstream();
 
     return RTNType::Good;
 }
