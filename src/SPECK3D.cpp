@@ -22,6 +22,13 @@ auto speck::SPECKSet3D::is_empty() const -> bool
 //
 // Class SPECK3D
 //
+
+#ifdef QZ_TERM
+void speck::SPECK3D::set_quantization_term_level( int32_t lev )
+{
+    m_qz_term_lev   = lev;
+}
+#else
 void speck::SPECK3D::set_bit_budget(size_t budget)
 {
     size_t mod = budget % 8;
@@ -29,13 +36,6 @@ void speck::SPECK3D::set_bit_budget(size_t budget)
         m_budget = budget;
     else // we can fill up the last byte
         m_budget = budget + 8 - mod;
-}
-
-
-#ifdef QZ_TERM
-void speck::SPECK3D::set_quantization_term_level( int32_t lev )
-{
-    m_qz_term_lev   = lev;
 }
 #endif
 
@@ -64,7 +64,6 @@ auto speck::SPECK3D::encode() -> RTNType
 
     m_encoded_stream.clear();
     m_bit_buffer.clear();
-    m_bit_buffer.reserve(m_budget);
     auto max_coeff = speck::make_coeff_positive(m_coeff_buf, m_sign_array);
 
     // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
@@ -126,9 +125,11 @@ auto speck::SPECK3D::decode() -> RTNType
         return RTNType::Error;
     m_encode_mode = false;
 
+#ifndef QZ_TERM
     // By default, decode all the available bits
     if (m_budget == 0 || m_budget > m_bit_buffer.size() )
         m_budget = m_bit_buffer.size();
+#endif
 
     // initialize coefficients to be zero, and sign array to be all positive
     const auto coeff_len = m_dim_x * m_dim_y * m_dim_z;
@@ -169,6 +170,7 @@ auto speck::SPECK3D::decode() -> RTNType
     }
 
 #ifdef QZ_TERM
+    // We should not have more than 7 bits left in the bit buffer! 
     if( m_bit_idx > m_bit_buffer.size() || m_bit_buffer.size() - m_bit_idx >= 8 )
         return RTNType::Error;
 #else
@@ -179,8 +181,8 @@ auto speck::SPECK3D::decode() -> RTNType
 
     // Restore coefficient signs by setting some of them negative
     for (size_t i = 0; i < m_sign_array.size(); i++) {
-        if (!m_sign_array[i])
-            m_coeff_buf[i] = -m_coeff_buf[i];
+        double tmp[2]  = {-m_coeff_buf[i], m_coeff_buf[i]};
+        m_coeff_buf[i] = tmp[ m_sign_array[i] ];
     }
 
     return RTNType::Good;
@@ -264,6 +266,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
     m_LSP_new.clear();
     m_LSP_old.clear();
     m_LSP_old.reserve( m_dim_x * m_dim_y * m_dim_z );
+    m_bit_buffer.reserve( m_budget );
 #endif
 }
 
@@ -436,8 +439,9 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
     const double neg_half_T = m_threshold_arr[ m_threshold_idx ] * -0.5;
     const double one_half_T = m_threshold_arr[ m_threshold_idx ] *  1.5;
 
+    const double tmp[2] = {neg_half_T, half_T};
     for( size_t i = 0; i < num_bits; i++ )
-        m_coeff_buf[ m_LSP_old[i] ] += m_bit_buffer[m_bit_idx + i] ? half_T : neg_half_T;
+        m_coeff_buf[ m_LSP_old[i] ] += tmp[ m_bit_buffer[m_bit_idx + i] ];
     m_bit_idx += num_bits;
     if (m_bit_idx >= m_budget)
         return RTNType::BitBudgetMet;
@@ -550,21 +554,23 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
 
     const size_t slice_size = m_dim_x * m_dim_y;
 
+    const auto thld = m_threshold_arr[ m_threshold_idx ];
+    const auto gtr  = [thld](auto v){return v >= thld;};
+
     for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
       const size_t slice_offset = z * slice_size;
       for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
         const size_t col_offset = slice_offset + y * m_dim_x;
 
-        for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
-          if( m_coeff_buf[col_offset + x] >= m_threshold_arr[ m_threshold_idx ] ) {
-            xyz[0] = x - set.start_x;
-            xyz[1] = y - set.start_y;
-            xyz[2] = z - set.start_z;
-
+          auto first = m_coeff_buf.begin() + (col_offset + set.start_x);
+          auto last  = first + set.length_x;
+          auto itr   = std::find_if( first, last, gtr );
+          if(  itr  != last ) {
+            xyz[0]   = std::distance( first, itr );
+            xyz[1]   = y - set.start_y;
+            xyz[2]   = z - set.start_z;
             return SigType::Sig;
           }
-        } // End of processing a line
-
       }
     }
 
@@ -846,9 +852,9 @@ auto speck::SPECK3D::m_ready_to_decode() const -> bool
 
 auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::array<SPECKSet3D, 8>
 {
-    const uint32_t split_x[2] { set.length_x - set.length_x / 2, set.length_x / 2 };
-    const uint32_t split_y[2] { set.length_y - set.length_y / 2, set.length_y / 2 };
-    const uint32_t split_z[2] { set.length_z - set.length_z / 2, set.length_z / 2 };
+    const uint32_t split_x[2] = { set.length_x - set.length_x / 2, set.length_x / 2 };
+    const uint32_t split_y[2] = { set.length_y - set.length_y / 2, set.length_y / 2 };
+    const uint32_t split_z[2] = { set.length_z - set.length_z / 2, set.length_z / 2 };
 
     auto next_part_lev = set.part_level;
     next_part_lev     += split_x[1] > 0 ? 1 : 0;
