@@ -11,48 +11,42 @@
 #endif
 
 template <typename T>
-auto speck::CDF97::copy_data(const T* data, size_t len, size_t dimx, size_t dimy, size_t dimz) 
-                 -> RTNType
+auto speck::CDF97::copy_data(const T* data, size_t len, dims_type dims ) -> RTNType
 {
     static_assert(std::is_floating_point<T>::value,
                   "!! Only floating point values are supported !!");
-    if( len != dimx * dimy * dimz )
+    if( len != dims[0] * dims[1] * dims[2] )
         return RTNType::DimMismatch;
 
     m_data_buf.resize( len );
     std::copy( data, data + len, m_data_buf.begin() );
 
-    m_dim_x = dimx;
-    m_dim_y = dimy;
-    m_dim_z = dimz;
+    m_dims = dims;
 
-    auto max_col = std::max( std::max(dimx, dimy), dimz );
+    auto max_col = std::max( std::max(dims[0], dims[1]), dims[2] );
     m_col_buf.resize( max_col * 2 );
 
-    auto max_slice = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
+    auto max_slice = std::max( std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2] );
     m_slice_buf.resize( max_slice );
 
     return RTNType::Good;
 }
-template auto speck::CDF97::copy_data(const float*,  size_t, size_t, size_t, size_t) -> RTNType;
-template auto speck::CDF97::copy_data(const double*, size_t, size_t, size_t, size_t) -> RTNType;
+template auto speck::CDF97::copy_data(const float*,  size_t, dims_type ) -> RTNType;
+template auto speck::CDF97::copy_data(const double*, size_t, dims_type ) -> RTNType;
 
 
-auto speck::CDF97::take_data( vecd_type&& buf, size_t dimx, size_t dimy, size_t dimz)
-                 -> RTNType
+auto speck::CDF97::take_data( vecd_type&& buf, dims_type dims ) -> RTNType
 {
-    if( buf.size() != dimx * dimy * dimz )
+    if( buf.size() != dims[0] * dims[1] * dims[2] )
         return RTNType::DimMismatch;
 
     m_data_buf = std::move(buf);
-    m_dim_x    = dimx;
-    m_dim_y    = dimy;
-    m_dim_z    = dimz;
+    m_dims     = dims;
 
-    auto max_col = std::max( std::max(dimx, dimy), dimz );
+    auto max_col = std::max( std::max(dims[0], dims[1]), dims[2] );
     m_col_buf.resize( max_col * 2 );
 
-    auto max_slice = std::max( std::max(dimx * dimy, dimx * dimz), dimy * dimz );
+    auto max_slice = std::max( std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2] );
     m_slice_buf.resize( max_slice );
 
     return RTNType::Good;
@@ -65,39 +59,37 @@ auto speck::CDF97::view_data() const -> const vecd_type&
 
 auto speck::CDF97::release_data() -> vecd_type
 {
-    m_dim_x = 0;
-    m_dim_y = 0;
-    m_dim_z = 0;
+    m_dims = {0, 0, 0};
     return std::move(m_data_buf);
 }
 
 void speck::CDF97::dwt1d()
 {
-    size_t num_xforms = speck::num_of_xforms(m_dim_x);
+    size_t num_xforms = speck::num_of_xforms(m_dims[0]);
     m_dwt1d(m_data_buf.data(), m_data_buf.size(), num_xforms, m_col_buf.data());
 }
 
 void speck::CDF97::idwt1d()
 {
-    size_t num_xforms = speck::num_of_xforms(m_dim_x);
+    size_t num_xforms = speck::num_of_xforms(m_dims[0]);
     m_idwt1d(m_data_buf.data(), m_data_buf.size(), num_xforms, m_col_buf.data());
 }
 
 void speck::CDF97::dwt2d()
 {
-    size_t num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
-    m_dwt2d(m_data_buf.data(), m_dim_x, m_dim_y, num_xforms_xy, m_col_buf.data());
+    size_t num_xforms_xy = speck::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+    m_dwt2d(m_data_buf.data(), m_dims[0], m_dims[1], num_xforms_xy, m_col_buf.data());
 }
 
 void speck::CDF97::idwt2d()
 {
-    size_t num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
-    m_idwt2d(m_data_buf.data(), m_dim_x, m_dim_y, num_xforms_xy, m_col_buf.data());
+    size_t num_xforms_xy = speck::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+    m_idwt2d(m_data_buf.data(), m_dims[0], m_dims[1], num_xforms_xy, m_col_buf.data());
 }
 
 void speck::CDF97::dwt3d()
 {
-    const size_t  plane_size_xy = m_dim_x * m_dim_y;
+    const size_t  plane_size_xy = m_dims[0] * m_dims[1];
 
     /*
      *             Z
@@ -123,51 +115,51 @@ void speck::CDF97::dwt3d()
 
      // First transform along the Z dimension
      //
-    const auto num_xforms_z = speck::num_of_xforms(m_dim_z);
+    const auto num_xforms_z = speck::num_of_xforms(m_dims[2]);
 
-    for (size_t y = 0; y < m_dim_y; y++) {
-        const auto y_offset = y * m_dim_x;
+    for (size_t y = 0; y < m_dims[1]; y++) {
+        const auto y_offset = y * m_dims[0];
 
         // Re-arrange values of one XZ slice so that they form many z_columns
-        for (size_t z = 0; z < m_dim_z; z++) {
+        for (size_t z = 0; z < m_dims[2]; z++) {
             const auto cube_start_idx = z * plane_size_xy + y_offset;
-            for (size_t x = 0; x < m_dim_x; x++)
-                m_slice_buf[z + x * m_dim_z] = m_data_buf[cube_start_idx + x];
+            for (size_t x = 0; x < m_dims[0]; x++)
+                m_slice_buf[z + x * m_dims[2]] = m_data_buf[cube_start_idx + x];
         }
 
         // DWT1D on every z_column
-        for (size_t x = 0; x < m_dim_x; x++)
-            m_dwt1d(m_slice_buf.data() + x * m_dim_z, m_dim_z, num_xforms_z, m_col_buf.data());
+        for (size_t x = 0; x < m_dims[0]; x++)
+            m_dwt1d(m_slice_buf.data() + x * m_dims[2], m_dims[2], num_xforms_z, m_col_buf.data());
 
         // Put back values of the z_columns to the cube
-        for (size_t z = 0; z < m_dim_z; z++) {
+        for (size_t z = 0; z < m_dims[2]; z++) {
             const auto cube_start_idx = z * plane_size_xy + y_offset;
-            for (size_t x = 0; x < m_dim_x; x++)
-                m_data_buf[cube_start_idx + x] = m_slice_buf[z + x * m_dim_z];
+            for (size_t x = 0; x < m_dims[0]; x++)
+                m_data_buf[cube_start_idx + x] = m_slice_buf[z + x * m_dims[2]];
         }
     }
 
     // Second transform each plane
     //
-    const auto num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
+    const auto num_xforms_xy = speck::num_of_xforms(std::min(m_dims[0], m_dims[1]));
 
-    for (size_t z = 0; z < m_dim_z; z++) {
+    for (size_t z = 0; z < m_dims[2]; z++) {
         const size_t offset = plane_size_xy * z;
-        m_dwt2d(m_data_buf.data() + offset, m_dim_x, m_dim_y, num_xforms_xy, m_col_buf.data());
+        m_dwt2d(m_data_buf.data() + offset, m_dims[0], m_dims[1], num_xforms_xy, m_col_buf.data());
     }
 }
 
 void speck::CDF97::idwt3d()
 {
-    const size_t plane_size_xy = m_dim_x * m_dim_y;
+    const size_t plane_size_xy = m_dims[0] * m_dims[1];
 
     // First, inverse transform each plane
     //
-    auto num_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
+    auto num_xforms_xy = speck::num_of_xforms(std::min(m_dims[0], m_dims[1]));
 
-    for (size_t i = 0; i < m_dim_z; i++) {
+    for (size_t i = 0; i < m_dims[2]; i++) {
         const size_t offset  = plane_size_xy * i;
-        m_idwt2d(m_data_buf.data() + offset, m_dim_x, m_dim_y, num_xforms_xy, m_col_buf.data());
+        m_idwt2d(m_data_buf.data() + offset, m_dims[0], m_dims[1], num_xforms_xy, m_col_buf.data());
     }
 
     /*
@@ -191,27 +183,27 @@ void speck::CDF97::idwt3d()
 
     // Process one XZ slice at a time
     //
-    const auto num_xforms_z = speck::num_of_xforms(m_dim_z);
+    const auto num_xforms_z = speck::num_of_xforms(m_dims[2]);
 
-    for (size_t y = 0; y < m_dim_y; y++) {
-        const auto y_offset  = y * m_dim_x;
+    for (size_t y = 0; y < m_dims[1]; y++) {
+        const auto y_offset  = y * m_dims[0];
 
         // Re-arrange values on one slice so that they form many z_columns
-        for (size_t z = 0; z < m_dim_z; z++) {
+        for (size_t z = 0; z < m_dims[2]; z++) {
             const auto cube_start_idx = z * plane_size_xy + y_offset;
-            for (size_t x = 0; x < m_dim_x; x++)
-                m_slice_buf[z + x * m_dim_z] = m_data_buf[cube_start_idx + x];
+            for (size_t x = 0; x < m_dims[0]; x++)
+                m_slice_buf[z + x * m_dims[2]] = m_data_buf[cube_start_idx + x];
         }
 
         // IDWT1D on every z_column
-        for (size_t x = 0; x < m_dim_x; x++)
-            m_idwt1d(m_slice_buf.data() + x * m_dim_z, m_dim_z, num_xforms_z, m_col_buf.data());
+        for (size_t x = 0; x < m_dims[0]; x++)
+            m_idwt1d(m_slice_buf.data() + x * m_dims[2], m_dims[2], num_xforms_z, m_col_buf.data());
 
         // Put back values from the z_columns to the cube
-        for (size_t z = 0; z < m_dim_z; z++) {
+        for (size_t z = 0; z < m_dims[2]; z++) {
             const auto cube_start_idx = z * plane_size_xy + y_offset;
-            for (size_t x = 0; x < m_dim_x; x++)
-                m_data_buf[cube_start_idx + x] = m_slice_buf[z + x * m_dim_z];
+            for (size_t x = 0; x < m_dims[0]; x++)
+                m_data_buf[cube_start_idx + x] = m_slice_buf[z + x * m_dims[2]];
         }
     }
 }
@@ -303,7 +295,7 @@ void speck::CDF97::m_dwt2d_one_level(double* plane,
     if (len_x % 2 == 0) // Even length
     {
         for (size_t i = 0; i < len_y; i++) {
-            auto* pos = plane + i * m_dim_x;
+            auto* pos = plane + i * m_dims[0];
             std::memcpy(buf_ptr, pos, sizeof(double) * len_x);
             this->QccWAVCDF97AnalysisSymmetricEvenEven(buf_ptr, len_x);
             // pub back the resluts in low-pass and high-pass groups
@@ -312,7 +304,7 @@ void speck::CDF97::m_dwt2d_one_level(double* plane,
     } else // Odd length
     {
         for (size_t i = 0; i < len_y; i++) {
-            auto* pos = plane + i * m_dim_x;
+            auto* pos = plane + i * m_dims[0];
             std::memcpy(buf_ptr, pos, sizeof(double) * len_x);
             this->QccWAVCDF97AnalysisSymmetricOddEven(buf_ptr, len_x);
             // pub back the resluts in low-pass and high-pass groups
@@ -331,23 +323,23 @@ void speck::CDF97::m_dwt2d_one_level(double* plane,
     {
         for (size_t x = 0; x < len_x; x++) {
             for (size_t y = 0; y < len_y; y++)
-                buf_ptr[y] = plane[y * m_dim_x + x];
+                buf_ptr[y] = plane[y * m_dims[0] + x];
             this->QccWAVCDF97AnalysisSymmetricEvenEven(buf_ptr, len_y);
             // Re-organize the resluts in low-pass and high-pass groups
             m_gather_even(buf_ptr2, buf_ptr, len_y);
             for (size_t y = 0; y < len_y; y++)
-                plane[y * m_dim_x + x] = buf_ptr2[y];
+                plane[y * m_dims[0] + x] = buf_ptr2[y];
         }
     } else // Odd length
     {
         for (size_t x = 0; x < len_x; x++) {
             for (size_t y = 0; y < len_y; y++)
-                buf_ptr[y] = plane[y * m_dim_x + x];
+                buf_ptr[y] = plane[y * m_dims[0] + x];
             this->QccWAVCDF97AnalysisSymmetricOddEven(buf_ptr, len_y);
             // Re-organize the resluts in low-pass and high-pass groups
             m_gather_odd(buf_ptr2, buf_ptr, len_y);
             for (size_t y = 0; y < len_y; y++)
-                plane[y * m_dim_x + x] = buf_ptr2[y];
+                plane[y * m_dims[0] + x] = buf_ptr2[y];
         }
     }
 }
@@ -367,23 +359,23 @@ void speck::CDF97::m_idwt2d_one_level(double* plane,
     {
         for (size_t x = 0; x < len_x; x++) {
             for (size_t y = 0; y < len_y; y++)
-                buf_ptr[y] = plane[y * m_dim_x + x];
+                buf_ptr[y] = plane[y * m_dims[0] + x];
             // Re-organize the coefficients as interleaved low-pass and high-pass ones
             m_scatter_even(buf_ptr2, buf_ptr, len_y);
             this->QccWAVCDF97SynthesisSymmetricEvenEven(buf_ptr2, len_y);
             for (size_t y = 0; y < len_y; y++)
-                plane[y * m_dim_x + x] = buf_ptr2[y];
+                plane[y * m_dims[0] + x] = buf_ptr2[y];
         }
     } else // Odd length
     {
         for (size_t x = 0; x < len_x; x++) {
             for (size_t y = 0; y < len_y; y++)
-                buf_ptr[y] = plane[y * m_dim_x + x];
+                buf_ptr[y] = plane[y * m_dims[0] + x];
             // Re-organize the coefficients as interleaved low-pass and high-pass ones
             m_scatter_odd(buf_ptr2, buf_ptr, len_y);
             this->QccWAVCDF97SynthesisSymmetricOddEven(buf_ptr2, len_y);
             for (size_t y = 0; y < len_y; y++)
-                plane[y * m_dim_x + x] = buf_ptr2[y];
+                plane[y * m_dims[0] + x] = buf_ptr2[y];
         }
     }
 
@@ -391,7 +383,7 @@ void speck::CDF97::m_idwt2d_one_level(double* plane,
     if (len_x % 2 == 0) // Even length
     {
         for (size_t i = 0; i < len_y; i++) {
-            auto* pos = plane + i * m_dim_x;
+            auto* pos = plane + i * m_dims[0];
             // Re-organize the coefficients as interleaved low-pass and high-pass ones
             m_scatter_even(buf_ptr, pos, len_x);
             this->QccWAVCDF97SynthesisSymmetricEvenEven(buf_ptr, len_x);
@@ -400,7 +392,7 @@ void speck::CDF97::m_idwt2d_one_level(double* plane,
     } else // Odd length
     {
         for (size_t i = 0; i < len_y; i++) {
-            auto* pos = plane + i * m_dim_x;
+            auto* pos = plane + i * m_dims[0];
             // Re-organize the coefficients as interleaved low-pass and high-pass ones
             m_scatter_odd(buf_ptr, pos, len_x);
             this->QccWAVCDF97SynthesisSymmetricOddEven(buf_ptr, len_x);
@@ -568,6 +560,6 @@ void speck::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double* signal,
 
 auto speck::CDF97::get_dims() const -> std::array<size_t, 3>
 {
-    return {m_dim_x, m_dim_y, m_dim_z};
+    return {m_dims[0], m_dims[1], m_dims[2]};
 }
 

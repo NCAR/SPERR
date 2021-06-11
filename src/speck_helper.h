@@ -29,6 +29,7 @@ using smart_buffer_uint8= std::pair<buffer_type_uint8, size_t>;
 
 using vecd_type = std::vector<double>;
 using vec8_type = std::vector<uint8_t>;
+using dims_type = std::array<size_t, 3>;
 
 //
 // Helper classes

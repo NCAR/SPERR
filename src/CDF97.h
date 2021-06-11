@@ -15,10 +15,8 @@ public:
     // Note that copy_data() and take_data() effectively resets internal states
     // of this class.
     template <typename T>
-    auto copy_data(const T* buf,  size_t len,
-                   size_t   dimx, size_t dimy = 1, size_t dimz = 1) -> RTNType;
-    auto take_data( std::vector<double>&& buf,
-                   size_t dimx, size_t dimy = 1, size_t dimz = 1) -> RTNType;
+    auto copy_data(const T* buf,  size_t len,  dims_type dims ) -> RTNType;
+    auto take_data( std::vector<double>&& buf, dims_type dims ) -> RTNType;
 
     //
     // Output
@@ -116,10 +114,8 @@ private:
     //
     // Private data members
     //
-    vecd_type     m_data_buf;       // Holds the entire input data.
-    size_t        m_dim_x     = 0;  // Dimension of the data volume
-    size_t        m_dim_y     = 0;
-    size_t        m_dim_z     = 0;
+    vecd_type     m_data_buf;         // Holds the entire input data.
+    dims_type     m_dims = {0, 0, 0}; // Dimension of the data volume
 
     // Temporary buffers that are big enough for any (1D column * 2) or any 2D slice.
     vecd_type     m_col_buf;
