@@ -5,38 +5,32 @@
 
 
 template< typename T >
-auto SPECK3D_Compressor::copy_data( const T* p, size_t len, size_t dimx, size_t dimy, size_t dimz) 
-                       -> RTNType
+auto SPECK3D_Compressor::copy_data( const T* p, size_t len, speck::dims_type dims ) -> RTNType
 {
     static_assert(std::is_floating_point<T>::value,
                   "!! Only floating point values are supported !!");
 
-    if( len != dimx * dimy * dimz )
+    if( len != dims[0] * dims[1] * dims[2] )
         return RTNType::DimMismatch;
 
     m_val_buf.resize( len );
     std::copy( p, p + len, m_val_buf.begin() );
 
-    m_dim_x = dimx;
-    m_dim_y = dimy;
-    m_dim_z = dimz;
+    m_dims = dims;
 
     return RTNType::Good;
 }
-template auto SPECK3D_Compressor::copy_data( const double*, size_t, size_t, size_t, size_t ) -> RTNType;
-template auto SPECK3D_Compressor::copy_data( const float*,  size_t, size_t, size_t, size_t ) -> RTNType;
+template auto SPECK3D_Compressor::copy_data( const double*, size_t, speck::dims_type ) -> RTNType;
+template auto SPECK3D_Compressor::copy_data( const float*,  size_t, speck::dims_type ) -> RTNType;
 
 
-auto SPECK3D_Compressor::take_data( speck::vecd_type&& buf, size_t dimx, 
-                                    size_t dimy, size_t dimz ) -> RTNType
+auto SPECK3D_Compressor::take_data( speck::vecd_type&& buf, speck::dims_type dims ) -> RTNType
 {
-    if( buf.size() != dimx * dimy * dimz )
+    if( buf.size() != dims[0] * dims[1] * dims[2] )
         return RTNType::DimMismatch;
 
-    m_val_buf    = std::move( buf );
-    m_dim_x      = dimx;
-    m_dim_y      = dimy;
-    m_dim_z      = dimz;
+    m_val_buf = std::move( buf );
+    m_dims    = dims;
 
     return RTNType::Good;
 }
@@ -60,13 +54,13 @@ auto SPECK3D_Compressor::compress() -> RTNType
     if( m_val_buf.empty() ) 
         return RTNType::Error;
     m_condi_stream.clear();
-    m_speck_stream.clear;
-    m_sperr_stream.clear;
+    m_speck_stream.clear();
+    m_sperr_stream.clear();
     m_num_outlier  = 0;
-    const total_vals = m_dim_x, m_dim_y, m_dim_z;
+    const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
 
     // Note that we keep the original buffer untouched for outlier calculations later.
-    m_cdf.copy_data( m_val_buf.data(), total_vals, m_dim_x, m_dim_y, m_dim_z );
+    m_cdf.copy_data( m_val_buf.data(), total_vals, m_dims );
     m_cdf.dwt3d();
     auto cdf_out = m_cdf.release_data();
     m_encoder.take_data( std::move(cdf_out.first), cdf_out.second, m_dim_x, m_dim_y, m_dim_z );
@@ -140,7 +134,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     if( m_val_buf.empty() ) 
         return RTNType::Error;
     m_speck_stream.clear(); 
-    const auto total_vals = m_dim_x * m_dim_y * m_dim_z;
+    const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
 
     // Step 1: data goes through the conditioner 
     m_conditioner.toggle_all_false();
@@ -154,14 +148,14 @@ auto SPECK3D_Compressor::compress() -> RTNType
     std::copy( condi_meta.begin(), condi_meta.end(), m_condi_stream.begin() );
 
     // Step 2: wavelet transform
-    rtn = m_cdf.take_data( std::move(m_val_buf), m_dim_x, m_dim_y, m_dim_z );
+    rtn = m_cdf.take_data( std::move(m_val_buf), m_dims );
     if( rtn != RTNType::Good )
         return rtn;
     m_cdf.dwt3d();
     auto cdf_out = m_cdf.release_data();
 
     // Step 3: SPECK encoding
-    rtn = m_encoder.take_data(std::move(cdf_out), m_dim_x, m_dim_y, m_dim_z);
+    rtn = m_encoder.take_data(std::move(cdf_out), m_dims );
     if( rtn != RTNType::Good )
         return rtn;
     m_encoder.set_bit_budget( size_t(m_bpp * total_vals) );

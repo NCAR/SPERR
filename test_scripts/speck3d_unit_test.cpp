@@ -17,12 +17,10 @@ using speck::RTNType;
 class speck_tester
 {
 public:
-    speck_tester( const char* in, size_t x, size_t y, size_t z )
+    speck_tester( const char* in, speck::dims_type dims )
     {
         m_input_name = in;
-        m_dim_x      = x;
-        m_dim_y      = y;
-        m_dim_z      = z;
+        m_dims       = dims;
     }
 
     float get_psnr() const
@@ -50,7 +48,7 @@ public:
         m_psnr = 0.0;
         m_lmax = 1000.0;
         
-        const size_t  total_vals = m_dim_x * m_dim_y * m_dim_z;
+        const size_t  total_vals = m_dims[0] * m_dims[1] * m_dims[2];
 
         //
         // Use a compressor 
@@ -59,8 +57,7 @@ public:
         if( !speck::size_is(in_buf, total_vals) )
             return 1;
         SPECK3D_Compressor compressor;
-        if( compressor.copy_data( in_buf.first.get(), total_vals, m_dim_x, m_dim_y, m_dim_z )
-            != RTNType::Good )
+        if( compressor.copy_data( in_buf.first.get(), total_vals, m_dims ) != RTNType::Good )
             return 1;
 
 #ifdef QZ_TERM
@@ -103,7 +100,7 @@ public:
 
 private:
     std::string m_input_name;
-    size_t m_dim_x, m_dim_y, m_dim_z;
+    speck::dims_type m_dims = {0, 0, 0};
     std::string m_output_name = "output.tmp";
     float m_psnr, m_lmax;
 };
@@ -114,12 +111,10 @@ private:
 class speck_tester_omp
 {
 public:
-    speck_tester_omp( const char* in, size_t x, size_t y, size_t z, int num_t )
+    speck_tester_omp( const char* in, speck::dims_type dims, int num_t )
     {
         m_input_name = in;
-        m_dim_x      = x;
-        m_dim_y      = y;
-        m_dim_z      = z;
+        m_dims       = dims;
         m_num_t      = num_t;
     }
 
@@ -148,7 +143,7 @@ public:
         m_psnr = 0.0;
         m_lmax = 1000.0;
         
-        const size_t  total_vals = m_dim_x * m_dim_y * m_dim_z;
+        const size_t  total_vals = m_dims[0] * m_dims[1] * m_dims[2];
 
         //
         // Use a compressor 
@@ -158,8 +153,8 @@ public:
             return 1;
 
         SPECK3D_OMP_C compressor;
-        compressor.set_dims( m_dim_x, m_dim_y, m_dim_z );
-        compressor.prefer_chunk_size( 64, 64, 64 );
+        compressor.set_dims( m_dims );
+        compressor.prefer_chunk_dims( {64, 64, 64} );
         compressor.set_num_threads( m_num_t );
 
         if( compressor.use_volume( in_buf.first.get(), total_vals ) != RTNType::Good )
@@ -211,7 +206,7 @@ public:
 
 private:
     std::string m_input_name;
-    size_t m_dim_x, m_dim_y, m_dim_z;
+    speck::dims_type m_dims = {0, 0, 0};
     std::string m_output_name = "output.tmp";
     float m_psnr, m_lmax;
     int   m_num_t;
@@ -222,7 +217,7 @@ private:
 TEST( speck3d_qz_term, large_tolerance )
 {
     const double tol = 1.0;
-    speck_tester tester( "../test_data/wmag128.float", 128, 128, 128 );
+    speck_tester tester( "../test_data/wmag128.float", {128, 128, 128} );
     tester.execute( 2, tol );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
@@ -244,7 +239,7 @@ TEST( speck3d_qz_term, large_tolerance )
 TEST( speck3d_qz_term, small_tolerance )
 {
     const double tol = 0.07;
-    speck_tester tester( "../test_data/wmag128.float", 128, 128, 128 );
+    speck_tester tester( "../test_data/wmag128.float", {128, 128, 128} );
     tester.execute( -3, tol );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
@@ -259,7 +254,7 @@ TEST( speck3d_qz_term, small_tolerance )
 }
 TEST( speck3d_qz_term, narrow_data_range)
 {
-    speck_tester tester( "../test_data/vorticity.128_128_41", 128, 128, 41 );
+    speck_tester tester( "../test_data/vorticity.128_128_41", {128, 128, 41} );
     tester.execute( -16, 3e-5 );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
@@ -277,7 +272,7 @@ TEST( speck3d_qz_term, narrow_data_range)
 TEST( speck3d_qz_term_omp, narrow_data_range)
 {
     // We specify to use 1 thread to make sure that object re-use has no side effects.
-    speck_tester_omp tester( "../test_data/vorticity.128_128_41", 128, 128, 41, 1 );
+    speck_tester_omp tester( "../test_data/vorticity.128_128_41", {128, 128, 41}, 1 );
     tester.execute( -16, 3e-5 );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
@@ -294,7 +289,7 @@ TEST( speck3d_qz_term_omp, narrow_data_range)
 }
 TEST( speck3d_qz_term_omp, small_tolerance )
 {
-    speck_tester_omp tester( "../test_data/wmag128.float", 128, 128, 128, 3 );
+    speck_tester_omp tester( "../test_data/wmag128.float", {128, 128, 128}, 3 );
     tester.execute( -3, 0.07);
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
@@ -315,7 +310,7 @@ TEST( speck3d_qz_term_omp, small_tolerance )
 
 TEST( speck3d_bit_rate, small )
 {
-    speck_tester tester( "../test_data/wmag17.float", 17, 17, 17 );
+    speck_tester tester( "../test_data/wmag17.float", {17, 17, 17} );
 
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
@@ -341,7 +336,7 @@ TEST( speck3d_bit_rate, small )
 
 TEST( speck3d_bit_rate, big )
 {
-    speck_tester tester( "../test_data/wmag128.float", 128, 128, 128 );
+    speck_tester tester( "../test_data/wmag128.float", {128, 128, 128} );
 
     tester.execute( 2.0f );
     float psnr = tester.get_psnr();
@@ -374,7 +369,7 @@ TEST( speck3d_bit_rate, big )
 
 TEST( speck3d_bit_rate, narrow_data_range )
 {
-    speck_tester tester( "../test_data/vorticity.128_128_41", 128, 128, 41 );
+    speck_tester tester( "../test_data/vorticity.128_128_41", {128, 128, 41} );
 
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
@@ -414,7 +409,7 @@ TEST( speck3d_bit_rate, narrow_data_range )
 
 TEST( speck3d_bit_rate_omp, narrow_data_range )
 {
-    speck_tester_omp tester( "../test_data/vorticity.128_128_41", 128, 128, 41, 1 );
+    speck_tester_omp tester( "../test_data/vorticity.128_128_41", {128, 128, 41}, 1 );
 
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
@@ -433,7 +428,7 @@ TEST( speck3d_bit_rate_omp, narrow_data_range )
 
 TEST( speck3d_bit_rate_omp, big )
 {
-    speck_tester_omp tester( "../test_data/wmag128.float", 128, 128, 128, 4 );
+    speck_tester_omp tester( "../test_data/wmag128.float", {128, 128, 128}, 4 );
 
     tester.execute( 2.0f );
     float psnr = tester.get_psnr();

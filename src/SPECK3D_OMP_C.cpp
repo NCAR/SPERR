@@ -7,19 +7,15 @@
 #include <omp.h>
 
 
-void SPECK3D_OMP_C::set_dims( size_t x, size_t y, size_t z )
+void SPECK3D_OMP_C::set_dims( speck::dims_type dims )
 {
-    m_dim_x = x;
-    m_dim_y = y;
-    m_dim_z = z;
+    m_dims = dims;
 }
 
 
-void SPECK3D_OMP_C::prefer_chunk_size( size_t x, size_t y, size_t z )
+void SPECK3D_OMP_C::prefer_chunk_dims( speck::dims_type dims )
 {
-    m_chunk_x = x;
-    m_chunk_y = y;
-    m_chunk_z = z;
+    m_chunk_dims = dims;
 }
 
     
@@ -68,26 +64,24 @@ auto SPECK3D_OMP_C::set_bpp( float bpp ) -> RTNType
 template<typename T>
 auto SPECK3D_OMP_C::use_volume( const T* vol, size_t len ) -> RTNType
 {
-    if( len != m_dim_x * m_dim_y * m_dim_z )
+    if( len != m_dims[0] * m_dims[1] * m_dims[2] )
         return RTNType::WrongSize;
 
     // If preferred chunk size is not set, then use the volume size as chunk size.
-    if( m_chunk_x == 0 || m_chunk_y == 0 || m_chunk_z == 0 ) {
-        m_chunk_x = m_dim_x;
-        m_chunk_y = m_dim_y;
-        m_chunk_z = m_dim_z;
+    for( size_t i = 0; i < m_chunk_dims.size(); i++ ) {
+        if( m_chunk_dims[i] == 0 )
+            m_chunk_dims[i] = m_dims[i];
     }
 
     // Block the volume into smaller chunks
-    auto chunks = speck::chunk_volume( {m_dim_x,   m_dim_y,   m_dim_z}, 
-                                       {m_chunk_x, m_chunk_y, m_chunk_z} );
+    auto chunks = speck::chunk_volume( m_dims, m_chunk_dims );
     const auto num_chunks = chunks.size();
     m_chunk_buffers.resize( num_chunks );
     std::for_each( m_chunk_buffers.begin(), m_chunk_buffers.end(), [](auto& v){v.clear();} );
 
     #pragma omp parallel for num_threads(m_num_threads)
     for( size_t i = 0; i < num_chunks; i++ ) {
-        m_chunk_buffers[i] = speck::gather_chunk( vol, {m_dim_x, m_dim_y, m_dim_z}, chunks[i] );
+        m_chunk_buffers[i] = speck::gather_chunk( vol, m_dims, chunks[i] );
     }
 
     return RTNType::Good;
@@ -100,8 +94,7 @@ template auto SPECK3D_OMP_C::use_volume( const double* , size_t ) -> RTNType;
 auto SPECK3D_OMP_C::compress() -> RTNType
 {
     // Need to make sure that the chunks are ready! 
-    auto chunks = speck::chunk_volume( {m_dim_x,   m_dim_y,   m_dim_z}, 
-                                       {m_chunk_x, m_chunk_y, m_chunk_z} );
+    auto chunks = speck::chunk_volume( m_dims, m_chunk_dims );
     const auto num_chunks = chunks.size();
     if( m_chunk_buffers.size() != num_chunks )
         return RTNType::Error;
@@ -127,7 +120,7 @@ auto SPECK3D_OMP_C::compress() -> RTNType
         const auto buf_len = chunks[i][1] * chunks[i][3] * chunks[i][5];
 
         // The following few operations have no chance to fail.
-        compressor.take_data(std::move(m_chunk_buffers[i]), chunks[i][1], chunks[i][3], chunks[i][5]);
+        compressor.take_data(std::move(m_chunk_buffers[i]), {chunks[i][1], chunks[i][3], chunks[i][5]});
 
 #ifdef QZ_TERM
         compressor.set_qz_level(  m_qz_lev );
@@ -187,8 +180,7 @@ auto SPECK3D_OMP_C::m_generate_header() const -> speck::vec8_type
     //  -- volume and chunk dimensions          (4 x 6 = 24 bytes)
     //  -- length of bitstream for each chunk   (4 x num_chunks)
 
-    auto chunks = speck::chunk_volume( {m_dim_x, m_dim_y, m_dim_z}, 
-                                       {m_chunk_x, m_chunk_y, m_chunk_z} );
+    auto chunks = speck::chunk_volume( m_dims, m_chunk_dims );
     const auto num_chunks  = chunks.size();
     if( num_chunks != m_encoded_streams.size() )
         return std::vector<uint8_t>(0);
@@ -210,8 +202,8 @@ auto SPECK3D_OMP_C::m_generate_header() const -> speck::vec8_type
     loc += 1;
 
     // Volume and chunk dimensions
-    uint32_t vcdim[6] = {uint32_t(m_dim_x),   uint32_t(m_dim_y),   uint32_t(m_dim_z), 
-                         uint32_t(m_chunk_x), uint32_t(m_chunk_y), uint32_t(m_chunk_z)};
+    uint32_t vcdim[6] = {uint32_t(m_dims[0]), uint32_t(m_dims[1]), uint32_t(m_dims[2]), 
+                         uint32_t(m_chunk_dims[0]), uint32_t(m_chunk_dims[1]), uint32_t(m_chunk_dims[2])};
     std::memcpy( &header[loc], vcdim, sizeof(vcdim) );
     loc += sizeof(vcdim);
 

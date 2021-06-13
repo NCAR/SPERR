@@ -25,11 +25,10 @@ public:
 
     // Accept incoming data: copy from a raw memory block
     template< typename T >
-    auto copy_data( const T* p, size_t len, size_t dimx, size_t dimy, size_t dimz ) -> RTNType;
+    auto copy_data( const T* p, size_t len, speck::dims_type dims ) -> RTNType;
 
     // Accept incoming data: take ownership of a memory block
-    auto take_data( std::vector<double>&& buf, size_t dimx, size_t dimy, size_t dimz ) 
-                    -> RTNType;
+    auto take_data( std::vector<double>&& buf, speck::dims_type dims ) -> RTNType;
 
 #ifdef QZ_TERM
     void set_qz_level( int32_t );
@@ -47,9 +46,7 @@ public:
 
 
 private:
-    size_t                      m_dim_x;
-    size_t                      m_dim_y;
-    size_t                      m_dim_z;
+    speck::dims_type            m_dims = {0, 0, 0};
     speck::vecd_type            m_val_buf;
 
     speck::Conditioner          m_conditioner;

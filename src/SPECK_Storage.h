@@ -21,8 +21,8 @@ public:
     // Memory management: input and output
     //
     template <typename T>
-    auto copy_data(const T*, size_t len, size_t dimx, size_t dimy, size_t dimz = 1) -> RTNType;
-    auto take_data(vecd_type&&, size_t dimx, size_t dimy, size_t dimz = 1) -> RTNType;
+    auto copy_data(const T*, size_t len, dims_type dims ) -> RTNType;
+    auto take_data(vecd_type&&,          dims_type dims ) -> RTNType;
     auto release_data() -> vecd_type;               // Release ownership
     auto view_data() const -> const vecd_type&;     // Keep ownership
     auto get_dims() const -> std::array<size_t, 3>;
@@ -49,11 +49,9 @@ protected:
     // Member variables
     //
     const size_t    m_header_size    = 24;
-    size_t          m_dim_x          = 0;
-    size_t          m_dim_y          = 0;
-    size_t          m_dim_z          = 0;
     int32_t         m_max_coeff_bits = 0;
     int32_t         m_qz_term_lev    = 0; // At which quantization level does encoding terminate?
+    dims_type       m_dims           = {0, 0, 0};
 
     std::vector<double> m_coeff_buf;
     std::vector<bool>   m_bit_buffer;

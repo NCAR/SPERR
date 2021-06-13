@@ -25,7 +25,7 @@ auto speck::SPECKSet2D::is_empty() const -> bool
 speck::SPECK2D::SPECK2D()
 {
     m_I.type = SetType::TypeI;
-    m_dim_z  = 1;
+    m_dims[2]  = 1;
 }
 
 
@@ -124,7 +124,7 @@ auto speck::SPECK2D::decode() -> RTNType
 void speck::SPECK2D::m_initialize_sets_lists()
 {
     const auto num_of_parts  = m_num_of_partitions();
-    const auto num_of_xforms = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
+    const auto num_of_xforms = speck::num_of_xforms(std::min(m_dims[0], m_dims[1]));
 
     // prepare m_LIS
     // Note that `m_LIS` can only grow in size.
@@ -146,8 +146,8 @@ void speck::SPECK2D::m_initialize_sets_lists()
     m_I.part_level = num_of_xforms;
     m_I.start_x    = S.length_x;
     m_I.start_y    = S.length_y;
-    m_I.length_x   = m_dim_x;
-    m_I.length_y   = m_dim_y;
+    m_I.length_x   = m_dims[0];
+    m_I.length_y   = m_dims[1];
 }
 
 //
@@ -437,8 +437,8 @@ auto speck::SPECK2D::m_code_I() -> RTNType
 void speck::SPECK2D::m_partition_I(std::array<SPECKSet2D, 3>& subsets)
 {
     std::array<size_t, 2> len_x, len_y;
-    speck::calc_approx_detail_len(m_dim_x, m_I.part_level, len_x);
-    speck::calc_approx_detail_len(m_dim_y, m_I.part_level, len_y);
+    speck::calc_approx_detail_len(m_dims[0], m_I.part_level, len_x);
+    speck::calc_approx_detail_len(m_dims[1], m_I.part_level, len_y);
     const auto approx_len_x = len_x[0];
     const auto detail_len_x = len_x[1];
     const auto approx_len_y = len_y[0];
@@ -495,7 +495,7 @@ auto speck::SPECK2D::m_decide_set_significance(SPECKSet2D& set) -> RTNType
     if (set.type == SetType::TypeS) {
         for (auto y = set.start_y; y < (set.start_y + set.length_y); y++)
             for (auto x = set.start_x; x < (set.start_x + set.length_x); x++) {
-                auto idx = y * m_dim_x + x;
+                auto idx = y * m_dims[0] + x;
                 if (m_significance_map[idx]) {
                     set.signif = SigType::Sig;
                     return RTNType::Good;
@@ -507,7 +507,7 @@ auto speck::SPECK2D::m_decide_set_significance(SPECKSet2D& set) -> RTNType
         // First rectangle: directly to the right of the missing top-left corner
         for (size_t y = 0; y < set.start_y; y++)
             for (auto x = set.start_x; x < set.length_x; x++) {
-                auto idx = y * m_dim_x + x;
+                auto idx = y * m_dims[0] + x;
                 if (m_significance_map[idx]) {
                     set.signif = SigType::Sig;
                     return RTNType::Good;
@@ -548,7 +548,7 @@ auto speck::SPECK2D::m_output_set_significance(const SPECKSet2D& set) -> RTNType
 
 auto speck::SPECK2D::m_output_pixel_sign(const SPECKSet2D& pixel) -> RTNType
 {
-    const auto idx = pixel.start_y * m_dim_x + pixel.start_x;
+    const auto idx = pixel.start_y * m_dims[0] + pixel.start_x;
 
 #ifdef PRINT
     if (m_sign_array[idx])
@@ -574,7 +574,7 @@ auto speck::SPECK2D::m_input_pixel_sign(const SPECKSet2D& pixel) -> RTNType
     if (m_bit_idx >= m_budget )
         return RTNType::BitBudgetMet;
 
-    const auto idx    = pixel.start_y * m_dim_x + pixel.start_x;
+    const auto idx    = pixel.start_y * m_dims[0] + pixel.start_x;
     m_sign_array[idx] = m_bit_buffer[m_bit_idx++];
 
     // Progressive quantization!
@@ -591,7 +591,7 @@ auto speck::SPECK2D::m_input_pixel_sign(const SPECKSet2D& pixel) -> RTNType
 
 auto speck::SPECK2D::m_output_refinement(const SPECKSet2D& pixel) -> RTNType
 {
-    const auto idx = pixel.start_y * m_dim_x + pixel.start_x;
+    const auto idx = pixel.start_y * m_dims[0] + pixel.start_x;
 
     if (m_coeff_buf[idx] >= m_threshold) {
         m_bit_buffer.push_back(true);
@@ -623,7 +623,7 @@ auto speck::SPECK2D::m_input_refinement(const SPECKSet2D& pixel) -> RTNType
         return RTNType::BitBudgetMet;
 
     const auto bit = m_bit_buffer[m_bit_idx++];
-    const auto idx = pixel.start_y * m_dim_x + pixel.start_x;
+    const auto idx = pixel.start_y * m_dims[0] + pixel.start_x;
     m_coeff_buf[idx] += bit ? m_threshold * 0.5 : m_threshold * -0.5;
 
 #ifdef PRINT
@@ -640,7 +640,7 @@ auto speck::SPECK2D::m_input_refinement(const SPECKSet2D& pixel) -> RTNType
 auto speck::SPECK2D::m_num_of_partitions() const -> size_t
 {
     size_t num_of_parts = 0;
-    size_t dim_x = m_dim_x, dim_y = m_dim_y;
+    size_t dim_x = m_dims[0], dim_y = m_dims[1];
     while (dim_x > 1 || dim_y > 1) {
         num_of_parts++;
         dim_x -= dim_x / 2;
@@ -653,8 +653,8 @@ void speck::SPECK2D::m_calc_root_size(SPECKSet2D& root) const
 {
     // approximation and detail lengths are placed as the 1st and 2nd element
     std::array<size_t, 2> len_x, len_y;
-    speck::calc_approx_detail_len(m_dim_x, root.part_level, len_x);
-    speck::calc_approx_detail_len(m_dim_y, root.part_level, len_y);
+    speck::calc_approx_detail_len(m_dims[0], root.part_level, len_x);
+    speck::calc_approx_detail_len(m_dims[1], root.part_level, len_y);
 
     root.start_x  = 0;
     root.start_y  = 0;
@@ -682,7 +682,7 @@ auto speck::SPECK2D::m_ready_to_encode() const -> bool
 {
     if (m_coeff_buf == nullptr)
         return false;
-    if (m_dim_x <= 0 || m_dim_y <= 0)
+    if (m_dims[0] == 0 || m_dims[1] == 0)
         return false;
     if (m_budget == 0)
         return false;
@@ -694,7 +694,7 @@ auto speck::SPECK2D::m_ready_to_decode() const -> bool
 {
     if (m_bit_buffer.empty())
         return false;
-    if (m_dim_x == 0 || m_dim_y == 0)
+    if (m_dims[0] == 0 || m_dims[1] == 0)
         return false;
 
     return true;

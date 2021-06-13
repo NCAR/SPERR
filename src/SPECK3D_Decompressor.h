@@ -40,9 +40,7 @@ public:
     auto get_dims() const  -> std::array<size_t, 3>;
 
 private:
-    size_t                      m_dim_x = 0;
-    size_t                      m_dim_y = 0;
-    size_t                      m_dim_z = 0;
+    speck::dims_type            m_dims = {0, 0, 0};
 
     std::vector<uint8_t>        m_condi_stream;
     std::vector<uint8_t>        m_speck_stream;

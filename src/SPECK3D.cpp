@@ -132,7 +132,7 @@ auto speck::SPECK3D::decode() -> RTNType
 #endif
 
     // initialize coefficients to be zero, and sign array to be all positive
-    const auto coeff_len = m_dim_x * m_dim_y * m_dim_z;
+    const auto coeff_len = m_dims[0] * m_dims[1] * m_dims[2];
     m_coeff_buf.assign(  coeff_len, 0.0 );
     m_sign_array.assign( coeff_len, true);
 
@@ -192,9 +192,9 @@ auto speck::SPECK3D::decode() -> RTNType
 void speck::SPECK3D::m_initialize_sets_lists()
 {
     std::array<size_t, 3> num_of_parts; // how many times each dimension could be partitioned?
-    num_of_parts[0] = speck::num_of_partitions( m_dim_x );
-    num_of_parts[1] = speck::num_of_partitions( m_dim_y );
-    num_of_parts[2] = speck::num_of_partitions( m_dim_z );
+    num_of_parts[0] = speck::num_of_partitions( m_dims[0] );
+    num_of_parts[1] = speck::num_of_partitions( m_dims[1] );
+    num_of_parts[2] = speck::num_of_partitions( m_dims[2] );
     size_t num_of_sizes = 1;
     for (size_t i = 0; i < 3; i++)
         num_of_sizes += num_of_parts[i];
@@ -213,12 +213,12 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // Starting from a set representing the whole volume, identify the smaller sets
     //   and put them in LIS accordingly.
     SPECKSet3D big;
-    big.length_x = uint32_t(m_dim_x); // Truncate 64-bit int to 32-bit, but should be OK.
-    big.length_y = uint32_t(m_dim_y); // Truncate 64-bit int to 32-bit, but should be OK.
-    big.length_z = uint32_t(m_dim_z); // Truncate 64-bit int to 32-bit, but should be OK.
+    big.length_x = uint32_t(m_dims[0]); // Truncate 64-bit int to 32-bit, but should be OK.
+    big.length_y = uint32_t(m_dims[1]); // Truncate 64-bit int to 32-bit, but should be OK.
+    big.length_z = uint32_t(m_dims[2]); // Truncate 64-bit int to 32-bit, but should be OK.
 
-    const auto num_of_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
-    const auto num_of_xforms_z  = speck::num_of_xforms(m_dim_z);
+    const auto num_of_xforms_xy = speck::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+    const auto num_of_xforms_z  = speck::num_of_xforms(m_dims[2]);
     size_t     xf               = 0;
 
     while (xf < num_of_xforms_xy && xf < num_of_xforms_z) {
@@ -265,7 +265,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // Note that `m_LSP_old` usually grow close to the full length, so we reserve space now.
     m_LSP_new.clear();
     m_LSP_old.clear();
-    m_LSP_old.reserve( m_dim_x * m_dim_y * m_dim_z );
+    m_LSP_old.reserve( m_dims[0] * m_dims[1] * m_dims[2] );
     m_bit_buffer.reserve( m_budget );
 #endif
 }
@@ -552,7 +552,7 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
 {
     assert( !set.is_empty() );
 
-    const size_t slice_size = m_dim_x * m_dim_y;
+    const size_t slice_size = m_dims[0] * m_dims[1];
 
     const auto thld = m_threshold_arr[ m_threshold_idx ];
     const auto gtr  = [thld](auto v){return v >= thld;};
@@ -560,13 +560,11 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
     for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
       const size_t slice_offset = z * slice_size;
       for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
-        const size_t col_offset = slice_offset + y * m_dim_x;
-
-          auto first = m_coeff_buf.begin() + (col_offset + set.start_x);
+          auto first = m_coeff_buf.begin() + (slice_offset + y * m_dims[0] + set.start_x);
           auto last  = first + set.length_x;
-          auto itr   = std::find_if( first, last, gtr );
-          if(  itr  != last ) {
-            xyz[0]   = std::distance( first, itr );
+          auto find  = std::find_if( first, last, gtr );
+          if(  find != last ) {
+            xyz[0]   = std::distance( first, find );
             xyz[1]   = y - set.start_y;
             xyz[2]   = z - set.start_z;
             return SigType::Sig;
@@ -749,8 +747,8 @@ auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2,
         }
 
         if(it->is_pixel()) {
-            m_LIP.push_back(it->start_z * m_dim_x * m_dim_y + 
-                            it->start_y * m_dim_x + it->start_x);
+            m_LIP.push_back(it->start_z * m_dims[0] * m_dims[1] + 
+                            it->start_y * m_dims[0] + it->start_x);
 
 #ifdef QZ_TERM
             m_process_P_encode(m_LIP.size() - 1, *sig_it, sig_counter, output);
@@ -795,8 +793,8 @@ auto speck::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
             read = false;
         }
         if (it->is_pixel()) {
-            m_LIP.push_back(it->start_z * m_dim_x * m_dim_y + 
-                            it->start_y * m_dim_x + it->start_x);
+            m_LIP.push_back(it->start_z * m_dims[0] * m_dims[1] + 
+                            it->start_y * m_dims[0] + it->start_x);
 
 #ifdef QZ_TERM
             m_process_P_decode(m_LIP.size() - 1, sig_counter, read);
@@ -828,11 +826,11 @@ auto speck::SPECK3D::m_ready_to_encode() const -> bool
 {
     if (m_coeff_buf.empty()) 
         return false;
-    if (m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0 || m_dim_z == 1)
+    if( std::any_of(m_dims.begin(), m_dims.end(), [](auto v){return v == 0;}) )
         return false;
 
 #ifndef QZ_TERM
-    if (m_budget == 0 || m_budget > m_dim_x * m_dim_y * m_dim_z * 64)
+    if (m_budget == 0 || m_budget > m_dims[0] * m_dims[1] * m_dims[2] * 64)
         return false;
 #endif
 
@@ -843,7 +841,7 @@ auto speck::SPECK3D::m_ready_to_decode() const -> bool
 {
     if (m_bit_buffer.empty())
         return false;
-    if (m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0)
+    if( std::any_of(m_dims.begin(), m_dims.end(), [](auto v){return v == 0;}) )
         return false;
 
     return true;

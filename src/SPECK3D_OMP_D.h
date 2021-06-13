@@ -32,17 +32,14 @@ public:
     auto view_data() const -> const std::vector<double>&;
     template<typename T>
     auto get_data() const -> std::vector<T>;
+    auto get_dims() const -> std::array<size_t, 3>;
 
 
 private:
 
-    size_t      m_dim_x       = 0;  // Dimension of the entire volume
-    size_t      m_dim_y       = 0;  // Dimension of the entire volume
-    size_t      m_dim_z       = 0;  // Dimension of the entire volume
-    size_t      m_chunk_x     = 0;  // Preferred dimension for a chunk.
-    size_t      m_chunk_y     = 0;  // Preferred dimension for a chunk.
-    size_t      m_chunk_z     = 0;  // Preferred dimension for a chunk.
-    size_t      m_num_threads = 1;  // number of theads to use in OpenMP sections
+    speck::dims_type  m_dims        = {0, 0, 0}; // Dimension of the entire volume
+    speck::dims_type  m_chunk_dims  = {0, 0, 0}; // Preferred dimensions for a chunk
+    size_t            m_num_threads = 1;         // number of theads to use in OpenMP sections
 
 #ifndef QZ_TERM
     float       m_bpp         = 0.0;

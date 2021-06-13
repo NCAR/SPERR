@@ -560,6 +560,6 @@ void speck::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double* signal,
 
 auto speck::CDF97::get_dims() const -> std::array<size_t, 3>
 {
-    return {m_dims[0], m_dims[1], m_dims[2]};
+    return m_dims;
 }
 

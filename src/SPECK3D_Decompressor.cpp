@@ -58,10 +58,7 @@ auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
     pos += speck_size;
 
     // Step 3: keep the volume dimension from the header
-    auto dims = m_decoder.get_speck_stream_dims( m_speck_stream.data() );
-    m_dim_x = dims[0];
-    m_dim_y = dims[1];
-    m_dim_z = dims[2];
+    m_dims = m_decoder.get_speck_stream_dims( m_speck_stream.data() );
 
 #ifdef QZ_TERM
     // Step 4: extract SPERR stream from it
@@ -104,7 +101,7 @@ auto SPECK3D_Decompressor::decompress( ) -> RTNType
         return rtn;
 
 #ifndef QZ_TERM
-    m_decoder.set_bit_budget( size_t(m_bpp * float(m_dim_x * m_dim_y * m_dim_z)) );
+    m_decoder.set_bit_budget( size_t(m_bpp * float(m_dims[0] * m_dims[1] * m_dims[2])) );
 #endif
 
     rtn = m_decoder.decode();
@@ -117,7 +114,7 @@ auto SPECK3D_Decompressor::decompress( ) -> RTNType
     //  transfer the ownership, because `m_decoder` will reuse that memory when processing
     //  the next chunk. For the same reason, `m_cdf` keeps its memory.)
     auto decoder_out = m_decoder.view_data();
-    m_cdf.copy_data( decoder_out.data(), decoder_out.size(), m_dim_x, m_dim_y, m_dim_z );
+    m_cdf.copy_data( decoder_out.data(), decoder_out.size(), m_dims );
     m_cdf.idwt3d();
 
     // Step 3: Inverse Conditioning
@@ -167,15 +164,13 @@ auto SPECK3D_Decompressor::view_data() const -> const std::vector<double>&
 
 auto SPECK3D_Decompressor::release_data() -> std::vector<double>
 {
-    m_dim_x = 0;
-    m_dim_y = 0;
-    m_dim_z = 0;
+    m_dims = {0, 0, 0};
     return std::move(m_val_buf);
 }
 
 auto SPECK3D_Decompressor::get_dims() const -> std::array<size_t, 3>
 {
-    return {m_dim_x, m_dim_y, m_dim_z};
+    return m_dims;
 }
 
 

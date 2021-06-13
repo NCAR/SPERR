@@ -5,38 +5,32 @@
 
 
 template <typename T>
-auto speck::SPECK_Storage::copy_data(const T* p, size_t len, size_t dimx, size_t dimy, size_t dimz) 
-          -> RTNType
+auto speck::SPECK_Storage::copy_data(const T* p, size_t len, dims_type dims ) -> RTNType
 {
     static_assert(std::is_floating_point<T>::value,
                   "!! Only floating point values are supported !!");
-    if( len != dimx * dimy * dimz )
+    if( len != dims[0] * dims[1] * dims[2] )
         return RTNType::DimMismatch;
 
     // If `m_coeff_buf` is empty, or having a different length, we need to allocate memory!
     m_coeff_buf.resize( len );
     std::copy( p, p + len, m_coeff_buf.begin() );
 
-    m_dim_x = dimx;
-    m_dim_y = dimy;
-    m_dim_z = dimz;
+    m_dims = dims;
 
     return RTNType::Good;
 }
-template auto speck::SPECK_Storage::copy_data(const double*, size_t, size_t, size_t, size_t) -> RTNType;
-template auto speck::SPECK_Storage::copy_data(const float*,  size_t, size_t, size_t, size_t) -> RTNType;
+template auto speck::SPECK_Storage::copy_data(const double*, size_t, dims_type) -> RTNType;
+template auto speck::SPECK_Storage::copy_data(const float*,  size_t, dims_type) -> RTNType;
 
 
-auto speck::SPECK_Storage::take_data(vecd_type&& coeffs, size_t dimx, size_t dimy, size_t dimz) 
-                           -> RTNType
+auto speck::SPECK_Storage::take_data(vecd_type&& coeffs, dims_type dims) -> RTNType
 {
-    if( coeffs.size() != dimx * dimy * dimz )
+    if( coeffs.size() != dims[0] * dims[1] * dims[2] )
         return RTNType::DimMismatch;
 
     m_coeff_buf = std::move(coeffs);
-    m_dim_x     = dimx;
-    m_dim_y     = dimy;
-    m_dim_z     = dimz;
+    m_dims      = dims;
 
     return RTNType::Good;
 }
@@ -44,9 +38,7 @@ auto speck::SPECK_Storage::take_data(vecd_type&& coeffs, size_t dimx, size_t dim
 
 auto speck::SPECK_Storage::release_data() -> vecd_type
 {
-    m_dim_x = 0;
-    m_dim_y = 0;
-    m_dim_z = 0;
+    m_dims = {0, 0, 0};
     return std::move(m_coeff_buf);
 }
 auto speck::SPECK_Storage::view_data() const -> const vecd_type&
@@ -55,7 +47,7 @@ auto speck::SPECK_Storage::view_data() const -> const vecd_type&
 }
 auto speck::SPECK_Storage::get_dims() const -> std::array<size_t, 3>
 {
-    return {m_dim_x, m_dim_y, m_dim_z};
+    return m_dims;
 }
 
 
@@ -65,7 +57,7 @@ auto speck::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
     // dim_x,     dim_y,     dim_z,     max_coeff_bits,  qz_term_lev,  bitstream_len (in byte)
     // uint32_t,  uint32_t,  uint32_t,  int16_t,         int16_t,      uint64_t
 
-    uint32_t dims[3] { uint32_t(m_dim_x), uint32_t(m_dim_y), uint32_t(m_dim_z) };
+    uint32_t dims[3] { uint32_t(m_dims[0]), uint32_t(m_dims[1]), uint32_t(m_dims[2]) };
     assert( m_bit_buffer.size() % 8 == 0 );
     const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
     const size_t total_size = m_header_size + bit_in_byte;
@@ -122,10 +114,8 @@ auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t
     if( rtn != RTNType::Good )
         return rtn;
 
-    m_dim_x = dims[0]; 
-    m_dim_y = dims[1]; 
-    m_dim_z = dims[2];
-    m_coeff_buf.resize(m_dim_x * m_dim_y * m_dim_z );
+    std::copy( std::begin(dims), std::end(dims), m_dims.begin() );
+    m_coeff_buf.resize( m_dims[0] * m_dims[1] * m_dims[2] );
 
     m_encoded_stream.clear();
 

@@ -58,16 +58,15 @@ auto SPECK3D_OMP_D::use_bitstream( const void* p, size_t total_len ) -> RTNType
     uint32_t vcdim[6];
     std::memcpy( vcdim, u8p + loc, sizeof(vcdim) );
     loc += sizeof(vcdim);
-    m_dim_x     = vcdim[0];
-    m_dim_y     = vcdim[1];
-    m_dim_z     = vcdim[2];
-    m_chunk_x   = vcdim[3];
-    m_chunk_y   = vcdim[4];
-    m_chunk_z   = vcdim[5];
+    m_dims[0]       = vcdim[0];
+    m_dims[1]       = vcdim[1];
+    m_dims[2]       = vcdim[2];
+    m_chunk_dims[0] = vcdim[3];
+    m_chunk_dims[1] = vcdim[4];
+    m_chunk_dims[2] = vcdim[5];
 
     // Figure out how many chunks and their length
-    auto chunks = speck::chunk_volume( {m_dim_x,   m_dim_y,   m_dim_z}, 
-                                       {m_chunk_x, m_chunk_y, m_chunk_z} );
+    auto chunks = speck::chunk_volume( m_dims, m_chunk_dims );
     const auto num_chunks = chunks.size();
     auto chunk_sizes = std::vector<size_t>( num_chunks, 0 );
     for( size_t i = 0; i < num_chunks; i++ ) {
@@ -98,8 +97,9 @@ auto SPECK3D_OMP_D::use_bitstream( const void* p, size_t total_len ) -> RTNType
 
 auto SPECK3D_OMP_D::decompress( const void* p ) -> RTNType
 {
-    if( m_dim_x   == 0 || m_dim_y   == 0 || m_dim_z   == 0 ||
-        m_chunk_x == 0 || m_chunk_y == 0 || m_chunk_z == 0 )
+    auto eq0 = [](auto v){return v == 0;};
+    if( std::any_of(m_dims.begin(), m_dims.end(), eq0) ||
+        std::any_of(m_chunk_dims.begin(), m_chunk_dims.end(), eq0) )
         return RTNType::Error;
     if( p == nullptr || m_bitstream_ptr == nullptr )
         return RTNType::Error;
@@ -107,12 +107,11 @@ auto SPECK3D_OMP_D::decompress( const void* p ) -> RTNType
         return RTNType::Error;
         
     // Let's figure out the chunk information
-    const auto chunks = speck::chunk_volume( {m_dim_x,   m_dim_y,   m_dim_z}, 
-                                             {m_chunk_x, m_chunk_y, m_chunk_z} );
+    const auto chunks = speck::chunk_volume( m_dims, m_chunk_dims );
     const auto num_chunks = chunks.size();
     if( m_offsets.size() != num_chunks + 1 )
         return RTNType::Error;
-    const auto total_vals = m_dim_x * m_dim_y * m_dim_z;
+    const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
 
     // Allocate a buffer to store the entire volume
     m_vol_buf.resize( total_vals );
@@ -140,8 +139,7 @@ auto SPECK3D_OMP_D::decompress( const void* p ) -> RTNType
             chunk_rtn[ i*3+2 ] = RTNType::Error;
         else{
             chunk_rtn[ i*3+2 ] = RTNType::Good;
-            speck::scatter_chunk( m_vol_buf, {m_dim_x, m_dim_y, m_dim_z}, 
-                                  small_vol, chunks[i] );
+            speck::scatter_chunk( m_vol_buf, m_dims, small_vol, chunks[i] );
         }
     }
 
@@ -154,9 +152,7 @@ auto SPECK3D_OMP_D::decompress( const void* p ) -> RTNType
 
 auto SPECK3D_OMP_D::release_data() -> speck::vecd_type
 {
-    m_dim_x = 0;
-    m_dim_y = 0;
-    m_dim_z = 0;
+    m_dims = {0, 0, 0};
     return std::move(m_vol_buf);
 }
 
@@ -164,6 +160,12 @@ auto SPECK3D_OMP_D::release_data() -> speck::vecd_type
 auto SPECK3D_OMP_D::view_data() const -> const std::vector<double>&
 {
     return m_vol_buf;
+}
+
+
+auto SPECK3D_OMP_D::get_dims() const -> std::array<size_t, 3>
+{
+    return m_dims;
 }
 
 
