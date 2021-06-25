@@ -229,28 +229,29 @@ auto speck::read_n_bytes( const char* filename, size_t n_bytes, void* buffer ) -
 
 
 template <typename T>
-auto speck::read_whole_file( const char* filename ) -> std::pair<std::unique_ptr<T[]>, size_t>
+auto speck::read_whole_file( const char* filename ) -> std::vector<T>
 {
+    std::vector<T> buf;
+
     std::FILE* file = std::fopen( filename, "rb" );
     if( !file )
-        return {nullptr, 0};
+        return buf;
 
     std::fseek( file, 0, SEEK_END );
     const size_t file_size = std::ftell( file );
     const size_t num_vals  = file_size / sizeof(T);
     std::fseek( file, 0, SEEK_SET );
 
-    auto buf = std::make_unique<T[]>( num_vals );
-    size_t nread  = std::fread( buf.get(), sizeof(T), num_vals, file );
+    buf.resize( num_vals );
+    size_t nread  = std::fread( buf.data(), sizeof(T), num_vals, file );
     std::fclose( file );
     if( nread != num_vals )
-        return {nullptr, 0};
-    else
-        return {std::move(buf), num_vals};
+        buf.clear();
+
+    return buf;
 }
-template auto speck::read_whole_file( const char* ) -> speck::smart_buffer_f;
-template auto speck::read_whole_file( const char* ) -> speck::smart_buffer_d;
-template auto speck::read_whole_file( const char* ) -> speck::smart_buffer_uint8;
+template auto speck::read_whole_file( const char* ) -> std::vector<float>;
+template auto speck::read_whole_file( const char* ) -> std::vector<double>;
 
 
 auto speck::write_n_bytes( const char* filename, size_t n_bytes, const void* buffer ) -> RTNType

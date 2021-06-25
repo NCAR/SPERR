@@ -10,7 +10,7 @@ auto speck::SPECK_Storage::copy_data(const T* p, size_t len, dims_type dims ) ->
     static_assert(std::is_floating_point<T>::value,
                   "!! Only floating point values are supported !!");
     if( len != dims[0] * dims[1] * dims[2] )
-        return RTNType::DimMismatch;
+        return RTNType::WrongSize;
 
     // If `m_coeff_buf` is empty, or having a different length, we need to allocate memory!
     m_coeff_buf.resize( len );
@@ -27,7 +27,7 @@ template auto speck::SPECK_Storage::copy_data(const float*,  size_t, dims_type) 
 auto speck::SPECK_Storage::take_data(vecd_type&& coeffs, dims_type dims) -> RTNType
 {
     if( coeffs.size() != dims[0] * dims[1] * dims[2] )
-        return RTNType::DimMismatch;
+        return RTNType::WrongSize;
 
     m_coeff_buf = std::move(coeffs);
     m_dims      = dims;

@@ -16,7 +16,7 @@ auto speck::CDF97::copy_data(const T* data, size_t len, dims_type dims ) -> RTNT
     static_assert(std::is_floating_point<T>::value,
                   "!! Only floating point values are supported !!");
     if( len != dims[0] * dims[1] * dims[2] )
-        return RTNType::DimMismatch;
+        return RTNType::WrongSize;
 
     m_data_buf.resize( len );
     std::copy( data, data + len, m_data_buf.begin() );
@@ -38,7 +38,7 @@ template auto speck::CDF97::copy_data(const double*, size_t, dims_type ) -> RTNT
 auto speck::CDF97::take_data( vecd_type&& buf, dims_type dims ) -> RTNType
 {
     if( buf.size() != dims[0] * dims[1] * dims[2] )
-        return RTNType::DimMismatch;
+        return RTNType::WrongSize;
 
     m_data_buf = std::move(buf);
     m_dims     = dims;

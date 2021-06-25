@@ -57,7 +57,7 @@ enum class RTNType { // Return Type
     VersionMismatch,
     ZSTDMismatch,
     ZSTDError,
-    DimMismatch,
+    SliceVolumeMismatch,
     Error
 };
 
@@ -162,7 +162,7 @@ void unpack_8_booleans( bool* dest,     uint8_t src );
 auto write_n_bytes(  const char* filename, size_t n_bytes, const void* buffer ) -> RTNType;
 auto read_n_bytes(   const char* filename, size_t n_bytes,       void* buffer ) -> RTNType;
 template <typename T>
-auto read_whole_file(const char* filename) -> std::pair<std::unique_ptr<T[]>, size_t>;
+auto read_whole_file(const char* filename) -> std::vector<T>;
 
 // Calculate a suite of statistics
 // Note that arr1 is considered as the ground truth array, so it's the range of arr1
