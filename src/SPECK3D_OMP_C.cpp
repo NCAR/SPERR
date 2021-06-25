@@ -193,8 +193,9 @@ auto SPECK3D_OMP_C::m_generate_header() const -> speck::vec8_type
 
     // 8 booleans: 
     // bool[0]  : if ZSTD is used
-    // bool[1-7]: undefined
-    bool b[8] = {false, false, false, false, false, false, false, false};
+    // bool[1]  : if this bitstream is for 3D (true) or 2D (false) data.
+    // bool[2-7]: undefined
+    bool b[8] = {false, true, false, false, false, false, false, false};
 #ifdef USE_ZSTD
     b[0] = true;
 #endif

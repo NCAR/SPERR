@@ -33,6 +33,7 @@ public:
 #ifdef QZ_TERM
     void set_qz_level( int32_t );
     auto set_tolerance( double ) -> RTNType;
+
     // Return 1) the number of outliers, and 2) the num of bytes to encode them.
     auto get_outlier_stats() const -> std::pair<size_t, size_t>;
 #else
@@ -46,6 +47,7 @@ public:
 
 
 private:
+
     speck::dims_type            m_dims = {0, 0, 0};
     speck::vecd_type            m_val_buf;
 
@@ -53,9 +55,10 @@ private:
     speck::CDF97                m_cdf;
     speck::SPECK3D              m_encoder;
 
-    // Store bitstreams from SPECK encoding and error correction if applicable
-    std::vector<uint8_t>        m_condi_stream;
-    std::vector<uint8_t>        m_speck_stream;
+    // Store bitstreams from the conditioner and SPECK encoding, and the overall bitstream.
+    speck::vec8_type            m_condi_stream;
+    speck::vec8_type            m_speck_stream;
+    speck::vec8_type            m_encoded_stream;
 
 #ifdef QZ_TERM
     std::vector<uint8_t>        m_sperr_stream;
@@ -77,9 +80,7 @@ private:
             {nullptr, &ZSTD_freeCCtx};
 #endif
 
-    speck::vec8_type    m_encoded_stream;
-
-    auto m_prepare_encoded_bitstream() -> speck::RTNType;
+    auto m_assemble_encoded_bitstream() -> speck::RTNType;
 };
 
 

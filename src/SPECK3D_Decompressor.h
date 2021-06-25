@@ -23,7 +23,7 @@ using speck::RTNType;
 class SPECK3D_Decompressor {
 
 public:
-    // Accept incoming data; this data is expected to have a header.
+    // Accept incoming data.
     auto use_bitstream( const void* p, size_t len ) -> RTNType;
 
 #ifndef QZ_TERM

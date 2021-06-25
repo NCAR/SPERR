@@ -11,7 +11,7 @@ auto SPECK3D_Compressor::copy_data( const T* p, size_t len, speck::dims_type dim
                   "!! Only floating point values are supported !!");
 
     if( len != dims[0] * dims[1] * dims[2] )
-        return RTNType::DimMismatch;
+        return RTNType::WrongSize;
 
     m_val_buf.resize( len );
     std::copy( p, p + len, m_val_buf.begin() );
@@ -27,7 +27,7 @@ template auto SPECK3D_Compressor::copy_data( const float*,  size_t, speck::dims_
 auto SPECK3D_Compressor::take_data( speck::vecd_type&& buf, speck::dims_type dims ) -> RTNType
 {
     if( buf.size() != dims[0] * dims[1] * dims[2] )
-        return RTNType::DimMismatch;
+        return RTNType::WrongSize;
 
     m_val_buf = std::move( buf );
     m_dims    = dims;
@@ -124,17 +124,16 @@ auto SPECK3D_Compressor::compress() -> RTNType
             return RTNType::Error;
     }
 
-    auto rtn = m_prepare_encoded_bitstream();
+    auto rtn = m_assemble_encoded_bitstream();
 
     return rtn;
 }
 #else
 auto SPECK3D_Compressor::compress() -> RTNType
 {
-    if( m_val_buf.empty() ) 
-        return RTNType::Error;
-    m_speck_stream.clear(); 
     const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
+    if( m_val_buf.size() != total_vals ) 
+        return RTNType::Error;
 
     // Step 1: data goes through the conditioner 
     m_conditioner.toggle_all_false();
@@ -159,16 +158,16 @@ auto SPECK3D_Compressor::compress() -> RTNType
     if( rtn != RTNType::Good )
         return rtn;
     m_encoder.set_bit_budget( size_t(m_bpp * total_vals) );
-
     rtn = m_encoder.encode();
     if( rtn != RTNType::Good )
         return rtn;
 
+    // Copy SPECK bitstream to `m_speck_stream`
     m_speck_stream = m_encoder.view_encoded_bitstream();
     if( m_speck_stream.empty() )
         return RTNType::Error;
 
-    rtn = m_prepare_encoded_bitstream();
+    rtn = m_assemble_encoded_bitstream();
 
     return rtn;
 }
@@ -176,7 +175,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
 
 
 #ifdef USE_ZSTD
-auto SPECK3D_Compressor::m_prepare_encoded_bitstream() -> RTNType
+auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 {
 #ifdef QZ_TERM
     const size_t total_size = m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
@@ -216,12 +215,15 @@ auto SPECK3D_Compressor::m_prepare_encoded_bitstream() -> RTNType
         m_encoded_stream.resize( comp_size );
         return RTNType::Good;
     }
-} // Finish the USE_ZSTD case
-
+}
+//
+// Finish the USE_ZSTD case
+//
 #else
+//
 // Start the no-ZSTD case
-
-auto SPECK3D_Compressor::m_prepare_encoded_bitstream() -> RTNType
+//
+auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 {
 #ifdef QZ_TERM
     const size_t total_size = m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
