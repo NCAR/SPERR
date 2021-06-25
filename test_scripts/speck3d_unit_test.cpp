@@ -54,10 +54,10 @@ public:
         // Use a compressor 
         //
         auto in_buf = speck::read_whole_file<float>( m_input_name.c_str() );
-        if( !speck::size_is(in_buf, total_vals) )
+        if( in_buf.size() != total_vals )
             return 1;
         SPECK3D_Compressor compressor;
-        if( compressor.copy_data( in_buf.first.get(), total_vals, m_dims ) != RTNType::Good )
+        if( compressor.copy_data( in_buf.data(), total_vals, m_dims ) != RTNType::Good )
             return 1;
 
 #ifdef QZ_TERM
@@ -89,7 +89,7 @@ public:
         // Compare results
         //
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( in_buf.first.get(), vol.data(), total_vals,
+        speck::calc_stats( in_buf.data(), vol.data(), total_vals,
                            &rmse, &lmax, &psnr, &arr1min, &arr1max );
         m_psnr = psnr;
         m_lmax = lmax;
@@ -149,7 +149,7 @@ public:
         // Use a compressor 
         //
         auto in_buf = speck::read_whole_file<float>( m_input_name.c_str() );
-        if( !speck::size_is(in_buf, total_vals) )
+        if( in_buf.size() != total_vals )
             return 1;
 
         SPECK3D_OMP_C compressor;
@@ -157,7 +157,7 @@ public:
         compressor.prefer_chunk_dims( {64, 64, 64} );
         compressor.set_num_threads( m_num_t );
 
-        if( compressor.use_volume( in_buf.first.get(), total_vals ) != RTNType::Good )
+        if( compressor.use_volume( in_buf.data(), total_vals ) != RTNType::Good )
             return 1;
 
 #ifdef QZ_TERM
