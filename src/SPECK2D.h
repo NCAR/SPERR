@@ -33,6 +33,7 @@ public:
 // Main SPECK2D class
 //
 class SPECK2D : public SPECK_Storage {
+
 public:
     // Constructor
     SPECK2D();

@@ -37,41 +37,40 @@ public:
         m_lmax = 10000.0;
 
         const size_t  total_vals = m_dim_x * m_dim_y;
+        auto in_buf = speck::read_whole_file<float>( m_input_name.c_str() );
+        if( in_buf.size() != total_vals )
+            return 1;
 
         //
         // Use a compressor
         //
-        auto in_buf = speck::read_whole_file<float>( m_input_name.c_str() );
-        if( !speck::size_is(in_buf, total_vals) )
-            return 1;
         SPECK2D_Compressor compressor;
-        if( compressor.copy_data( in_buf.first.get(), total_vals, m_dim_x, m_dim_y ) 
-            != RTNType::Good )
+        if( compressor.copy_data(in_buf.data(), total_vals, {m_dim_x, m_dim_y, 1}) 
+            != RTNType::Good)
             return 1;
         if( compressor.set_bpp( bpp ) != RTNType::Good )
             return 1;
         if( compressor.compress() != RTNType::Good )
             return 1;
-        if( compressor.write_bitstream( m_output_name.c_str() ) != RTNType::Good )
-            return 1;
+        auto bitstream = compressor.get_encoded_bitstream();
 
         //
         // Then use a decompressor
         //
         SPECK2D_Decompressor decompressor;
-        if( decompressor.read_bitstream( m_output_name.c_str() ) != RTNType::Good )
+        if( decompressor.use_bitstream( bitstream.data(), bitstream.size() ) != RTNType::Good )
             return 1;
         if( decompressor.decompress() != RTNType::Good )
             return 1;
-        auto slice = decompressor.get_decompressed_slice_f();
-        if( !speck::size_is( slice, total_vals ) )
+        auto slice = decompressor.get_data<float>();
+        if( slice.size() != total_vals )
             return 1;
 
         //
         // Compare results 
         //
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( in_buf.first.get(), slice.first.get(), total_vals,
+        speck::calc_stats( in_buf.data(), slice.data(), total_vals,
                            &rmse, &lmax, &psnr, &arr1min, &arr1max );
         m_psnr = psnr;
         m_lmax = lmax;

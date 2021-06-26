@@ -50,7 +50,7 @@ auto speck::SPECK2D::encode() -> RTNType
     m_encoded_stream.clear();
     m_bit_buffer.clear();
     m_bit_buffer.reserve(m_budget);
-    auto max_coeff = speck::make_coeff_positive(m_coeff_buf, m_coeff_len, m_sign_array);
+    auto max_coeff = speck::make_coeff_positive(m_coeff_buf, m_sign_array);
 
     m_max_coeff_bits = int32_t(std::floor(std::log2(max_coeff)));
     m_threshold      = std::pow(2.0, double(m_max_coeff_bits));
@@ -87,15 +87,15 @@ auto speck::SPECK2D::decode() -> RTNType
         m_budget = m_bit_buffer.size();
 
     // initialize coefficients to be zero, and signs to be all positive
-    m_coeff_buf = std::make_unique<double[]>(m_coeff_len);
-    for (size_t i = 0; i < m_coeff_len; i++)
-        m_coeff_buf[i] = 0.0;
-    m_sign_array.assign(m_coeff_len, true);
+    const auto coeff_len = m_dims[0] * m_dims[1];
+    m_coeff_buf.assign( coeff_len, 0.0 );
+    m_sign_array.assign(coeff_len, true);
 
     m_initialize_sets_lists();
 
     m_bit_idx   = 0;
     m_threshold = std::pow(2.0, double(m_max_coeff_bits));
+
     for (size_t bitplane = 0; bitplane < 128; bitplane++) {
         auto rtn = m_sorting_pass();
         if( rtn == RTNType::BitBudgetMet )
@@ -113,9 +113,9 @@ auto speck::SPECK2D::decode() -> RTNType
     }
 
     // Restore coefficient signs
-    for (size_t i = 0; i < m_coeff_len; i++) {
-        if (!m_sign_array[i])
-            m_coeff_buf[i] = -m_coeff_buf[i];
+    for (size_t i = 0; i < m_sign_array.size(); i++) {
+        double tmp[2]  = {-m_coeff_buf[i], m_coeff_buf[i]};
+        m_coeff_buf[i] = tmp[ m_sign_array[i] ];
     }
 
     return RTNType::Good;
@@ -157,9 +157,11 @@ auto speck::SPECK2D::m_sorting_pass() -> RTNType
 {
     if (m_encode_mode) {
         // Update the significance map based on the current threshold
-        m_significance_map.assign(m_coeff_len, false);
-        for (size_t i = 0; i < m_coeff_len; i++) {
-            if (m_coeff_buf[i] >= m_threshold)
+        // Note that there are only a small number of values identified as significant
+        // at each iteration, so not touching every data value.
+        m_significance_map.assign( m_coeff_buf.size(), false);
+        for (size_t i = 0; i < m_coeff_buf.size(); i++) {
+            if (m_coeff_buf[i] >= m_threshold) [[unlikely]]
                 m_significance_map[i] = true;
         }
     }
@@ -680,9 +682,9 @@ void speck::SPECK2D::m_clean_LIS()
 
 auto speck::SPECK2D::m_ready_to_encode() const -> bool
 {
-    if (m_coeff_buf == nullptr)
+    if (m_dims[0] == 0 || m_dims[1] == 0 || m_dims[2] != 1)
         return false;
-    if (m_dims[0] == 0 || m_dims[1] == 0)
+    if (m_coeff_buf.size() != m_dims[0] * m_dims[1])
         return false;
     if (m_budget == 0)
         return false;
@@ -694,7 +696,7 @@ auto speck::SPECK2D::m_ready_to_decode() const -> bool
 {
     if (m_bit_buffer.empty())
         return false;
-    if (m_dims[0] == 0 || m_dims[1] == 0)
+    if (m_dims[0] == 0 || m_dims[1] == 0 || m_dims[2] != 1)
         return false;
 
     return true;
