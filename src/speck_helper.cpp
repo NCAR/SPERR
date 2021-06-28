@@ -180,33 +180,6 @@ void speck::unpack_8_booleans( bool* dest, uint8_t src )
 }
 
 
-template<typename T>
-auto speck::begin( const std::unique_ptr<T[]>& uptr ) -> ptr_iterator<T>
-{
-    return ptr_iterator<T>( uptr.get() );
-}
-template auto speck::begin(const speck::buffer_type_f& ) -> ptr_iterator<float >;
-template auto speck::begin(const speck::buffer_type_d& ) -> ptr_iterator<double>;
-
-
-template<typename T>
-auto speck::begin( const std::pair<std::unique_ptr<T[]>, size_t>& sbf ) -> ptr_iterator<T>
-{
-    return ptr_iterator<T>( sbf.first.get() );
-}
-template<typename T>
-auto speck::end( const std::pair<std::unique_ptr<T[]>, size_t>& sbf ) -> ptr_iterator<T>
-{
-    return ptr_iterator<T>( sbf.first.get() + sbf.second );
-}
-template auto speck::begin( const speck::smart_buffer_f& )     -> ptr_iterator<float >;
-template auto speck::begin( const speck::smart_buffer_d& )     -> ptr_iterator<double>;
-template auto speck::begin( const speck::smart_buffer_uint8& ) -> ptr_iterator<uint8_t>;
-template auto speck::end(   const speck::smart_buffer_f& )     -> ptr_iterator<float >;
-template auto speck::end(   const speck::smart_buffer_d& )     -> ptr_iterator<double>;
-template auto speck::end(   const speck::smart_buffer_uint8& ) -> ptr_iterator<uint8_t>;
-
-
 auto speck::read_n_bytes( const char* filename, size_t n_bytes, void* buffer ) -> RTNType
 {
     std::FILE* f = std::fopen( filename, "rb" );
@@ -355,30 +328,6 @@ auto speck::kahan_summation( const T* arr, size_t len ) -> T
 }
 template auto speck::kahan_summation( const float*,  size_t ) -> float;
 template auto speck::kahan_summation( const double*, size_t ) -> double;
-
-
-
-template <typename T>
-auto speck::empty_buf( const std::pair<T, size_t>& buf ) -> bool
-{
-    return (buf.first == nullptr || buf.second == 0);
-}
-template auto speck::empty_buf( const smart_buffer_d&     ) -> bool;
-template auto speck::empty_buf( const smart_buffer_f&     ) -> bool;
-template auto speck::empty_buf( const smart_buffer_uint8& ) -> bool;
-template auto speck::empty_buf( const std::pair<const buffer_type_d&, size_t>& ) -> bool;
-
-
-template <typename T>
-auto speck::size_is( const  std::pair<T, size_t>& buf,
-                     size_t expected_size ) -> bool
-{
-    return (buf.first != nullptr && buf.second == expected_size);
-}
-template auto speck::size_is( const smart_buffer_d&,     size_t ) -> bool;
-template auto speck::size_is( const smart_buffer_f&,     size_t ) -> bool;
-template auto speck::size_is( const smart_buffer_uint8&, size_t ) -> bool;
-template auto speck::size_is( const std::pair<const buffer_type_d&, size_t>&, size_t ) -> bool;
 
 
 auto speck::chunk_volume( const std::array<size_t, 3>& vol_dim, 

@@ -20,13 +20,6 @@ namespace speck {
 //
 // A few shortcuts
 //
-using buffer_type_d     = std::unique_ptr<double[]>;
-using buffer_type_f     = std::unique_ptr<float[]>;
-using buffer_type_uint8 = std::unique_ptr<uint8_t[]>;
-using smart_buffer_d    = std::pair<buffer_type_d, size_t>; // It's smart because
-using smart_buffer_f    = std::pair<buffer_type_f, size_t>; // it knows its size.
-using smart_buffer_uint8= std::pair<buffer_type_uint8, size_t>;
-
 using vecd_type = std::vector<double>;
 using vec8_type = std::vector<uint8_t>;
 using dims_type = std::array<size_t, 3>;
@@ -100,19 +93,6 @@ public:
     // https://github.com/shaomeng/cppcon2019_class/blob/master/labs/01-vector_walkthrough/code/trnx_vector_impl.h
 };
 
-// Helper functions to generate a ptr_iterator from a unique_ptr.
-// (Their names resemble std::begin() and std::end().)
-// For an array with size N, the begin and end iterators are:
-// auto begin = speck::begin( buf ); auto end = speck::begin( buf ) + N;
-template<typename T>
-auto begin( const std::unique_ptr<T[]>& ) -> ptr_iterator<T>;
-
-// Generate a ptr_iterator from a smart_buffer.
-template<typename T>
-auto begin( const std::pair<std::unique_ptr<T[]>, size_t>& ) -> ptr_iterator<T>;
-template<typename T>
-auto end(   const std::pair<std::unique_ptr<T[]>, size_t>& ) -> ptr_iterator<T>;
-
 
 //
 // Helper functions
@@ -172,14 +152,6 @@ void calc_stats( const T* arr1,   const T* arr2,  size_t len,
                  T* rmse, T* linfty, T* psnr, T* arr1min, T* arr1max );
 template <typename T>
 auto kahan_summation( const T*, size_t ) -> T;
-
-// Test if a smart_buffer is empty. Might support other types of buffers in the future.
-template <typename T>
-auto empty_buf( const std::pair<T, size_t>& smart_buf) -> bool;
-
-// Test if a smart_buffer is non-empty, AND correct in size.
-template <typename T>
-auto size_is( const std::pair<T, size_t>& smart_buf, size_t expected_size ) -> bool;
 
 
 // Given a whole volume size and a desired chunk size, this helper function returns
