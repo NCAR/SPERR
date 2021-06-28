@@ -26,12 +26,8 @@ public:
     // bool[1] : divide by rms
     // bool[2-7] : unused
     // Accordingly, `inverse_condition()` takes a buffer of 17 bytes.
-    template<typename T>
-    auto condition( T&, size_t ) const -> std::pair<RTNType, std::array<uint8_t, 17>>;
-    template<typename T>
-    auto inverse_condition( T&, size_t, const uint8_t* ) const -> RTNType;
-    template<typename T>
-    auto inverse_condition( T&, size_t, const std::array<uint8_t, 17>& ) const -> RTNType;
+    auto condition( speck::vecd_type& ) const -> std::pair<RTNType, std::array<uint8_t, 17>>;
+    auto inverse_condition( speck::vecd_type&, const uint8_t* ) const -> RTNType;
 
 private:
     //
@@ -40,18 +36,18 @@ private:
     bool m_s_mean  = false; // subtract mean
     bool m_d_rms   = false; // divide by rms
 
+    const size_t m_meta_size = 17;
+    using meta_type = std::array<uint8_t, 17>;
+
     // Calculations are carried out by strides, which 
     // should be a divisor of the input data size.
     mutable size_t m_num_strides  = 2048; // should be good enough for most applications.
     mutable std::vector<double> m_stride_buf;
-    const size_t m_meta_size = 17;
 
     // Action items
     // Buffers passed in here are guaranteed to have correct lengths and conditions.
-    template<typename T>
-    auto m_calc_mean( T& buf, size_t len ) const -> double;
-    template<typename T>
-    auto m_calc_rms(  T& buf, size_t len ) const -> double;
+    auto m_calc_mean( const speck::vecd_type& buf ) const -> double;
+    auto m_calc_rms( const speck::vecd_type& buf ) const -> double;
     // adjust the value of `m_num_strides` so it'll be a divisor of `len`
     void m_adjust_strides( size_t len ) const;
 };

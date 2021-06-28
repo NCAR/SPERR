@@ -71,7 +71,7 @@ auto SPECK2D_Compressor::compress() -> RTNType
     // Step 1: data goes through the conditioner
     m_conditioner.toggle_all_false();
     m_conditioner.toggle_subtract_mean(true);
-    auto [rtn, condi_meta] = m_conditioner.condition( m_val_buf, total_vals );
+    auto [rtn, condi_meta] = m_conditioner.condition( m_val_buf );
     if( rtn != RTNType::Good )
         return rtn;
 

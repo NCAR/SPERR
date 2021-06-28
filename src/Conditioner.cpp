@@ -35,62 +35,37 @@ auto speck::Conditioner::get_meta_size() const -> size_t
 }
 
 
-template<typename T>
-auto speck::Conditioner::m_calc_mean( T& buf, size_t len ) const -> double
+auto speck::Conditioner::m_calc_mean( const vecd_type& buf ) const -> double
 {
-    if constexpr( std::is_same_v<T, std::vector<double>> ) {
-        assert( len == buf.size() );
-    }
-    assert( len % m_num_strides == 0 );
+    assert( buf.size() % m_num_strides == 0 );
 
     m_stride_buf.resize( m_num_strides );
-    const size_t stride_size = len / m_num_strides;
+    const size_t stride_size = buf.size() / m_num_strides;
 
     for (size_t s = 0; s < m_num_strides; s++) {
-        if constexpr( std::is_same_v<T, buffer_type_d> ) {
-            auto begin = speck::begin( buf ) + stride_size * s;
-            auto end   = begin + stride_size;
-            m_stride_buf[s] = std::accumulate( begin, end, double{0.0} ) / double(stride_size);
-        }
-        else {
-            auto begin = buf.begin() + stride_size * s;
-            auto end   = begin + stride_size;
-            m_stride_buf[s] = std::accumulate( begin, end, double{0.0} ) / double(stride_size);
-        }
+        auto begin = buf.begin() + stride_size * s;
+        auto end   = begin + stride_size;
+        m_stride_buf[s] = std::accumulate( begin, end, double{0.0} ) / double(stride_size);
     }
 
     double sum = std::accumulate( m_stride_buf.begin(), m_stride_buf.end(), double{0.0} );
 
     return (sum / double(m_stride_buf.size()));
 }
-template auto speck::Conditioner::m_calc_mean( buffer_type_d& buf, size_t len ) const -> double;
-template auto speck::Conditioner::m_calc_mean( std::vector<double>& buf, size_t len ) const -> double;
 
 
-template<typename T>
-auto speck::Conditioner::m_calc_rms( T& buf, size_t len ) const -> double
+auto speck::Conditioner::m_calc_rms( const vecd_type& buf ) const -> double
 {
-    if constexpr( std::is_same_v<T, std::vector<double>> ) {
-        assert( len == buf.size() );
-    }
-    assert( len % m_num_strides == 0 );
+    assert( buf.size() % m_num_strides == 0 );
 
     m_stride_buf.resize( m_num_strides );
-    const size_t stride_size = len / m_num_strides;
+    const size_t stride_size = buf.size() / m_num_strides;
 
     for (size_t s = 0; s < m_num_strides; s++) {
-        if constexpr( std::is_same_v<T, buffer_type_d> ) {
-            auto begin = speck::begin( buf ) + stride_size * s;
-            auto end   = begin + stride_size;
-            m_stride_buf[s]  = std::accumulate( begin, end, double{0.0}, 
-                               [](auto a, auto b){return a + b * b;} );
-        }
-        else {
-            auto begin = buf.begin() + stride_size * s;
-            auto end   = begin + stride_size;
-            m_stride_buf[s]  = std::accumulate( begin, end, double{0.0}, 
-                               [](auto a, auto b){return a + b * b;} );
-        }
+        auto begin = buf.begin() + stride_size * s;
+        auto end   = begin + stride_size;
+        m_stride_buf[s]  = std::accumulate( begin, end, double{0.0}, 
+                           [](auto a, auto b){return a + b * b;} );
 
         m_stride_buf[s] /= double(stride_size);
     }
@@ -101,8 +76,6 @@ auto speck::Conditioner::m_calc_rms( T& buf, size_t len ) const -> double
 
     return rms;
 }
-template auto speck::Conditioner::m_calc_rms( buffer_type_d& buf, size_t len ) const -> double;
-template auto speck::Conditioner::m_calc_rms( std::vector<double>& buf, size_t len ) const -> double;
 
 
 void speck::Conditioner::m_adjust_strides( size_t len ) const
@@ -135,54 +108,33 @@ void speck::Conditioner::m_adjust_strides( size_t len ) const
 }
 
 
-template<typename T>
-auto speck::Conditioner::condition( T& buf, size_t len ) const
-                         -> std::pair<RTNType, std::array<uint8_t, 17>>
+auto speck::Conditioner::condition( vecd_type& buf ) const -> std::pair<RTNType, meta_type>
 {
-    std::array<uint8_t, 17> meta;
+    meta_type meta;
     meta.fill( 0 );
     double mean = 0.0;
     double rms  = 1.0;
 
-    if constexpr( std::is_same_v<T, std::vector<double>> ) {
-        if( len != buf.size() )
+    // If divide_by_rms is requested, need to make sure rms is non-zero
+    if( m_d_rms ) {
+        if( std::all_of( buf.begin(), buf.end(), [](auto v){return v == 0.0;} ) )
             return {RTNType::Error, meta};
     }
 
-    // If divide_by_rms is requested, need to make sure rms is non-zero
-    if( m_d_rms ) {
-        if constexpr( std::is_same_v<T, buffer_type_d> ) {
-            const auto begin = speck::begin(buf);
-            const auto end   = begin + len;
-            if( std::all_of( begin, end, [](auto v){return v == 0.0;} ) )
-                return {RTNType::Error, meta};
-        }
-        else {
-            if( std::all_of( buf.begin(), buf.end(), [](auto v){return v == 0.0;} ) )
-                return {RTNType::Error, meta};
-        }
-    }
-
-    m_adjust_strides( len );
+    m_adjust_strides( buf.size() );
 
     // Perform subtract mean first
     if( m_s_mean ) {
-        mean = m_calc_mean( buf, len );
+        mean = m_calc_mean( buf );
         auto minus_mean = [mean](auto& v){v -= mean;};
-        if constexpr( std::is_same_v<T, buffer_type_d> )
-            std::for_each( speck::begin(buf), speck::begin(buf) + len, minus_mean );
-        else
-            std::for_each( buf.begin(), buf.end(), minus_mean );
+        std::for_each( buf.begin(), buf.end(), minus_mean );
     }
 
     // Perform divide_by_rms second
     if( m_d_rms ) {
-        rms = m_calc_rms( buf, len );
+        rms = m_calc_rms( buf );
         auto div_rms = [rms](auto& v){v /= rms;};
-        if constexpr( std::is_same_v<T, buffer_type_d> )
-            std::for_each( speck::begin(buf), speck::begin(buf) + len, div_rms );
-        else 
-            std::for_each( buf.begin(), buf.end(), div_rms );
+        std::for_each( buf.begin(), buf.end(), div_rms );
     }
 
     // pack meta
@@ -197,21 +149,10 @@ auto speck::Conditioner::condition( T& buf, size_t len ) const
 
     return {RTNType::Good, meta};
 }
-template auto speck::Conditioner::condition( buffer_type_d&, size_t) const
-                                  -> std::pair<RTNType, std::array<uint8_t, 17>>;
-template auto speck::Conditioner::condition( std::vector<double>&, size_t) const
-                                  -> std::pair<RTNType, std::array<uint8_t, 17>>;
 
 
-template<typename T>
-auto speck::Conditioner::inverse_condition( T& buf, size_t len, const uint8_t* meta ) const 
-                         -> RTNType
+auto speck::Conditioner::inverse_condition( vecd_type& buf, const uint8_t* meta ) const -> RTNType
 {
-    if constexpr( std::is_same_v<T, std::vector<double>> ) {
-        if( len != buf.size() )
-            return RTNType::Error;
-    }
-
     // unpack meta
     bool   b8[8];
     speck::unpack_8_booleans( b8, meta[0] );
@@ -224,46 +165,23 @@ auto speck::Conditioner::inverse_condition( T& buf, size_t len, const uint8_t* m
     pos += sizeof(rms);
     assert( pos == m_meta_size );
 
-    m_adjust_strides( len );
+    m_adjust_strides( buf.size() );
 
     // Perform inverse of divide_by_rms, which is multiply by rms
     if( b8[1] ) {
         auto mul_rms = [rms](auto& v){v *= rms;};
-        if constexpr( std::is_same_v<T, buffer_type_d> )
-            std::for_each( speck::begin(buf), speck::begin(buf) + len, mul_rms );
-        else 
-            std::for_each( buf.begin(), buf.end(), mul_rms );
+        std::for_each( buf.begin(), buf.end(), mul_rms );
     }
 
     // Perform inverse of subtract_mean, which is add mean.
     if( b8[0] ) {
         auto plus_mean = [mean](auto& v){v += mean;};
-        if constexpr( std::is_same_v<T, buffer_type_d> )
-            std::for_each( speck::begin(buf), speck::begin(buf) + len, plus_mean );
-        else 
-            std::for_each( buf.begin(), buf.end(), plus_mean );
+        std::for_each( buf.begin(), buf.end(), plus_mean );
     }
 
     return RTNType::Good;
 }
-template auto speck::Conditioner::inverse_condition( buffer_type_d&, 
-                                                     size_t, 
-                                                     const uint8_t* ) const -> RTNType;
-template auto speck::Conditioner::inverse_condition( std::vector<double>&, 
-                                                     size_t, 
-                                                     const uint8_t* ) const -> RTNType;
 
-
-template<typename T>
-auto speck::Conditioner::inverse_condition( T& buf, size_t len, 
-                         const std::array<uint8_t, 17>& meta ) const -> RTNType
-{
-    return this->inverse_condition( buf, len, meta.data() );
-}
-template auto speck::Conditioner::inverse_condition( buffer_type_d&, size_t, 
-                                  const std::array<uint8_t, 17>& ) const -> RTNType;
-template auto speck::Conditioner::inverse_condition( std::vector<double>&, size_t, 
-                                  const std::array<uint8_t, 17>& ) const -> RTNType;
 
 
 

@@ -155,7 +155,7 @@ auto SPECK2D_Decompressor::decompress() -> RTNType
 
     // Step 3: Inverse Conditioning
     auto cdf_out = m_cdf.release_data();
-    m_conditioner.inverse_condition( cdf_out, cdf_out.size(), m_condi_stream.data() );
+    m_conditioner.inverse_condition( cdf_out, m_condi_stream.data() );
 
     m_val_buf = std::move( cdf_out );
 

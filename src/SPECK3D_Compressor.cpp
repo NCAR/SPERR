@@ -67,7 +67,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     // Step 1: data (m_val_buf2) goes through the conditioner
     m_conditioner.toggle_all_false();
     m_conditioner.toggle_subtract_mean( true );
-    auto [rtn, condi_meta] = m_conditioner.condition( m_val_buf2, total_vals );
+    auto [rtn, condi_meta] = m_conditioner.condition( m_val_buf2 );
     if( rtn != RTNType::Good )
         return rtn;
     m_condi_stream.resize( condi_meta.size() );
@@ -98,7 +98,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     m_cdf.take_data( m_encoder.release_data(), m_dims );
     m_cdf.idwt3d();
     m_val_buf2 = m_cdf.release_data();
-    m_conditioner.inverse_condition( m_val_buf2, m_val_buf2.size(), m_condi_stream.data() );
+    m_conditioner.inverse_condition( m_val_buf2, m_condi_stream.data() );
 
     // Step 5: we find all the outliers!
     //
@@ -156,7 +156,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     // Step 1: data goes through the conditioner 
     m_conditioner.toggle_all_false();
     m_conditioner.toggle_subtract_mean( true );
-    auto [rtn, condi_meta] = m_conditioner.condition( m_val_buf, total_vals );
+    auto [rtn, condi_meta] = m_conditioner.condition( m_val_buf );
     if( rtn != RTNType::Good )
         return rtn;
     m_condi_stream.resize( condi_meta.size() );

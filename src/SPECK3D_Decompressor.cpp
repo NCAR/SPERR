@@ -124,7 +124,7 @@ auto SPECK3D_Decompressor::decompress( ) -> RTNType
     auto cdf_out = m_cdf.view_data();
     m_val_buf.resize( cdf_out.size() );
     std::copy( cdf_out.begin(), cdf_out.end(), m_val_buf.begin() );
-    m_conditioner.inverse_condition( m_val_buf, m_val_buf.size(), m_condi_stream.data() );
+    m_conditioner.inverse_condition( m_val_buf, m_condi_stream.data() );
 
 #ifdef QZ_TERM
     // Step 4: If there's SPERR data, then do the correction.
