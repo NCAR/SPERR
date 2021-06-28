@@ -15,8 +15,8 @@ class SPECK3D_OMP_C
 {
 public:
 
-    void set_dims( size_t, size_t, size_t );
-    void prefer_chunk_size( size_t, size_t, size_t );
+    void set_dims( speck::dims_type );
+    void prefer_chunk_dims( speck::dims_type );
     void set_num_threads( size_t );
 
     // Upon receiving incoming data, a chunking scheme is decided, and the volume
@@ -36,20 +36,16 @@ public:
     auto compress() -> RTNType;
 
     // Provide a copy of the encoded bitstream to the caller.
-    auto get_encoded_bitstream() const -> speck::smart_buffer_uint8;
+    auto get_encoded_bitstream() const -> std::vector<uint8_t>;
 
 
 private:
-    size_t      m_dim_x       = 0; // Dimension of the entire volume
-    size_t      m_dim_y       = 0; // Dimension of the entire volume
-    size_t      m_dim_z       = 0; // Dimension of the entire volume
-    size_t      m_chunk_x     = 0; // Dimension of the preferred chunk size
-    size_t      m_chunk_y     = 0; // Dimension of the preferred chunk size
-    size_t      m_chunk_z     = 0; // Dimension of the preferred chunk size
-    size_t      m_num_threads = 1; // number of theads to use in OpenMP sections
+    speck::dims_type  m_dims        = {0, 0, 0}; // Dimension of the entire volume
+    speck::dims_type  m_chunk_dims  = {0, 0, 0}; // Preferred dimensions for a chunk
+    size_t            m_num_threads = 1;         // number of theads to use in OpenMP sections
 
-    std::vector<speck::buffer_type_d>       m_chunk_buffers;
-    std::vector<speck::smart_buffer_uint8>  m_encoded_streams;
+    std::vector<speck::vecd_type>   m_chunk_buffers;
+    std::vector<speck::vec8_type>   m_encoded_streams;
 
     const size_t m_header_magic = 26; // header size would be this number + num_chunks * 4
 
@@ -65,7 +61,7 @@ private:
     //
     // Private methods
     //
-    auto m_generate_header() const -> speck::smart_buffer_uint8;
+    auto m_generate_header() const -> speck::vec8_type;
 
 };
 

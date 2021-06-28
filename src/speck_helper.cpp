@@ -45,15 +45,14 @@ void speck::calc_approx_detail_len(size_t orig_len, size_t lev,
     approx_detail_len[1] = high_len;
 }
 
-auto speck::make_coeff_positive(buffer_type_d& buf, size_t len, std::vector<bool>& signs) -> double
+auto speck::make_coeff_positive(vecd_type& buf, std::vector<bool>& signs) -> double
 {
-    //sign_array.assign(len, true);
-    signs.resize( len, false );
+    signs.resize( buf.size(), false );
     auto max = std::abs(buf[0]);
 
     const bool tmpb[2] = {true, false};
 
-    for (size_t i = 0; i < len; i++) {
+    for (size_t i = 0; i < buf.size(); i++) {
         double tmpd[2] = {buf[i], -buf[i]};
         size_t idx = buf[i] < 0.0;
         buf[i]   = tmpd[idx];
@@ -67,7 +66,7 @@ auto speck::make_coeff_positive(buffer_type_d& buf, size_t len, std::vector<bool
 
 // Good solution to deal with bools and unsigned chars
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
-auto speck::pack_booleans( buffer_type_uint8&       dest,
+auto speck::pack_booleans( std::vector<uint8_t>&    dest,
                            const std::vector<bool>& src,
                            size_t                   offset ) -> RTNType
 {
@@ -108,7 +107,7 @@ auto speck::unpack_booleans( std::vector<bool>& dest,
     const size_t num_of_bytes = src_len - src_offset;
     const size_t num_of_bools = num_of_bytes * 8;
     if( dest.size() != num_of_bools )
-        dest.assign( num_of_bools, false );
+        dest.resize( num_of_bools );
 
     const uint8_t* src_ptr = reinterpret_cast<const uint8_t*>(src) + src_offset;
     const uint64_t magic   = 0x8040201008040201;
@@ -230,28 +229,29 @@ auto speck::read_n_bytes( const char* filename, size_t n_bytes, void* buffer ) -
 
 
 template <typename T>
-auto speck::read_whole_file( const char* filename ) -> std::pair<std::unique_ptr<T[]>, size_t>
+auto speck::read_whole_file( const char* filename ) -> std::vector<T>
 {
+    std::vector<T> buf;
+
     std::FILE* file = std::fopen( filename, "rb" );
     if( !file )
-        return {nullptr, 0};
+        return buf;
 
     std::fseek( file, 0, SEEK_END );
     const size_t file_size = std::ftell( file );
     const size_t num_vals  = file_size / sizeof(T);
     std::fseek( file, 0, SEEK_SET );
 
-    auto buf = std::make_unique<T[]>( num_vals );
-    size_t nread  = std::fread( buf.get(), sizeof(T), num_vals, file );
+    buf.resize( num_vals );
+    size_t nread  = std::fread( buf.data(), sizeof(T), num_vals, file );
     std::fclose( file );
     if( nread != num_vals )
-        return {nullptr, 0};
-    else
-        return {std::move(buf), num_vals};
+        buf.clear();
+
+    return buf;
 }
-template auto speck::read_whole_file( const char* ) -> speck::smart_buffer_f;
-template auto speck::read_whole_file( const char* ) -> speck::smart_buffer_d;
-template auto speck::read_whole_file( const char* ) -> speck::smart_buffer_uint8;
+template auto speck::read_whole_file( const char* ) -> std::vector<float>;
+template auto speck::read_whole_file( const char* ) -> std::vector<double>;
 
 
 auto speck::write_n_bytes( const char* filename, size_t n_bytes, const void* buffer ) -> RTNType
@@ -435,15 +435,15 @@ auto speck::chunk_volume( const std::array<size_t, 3>& vol_dim,
 
 template<typename T>
 auto speck::gather_chunk( const T* vol, const std::array<size_t, 3>& vol_dim,
-                          const std::array<size_t, 6>& chunk ) -> buffer_type_d
+                          const std::array<size_t, 6>& chunk ) -> vecd_type
 {
     if( chunk[0] + chunk[1] > vol_dim[0] || 
         chunk[2] + chunk[3] > vol_dim[1] ||
         chunk[4] + chunk[5] > vol_dim[2] )
-        return {};
+        return std::vector<double>(0);
 
     auto len = chunk[1] * chunk[3] * chunk[5];
-    auto buf = std::make_unique<double[]>( len );
+    auto buf = std::vector<double>( len );
 
     size_t idx = 0;
     for( size_t z = chunk[4]; z < chunk[4] + chunk[5]; z++ ) {
@@ -457,15 +457,14 @@ auto speck::gather_chunk( const T* vol, const std::array<size_t, 3>& vol_dim,
 
     return std::move(buf);
 }
+template auto speck::gather_chunk( const float*,  const std::array<size_t, 3>&,
+                                   const std::array<size_t, 6>& ) -> vecd_type;
 template auto speck::gather_chunk( const double*, const std::array<size_t, 3>&,
-                                   const std::array<size_t, 6>& ) -> buffer_type_d;
-template auto speck::gather_chunk( const float*, const std::array<size_t, 3>&,
-                                   const std::array<size_t, 6>& ) -> buffer_type_d;
+                                   const std::array<size_t, 6>& ) -> vecd_type;
 
 
-template<typename T>
-void speck::scatter_chunk( T* big_vol, const std::array<size_t, 3>& vol_dim,
-                           const buffer_type_d&         small_vol,
+void speck::scatter_chunk( vecd_type& big_vol,  const std::array<size_t, 3>& vol_dim,
+                           const vecd_type&     small_vol,
                            const std::array<size_t, 6>& chunk )
 {
     size_t idx = 0;
@@ -478,10 +477,6 @@ void speck::scatter_chunk( T* big_vol, const std::array<size_t, 3>& vol_dim,
       }
     }
 }
-template void speck::scatter_chunk( float*, const std::array<size_t, 3>&,
-                                    const buffer_type_d&, const std::array<size_t, 6>& );
-template void speck::scatter_chunk( double*, const std::array<size_t, 3>&,
-                                    const buffer_type_d&, const std::array<size_t, 6>& );
 
 
 

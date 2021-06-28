@@ -8,6 +8,7 @@
 #include <omp.h>
 
 
+#ifndef QZ_TERM
 auto SPECK3D_OMP_D::set_bpp( float bpp ) -> RTNType
 {
     if( bpp < 0.0 || bpp > 64.0 )
@@ -17,6 +18,7 @@ auto SPECK3D_OMP_D::set_bpp( float bpp ) -> RTNType
         return RTNType::Good;
     }
 }
+#endif
     
 
 void SPECK3D_OMP_D::set_num_threads( size_t n )
@@ -34,44 +36,38 @@ auto SPECK3D_OMP_D::use_bitstream( const void* p, size_t total_len ) -> RTNType
     // It does not, however, read the actual bitstream. The actual bitstream
     // will be provided when the decompress() method is called.
 
-    const uint8_t* u8p = static_cast<const uint8_t*>( p );
-    size_t loc = 0;
+    const uint8_t* const u8p = static_cast<const uint8_t*>( p );
 
     // Parse Step 1: Major version number need to match
-    uint8_t ver;
-    std::memcpy( &ver, u8p + loc, sizeof(ver) );
-    loc += sizeof(ver);
+    uint8_t ver = *u8p;
     if( ver / 10 != SPERR_VERSION_MAJOR )
         return RTNType::VersionMismatch;
+    size_t loc = 1;
 
-    // Parse Step 2: ZSTD application needs to be consistent.
+    // Parse Step 2: ZSTD application and 3D/2D recording need to be consistent.
     bool b[8];
     speck::unpack_8_booleans( b, u8p[loc] );
     loc++;
 #ifdef USE_ZSTD
-    if( b[0] == false ) return {};
+    if( b[0] == false ) return RTNType::ZSTDMismatch;
 #else
-    if( b[0] == true )  return {};
+    if( b[0] == true )  return RTNType::ZSTDMismatch;
 #endif
+    if( b[1] == false ) return RTNType::SliceVolumeMismatch;
     
     // Parse Step 3: Extract volume and chunk dimensions
     uint32_t vcdim[6];
     std::memcpy( vcdim, u8p + loc, sizeof(vcdim) );
     loc += sizeof(vcdim);
-    m_dim_x     = vcdim[0];
-    m_dim_y     = vcdim[1];
-    m_dim_z     = vcdim[2];
-    m_chunk_x   = vcdim[3];
-    m_chunk_y   = vcdim[4];
-    m_chunk_z   = vcdim[5];
-    if( m_total_vals != m_dim_x * m_dim_y * m_dim_z ) {
-        m_total_vals  = m_dim_x * m_dim_y * m_dim_z;
-        m_vol_buf.reset(nullptr);
-    }
+    m_dims[0]       = vcdim[0];
+    m_dims[1]       = vcdim[1];
+    m_dims[2]       = vcdim[2];
+    m_chunk_dims[0] = vcdim[3];
+    m_chunk_dims[1] = vcdim[4];
+    m_chunk_dims[2] = vcdim[5];
 
     // Figure out how many chunks and their length
-    auto chunks = speck::chunk_volume( {m_dim_x,   m_dim_y,   m_dim_z}, 
-                                       {m_chunk_x, m_chunk_y, m_chunk_z} );
+    auto chunks = speck::chunk_volume( m_dims, m_chunk_dims );
     const auto num_chunks = chunks.size();
     auto chunk_sizes = std::vector<size_t>( num_chunks, 0 );
     for( size_t i = 0; i < num_chunks; i++ ) {
@@ -102,8 +98,9 @@ auto SPECK3D_OMP_D::use_bitstream( const void* p, size_t total_len ) -> RTNType
 
 auto SPECK3D_OMP_D::decompress( const void* p ) -> RTNType
 {
-    if( m_dim_x   == 0 || m_dim_y   == 0 || m_dim_z   == 0 ||
-        m_chunk_x == 0 || m_chunk_y == 0 || m_chunk_z == 0 )
+    auto eq0 = [](auto v){return v == 0;};
+    if( std::any_of(m_dims.begin(), m_dims.end(), eq0) ||
+        std::any_of(m_chunk_dims.begin(), m_chunk_dims.end(), eq0) )
         return RTNType::Error;
     if( p == nullptr || m_bitstream_ptr == nullptr )
         return RTNType::Error;
@@ -111,15 +108,14 @@ auto SPECK3D_OMP_D::decompress( const void* p ) -> RTNType
         return RTNType::Error;
         
     // Let's figure out the chunk information
-    const auto chunks = speck::chunk_volume( {m_dim_x,   m_dim_y,   m_dim_z}, 
-                                             {m_chunk_x, m_chunk_y, m_chunk_z} );
+    const auto chunks = speck::chunk_volume( m_dims, m_chunk_dims );
     const auto num_chunks = chunks.size();
     if( m_offsets.size() != num_chunks + 1 )
         return RTNType::Error;
+    const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
 
     // Allocate a buffer to store the entire volume
-    if( m_vol_buf == nullptr )
-        m_vol_buf =  std::make_unique<double[]>( m_total_vals );
+    m_vol_buf.resize( total_vals );
 
     // Create number of decompressor instances equal to the number of threads
     auto decompressors = std::vector<SPECK3D_Decompressor>( m_num_threads );
@@ -130,18 +126,21 @@ auto SPECK3D_OMP_D::decompress( const void* p ) -> RTNType
     #pragma omp parallel for num_threads(m_num_threads)
     for( size_t i = 0; i < num_chunks; i++ ) {
         auto& decompressor = decompressors[ omp_get_thread_num() ];
+
+#ifndef QZ_TERM
         decompressor.set_bpp( m_bpp );
+#endif
+
         chunk_rtn[ i * 3 ] = decompressor.use_bitstream( m_bitstream_ptr + m_offsets[i],
                                                          m_offsets[i+1]  - m_offsets[i] );
 
         chunk_rtn[ i*3+1 ] = decompressor.decompress();
-        auto small_vol     = decompressor.get_decompressed_volume<double>();
-        if( speck::empty_buf( small_vol ) )
+        const auto small_vol = decompressor.view_data();
+        if( small_vol.empty() )
             chunk_rtn[ i*3+2 ] = RTNType::Error;
         else{
             chunk_rtn[ i*3+2 ] = RTNType::Good;
-            speck::scatter_chunk( m_vol_buf.get(), {m_dim_x, m_dim_y, m_dim_z}, 
-                                  small_vol.first, chunks[i] );
+            speck::scatter_chunk( m_vol_buf, m_dims, small_vol, chunks[i] );
         }
     }
 
@@ -152,25 +151,34 @@ auto SPECK3D_OMP_D::decompress( const void* p ) -> RTNType
 }
 
 
-auto SPECK3D_OMP_D::release_data_volume() -> speck::smart_buffer_d
+auto SPECK3D_OMP_D::release_data() -> speck::vecd_type
 {
-    return {std::move(m_vol_buf), m_total_vals};
+    m_dims = {0, 0, 0};
+    return std::move(m_vol_buf);
+}
+
+
+auto SPECK3D_OMP_D::view_data() const -> const std::vector<double>&
+{
+    return m_vol_buf;
+}
+
+
+auto SPECK3D_OMP_D::get_dims() const -> std::array<size_t, 3>
+{
+    return m_dims;
 }
 
 
 template<typename T>
-auto SPECK3D_OMP_D::get_data_volume() const -> std::pair<std::unique_ptr<T[]>, size_t>
+auto SPECK3D_OMP_D::get_data() const -> std::vector<T>
 {
-    if( m_vol_buf == nullptr )
-        return {nullptr, 0};
-
-    auto buf = std::make_unique<T[]>( m_total_vals );
-    std::copy( speck::begin(m_vol_buf), speck::begin(m_vol_buf) + m_total_vals, speck::begin(buf) );
-    return {std::move(buf), m_total_vals};
+    auto rtn_buf = std::vector<T>( m_vol_buf.size() );
+    std::copy( m_vol_buf.begin(), m_vol_buf.end(), rtn_buf.begin() );
+    return rtn_buf;
 }
-template auto SPECK3D_OMP_D::get_data_volume() const -> std::pair<std::unique_ptr<float[]>, size_t>;
-template auto SPECK3D_OMP_D::get_data_volume() const -> std::pair<std::unique_ptr<double[]>, size_t>;
-
+template auto SPECK3D_OMP_D::get_data() const -> std::vector<float>;
+template auto SPECK3D_OMP_D::get_data() const -> std::vector<double>;
 
 
 

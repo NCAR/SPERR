@@ -43,8 +43,8 @@ int main( int argc, char* argv[] )
                                    ->group("Compression Parameters")->required();
 #else
     float bpp;
-    auto* bpp_ptr = app.add_option("-b,--bpp", bpp, 
-            "Target bit-per-pixel. E.g., `-b 2.3`.")
+    auto* bpp_ptr = app.add_option("--bpp", bpp, 
+            "Target bit-per-pixel. E.g., `-bpp 2.3`.")
              ->check(CLI::Range(0.0f, 64.0f))
              ->group("Compression Parameters")->required();
 #endif
@@ -102,10 +102,10 @@ int main( int argc, char* argv[] )
     }
 
     auto stream = compressor.get_encoded_bitstream();
-    if( speck::empty_buf(stream) )
+    if( stream.empty() )
         return 1;
 
-    if( speck::write_n_bytes( output_file.c_str(), stream.second, stream.first.get() ) != 
+    if( speck::write_n_bytes( output_file.c_str(), stream.size(), stream.data() ) != 
                               speck::RTNType::Good ) {
         std::cerr << "Write to disk failed!" << std::endl;
         return 1;

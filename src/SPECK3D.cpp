@@ -22,6 +22,12 @@ auto speck::SPECKSet3D::is_empty() const -> bool
 //
 // Class SPECK3D
 //
+#ifdef QZ_TERM
+void speck::SPECK3D::set_quantization_term_level( int32_t lev )
+{
+    m_qz_term_lev = lev;
+}
+#else
 void speck::SPECK3D::set_bit_budget(size_t budget)
 {
     size_t mod = budget % 8;
@@ -29,13 +35,6 @@ void speck::SPECK3D::set_bit_budget(size_t budget)
         m_budget = budget;
     else // we can fill up the last byte
         m_budget = budget + 8 - mod;
-}
-
-
-#ifdef QZ_TERM
-void speck::SPECK3D::set_quantization_term_level( int32_t lev )
-{
-    m_qz_term_lev   = lev;
 }
 #endif
 
@@ -62,9 +61,9 @@ auto speck::SPECK3D::encode() -> RTNType
 
     m_initialize_sets_lists();
 
+    m_encoded_stream.clear();
     m_bit_buffer.clear();
-    m_bit_buffer.reserve(m_budget);
-    auto max_coeff = speck::make_coeff_positive(m_coeff_buf, m_coeff_len, m_sign_array);
+    auto max_coeff = speck::make_coeff_positive(m_coeff_buf, m_sign_array);
 
     // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
     // negative value. std::floor() will always find the smaller integer value,
@@ -90,8 +89,8 @@ auto speck::SPECK3D::encode() -> RTNType
         m_clean_LIS();
     }
 
-    // If the bit buffer has the last byte empty, let's fill in zero's.
-    // Care must be taken during decoding to make sure they are handled properly.
+    // If the bit buffer has the last byte half-empty, let's fill in zero's.
+    // The decoding process will not read them.
     while( m_bit_buffer.size() % 8 != 0 )
         m_bit_buffer.push_back( false );
 
@@ -112,7 +111,10 @@ auto speck::SPECK3D::encode() -> RTNType
     }
 #endif
 
-    return RTNType::Good;
+    // Finally we prepare the bitstream
+    auto rtn = m_prepare_encoded_bitstream();
+
+    return rtn;
 }
 
 
@@ -122,17 +124,16 @@ auto speck::SPECK3D::decode() -> RTNType
         return RTNType::Error;
     m_encode_mode = false;
 
+#ifndef QZ_TERM
     // By default, decode all the available bits
     if (m_budget == 0 || m_budget > m_bit_buffer.size() )
         m_budget = m_bit_buffer.size();
+#endif
 
     // initialize coefficients to be zero, and sign array to be all positive
-    if( m_coeff_buf == nullptr )
-        m_coeff_buf = std::make_unique<double[]>(m_coeff_len);
-    auto begin = speck::begin( m_coeff_buf );
-    auto end   = begin + m_coeff_len;
-    std::fill( begin, end, 0.0 );
-    m_sign_array.assign(m_coeff_len, true);
+    const auto coeff_len = m_dims[0] * m_dims[1] * m_dims[2];
+    m_coeff_buf.assign(  coeff_len, 0.0 );
+    m_sign_array.assign( coeff_len, true);
 
     m_initialize_sets_lists();
 
@@ -168,6 +169,7 @@ auto speck::SPECK3D::decode() -> RTNType
     }
 
 #ifdef QZ_TERM
+    // We should not have more than 7 bits left in the bit buffer! 
     if( m_bit_idx > m_bit_buffer.size() || m_bit_buffer.size() - m_bit_idx >= 8 )
         return RTNType::Error;
 #else
@@ -178,8 +180,8 @@ auto speck::SPECK3D::decode() -> RTNType
 
     // Restore coefficient signs by setting some of them negative
     for (size_t i = 0; i < m_sign_array.size(); i++) {
-        if (!m_sign_array[i])
-            m_coeff_buf[i] = -m_coeff_buf[i];
+        double tmp[2]  = {-m_coeff_buf[i], m_coeff_buf[i]};
+        m_coeff_buf[i] = tmp[ m_sign_array[i] ];
     }
 
     return RTNType::Good;
@@ -189,9 +191,9 @@ auto speck::SPECK3D::decode() -> RTNType
 void speck::SPECK3D::m_initialize_sets_lists()
 {
     std::array<size_t, 3> num_of_parts; // how many times each dimension could be partitioned?
-    num_of_parts[0] = speck::num_of_partitions( m_dim_x );
-    num_of_parts[1] = speck::num_of_partitions( m_dim_y );
-    num_of_parts[2] = speck::num_of_partitions( m_dim_z );
+    num_of_parts[0] = speck::num_of_partitions( m_dims[0] );
+    num_of_parts[1] = speck::num_of_partitions( m_dims[1] );
+    num_of_parts[2] = speck::num_of_partitions( m_dims[2] );
     size_t num_of_sizes = 1;
     for (size_t i = 0; i < 3; i++)
         num_of_sizes += num_of_parts[i];
@@ -210,12 +212,12 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // Starting from a set representing the whole volume, identify the smaller sets
     //   and put them in LIS accordingly.
     SPECKSet3D big;
-    big.length_x = uint32_t(m_dim_x); // Truncate 64-bit int to 32-bit, but should be OK.
-    big.length_y = uint32_t(m_dim_y); // Truncate 64-bit int to 32-bit, but should be OK.
-    big.length_z = uint32_t(m_dim_z); // Truncate 64-bit int to 32-bit, but should be OK.
+    big.length_x = uint32_t(m_dims[0]); // Truncate 64-bit int to 32-bit, but should be OK.
+    big.length_y = uint32_t(m_dims[1]); // Truncate 64-bit int to 32-bit, but should be OK.
+    big.length_z = uint32_t(m_dims[2]); // Truncate 64-bit int to 32-bit, but should be OK.
 
-    const auto num_of_xforms_xy = speck::num_of_xforms(std::min(m_dim_x, m_dim_y));
-    const auto num_of_xforms_z  = speck::num_of_xforms(m_dim_z);
+    const auto num_of_xforms_xy = speck::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+    const auto num_of_xforms_z  = speck::num_of_xforms(m_dims[2]);
     size_t     xf               = 0;
 
     while (xf < num_of_xforms_xy && xf < num_of_xforms_z) {
@@ -262,7 +264,8 @@ void speck::SPECK3D::m_initialize_sets_lists()
     // Note that `m_LSP_old` usually grow close to the full length, so we reserve space now.
     m_LSP_new.clear();
     m_LSP_old.clear();
-    m_LSP_old.reserve( m_coeff_len );
+    m_LSP_old.reserve( m_dims[0] * m_dims[1] * m_dims[2] );
+    m_bit_buffer.reserve( m_budget );
 #endif
 }
 
@@ -387,76 +390,8 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 
 
 #ifndef QZ_TERM
-auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
-{
-    // First, process `m_LSP_old`.
-    //
-    // In fixed-size mode, we either process all elements in `m_LSP_old`,
-    // or process a portion of them that meets the total bit budget.
-    //
-    const size_t n_to_process = std::min( m_LSP_old.size(), m_budget - m_bit_buffer.size() );
-    for( size_t i = 0; i < n_to_process; i++ ) {
-        const auto loc = m_LSP_old[i];
-        if (m_coeff_buf[loc] >= m_threshold_arr[ m_threshold_idx ]) {
-            m_coeff_buf[loc] -= m_threshold_arr[ m_threshold_idx ];
-            m_bit_buffer.push_back(true);
-        }
-        else
-            m_bit_buffer.push_back(false);
-    }
-    if( m_bit_buffer.size() >= m_budget ) 
-        return RTNType::BitBudgetMet;
-
-    // Second, process `m_LSP_new`
-    //
-    for( auto loc : m_LSP_new )
-        m_coeff_buf[loc] -= m_threshold_arr[ m_threshold_idx ];
-
-    // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
-    // (`m_LSP_old` has reserved `m_coeff_len` capacity in advance.)
-    //
-    m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
-
-    // Fourth, clear `m_LSP_new`.
-    //
-    m_LSP_new.clear();
-
-    return RTNType::Good;
-}
-#endif
-
-#ifndef QZ_TERM
-auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
-{
-    // First, process `m_LSP_old`
-    //
-    const size_t num_bits   = std::min( m_budget - m_bit_idx, m_LSP_old.size() );
-    const double half_T     = m_threshold_arr[ m_threshold_idx ] *  0.5;
-    const double neg_half_T = m_threshold_arr[ m_threshold_idx ] * -0.5;
-    const double one_half_T = m_threshold_arr[ m_threshold_idx ] *  1.5;
-
-    for( size_t i = 0; i < num_bits; i++ )
-        m_coeff_buf[ m_LSP_old[i] ] += m_bit_buffer[m_bit_idx + i] ? half_T : neg_half_T;
-    m_bit_idx += num_bits;
-    if (m_bit_idx >= m_budget)
-        return RTNType::BitBudgetMet;
-    
-    // Second, process `m_LSP_new`
-    //
-    for( auto idx : m_LSP_new )
-        m_coeff_buf[ idx ] = one_half_T;
-
-    // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
-    // (`m_LSP_old` has reserved `m_coeff_len` capacity in advance.)
-    //
-    m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
-
-    // Fourth, clear `m_LSP_new`.
-    //
-    m_LSP_new.clear();
-
-    return RTNType::Good;
-}
+//
+// Refinement pass is only used in fixed-size mode.
 #endif
 
 
@@ -524,7 +459,6 @@ void speck::SPECK3D::m_quantize_P_encode( size_t idx )
     }
     m_coeff_buf[idx] = coeff;
 }
-
 void speck::SPECK3D::m_quantize_P_decode( size_t idx )
 {
     // Since only identified significant pixels come here, it's immediately
@@ -539,6 +473,81 @@ void speck::SPECK3D::m_quantize_P_decode( size_t idx )
     }
     m_coeff_buf[idx] = coeff;
 }
+//
+// Finish QZ_TERM specific functions
+//
+#else
+//
+// Start fixed-size specific functions
+//
+auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
+{
+    // First, process `m_LSP_old`.
+    //
+    // In fixed-size mode, we either process all elements in `m_LSP_old`,
+    // or process a portion of them that meets the total bit budget.
+    //
+    const size_t n_to_process = std::min( m_LSP_old.size(), m_budget - m_bit_buffer.size() );
+    for( size_t i = 0; i < n_to_process; i++ ) {
+        const auto loc = m_LSP_old[i];
+        if (m_coeff_buf[loc] >= m_threshold_arr[ m_threshold_idx ]) {
+            m_coeff_buf[loc] -= m_threshold_arr[ m_threshold_idx ];
+            m_bit_buffer.push_back(true);
+        }
+        else
+            m_bit_buffer.push_back(false);
+    }
+    if( m_bit_buffer.size() >= m_budget ) 
+        return RTNType::BitBudgetMet;
+
+    // Second, process `m_LSP_new`
+    //
+    for( auto loc : m_LSP_new )
+        m_coeff_buf[loc] -= m_threshold_arr[ m_threshold_idx ];
+
+    // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
+    // (`m_LSP_old` has reserved the full coeff length capacity in advance.)
+    //
+    m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
+
+    // Fourth, clear `m_LSP_new`.
+    //
+    m_LSP_new.clear();
+
+    return RTNType::Good;
+}
+auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
+{
+    // First, process `m_LSP_old`
+    //
+    const size_t num_bits   = std::min( m_budget - m_bit_idx, m_LSP_old.size() );
+    const double half_T     = m_threshold_arr[ m_threshold_idx ] *  0.5;
+    const double neg_half_T = m_threshold_arr[ m_threshold_idx ] * -0.5;
+    const double one_half_T = m_threshold_arr[ m_threshold_idx ] *  1.5;
+
+    const double tmp[2] = {neg_half_T, half_T};
+    for( size_t i = 0; i < num_bits; i++ )
+        m_coeff_buf[ m_LSP_old[i] ] += tmp[ m_bit_buffer[m_bit_idx + i] ];
+    m_bit_idx += num_bits;
+    if (m_bit_idx >= m_budget)
+        return RTNType::BitBudgetMet;
+    
+    // Second, process `m_LSP_new`
+    //
+    for( auto idx : m_LSP_new )
+        m_coeff_buf[ idx ] = one_half_T;
+
+    // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
+    // (`m_LSP_old` has reserved the full coeff length capacity in advance.)
+    //
+    m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
+
+    // Fourth, clear `m_LSP_new`.
+    //
+    m_LSP_new.clear();
+
+    return RTNType::Good;
+}
 #endif
 
 
@@ -547,23 +556,23 @@ auto speck::SPECK3D::m_decide_significance( const SPECKSet3D&        set,
 {
     assert( !set.is_empty() );
 
-    const size_t slice_size = m_dim_x * m_dim_y;
+    const size_t slice_size = m_dims[0] * m_dims[1];
+
+    const auto thld = m_threshold_arr[ m_threshold_idx ];
+    const auto gtr  = [thld](auto v){return v >= thld;};
 
     for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
       const size_t slice_offset = z * slice_size;
       for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
-        const size_t col_offset = slice_offset + y * m_dim_x;
-
-        for( auto x = set.start_x; x < (set.start_x + set.length_x); x++ ) {
-          if( m_coeff_buf[col_offset + x] >= m_threshold_arr[ m_threshold_idx ] ) {
-            xyz[0] = x - set.start_x;
-            xyz[1] = y - set.start_y;
-            xyz[2] = z - set.start_z;
-
+          auto first = m_coeff_buf.begin() + (slice_offset + y * m_dims[0] + set.start_x);
+          auto last  = first + set.length_x;
+          auto find  = std::find_if( first, last, gtr );
+          if(  find != last ) {
+            xyz[0]   = std::distance( first, find );
+            xyz[1]   = y - set.start_y;
+            xyz[2]   = z - set.start_z;
             return SigType::Sig;
           }
-        } // End of processing a line
-
       }
     }
 
@@ -742,8 +751,8 @@ auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2,
         }
 
         if(it->is_pixel()) {
-            m_LIP.push_back(it->start_z * m_dim_x * m_dim_y + 
-                            it->start_y * m_dim_x + it->start_x);
+            m_LIP.push_back(it->start_z * m_dims[0] * m_dims[1] + 
+                            it->start_y * m_dims[0] + it->start_x);
 
 #ifdef QZ_TERM
             m_process_P_encode(m_LIP.size() - 1, *sig_it, sig_counter, output);
@@ -788,8 +797,8 @@ auto speck::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
             read = false;
         }
         if (it->is_pixel()) {
-            m_LIP.push_back(it->start_z * m_dim_x * m_dim_y + 
-                            it->start_y * m_dim_x + it->start_x);
+            m_LIP.push_back(it->start_z * m_dims[0] * m_dims[1] + 
+                            it->start_y * m_dims[0] + it->start_x);
 
 #ifdef QZ_TERM
             m_process_P_decode(m_LIP.size() - 1, sig_counter, read);
@@ -819,13 +828,13 @@ auto speck::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
 
 auto speck::SPECK3D::m_ready_to_encode() const -> bool
 {
-    if (m_coeff_buf == nullptr)
+    if (m_coeff_buf.empty()) 
         return false;
-    if (m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0 || m_dim_z == 1)
+    if( std::any_of(m_dims.begin(), m_dims.end(), [](auto v){return v == 0;}) )
         return false;
 
 #ifndef QZ_TERM
-    if (m_budget == 0 || m_budget > m_coeff_len * 64)
+    if (m_budget == 0 || m_budget > m_dims[0] * m_dims[1] * m_dims[2] * 64)
         return false;
 #endif
 
@@ -836,7 +845,7 @@ auto speck::SPECK3D::m_ready_to_decode() const -> bool
 {
     if (m_bit_buffer.empty())
         return false;
-    if (m_dim_x == 0 || m_dim_y == 0 || m_dim_z == 0 || m_coeff_len == 0)
+    if( std::any_of(m_dims.begin(), m_dims.end(), [](auto v){return v == 0;}) )
         return false;
 
     return true;
@@ -845,9 +854,9 @@ auto speck::SPECK3D::m_ready_to_decode() const -> bool
 
 auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::array<SPECKSet3D, 8>
 {
-    const uint32_t split_x[2] { set.length_x - set.length_x / 2, set.length_x / 2 };
-    const uint32_t split_y[2] { set.length_y - set.length_y / 2, set.length_y / 2 };
-    const uint32_t split_z[2] { set.length_z - set.length_z / 2, set.length_z / 2 };
+    const uint32_t split_x[2] = { set.length_x - set.length_x / 2, set.length_x / 2 };
+    const uint32_t split_y[2] = { set.length_y - set.length_y / 2, set.length_y / 2 };
+    const uint32_t split_z[2] = { set.length_z - set.length_z / 2, set.length_z / 2 };
 
     auto next_part_lev = set.part_level;
     next_part_lev     += split_x[1] > 0 ? 1 : 0;

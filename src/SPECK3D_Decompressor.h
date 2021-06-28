@@ -11,6 +11,7 @@
 #include "CDF97.h"
 #include "SPECK3D.h"
 #include "SPERR.h"
+#include "Conditioner.h"
 
 #ifdef USE_ZSTD
   #include "zstd.h"
@@ -22,42 +23,44 @@ using speck::RTNType;
 class SPECK3D_Decompressor {
 
 public:
-    // Accept incoming data; this data is expected to have a header.
+    // Accept incoming data.
     auto use_bitstream( const void* p, size_t len ) -> RTNType;
 
+#ifndef QZ_TERM
     auto set_bpp( float ) -> RTNType;
+#endif
 
     auto decompress() -> RTNType;
 
     // Get the decompressed volume in a float or double buffer.
-    // It returns a smart_buffer_f or smart_buffer_d
     template<typename T>
-    auto get_decompressed_volume() const -> std::pair<std::unique_ptr<T[]>, size_t>;
-
-    auto get_dims() const -> std::array<size_t, 3>;
+    auto get_data()  const -> std::vector<T>;
+    auto view_data() const -> const std::vector<double>&;
+    auto release_data()    -> std::vector<double>;
+    auto get_dims() const  -> std::array<size_t, 3>;
 
 private:
-    float                       m_bpp               = 0.0;
-    size_t                      m_dim_x             = 0;
-    size_t                      m_dim_y             = 0;
-    size_t                      m_dim_z             = 0;
+    speck::dims_type            m_dims = {0, 0, 0};
 
-    std::vector<uint8_t>        m_speck_stream;
+    speck::vec8_type            m_condi_stream;
+    speck::vec8_type            m_speck_stream;
+    speck::vecd_type            m_val_buf;
 
+    speck::Conditioner          m_conditioner;
     speck::CDF97                m_cdf;
     speck::SPECK3D              m_decoder;
 
 #ifdef QZ_TERM
     speck::SPERR                m_sperr;
-    std::vector<uint8_t>        m_sperr_stream;
-    std::vector<speck::Outlier> m_LOS;
+    speck::vec8_type            m_sperr_stream;
+#else
+    float                       m_bpp   = 0.0;
 #endif
 
 #ifdef USE_ZSTD
     // The following resources are used repeatedly during the lifespan of an instance.
-    // Note that `m_tmp_buf` will be written to using direct pointer access, so not
-    // using a std::vector<uint_8> type here.
-    speck::smart_buffer_uint8                             m_tmp_buf = {nullptr, 0};
+    speck::buffer_type_uint8    m_zstd_buf     = nullptr;
+    size_t                      m_zstd_buf_len = 0;
     std::unique_ptr<ZSTD_DCtx, decltype(&ZSTD_freeDCtx)>  m_dctx = {nullptr, &ZSTD_freeDCtx};
 #endif
 

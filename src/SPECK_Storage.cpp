@@ -5,90 +5,69 @@
 
 
 template <typename T>
-auto speck::SPECK_Storage::copy_data(const T* p, size_t len, size_t dimx, size_t dimy, size_t dimz) 
-          -> RTNType
+auto speck::SPECK_Storage::copy_data(const T* p, size_t len, dims_type dims ) -> RTNType
 {
     static_assert(std::is_floating_point<T>::value,
                   "!! Only floating point values are supported !!");
-    if( len != dimx * dimy * dimz )
-        return RTNType::DimMismatch;
+    if( len != dims[0] * dims[1] * dims[2] )
+        return RTNType::WrongSize;
 
     // If `m_coeff_buf` is empty, or having a different length, we need to allocate memory!
-    if( m_coeff_buf == nullptr || m_coeff_len != len ) {
-        m_coeff_len = len;
-        m_coeff_buf = std::make_unique<double[]>(len); 
-    }
-    std::copy( p, p + len, speck::begin(m_coeff_buf) );
+    m_coeff_buf.resize( len );
+    std::copy( p, p + len, m_coeff_buf.begin() );
 
-    m_dim_x = dimx;
-    m_dim_y = dimy;
-    m_dim_z = dimz;
+    m_dims = dims;
 
     return RTNType::Good;
 }
-template auto speck::SPECK_Storage::copy_data(const double*, size_t, size_t, size_t, size_t) -> RTNType;
-template auto speck::SPECK_Storage::copy_data(const float*,  size_t, size_t, size_t, size_t) -> RTNType;
+template auto speck::SPECK_Storage::copy_data(const double*, size_t, dims_type) -> RTNType;
+template auto speck::SPECK_Storage::copy_data(const float*,  size_t, dims_type) -> RTNType;
 
 
-auto speck::SPECK_Storage::take_data(buffer_type_d coeffs, size_t len, 
-                                     size_t dimx, size_t dimy, size_t dimz) -> RTNType
+auto speck::SPECK_Storage::take_data(vecd_type&& coeffs, dims_type dims) -> RTNType
 {
-    if( len != dimx * dimy * dimz )
-        return RTNType::DimMismatch;
+    if( coeffs.size() != dims[0] * dims[1] * dims[2] )
+        return RTNType::WrongSize;
 
     m_coeff_buf = std::move(coeffs);
-    m_coeff_len = len;
-    m_dim_x     = dimx;
-    m_dim_y     = dimy;
-    m_dim_z     = dimz;
+    m_dims      = dims;
 
     return RTNType::Good;
 }
 
 
-auto speck::SPECK_Storage::release_data() -> std::pair<buffer_type_d, size_t>
+auto speck::SPECK_Storage::release_data() -> vecd_type
 {
-    return {std::move(m_coeff_buf), m_coeff_len};
+    m_dims = {0, 0, 0};
+    return std::move(m_coeff_buf);
 }
-
-auto speck::SPECK_Storage::view_data() const -> std::pair<const buffer_type_d&, size_t>
+auto speck::SPECK_Storage::view_data() const -> const vecd_type&
 {
-    return std::make_pair(std::cref(m_coeff_buf), m_coeff_len);
-}
-
-void speck::SPECK_Storage::set_image_mean(double mean)
-{
-    m_image_mean = mean;
-}
-auto speck::SPECK_Storage::get_image_mean() const -> double
-{
-    return m_image_mean;
+    return m_coeff_buf;
 }
 auto speck::SPECK_Storage::get_dims() const -> std::array<size_t, 3>
 {
-    return {m_dim_x, m_dim_y, m_dim_z};
+    return m_dims;
 }
 
 
-auto speck::SPECK_Storage::get_encoded_bitstream() const -> smart_buffer_uint8
+auto speck::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
 {
     // Header definition:
-    // dim_x,     dim_y,     dim_z,     image_mean,  max_coeff_bits,  qz_term_lev,  bitstream_len (in byte)
-    // uint32_t,  uint32_t,  uint32_t,  double       int16_t,         int16_t,      uint64_t
+    // dim_x,     dim_y,     dim_z,     max_coeff_bits,  qz_term_lev,  bitstream_len (in byte)
+    // uint32_t,  uint32_t,  uint32_t,  int16_t,         int16_t,      uint64_t
 
-    uint32_t dims[3] { uint32_t(m_dim_x), uint32_t(m_dim_y), uint32_t(m_dim_z) };
+    uint32_t dims[3] { uint32_t(m_dims[0]), uint32_t(m_dims[1]), uint32_t(m_dims[2]) };
     assert( m_bit_buffer.size() % 8 == 0 );
     const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
     const size_t total_size = m_header_size + bit_in_byte;
-    auto tmp_buf = std::make_unique<uint8_t[]>( total_size );
-    auto* const ptr = tmp_buf.get();
+    m_encoded_stream.resize( total_size );
+    auto* const ptr = m_encoded_stream.data();
 
     // Fill header 
     size_t pos = 0;
     std::memcpy(ptr, dims, sizeof(dims));
     pos += sizeof(dims);
-    std::memcpy(ptr + pos, &m_image_mean, sizeof(m_image_mean));
-    pos += sizeof(m_image_mean);
     int16_t max_bits = int16_t(m_max_coeff_bits);   // int16_t is big enough
     std::memcpy(ptr + pos, &max_bits, sizeof(max_bits));
     pos += sizeof(max_bits);
@@ -100,11 +79,8 @@ auto speck::SPECK_Storage::get_encoded_bitstream() const -> smart_buffer_uint8
     assert( pos == m_header_size );
 
     // Assemble the bitstream into bytes
-    auto rtn = speck::pack_booleans( tmp_buf, m_bit_buffer, pos );
-    if( rtn != RTNType::Good )
-        return {nullptr, 0};
-    else
-        return {std::move(tmp_buf), total_size};
+    auto rtn = speck::pack_booleans( m_encoded_stream, m_bit_buffer, pos );
+    return rtn;
 }
 
 
@@ -121,8 +97,6 @@ auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t
     size_t   pos = 0;
     std::memcpy(dims, ptr, sizeof(dims));
     pos += sizeof(dims);
-    std::memcpy(&m_image_mean, ptr + pos, sizeof(m_image_mean));
-    pos += sizeof(m_image_mean);
     int16_t max_bits;
     std::memcpy(&max_bits, ptr + pos, sizeof(max_bits));
     pos += sizeof(max_bits);
@@ -140,25 +114,34 @@ auto speck::SPECK_Storage::parse_encoded_bitstream( const void* comp_buf, size_t
     if( rtn != RTNType::Good )
         return rtn;
 
-    m_dim_x = dims[0]; 
-    m_dim_y = dims[1]; 
-    m_dim_z = dims[2];
-    if( m_coeff_len != m_dim_x * m_dim_y * m_dim_z ) {
-        m_coeff_len  = m_dim_x * m_dim_y * m_dim_z;
-        m_coeff_buf.reset(nullptr);
-    }
+    std::copy( std::begin(dims), std::end(dims), m_dims.begin() );
+    m_coeff_buf.resize( m_dims[0] * m_dims[1] * m_dims[2] );
+
+    m_encoded_stream.clear();
 
     return RTNType::Good;
+}
+
+
+auto speck::SPECK_Storage::view_encoded_bitstream() const -> const vec8_type&
+{
+    return m_encoded_stream;
+}
+
+
+auto speck::SPECK_Storage::get_encoded_bitstream() -> vec8_type
+{
+    return std::move(m_encoded_stream);
 }
 
 
 auto speck::SPECK_Storage::get_speck_stream_size( const void* buf ) const -> uint64_t
 {
     // Given the header definition in `get_encoded_bitstream()`, directly
-    // go retrieve the value stored in byte 24-31.
+    // go retrieve the value stored in the last 8 bytes of the header
     const uint8_t* const ptr = static_cast<const uint8_t*>( buf );
     uint64_t bit_in_byte;
-    std::memcpy(&bit_in_byte, ptr + 24, sizeof(bit_in_byte));
+    std::memcpy(&bit_in_byte, ptr + m_header_size - 8, sizeof(bit_in_byte));
 
     return (m_header_size + size_t(bit_in_byte));
 }

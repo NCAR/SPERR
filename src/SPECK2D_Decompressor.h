@@ -10,49 +10,39 @@
 
 #include "CDF97.h"
 #include "SPECK2D.h"
+#include "Conditioner.h"
 
 using speck::RTNType;
 
 class SPECK2D_Decompressor {
 
 public:
-    // Accept incoming data: copy from a raw memory block
-    void copy_bitstream( const void* p, size_t len );
-
-    // Accept incoming data by taking ownership of the memory block
-    void take_bitstream( speck::buffer_type_uint8 buf, size_t len );
-
-    // Accept incoming data by reading a file from disk.
-    auto read_bitstream( const char* filename ) -> RTNType;
+    // Accept incoming data.
+    auto use_bitstream( const void* p, size_t len ) -> RTNType;
 
     auto set_bpp( float ) -> RTNType;
 
     auto decompress() -> RTNType;
 
-    // Get the decompressed slice in a float or double buffer.
-    // The returned buffer is a copy of the slice, so caller can use
-    // that buffer withint making another copy.
-    auto get_decompressed_slice_f() const -> std::pair<speck::buffer_type_f, size_t>;
-    auto get_decompressed_slice_d() const -> std::pair<speck::buffer_type_d, size_t>;
-
-    // Write the decompressed slice as floats or doubles to a file on disk.
-    auto write_slice_f( const char* filename ) const -> RTNType;
-    auto write_slice_d( const char* filename ) const -> RTNType;
+    // Get the decompressed data in a float or double buffer.
+    template<typename T>
+    auto get_data()  const -> std::vector<T>;
+    auto view_data() const -> const std::vector<double>&;
+    auto release_data()    -> std::vector<double>;
+    auto get_dims()  const -> std::array<size_t, 3>;
 
 private:
-    const size_t                m_meta_size         = 2;
-    float                       m_bpp               = 0.0;
-    speck::buffer_type_uint8    m_entire_stream;
-    size_t                      m_entire_stream_len = 0;
-    bool                        m_metadata_parsed   = false;
+    speck::dims_type            m_dims = {0, 0, 0};
+    speck::vec8_type            m_condi_stream;
+    speck::vec8_type            m_speck_stream;
+    speck::vecd_type            m_val_buf;
 
+    const size_t                m_meta_size = 2;
+    float                       m_bpp       = 0.0;
+
+    speck::Conditioner          m_conditioner;
     speck::CDF97                m_cdf;
     speck::SPECK2D              m_decoder;
-
-    //
-    // Private methods
-    //
-    auto m_parse_metadata() -> RTNType;
 
 };
 

@@ -69,11 +69,11 @@ int main( int argc, char* argv[] )
     const auto in_stream_bytes = in_stream.second;
     in_stream = {nullptr, 0};
 
-    auto vol = decompressor.get_data_volume<float>();
-    if( speck::empty_buf(vol) )
+    auto vol = decompressor.get_data<float>();
+    if( vol.empty() )
         return 1;
-    if( speck::write_n_bytes( output_file.c_str(), vol.second * sizeof(float), 
-                              vol.first.get() ) != speck::RTNType::Good ) {
+    if( speck::write_n_bytes( output_file.c_str(), vol.size() * sizeof(float), 
+                              vol.data() ) != speck::RTNType::Good ) {
         std::cerr << "Write to disk failed!" << std::endl;
         return 1;
     }
@@ -81,7 +81,7 @@ int main( int argc, char* argv[] )
     // Compare with the original data if user specifies
     if( *compare_file_ptr ) {
         auto orig = speck::read_whole_file<float>( compare_file.c_str() );
-        if( orig.second != vol.second ) {
+        if( orig.second != vol.size() ) {
             std::cerr << "File to compare with has difference size "
                          "with the decompressed file!" << std::endl;
             return 1;
@@ -90,7 +90,7 @@ int main( int argc, char* argv[] )
         printf("Average bit-per-pixel = %.2f\n", in_stream_bytes * 8.0f / orig.second);
 
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( orig.first.get(), vol.first.get(), orig.second,
+        speck::calc_stats( orig.first.get(), vol.data(), orig.second,
                            &rmse, &lmax, &psnr, &arr1min, &arr1max);
         printf("Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
         printf("Decompressed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);

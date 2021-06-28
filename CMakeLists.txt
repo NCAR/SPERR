@@ -71,6 +71,7 @@ add_subdirectory( src )
 
 list( APPEND HELPER_LIBS    speck_helper         )
 list( APPEND HELPER_LIBS    bit_buffer           )
+list( APPEND HELPER_LIBS    Conditioner          )
 list( APPEND CDF_LIBS       CDF97                )
 list( APPEND SPECK_Storage_LIBS SPECK_Storage    )
 list( APPEND SPECK3D_LIBS   SPECK3D_OMP_C        )

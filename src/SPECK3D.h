@@ -42,17 +42,17 @@ class SPECK3D : public SPECK_Storage {
 
 public:
 
+#ifdef QZ_TERM
+    //
+    // Notes for QZ_TERM mode:
+    // It changes the behavior of the coding process, so encoding terminates at a particular
+    // quantization level (2^lev).
+    //
+    void set_quantization_term_level( int32_t lev );
+#else
     // How many bits does speck process (for encoding and decoding).
     // If set to zero during decoding, then all bits in the bitstream will be processed.
     void set_bit_budget(size_t);           
-
-#ifdef QZ_TERM
-    // Notes for QZ_TERM mode:
-    // It changes the behavior of encoding, so encoding terminates at a particular
-    // quantization level (2^lev).
-    // It does NOT change the behavior of decoding, though.
-    //
-    void set_quantization_term_level( int32_t lev );
 #endif
 
     // core operations
@@ -60,10 +60,6 @@ public:
     auto decode() -> RTNType;
     
 private:
-    //
-    // Note: for methods returning an integer, 0 means normal execution, and
-    // 1 means bit budget met.
-    //
     auto m_ready_to_encode() const  -> bool;
     auto m_ready_to_decode() const  -> bool;
     void m_clean_LIS(); // Clean garbage sets from m_LIS if too much garbage exists.
@@ -93,7 +89,7 @@ private:
     auto m_decide_significance(const SPECKSet3D&, std::array<uint32_t, 3>& xyz) const -> SigType;
 
 #ifdef QZ_TERM
-    // Quantize a pixel to the specified m_qz_term_lev.
+    // Quantize a pixel to the specified `m_qz_term_lev`.
     void m_quantize_P_encode( size_t idx );
     void m_quantize_P_decode( size_t idx );
 #else
@@ -105,26 +101,26 @@ private:
     //
     // Private data members
     //
-    size_t  m_budget         = 0;   // What's the budget for num of bits?
     size_t  m_bit_idx        = 0;   // Used for decode. Which bit we're at?
     bool    m_encode_mode    = true; // Encode (true) or Decode (false) mode?
 
-    const size_t        m_u64_garbage_val = std::numeric_limits<size_t>::max();
     const uint8_t       m_false   = 0;
     const uint8_t       m_true    = 1;
     const uint8_t       m_discard = 2;
+    const size_t        m_u64_garbage_val = std::numeric_limits<size_t>::max();
     std::vector<bool>   m_sign_array;
 
     std::vector<std::vector<SPECKSet3D>>  m_LIS;
     std::vector<size_t>                   m_LIP;
 
 #ifndef QZ_TERM
-    std::vector<size_t>                   m_LSP_new;
-    std::vector<size_t>                   m_LSP_old;
+    std::vector<size_t>     m_LSP_new;
+    std::vector<size_t>     m_LSP_old;
+    size_t                  m_budget        = 0;   // What's the budget for num of bits?
 #endif
 
     int32_t                 m_threshold_idx = 0;
-    std::array<double, 64>  m_threshold_arr = {0.0};
+    std::array<double, 64>  m_threshold_arr;
 
 };
 
