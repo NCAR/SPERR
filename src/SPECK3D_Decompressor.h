@@ -42,9 +42,9 @@ public:
 private:
     speck::dims_type            m_dims = {0, 0, 0};
 
-    std::vector<uint8_t>        m_condi_stream;
-    std::vector<uint8_t>        m_speck_stream;
-    std::vector<double>         m_val_buf;
+    speck::vec8_type            m_condi_stream;
+    speck::vec8_type            m_speck_stream;
+    speck::vecd_type            m_val_buf;
 
     speck::Conditioner          m_conditioner;
     speck::CDF97                m_cdf;
@@ -52,7 +52,7 @@ private:
 
 #ifdef QZ_TERM
     speck::SPERR                m_sperr;
-    std::vector<uint8_t>        m_sperr_stream;
+    speck::vec8_type            m_sperr_stream;
 #else
     float                       m_bpp   = 0.0;
 #endif

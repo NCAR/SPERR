@@ -108,7 +108,6 @@ auto SPECK3D_OMP_C::compress() -> RTNType
     std::for_each( m_encoded_streams.begin(), m_encoded_streams.end(), [](auto& v){v.clear();} );
 
 #ifdef QZ_TERM
-    m_outlier_stats.clear();
     m_outlier_stats.assign( num_chunks, {0, 0} );
 #endif
 

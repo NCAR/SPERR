@@ -22,11 +22,10 @@ auto speck::SPECKSet3D::is_empty() const -> bool
 //
 // Class SPECK3D
 //
-
 #ifdef QZ_TERM
 void speck::SPECK3D::set_quantization_term_level( int32_t lev )
 {
-    m_qz_term_lev   = lev;
+    m_qz_term_lev = lev;
 }
 #else
 void speck::SPECK3D::set_bit_budget(size_t budget)
@@ -90,8 +89,8 @@ auto speck::SPECK3D::encode() -> RTNType
         m_clean_LIS();
     }
 
-    // If the bit buffer has the last byte empty, let's fill in zero's.
-    // Care must be taken during decoding to make sure they are handled properly.
+    // If the bit buffer has the last byte half-empty, let's fill in zero's.
+    // The decoding process will not read them.
     while( m_bit_buffer.size() % 8 != 0 )
         m_bit_buffer.push_back( false );
 
@@ -391,77 +390,8 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 
 
 #ifndef QZ_TERM
-auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
-{
-    // First, process `m_LSP_old`.
-    //
-    // In fixed-size mode, we either process all elements in `m_LSP_old`,
-    // or process a portion of them that meets the total bit budget.
-    //
-    const size_t n_to_process = std::min( m_LSP_old.size(), m_budget - m_bit_buffer.size() );
-    for( size_t i = 0; i < n_to_process; i++ ) {
-        const auto loc = m_LSP_old[i];
-        if (m_coeff_buf[loc] >= m_threshold_arr[ m_threshold_idx ]) {
-            m_coeff_buf[loc] -= m_threshold_arr[ m_threshold_idx ];
-            m_bit_buffer.push_back(true);
-        }
-        else
-            m_bit_buffer.push_back(false);
-    }
-    if( m_bit_buffer.size() >= m_budget ) 
-        return RTNType::BitBudgetMet;
-
-    // Second, process `m_LSP_new`
-    //
-    for( auto loc : m_LSP_new )
-        m_coeff_buf[loc] -= m_threshold_arr[ m_threshold_idx ];
-
-    // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
-    // (`m_LSP_old` has reserved the full coeff length capacity in advance.)
-    //
-    m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
-
-    // Fourth, clear `m_LSP_new`.
-    //
-    m_LSP_new.clear();
-
-    return RTNType::Good;
-}
-#endif
-
-#ifndef QZ_TERM
-auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
-{
-    // First, process `m_LSP_old`
-    //
-    const size_t num_bits   = std::min( m_budget - m_bit_idx, m_LSP_old.size() );
-    const double half_T     = m_threshold_arr[ m_threshold_idx ] *  0.5;
-    const double neg_half_T = m_threshold_arr[ m_threshold_idx ] * -0.5;
-    const double one_half_T = m_threshold_arr[ m_threshold_idx ] *  1.5;
-
-    const double tmp[2] = {neg_half_T, half_T};
-    for( size_t i = 0; i < num_bits; i++ )
-        m_coeff_buf[ m_LSP_old[i] ] += tmp[ m_bit_buffer[m_bit_idx + i] ];
-    m_bit_idx += num_bits;
-    if (m_bit_idx >= m_budget)
-        return RTNType::BitBudgetMet;
-    
-    // Second, process `m_LSP_new`
-    //
-    for( auto idx : m_LSP_new )
-        m_coeff_buf[ idx ] = one_half_T;
-
-    // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
-    // (`m_LSP_old` has reserved the full coeff length capacity in advance.)
-    //
-    m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
-
-    // Fourth, clear `m_LSP_new`.
-    //
-    m_LSP_new.clear();
-
-    return RTNType::Good;
-}
+//
+// Refinement pass is only used in fixed-size mode.
 #endif
 
 
@@ -529,7 +459,6 @@ void speck::SPECK3D::m_quantize_P_encode( size_t idx )
     }
     m_coeff_buf[idx] = coeff;
 }
-
 void speck::SPECK3D::m_quantize_P_decode( size_t idx )
 {
     // Since only identified significant pixels come here, it's immediately
@@ -543,6 +472,81 @@ void speck::SPECK3D::m_quantize_P_decode( size_t idx )
         coeff += tmp[ m_bit_buffer[m_bit_idx++] ];
     }
     m_coeff_buf[idx] = coeff;
+}
+//
+// Finish QZ_TERM specific functions
+//
+#else
+//
+// Start fixed-size specific functions
+//
+auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
+{
+    // First, process `m_LSP_old`.
+    //
+    // In fixed-size mode, we either process all elements in `m_LSP_old`,
+    // or process a portion of them that meets the total bit budget.
+    //
+    const size_t n_to_process = std::min( m_LSP_old.size(), m_budget - m_bit_buffer.size() );
+    for( size_t i = 0; i < n_to_process; i++ ) {
+        const auto loc = m_LSP_old[i];
+        if (m_coeff_buf[loc] >= m_threshold_arr[ m_threshold_idx ]) {
+            m_coeff_buf[loc] -= m_threshold_arr[ m_threshold_idx ];
+            m_bit_buffer.push_back(true);
+        }
+        else
+            m_bit_buffer.push_back(false);
+    }
+    if( m_bit_buffer.size() >= m_budget ) 
+        return RTNType::BitBudgetMet;
+
+    // Second, process `m_LSP_new`
+    //
+    for( auto loc : m_LSP_new )
+        m_coeff_buf[loc] -= m_threshold_arr[ m_threshold_idx ];
+
+    // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
+    // (`m_LSP_old` has reserved the full coeff length capacity in advance.)
+    //
+    m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
+
+    // Fourth, clear `m_LSP_new`.
+    //
+    m_LSP_new.clear();
+
+    return RTNType::Good;
+}
+auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
+{
+    // First, process `m_LSP_old`
+    //
+    const size_t num_bits   = std::min( m_budget - m_bit_idx, m_LSP_old.size() );
+    const double half_T     = m_threshold_arr[ m_threshold_idx ] *  0.5;
+    const double neg_half_T = m_threshold_arr[ m_threshold_idx ] * -0.5;
+    const double one_half_T = m_threshold_arr[ m_threshold_idx ] *  1.5;
+
+    const double tmp[2] = {neg_half_T, half_T};
+    for( size_t i = 0; i < num_bits; i++ )
+        m_coeff_buf[ m_LSP_old[i] ] += tmp[ m_bit_buffer[m_bit_idx + i] ];
+    m_bit_idx += num_bits;
+    if (m_bit_idx >= m_budget)
+        return RTNType::BitBudgetMet;
+    
+    // Second, process `m_LSP_new`
+    //
+    for( auto idx : m_LSP_new )
+        m_coeff_buf[ idx ] = one_half_T;
+
+    // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
+    // (`m_LSP_old` has reserved the full coeff length capacity in advance.)
+    //
+    m_LSP_old.insert( m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend() );
+
+    // Fourth, clear `m_LSP_new`.
+    //
+    m_LSP_new.clear();
+
+    return RTNType::Good;
 }
 #endif
 

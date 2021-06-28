@@ -218,35 +218,43 @@ TEST( speck3d_qz_term, large_tolerance )
 {
     const double tol = 1.0;
     speck_tester tester( "../test_data/wmag128.float", {128, 128, 128} );
-    tester.execute( 2, tol );
+    auto rtn = tester.execute( 2, tol );
+    EXPECT_EQ( rtn, 0 );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
     EXPECT_GT( psnr, 57.629364 );
+    EXPECT_LT( psnr, 57.629365 );
     EXPECT_LT( lmax, tol );
 
-    tester.execute( -1, tol );
+    rtn = tester.execute( -1, tol );
+    EXPECT_EQ( rtn, 0 );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 65.498861 );
+    EXPECT_GT( psnr, 65.498870 );
+    EXPECT_LT( psnr, 65.498871 );
     EXPECT_LT( lmax, tol );
 
-    tester.execute( -2, tol );
+    rtn = tester.execute( -2, tol );
+    EXPECT_EQ( rtn, 0 );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
     EXPECT_GT( psnr, 72.025230 );
+    EXPECT_LT( psnr, 72.025231 );
     EXPECT_LT( lmax, 0.6164713 );
 }
 TEST( speck3d_qz_term, small_tolerance )
 {
     const double tol = 0.07;
     speck_tester tester( "../test_data/wmag128.float", {128, 128, 128} );
-    tester.execute( -3, tol );
+    auto rtn = tester.execute( -3, tol );
+    EXPECT_EQ( rtn, 0 );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
     EXPECT_GT( psnr, 81.446037 );
     EXPECT_LT( lmax, tol );
 
-    tester.execute( -5, tol );
+    rtn = tester.execute( -5, tol );
+    EXPECT_EQ( rtn, 0 );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
     EXPECT_GT( psnr, 91.618080 );
@@ -255,14 +263,16 @@ TEST( speck3d_qz_term, small_tolerance )
 TEST( speck3d_qz_term, narrow_data_range)
 {
     speck_tester tester( "../test_data/vorticity.128_128_41", {128, 128, 41} );
-    tester.execute( -16, 3e-5 );
+    auto rtn = tester.execute( -16, 3e-5 );
+    EXPECT_EQ( rtn, 0 );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
     EXPECT_GT( psnr, 42.293655 );
     EXPECT_LT( psnr, 42.293656 );
     EXPECT_LT( lmax, 2.983993e-05 );
 
-    tester.execute( -18, 7e-6 );
+    rtn = tester.execute( -18, 7e-6 );
+    EXPECT_EQ( rtn, 0 );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
     EXPECT_GT( psnr, 50.522224 );
@@ -272,15 +282,18 @@ TEST( speck3d_qz_term, narrow_data_range)
 TEST( speck3d_qz_term_omp, narrow_data_range)
 {
     // We specify to use 1 thread to make sure that object re-use has no side effects.
+    // The next set of tests will use multiple threads.
     speck_tester_omp tester( "../test_data/vorticity.128_128_41", {128, 128, 41}, 1 );
-    tester.execute( -16, 3e-5 );
+    auto rtn = tester.execute( -16, 3e-5 );
+    EXPECT_EQ( rtn, 0 );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
     EXPECT_GT( psnr, 42.207504 );
     EXPECT_LT( psnr, 42.207505 );
     EXPECT_LT( lmax, 2.987783e-05 );
 
-    tester.execute( -18, 7e-6 );
+    rtn = tester.execute( -18, 7e-6 );
+    EXPECT_EQ( rtn, 0 );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
     EXPECT_GT( psnr, 50.486732 );
@@ -290,14 +303,16 @@ TEST( speck3d_qz_term_omp, narrow_data_range)
 TEST( speck3d_qz_term_omp, small_tolerance )
 {
     speck_tester_omp tester( "../test_data/wmag128.float", {128, 128, 128}, 3 );
-    tester.execute( -3, 0.07);
+    auto rtn = tester.execute( -3, 0.07);
+    EXPECT_EQ( rtn, 0 );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
     EXPECT_GT( psnr, 81.436264 );
     EXPECT_LT( psnr, 81.436265 );
     EXPECT_LT( lmax, 6.999970e-02 );
 
-    tester.execute( -5, 0.05 );
+    rtn = tester.execute( -5, 0.05 );
+    EXPECT_EQ( rtn, 0 );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
     EXPECT_GT( psnr, 91.552566 );

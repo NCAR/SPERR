@@ -43,10 +43,10 @@ class SPECK3D : public SPECK_Storage {
 public:
 
 #ifdef QZ_TERM
+    //
     // Notes for QZ_TERM mode:
-    // It changes the behavior of encoding, so encoding terminates at a particular
+    // It changes the behavior of the coding process, so encoding terminates at a particular
     // quantization level (2^lev).
-    // It does NOT change the behavior of decoding, though.
     //
     void set_quantization_term_level( int32_t lev );
 #else
@@ -89,7 +89,7 @@ private:
     auto m_decide_significance(const SPECKSet3D&, std::array<uint32_t, 3>& xyz) const -> SigType;
 
 #ifdef QZ_TERM
-    // Quantize a pixel to the specified m_qz_term_lev.
+    // Quantize a pixel to the specified `m_qz_term_lev`.
     void m_quantize_P_encode( size_t idx );
     void m_quantize_P_decode( size_t idx );
 #else
@@ -120,7 +120,7 @@ private:
 #endif
 
     int32_t                 m_threshold_idx = 0;
-    std::array<double, 64>  m_threshold_arr = {0.0};
+    std::array<double, 64>  m_threshold_arr;
 
 };
 

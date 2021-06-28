@@ -69,8 +69,11 @@ auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
         if( pos + sperr_size != ptr_len )
             return RTNType::WrongSize;
         m_sperr_stream.resize( sperr_size, 0 );
-        std::copy( sperr_p, sperr_p + pos, m_sperr_stream.begin() );
+        std::copy( sperr_p, sperr_p + sperr_size, m_sperr_stream.begin() );
     }
+#else
+    if( pos != ptr_len )
+        return RTNType::WrongSize;
 #endif
 
     return RTNType::Good;

@@ -61,13 +61,14 @@ private:
     speck::vec8_type            m_encoded_stream;
 
 #ifdef QZ_TERM
-    std::vector<uint8_t>        m_sperr_stream;
+    speck::vec8_type            m_sperr_stream;
     speck::SPERR                m_sperr;
     int32_t                     m_qz_lev      = 0;
     double                      m_tol         = 0.0; // tolerance used in error correction
     size_t                      m_num_outlier = 0;
-    std::vector<speck::Outlier> m_LOS; // List of OutlierS
-    speck::vecd_type            m_tmp_diff;
+    std::vector<speck::Outlier> m_LOS;      // List of OutlierS
+    speck::vecd_type            m_val_buf2; // Copy of `m_val_buf` that goes through encoding.
+    speck::vecd_type            m_diffv;    // Store differences in double in a vector.
 #else
     float                       m_bpp         = 0.0;
 #endif
@@ -75,7 +76,7 @@ private:
 #ifdef USE_ZSTD
     // The following resources are used repeatedly during the lifespan of an instance,
     // but they only play temporary roles, so OK to be mutable.
-    mutable std::vector<uint8_t>  m_zstd_buf;
+    mutable speck::vec8_type    m_zstd_buf;
     mutable std::unique_ptr<ZSTD_CCtx, decltype(&ZSTD_freeCCtx)>  m_cctx =
             {nullptr, &ZSTD_freeCCtx};
 #endif
