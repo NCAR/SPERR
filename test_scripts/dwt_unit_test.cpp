@@ -20,9 +20,9 @@ TEST( dwt1d, big_image_even )
 
     // Make a copy and then use a conditioner
     auto in_copy = std::vector<double>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
+    std::copy( in_buf.get(), in_buf.get() + total_vals, in_copy.begin() );
     speck::Conditioner condi( true );
-    auto [rtn, meta] = condi.condition( in_copy, total_vals );
+    auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
@@ -35,7 +35,7 @@ TEST( dwt1d, big_image_even )
     EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner
-    rtn = condi.inverse_condition( result, result.size(), meta.data() );
+    rtn = condi.inverse_condition( result, meta.data() );
 
     for( size_t i = 0; i < total_vals; i++ )
     {
@@ -56,9 +56,9 @@ TEST( dwt1d, big_image_odd )
 
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
+    std::copy( in_buf.get(), in_buf.get() + total_vals, in_copy.begin() );
     speck::Conditioner condi( true );
-    auto [rtn, meta] = condi.condition( in_copy, total_vals );
+    auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
@@ -71,7 +71,7 @@ TEST( dwt1d, big_image_odd )
     EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner again
-    rtn = condi.inverse_condition( result, result.size(), meta );
+    rtn = condi.inverse_condition( result, meta.data() );
 
     for( size_t i = 0; i < total_vals; i++ )
     {
@@ -86,15 +86,15 @@ TEST( dwt2d, small_image_even )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
-    auto [in_buf, len] = speck::read_whole_file<float>(input);
-    if( in_buf == nullptr || len != total_vals )
+    auto in_buf = speck::read_whole_file<float>(input);
+    if( in_buf.size() != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
+    std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
     speck::Conditioner condi( true );
-    auto [rtn, meta] = condi.condition( in_copy, total_vals );
+    auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
@@ -107,7 +107,7 @@ TEST( dwt2d, small_image_even )
     EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner again
-    rtn = condi.inverse_condition( result, result.size(), meta );
+    rtn = condi.inverse_condition( result, meta.data() );
 
     for( size_t i = 0; i < total_vals; i++ )
     {
@@ -122,15 +122,15 @@ TEST( dwt2d, small_image_odd )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
-    auto [in_buf, len] = speck::read_whole_file<float>(input);
-    if( in_buf == nullptr || len != total_vals )
+    auto in_buf = speck::read_whole_file<float>(input);
+    if( in_buf.size() != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
+    std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
     speck::Conditioner condi( true );
-    auto [rtn, meta] = condi.condition( in_copy, total_vals );
+    auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
@@ -143,7 +143,7 @@ TEST( dwt2d, small_image_odd )
     EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner
-    rtn = condi.inverse_condition( result, result.size(), meta );
+    rtn = condi.inverse_condition( result, meta.data() );
 
     for( size_t i = 0; i < total_vals; i++ )
     {
@@ -158,15 +158,15 @@ TEST( dwt2d, big_image_even )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
-    auto [in_buf, len] = speck::read_whole_file<float>(input);
-    if( in_buf == nullptr || len != total_vals )
+    auto in_buf = speck::read_whole_file<float>(input);
+    if( in_buf.size() != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
+    std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
     speck::Conditioner condi( true );
-    auto [rtn, meta] = condi.condition( in_copy, total_vals );
+    auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
@@ -179,7 +179,7 @@ TEST( dwt2d, big_image_even )
     EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner
-    rtn = condi.inverse_condition( result, result.size(), meta );
+    rtn = condi.inverse_condition( result, meta.data() );
 
     for( size_t i = 0; i < total_vals; i++ )
     {
@@ -194,15 +194,15 @@ TEST( dwt2d, big_image_odd )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
-    auto [in_buf, len] = speck::read_whole_file<float>(input);
-    if( in_buf == nullptr || len != total_vals )
+    auto in_buf = speck::read_whole_file<float>(input);
+    if( in_buf.size() != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
+    std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
     speck::Conditioner condi( true );
-    auto [rtn, meta] = condi.condition( in_copy, total_vals );
+    auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
@@ -215,7 +215,7 @@ TEST( dwt2d, big_image_odd )
     EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner
-    rtn = condi.inverse_condition( result, result.size(), meta);
+    rtn = condi.inverse_condition( result, meta.data() );
 
     for( size_t i = 0; i < total_vals; i++ )
     {
@@ -230,15 +230,15 @@ TEST( dwt3d, small_even_cube )
     const size_t  total_vals = dim_x * dim_y * dim_z;
 
     // Let read in binaries as 4-byte floats
-    auto [in_buf, len] = speck::read_whole_file<float>(input);
-    if( in_buf == nullptr || len != total_vals )
+    auto in_buf = speck::read_whole_file<float>(input);
+    if( in_buf.size() != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
+    std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
     speck::Conditioner condi( true );
-    auto [rtn, meta] = condi.condition( in_copy, total_vals );
+    auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
@@ -251,7 +251,7 @@ TEST( dwt3d, small_even_cube )
     EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner
-    rtn = condi.inverse_condition( result, result.size(), meta);
+    rtn = condi.inverse_condition( result, meta.data() );
 
     for( size_t i = 0; i < total_vals; i++ )
     {
@@ -266,15 +266,15 @@ TEST( dwt3d, big_odd_cube )
     const size_t  total_vals = dim_x * dim_y * dim_z;
 
     // Let read in binaries as 4-byte floats
-    auto [in_buf, len] = speck::read_whole_file<float>(input);
-    if( in_buf == nullptr || len != total_vals )
+    auto in_buf = speck::read_whole_file<float>(input);
+    if( in_buf.size() != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
+    std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
     speck::Conditioner condi( true );
-    auto [rtn, meta] = condi.condition( in_copy, total_vals );
+    auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
@@ -287,7 +287,7 @@ TEST( dwt3d, big_odd_cube )
     EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner
-    rtn = condi.inverse_condition( result, result.size(), meta );
+    rtn = condi.inverse_condition( result, meta.data() );
 
     for( size_t i = 0; i < total_vals; i++ )
     {
@@ -302,15 +302,15 @@ TEST( dwt3d, big_even_cube )
     const size_t  total_vals = dim_x * dim_y * dim_z;
 
     // Let read in binaries as 4-byte floats
-    auto [in_buf, len] = speck::read_whole_file<float>(input);
-    if( in_buf == nullptr || len != total_vals )
+    auto in_buf = speck::read_whole_file<float>(input);
+    if( in_buf.size() != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
-    std::copy( speck::begin(in_buf), speck::begin(in_buf) + total_vals, in_copy.begin() );
+    std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
     speck::Conditioner condi( true );
-    auto [rtn, meta] = condi.condition( in_copy, total_vals );
+    auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
     speck::CDF97 cdf;
@@ -323,7 +323,7 @@ TEST( dwt3d, big_even_cube )
     EXPECT_EQ( result.size(), total_vals );
 
     // Apply the conditioner
-    rtn = condi.inverse_condition( result, result.size(), meta);
+    rtn = condi.inverse_condition( result, meta.data() );
 
     for( size_t i = 0; i < total_vals; i++ )
     {

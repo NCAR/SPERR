@@ -56,7 +56,7 @@ public:
 
         // Create a decoder
         speck::SPERR decoder;
-        if( decoder.parse_encoded_bitstream(stream.first.get(), stream.second) != RTNType::Good )
+        if( decoder.parse_encoded_bitstream(stream.data(), stream.size()) != RTNType::Good )
             return;
         if( decoder.decode() != RTNType::Good )
             return;

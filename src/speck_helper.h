@@ -158,17 +158,16 @@ auto kahan_summation( const T*, size_t ) -> T;
 // a list of chunks specified by 6 integers:
 // chunk[0], [2], [4]: starting index of this chunk 
 // chunk[1], [3], [5]: length of this chunk
-auto chunk_volume( const std::array<size_t, 3>& vol_dim, 
-                   const std::array<size_t, 3>& chunk_dim )
+auto chunk_volume( const dims_type& vol_dim, const dims_type& chunk_dim )
                    -> std::vector< std::array<size_t, 6> >;
 
 // Gather a chunk from a bigger volume
 template<typename T>
-auto gather_chunk( const T* vol, const std::array<size_t, 3>& vol_dim, 
+auto gather_chunk( const T* vol, const dims_type& vol_dim, 
                    const std::array<size_t, 6>& chunk ) -> vecd_type;
 
 // Put this chunk to a bigger volume
-void scatter_chunk( vecd_type& big_vol, const std::array<size_t, 3>& vol_dim,
+void scatter_chunk( vecd_type& big_vol, const dims_type& vol_dim,
                     const vecd_type&    small_vol,
                     const std::array<size_t, 6>& chunk);
 
