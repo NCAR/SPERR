@@ -46,12 +46,11 @@ int main( int argc, char* argv[] )
     // Let's do the actual work
     //
     auto in_stream = speck::read_whole_file<uint8_t>( input_file.c_str() );
-    if( speck::empty_buf(in_stream) )
+    if( in_stream.empty() )
         return 1;
     SPECK3D_OMP_D decompressor;
     decompressor.set_num_threads( omp_num_threads );
-    if( decompressor.use_bitstream(in_stream.first.get(), in_stream.second) != 
-        speck::RTNType::Good ) {
+    if( decompressor.use_bitstream(in_stream.data(), in_stream.size()) != speck::RTNType::Good ) {
         std::cerr << "Read compressed file error: " << input_file << std::endl;
         return 1;
     }
@@ -60,14 +59,15 @@ int main( int argc, char* argv[] )
     decompressor.set_bpp( decomp_bpp );
 #endif
 
-    if( decompressor.decompress( in_stream.first.get() ) != speck::RTNType::Good ) {
+    if( decompressor.decompress( in_stream.data() ) != speck::RTNType::Good ) {
         std::cerr << "Decompression failed!" << std::endl;
         return 1;
     }
 
     // Let's free up some memory here
-    const auto in_stream_bytes = in_stream.second;
-    in_stream = {nullptr, 0};
+    const auto in_stream_num_bytes = in_stream.size();
+    in_stream.clear();
+    in_stream.shrink_to_fit();
 
     auto vol = decompressor.get_data<float>();
     if( vol.empty() )
@@ -81,16 +81,16 @@ int main( int argc, char* argv[] )
     // Compare with the original data if user specifies
     if( *compare_file_ptr ) {
         auto orig = speck::read_whole_file<float>( compare_file.c_str() );
-        if( orig.second != vol.size() ) {
+        if( orig.size() != vol.size() ) {
             std::cerr << "File to compare with has difference size "
                          "with the decompressed file!" << std::endl;
             return 1;
         }
 
-        printf("Average bit-per-pixel = %.2f\n", in_stream_bytes * 8.0f / orig.second);
+        printf("Average bit-per-pixel = %.2f\n", in_stream_num_bytes * 8.0f / orig.size());
 
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( orig.first.get(), vol.data(), orig.second,
+        speck::calc_stats( orig.data(), vol.data(), orig.size(),
                            &rmse, &lmax, &psnr, &arr1min, &arr1max);
         printf("Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
         printf("Decompressed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);

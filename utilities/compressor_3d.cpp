@@ -72,8 +72,8 @@ int main( int argc, char* argv[] )
     //
     const size_t total_vals = dims[0] * dims[1] * dims[2];
     SPECK3D_OMP_C compressor;
-    compressor.set_dims(dims[0], dims[1], dims[2]);
-    compressor.prefer_chunk_size( chunks[0], chunks[1], chunks[2] );
+    compressor.set_dims( {dims[0], dims[1], dims[2]} );
+    compressor.prefer_chunk_dims( {chunks[0], chunks[1], chunks[2]} );
     compressor.set_num_threads( omp_num_threads );
 
 #ifdef QZ_TERM
@@ -84,17 +84,18 @@ int main( int argc, char* argv[] )
 #endif
 
     auto orig = speck::read_whole_file<float>( input_file.c_str() );
-    if( !speck::size_is(orig, total_vals) ) {
+    if( orig.size() != total_vals ) {
         std::cerr << "Read input file error: " << input_file << std::endl;
         return 1;
     }
-    if( compressor.use_volume( orig.first.get(), orig.second ) != speck::RTNType::Good ) {
+    if( compressor.use_volume( orig.data(), orig.size()) != speck::RTNType::Good ) {
         std::cerr << "Copy data failed!" << std::endl;
         return 1;
     }
 
     // Free memory taken by `orig` since the volume has been put into chunks.
-    orig = {nullptr, 0};
+    orig.clear();
+    orig.shrink_to_fit();
 
     if( compressor.compress() != speck::RTNType::Good ) {
         std::cerr << "Compression failed!" << std::endl;

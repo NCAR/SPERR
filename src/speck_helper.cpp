@@ -225,6 +225,7 @@ auto speck::read_whole_file( const char* filename ) -> std::vector<T>
 }
 template auto speck::read_whole_file( const char* ) -> std::vector<float>;
 template auto speck::read_whole_file( const char* ) -> std::vector<double>;
+template auto speck::read_whole_file( const char* ) -> std::vector<uint8_t>;
 
 
 auto speck::write_n_bytes( const char* filename, size_t n_bytes, const void* buffer ) -> RTNType
