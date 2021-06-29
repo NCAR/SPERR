@@ -18,16 +18,16 @@
 //
 // This file should only be compiled in QZ_TERM mode.
 //
-auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims, 
-                             std::array<size_t, 3> chunks,
+auto test_configuration_omp( const float* in_buf, speck::dims_type dims, 
+                             speck::dims_type chunks,
                              int32_t qz_level, double tolerance,
                              size_t  omp_num_threads ) -> int 
 {
     // Setup
     const size_t total_vals = dims[0] * dims[1] * dims[2];
     SPECK3D_OMP_C compressor;
-    compressor.set_dims(dims[0], dims[1], dims[2]);
-    compressor.prefer_chunk_size( chunks[0], chunks[1], chunks[2] );
+    compressor.set_dims( dims );
+    compressor.prefer_chunk_dims( chunks );
     compressor.set_num_threads( omp_num_threads );
     auto rtn = compressor.use_volume( in_buf, total_vals );
     if(  rtn != RTNType::Good )
@@ -46,11 +46,11 @@ auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims,
     std::cout << " -> Compression takes time: " << diff_time << "ms\n";
 
     auto encoded_stream = compressor.get_encoded_bitstream();
-    if( speck::empty_buf( encoded_stream ) )
+    if( encoded_stream.empty() )
         return 1;
     else
         printf("    Total compressed size in bytes = %ld, average bpp = %.2f\n",
-               encoded_stream.second, float(encoded_stream.second * 8) / float(total_vals) );
+               encoded_stream.size(), float(encoded_stream.size() * 8) / float(total_vals) );
 
     auto outlier = compressor.get_outlier_stats();
     if( outlier.first == 0 ) {
@@ -61,33 +61,33 @@ auto test_configuration_omp( const float* in_buf, std::array<size_t, 3> dims,
                "using total storage ~ %.2f%%\n",
                 outlier.first, float(outlier.first * 100) / float(total_vals),
                 float(outlier.second * 8)    / float(outlier.first),
-                float(outlier.second * 100 ) / float(encoded_stream.second) );
+                float(outlier.second * 100 ) / float(encoded_stream.size()) );
     }
 
 
     // Perform decompression
     SPECK3D_OMP_D decompressor;
     decompressor.set_num_threads( omp_num_threads );
-    rtn = decompressor.use_bitstream( encoded_stream.first.get(), encoded_stream.second );
+    rtn = decompressor.use_bitstream( encoded_stream.data(), encoded_stream.size() );
     if( rtn != RTNType::Good )
         return 1;
 
     start_time = std::chrono::steady_clock::now();
-    rtn = decompressor.decompress( encoded_stream.first.get() );
+    rtn = decompressor.decompress( encoded_stream.data() );
     if(  rtn != RTNType::Good )
         return 1;
     end_time = std::chrono::steady_clock::now();
     diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
     std::cout << " -> Decompression takes time: " << diff_time << "ms\n";
 
-    auto decoded_volume = decompressor.get_data_volume<float>();
-    if( !speck::size_is( decoded_volume, total_vals ) )
+    auto decoded_volume = decompressor.get_data<float>();
+    if( decoded_volume.size() != total_vals )
         return 1;
 
 
     // Collect statistics
     float rmse, lmax, psnr, arr1min, arr1max;
-    speck::calc_stats( in_buf, decoded_volume.first.get(), total_vals,
+    speck::calc_stats( in_buf, decoded_volume.data(), total_vals,
                        &rmse, &lmax, &psnr, &arr1min, &arr1max);
     printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
     printf("    Reconstructed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
@@ -208,8 +208,8 @@ int main( int argc, char* argv[] )
 
     // Read and keep a copy of input data (will be used for evaluation)
     const size_t total_vals = dims[0] * dims[1] * dims[2];
-    auto [input_buf, buf_len] = speck::read_whole_file<float>( input_file.c_str() );
-    if( input_buf == nullptr || buf_len != total_vals ) {
+    auto input_buf = speck::read_whole_file<float>( input_file.c_str() );
+    if( input_buf.size() != total_vals ) {
         std::cerr << "  -- reading input file failed!" << std::endl;
         return 1;
     }
@@ -218,7 +218,7 @@ int main( int argc, char* argv[] )
     // Let's do an initial analysis to pick an initial QZ level.
     // The strategy is to use a QZ level that about 1/1000 of the input data range.
     //
-    const auto minmax = std::minmax_element( input_buf.get(), input_buf.get() + total_vals );
+    const auto minmax = std::minmax_element( input_buf.begin(), input_buf.end() );
     const auto range  = *minmax.second - *minmax.first;
     if( !(*qz_level_ptr) ) {
         qz_level  = int32_t(std::floor(std::log2(range / 1000.0)));
@@ -242,7 +242,7 @@ int main( int argc, char* argv[] )
 
     printf("Initial analysis: absolute error tolerance = %.2e, quantization level = %d ...  \n", 
             tolerance, qz_level);
-    int rtn = test_configuration_omp( input_buf.get(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
+    int rtn = test_configuration_omp( input_buf.data(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
                                       qz_level, tolerance, omp_num_threads );
     if( rtn != 0 )
         return rtn;
@@ -264,7 +264,7 @@ int main( int argc, char* argv[] )
         qz_level = tmp;
         printf("\nNow testing qz_level = %d ...\n", qz_level);
     
-        rtn = test_configuration_omp( input_buf.get(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
+        rtn = test_configuration_omp( input_buf.data(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
                                       qz_level, tolerance, omp_num_threads );
         if ( rtn != 0 )
             return rtn;
