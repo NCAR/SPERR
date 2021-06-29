@@ -60,14 +60,14 @@ TEST( speck_helper, bit_packing )
                               true,  true,  true,  false, true,  true,  true,  false, // 10th byte
                               false, false, true,  true,  true,  false, false, true };// 11th byte
 
-    auto bytes = std::make_unique<uint8_t[]>(num_of_bytes + byte_offset);
+    auto bytes = std::vector<uint8_t>(num_of_bytes + byte_offset);
 
     // Pack booleans
     auto rtn = speck::pack_booleans( bytes, input, byte_offset );
     EXPECT_EQ( rtn, speck::RTNType::Good );
     // Unpack booleans
     auto output = std::vector<bool>( num_of_bytes * 8 );
-    rtn = speck::unpack_booleans( output, bytes.get(), num_of_bytes + byte_offset, byte_offset );
+    rtn = speck::unpack_booleans( output, bytes.data(), bytes.size(), byte_offset );
 
     EXPECT_EQ( rtn, speck::RTNType::Good );
     EXPECT_EQ( input.size(), output.size() );
