@@ -81,7 +81,7 @@ private:
     auto m_process_P_decode(size_t idx,  size_t& counter, bool) -> RTNType;
 
     // Divide a SPECKSet3D into 8, 4, or 2 smaller subsets.
-    auto m_partition_S_XYZ(const SPECKSet3D&) const -> std::array<SPECKSet3D, 8>;
+    void m_partition_S_XYZ(const SPECKSet3D&) const; // Result saved to member data: `m_8subs`.
     auto m_partition_S_XY (const SPECKSet3D&) const -> std::array<SPECKSet3D, 4>;
     auto m_partition_S_Z  (const SPECKSet3D&) const -> std::array<SPECKSet3D, 2>;
 
@@ -122,6 +122,8 @@ private:
     int32_t                 m_threshold_idx = 0;
     std::array<double, 64>  m_threshold_arr;
 
+    // Stores partition results produced by m_partition_S_XYZ().
+    mutable std::array<SPECKSet3D, 8> m_8subsets;
 };
 
 };

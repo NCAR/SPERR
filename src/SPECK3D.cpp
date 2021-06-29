@@ -18,7 +18,6 @@ auto speck::SPECKSet3D::is_empty() const -> bool
     return (length_z == 0 || length_y == 0 || length_x == 0);
 }
 
-
 //
 // Class SPECK3D
 //
@@ -221,12 +220,12 @@ void speck::SPECK3D::m_initialize_sets_lists()
     size_t     xf               = 0;
 
     while (xf < num_of_xforms_xy && xf < num_of_xforms_z) {
-        auto subsets = m_partition_S_XYZ(big);
-        big = subsets[0]; // Reference `m_partition_S_XYZ()` for subset ordering
+        m_partition_S_XYZ(big);
+        big = m_8subsets[0]; // Reference `m_partition_S_XYZ()` for subset ordering
         // Iterate the rest subsets.
-        for (size_t i = 1; i < subsets.size(); i++) {
-            const auto parts = subsets[i].part_level;
-            m_LIS[parts].emplace_back(subsets[i]);
+        for (size_t i = 1; i < m_8subsets.size(); i++) {
+            const auto parts = m_8subsets[i].part_level;
+            m_LIS[parts].push_back(m_8subsets[i]);
         }
         xf++;
     }
@@ -239,7 +238,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
             // Iterate the rest subsets.
             for (size_t i = 1; i < subsets.size(); i++) {
                 const auto parts = subsets[i].part_level;
-                m_LIS[parts].emplace_back(subsets[i]);
+                m_LIS[parts].push_back(subsets[i]);
             }
             xf++;
         }
@@ -248,7 +247,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
             auto subsets = m_partition_S_Z(big);
             big              = subsets[0];
             const auto parts = subsets[1].part_level;
-            m_LIS[parts].emplace_back(subsets[1]);
+            m_LIS[parts].push_back(subsets[1]);
             xf++;
         }
     }
@@ -725,23 +724,23 @@ auto speck::SPECK3D::m_process_S_decode(size_t  idx1,    size_t idx2,
 auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2, 
                                      std::array<SigType, 8> subset_sigs) -> RTNType
 {
-    auto subsets = m_partition_S_XYZ( m_LIS[idx1][idx2] );
+    m_partition_S_XYZ( m_LIS[idx1][idx2] );
 
     // Since some subsets could be empty, let's put empty sets at the end.
     for( size_t i = 0; i < 8; i++ ) {
-        if( subsets[i].is_empty() )
+        if( m_8subsets[i].is_empty() )
             subset_sigs[i] = SigType::Garbage; // SigType::Garbage is only used locally here.
     }
     // Also need to organize `subset_sigs` to maintain the relative order with subsets.
     std::remove( subset_sigs.begin(), subset_sigs.end(), SigType::Garbage );
 
-    const auto set_end    = std::remove_if( subsets.begin(), subsets.end(),
+    const auto set_end    = std::remove_if( m_8subsets.begin(), m_8subsets.end(),
                             [](const auto& s){return s.is_empty();} );
     const auto set_end_m1 = set_end - 1;
 
     auto sig_it = subset_sigs.begin();
     size_t sig_counter = 0;
-    for( auto it = subsets.begin(); it < set_end; ++it ) {
+    for( auto it = m_8subsets.begin(); it < set_end; ++it ) {
         // If we're looking at the last subset, and no prior subset is found to be
         // significant, then we know that this last one *is* significant.
         bool output = true;
@@ -764,7 +763,7 @@ auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2,
         }
         else {
             const auto newidx1 = it->part_level;
-            m_LIS[newidx1].emplace_back(*it);
+            m_LIS[newidx1].push_back(*it);
             const auto newidx2 = m_LIS[newidx1].size() - 1;
 
 #ifdef QZ_TERM
@@ -783,13 +782,13 @@ auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2,
 
 auto speck::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
 {
-    auto       subsets     = m_partition_S_XYZ( m_LIS[idx1][idx2] );
-    const auto set_end     = std::remove_if( subsets.begin(), subsets.end(),
+    m_partition_S_XYZ( m_LIS[idx1][idx2] );
+    const auto set_end     = std::remove_if( m_8subsets.begin(), m_8subsets.end(),
                              [](const auto& s){return s.is_empty();} );
     const auto set_end_m1  = set_end - 1;
     size_t     sig_counter = 0;
 
-    for( auto it = subsets.begin(); it < set_end; ++it ) {
+    for( auto it = m_8subsets.begin(); it < set_end; ++it ) {
         // If we're looking at the last subset, and no prior subset is found to be
         // significant, then we know that this last one *is* significant.
         bool read = true;
@@ -810,7 +809,7 @@ auto speck::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
         }
         else {
             const auto newidx1 = it->part_level;
-            m_LIS[newidx1].emplace_back(*it);
+            m_LIS[newidx1].push_back(*it);
             const auto newidx2 = m_LIS[newidx1].size() - 1;
 
 #ifdef QZ_TERM
@@ -852,7 +851,7 @@ auto speck::SPECK3D::m_ready_to_decode() const -> bool
 }
 
 
-auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::array<SPECKSet3D, 8>
+void speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const
 {
     const uint32_t split_x[2] = { set.length_x - set.length_x / 2, set.length_x / 2 };
     const uint32_t split_y[2] = { set.length_y - set.length_y / 2, set.length_y / 2 };
@@ -863,10 +862,12 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
     next_part_lev     += split_y[1] > 0 ? 1 : 0;
     next_part_lev     += split_z[1] > 0 ? 1 : 0;
 
-    std::array<SPECKSet3D, 8> subsets;
     #pragma GCC unroll 8
-    for (auto& s : subsets)
+    for (auto& s : m_8subsets) {
         s.part_level = next_part_lev;
+        s.signif     = SigType::Insig;
+        s.type       = SetType::TypeS;
+    }
 
     constexpr size_t offsets[3] { 1, 2, 4 };
 
@@ -875,7 +876,7 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
     //
     // subset (0, 0, 0)
     constexpr auto idx0 = 0 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
-    auto&  sub0   = subsets[idx0];
+    auto&  sub0   = m_8subsets[idx0];
     sub0.start_x  = set.start_x;
     sub0.length_x = split_x[0];
     sub0.start_y  = set.start_y;
@@ -885,7 +886,7 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
 
     // subset (1, 0, 0)
     constexpr auto idx1 = 1 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
-    auto& sub1    = subsets[idx1];
+    auto& sub1    = m_8subsets[idx1];
     sub1.start_x  = set.start_x + split_x[0];
     sub1.length_x = split_x[1];
     sub1.start_y  = set.start_y;
@@ -895,7 +896,7 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
 
     // subset (0, 1, 0)
     constexpr auto idx2 = 0 * offsets[0] + 1 * offsets[1] + 0 * offsets[2];
-    auto& sub2    = subsets[idx2];
+    auto& sub2    = m_8subsets[idx2];
     sub2.start_x  = set.start_x;
     sub2.length_x = split_x[0];
     sub2.start_y  = set.start_y + split_y[0];
@@ -905,7 +906,7 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
 
     // subset (1, 1, 0)
     constexpr auto idx3 = 1 * offsets[0] + 1 * offsets[1] + 0 * offsets[2];
-    auto& sub3    = subsets[idx3];
+    auto& sub3    = m_8subsets[idx3];
     sub3.start_x  = set.start_x + split_x[0];
     sub3.length_x = split_x[1];
     sub3.start_y  = set.start_y + split_y[0];
@@ -915,7 +916,7 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
 
     // subset (0, 0, 1)
     constexpr auto idx4 = 0 * offsets[0] + 0 * offsets[1] + 1 * offsets[2];
-    auto& sub4    = subsets[idx4];
+    auto& sub4    = m_8subsets[idx4];
     sub4.start_x  = set.start_x;
     sub4.length_x = split_x[0];
     sub4.start_y  = set.start_y;
@@ -925,7 +926,7 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
 
     // subset (1, 0, 1)
     constexpr auto idx5 = 1 * offsets[0] + 0 * offsets[1] + 1 * offsets[2];
-    auto& sub5    = subsets[idx5];
+    auto& sub5    = m_8subsets[idx5];
     sub5.start_x  = set.start_x + split_x[0];
     sub5.length_x = split_x[1];
     sub5.start_y  = set.start_y;
@@ -935,7 +936,7 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
 
     // subset (0, 1, 1)
     constexpr auto idx6 = 0 * offsets[0] + 1 * offsets[1] + 1 * offsets[2];
-    auto& sub6    = subsets[idx6];
+    auto& sub6    = m_8subsets[idx6];
     sub6.start_x  = set.start_x;
     sub6.length_x = split_x[0];
     sub6.start_y  = set.start_y + split_y[0];
@@ -945,19 +946,13 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
 
     // subset (1, 1, 1)
     constexpr auto idx7 = 1 * offsets[0] + 1 * offsets[1] + 1 * offsets[2];
-    auto& sub7    = subsets[idx7];
+    auto& sub7    = m_8subsets[idx7];
     sub7.start_x  = set.start_x + split_x[0];
     sub7.length_x = split_x[1];
     sub7.start_y  = set.start_y + split_y[0];
     sub7.length_y = split_y[1];
     sub7.start_z  = set.start_z + split_z[0];
     sub7.length_z = split_z[1];
-
-    //
-    // My research and tests show that this return is subject to NRVO (Named
-    // Return Value Optimization) even without optimization turned on.
-    //
-    return subsets;
 }
 
 auto speck::SPECK3D::m_partition_S_XY(const SPECKSet3D& set) const -> std::array<SPECKSet3D, 4>
