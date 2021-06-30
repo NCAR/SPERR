@@ -164,19 +164,7 @@ auto SPECK3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
         itr += s.size();
     }
 
-    return std::move(buf);
-}
-
-
-auto SPECK3D_OMP_C::view_encoded_bitstream() const -> const speck::vec8_type&
-{
-    return m_total_stream;
-}
-
-
-auto SPECK3D_OMP_C::release_encoded_bitstream() -> speck::vec8_type&&
-{
-    return std::move(m_total_stream);
+    return buf;
 }
 
 

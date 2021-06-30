@@ -37,8 +37,6 @@ public:
 
     // Provide a copy of the encoded bitstream to the caller.
     auto get_encoded_bitstream() const  -> std::vector<uint8_t>;
-    auto view_encoded_bitstream() const -> const std::vector<uint8_t>&;
-    auto release_encoded_bitstream()    -> std::vector<uint8_t>&&;
 
 
 private:
