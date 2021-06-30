@@ -23,7 +23,7 @@ public:
     template <typename T>
     auto copy_data(const T*, size_t len, dims_type dims ) -> RTNType;
     auto take_data(vecd_type&&,          dims_type dims ) -> RTNType;
-    auto release_data() -> vecd_type;               // Release ownership
+    auto release_data() -> vecd_type&&;             // Release ownership
     auto view_data() const -> const vecd_type&;     // Keep ownership
     auto get_dims() const -> std::array<size_t, 3>;
 

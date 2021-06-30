@@ -151,7 +151,7 @@ auto SPECK3D_OMP_D::decompress( const void* p ) -> RTNType
 }
 
 
-auto SPECK3D_OMP_D::release_data() -> speck::vecd_type
+auto SPECK3D_OMP_D::release_data() -> speck::vecd_type&&
 {
     m_dims = {0, 0, 0};
     return std::move(m_vol_buf);

@@ -149,9 +149,6 @@ auto SPECK3D_OMP_C::compress() -> RTNType
 
 auto SPECK3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
 {
-    //
-    // This method packs a header and chunk bitstreams together to the caller.
-    //
     auto header = m_generate_header();
     if(  header.empty() )
         return std::vector<uint8_t>(0);
@@ -168,6 +165,18 @@ auto SPECK3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
     }
 
     return std::move(buf);
+}
+
+
+auto SPECK3D_OMP_C::view_encoded_bitstream() const -> const speck::vec8_type&
+{
+    return m_total_stream;
+}
+
+
+auto SPECK3D_OMP_C::release_encoded_bitstream() -> speck::vec8_type&&
+{
+    return std::move(m_total_stream);
 }
 
 

@@ -22,7 +22,7 @@ public:
     // Output
     //
     auto view_data() const -> const std::vector<double>&;
-    auto release_data()    -> std::vector<double>;
+    auto release_data()    -> std::vector<double>&&;
     auto get_dims() const  -> std::array<size_t, 3>; // In 2D case, the 3rd value equals 1.
 
     // Action items

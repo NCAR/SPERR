@@ -36,7 +36,7 @@ auto speck::SPECK_Storage::take_data(vecd_type&& coeffs, dims_type dims) -> RTNT
 }
 
 
-auto speck::SPECK_Storage::release_data() -> vecd_type
+auto speck::SPECK_Storage::release_data() -> vecd_type&&
 {
     m_dims = {0, 0, 0};
     return std::move(m_coeff_buf);

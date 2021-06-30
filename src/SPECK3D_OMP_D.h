@@ -28,7 +28,7 @@ public:
     // The pointer passed in here MUST be the same as the one passed to `use_bitstream`.
     auto decompress( const void* ) -> RTNType;
 
-    auto release_data() -> std::vector<double>;
+    auto release_data() -> std::vector<double>&&;
     auto view_data() const -> const std::vector<double>&;
     template<typename T>
     auto get_data() const -> std::vector<T>;

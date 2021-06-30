@@ -46,7 +46,7 @@ void speck::SPERR::set_tolerance(double t)
     m_tolerance = t;
 }
 
-auto speck::SPERR::release_outliers() -> std::vector<Outlier>
+auto speck::SPERR::release_outliers() -> std::vector<Outlier>&&
 {
     return std::move(m_LOS);
 }

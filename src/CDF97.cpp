@@ -57,7 +57,7 @@ auto speck::CDF97::view_data() const -> const vecd_type&
     return m_data_buf;
 }
 
-auto speck::CDF97::release_data() -> vecd_type
+auto speck::CDF97::release_data() -> vecd_type&&
 {
     m_dims = {0, 0, 0};
     return std::move(m_data_buf);

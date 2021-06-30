@@ -36,7 +36,9 @@ public:
     auto compress() -> RTNType;
 
     // Provide a copy of the encoded bitstream to the caller.
-    auto get_encoded_bitstream() const -> std::vector<uint8_t>;
+    auto get_encoded_bitstream() const  -> std::vector<uint8_t>;
+    auto view_encoded_bitstream() const -> const std::vector<uint8_t>&;
+    auto release_encoded_bitstream()    -> std::vector<uint8_t>&&;
 
 
 private:
@@ -46,6 +48,7 @@ private:
 
     std::vector<speck::vecd_type>   m_chunk_buffers;
     std::vector<speck::vec8_type>   m_encoded_streams;
+    speck::vec8_type                m_total_stream;
 
     const size_t m_header_magic = 26; // header size would be this number + num_chunks * 4
 

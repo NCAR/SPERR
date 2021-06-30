@@ -118,7 +118,7 @@ auto SPECK2D_Decompressor::view_data() const -> const std::vector<double>&
 }
 
 
-auto SPECK2D_Decompressor::release_data() -> std::vector<double>
+auto SPECK2D_Decompressor::release_data() -> std::vector<double>&&
 {
     m_dims = {0, 0, 0}; 
     return std::move(m_val_buf);

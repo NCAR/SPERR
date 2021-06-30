@@ -51,11 +51,11 @@ public:
     void set_tolerance(double);                          // set error tolerance (Must be positive)
 
     // Output
-    auto release_outliers() -> std::vector<Outlier>; // Release ownership of decoded outliers
+    auto release_outliers() -> std::vector<Outlier>&&;   // Release ownership of decoded outliers
     auto view_outliers() -> const std::vector<Outlier>&;
-    auto num_of_outliers() const -> size_t;          // How many outliers are decoded?
-    auto num_of_bits() const -> size_t;              // How many bits are generated?
-    auto max_coeff_bits() const -> int32_t;          // Will be used when decoding.
+    auto num_of_outliers() const -> size_t;              // How many outliers are decoded?
+    auto num_of_bits() const -> size_t;                  // How many bits are generated?
+    auto max_coeff_bits() const -> int32_t;              // Will be used when decoding.
 
     auto get_encoded_bitstream() const -> std::vector<uint8_t>;
     auto parse_encoded_bitstream( const void*, size_t ) -> RTNType;

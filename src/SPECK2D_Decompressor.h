@@ -28,7 +28,7 @@ public:
     template<typename T>
     auto get_data()  const -> std::vector<T>;
     auto view_data() const -> const std::vector<double>&;
-    auto release_data()    -> std::vector<double>;
+    auto release_data()    -> std::vector<double>&&;
     auto get_dims()  const -> std::array<size_t, 3>;
 
 private:
