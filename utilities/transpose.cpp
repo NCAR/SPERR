@@ -37,12 +37,12 @@ int main( int argc, char* argv[] )
         return -1;
     }
 
-    const char* in_name   = argv[1];
-    const char* out_name  = argv[5];
-    const auto  in_dimx   = std::atol(argv[2]);
-    const auto  in_dimy   = std::atol(argv[3]);
-    const auto  in_dimz   = std::atol(argv[4]);
-    const auto  total_len = in_dimx * in_dimy * in_dimz;
+    const char*  in_name   = argv[1];
+    const char*  out_name  = argv[5];
+    const size_t in_dimx   = std::atol(argv[2]);
+    const size_t in_dimy   = std::atol(argv[3]);
+    const size_t in_dimz   = std::atol(argv[4]);
+    const auto   total_len = in_dimx * in_dimy * in_dimz;
 
     std::FILE*  f = std::fopen( in_name, "rb" );
     if( f == nullptr ) {
@@ -55,13 +55,16 @@ int main( int argc, char* argv[] )
     auto nread  = std::fread( in_buf.get(), sizeof(FL), total_len, f );
     std::fclose(f);
     if( nread != total_len ) {
-        std::printf("file read error: expected to read %ld vals, actually read %ld vals.\n",
+        std::printf("file read error: expected to read %u vals, actually read %u vals.\n",
                      total_len, nread );
         return -1;
     }
+    else {
+        std::printf("read input file %s at (%u X %u X %u)\n", in_name, in_dimx, in_dimy, in_dimz);
+    }
 
     // What output ordering is needed? 
-    const auto in_dims  = std::array<size_t, 3>{size_t(in_dimx), size_t(in_dimy), size_t(in_dimz)};
+    const auto in_dims  = std::array<size_t, 3>{in_dimx, in_dimy, in_dimz};
     const auto out_dims = transpose_matthias( in_dims );
     
     const auto special = float{3.14};
@@ -94,10 +97,13 @@ int main( int argc, char* argv[] )
     auto nwrite = std::fwrite( out_buf.get(), sizeof(FL), total_len, f );
     std::fclose( f );
     if( nwrite != total_len ) {
-        std::printf("file write error: expected to write %ld vals, actually write %ld vals.\n",
+        std::printf("file write error: expected to write %u vals, actually write %u vals.\n",
                      total_len, nwrite );
         return -1;
     }
-
-    return 0;
+    else {
+        std::printf("written output file %s at (%u X %u X %u)\n", out_name,
+                     out_dims[0], out_dims[1], out_dims[2] );
+        return 0;
+    }
 }
