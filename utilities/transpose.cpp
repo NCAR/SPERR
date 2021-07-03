@@ -55,12 +55,13 @@ int main( int argc, char* argv[] )
     auto nread  = std::fread( in_buf.get(), sizeof(FL), total_len, f );
     std::fclose(f);
     if( nread != total_len ) {
-        std::printf("file read error: expected to read %u vals, actually read %u vals.\n",
+        std::printf("file read error: expected to read %lu vals, actually read %lu vals.\n",
                      total_len, nread );
         return -1;
     }
     else {
-        std::printf("read input file %s at (%u X %u X %u)\n", in_name, in_dimx, in_dimy, in_dimz);
+        std::printf("read input file %s at (%lu X %lu X %lu)\n", in_name, 
+                     in_dimx, in_dimy, in_dimz);
     }
 
     // What output ordering is needed? 
@@ -97,12 +98,12 @@ int main( int argc, char* argv[] )
     auto nwrite = std::fwrite( out_buf.get(), sizeof(FL), total_len, f );
     std::fclose( f );
     if( nwrite != total_len ) {
-        std::printf("file write error: expected to write %u vals, actually write %u vals.\n",
+        std::printf("file write error: expected to write %lu vals, actually write %lu vals.\n",
                      total_len, nwrite );
         return -1;
     }
     else {
-        std::printf("written output file %s at (%u X %u X %u)\n", out_name,
+        std::printf("written output file %s at (%lu X %lu X %lu)\n", out_name,
                      out_dims[0], out_dims[1], out_dims[2] );
         return 0;
     }
