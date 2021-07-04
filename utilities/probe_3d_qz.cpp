@@ -18,10 +18,13 @@
 //
 // This file should only be compiled in QZ_TERM mode.
 //
-auto test_configuration_omp( const float* in_buf, speck::dims_type dims, 
-                             speck::dims_type chunks,
-                             int32_t qz_level, double tolerance,
-                             size_t  omp_num_threads ) -> int 
+auto test_configuration_omp( const float*         in_buf, 
+                             speck::dims_type     dims, 
+                             speck::dims_type     chunks,
+                             int32_t              qz_level, 
+                             double               tolerance,
+                             size_t               omp_num_threads, 
+                             std::vector<float>&  output_buf ) -> int 
 {
     // Setup
     const size_t total_vals = dims[0] * dims[1] * dims[2];
@@ -80,86 +83,20 @@ auto test_configuration_omp( const float* in_buf, speck::dims_type dims,
     diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
     std::cout << " -> Decompression takes time: " << diff_time << "ms\n";
 
-    auto decoded_volume = decompressor.get_data<float>();
-    if( decoded_volume.size() != total_vals )
+    output_buf = decompressor.get_data<float>();
+    if( output_buf.size() != total_vals )
         return 1;
 
 
     // Collect statistics
     float rmse, lmax, psnr, arr1min, arr1max;
-    speck::calc_stats( in_buf, decoded_volume.data(), total_vals,
+    speck::calc_stats( in_buf, output_buf.data(), total_vals,
                        &rmse, &lmax, &psnr, &arr1min, &arr1max);
     printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
     printf("    Reconstructed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
 
     return 0;
 }
-
-
-#if 0
-auto test_configuration_single_block( const float* in_buf, std::array<size_t, 3> dims, 
-                                      int32_t qz_level, double tolerance ) -> int 
-{
-    // Setup
-    const size_t total_vals = dims[0] * dims[1] * dims[2];
-    SPECK3D_Compressor compressor;
-    compressor.copy_data( in_buf, total_vals, dims[0], dims[1], dims[2] );
-    compressor.set_qz_level( qz_level );
-    compressor.set_tolerance( tolerance );
-
-    // Perform compression
-    auto start_time = std::chrono::steady_clock::now();
-    auto rtn  = compressor.compress();
-    if(  rtn != RTNType::Good )
-        return 1;
-    auto end_time = std::chrono::steady_clock::now();
-    auto diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
-    std::cout << " -> Compression takes time: " << diff_time << "ms\n";
-    auto encoded_stream = compressor.get_encoded_bitstream();
-    auto otl_count = compressor.get_outlier_stats();
-
-    // Print some analysis
-    if( speck::empty_buf( encoded_stream ) )
-        return 1;
-    printf("    Total compressed size in bytes = %ld, average bpp = %.2f\n", 
-               encoded_stream.second, float(encoded_stream.second * 8) / float(total_vals) );
-    if( otl_count.first == 0 ) {
-        printf("    There are no outliers at this quantization level!\n");
-    }
-    else {
-        printf("    Outliers: num = %ld, pct = %.2f%%, bpp ~ %.2f, "
-                   "using total storage ~ %.2f%%\n",
-                otl_count.first, float(otl_count.first * 100) / float(total_vals),
-                float(otl_count.second * 8) / float(otl_count.first),
-                float(otl_count.second * 100) / float(encoded_stream.second) );
-    }
-
-    // Perform decompression
-    SPECK3D_Decompressor decompressor;
-    if( decompressor.use_bitstream( encoded_stream.first.get(), encoded_stream.second ) !=
-                                    RTNType::Good )
-        return 1;
-    start_time = std::chrono::steady_clock::now();
-    rtn = decompressor.decompress();
-    if( rtn != RTNType::Good )
-        return 1;
-    end_time = std::chrono::steady_clock::now();
-    diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
-    std::cout << " -> Decompression takes time: " << diff_time << "ms\n";
-    auto decoded_volume = decompressor.get_decompressed_volume<float>();
-    if( !speck::size_is( decoded_volume, total_vals ) )
-        return 1;
-
-    // Collect statistics
-    float rmse, lmax, psnr, arr1min, arr1max;
-    speck::calc_stats( in_buf, decoded_volume.first.get(), total_vals,
-                       &rmse, &lmax, &psnr, &arr1min, &arr1max);
-    printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
-    printf("    Reconstructed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
-
-    return 0;
-}
-#endif
 
 
 int main( int argc, char* argv[] )
@@ -206,13 +143,17 @@ int main( int argc, char* argv[] )
 
     const std::array<size_t, 3> dims = {dims_v[0], dims_v[1], dims_v[2]};
 
-    // Read and keep a copy of input data (will be used for evaluation)
+    //
+    // Read and keep a copy of input data (will be re-used for different qz levels).
+    // Also create an output buffer that keeps the decompressed volume.
+    //
     const size_t total_vals = dims[0] * dims[1] * dims[2];
     auto input_buf = speck::read_whole_file<float>( input_file.c_str() );
     if( input_buf.size() != total_vals ) {
         std::cerr << "  -- reading input file failed!" << std::endl;
         return 1;
     }
+    auto output_buf = std::vector<float>();
 
     //
     // Let's do an initial analysis to pick an initial QZ level.
@@ -240,10 +181,10 @@ int main( int argc, char* argv[] )
         }
     }
 
-    printf("Initial analysis: absolute error tolerance = %.2e, quantization level = %d ...  \n", 
+    printf("Initial analysis: absolute error tolerance = %.2e, quantization level = %d ...  \n\n", 
             tolerance, qz_level);
     int rtn = test_configuration_omp( input_buf.data(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
-                                      qz_level, tolerance, omp_num_threads );
+                                      qz_level, tolerance, omp_num_threads, output_buf );
     if( rtn != 0 )
         return rtn;
 
@@ -251,33 +192,53 @@ int main( int argc, char* argv[] )
     // Now it enters the interactive session
     //
     char answer;
-    std::cout << "Do you want to explore other quantization levels? [y/n]:  ";
+    std::cout << "\nDo you want to explore another quantization level,            (y)\n"
+                   "               output the current decompressed file to disk,  (o)\n"
+                   "               or quit ?                                      (q): ";
     std::cin >> answer;
-    while ( std::tolower(answer) == 'y' ) {
-        int32_t tmp;
-        std::cout << std::endl << "Please input a new qz level to test: ";
-        std::cin >> tmp;
-        while (tmp < qz_level - 15 || tmp > qz_level + 15) {
-            printf("Please input a qz_level within (-15, 15) of %d:  ", qz_level);
-            std::cin >> tmp;
-        }
-        qz_level = tmp;
-        printf("\nNow testing qz_level = %d ...\n", qz_level);
-    
-        rtn = test_configuration_omp( input_buf.data(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
-                                      qz_level, tolerance, omp_num_threads );
-        if ( rtn != 0 )
-            return rtn;
 
-        std::cout << "Do you want to try other qz level? [y/n]:  ";
+    while ( std::tolower(answer) == 'y' || std::tolower(answer) == 'o' ) {
+
+        switch (std::tolower(answer)) {
+          case 'y' : 
+            int32_t tmp;
+            std::cout << std::endl << "Please input a new qz level to test: ";
+            std::cin >> tmp;
+            while (tmp < qz_level - 15 || tmp > qz_level + 15) {
+                printf("Please input a qz_level within (-15, 15) of %d:  ", qz_level);
+                std::cin >> tmp;
+            }
+            qz_level = tmp;
+            printf("\nNow testing qz_level = %d ...\n", qz_level);
+        
+            rtn = test_configuration_omp( input_buf.data(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
+                                          qz_level, tolerance, omp_num_threads, output_buf );
+            if ( rtn != 0 )
+                return rtn;
+
+            break;
+
+          case 'o':
+            std::string fname;
+            std::cout << std::endl << "Please input a filename to use: ";
+            std::cin >> fname;
+            auto rtn2 = speck::write_n_bytes( fname.c_str(), 
+                               sizeof(decltype(output_buf)::value_type) * output_buf.size(),
+                               output_buf.data() );
+            if( rtn2 == RTNType::Good )
+                std::cout << "written decompressed file: " << fname << std::endl;
+            else {
+                std::cerr << "writign decompressed file error: " << fname << std::endl;
+                return 1;
+            }
+        } // end of switch
+
+        std::cout << "\nDo you want to explore another quantization level,            (y)\n"
+                       "               output the current decompressed file to disk,  (o)\n"
+                       "               or quit ?                                      (q): ";
         std::cin >> answer;
         answer = std::tolower(answer);
-        while( answer != 'y' && answer != 'n' ) {
-            std::cout << "Do you want to try other qz_level? [y/n]:  ";
-            std::cin >> answer;
-            answer = std::tolower(answer);
-        }
-    }
+    } // end of while
     
     std::cout << "\nHave a good day! \n";
     

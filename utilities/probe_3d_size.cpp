@@ -15,93 +15,13 @@
 // This file should only be compiled in non QZ_TERM mode.
 #ifndef QZ_TERM
 
-#if 0
-auto use_compressor( const float* in_buf, std::array<size_t, 3> dims, float bpp )
-                    -> speck::smart_buffer_uint8 
-{
-    const size_t total_vals = dims[0] * dims[1] * dims[2];
-    SPECK3D_Compressor compressor;
-    if( compressor.copy_data( in_buf, total_vals, dims[0], dims[1], dims[2] ) != speck::RTNType::Good ) {
-        std::cerr << "  -- copying data failed!" << std::endl;
-        return {nullptr, 0};
-    }
 
-    if( compressor.set_bpp( bpp ) != speck::RTNType::Good ) {
-        std::cerr << "  -- setting BPP failed!\n";
-        return {nullptr, 0};
-    }
-
-    auto start = std::chrono::steady_clock::now();
-    if( compressor.compress() != speck::RTNType::Good ) {
-        std::cerr << "  -- compression failed!\n";
-        return {nullptr, 0};
-    }
-    auto end = std::chrono::steady_clock::now();
-    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-    std::cout << " -> Compression takes time  : " << diff << "ms\n";
-
-    auto stream = compressor.get_encoded_bitstream();
-    if( stream.first == nullptr || stream.second == 0 ) {
-        std::cerr << "  -- obtaining encoded bitstream failed!\n";
-        return {nullptr, 0};
-    }
-
-    return stream;
-}
-
-auto use_decompressor( speck::smart_buffer_uint8 stream ) -> speck::smart_buffer_f
-{
-    SPECK3D_Decompressor decompressor;
-    if( decompressor.use_bitstream( stream.first.get(), stream.second ) != RTNType::Good )
-        return {nullptr, 0};
-
-    auto start = std::chrono::steady_clock::now();
-    if( decompressor.decompress() != speck::RTNType::Good ) {
-        std::cerr << "  -- decompression failed!\n";
-        return {nullptr, 0};
-    }
-    auto end = std::chrono::steady_clock::now();
-    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-    std::cout << " -> Decompression takes time: " << diff << "ms\n";
-
-    auto vol = decompressor.get_decompressed_volume<float>();
-    if( vol.first == nullptr ) {
-        std::cerr << "  -- obtaining reconstructed volume failed!\n";
-        return {nullptr, 0};
-    }
-
-    return vol;
-}
-
-auto test_configuration( const float* in_buf, std::array<size_t, 3> dims, float bpp ) -> int
-{
-    const size_t total_vals = dims[0] * dims[1] * dims[2];
-
-    auto stream = use_compressor( in_buf, dims, bpp );
-    if( stream.first == nullptr || stream.second == 0 )
-        return 1;
-    printf("    Total compressed size in bytes = %ld, average bpp = %.2f\n", 
-                stream.second, float(stream.second) * 8.0f / float(total_vals) );
-
-    auto reconstruct = use_decompressor( std::move(stream) );
-    if( reconstruct.first == nullptr || reconstruct.second != total_vals )
-        return 1;
-
-    float rmse, lmax, psnr, arr1min, arr1max;
-    speck::calc_stats( in_buf, reconstruct.first.get(), total_vals,
-                       &rmse, &lmax, &psnr, &arr1min, &arr1max);
-
-    printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
-    printf("    RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
-    
-    return 0;
-}
-#endif
-
-
-auto test_configuration_omp( const float* in_buf, speck::dims_type dims,
-                             speck::dims_type chunks,
-                             float bpp, size_t omp_num_threads ) -> int
+auto test_configuration_omp( const float*         in_buf, 
+                             speck::dims_type     dims,
+                             speck::dims_type     chunks,
+                             float                bpp, 
+                             size_t               omp_num_threads,
+                             std::vector<float>&  output_buf ) -> int
 {
     // Setup
     const size_t total_vals = dims[0] * dims[1] * dims[2];
@@ -146,14 +66,14 @@ auto test_configuration_omp( const float* in_buf, speck::dims_type dims,
     diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
     std::cout << " -> Decompression takes time: " << diff_time << "ms\n";
 
-    auto decoded_volume = decompressor.get_data<float>();
-    if( decoded_volume.size() != total_vals )
+    output_buf = decompressor.get_data<float>();
+    if( output_buf.size() != total_vals )
         return 1;
 
 
     // Collect statistics
     float rmse, lmax, psnr, arr1min, arr1max;
-    speck::calc_stats( in_buf, decoded_volume.data(), total_vals,
+    speck::calc_stats( in_buf, output_buf.data(), total_vals,
                        &rmse, &lmax, &psnr, &arr1min, &arr1max);
     printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
     printf("    Reconstructed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
@@ -195,13 +115,17 @@ int main( int argc, char* argv[] )
 
     const std::array<size_t, 3> dims = {dims_v[0], dims_v[1], dims_v[2]};
 
-    // Read and keep a copy of input data (will be used for evaluation)
+    //
+    // Read and keep a copy of input data (will be used for testing different configurations)
+    // Also create a buffer to hold decompressed data.
+    //
     const size_t total_vals = dims[0] * dims[1] * dims[2];
     auto input_buf = speck::read_whole_file<float>( input_file.c_str() );
     if( input_buf.size() != total_vals ) {
         std::cerr << "  -- reading input file failed!" << std::endl;
         return 1;
     }
+    auto output_buf = std::vector<float>();
 
     //
     // Let's do an initial analysis
@@ -211,7 +135,7 @@ int main( int argc, char* argv[] )
     }
     printf("Initial analysis: compression at %.2f bit-per-pixel...  \n", bpp);
     int rtn = test_configuration_omp( input_buf.data(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
-                                      bpp, omp_num_threads );
+                                      bpp, omp_num_threads, output_buf );
     if( rtn != 0 )
         return rtn;
 
@@ -219,32 +143,51 @@ int main( int argc, char* argv[] )
     // Now it enters the interactive session
     //
     char answer;
-    std::cout << "Do you want to explore other bit-per-pixel values? [y/n]:  ";
+    std::cout << "\nDo you want to explore other bit-per-pixel values             (y),\n"
+                   "               output the current decompressed file to disk,  (o),\n"
+                   "               or quit?                                       (q): ";
     std::cin >> answer;
-    while ( std::tolower(answer) == 'y' ) {
-        bpp = -1.0;
-        std::cout << "\nPlease input a new bpp value to test [0.0 - 64.0]:  ";
-        std::cin >> bpp;
-        while (bpp <= 0.0 || bpp >= 64.0 ) {
-            std::cout << "Please input a bpp value inbetween [0.0 - 64.0]:  ";
-            std::cin >> bpp;
-        }
-        printf("\nNow testing bpp = %.2f ...\n", bpp);
-    
-        rtn = test_configuration_omp( input_buf.data(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
-                                      bpp, omp_num_threads );
-        if ( rtn != 0 )
-            return rtn;
+    while ( std::tolower(answer) == 'y' || std::tolower(answer) == 'o' ) {
 
-        std::cout << "Do you want to try other bpp value? [y/n]:  ";
+        switch (std::tolower(answer) ) {
+          case 'y': 
+            bpp = -1.0;
+            std::cout << "\nPlease input a new bpp value to test [0.0 - 64.0]:  ";
+            std::cin >> bpp;
+            while (bpp <= 0.0 || bpp >= 64.0 ) {
+                std::cout << "Please input a bpp value inbetween [0.0 - 64.0]:  ";
+                std::cin >> bpp;
+            }
+            printf("\nNow testing bpp = %.2f ...\n", bpp);
+        
+            rtn = test_configuration_omp( input_buf.data(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
+                                          bpp, omp_num_threads, output_buf );
+            if ( rtn != 0 )
+                return rtn;
+
+            break;
+
+          case 'o':
+            std::string fname;
+            std::cout << std::endl << "Please input a filename to use: ";
+            std::cin >> fname;
+            auto rtn2 = speck::write_n_bytes( fname.c_str(), 
+                               sizeof(decltype(output_buf)::value_type) * output_buf.size(),
+                               output_buf.data() );
+            if( rtn2 == RTNType::Good )
+                std::cout << "written decompressed file: " << fname << std::endl;
+            else {
+                std::cerr << "writign decompressed file error: " << fname << std::endl;
+                return 1;
+            }
+        } // end of switch
+
+        std::cout << "\nDo you want to explore other bit-per-pixel values,            (y)\n"
+                       "               output the current decompressed file to disk,  (o)\n"
+                       "               or quit?                                       (q): ";
         std::cin >> answer;
         answer = std::tolower(answer);
-        while( answer != 'y' && answer != 'n' ) {
-            std::cout << "Do you want to try other bpp value? [y/n]:  ";
-            std::cin >> answer;
-            answer = std::tolower(answer);
-        }
-    }
+    } // end of while
     
     std::cout << "\nHave a good day! \n";
     
