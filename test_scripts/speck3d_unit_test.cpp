@@ -69,7 +69,7 @@ public:
 
         if( compressor.compress() != RTNType::Good )
             return 1;
-        auto stream = compressor.get_encoded_bitstream();
+        auto stream = compressor.release_encoded_bitstream();
         if( stream.empty() )
             return 1;
 
