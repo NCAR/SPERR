@@ -42,7 +42,7 @@ auto SPECK3D_Compressor::view_encoded_bitstream() const -> const std::vector<uin
 }
 
 
-auto SPECK3D_Compressor::get_encoded_bitstream() -> std::vector<uint8_t>
+auto SPECK3D_Compressor::get_encoded_bitstream() -> std::vector<uint8_t>&&
 {
     return std::move(m_encoded_stream);
 }

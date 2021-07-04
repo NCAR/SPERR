@@ -130,7 +130,7 @@ auto SPECK3D_OMP_C::compress() -> RTNType
 
         // Action items
         chunk_rtn[i]         = compressor.compress();
-        m_encoded_streams[i] = compressor.view_encoded_bitstream();
+        m_encoded_streams[i] = compressor.release_encoded_bitstream();
 
 #ifdef QZ_TERM
         m_outlier_stats[i] = compressor.get_outlier_stats();
