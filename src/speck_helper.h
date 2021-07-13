@@ -6,7 +6,7 @@
 //
 
 #include <array>
-#include <cstddef> // size_t
+#include <cstddef> // std::size_t
 #include <cstdint> // fixed width integers
 #include <cstdlib>
 #include <utility> // std::pair
@@ -16,6 +16,8 @@
 #include "SperrConfig.h"
 
 namespace speck {
+
+using std::size_t; // Seems most appropriate
 
 //
 // A few shortcuts
