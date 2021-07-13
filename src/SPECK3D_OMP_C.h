@@ -24,6 +24,8 @@ public:
     template<typename T>
     auto use_volume( const T*, size_t ) -> RTNType;
 
+    void toggle_conditioning( std::array<bool, 8> );
+
 #ifdef QZ_TERM
     void set_qz_level( int32_t );
     auto set_tolerance( double ) -> RTNType;
@@ -40,9 +42,12 @@ public:
 
 
 private:
-    speck::dims_type  m_dims        = {0, 0, 0}; // Dimension of the entire volume
-    speck::dims_type  m_chunk_dims  = {0, 0, 0}; // Preferred dimensions for a chunk
-    size_t            m_num_threads = 1;         // number of theads to use in OpenMP sections
+
+    speck::dims_type                m_dims        = {0, 0, 0}; // Dimension of the entire volume
+    speck::dims_type                m_chunk_dims  = {0, 0, 0}; // Preferred dimensions for a chunk
+    size_t                          m_num_threads = 1;
+    std::array<bool, 8>             m_conditioning_settings = {true,  false, false, false,
+                                                               false, false, false, false};
 
     std::vector<speck::vecd_type>   m_chunk_buffers;
     std::vector<speck::vec8_type>   m_encoded_streams;

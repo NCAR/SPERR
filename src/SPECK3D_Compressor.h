@@ -30,6 +30,8 @@ public:
     // Accept incoming data: take ownership of a memory block
     auto take_data( std::vector<double>&& buf, speck::dims_type dims ) -> RTNType;
 
+    void toggle_conditioning( std::array<bool, 8> );
+
 #ifdef QZ_TERM
     void set_qz_level( int32_t );
     auto set_tolerance( double ) -> RTNType;
@@ -54,6 +56,9 @@ private:
     speck::Conditioner          m_conditioner;
     speck::CDF97                m_cdf;
     speck::SPECK3D              m_encoder;
+
+    std::array<bool, 8>         m_conditioning_settings = {true,  false, false, false,
+                                                           false, false, false, false};
 
     // Store bitstreams from the conditioner and SPECK encoding, and the overall bitstream.
     speck::vec8_type            m_condi_stream;

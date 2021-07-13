@@ -65,8 +65,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     std::copy( m_val_buf.begin(), m_val_buf.end(), m_val_buf2.begin() );
 
     // Step 1: data (m_val_buf2) goes through the conditioner
-    m_conditioner.toggle_all_false();
-    m_conditioner.toggle_subtract_mean( true );
+    m_conditioner.toggle_all_settings( m_conditioning_settings );
     auto [rtn, condi_meta] = m_conditioner.condition( m_val_buf2 );
     if( rtn != RTNType::Good )
         return rtn;
@@ -154,8 +153,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     m_speck_stream.clear();
 
     // Step 1: data goes through the conditioner 
-    m_conditioner.toggle_all_false();
-    m_conditioner.toggle_subtract_mean( true );
+    m_conditioner.toggle_all_settings( m_conditioning_settings );
     auto [rtn, condi_meta] = m_conditioner.condition( m_val_buf );
     if( rtn != RTNType::Good )
         return rtn;
@@ -296,3 +294,9 @@ auto SPECK3D_Compressor::set_bpp( float bpp ) -> RTNType
     }
 }
 #endif
+
+
+void SPECK3D_Compressor::toggle_conditioning( std::array<bool, 8> b8 )
+{
+    m_conditioning_settings = b8;
+}

@@ -34,7 +34,7 @@ auto speck::Conditioner::get_meta_size() const -> size_t
     return m_meta_size;
 }
 
-void speck::Conditioner::toggle_8_bools( std::array<bool, 8> b8 )
+void speck::Conditioner::toggle_all_settings( std::array<bool, 8> b8 )
 {
     m_s_mean = b8[0];
     m_d_rms  = b8[1];

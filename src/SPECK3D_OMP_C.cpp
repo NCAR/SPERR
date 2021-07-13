@@ -26,6 +26,12 @@ void SPECK3D_OMP_C::set_num_threads( size_t n )
 }
 
 
+void SPECK3D_OMP_C::toggle_conditioning( std::array<bool, 8> b8 )
+{
+    m_conditioning_settings = b8;
+}
+
+
 #ifdef QZ_TERM
 void SPECK3D_OMP_C::set_qz_level( int32_t q )
 {
@@ -120,6 +126,8 @@ auto SPECK3D_OMP_C::compress() -> RTNType
 
         // The following few operations have no chance to fail.
         compressor.take_data(std::move(m_chunk_buffers[i]), {chunks[i][1], chunks[i][3], chunks[i][5]});
+
+        compressor.toggle_conditioning( m_conditioning_settings );
 
 #ifdef QZ_TERM
         compressor.set_qz_level(  m_qz_lev );
