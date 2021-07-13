@@ -74,11 +74,9 @@ private:
 #endif
 
 #ifdef USE_ZSTD
-    // The following resources are used repeatedly during the lifespan of an instance,
-    // but they only play temporary roles, so OK to be mutable.
-    mutable speck::vec8_type    m_zstd_buf;
-    mutable std::unique_ptr<ZSTD_CCtx, decltype(&ZSTD_freeCCtx)>  m_cctx =
-            {nullptr, &ZSTD_freeCCtx};
+    std::unique_ptr<uint8_t[]>  m_zstd_buf     = nullptr;
+    size_t                      m_zstd_buf_len = 0;
+    std::unique_ptr<ZSTD_CCtx, decltype(&ZSTD_freeCCtx)> m_cctx = {nullptr, &ZSTD_freeCCtx};
 #endif
 
     auto m_assemble_encoded_bitstream() -> speck::RTNType;

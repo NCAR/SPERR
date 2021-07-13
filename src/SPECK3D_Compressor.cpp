@@ -206,14 +206,19 @@ auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
             m_cctx.reset(ctx_p);
     }
 
-    m_zstd_buf.resize( total_size );
-    std::copy( m_condi_stream.begin(), m_condi_stream.end(), m_zstd_buf.begin() );
-    auto zstd_itr = m_zstd_buf.begin() + m_condi_stream.size();
-    std::copy( m_speck_stream.begin(), m_speck_stream.end(), zstd_itr );
+    // If `m_zstd_buf` is not big enough for the decompressed buffer, we re-size it.
+    if( total_size     > m_zstd_buf_len ) {
+        m_zstd_buf_len = std::max( total_size, m_zstd_buf_len * 2 );
+        m_zstd_buf     = std::make_unique<uint8_t[]>(m_zstd_buf_len);
+    }
+    auto zstd_itr = m_zstd_buf.get();
+    std::copy(  m_condi_stream.begin(), m_condi_stream.end(), zstd_itr );
+    zstd_itr += m_condi_stream.size();
+    std::copy(  m_speck_stream.begin(), m_speck_stream.end(), zstd_itr );
     zstd_itr += m_speck_stream.size();
 
 #ifdef QZ_TERM
-    std::copy( m_sperr_stream.begin(), m_sperr_stream.end(), zstd_itr );
+    std::copy(  m_sperr_stream.begin(), m_sperr_stream.end(), zstd_itr );
     zstd_itr += m_sperr_stream.size();
 #endif
 
@@ -221,7 +226,7 @@ auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
     m_encoded_stream.resize( comp_buf_size );
     const size_t comp_size = ZSTD_compressCCtx( m_cctx.get(),
                                                 m_encoded_stream.data(),  comp_buf_size,
-                                                m_zstd_buf.data(), total_size,
+                                                m_zstd_buf.get(), total_size,
                                                 ZSTD_CLEVEL_DEFAULT + 6 );
     if( ZSTD_isError( comp_size ) )
         return RTNType::ZSTDError;

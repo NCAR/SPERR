@@ -34,6 +34,11 @@ auto speck::Conditioner::get_meta_size() const -> size_t
     return m_meta_size;
 }
 
+void speck::Conditioner::toggle_8_bools( std::array<bool, 8> b8 )
+{
+    m_s_mean = b8[0];
+    m_d_rms  = b8[1];
+}
 
 auto speck::Conditioner::m_calc_mean( const vecd_type& buf ) const -> double
 {
@@ -113,7 +118,7 @@ auto speck::Conditioner::condition( vecd_type& buf ) const -> std::pair<RTNType,
     meta_type meta;
     meta.fill( 0 );
     double mean = 0.0;
-    double rms  = 1.0;
+    double rms  = 0.0;
 
     // If divide_by_rms is requested, need to make sure rms is non-zero
     if( m_d_rms ) {
@@ -157,7 +162,7 @@ auto speck::Conditioner::inverse_condition( vecd_type& buf, const uint8_t* meta 
     bool   b8[8];
     speck::unpack_8_booleans( b8, meta[0] );
     double mean = 0.0;
-    double rms  = 1.0;
+    double rms  = 0.0;
     size_t pos  = 1;
     std::memcpy( &mean, meta + pos, sizeof(mean) );
     pos += sizeof(mean);

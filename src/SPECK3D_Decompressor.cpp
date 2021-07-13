@@ -20,7 +20,7 @@ auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType
     if( content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN )
         return RTNType::ZSTDError;
 
-    // If `m_zstd_buf` is not big enough for the decompressed buffer, we re-size it 
+    // If `m_zstd_buf` is not big enough for the decompressed buffer, we re-size it.
     if( content_size   > m_zstd_buf_len ) {
         m_zstd_buf_len = std::max( content_size, m_zstd_buf_len * 2 );
         m_zstd_buf     = std::make_unique<uint8_t[]>(m_zstd_buf_len);

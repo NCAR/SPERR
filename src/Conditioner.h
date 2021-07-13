@@ -18,6 +18,8 @@ public:
     void toggle_all_false();
     void toggle_subtract_mean( bool );
     void toggle_divide_by_rms( bool );
+    void toggle_8_bools( std::array<bool, 8> );
+
     auto get_meta_size() const -> size_t;
 
     // The 17 bytes returned by `condition()`: 1 byte (8 booleans) followed by two doubles.
