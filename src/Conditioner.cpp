@@ -8,27 +8,6 @@
 
 #include "Conditioner.h"
 
-speck::Conditioner::Conditioner(bool sub_mean)
-{
-    m_s_mean = sub_mean;
-}
-
-void speck::Conditioner::toggle_all_false()
-{
-    m_s_mean = false;
-    m_d_rms  = false;
-}
-
-void speck::Conditioner::toggle_subtract_mean( bool b )
-{
-    m_s_mean = b;
-}
-
-void speck::Conditioner::toggle_divide_by_rms( bool b )
-{
-    m_d_rms = b;
-}
-
 auto speck::Conditioner::get_meta_size() const -> size_t
 {
     return m_meta_size;
