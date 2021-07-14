@@ -20,6 +20,7 @@ auto test_configuration_omp( const float*         in_buf,
                              speck::dims_type     dims,
                              speck::dims_type     chunks,
                              float                bpp, 
+                             std::array<bool, 8>  condi_settings,
                              size_t               omp_num_threads,
                              std::vector<float>&  output_buf ) -> int
 {
@@ -28,8 +29,9 @@ auto test_configuration_omp( const float*         in_buf,
     SPECK3D_OMP_C compressor;
     compressor.set_dims(dims);
     compressor.prefer_chunk_dims( chunks );
-    compressor.set_num_threads( omp_num_threads );
     compressor.set_bpp( bpp );
+    compressor.toggle_conditioning( condi_settings );
+    compressor.set_num_threads( omp_num_threads );
     auto rtn = compressor.use_volume( in_buf, total_vals );
     if(  rtn != RTNType::Good )
         return 1;
@@ -107,13 +109,25 @@ int main( int argc, char* argv[] )
     auto* bpp_ptr = app.add_option("--bpp", bpp, "Target bit-per-pixel value.\n"
                     "For example, `--bpp 0.5`.\n")->check(CLI::Range(0.0f, 64.0f));
 
+    bool div_rms = false;
+    app.add_flag("--div-rms", div_rms, "Conditioning: calculate rms of each chunk and divide every\n"
+                                       "value by rms of its chunk. Default: not applied.\n");
+
     size_t omp_num_threads = 4;
     auto* omp_ptr = app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. "
                                    "Default: 4\n"); 
 
     CLI11_PARSE(app, argc, argv);
 
-    const std::array<size_t, 3> dims = {dims_v[0], dims_v[1], dims_v[2]};
+    const auto dims           = std::array<size_t, 3>{dims_v[0], dims_v[1], dims_v[2]};
+    const auto condi_settings = std::array<bool, 8>{ true,      // subtract mean
+                                                     div_rms,   // divide by rms
+                                                     false,     // unused
+                                                     false,     // unused
+                                                     false,     // unused
+                                                     false,     // unused
+                                                     false,     // unused
+                                                     false };   // unused
 
     //
     // Read and keep a copy of input data (will be used for testing different configurations)
@@ -135,7 +149,7 @@ int main( int argc, char* argv[] )
     }
     printf("Initial analysis: compression at %.2f bit-per-pixel...  \n", bpp);
     int rtn = test_configuration_omp( input_buf.data(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
-                                      bpp, omp_num_threads, output_buf );
+                                      bpp, condi_settings, omp_num_threads, output_buf );
     if( rtn != 0 )
         return rtn;
 
@@ -161,7 +175,7 @@ int main( int argc, char* argv[] )
             printf("\nNow testing bpp = %.2f ...\n", bpp);
         
             rtn = test_configuration_omp( input_buf.data(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
-                                          bpp, omp_num_threads, output_buf );
+                                          bpp, condi_settings, omp_num_threads, output_buf );
             if ( rtn != 0 )
                 return rtn;
 

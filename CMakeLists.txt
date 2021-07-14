@@ -64,7 +64,7 @@ endif()
 #
 # Download CLI11
 #
-file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/download/v1.9.1/CLI11.hpp 
+file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/latest/download/CLI11.hpp 
               "${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp" )
 
 add_subdirectory( src )

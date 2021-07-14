@@ -23,6 +23,7 @@ auto test_configuration_omp( const float*         in_buf,
                              speck::dims_type     chunks,
                              int32_t              qz_level, 
                              double               tolerance,
+                             std::array<bool, 8>  condi_settings,
                              size_t               omp_num_threads, 
                              std::vector<float>&  output_buf ) -> int 
 {
@@ -31,6 +32,7 @@ auto test_configuration_omp( const float*         in_buf,
     SPECK3D_OMP_C compressor;
     compressor.set_dims( dims );
     compressor.prefer_chunk_dims( chunks );
+    compressor.toggle_conditioning( condi_settings );
     compressor.set_num_threads( omp_num_threads );
     auto rtn = compressor.use_volume( in_buf, total_vals );
     if(  rtn != RTNType::Good )
@@ -121,19 +123,17 @@ int main( int argc, char* argv[] )
 
     double tolerance = 0.0;
     app.add_option("-t", tolerance, "Maximum point-wise error tolerance. E.g., `-t 0.001`.\n"
-                   "By default, it takes the input as an absolute error tolerance.\n"
-                   "If flag `--rel_tol` presents, the input is treated as a percentage\n"
-                   "of input data range that point-wise errors could occur.\n"
-                   "E.g., `-t 5` means that error tolerance is at 5% of the data range.\n")
-                    ->required();
-
-    bool rel_tol = false;
-    app.add_flag("--rel_tol", rel_tol, "Use relative error tolerance (as a percentage).\n");
+                   "It takes a positive value as the absolute error tolerance.\n")
+                    ->required()->check(CLI::PositiveNumber);
 
     int32_t qz_level;
     auto* qz_level_ptr = app.add_option("-q,--qz_level", qz_level, 
                          "Integer quantization level to test. E.g., `-q -10`. \n"
                          "If not specified, the probe will pick one for you.\n");
+
+    bool div_rms = false;
+    app.add_flag("--div-rms", div_rms, "Conditioning: calculate rms of each chunk and divide every\n"
+                                       "value by rms of its chunk. Default: not applied.\n");
 
     size_t omp_num_threads = 4;
     auto* omp_ptr = app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. "
@@ -141,7 +141,20 @@ int main( int argc, char* argv[] )
 
     CLI11_PARSE(app, argc, argv);
 
-    const std::array<size_t, 3> dims = {dims_v[0], dims_v[1], dims_v[2]};
+    if( tolerance <= 0.0 ) {
+        std::cerr << "Absolute error tolerance must be a positive value!\n";
+        return 1;
+    }
+
+    const auto dims           = std::array<size_t, 3>{dims_v[0], dims_v[1], dims_v[2]};
+    const auto condi_settings = std::array<bool, 8>{ true,      // subtract mean
+                                                     div_rms,   // divide by rms
+                                                     false,     // unused
+                                                     false,     // unused
+                                                     false,     // unused
+                                                     false,     // unused
+                                                     false,     // unused
+                                                     false };   // unused
 
     //
     // Read and keep a copy of input data (will be re-used for different qz levels).
@@ -164,27 +177,11 @@ int main( int argc, char* argv[] )
     if( !(*qz_level_ptr) ) {
         qz_level  = int32_t(std::floor(std::log2(range / 1000.0)));
     }
-    if( rel_tol ) {
-        if( tolerance <= 0.0 || tolerance >= 100.0 ) {
-            std::cerr << "Relative error tolerance must be in the range of [0, 100]\n";
-            return 1;
-        }
-        else {
-            auto frc  = tolerance / 100.0;
-            tolerance = range * frc;
-        }
-    }
-    else {
-        if( tolerance <= 0.0 ) {
-            std::cerr << "Absolute error tolerance must be a positive value!\n";
-            return 1;
-        }
-    }
 
     printf("Initial analysis: absolute error tolerance = %.2e, quantization level = %d ...  \n\n", 
             tolerance, qz_level);
     int rtn = test_configuration_omp( input_buf.data(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
-                                      qz_level, tolerance, omp_num_threads, output_buf );
+                                      qz_level, tolerance, condi_settings, omp_num_threads, output_buf );
     if( rtn != 0 )
         return rtn;
 
@@ -212,7 +209,7 @@ int main( int argc, char* argv[] )
             printf("\nNow testing qz_level = %d ...\n", qz_level);
         
             rtn = test_configuration_omp( input_buf.data(), dims, {chunks_v[0], chunks_v[1], chunks_v[2]},
-                                          qz_level, tolerance, omp_num_threads, output_buf );
+                                          qz_level, tolerance, condi_settings, omp_num_threads, output_buf );
             if ( rtn != 0 )
                 return rtn;
 
