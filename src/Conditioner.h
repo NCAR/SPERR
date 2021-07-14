@@ -31,8 +31,14 @@ private:
     //
     // what treatments are applied?
     //
-    bool m_s_mean  = true;  // subtract mean
-    bool m_d_rms   = false; // divide by rms
+    std::array<bool, 8> m_settings = {true,   // subtract mean
+                                      false,  // divide by rms
+                                      false,  // unused
+                                      false,  // unused
+                                      false,  // unused
+                                      false,  // unused
+                                      false,  // unused
+                                      false}; // unused
 
     const size_t m_meta_size = 17;
     using meta_type = std::array<uint8_t, 17>;

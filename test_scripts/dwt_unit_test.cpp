@@ -21,7 +21,7 @@ TEST( dwt1d, big_image_even )
     // Make a copy and then use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.get(), in_buf.get() + total_vals, in_copy.begin() );
-    speck::Conditioner condi( true );
+    auto condi = speck::Conditioner(); 
     auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -57,7 +57,7 @@ TEST( dwt1d, big_image_odd )
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.get(), in_buf.get() + total_vals, in_copy.begin() );
-    speck::Conditioner condi( true );
+    auto condi = speck::Conditioner();
     auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -93,7 +93,7 @@ TEST( dwt2d, small_image_even )
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
-    speck::Conditioner condi( true );
+    auto condi = speck::Conditioner(); 
     auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -129,7 +129,7 @@ TEST( dwt2d, small_image_odd )
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
-    speck::Conditioner condi( true );
+    auto condi = speck::Conditioner(); 
     auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -165,7 +165,7 @@ TEST( dwt2d, big_image_even )
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
-    speck::Conditioner condi( true );
+    auto condi = speck::Conditioner();
     auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -201,7 +201,7 @@ TEST( dwt2d, big_image_odd )
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
-    speck::Conditioner condi( true );
+    auto condi = speck::Conditioner();
     auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -237,7 +237,7 @@ TEST( dwt3d, small_even_cube )
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
-    speck::Conditioner condi( true );
+    auto condi = speck::Conditioner();
     auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -273,7 +273,7 @@ TEST( dwt3d, big_odd_cube )
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
-    speck::Conditioner condi( true );
+    auto condi = speck::Conditioner(); 
     auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.
@@ -309,7 +309,7 @@ TEST( dwt3d, big_even_cube )
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
-    speck::Conditioner condi( true );
+    auto condi = speck::Conditioner( );
     auto [rtn, meta] = condi.condition( in_copy );
 
     // Use a speck::CDF97 to perform DWT and IDWT.

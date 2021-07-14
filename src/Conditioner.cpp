@@ -3,8 +3,7 @@
 #include <cstring>   // std::memcpy()
 #include <cmath>     // std::sqrt()
 #include <numeric>   // std::accumulate()
-#include <type_traits>   // std::is_same_v()
-#include <vector>   // std::is_same_v()
+#include <vector>
 
 #include "Conditioner.h"
 
@@ -15,8 +14,7 @@ auto speck::Conditioner::get_meta_size() const -> size_t
 
 void speck::Conditioner::toggle_all_settings( std::array<bool, 8> b8 )
 {
-    m_s_mean = b8[0];
-    m_d_rms  = b8[1];
+    m_settings = b8;
 }
 
 auto speck::Conditioner::m_calc_mean( const vecd_type& buf ) const -> double
@@ -99,8 +97,8 @@ auto speck::Conditioner::condition( vecd_type& buf ) const -> std::pair<RTNType,
     double mean = 0.0;
     double rms  = 0.0;
 
-    // If divide_by_rms is requested, need to make sure rms is non-zero
-    if( m_d_rms ) {
+    // If divide by rms is requested, need to make sure rms is non-zero
+    if( m_settings[1] ) {
         if( std::all_of( buf.begin(), buf.end(), [](auto v){return v == 0.0;} ) )
             return {RTNType::Error, meta};
     }
@@ -108,22 +106,21 @@ auto speck::Conditioner::condition( vecd_type& buf ) const -> std::pair<RTNType,
     m_adjust_strides( buf.size() );
 
     // Perform subtract mean first
-    if( m_s_mean ) {
+    if( m_settings[0] ) {
         mean = m_calc_mean( buf );
         auto minus_mean = [mean](auto& v){v -= mean;};
         std::for_each( buf.begin(), buf.end(), minus_mean );
     }
 
     // Perform divide_by_rms second
-    if( m_d_rms ) {
+    if( m_settings[1] ) {
         rms = m_calc_rms( buf );
         auto div_rms = [rms](auto& v){v /= rms;};
         std::for_each( buf.begin(), buf.end(), div_rms );
     }
 
     // pack meta
-    bool b8[8] = {m_s_mean, m_d_rms, false, false, false, false, false, false};
-    speck::pack_8_booleans( meta[0], b8 );
+    speck::pack_8_booleans( meta[0], m_settings.data() );
     size_t pos = 1;
     std::memcpy( meta.data() + pos, &mean, sizeof(mean) );
     pos += sizeof(mean);
@@ -138,7 +135,7 @@ auto speck::Conditioner::condition( vecd_type& buf ) const -> std::pair<RTNType,
 auto speck::Conditioner::inverse_condition( vecd_type& buf, const uint8_t* meta ) const -> RTNType
 {
     // unpack meta
-    bool   b8[8];
+    bool b8[8];
     speck::unpack_8_booleans( b8, meta[0] );
     double mean = 0.0;
     double rms  = 0.0;
