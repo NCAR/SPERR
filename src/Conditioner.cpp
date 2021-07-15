@@ -105,6 +105,12 @@ auto speck::Conditioner::condition( vecd_type& buf ) const -> std::pair<RTNType,
 
     m_adjust_strides( buf.size() );
 
+    //
+    // The ordering of each operation is actually interesting. Between subtract mean
+    // and divide by rms, it kind of makes sense to bring all values closer to zero
+    // first and then do divide by rms, if you think about it...
+    //
+
     // Perform subtract mean first
     if( m_settings[0] ) {
         mean = m_calc_mean( buf );
