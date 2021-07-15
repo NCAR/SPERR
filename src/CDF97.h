@@ -118,8 +118,10 @@ private:
     dims_type     m_dims = {0, 0, 0}; // Dimension of the data volume
 
     // Temporary buffers that are big enough for any (1D column * 2) or any 2D slice.
-    vecd_type     m_col_buf;
-    vecd_type     m_slice_buf;
+    std::unique_ptr<double[]>   m_col_buf       = nullptr;
+    std::unique_ptr<double[]>   m_slice_buf     = nullptr;
+    size_t                      m_col_buf_len   = 0;
+    size_t                      m_slice_buf_len = 0;
 
     /*
      * Note on the coefficients and constants:

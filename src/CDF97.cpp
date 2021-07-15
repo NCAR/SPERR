@@ -24,10 +24,16 @@ auto speck::CDF97::copy_data(const T* data, size_t len, dims_type dims ) -> RTNT
     m_dims = dims;
 
     auto max_col = std::max( std::max(dims[0], dims[1]), dims[2] );
-    m_col_buf.resize( max_col * 2 );
+    if( m_col_buf_len < max_col * 2 ) {
+        m_col_buf_len = max_col * 2;
+        m_col_buf     = std::make_unique<double[]>(m_col_buf_len);
+    }
 
     auto max_slice = std::max( std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2] );
-    m_slice_buf.resize( max_slice );
+    if( m_slice_buf_len < max_slice ) {
+        m_slice_buf_len = max_slice;
+        m_slice_buf     = std::make_unique<double[]>(m_slice_buf_len);
+    }
 
     return RTNType::Good;
 }
@@ -44,10 +50,16 @@ auto speck::CDF97::take_data( vecd_type&& buf, dims_type dims ) -> RTNType
     m_dims     = dims;
 
     auto max_col = std::max( std::max(dims[0], dims[1]), dims[2] );
-    m_col_buf.resize( max_col * 2 );
+    if( m_col_buf_len < max_col * 2 ) {
+        m_col_buf_len = max_col * 2;
+        m_col_buf     = std::make_unique<double[]>(m_col_buf_len);
+    }
 
     auto max_slice = std::max( std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2] );
-    m_slice_buf.resize( max_slice );
+    if( m_slice_buf_len < max_slice ) {
+        m_slice_buf_len = max_slice;
+        m_slice_buf     = std::make_unique<double[]>(m_slice_buf_len);
+    }
 
     return RTNType::Good;
 }
@@ -66,25 +78,25 @@ auto speck::CDF97::release_data() -> vecd_type&&
 void speck::CDF97::dwt1d()
 {
     size_t num_xforms = speck::num_of_xforms(m_dims[0]);
-    m_dwt1d(m_data_buf.data(), m_data_buf.size(), num_xforms, m_col_buf.data());
+    m_dwt1d(m_data_buf.data(), m_data_buf.size(), num_xforms, m_col_buf.get());
 }
 
 void speck::CDF97::idwt1d()
 {
     size_t num_xforms = speck::num_of_xforms(m_dims[0]);
-    m_idwt1d(m_data_buf.data(), m_data_buf.size(), num_xforms, m_col_buf.data());
+    m_idwt1d(m_data_buf.data(), m_data_buf.size(), num_xforms, m_col_buf.get());
 }
 
 void speck::CDF97::dwt2d()
 {
     size_t num_xforms_xy = speck::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-    m_dwt2d(m_data_buf.data(), m_dims[0], m_dims[1], num_xforms_xy, m_col_buf.data());
+    m_dwt2d(m_data_buf.data(), m_dims[0], m_dims[1], num_xforms_xy, m_col_buf.get());
 }
 
 void speck::CDF97::idwt2d()
 {
     size_t num_xforms_xy = speck::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-    m_idwt2d(m_data_buf.data(), m_dims[0], m_dims[1], num_xforms_xy, m_col_buf.data());
+    m_idwt2d(m_data_buf.data(), m_dims[0], m_dims[1], num_xforms_xy, m_col_buf.get());
 }
 
 void speck::CDF97::dwt3d()
@@ -129,7 +141,7 @@ void speck::CDF97::dwt3d()
 
         // DWT1D on every z_column
         for (size_t x = 0; x < m_dims[0]; x++)
-            m_dwt1d(m_slice_buf.data() + x * m_dims[2], m_dims[2], num_xforms_z, m_col_buf.data());
+            m_dwt1d(m_slice_buf.get() + x * m_dims[2], m_dims[2], num_xforms_z, m_col_buf.get());
 
         // Put back values of the z_columns to the cube
         for (size_t z = 0; z < m_dims[2]; z++) {
@@ -145,7 +157,7 @@ void speck::CDF97::dwt3d()
 
     for (size_t z = 0; z < m_dims[2]; z++) {
         const size_t offset = plane_size_xy * z;
-        m_dwt2d(m_data_buf.data() + offset, m_dims[0], m_dims[1], num_xforms_xy, m_col_buf.data());
+        m_dwt2d(m_data_buf.data() + offset, m_dims[0], m_dims[1], num_xforms_xy, m_col_buf.get());
     }
 }
 
@@ -159,7 +171,7 @@ void speck::CDF97::idwt3d()
 
     for (size_t i = 0; i < m_dims[2]; i++) {
         const size_t offset  = plane_size_xy * i;
-        m_idwt2d(m_data_buf.data() + offset, m_dims[0], m_dims[1], num_xforms_xy, m_col_buf.data());
+        m_idwt2d(m_data_buf.data() + offset, m_dims[0], m_dims[1], num_xforms_xy, m_col_buf.get());
     }
 
     /*
@@ -197,7 +209,7 @@ void speck::CDF97::idwt3d()
 
         // IDWT1D on every z_column
         for (size_t x = 0; x < m_dims[0]; x++)
-            m_idwt1d(m_slice_buf.data() + x * m_dims[2], m_dims[2], num_xforms_z, m_col_buf.data());
+            m_idwt1d(m_slice_buf.get() + x * m_dims[2], m_dims[2], num_xforms_z, m_col_buf.get());
 
         // Put back values from the z_columns to the cube
         for (size_t z = 0; z < m_dims[2]; z++) {
