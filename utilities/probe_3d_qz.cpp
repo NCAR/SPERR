@@ -123,8 +123,9 @@ int main( int argc, char* argv[] )
 
     double tolerance = 0.0;
     app.add_option("-t", tolerance, "Maximum point-wise error tolerance. E.g., `-t 0.001`.\n"
-                   "It takes a positive value as the absolute error tolerance.\n")
-                    ->required()->check(CLI::PositiveNumber);
+                   "It takes a positive value as the absolute error tolerance.\n"
+                   "Note: if flag --div-rms is enabled, then this tolerance applies\n"
+                   "to conditioned data.\n")->required()->check(CLI::PositiveNumber);
 
     int32_t qz_level;
     auto* qz_level_ptr = app.add_option("-q,--qz_level", qz_level, 
