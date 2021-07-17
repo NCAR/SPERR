@@ -6,9 +6,6 @@
 #include <numeric> // std::accumulate()
 #include <type_traits>
 
-#ifdef USE_OMP
-   #include <omp.h>
-#endif
 
 template <typename T>
 auto speck::CDF97::copy_data(const T* data, size_t len, dims_type dims ) -> RTNType
@@ -231,10 +228,9 @@ void speck::CDF97::m_dwt2d(double* plane,
                            size_t  num_of_lev,
                            double* tmp_buf)
 {
-    std::array<size_t, 2> approx_x, approx_y;
     for (size_t lev = 0; lev < num_of_lev; lev++) {
-        speck::calc_approx_detail_len(len_x, lev, approx_x);
-        speck::calc_approx_detail_len(len_y, lev, approx_y);
+        auto approx_x = speck::calc_approx_detail_len(len_x, lev);
+        auto approx_y = speck::calc_approx_detail_len(len_y, lev);
         m_dwt2d_one_level(plane, approx_x[0], approx_y[0], tmp_buf);
     }
 }
@@ -245,10 +241,9 @@ void speck::CDF97::m_idwt2d(double* plane,
                             size_t  num_of_lev,
                             double* tmp_buf)
 {
-    std::array<size_t, 2> approx_x, approx_y;
     for (size_t lev = num_of_lev; lev > 0; lev--) {
-        speck::calc_approx_detail_len(len_x, lev - 1, approx_x);
-        speck::calc_approx_detail_len(len_y, lev - 1, approx_y);
+        auto approx_x = speck::calc_approx_detail_len(len_x, lev - 1);
+        auto approx_y = speck::calc_approx_detail_len(len_y, lev - 1);
         m_idwt2d_one_level(plane, approx_x[0], approx_y[0], tmp_buf);
     }
 }
@@ -259,9 +254,8 @@ void speck::CDF97::m_dwt1d(double* array,
                            double* tmp_buf)
 {
     double* const ptr = tmp_buf;
-    std::array<size_t, 2> approx;
     for (size_t lev = 0; lev < num_of_lev; lev++) {
-        speck::calc_approx_detail_len(array_len, lev, approx);
+        auto approx = speck::calc_approx_detail_len(array_len, lev);
         std::memcpy(ptr, array, sizeof(double) * approx[0]);
         if (approx[0] % 2 == 0) {
             this->QccWAVCDF97AnalysisSymmetricEvenEven(ptr, approx[0]);
@@ -279,9 +273,8 @@ void speck::CDF97::m_idwt1d(double* array,
                             double* tmp_buf)
 {
     double* const ptr = tmp_buf;
-    std::array<size_t, 2> approx;
     for (size_t lev = num_of_lev; lev > 0; lev--) {
-        speck::calc_approx_detail_len(array_len, lev - 1, approx);
+        auto approx = speck::calc_approx_detail_len(array_len, lev - 1);
         if (approx[0] % 2 == 0) {
             m_scatter_even(ptr, array, approx[0]);
             this->QccWAVCDF97SynthesisSymmetricEvenEven(ptr, approx[0]);

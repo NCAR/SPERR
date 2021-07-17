@@ -109,9 +109,8 @@ auto num_of_partitions(size_t len) -> size_t;
 // Determine the approximation and detail signal length at a certain
 // transformation level lev: 0 <= lev < num_of_xforms.
 // It puts the approximation and detail length as the 1st and 2nd
-// element of the output array.
-void calc_approx_detail_len(size_t orig_len, size_t lev, // input
-                            std::array<size_t, 2>&);     // output
+// element of the return array.
+auto calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<size_t, 2>;
 
 // 1) fill sign_array based on coeff_buffer signs, and
 // 2) make coeff_buffer containing all positive values.

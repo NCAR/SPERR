@@ -31,8 +31,7 @@ auto speck::num_of_partitions(size_t len) -> size_t
     return num_of_parts;
 }
 
-void speck::calc_approx_detail_len(size_t orig_len, size_t lev,
-                                   std::array<size_t, 2>& approx_detail_len)
+auto speck::calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<size_t, 2>
 {
     size_t low_len  = orig_len;
     size_t high_len = 0;
@@ -41,8 +40,7 @@ void speck::calc_approx_detail_len(size_t orig_len, size_t lev,
         low_len -= high_len;
     }
 
-    approx_detail_len[0] = low_len;
-    approx_detail_len[1] = high_len;
+    return {low_len, high_len};
 }
 
 auto speck::make_coeff_positive(vecd_type& buf, std::vector<bool>& signs) -> double

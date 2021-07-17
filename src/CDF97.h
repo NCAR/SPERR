@@ -40,68 +40,70 @@ private:
     // Private methods helping DWT.
     //
     // Note: most of these methods operate on a partial array, i.e., not from the
-    //       beginning of an array or not ending at the actual end.
+    //       beginning of an array and not ending at the actual end.
     //       Thus, raw pointers are used here.
-    //
+
+    // Multiple levels of 1D DWT on a given array of length len.
+    // A buffer space (tmp_buf) should be passed in for
+    // this method to work on with length at least `array_len`.
     void m_dwt1d(double* array,
                  size_t  array_len,
                  size_t  num_of_xforms,
                  double* tmp_buf);
-    // Multiple levels of 2D DWT on a given array of length len.
-    // A buffer space (tmp_buf) should be passed in for
-    // this method to work on with length at least `array_len`.
+    // Multiple levels of 1D IDWT on a given array of length len.
+    // Refer to m_dwt1d() for the requirement of tmp_buf.
     void m_idwt1d(double* array,
                   size_t  array_len,
                   size_t  num_of_xforms,
                   double* tmp_buf);
-    // Multiple levels of 2D IDWT on a given array of length len.
-    // Refer to m_dwt1d() for the requirement of tmp_buf.
+
+    // Multiple levels of 2D DWT on a given plane by repeatedly invoking m_dwt2d_one_level().
+    // The plane has a dimension (len_x, len_y).
+    // A buffer space (tmp_buf) should be passed in for
+    // this method to work on with length at least 2*max(len_x, len_y).
     void m_dwt2d(double* plane,
                  size_t  len_x,
                  size_t  len_y,
                  size_t  num_of_xforms,
                  double* tmp_buf);
-    // Multiple levels of 2D DWT on a given plane by repeatedly
-    // invoking m_dwt2d_one_level().
+    // Multiple levels of 2D IDWT on a given plane by repeatedly invoking m_idwt2d_one_level().
     // The plane has a dimension (len_x, len_y).
-    // A buffer space (tmp_buf) should be passed in for
-    // this method to work on with length at least 2*max(len_x, len_y).
+    // Refer to m_dwt2d() for the requirement of tmp_buf.
     void m_idwt2d(double* plane,
                   size_t  len_x,
                   size_t  len_y,
                   size_t  num_of_xforms,
                   double* tmp_buf);
-    // Multiple levels of 2D IDWT on a given plane by repeatedly
-    // invoking m_idwt2d_one_level().
-    // The plane has a dimension (len_x, len_y).
-    // Refer to m_dwt2d() for the requirement of tmp_buf.
-    void m_dwt2d_one_level(double* plane,
-                           size_t  len_x,
-                           size_t  len_y,
-                           double* tmp_buf);
+
     // Perform one level of 2D dwt on a given plane (dim_x, dim_y),
     // specifically on its top left (len_x, len_y) subset.
     // A buffer space (tmp_buf) should be passed in for
     // this method to work on with length at least 2*max(len_x, len_y).
+    void m_dwt2d_one_level(double* plane,
+                           size_t  len_x,
+                           size_t  len_y,
+                           double* tmp_buf);
+    // Perform one level of 2D idwt on a given plane (dim_x, dim_y),
+    // specifically on its top left (len_x, len_y) subset.
+    // Refer to m_idwt2d_one_level() for the requirement of tmp_buf.
     void m_idwt2d_one_level(double* plane,
                             size_t  len_x,
                             size_t  len_y,
                             double* tmp_buf);
-    // Perform one level of 2D idwt on a given plane (dim_x, dim_y),
-    // specifically on its top left (len_x, len_y) subset.
-    // Refer to m_idwt2d_one_level() for the requirement of tmp_buf.
-    void m_gather_even(double* dest, const double* orig, size_t len) const;
-    void m_gather_odd(double* dest, const double* orig, size_t len) const;
+
     // Separate even and odd indexed elements to be at the front
     // and back of the dest array. Note: sufficient memory space
     // should be allocated by the caller.
     // Note 2: two versions for even and odd length input.
-    void m_scatter_even(double* dest, const double* orig, size_t len) const;
-    void m_scatter_odd(double* dest, const double* orig, size_t len) const;
+    void m_gather_even(double* dest, const double* orig, size_t len) const;
+    void m_gather_odd(double* dest, const double* orig, size_t len) const;
+
     // Interleave low and high pass elements to be at even and
     // odd positions of the dest array. Note: sufficient memory
     // space should be allocated by the caller.
     // Note 2: two versions for even and odd length input.
+    void m_scatter_even(double* dest, const double* orig, size_t len) const;
+    void m_scatter_odd(double* dest, const double* orig, size_t len) const;
 
     //
     // Methods from QccPack, keep their original names.

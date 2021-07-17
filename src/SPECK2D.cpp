@@ -438,9 +438,8 @@ auto speck::SPECK2D::m_code_I() -> RTNType
 
 void speck::SPECK2D::m_partition_I(std::array<SPECKSet2D, 3>& subsets)
 {
-    std::array<size_t, 2> len_x, len_y;
-    speck::calc_approx_detail_len(m_dims[0], m_I.part_level, len_x);
-    speck::calc_approx_detail_len(m_dims[1], m_I.part_level, len_y);
+    auto len_x = speck::calc_approx_detail_len(m_dims[0], m_I.part_level);
+    auto len_y = speck::calc_approx_detail_len(m_dims[1], m_I.part_level);
     const auto approx_len_x = len_x[0];
     const auto detail_len_x = len_x[1];
     const auto approx_len_y = len_y[0];
@@ -654,9 +653,8 @@ auto speck::SPECK2D::m_num_of_partitions() const -> size_t
 void speck::SPECK2D::m_calc_root_size(SPECKSet2D& root) const
 {
     // approximation and detail lengths are placed as the 1st and 2nd element
-    std::array<size_t, 2> len_x, len_y;
-    speck::calc_approx_detail_len(m_dims[0], root.part_level, len_x);
-    speck::calc_approx_detail_len(m_dims[1], root.part_level, len_y);
+    auto len_x = speck::calc_approx_detail_len(m_dims[0], root.part_level);
+    auto len_y = speck::calc_approx_detail_len(m_dims[1], root.part_level);
 
     root.start_x  = 0;
     root.start_y  = 0;
