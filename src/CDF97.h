@@ -75,7 +75,7 @@ private:
                   size_t  num_of_xforms,
                   double* tmp_buf);
 
-    // Perform one level of 2D dwt on a given plane (dim_x, dim_y),
+    // Perform one level of 2D dwt on a given plane (m_dims[0], m_dims[1]),
     // specifically on its top left (len_x, len_y) subset.
     // A buffer space (tmp_buf) should be passed in for
     // this method to work on with length at least 2*max(len_x, len_y).
@@ -83,12 +83,25 @@ private:
                            size_t  len_x,
                            size_t  len_y,
                            double* tmp_buf);
-    // Perform one level of 2D idwt on a given plane (dim_x, dim_y),
+    // Perform one level of 2D idwt on a given plane (m_dims[0], m_dims[1]),
     // specifically on its top left (len_x, len_y) subset.
     // Refer to m_idwt2d_one_level() for the requirement of tmp_buf.
     void m_idwt2d_one_level(double* plane,
                             size_t  len_x,
                             size_t  len_y,
+                            double* tmp_buf);
+
+    // Perform one level of 1D dwt on a given array (array_len).
+    // A buffer space (tmp_buf) should be passed in for
+    // this method to work on with length at least 2*array_len.
+    void m_dwt1d_one_level(double* array,
+                           size_t  array_len,
+                           double* tmp_buf);
+    // Perform one level of 1D idwt on a given array (array_len).
+    // A buffer space (tmp_buf) should be passed in for
+    // this method to work on with length at least 2*array_len.
+    void m_idwt1d_one_level(double* array,
+                            size_t  array_len,
                             double* tmp_buf);
 
     // Separate even and odd indexed elements to be at the front

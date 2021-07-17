@@ -5,9 +5,9 @@ cmake_minimum_required(VERSION 3.10)
 project(SPERR VERSION 0.1)
 
 # specify the C++ standard
-# CMake will try to add a -std=c++17 flag if the compiler supports, but if it doesn't,
+# CMake will try to add a -std=c++20 flag if the compiler supports, but if it doesn't,
 # CMake will `decay` to a previous supported flag, e.g. -std=c++11.
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
     # Set the possible values of build type for cmake-gui

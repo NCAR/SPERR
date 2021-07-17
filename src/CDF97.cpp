@@ -253,17 +253,9 @@ void speck::CDF97::m_dwt1d(double* array,
                            size_t  num_of_lev,
                            double* tmp_buf)
 {
-    double* const ptr = tmp_buf;
     for (size_t lev = 0; lev < num_of_lev; lev++) {
-        auto approx = speck::calc_approx_detail_len(array_len, lev);
-        std::memcpy(ptr, array, sizeof(double) * approx[0]);
-        if (approx[0] % 2 == 0) {
-            this->QccWAVCDF97AnalysisSymmetricEvenEven(ptr, approx[0]);
-            m_gather_even(array, ptr, approx[0]);
-        } else {
-            this->QccWAVCDF97AnalysisSymmetricOddEven(ptr, approx[0]);
-            m_gather_odd(array, ptr, approx[0]);
-        }
+        auto [apx, nnm] = speck::calc_approx_detail_len(array_len, lev);
+        m_dwt1d_one_level(array, apx, tmp_buf);
     }
 }
 
@@ -272,18 +264,38 @@ void speck::CDF97::m_idwt1d(double* array,
                             size_t  num_of_lev,
                             double* tmp_buf)
 {
-    double* const ptr = tmp_buf;
     for (size_t lev = num_of_lev; lev > 0; lev--) {
-        auto approx = speck::calc_approx_detail_len(array_len, lev - 1);
-        if (approx[0] % 2 == 0) {
-            m_scatter_even(ptr, array, approx[0]);
-            this->QccWAVCDF97SynthesisSymmetricEvenEven(ptr, approx[0]);
-        } else {
-            m_scatter_odd(ptr, array, approx[0]);
-            this->QccWAVCDF97SynthesisSymmetricOddEven(ptr, approx[0]);
-        }
-        std::memcpy(array, ptr, sizeof(double) * approx[0]);
+        auto [apx, nnm] = speck::calc_approx_detail_len(array_len, lev - 1);
+        m_idwt1d_one_level(array, apx, tmp_buf);
     }
+}
+
+void speck::CDF97::m_dwt1d_one_level(double* array,
+                                     size_t  array_len,
+                                     double* tmp_buf)
+{
+    std::memcpy(tmp_buf, array, sizeof(double) * array_len);
+    if (array_len % 2 == 0) [[likely]] {
+        this->QccWAVCDF97AnalysisSymmetricEvenEven(tmp_buf, array_len);
+        m_gather_even(array, tmp_buf, array_len);
+    } else {
+        this->QccWAVCDF97AnalysisSymmetricOddEven(tmp_buf, array_len);
+        m_gather_odd(array, tmp_buf, array_len);
+    }
+}
+
+void speck::CDF97::m_idwt1d_one_level(double* array,
+                                      size_t  array_len,
+                                      double* tmp_buf)
+{
+    if (array_len % 2 == 0) [[likely]] {
+        m_scatter_even(tmp_buf, array, array_len);
+        this->QccWAVCDF97SynthesisSymmetricEvenEven(tmp_buf, array_len);
+    } else {
+        m_scatter_odd(tmp_buf, array, array_len);
+        this->QccWAVCDF97SynthesisSymmetricOddEven(tmp_buf, array_len);
+    }
+    std::memcpy(array, tmp_buf, sizeof(double) * array_len);
 }
 
 void speck::CDF97::m_dwt2d_one_level(double* plane,
@@ -297,7 +309,7 @@ void speck::CDF97::m_dwt2d_one_level(double* plane,
     double* const buf_ptr2 = tmp_buf + len_xy; // Second half of the array
 
     // First, perform DWT along X for every row
-    if (len_x % 2 == 0) // Even length
+    if (len_x % 2 == 0) [[likely]] // Even length
     {
         for (size_t i = 0; i < len_y; i++) {
             auto* pos = plane + i * m_dims[0];
@@ -324,7 +336,7 @@ void speck::CDF97::m_dwt2d_one_level(double* plane,
     // on an X86 linux machine using gcc, clang, and pgi. Again the difference is
     // either indistinguishable, or the current implementation has a slight edge.
 
-    if (len_y % 2 == 0) // Even length
+    if (len_y % 2 == 0) [[likely]] // Even length
     {
         for (size_t x = 0; x < len_x; x++) {
             for (size_t y = 0; y < len_y; y++)
@@ -360,7 +372,7 @@ void speck::CDF97::m_idwt2d_one_level(double* plane,
     double* const buf_ptr2 = tmp_buf + len_xy; // Second half of the array
 
     // First, perform IDWT along Y for every column
-    if (len_y % 2 == 0) // Even length
+    if (len_y % 2 == 0) [[likely]] // Even length
     {
         for (size_t x = 0; x < len_x; x++) {
             for (size_t y = 0; y < len_y; y++)
@@ -385,7 +397,7 @@ void speck::CDF97::m_idwt2d_one_level(double* plane,
     }
 
     // Second, perform IDWT along X for every row
-    if (len_x % 2 == 0) // Even length
+    if (len_x % 2 == 0) [[likely]] // Even length
     {
         for (size_t i = 0; i < len_y; i++) {
             auto* pos = plane + i * m_dims[0];
@@ -410,7 +422,6 @@ void speck::CDF97::m_gather_even(double* dest, const double* orig, size_t len) c
 {
     assert(len % 2 == 0); // This function specifically for even length input
     size_t low_count = len / 2, high_count = len / 2;
-    // How many low-pass and high-pass elements?
     size_t counter = 0;
     for (size_t i = 0; i < low_count; i++)
         dest[counter++] = orig[i * 2];
@@ -421,7 +432,6 @@ void speck::CDF97::m_gather_odd(double* dest, const double* orig, size_t len) co
 {
     assert(len % 2 == 1); // This function specifically for odd length input
     size_t low_count = len / 2 + 1, high_count = len / 2;
-    // How many low-pass and high-pass elements?
     size_t counter = 0;
     for (size_t i = 0; i < low_count; i++)
         dest[counter++] = orig[i * 2];
@@ -433,7 +443,6 @@ void speck::CDF97::m_scatter_even(double* dest, const double* orig, size_t len) 
 {
     assert(len % 2 == 0); // This function specifically for even length input
     size_t low_count = len / 2, high_count = len / 2;
-    // How many low-pass and high-pass elements?
     size_t counter = 0;
     for (size_t i = 0; i < low_count; i++)
         dest[i * 2] = orig[counter++];
@@ -444,7 +453,6 @@ void speck::CDF97::m_scatter_odd(double* dest, const double* orig, size_t len) c
 {
     assert(len % 2 == 1); // This function specifically for odd length input
     size_t low_count = len / 2 + 1, high_count = len / 2;
-    // How many low-pass and high-pass elements?
     size_t counter = 0;
     for (size_t i = 0; i < low_count; i++)
         dest[i * 2] = orig[counter++];
