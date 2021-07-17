@@ -346,8 +346,7 @@ static int QccSPECK3DInsertSet(QccList *LIS,
 
 static int QccSPECK3DInitialization(QccList *LIS,
                                     QccList *LSP,
-                                    const QccWAVSubbandPyramid3D
-                                    *coefficients,
+                                    const QccWAVSubbandPyramid3D *coefficients,
                                     const QccWAVSubbandPyramid3D *mask)
 {
   QccSPECK3DSet set;
