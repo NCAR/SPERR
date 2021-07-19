@@ -1,7 +1,6 @@
 #
 # Core SPERR libraries
 #
-add_library( bit_buffer     bit_buffer.cpp    )
 add_library( speck_helper   speck_helper.cpp  )
 add_library( Conditioner    Conditioner.cpp   )
 add_library( CDF97          CDF97.cpp         )
@@ -10,7 +9,6 @@ add_library( SPECK2D        SPECK2D.cpp       )
 add_library( SPECK3D        SPECK3D.cpp       ) 
 add_library( SPERR          SPERR.cpp         ) 
 
-target_include_directories( bit_buffer    INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( speck_helper  INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( Conditioner   INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( CDF97         INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
