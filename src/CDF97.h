@@ -47,21 +47,20 @@ private:
     //       beginning of an array and not ending at the actual end.
     //       Thus, raw pointers are used here.
 
-    // Multiple levels of 1D DWT on a given array of length len.
+    // Multiple levels of 1D DWT/IDWT on a given array of length array_len.
     // A buffer space (tmp_buf) should be passed in for
     // this method to work on with length at least `array_len`.
     void m_dwt1d(double* array,
                  size_t  array_len,
                  size_t  num_of_xforms,
                  double* tmp_buf);
-    // Multiple levels of 1D IDWT on a given array of length len.
-    // Refer to m_dwt1d() for the requirement of tmp_buf.
     void m_idwt1d(double* array,
                   size_t  array_len,
                   size_t  num_of_xforms,
                   double* tmp_buf);
 
-    // Multiple levels of 2D DWT on a given plane by repeatedly invoking m_dwt2d_one_level().
+
+    // Multiple levels of 2D DWT/IDWT on a given plane by repeatedly invoking m_dwt2d_one_level().
     // The plane has a dimension (len_xy[0], len_xy[1]).
     // A buffer space (tmp_buf) should be passed in for
     // this method to work on with length at least 2*max(len_xy[0], len_xy[1]).
@@ -69,40 +68,46 @@ private:
                  std::array<size_t, 2>  len_xy,
                  size_t                 num_of_xforms,
                  double*                tmp_buf);
-    // Multiple levels of 2D IDWT on a given plane by repeatedly invoking m_idwt2d_one_level().
-    // The plane has a dimension (len_xy[0], len_xy[1]).
-    // Refer to m_dwt2d() for the requirement of tmp_buf.
     void m_idwt2d(double*               plane,
                   std::array<size_t, 2> len_xy,
                   size_t                num_of_xforms,
                   double*               tmp_buf);
 
-    // Perform one level of 2D dwt on a given plane (m_dims[0], m_dims[1]),
-    // specifically on its top left (len_xy[0], len_xy[1]) subset.
+
+    // Perform one level of interleaved 3D dwt/idwt on a given volume (m_dims),
+    // specifically on its top left (len_xyz) subset.
+    // A buffer space (tmp_buf) should be passed in for
+    // this method to work on with length at least 2*max(len_xyz[0], len_xyz[1], len_xyz[2]).
+    void m_dwt3d_one_level(double*                plane,
+                           std::array<size_t, 2>  len_xy,
+                           double*                tmp_buf);
+    void m_idwt3d_one_level(double*               plane,
+                            std::array<size_t, 2> len_xy,
+                            double*               tmp_buf);
+
+
+    // Perform one level of 2D dwt/idwt on a given plane (m_dims),
+    // specifically on its top left (len_xy) subset.
     // A buffer space (tmp_buf) should be passed in for
     // this method to work on with length at least 2*max(len_xy[0], len_xy[1]).
     void m_dwt2d_one_level(double*                plane,
                            std::array<size_t, 2>  len_xy,
                            double*                tmp_buf);
-    // Perform one level of 2D idwt on a given plane (m_dims[0], m_dims[1]),
-    // specifically on its top left (len_xy[0], len_xy[1]) subset.
-    // Refer to m_idwt2d_one_level() for the requirement of tmp_buf.
     void m_idwt2d_one_level(double*               plane,
                             std::array<size_t, 2> len_xy,
                             double*               tmp_buf);
 
-    // Perform one level of 1D dwt on a given array (array_len).
+
+    // Perform one level of 1D dwt/idwt on a given array (array_len).
     // A buffer space (tmp_buf) should be passed in for
     // this method to work on with length at least 2*array_len.
     void m_dwt1d_one_level(double* array,
                            size_t  array_len,
                            double* tmp_buf);
-    // Perform one level of 1D idwt on a given array (array_len).
-    // A buffer space (tmp_buf) should be passed in for
-    // this method to work on with length at least 2*array_len.
     void m_idwt1d_one_level(double* array,
                             size_t  array_len,
                             double* tmp_buf);
+
 
     // Separate even and odd indexed elements to be at the front
     // and back of the dest array. Note: sufficient memory space
