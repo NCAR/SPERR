@@ -48,65 +48,47 @@ private:
     //       Thus, raw pointers are used here.
 
     // Multiple levels of 1D DWT/IDWT on a given array of length array_len.
-    // A buffer space (tmp_buf) should be passed in for
-    // this method to work on with length at least `array_len`.
     void m_dwt1d(double* array,
                  size_t  array_len,
-                 size_t  num_of_xforms,
-                 double* tmp_buf);
+                 size_t  num_of_xforms);
     void m_idwt1d(double* array,
                   size_t  array_len,
-                  size_t  num_of_xforms,
-                  double* tmp_buf);
+                  size_t  num_of_xforms);
 
 
     // Multiple levels of 2D DWT/IDWT on a given plane by repeatedly invoking m_dwt2d_one_level().
     // The plane has a dimension (len_xy[0], len_xy[1]).
-    // A buffer space (tmp_buf) should be passed in for
-    // this method to work on with length at least 2*max(len_xy[0], len_xy[1]).
     void m_dwt2d(double*                plane,
                  std::array<size_t, 2>  len_xy,
-                 size_t                 num_of_xforms,
-                 double*                tmp_buf);
+                 size_t                 num_of_xforms);
     void m_idwt2d(double*               plane,
                   std::array<size_t, 2> len_xy,
-                  size_t                num_of_xforms,
-                  double*               tmp_buf);
+                  size_t                num_of_xforms);
 
 
     // Perform one level of interleaved 3D dwt/idwt on a given volume (m_dims),
     // specifically on its top left (len_xyz) subset.
-    // A buffer space (tmp_buf) should be passed in for
-    // this method to work on with length at least 2*max(len_xyz[0], len_xyz[1], len_xyz[2]).
     void m_dwt3d_one_level(double*                plane,
-                           std::array<size_t, 2>  len_xy,
-                           double*                tmp_buf);
+                           std::array<size_t, 3>  len_xyz);
     void m_idwt3d_one_level(double*               plane,
-                            std::array<size_t, 2> len_xy,
-                            double*               tmp_buf);
+                            std::array<size_t, 3> len_xyz);
 
 
     // Perform one level of 2D dwt/idwt on a given plane (m_dims),
     // specifically on its top left (len_xy) subset.
-    // A buffer space (tmp_buf) should be passed in for
-    // this method to work on with length at least 2*max(len_xy[0], len_xy[1]).
     void m_dwt2d_one_level(double*                plane,
-                           std::array<size_t, 2>  len_xy,
-                           double*                tmp_buf);
+                           std::array<size_t, 2>  len_xy);
     void m_idwt2d_one_level(double*               plane,
-                            std::array<size_t, 2> len_xy,
-                            double*               tmp_buf);
+                            std::array<size_t, 2> len_xy);
 
 
     // Perform one level of 1D dwt/idwt on a given array (array_len).
     // A buffer space (tmp_buf) should be passed in for
     // this method to work on with length at least 2*array_len.
     void m_dwt1d_one_level(double* array,
-                           size_t  array_len,
-                           double* tmp_buf);
+                           size_t  array_len);
     void m_idwt1d_one_level(double* array,
-                            size_t  array_len,
-                            double* tmp_buf);
+                            size_t  array_len);
 
 
     // Separate even and odd indexed elements to be at the front

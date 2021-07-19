@@ -75,32 +75,30 @@ auto speck::CDF97::release_data() -> vecd_type&&
 void speck::CDF97::dwt1d()
 {
     size_t num_xforms = speck::num_of_xforms(m_dims[0]);
-    m_dwt1d(m_data_buf.data(), m_data_buf.size(), num_xforms, m_col_buf.get());
+    m_dwt1d(m_data_buf.data(), m_data_buf.size(), num_xforms);
 }
 
 void speck::CDF97::idwt1d()
 {
     size_t num_xforms = speck::num_of_xforms(m_dims[0]);
-    m_idwt1d(m_data_buf.data(), m_data_buf.size(), num_xforms, m_col_buf.get());
+    m_idwt1d(m_data_buf.data(), m_data_buf.size(), num_xforms);
 }
 
 void speck::CDF97::dwt2d()
 {
     size_t num_xforms_xy = speck::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-    m_dwt2d(m_data_buf.data(), {m_dims[0], m_dims[1]}, num_xforms_xy, m_col_buf.get());
+    m_dwt2d(m_data_buf.data(), {m_dims[0], m_dims[1]}, num_xforms_xy);
 }
 
 void speck::CDF97::idwt2d()
 {
     size_t num_xforms_xy = speck::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-    m_idwt2d(m_data_buf.data(), {m_dims[0], m_dims[1]}, num_xforms_xy, m_col_buf.get());
+    m_idwt2d(m_data_buf.data(), {m_dims[0], m_dims[1]}, num_xforms_xy);
 }
 
 //void speck::CDF97::dwt3d_wavelet_packet()
 void speck::CDF97::dwt3d()
 {
-    const size_t  plane_size_xy = m_dims[0] * m_dims[1];
-
     /*
      *             Z
      *            /
@@ -118,13 +116,10 @@ void speck::CDF97::dwt3d()
      *       Y
      */
 
-    /*
-     * Note on the order of performing transforms in 3 dimensions:
-     * this implementation follows QccPack's example.
-     */
+    const size_t  plane_size_xy = m_dims[0] * m_dims[1];
 
-     // First transform along the Z dimension
-     //
+    // First transform along the Z dimension
+    //
     const auto num_xforms_z = speck::num_of_xforms(m_dims[2]);
 
     for (size_t y = 0; y < m_dims[1]; y++) {
@@ -139,7 +134,7 @@ void speck::CDF97::dwt3d()
 
         // DWT1D on every z_column
         for (size_t x = 0; x < m_dims[0]; x++)
-            m_dwt1d(m_slice_buf.get() + x * m_dims[2], m_dims[2], num_xforms_z, m_col_buf.get());
+            m_dwt1d(m_slice_buf.get() + x * m_dims[2], m_dims[2], num_xforms_z);
 
         // Put back values of the z_columns to the cube
         for (size_t z = 0; z < m_dims[2]; z++) {
@@ -155,7 +150,7 @@ void speck::CDF97::dwt3d()
 
     for (size_t z = 0; z < m_dims[2]; z++) {
         const size_t offset = plane_size_xy * z;
-        m_dwt2d(m_data_buf.data() + offset, {m_dims[0], m_dims[1]}, num_xforms_xy, m_col_buf.get());
+        m_dwt2d(m_data_buf.data() + offset, {m_dims[0], m_dims[1]}, num_xforms_xy);
     }
 }
 
@@ -170,7 +165,7 @@ void speck::CDF97::idwt3d()
 
     for (size_t i = 0; i < m_dims[2]; i++) {
         const size_t offset  = plane_size_xy * i;
-        m_idwt2d(m_data_buf.data() + offset, {m_dims[0], m_dims[1]}, num_xforms_xy, m_col_buf.get());
+        m_idwt2d(m_data_buf.data() + offset, {m_dims[0], m_dims[1]}, num_xforms_xy);
     }
 
     /*
@@ -208,7 +203,7 @@ void speck::CDF97::idwt3d()
 
         // IDWT1D on every z_column
         for (size_t x = 0; x < m_dims[0]; x++)
-            m_idwt1d(m_slice_buf.get() + x * m_dims[2], m_dims[2], num_xforms_z, m_col_buf.get());
+            m_idwt1d(m_slice_buf.get() + x * m_dims[2], m_dims[2], num_xforms_z);
 
         // Put back values from the z_columns to the cube
         for (size_t z = 0; z < m_dims[2]; z++) {
@@ -226,86 +221,79 @@ void speck::CDF97::idwt3d()
 
 void speck::CDF97::m_dwt2d(double*                plane,
                            std::array<size_t, 2>  len_xy,
-                           size_t                 num_of_lev,
-                           double*                tmp_buf)
+                           size_t                 num_of_lev)
 {
     for (size_t lev = 0; lev < num_of_lev; lev++) {
         auto approx_x = speck::calc_approx_detail_len(len_xy[0], lev);
         auto approx_y = speck::calc_approx_detail_len(len_xy[1], lev);
-        m_dwt2d_one_level(plane, {approx_x[0], approx_y[0]}, tmp_buf);
+        m_dwt2d_one_level(plane, {approx_x[0], approx_y[0]});
     }
 }
 
 void speck::CDF97::m_idwt2d(double*               plane,
                             std::array<size_t, 2> len_xy,
-                            size_t                num_of_lev,
-                            double*               tmp_buf)
+                            size_t                num_of_lev)
 {
     for (size_t lev = num_of_lev; lev > 0; lev--) {
         auto approx_x = speck::calc_approx_detail_len(len_xy[0], lev - 1);
         auto approx_y = speck::calc_approx_detail_len(len_xy[1], lev - 1);
-        m_idwt2d_one_level(plane, {approx_x[0], approx_y[0]}, tmp_buf);
+        m_idwt2d_one_level(plane, {approx_x[0], approx_y[0]});
     }
 }
 
 void speck::CDF97::m_dwt1d(double* array,
                            size_t  array_len,
-                           size_t  num_of_lev,
-                           double* tmp_buf)
+                           size_t  num_of_lev)
 {
     for (size_t lev = 0; lev < num_of_lev; lev++) {
         auto [apx, nnm] = speck::calc_approx_detail_len(array_len, lev);
-        m_dwt1d_one_level(array, apx, tmp_buf);
+        m_dwt1d_one_level(array, apx);
     }
 }
 
 void speck::CDF97::m_idwt1d(double* array,
                             size_t  array_len,
-                            size_t  num_of_lev,
-                            double* tmp_buf)
+                            size_t  num_of_lev)
 {
     for (size_t lev = num_of_lev; lev > 0; lev--) {
         auto [apx, nnm] = speck::calc_approx_detail_len(array_len, lev - 1);
-        m_idwt1d_one_level(array, apx, tmp_buf);
+        m_idwt1d_one_level(array, apx);
     }
 }
 
 void speck::CDF97::m_dwt1d_one_level(double* array,
-                                     size_t  array_len,
-                                     double* tmp_buf)
+                                     size_t  array_len)
 {
-    std::memcpy(tmp_buf, array, sizeof(double) * array_len);
+    std::memcpy(m_col_buf.get(), array, sizeof(double) * array_len);
     if (array_len % 2 == 0) [[likely]] {
-        this->QccWAVCDF97AnalysisSymmetricEvenEven(tmp_buf, array_len);
-        m_gather_even(array, tmp_buf, array_len);
+        this->QccWAVCDF97AnalysisSymmetricEvenEven(m_col_buf.get(), array_len);
+        m_gather_even(array, m_col_buf.get(), array_len);
     } else {
-        this->QccWAVCDF97AnalysisSymmetricOddEven(tmp_buf, array_len);
-        m_gather_odd(array, tmp_buf, array_len);
+        this->QccWAVCDF97AnalysisSymmetricOddEven(m_col_buf.get(), array_len);
+        m_gather_odd(array, m_col_buf.get(), array_len);
     }
 }
 
 void speck::CDF97::m_idwt1d_one_level(double* array,
-                                      size_t  array_len,
-                                      double* tmp_buf)
+                                      size_t  array_len)
 {
     if (array_len % 2 == 0) [[likely]] {
-        m_scatter_even(tmp_buf, array, array_len);
-        this->QccWAVCDF97SynthesisSymmetricEvenEven(tmp_buf, array_len);
+        m_scatter_even(m_col_buf.get(), array, array_len);
+        this->QccWAVCDF97SynthesisSymmetricEvenEven(m_col_buf.get(), array_len);
     } else {
-        m_scatter_odd(tmp_buf, array, array_len);
-        this->QccWAVCDF97SynthesisSymmetricOddEven(tmp_buf, array_len);
+        m_scatter_odd(m_col_buf.get(), array, array_len);
+        this->QccWAVCDF97SynthesisSymmetricOddEven(m_col_buf.get(), array_len);
     }
-    std::memcpy(array, tmp_buf, sizeof(double) * array_len);
+    std::memcpy(array, m_col_buf.get(), sizeof(double) * array_len);
 }
 
 void speck::CDF97::m_dwt2d_one_level(double*                plane,
-                                     std::array<size_t, 2>  len_xy,
-                                     double*                tmp_buf)
+                                     std::array<size_t, 2>  len_xy)
 {
     // Specify temporary buffers to work on
     size_t        max_len  = std::max(len_xy[0], len_xy[1]);
-    double* const buf_ptr  = tmp_buf;           // First half of the array
-    double* const buf_ptr2 = tmp_buf + max_len; // Second half of the array
+    double* const buf_ptr  = m_col_buf.get();   // First half of the array
+    double* const buf_ptr2 = buf_ptr + max_len; // Second half of the array
 
     // First, perform DWT along X for every row
     if (len_xy[0] % 2 == 0) [[likely]] // Even length
@@ -361,13 +349,12 @@ void speck::CDF97::m_dwt2d_one_level(double*                plane,
 }
 
 void speck::CDF97::m_idwt2d_one_level(double*               plane,
-                                      std::array<size_t, 2> len_xy,
-                                      double*               tmp_buf)
+                                      std::array<size_t, 2> len_xy)
 {
     // Specify temporary buffers to work on
     size_t        max_len  = std::max(len_xy[0], len_xy[1]);
-    double* const buf_ptr  = tmp_buf;           // First half of the array
-    double* const buf_ptr2 = tmp_buf + max_len; // Second half of the array
+    double* const buf_ptr  = m_col_buf.get();   // First half of the array
+    double* const buf_ptr2 = buf_ptr + max_len; // Second half of the array
 
     // First, perform IDWT along Y for every column
     if (len_xy[1] % 2 == 0) [[likely]] // Even length
@@ -415,6 +402,21 @@ void speck::CDF97::m_idwt2d_one_level(double*               plane,
         }
     }
 }
+
+
+void speck::CDF97::m_dwt3d_one_level(double*                plane,
+                                     std::array<size_t, 3>  len_xyz)
+{
+    // First do one level of transform on all XY planes.
+    const size_t plane_size_xy = m_dims[0] * m_dims[1];
+    for (size_t z = 0; z < len_xyz[2]; z++) {
+        const size_t offset = plane_size_xy * z;
+        m_dwt2d_one_level(plane + offset, {len_xyz[0], len_xyz[1]});
+    }
+
+    // Second do one level of transform on all Z columns.
+}
+
 
 void speck::CDF97::m_gather_even(double* dest, const double* orig, size_t len) const
 {
