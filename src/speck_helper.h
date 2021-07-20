@@ -164,11 +164,11 @@ auto chunk_volume( const dims_type& vol_dim, const dims_type& chunk_dim )
 
 // Gather a chunk from a bigger volume
 template<typename T>
-auto gather_chunk( const T* vol, const dims_type& vol_dim, 
+auto gather_chunk( const T* vol, dims_type vol_dim, 
                    const std::array<size_t, 6>& chunk ) -> vecd_type;
 
 // Put this chunk to a bigger volume
-void scatter_chunk( vecd_type& big_vol, const dims_type& vol_dim,
+void scatter_chunk( vecd_type& big_vol, dims_type vol_dim,
                     const vecd_type&    small_vol,
                     const std::array<size_t, 6>& chunk);
 

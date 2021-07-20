@@ -382,16 +382,17 @@ auto speck::chunk_volume( const std::array<size_t, 3>& vol_dim,
 
 
 template<typename T>
-auto speck::gather_chunk( const T* vol, const std::array<size_t, 3>& vol_dim,
+auto speck::gather_chunk( const T* vol,     dims_type vol_dim,
                           const std::array<size_t, 6>& chunk ) -> vecd_type
 {
+    auto buf = std::vector<double>();
     if( chunk[0] + chunk[1] > vol_dim[0] || 
         chunk[2] + chunk[3] > vol_dim[1] ||
         chunk[4] + chunk[5] > vol_dim[2] )
-        return std::vector<double>(0);
+        return buf;
 
     auto len = chunk[1] * chunk[3] * chunk[5];
-    auto buf = std::vector<double>( len );
+    buf.resize(len);
 
     size_t idx = 0;
     for( size_t z = chunk[4]; z < chunk[4] + chunk[5]; z++ ) {
@@ -403,15 +404,16 @@ auto speck::gather_chunk( const T* vol, const std::array<size_t, 3>& vol_dim,
       }
     }
 
-    return std::move(buf);
+    // Will be subject to Named Return Value Optimization.
+    return buf;
 }
-template auto speck::gather_chunk( const float*,  const std::array<size_t, 3>&,
+template auto speck::gather_chunk( const float*,    dims_type,
                                    const std::array<size_t, 6>& ) -> vecd_type;
-template auto speck::gather_chunk( const double*, const std::array<size_t, 3>&,
+template auto speck::gather_chunk( const double*,   dims_type,
                                    const std::array<size_t, 6>& ) -> vecd_type;
 
 
-void speck::scatter_chunk( vecd_type& big_vol,  const std::array<size_t, 3>& vol_dim,
+void speck::scatter_chunk( vecd_type& big_vol,  dims_type vol_dim,
                            const vecd_type&     small_vol,
                            const std::array<size_t, 6>& chunk )
 {
