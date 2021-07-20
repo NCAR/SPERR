@@ -343,8 +343,8 @@ TEST( speck3d_bit_rate, small )
     tester.execute( 2.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 4.1785880e+01 );
-    EXPECT_LT( psnr, 4.1785882e+01 );
+    EXPECT_GT( psnr, 4.1785873e+01 ); // Satisfy mac and linux
+    EXPECT_LT( psnr, 4.1785881e+01 ); // Satisfy mac and linux
     EXPECT_LT( lmax, 6.3229772e+0 );
 
     tester.execute( 1.0f );
@@ -454,8 +454,8 @@ TEST( speck3d_bit_rate_omp, big )
     tester.execute( 2.0f );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 5.3812064e+01 );
-    EXPECT_LT( psnr, 5.3812066e+01 );
+    EXPECT_GT( psnr, 5.3812061e+01 ); // satisfy both mac and linux
+    EXPECT_LT( psnr, 5.3812065e+01 ); // satisfy both mac and linux
     EXPECT_LT( lmax, 7.6953269e+00 );
 
     tester.execute( 1.0f );
