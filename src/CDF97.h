@@ -26,16 +26,14 @@ public:
     auto get_dims() const  -> std::array<size_t, 3>; // In 2D case, the 3rd value equals 1.
 
     // Action items
+    void dwt1d();
+    void idwt1d();
     void dwt2d();  // 1) calculates the number of levels of dwt,
                    // 2) perform the actual dwt.
     void idwt2d(); // 1) calculates the number of levels of dwt,
                    // 2) perform the actual idwt
-    void dwt1d();
-    void idwt1d();
-    void dwt3d();
-    void idwt3d();
-    //void dwt3d_wavelet_packet();
-    //void idwt3d_wavelet_packet();
+    void dwt3d_wavelet_packet();
+    void idwt3d_wavelet_packet();
     void dwt3d_dyadic();
     void idwt3d_dyadic();
 
@@ -68,9 +66,9 @@ private:
 
     // Perform one level of interleaved 3D dwt/idwt on a given volume (m_dims),
     // specifically on its top left (len_xyz) subset.
-    void m_dwt3d_one_level(double*                plane,
+    void m_dwt3d_one_level(double*                vol,
                            std::array<size_t, 3>  len_xyz);
-    void m_idwt3d_one_level(double*               plane,
+    void m_idwt3d_one_level(double*               vol,
                             std::array<size_t, 3> len_xyz);
 
 
@@ -120,9 +118,12 @@ private:
     dims_type     m_dims = {0, 0, 0}; // Dimension of the data volume
 
     // Temporary buffers that are big enough for any (1D column * 2) or any 2D slice.
-    std::unique_ptr<double[]>   m_col_buf       = nullptr;
+    // Note: `m_qcc_buf` should be used by ***_one_level functions
+    // and should not be used by higher-level functions.
+    // `m_slice_buf` is only used by wavelet-packet transforms.
+    std::unique_ptr<double[]>   m_qcc_buf       = nullptr;
     std::unique_ptr<double[]>   m_slice_buf     = nullptr;
-    size_t                      m_col_buf_len   = 0;
+    size_t                      m_qcc_buf_len   = 0;
     size_t                      m_slice_buf_len = 0;
 
     /*

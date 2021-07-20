@@ -118,7 +118,14 @@ auto SPECK3D_Decompressor::decompress( ) -> RTNType
     //  the next chunk. For the same reason, `m_cdf` keeps its memory.)
     auto decoder_out = m_decoder.view_data();
     m_cdf.copy_data( decoder_out.data(), decoder_out.size(), m_dims );
-    m_cdf.idwt3d();
+    // Figure out which dwt3d strategy to use.
+    // Note: this strategy needs to be consistent with SPECK3D_Compressor.
+    auto xforms_xy = speck::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+    auto xforms_z  = speck::num_of_xforms(m_dims[2]);
+    if( xforms_xy == xforms_z )
+        m_cdf.idwt3d_dyadic();
+    else
+        m_cdf.idwt3d_wavelet_packet();
 
     // Step 3: Inverse Conditioning
     auto cdf_out = m_cdf.view_data();

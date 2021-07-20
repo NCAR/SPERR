@@ -83,7 +83,6 @@ auto SPECK3D_OMP_C::use_volume( const T* vol, size_t len ) -> RTNType
     auto chunks = speck::chunk_volume( m_dims, m_chunk_dims );
     const auto num_chunks = chunks.size();
     m_chunk_buffers.resize( num_chunks );
-    std::for_each( m_chunk_buffers.begin(), m_chunk_buffers.end(), [](auto& v){v.clear();} );
 
     #pragma omp parallel for num_threads(m_num_threads)
     for( size_t i = 0; i < num_chunks; i++ ) {
