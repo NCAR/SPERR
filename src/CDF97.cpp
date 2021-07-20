@@ -239,7 +239,6 @@ void speck::CDF97::idwt3d_dyadic()
         auto app_z = speck::calc_approx_detail_len(m_dims[2], lev - 1);
         m_idwt3d_one_level(m_data_buf.data(), {app_x[0], app_y[0], app_z[0]});
     }
-
 }
 
 

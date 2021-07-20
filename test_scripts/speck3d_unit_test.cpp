@@ -214,33 +214,36 @@ private:
 
 
 #ifdef QZ_TERM
+//
+// Error bound mode
+//
 TEST( speck3d_qz_term, large_tolerance )
 {
-    const double tol = 1.0;
+    const float tol = 1.0;
     speck_tester tester( "../test_data/wmag128.float", {128, 128, 128} );
     auto rtn = tester.execute( 2, tol );
     EXPECT_EQ( rtn, 0 );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 57.629364 );
-    EXPECT_LT( psnr, 57.629365 );
-    EXPECT_LT( lmax, tol );
+    EXPECT_GT( psnr, 5.7630912e+01 );
+    EXPECT_LT( psnr, 5.7630914e+01 );
+    EXPECT_LE( lmax, tol );
 
     rtn = tester.execute( -1, tol );
     EXPECT_EQ( rtn, 0 );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 65.498870 );
-    EXPECT_LT( psnr, 65.498871 );
+    EXPECT_GT( psnr, 6.5578315e+01 );
+    EXPECT_LT( psnr, 6.5578317e+01 );
     EXPECT_LT( lmax, tol );
 
     rtn = tester.execute( -2, tol );
     EXPECT_EQ( rtn, 0 );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 72.025230 );
-    EXPECT_LT( psnr, 72.025231 );
-    EXPECT_LT( lmax, 0.6164713 );
+    EXPECT_GT( psnr, 7.2108825e+01 );
+    EXPECT_LT( psnr, 7.2108827e+01 );
+    EXPECT_LT( lmax, 5.623770e-01 );
 }
 TEST( speck3d_qz_term, small_tolerance )
 {
@@ -250,15 +253,17 @@ TEST( speck3d_qz_term, small_tolerance )
     EXPECT_EQ( rtn, 0 );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 81.446037 );
-    EXPECT_LT( lmax, tol );
+    EXPECT_GT( psnr, 8.1451720e+01 );
+    EXPECT_LT( psnr, 8.1451722e+01 );
+    EXPECT_LT( lmax, 6.9999696e-02 );
 
     rtn = tester.execute( -5, tol );
     EXPECT_EQ( rtn, 0 );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 91.618080 );
-    EXPECT_LT( lmax, 0.0637522 );
+    EXPECT_GT( psnr, 9.1753349e+01 );
+    EXPECT_LT( psnr, 9.1753350e+01 );
+    EXPECT_LE( lmax, 5.3462983e-02 );
 }
 TEST( speck3d_qz_term, narrow_data_range)
 {
@@ -307,22 +312,23 @@ TEST( speck3d_qz_term_omp, small_tolerance )
     EXPECT_EQ( rtn, 0 );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 81.436264 );
-    EXPECT_LT( psnr, 81.436265 );
-    EXPECT_LT( lmax, 6.999970e-02 );
+    EXPECT_GT( psnr, 8.1441611e+01 );
+    EXPECT_LT( psnr, 8.1441613e+01 );
+    EXPECT_LT( lmax, 6.9999696e-02 );
 
     rtn = tester.execute( -5, 0.05 );
     EXPECT_EQ( rtn, 0 );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 91.552566 );
-    EXPECT_LT( psnr, 91.552567 );
-    EXPECT_LT( lmax, 4.975510e-02 );
+    EXPECT_GT( psnr, 9.1716300e+01 );
+    EXPECT_LT( psnr, 9.1716302e+01 );
+    EXPECT_LT( lmax, 4.9962998e-02 );
 }
 
 #else
+//
 // fixed-size mode
-
+//
 TEST( speck3d_bit_rate, small )
 {
     speck_tester tester( "../test_data/wmag17.float", {17, 17, 17} );
