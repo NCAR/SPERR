@@ -293,7 +293,11 @@ void speck::CDF97::m_dwt1d_one_level(double* array,
                                      size_t  array_len)
 {
     std::memcpy(m_qcc_buf.get(), array, sizeof(double) * array_len);
+#if __cplusplus >= 202002L
     if (array_len % 2 == 0) [[likely]] {
+#else
+    if (array_len % 2 == 0) {
+#endif
         this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf.get(), array_len);
         m_gather_even(array, m_qcc_buf.get(), array_len);
     } else {
@@ -305,7 +309,11 @@ void speck::CDF97::m_dwt1d_one_level(double* array,
 void speck::CDF97::m_idwt1d_one_level(double* array,
                                       size_t  array_len)
 {
+#if __cplusplus >= 202002L
     if (array_len % 2 == 0) [[likely]] {
+#else
+    if (array_len % 2 == 0) {
+#endif
         m_scatter_even(m_qcc_buf.get(), array, array_len);
         this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf.get(), array_len);
     } else {
@@ -326,8 +334,11 @@ void speck::CDF97::m_dwt2d_one_level(double*                plane,
     // because we want to have one even/odd test outside of the loop.
 
     // First, perform DWT along X for every row
-    if (len_xy[0] % 2 == 0) [[likely]] // Even length
-    {
+#if __cplusplus >= 202002L
+    if (len_xy[0] % 2 == 0) [[likely]] { // Even length
+#else
+    if (len_xy[0] % 2 == 0) {
+#endif
         for (size_t i = 0; i < len_xy[1]; i++) {
             auto* pos = plane + i * m_dims[0];
             std::memcpy(buf_ptr, pos, sizeof(double) * len_xy[0]);
@@ -353,8 +364,11 @@ void speck::CDF97::m_dwt2d_one_level(double*                plane,
     // on an X86 linux machine using gcc, clang, and pgi. Again the difference is
     // either indistinguishable, or the current implementation has a slight edge.
 
-    if (len_xy[1] % 2 == 0) [[likely]] // Even length
-    {
+#if __cplusplus >= 202002L
+    if (len_xy[1] % 2 == 0) [[likely]] { // Even length
+#else
+    if (len_xy[1] % 2 == 0) {
+#endif
         for (size_t x = 0; x < len_xy[0]; x++) {
             for (size_t y = 0; y < len_xy[1]; y++)
                 buf_ptr[y] = plane[y * m_dims[0] + x];
@@ -386,8 +400,11 @@ void speck::CDF97::m_idwt2d_one_level(double*               plane,
     double* const buf_ptr2 = buf_ptr + max_len; // Second half of the buffer
 
     // First, perform IDWT along Y for every column
-    if (len_xy[1] % 2 == 0) [[likely]] // Even length
-    {
+#if __cplusplus >= 202002L
+    if (len_xy[1] % 2 == 0) [[likely]] { // Even length
+#else
+    if (len_xy[1] % 2 == 0) {
+#endif
         for (size_t x = 0; x < len_xy[0]; x++) {
             for (size_t y = 0; y < len_xy[1]; y++)
                 buf_ptr[y] = plane[y * m_dims[0] + x];
@@ -411,8 +428,11 @@ void speck::CDF97::m_idwt2d_one_level(double*               plane,
     }
 
     // Second, perform IDWT along X for every row
-    if (len_xy[0] % 2 == 0) [[likely]] // Even length
-    {
+#if __cplusplus >= 202002L
+    if (len_xy[0] % 2 == 0) [[likely]] { // Even length
+#else
+    if (len_xy[0] % 2 == 0) {
+#endif
         for (size_t i = 0; i < len_xy[1]; i++) {
             auto* pos = plane + i * m_dims[0];
             // Re-organize the coefficients as interleaved low-pass and high-pass ones
@@ -452,8 +472,11 @@ void speck::CDF97::m_dwt3d_one_level(double*                vol,
     // 3) gather coefficients from `buf_ptr` to `buf_ptr2`
     // 4) put the Z column `buf_ptr2` back to their locations as a Z column.
 
-    if( len_xyz[2] % 2 == 0 ) [[likely]]   // Even length
-    {
+#if __cplusplus >= 202002L
+    if( len_xyz[2] % 2 == 0 ) [[likely]] { // Even length
+#else
+    if( len_xyz[2] % 2 == 0 ) {
+#endif
         for( size_t y = 0; y < len_xyz[1]; y++ ) {
             for( size_t x = 0; x < len_xyz[0]; x++ ) {
                 size_t buf_idx = 0;
@@ -507,8 +530,11 @@ void speck::CDF97::m_idwt3d_one_level(double*                vol,
     // 3) use appropriate even/odd Qcc*** function to transform it
     // 4) put the Z column `buf_ptr2` back to their locations as a Z column.
 
-    if( len_xyz[2] % 2 == 0 ) [[likely]] // Even length
-    {
+#if __cplusplus >= 202002L
+    if( len_xyz[2] % 2 == 0 ) [[likely]] { // Even length
+#else
+    if( len_xyz[2] % 2 == 0 ) {
+#endif
         for( size_t y = 0; y < len_xyz[2]; y++ ) {
             for( size_t x = 0; x < len_xyz[0]; x++ ) {
                 size_t buf_idx = 0;
