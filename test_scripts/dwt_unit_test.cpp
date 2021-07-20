@@ -240,11 +240,11 @@ TEST( dwt3d, small_even_cube )
     auto condi = speck::Conditioner();
     auto [rtn, meta] = condi.condition( in_copy );
 
-    // Use a speck::CDF97 to perform DWT and IDWT.
+    // Use a speck::CDF97 to perform DWT and IDWT, wavelet-packet.
     speck::CDF97 cdf;
-    cdf.take_data( std::move(in_copy), {dim_x, dim_y, dim_z} );
-    cdf.dwt3d();
-    cdf.idwt3d();
+    cdf.copy_data( in_copy.data(), dim_x * dim_y * dim_z, {dim_x, dim_y, dim_z} );
+    cdf.dwt3d_wavelet_packet();
+    cdf.idwt3d_wavelet_packet();
 
     // Claim that with single precision, the result is identical to the input
     auto result = cdf.release_data( );
@@ -252,9 +252,20 @@ TEST( dwt3d, small_even_cube )
 
     // Apply the conditioner
     rtn = condi.inverse_condition( result, meta.data() );
+    for( size_t i = 0; i < total_vals; i++ ) {
+        EXPECT_EQ( in_buf[i], float(result[i]) );
+    }
 
-    for( size_t i = 0; i < total_vals; i++ )
-    {
+    // Also test dyadic strategy:
+    cdf.take_data( std::move(in_copy), {dim_x, dim_y, dim_z} );
+    cdf.dwt3d_dyadic();
+    cdf.idwt3d_dyadic();
+
+    result = cdf.release_data( );
+    EXPECT_EQ( result.size(), total_vals );
+
+    rtn = condi.inverse_condition( result, meta.data() );
+    for( size_t i = 0; i < total_vals; i++ ) {
         EXPECT_EQ( in_buf[i], float(result[i]) );
     }
 }
@@ -276,11 +287,11 @@ TEST( dwt3d, big_odd_cube )
     auto condi = speck::Conditioner(); 
     auto [rtn, meta] = condi.condition( in_copy );
 
-    // Use a speck::CDF97 to perform DWT and IDWT.
+    // Use a speck::CDF97 to perform DWT and IDWT, wavelet-packet
     speck::CDF97 cdf;
-    cdf.take_data( std::move(in_copy), {dim_x, dim_y, dim_z} );
-    cdf.dwt3d();
-    cdf.idwt3d();
+    cdf.copy_data( in_copy.data(), dim_x * dim_y * dim_z, {dim_x, dim_y, dim_z} );
+    cdf.dwt3d_wavelet_packet();
+    cdf.idwt3d_wavelet_packet();
 
     // Claim that with single precision, the result is identical to the input
     auto result = cdf.release_data( );
@@ -288,9 +299,20 @@ TEST( dwt3d, big_odd_cube )
 
     // Apply the conditioner
     rtn = condi.inverse_condition( result, meta.data() );
+    for( size_t i = 0; i < total_vals; i++ ) {
+        EXPECT_EQ( in_buf[i], float(result[i]) );
+    }
 
-    for( size_t i = 0; i < total_vals; i++ )
-    {
+    // Also test dyadic strategy
+    cdf.take_data( std::move(in_copy), {dim_x, dim_y, dim_z} );
+    cdf.dwt3d_dyadic();
+    cdf.idwt3d_dyadic();
+
+    result = cdf.release_data( );
+    EXPECT_EQ( result.size(), total_vals );
+
+    rtn = condi.inverse_condition( result, meta.data() );
+    for( size_t i = 0; i < total_vals; i++ ) {
         EXPECT_EQ( in_buf[i], float(result[i]) );
     }
 }
@@ -312,11 +334,11 @@ TEST( dwt3d, big_even_cube )
     auto condi = speck::Conditioner( );
     auto [rtn, meta] = condi.condition( in_copy );
 
-    // Use a speck::CDF97 to perform DWT and IDWT.
+    // Use a speck::CDF97 to perform DWT and IDWT: wavelet-packet strategy
     speck::CDF97 cdf;
-    cdf.take_data( std::move(in_copy), {dim_x, dim_y, dim_z} );
-    cdf.dwt3d();
-    cdf.idwt3d();
+    cdf.copy_data( in_copy.data(), dim_x * dim_y * dim_z, {dim_x, dim_y, dim_z} );
+    cdf.dwt3d_wavelet_packet();
+    cdf.idwt3d_wavelet_packet();
 
     // Claim that with single precision, the result is identical to the input
     auto result = cdf.release_data( );
@@ -324,9 +346,20 @@ TEST( dwt3d, big_even_cube )
 
     // Apply the conditioner
     rtn = condi.inverse_condition( result, meta.data() );
+    for( size_t i = 0; i < total_vals; i++ ) {
+        EXPECT_EQ( in_buf[i], float(result[i]) );
+    }
 
-    for( size_t i = 0; i < total_vals; i++ )
-    {
+    // Also test dyadic strategy
+    cdf.take_data( std::move(in_copy), {dim_x, dim_y, dim_z} );
+    cdf.dwt3d_dyadic();
+    cdf.idwt3d_dyadic();
+
+    result = cdf.release_data( );
+    EXPECT_EQ( result.size(), total_vals );
+
+    rtn = condi.inverse_condition( result, meta.data() );
+    for( size_t i = 0; i < total_vals; i++ ) {
         EXPECT_EQ( in_buf[i], float(result[i]) );
     }
 }
