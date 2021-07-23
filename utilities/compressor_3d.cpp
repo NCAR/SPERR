@@ -26,21 +26,18 @@ int main( int argc, char* argv[] )
                    "E.g., `--chunks 64 64 64`.\n")->expected(3);
 
     size_t omp_num_threads = 4;
-    auto* omp_ptr = app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. "
-                                   "Default: 4\n");
+    app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4\n");
 
 #ifdef QZ_TERM
     int32_t qz_level = 0;
-    auto* qz_level_ptr = app.add_option("-q,--qz_level", qz_level, 
-            "Quantization level to reach when encoding\n"
-            "E.g., `-q n` means that the last quantization level is 2^n.\n"
-            "Note 1: smaller n usually yields smaller compression errors.\n"
-            "Note 2: n could be negative integers as well.")
-            ->group("Compression Parameters")->required();
+    app.add_option("-q,--qz_level", qz_level, "Quantization level to reach when encoding\n"
+                   "E.g., `-q n` means that the last quantization level is 2^n.\n"
+                   "Note 1: smaller n usually yields smaller compression errors.\n"
+                   "Note 2: n could be negative integers as well.")
+                   ->group("Compression Parameters")->required();
     double tolerance = 0.0;
-    auto* tol_ptr = app.add_option("-t,--tolerance", tolerance, 
-                                   "Maximum point-wise error tolerance\nE.g., `-t 1e-2`")
-                                   ->group("Compression Parameters")->required();
+    app.add_option("-t,--tolerance", tolerance, "Maximum point-wise error tolerance\n"
+                   "E.g., `-t 1e-2`")->group("Compression Parameters")->required();
 #else
     float bpp;
     auto* bpp_ptr = app.add_option("--bpp", bpp, 

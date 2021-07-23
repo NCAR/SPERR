@@ -71,8 +71,7 @@ auto speck::SPECK2D::encode() -> RTNType
 
     // Finally we prepare the bitstream
     auto rtn = m_prepare_encoded_bitstream();
-
-    return RTNType::Good;
+    return rtn;
 }
 
 auto speck::SPECK2D::decode() -> RTNType

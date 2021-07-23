@@ -137,8 +137,7 @@ int main( int argc, char* argv[] )
                                        "value by rms of its chunk. Default: not applied.\n");
 
     size_t omp_num_threads = 4;
-    auto* omp_ptr = app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. "
-                                   "Default: 4"); 
+    app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4"); 
 
     CLI11_PARSE(app, argc, argv);
 

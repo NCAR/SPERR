@@ -121,7 +121,6 @@ auto SPECK3D_OMP_C::compress() -> RTNType
     #pragma omp parallel for num_threads(m_num_threads)
     for( size_t i = 0; i < num_chunks; i++ ) {
         auto& compressor = compressors[ omp_get_thread_num() ];
-        const auto buf_len = chunks[i][1] * chunks[i][3] * chunks[i][5];
 
         // The following few operations have no chance to fail.
         compressor.take_data(std::move(m_chunk_buffers[i]), {chunks[i][1], chunks[i][3], chunks[i][5]});

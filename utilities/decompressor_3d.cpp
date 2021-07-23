@@ -30,8 +30,7 @@ int main( int argc, char* argv[] )
     app.add_option("-o", output_file, "Output filename\n")->required();
 
     size_t omp_num_threads = 4;
-    auto* omp_ptr = app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use."
-                                   " Default: 4\n");
+    app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4\n");
 
     std::string compare_file;
     auto* compare_file_ptr = app.add_option("--compare", compare_file,
