@@ -180,21 +180,19 @@ void speck::unpack_8_booleans( bool* dest, uint8_t src )
 
 auto speck::read_n_bytes( const char* filename, size_t n_bytes, void* buffer ) -> RTNType
 {
-    std::FILE* f = std::fopen( filename, "rb" );
-    if( !f ) {
+    std::unique_ptr<std::FILE, decltype(&std::fclose)> fp (std::fopen(filename, "rb"), &std::fclose);
+
+    if( !fp )
         return RTNType::IOError;
-    }
-    std::fseek( f, 0, SEEK_END );
-    if( std::ftell(f) < n_bytes ) {
-        std::fclose( f );
+
+    std::fseek( fp.get(), 0, SEEK_END );
+    if( std::ftell(fp.get()) < n_bytes )
         return RTNType::InvalidParam;
-    }
-    std::fseek( f, 0, SEEK_SET );
-    if( std::fread( buffer, 1, n_bytes, f ) != n_bytes ) {
-        std::fclose( f );
+
+    std::fseek( fp.get(), 0, SEEK_SET );
+    if( std::fread( buffer, 1, n_bytes, fp.get() ) != n_bytes )
         return RTNType::IOError;
-    }
-    std::fclose( f );
+
     return RTNType::Good;
 }
 
@@ -204,18 +202,17 @@ auto speck::read_whole_file( const char* filename ) -> std::vector<T>
 {
     std::vector<T> buf;
 
-    std::FILE* file = std::fopen( filename, "rb" );
-    if( !file )
+    std::unique_ptr<std::FILE, decltype(&std::fclose)> fp (std::fopen(filename, "rb"), &std::fclose);
+    if( !fp )
         return buf;
 
-    std::fseek( file, 0, SEEK_END );
-    const size_t file_size = std::ftell( file );
+    std::fseek( fp.get(), 0, SEEK_END );
+    const size_t file_size = std::ftell( fp.get() );
     const size_t num_vals  = file_size / sizeof(T);
-    std::fseek( file, 0, SEEK_SET );
+    std::fseek( fp.get(), 0, SEEK_SET );
 
     buf.resize( num_vals );
-    size_t nread  = std::fread( buf.data(), sizeof(T), num_vals, file );
-    std::fclose( file );
+    size_t nread  = std::fread( buf.data(), sizeof(T), num_vals, fp.get() );
     if( nread != num_vals )
         buf.clear();
 
@@ -228,16 +225,14 @@ template auto speck::read_whole_file( const char* ) -> std::vector<uint8_t>;
 
 auto speck::write_n_bytes( const char* filename, size_t n_bytes, const void* buffer ) -> RTNType
 {
-    std::FILE* f = std::fopen( filename, "wb" );
-    if( !f ) {
+    std::unique_ptr<std::FILE, decltype(&std::fclose)> fp (std::fopen(filename, "wb"), &std::fclose);
+    if( !fp )
         return RTNType::IOError;
-    }
-    if( std::fwrite(buffer, 1, n_bytes, f) != n_bytes ) {
-        std::fclose( f );
+
+    if( std::fwrite(buffer, 1, n_bytes, fp.get()) != n_bytes )
         return RTNType::IOError;
-    }
-    std::fclose( f );
-    return RTNType::Good;
+    else
+        return RTNType::Good;
 }
 
 
