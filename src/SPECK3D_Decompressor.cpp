@@ -1,7 +1,7 @@
 #include "SPECK3D_Decompressor.h"
 
-#include <cstring>
 #include <cassert>
+#include <cstring>
 
 
 auto SPECK3D_Decompressor::use_bitstream( const void* p, size_t len ) -> RTNType

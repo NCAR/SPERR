@@ -1,7 +1,7 @@
 #include <algorithm> // std::all_of()
 #include <cassert>
-#include <cstring>   // std::memcpy()
 #include <cmath>     // std::sqrt()
+#include <cstring>   // std::memcpy()
 #include <numeric>   // std::accumulate()
 #include <vector>
 

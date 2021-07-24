@@ -6,12 +6,12 @@
 
 #include "CLI11.hpp"
 
-#include <cstdlib>
 #include <cassert>
+#include <cctype>       // std::tolower()
+#include <chrono>
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
-#include <chrono>
-#include <cctype>       // std::tolower()
 
 
 #ifdef QZ_TERM

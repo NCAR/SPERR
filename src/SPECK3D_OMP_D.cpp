@@ -1,10 +1,10 @@
 
 #include "SPECK3D_OMP_D.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <numeric>
-#include <algorithm>
 #include <omp.h>
 
 

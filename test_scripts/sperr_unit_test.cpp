@@ -1,8 +1,8 @@
 #include "SPERR.h"
+#include "gtest/gtest.h"
 #include <algorithm>
 #include <cassert>
 #include <random>
-#include "gtest/gtest.h"
 
 namespace {
 

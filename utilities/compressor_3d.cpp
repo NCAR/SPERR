@@ -3,8 +3,8 @@
 #include "CLI11.hpp"
 
 #include <cstdlib>
-#include <iostream>
 #include <cstring>
+#include <iostream>
 
 
 int main( int argc, char* argv[] )

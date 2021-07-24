@@ -1,9 +1,9 @@
 #include "SPECK3D_OMP_C.h"
 
+#include <algorithm> // std::all_of()
 #include <cassert>
 #include <cstring>
 #include <numeric>   // std::accumulate()
-#include <algorithm> // std::all_of()
 #include <omp.h>
 
 
