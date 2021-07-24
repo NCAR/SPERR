@@ -48,10 +48,10 @@ auto speck::make_coeff_positive(vecd_type& buf, std::vector<bool>& signs) -> dou
     signs.resize( buf.size(), false );
     auto max = std::abs(buf[0]);
 
-    const bool tmpb[2] = {true, false};
+    const auto tmpb = std::array<bool, 2> {true, false};
 
     for (size_t i = 0; i < buf.size(); i++) {
-        double tmpd[2] = {buf[i], -buf[i]};
+        auto tmpd = std::array<double, 2> {buf[i], -buf[i]};
         size_t idx = buf[i] < 0.0;
         buf[i]   = tmpd[idx];
         signs[i] = tmpb[idx];
@@ -77,7 +77,7 @@ auto speck::pack_booleans( std::vector<uint8_t>&    dest,
     // uint8_t here which is definitely 1 byte in size.
     // Also, C++ guarantees conversion between booleans and integers:
     // true <--> 1, false <--> 0.
-    uint8_t  a[8]{0};
+    uint8_t  a[8]{0}; // NOLINT
     uint64_t t = 0;
     size_t   dest_idx = offset;
     for( size_t i = 0; i < src.size(); i += 8 ) {
@@ -112,7 +112,7 @@ auto speck::unpack_booleans( std::vector<bool>& dest,
     const uint64_t mask    = 0x8080808080808080;
 
 #ifndef OMP_UNPACK_BOOLEANS
-    uint8_t  a[8]{0};
+    uint8_t  a[8]{0}; // NOLINT
     uint64_t t = 0;
     size_t   dest_idx = 0;
     for( size_t byte_idx = 0; byte_idx < num_of_bytes; byte_idx++ ) {
@@ -159,7 +159,7 @@ void speck::pack_8_booleans( uint8_t& dest, const bool* src )
 {
     const uint64_t  magic = 0x8040201008040201;
     uint64_t t = 0;
-    uint8_t  a[8]{0};
+    uint8_t  a[8]{0}; // NOLINT
     for( size_t i = 0; i < 8; i++ )
         a[i] = src[i];
     std::memcpy(&t, a, 8);
@@ -171,7 +171,7 @@ void speck::unpack_8_booleans( bool* dest, uint8_t src )
     const uint64_t magic = 0x8040201008040201;
     const uint64_t mask  = 0x8080808080808080;
     uint64_t t = ((magic * src) & mask) >> 7;
-    uint8_t  a[8]{0};
+    uint8_t  a[8]{0}; // NOLINT
     std::memcpy( a, &t, 8 );
     for( size_t i = 0; i < 8; i++ )
         dest[i] = a[i];
@@ -260,14 +260,14 @@ void speck::calc_stats( const T* arr1,   const T* arr2,  size_t len,
     // #pragma omp parallel for
     for( size_t stride_i = 0; stride_i < num_of_strides; stride_i++ ) {
         T linfty = 0.0;
-        T buf[ stride_size ];
+        auto buf = std::array<T, stride_size>();
         for( size_t i = 0; i < stride_size; i++ ) {
             const size_t idx = stride_i * stride_size + i;
             auto diff = std::abs( arr1[idx] - arr2[idx] );
             linfty    = std::max( linfty, diff );
             buf[i]    = diff * diff;
         }
-        sum_vec   [ stride_i ] = speck::kahan_summation( buf, stride_size );
+        sum_vec   [ stride_i ] = speck::kahan_summation( buf.data(), stride_size );
         linfty_vec[ stride_i ] = linfty;
     }
 
@@ -275,14 +275,14 @@ void speck::calc_stats( const T* arr1,   const T* arr2,  size_t len,
     // Calculate summation and l-infty of the remaining elements
     //
     T last_linfty = 0.0;
-    T last_buf[ stride_size ]; // must be enough for `remainder_size` elements
+    auto last_buf = std::array<T, stride_size>{}; // must be enough for `remainder_size` elements.
     for( size_t i = 0; i < remainder_size; i++ ) {
         const size_t idx = stride_size * num_of_strides + i;
         auto diff   = std::abs( arr1[idx] - arr2[idx] );
         last_linfty = std::max( last_linfty, diff );
         last_buf[i] = diff * diff;
     }
-    sum_vec   [ num_of_strides ] = speck::kahan_summation( last_buf, remainder_size );
+    sum_vec   [ num_of_strides ] = speck::kahan_summation( last_buf.data(), remainder_size );
     linfty_vec[ num_of_strides ] = last_linfty;
 
     //

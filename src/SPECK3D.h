@@ -60,6 +60,10 @@ public:
     auto decode() -> RTNType;
     
 private:
+
+    using arrd2_type = std::array<double, 2>;
+    using arrb2_type = std::array<bool, 2>;
+
     auto m_ready_to_encode() const  -> bool;
     auto m_ready_to_decode() const  -> bool;
     void m_clean_LIS(); // Clean garbage sets from m_LIS if too much garbage exists.

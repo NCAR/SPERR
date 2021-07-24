@@ -23,13 +23,13 @@ auto speck::CDF97::copy_data(const T* data, size_t len, dims_type dims ) -> RTNT
     auto max_col = std::max( std::max(dims[0], dims[1]), dims[2] );
     if( m_qcc_buf_len < max_col * 2 ) {
         m_qcc_buf_len = max_col * 2;
-        m_qcc_buf     = std::make_unique<double[]>(m_qcc_buf_len);
+        m_qcc_buf     = std::make_unique<double[]>(m_qcc_buf_len); // NOLINT
     }
 
     auto max_slice = std::max( std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2] );
     if( m_slice_buf_len < max_slice ) {
         m_slice_buf_len = max_slice;
-        m_slice_buf     = std::make_unique<double[]>(m_slice_buf_len);
+        m_slice_buf     = std::make_unique<double[]>(m_slice_buf_len); // NOLINT
     }
 
     return RTNType::Good;
@@ -49,13 +49,13 @@ auto speck::CDF97::take_data( vecd_type&& buf, dims_type dims ) -> RTNType
     auto max_col = std::max( std::max(dims[0], dims[1]), dims[2] );
     if( m_qcc_buf_len < max_col * 2 ) {
         m_qcc_buf_len = max_col * 2;
-        m_qcc_buf     = std::make_unique<double[]>(m_qcc_buf_len);
+        m_qcc_buf     = std::make_unique<double[]>(m_qcc_buf_len); // NOLINT
     }
 
     auto max_slice = std::max( std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2] );
     if( m_slice_buf_len < max_slice ) {
         m_slice_buf_len = max_slice;
-        m_slice_buf     = std::make_unique<double[]>(m_slice_buf_len);
+        m_slice_buf     = std::make_unique<double[]>(m_slice_buf_len); // NOLINT
     }
 
     return RTNType::Good;

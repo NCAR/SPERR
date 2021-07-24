@@ -41,10 +41,10 @@ void speck::SPECK3D::set_bit_budget(size_t budget)
 
 void speck::SPECK3D::m_clean_LIS()
 {
-    for( size_t i = 0; i < m_LIS.size(); i++ ) {
-        auto it = std::remove_if( m_LIS[i].begin(), m_LIS[i].end(),
+    for(auto& list : m_LIS) {
+        auto it = std::remove_if( list.begin(), list.end(),
                   [](const auto& s) { return s.type == SetType::Garbage; });
-        m_LIS[i].erase( it, m_LIS[i].end() );
+        list.erase( it, list.end() );
     }
 
     // Let's also clean up m_LIP.
@@ -180,7 +180,7 @@ auto speck::SPECK3D::decode() -> RTNType
 
     // Restore coefficient signs by setting some of them negative
     for (size_t i = 0; i < m_sign_array.size(); i++) {
-        double tmp[2]  = {-m_coeff_buf[i], m_coeff_buf[i]};
+        auto tmp = arrd2_type{-m_coeff_buf[i], m_coeff_buf[i]};
         m_coeff_buf[i] = tmp[ m_sign_array[i] ];
     }
 
@@ -448,8 +448,8 @@ void speck::SPECK3D::m_quantize_P_encode( size_t idx )
     // subject to a QZ operation based on the current threshold.
     auto coeff = m_coeff_buf[idx] - m_threshold_arr[ m_threshold_idx ];
 
-    double     tmpd[2] = {0.0, 0.0};
-    const bool tmpb[2] = {false, true};
+    auto       tmpd = arrd2_type{0.0, 0.0};
+    const auto tmpb = arrb2_type{false, true};
     const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
     for( auto i = m_threshold_idx + 1; i < num_qz_levs; i++ ) {
         tmpd[1] = m_threshold_arr[i];
@@ -468,7 +468,7 @@ void speck::SPECK3D::m_quantize_P_decode( size_t idx )
     const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
     for( auto i = m_threshold_idx + 1; i < num_qz_levs; i++ ) {
         // C++ standard guarantees the conversion between bool and int.
-        double tmp[2] = { -m_threshold_arr[i + 1], m_threshold_arr[i + 1] };
+        auto tmp = arrd2_type { -m_threshold_arr[i + 1], m_threshold_arr[i + 1] };
         coeff += tmp[ m_bit_buffer[m_bit_idx++] ];
     }
     m_coeff_buf[idx] = coeff;
@@ -854,9 +854,11 @@ auto speck::SPECK3D::m_ready_to_decode() const -> bool
 
 auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::array<SPECKSet3D, 8>
 {
-    const uint32_t split_x[2] = { set.length_x - set.length_x / 2, set.length_x / 2 };
-    const uint32_t split_y[2] = { set.length_y - set.length_y / 2, set.length_y / 2 };
-    const uint32_t split_z[2] = { set.length_z - set.length_z / 2, set.length_z / 2 };
+    using u2_type = std::array<uint32_t, 2>;
+
+    const auto split_x = u2_type { set.length_x - set.length_x / 2, set.length_x / 2 };
+    const auto split_y = u2_type { set.length_y - set.length_y / 2, set.length_y / 2 };
+    const auto split_z = u2_type { set.length_z - set.length_z / 2, set.length_z / 2 };
 
     auto next_part_lev = set.part_level;
     next_part_lev     += split_x[1] > 0 ? 1 : 0;
@@ -869,7 +871,7 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
     for (auto& s : subsets)
         s.part_level = next_part_lev;
 
-    constexpr size_t offsets[3] { 1, 2, 4 };
+    constexpr auto offsets = std::array<size_t, 3> { 1, 2, 4 };
 
     //
     // The actual figuring out where it starts/ends part...
@@ -964,8 +966,9 @@ auto speck::SPECK3D::m_partition_S_XY(const SPECKSet3D& set) const -> std::array
 {
     std::array<SPECKSet3D, 4> subsets;
 
-    const uint32_t split_x[2] { set.length_x - set.length_x / 2, set.length_x / 2 };
-    const uint32_t split_y[2] { set.length_y - set.length_y / 2, set.length_y / 2 };
+    using u2_type = std::array<uint32_t, 2>;
+    const auto split_x = u2_type { set.length_x - set.length_x / 2, set.length_x / 2 };
+    const auto split_y = u2_type { set.length_y - set.length_y / 2, set.length_y / 2 };
 
     for (auto& s : subsets) {
         s.part_level = set.part_level;
@@ -978,7 +981,7 @@ auto speck::SPECK3D::m_partition_S_XY(const SPECKSet3D& set) const -> std::array
     //
     // The actual figuring out where it starts/ends part...
     //
-    const size_t offsets[3] { 1, 2, 4 };
+    const auto offsets = std::array<size_t, 3> { 1, 2, 4 };
     // subset (0, 0, 0)
     size_t sub_i  = 0 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
     auto&  sub0   = subsets[sub_i];
@@ -1026,7 +1029,7 @@ auto speck::SPECK3D::m_partition_S_Z(const SPECKSet3D& set) const -> std::array<
 {
     std::array<SPECKSet3D, 2> subsets;
 
-    const uint32_t split_z[2] { set.length_z - set.length_z / 2, set.length_z / 2 };
+    const auto split_z = std::array<uint32_t, 2> { set.length_z - set.length_z / 2, set.length_z / 2 };
 
     for (auto& s : subsets) {
         s.part_level = set.part_level;
