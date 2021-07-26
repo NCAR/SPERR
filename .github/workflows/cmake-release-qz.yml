@@ -1,4 +1,4 @@
-name: CMake
+name: cmake-release-qz
 
 on:
   push:
