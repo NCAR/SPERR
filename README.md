@@ -1,7 +1,5 @@
 [![clang-format Check](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-format-check.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-format-check.yml)
-
 [![cmake-release-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml)
-
 [![cmake-release-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml)
 
 # SPECK2020
