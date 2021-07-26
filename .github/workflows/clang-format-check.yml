@@ -9,8 +9,10 @@ jobs:
     strategy:
       matrix:
         path:
-          - 'src'
-          - 'utilities'
+          - check: 'src'
+            exclude: ''              # Nothing to exclude
+          - check: 'utilities'
+            exclude: '(old_files|qccpack)' # Exclude file paths containing "old_files" or "qcc_pack"
     steps:
     - uses: actions/checkout@v2
     - name: Run clang-format style check for C/C++ programs.
