@@ -1,6 +1,6 @@
 [![clang-format Check](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-format-check.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-format-check.yml)
 [![cmake-release-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml)
-[![cmake-release-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml)
+[![cmake-release-size](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml)
 
 # SPECK2020
 Attempt in 2019-2020 to port SPECK algorithm for VAPOR.
