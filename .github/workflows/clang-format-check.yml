@@ -1,3 +1,5 @@
+# Sam note: this action is from: https://github.com/jidicula/clang-format-action
+
 name: clang-format Check
 on: [push, pull_request]
 jobs:

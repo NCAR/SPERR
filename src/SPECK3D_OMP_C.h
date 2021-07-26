@@ -1,6 +1,6 @@
 //
-// This is a class that performs SPECK3D compression, and also utilizes OpenMP 
-// to achieve parallelization: the input volume is divided into smaller chunks 
+// This is a class that performs SPECK3D compression, and also utilizes OpenMP
+// to achieve parallelization: the input volume is divided into smaller chunks
 // and then they're processed individually.
 //
 
@@ -11,64 +11,62 @@
 
 using speck::RTNType;
 
-class SPECK3D_OMP_C
-{
-public:
+class SPECK3D_OMP_C {
+ public:
+  void set_dims(speck::dims_type);
+  void prefer_chunk_dims(speck::dims_type);
+  void set_num_threads(size_t);
 
-    void set_dims( speck::dims_type );
-    void prefer_chunk_dims( speck::dims_type );
-    void set_num_threads( size_t );
+  // Upon receiving incoming data, a chunking scheme is decided, and the volume
+  // is divided and kept in separate chunks.
+  template <typename T>
+  auto use_volume(const T*, size_t) -> RTNType;
 
-    // Upon receiving incoming data, a chunking scheme is decided, and the volume
-    // is divided and kept in separate chunks.
-    template<typename T>
-    auto use_volume( const T*, size_t ) -> RTNType;
-
-    void toggle_conditioning( std::array<bool, 8> );
+  void toggle_conditioning(std::array<bool, 8>);
 
 #ifdef QZ_TERM
-    void set_qz_level( int32_t );
-    auto set_tolerance( double ) -> RTNType;
-    // Return 1) the number of outliers, and 2) the num of bytes to encode them.
-    auto get_outlier_stats() const -> std::pair<size_t, size_t>;
+  void set_qz_level(int32_t);
+  auto set_tolerance(double) -> RTNType;
+  // Return 1) the number of outliers, and 2) the num of bytes to encode them.
+  auto get_outlier_stats() const -> std::pair<size_t, size_t>;
 #else
-    auto set_bpp( float ) -> RTNType;
+  auto set_bpp(float) -> RTNType;
 #endif
 
-    auto compress() -> RTNType;
+  auto compress() -> RTNType;
 
-    // Provide a copy of the encoded bitstream to the caller.
-    auto get_encoded_bitstream() const  -> std::vector<uint8_t>;
+  // Provide a copy of the encoded bitstream to the caller.
+  auto get_encoded_bitstream() const -> std::vector<uint8_t>;
 
+ private:
+  speck::dims_type m_dims = {0, 0, 0};  // Dimension of the entire volume
+  speck::dims_type m_chunk_dims = {0, 0,
+                                   0};  // Preferred dimensions for a chunk
+  size_t m_num_threads = 1;
+  std::array<bool, 8> m_conditioning_settings = {true,  false, false, false,
+                                                 false, false, false, false};
 
-private:
+  std::vector<speck::vecd_type> m_chunk_buffers;
+  std::vector<speck::vec8_type> m_encoded_streams;
+  speck::vec8_type m_total_stream;
 
-    speck::dims_type                m_dims        = {0, 0, 0}; // Dimension of the entire volume
-    speck::dims_type                m_chunk_dims  = {0, 0, 0}; // Preferred dimensions for a chunk
-    size_t                          m_num_threads = 1;
-    std::array<bool, 8>             m_conditioning_settings = {true,  false, false, false,
-                                                               false, false, false, false};
-
-    std::vector<speck::vecd_type>   m_chunk_buffers;
-    std::vector<speck::vec8_type>   m_encoded_streams;
-    speck::vec8_type                m_total_stream;
-
-    const size_t m_header_magic = 26; // header size would be this number + num_chunks * 4
+  const size_t m_header_magic =
+      26;  // header size would be this number + num_chunks * 4
 
 #ifdef QZ_TERM
-    int32_t     m_qz_lev      = 0;
-    double      m_tol         = 0.0;
-    // Outlier stats include 1) the number of outliers, and 2) the num of bytes to encode them.
-    std::vector<std::pair<size_t, size_t>>  m_outlier_stats;
+  int32_t m_qz_lev = 0;
+  double m_tol = 0.0;
+  // Outlier stats include 1) the number of outliers, and 2) the num of bytes to
+  // encode them.
+  std::vector<std::pair<size_t, size_t>> m_outlier_stats;
 #else
-    float       m_bpp         = 0.0;
+  float m_bpp = 0.0;
 #endif
 
-    //
-    // Private methods
-    //
-    auto m_generate_header() const -> speck::vec8_type;
-
+  //
+  // Private methods
+  //
+  auto m_generate_header() const -> speck::vec8_type;
 };
 
 #endif
