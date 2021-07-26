@@ -32,6 +32,8 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/SperrConfig.h.in" "SperrConfig.h")
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if( USE_ZSTD )
+    message(STATUS "ZSTD add-on enabled!")
+
     project(zstd-download NONE)
     include(ExternalProject)
     ExternalProject_Add( zstd-download
@@ -58,6 +60,8 @@ if( USE_ZSTD )
 
     ExternalProject_Get_Property( zstd-download INSTALL_DIR )
     include_directories("${INSTALL_DIR}/include")
+else()
+    message(STATUS "ZSTD add-on disabled!")
 endif()
 
 
@@ -117,8 +121,10 @@ target_link_libraries(      decompressor_3d PUBLIC ${SPECK3D_LIBS}
 
 if( QZ_TERM )
   add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_qz.cpp" )
+  message(STATUS "Building error-bound mode")
 else()
   add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_size.cpp" )
+  message(STATUS "Building size-bound mode")
 endif()
 target_include_directories( probe_3d PUBLIC ${PROJECT_BINARY_DIR} )
 target_link_libraries(      probe_3d PUBLIC ${SPECK3D_LIBS}
@@ -191,12 +197,14 @@ if( BUILD_UNIT_TESTS )
                                         PUBLIC gtest_main            )
     add_test( NAME test_speck3d COMMAND test_speck3d                 )
 
-    add_executable( test_sperr
-                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/sperr_unit_test.cpp" )
-    target_link_libraries( test_sperr PUBLIC ${SPERR_LIBS}
-                                      PUBLIC ${HELPER_LIBS}
-                                      PUBLIC gtest_main             )
-    add_test( NAME test_sperr COMMAND test_sperr                    )
+    if( QZ_TERM )
+        add_executable( test_sperr
+                        "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/sperr_unit_test.cpp" )
+        target_link_libraries( test_sperr PUBLIC ${SPERR_LIBS}
+                                          PUBLIC ${HELPER_LIBS}
+                                          PUBLIC gtest_main             )
+        add_test( NAME test_sperr COMMAND test_sperr                    )
+    endif()
 
 
 endif()
