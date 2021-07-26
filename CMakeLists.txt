@@ -14,7 +14,7 @@ if(NOT CMAKE_BUILD_TYPE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "DEBUG" "RELEASE" "RELWITHDEBINFO")
 endif()
 
-option( BUILD_UNIT_TESTS "Build unit tests using googletest?" OFF)
+option( BUILD_UNIT_TESTS "Build unit tests using googletest?" ON)
 option( USE_ZSTD "Incorporate zstd to achieve further 5% compression?" OFF)
 option( QZ_TERM  "Operational mode which terminates by quantization level" ON)
 
@@ -129,6 +129,8 @@ target_link_libraries(      probe_3d PUBLIC ${SPECK3D_LIBS}
 
 
 if( BUILD_UNIT_TESTS )
+    enable_testing()
+
     # Download and unpack googletest at configure time
     configure_file(GTestCMake.txt.in googletest-download/CMakeLists.txt)
     execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .  RESULT_VARIABLE result
