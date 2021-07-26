@@ -1,3 +1,5 @@
+[![CMake](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake.yml/badge.svg?branch=main)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake.yml)
+
 # SPECK2020
 Attempt in 2019-2020 to port SPECK algorithm for VAPOR.
 
