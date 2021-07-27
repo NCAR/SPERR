@@ -1,4 +1,4 @@
-# Sam note: this action is from: https://github.com/jidicula/clang-format-action
+# Sam note: this action is from: https://github.com/HorstBaerbel/action-clang-tidy
 
 name: Clang-tidy
 
