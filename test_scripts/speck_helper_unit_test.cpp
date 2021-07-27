@@ -99,8 +99,8 @@ TEST( speck_helper, bit_packing_one_byte )
         EXPECT_EQ( input[i], output[i] );
 
     // All false
-    for( size_t i = 0; i < 8; i++ )
-        input[i] = false;
+    for (bool & val : input)
+        val = false;
     speck::pack_8_booleans( byte, input );
     speck::unpack_8_booleans( output, byte );
     for( size_t i = 0; i < 8; i++ )
