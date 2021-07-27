@@ -1,4 +1,4 @@
-[![clang-format Check](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-format-check.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-format-check.yml)
+[![clang-format](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-format.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-format.yml)
 [![Clang-tidy](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy.yml)
 [![cmake-release-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml)
 [![cmake-release-size](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml)
