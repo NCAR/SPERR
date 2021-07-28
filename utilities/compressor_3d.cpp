@@ -51,11 +51,10 @@ int main(int argc, char* argv[]) {
       ->required();
 #else
   float bpp;
-  auto* bpp_ptr =
-      app.add_option("--bpp", bpp, "Target bit-per-pixel. E.g., `-bpp 2.3`.")
-          ->check(CLI::Range(0.0f, 64.0f))
-          ->group("Compression Parameters")
-          ->required();
+  app.add_option("--bpp", bpp, "Target bit-per-pixel. E.g., `-bpp 2.3`.")
+      ->check(CLI::Range(0.0f, 64.0f))
+      ->group("Compression Parameters")
+      ->required();
 #endif
 
   std::string output_file;

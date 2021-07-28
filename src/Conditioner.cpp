@@ -126,7 +126,7 @@ auto speck::Conditioner::condition(vecd_type& buf) const
   std::memcpy(meta.data() + pos, &mean, sizeof(mean));
   pos += sizeof(mean);
   std::memcpy(meta.data() + pos, &rms, sizeof(rms));
-  pos += sizeof(rms);
+  pos += sizeof(rms);  // NOLINT
   assert(pos == m_meta_size);
 
   return {RTNType::Good, meta};
@@ -144,7 +144,7 @@ auto speck::Conditioner::inverse_condition(vecd_type& buf,
   std::memcpy(&mean, meta + pos, sizeof(mean));
   pos += sizeof(mean);
   std::memcpy(&rms, meta + pos, sizeof(rms));
-  pos += sizeof(rms);
+  pos += sizeof(rms);  // NOLINT
   assert(pos == m_meta_size);
 
   m_adjust_strides(buf.size());

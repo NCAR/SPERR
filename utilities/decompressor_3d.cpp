@@ -19,13 +19,12 @@ int main(int argc, char* argv[]) {
 #ifndef QZ_TERM
   // Partial bitstream decompression is only applicable to fixed-size mode.
   float decomp_bpp = 0.0;
-  auto* decomp_bpp_ptr =
-      app.add_option(
-             "--partial_bpp", decomp_bpp,
-             "Partially decode the bitstream up to a certain bit-per-pixel. \n"
-             "If not specified, the entire bitstream will be decoded.")
-          ->check(CLI::Range(0.0f, 64.0f))
-          ->group("Decompression Options");
+  app.add_option(
+         "--partial_bpp", decomp_bpp,
+         "Partially decode the bitstream up to a certain bit-per-pixel. \n"
+         "If not specified, the entire bitstream will be decoded.")
+      ->check(CLI::Range(0.0f, 64.0f))
+      ->group("Decompression Options");
 #endif
 
   std::string output_file;

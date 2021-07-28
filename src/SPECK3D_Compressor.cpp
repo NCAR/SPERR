@@ -230,7 +230,7 @@ auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType {
   std::copy(m_condi_stream.begin(), m_condi_stream.end(), zstd_itr);
   zstd_itr += m_condi_stream.size();
   std::copy(m_speck_stream.begin(), m_speck_stream.end(), zstd_itr);
-  zstd_itr += m_speck_stream.size();
+  zstd_itr += m_speck_stream.size();  // NOLINT
 
 #ifdef QZ_TERM
   std::copy(m_sperr_stream.begin(), m_sperr_stream.end(), zstd_itr);

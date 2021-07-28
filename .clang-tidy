@@ -2,6 +2,7 @@
 # with the following additions:
 # performance-*
 # portability-*
+# clang-analyzer-*,
 
 ---
   Checks:          '-*,
@@ -33,6 +34,7 @@
                     modernize-use-transparent-functors,
                     performance-*,
                     portability-*,
+                    clang-analyzer-*,
                     readability-redundant-member-init'
   CheckOptions:
     - key:          bugprone-dangling-handle.HandleClasses

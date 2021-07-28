@@ -1,6 +1,6 @@
 # Sam note: this action is from: https://github.com/HorstBaerbel/action-clang-tidy
 
-name: Clang-tidy
+name: Clang-tidy-qz
 
 on:
   push:
@@ -22,4 +22,4 @@ jobs:
         builddir: 'build'
         excludedirs: ''
         extensions: 'c,h,C,H,cpp,hpp,cc,hh,c++,h++,cxx,hxx'
-        cmakeoptions: '-DBUILD_UNIT_TESTS=OFF'
+        cmakeoptions: '-DBUILD_UNIT_TESTS=OFF -DQZ_TERM=ON'
