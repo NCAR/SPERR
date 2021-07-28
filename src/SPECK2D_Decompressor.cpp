@@ -74,9 +74,9 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
     return RTNType::WrongSize;
   m_speck_stream.resize(speck_size, 0);
   std::copy(u8p, u8p + speck_size, m_speck_stream.begin());
-  u8p += speck_size;  // NOLINT
+  u8p += speck_size;   // NOLINT
   plen -= speck_size;  // NOLINT
-  assert(plen == 0);  // True if no other streams behind SPECK stream
+  assert(plen == 0);   // True if no other streams behind SPECK stream
 
   // Task 5)
   m_dims = m_decoder.get_speck_stream_dims(m_speck_stream.data());

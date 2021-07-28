@@ -1,6 +1,6 @@
 # Sam note: this action is from: https://github.com/HorstBaerbel/action-clang-tidy
 
-name: Clang-tidy-qz
+name: clang-tidy-qz
 
 on:
   push:

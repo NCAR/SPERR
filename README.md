@@ -1,6 +1,6 @@
 [![clang-format](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-format.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-format.yml)
-[![Clang-tidy-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-qz.yml)
-[![Clang-tidy-size](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-size.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-size.yml)
+[![clang-tidy-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-qz.yml)
+[![clang-tidy-size](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-size.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-size.yml)
 [![cmake-release-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml)
 [![cmake-release-size](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml)
 
