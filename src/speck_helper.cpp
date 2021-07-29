@@ -72,14 +72,14 @@ auto speck::pack_booleans(std::vector<uint8_t>& dest,
   // uint8_t here which is definitely 1 byte in size.
   // Also, C++ guarantees conversion between booleans and integers:
   // true <--> 1, false <--> 0.
-  uint8_t a[8]{0};  // NOLINT
+  auto a = std::array<uint8_t, 8>{};
   uint64_t t = 0;
   size_t dest_idx = offset;
   for (size_t i = 0; i < src.size(); i += 8) {
 #pragma GCC unroll 8
     for (size_t j = 0; j < 8; j++)
       a[j] = src[i + j];
-    std::memcpy(&t, a, 8);
+    std::memcpy(&t, a.data(), 8);
     dest[dest_idx++] = (magic * t) >> 56;
   }
 
@@ -106,7 +106,7 @@ auto speck::unpack_booleans(std::vector<bool>& dest,
   const uint64_t mask = 0x8080808080808080;
 
 #ifndef OMP_UNPACK_BOOLEANS
-  uint8_t a[8]{0};  // NOLINT
+  uint8_t a[8];  // NOLINT
   uint64_t t = 0;
   size_t dest_idx = 0;
   for (size_t byte_idx = 0; byte_idx < num_of_bytes; byte_idx++) {
@@ -154,10 +154,10 @@ auto speck::unpack_booleans(std::vector<bool>& dest,
 void speck::pack_8_booleans(uint8_t& dest, const bool* src) {
   const uint64_t magic = 0x8040201008040201;
   uint64_t t = 0;
-  uint8_t a[8]{0};  // NOLINT
+  auto a = std::array<uint8_t, 8>{};
   for (size_t i = 0; i < 8; i++)
     a[i] = src[i];
-  std::memcpy(&t, a, 8);
+  std::memcpy(&t, a.data(), 8);
   dest = (magic * t) >> 56;
 }
 
