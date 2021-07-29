@@ -48,8 +48,11 @@ if( USE_ZSTD )
       CMAKE_ARGS        "-DZSTD_BUILD_PROGRAMS=False"   # Don't build zstd command line utilities
       CMAKE_ARGS        "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/zstd/install"
       CMAKE_ARGS        "-DCMAKE_INSTALL_LIBDIR=lib"
-      CMAKE_ARGS        "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}" # use the same CXX compiler
-      CMAKE_ARGS        "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}"     # use the same C compiler
+      CMAKE_ARGS        "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"         # use the same CXX compiler
+      CMAKE_ARGS        "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}"             # use the same C compiler
+      CMAKE_ARGS        "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"               # use the same CXX flags
+      CMAKE_ARGS        "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}"                   # use the same C flags
+      CMAKE_ARGS        "-DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}" # use the same linker flags
       INSTALL_DIR       "${CMAKE_CURRENT_BINARY_DIR}/zstd/install"
         # !! <INSTALL_DIR> doesn't contain any value now !!
         # But it can be used later by others to retrieve where the installation is.
