@@ -373,10 +373,7 @@ auto speck::SPERR::m_refinement_new_SP(size_t idx) -> bool {
   if (!is_outlier)
     m_outlier_cnt--;
 
-  if (m_outlier_cnt == 0)
-    return true;
-  else
-    return false;
+  return (m_outlier_cnt == 0)
 }
 
 auto speck::SPERR::m_process_S_decoding(size_t idx1,
@@ -482,9 +479,9 @@ auto speck::SPERR::get_encoded_bitstream() const -> std::vector<uint8_t> {
   // Assemble the bitstream into bytes
   auto rtn = speck::pack_booleans(buf, m_bvec_tmp, pos);
   if (rtn != RTNType::Good)
-    return std::vector<uint8_t>(0);
-  else
-    return std::move(buf);
+    buf.clear();
+
+  return buf;
 }
 
 auto speck::SPERR::parse_encoded_bitstream(const void* buf, size_t len)
