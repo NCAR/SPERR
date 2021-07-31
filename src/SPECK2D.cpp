@@ -150,8 +150,13 @@ auto speck::SPECK2D::m_sorting_pass() -> RTNType {
     // significant at each iteration, so not touching every data value.
     m_significance_map.assign(m_coeff_buf.size(), false);
     for (size_t i = 0; i < m_coeff_buf.size(); i++) {
-      if (m_coeff_buf[i] >= m_threshold) [[unlikely]]
+#if __cplusplus >= 202002L
+      if (m_coeff_buf[i] >= m_threshold) [[unlikely]] {
+#else
+      if (m_coeff_buf[i] >= m_threshold) {
+#endif
         m_significance_map[i] = true;
+      }
     }
   }
 

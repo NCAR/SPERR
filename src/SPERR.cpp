@@ -373,7 +373,7 @@ auto speck::SPERR::m_refinement_new_SP(size_t idx) -> bool {
   if (!is_outlier)
     m_outlier_cnt--;
 
-  return (m_outlier_cnt == 0)
+  return (m_outlier_cnt == 0);
 }
 
 auto speck::SPERR::m_process_S_decoding(size_t idx1,
