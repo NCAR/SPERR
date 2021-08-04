@@ -130,12 +130,14 @@ auto SPECK3D_OMP_C::compress() -> RTNType {
 #endif
   }
 
-  if (std::any_of(chunk_rtn.begin(), chunk_rtn.end(),
-                  [](auto r) { return r != RTNType::Good; }))
-    return RTNType::Error;
+  auto found1 = std::find_if( chunk_rtn.begin(), chunk_rtn.end(),
+                              [](auto r){return r != RTNType::Good;});
+  if( found1 != chunk_rtn.end() )
+    return (*found1);
+
   if (std::any_of(m_encoded_streams.begin(), m_encoded_streams.end(),
                   [](auto& s) { return s.empty(); }))
-    return RTNType::Error;
+    return RTNType::EmptyStream;
 
   return RTNType::Good;
 }

@@ -72,7 +72,7 @@ auto speck::SPECK3D::encode() -> RTNType {
   // If the requested termination level is already above max_coeff_bits, return
   // right away.
   if (m_qz_term_lev > m_max_coeff_bits)
-    return RTNType::InvalidParam;
+    return RTNType::QzLevelTooBig;
 
   const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
 

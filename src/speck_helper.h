@@ -38,6 +38,8 @@ enum class RTNType {  // Return Type
   WrongSize,
   IOError,
   InvalidParam,
+  QzLevelTooBig, // a very specific type of invalid param
+  EmptyStream,   // a condition but not sure if it's an error
   BitBudgetMet,
   VersionMismatch,
   ZSTDMismatch,
