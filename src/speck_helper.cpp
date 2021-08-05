@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <numeric>
 
 //
 // Uncomment the following lines to enable OpenMP
@@ -233,11 +234,11 @@ template <typename T>
 void speck::calc_stats(const T* arr1,
                        const T* arr2,
                        size_t len,
-                       T* rmse,
-                       T* linfty,
-                       T* psnr,
-                       T* arr1min,
-                       T* arr1max) {
+                       T& rmse,
+                       T& linfty,
+                       T& psnr,
+                       T& arr1min,
+                       T& arr1max) {
   const size_t stride_size = 4096;
   const size_t num_of_strides = len / stride_size;
   const size_t remainder_size = len - stride_size * num_of_strides;
@@ -249,7 +250,6 @@ void speck::calc_stats(const T* arr1,
   // Calculate summation and l-infty of each stride
   //
   // (Uncomment the following line to enable OpenMP)
-  //
   // #pragma omp parallel for
   for (size_t stride_i = 0; stride_i < num_of_strides; stride_i++) {
     T linfty = 0.0;
@@ -260,7 +260,7 @@ void speck::calc_stats(const T* arr1,
       linfty = std::max(linfty, diff);
       buf[i] = diff * diff;
     }
-    sum_vec[stride_i] = speck::kahan_summation(buf.data(), stride_size);
+    sum_vec[stride_i] = std::accumulate(buf.begin(), buf.end(), T{0.0});
     linfty_vec[stride_i] = linfty;
   }
 
@@ -276,17 +276,17 @@ void speck::calc_stats(const T* arr1,
     last_linfty = std::max(last_linfty, diff);
     last_buf[i] = diff * diff;
   }
-  sum_vec[num_of_strides] =
-      speck::kahan_summation(last_buf.data(), remainder_size);
+  sum_vec[num_of_strides] = std::accumulate( last_buf.begin(), 
+                            last_buf.begin() + remainder_size, T{0.0});
   linfty_vec[num_of_strides] = last_linfty;
 
   //
   // Now calculate min, max, linfty
   //
   const auto minmax = std::minmax_element(arr1, arr1 + len);
-  *arr1min = *minmax.first;
-  *arr1max = *minmax.second;
-  *linfty = *(std::max_element(linfty_vec.begin(), linfty_vec.end()));
+  arr1min = *minmax.first;
+  arr1max = *minmax.second;
+  linfty = *(std::max_element(linfty_vec.begin(), linfty_vec.end()));
 
   //
   // Now calculate rmse and psnr
@@ -294,29 +294,28 @@ void speck::calc_stats(const T* arr1,
   // http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/VELDHUIZEN/node18.html
   // Also refer to https://www.mathworks.com/help/vision/ref/psnr.html
   //
-  const auto msr =
-      speck::kahan_summation(sum_vec.data(), sum_vec.size()) / T(len);
-  *rmse = std::sqrt(msr);
+  const auto msr = std::accumulate(sum_vec.begin(), sum_vec.end(), T{0.0}) / T(len);
+  rmse = std::sqrt(msr);
   auto range_sq = *minmax.first - *minmax.second;
   range_sq *= range_sq;
-  *psnr = std::log10(range_sq / msr) * 10.0;
+  psnr = std::log10(range_sq / msr) * T{10.0};
 }
 template void speck::calc_stats(const float*,
                                 const float*,
                                 size_t,
-                                float*,
-                                float*,
-                                float*,
-                                float*,
-                                float*);
+                                float&,
+                                float&,
+                                float&,
+                                float&,
+                                float&);
 template void speck::calc_stats(const double*,
                                 const double*,
                                 size_t,
-                                double*,
-                                double*,
-                                double*,
-                                double*,
-                                double*);
+                                double&,
+                                double&,
+                                double&,
+                                double&,
+                                double&);
 
 template <typename T>
 auto speck::kahan_summation(const T* arr, size_t len) -> T {

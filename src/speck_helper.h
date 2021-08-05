@@ -157,11 +157,12 @@ template <typename T>
 void calc_stats(const T* arr1,
                 const T* arr2,
                 size_t len,
-                T* rmse,
-                T* linfty,
-                T* psnr,
-                T* arr1min,
-                T* arr1max);
+                T& rmse,
+                T& linfty,
+                T& psnr,
+                T& arr1min,
+                T& arr1max);
+
 template <typename T>
 auto kahan_summation(const T*, size_t) -> T;
 

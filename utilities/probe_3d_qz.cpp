@@ -95,8 +95,8 @@ auto test_configuration_omp(const T* in_buf,
 
   // Collect statistics
   T rmse, lmax, psnr, arr1min, arr1max;
-  speck::calc_stats(in_buf, output_buf.data(), total_vals, &rmse, &lmax, &psnr,
-                    &arr1min, &arr1max);
+  speck::calc_stats(in_buf, output_buf.data(), total_vals, rmse, lmax, psnr,
+                    arr1min, arr1max);
   printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
   printf("    Reconstructed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n",
          rmse, lmax, psnr);
@@ -212,7 +212,7 @@ int main(int argc, char* argv[]) {
     qz_level = int32_t(std::floor(std::log2(range / 1000.0)));
   }
 
-  printf( "Initial analysis: input data min = %.4e, max = %.4e, "
+  printf( "Initial analysis: input data min = %.4e, max = %.4e,\n"
           "absolute error tolerance = %.2e, quantization level = %d ...  \n\n", 
           min_orig, max_orig, tolerance, qz_level);
 
