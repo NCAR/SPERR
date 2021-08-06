@@ -56,7 +56,7 @@ class SPECK3D_Compressor {
 
   // Store bitstreams from the conditioner and SPECK encoding, and the overall
   // bitstream.
-  speck::vec8_type m_condi_stream;
+  speck::Conditioner::meta_type m_condi_stream;
   speck::vec8_type m_speck_stream;
   speck::vec8_type m_encoded_stream;
 

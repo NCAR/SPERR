@@ -7,15 +7,36 @@
 
 #include "Conditioner.h"
 
-auto speck::Conditioner::get_meta_size() const -> size_t {
+auto speck::Conditioner::get_meta_size() const -> size_t
+{
   return m_meta_size;
 }
 
-void speck::Conditioner::toggle_all_settings(std::array<bool, 8> b8) {
+void speck::Conditioner::toggle_all_settings(std::array<bool, 8> b8)
+{
   m_settings = b8;
 }
 
-auto speck::Conditioner::m_calc_mean(const vecd_type& buf) const -> double {
+auto speck::Conditioner::m_calc_mean(const vecd_type& buf) -> double
+{
+  assert(buf.size() % m_num_strides == 0);
+
+  m_stride_buf.resize(m_num_strides);
+  const size_t stride_size = buf.size() / m_num_strides;
+
+  for (size_t s = 0; s < m_num_strides; s++) {
+    auto begin = buf.begin() + stride_size * s;
+    auto end = begin + stride_size;
+    m_stride_buf[s] = std::accumulate(begin, end, double{0.0}) / double(stride_size);
+  }
+
+  double sum = std::accumulate(m_stride_buf.begin(), m_stride_buf.end(), double{0.0});
+
+  return (sum / double(m_stride_buf.size()));
+}
+
+auto speck::Conditioner::m_calc_rms(const vecd_type& buf) -> double
+{
   assert(buf.size() % m_num_strides == 0);
 
   m_stride_buf.resize(m_num_strides);
@@ -25,39 +46,20 @@ auto speck::Conditioner::m_calc_mean(const vecd_type& buf) const -> double {
     auto begin = buf.begin() + stride_size * s;
     auto end = begin + stride_size;
     m_stride_buf[s] =
-        std::accumulate(begin, end, double{0.0}) / double(stride_size);
-  }
-
-  double sum =
-      std::accumulate(m_stride_buf.begin(), m_stride_buf.end(), double{0.0});
-
-  return (sum / double(m_stride_buf.size()));
-}
-
-auto speck::Conditioner::m_calc_rms(const vecd_type& buf) const -> double {
-  assert(buf.size() % m_num_strides == 0);
-
-  m_stride_buf.resize(m_num_strides);
-  const size_t stride_size = buf.size() / m_num_strides;
-
-  for (size_t s = 0; s < m_num_strides; s++) {
-    auto begin = buf.begin() + stride_size * s;
-    auto end = begin + stride_size;
-    m_stride_buf[s] = std::accumulate(begin, end, double{0.0},
-                                      [](auto a, auto b) { return a + b * b; });
+        std::accumulate(begin, end, double{0.0}, [](auto a, auto b) { return a + b * b; });
 
     m_stride_buf[s] /= double(stride_size);
   }
 
-  double rms =
-      std::accumulate(m_stride_buf.begin(), m_stride_buf.end(), double{0.0});
+  double rms = std::accumulate(m_stride_buf.begin(), m_stride_buf.end(), double{0.0});
   rms /= double(m_stride_buf.size());
   rms = std::sqrt(rms);
 
   return rms;
 }
 
-void speck::Conditioner::m_adjust_strides(size_t len) const {
+void speck::Conditioner::m_adjust_strides(size_t len)
+{
   // Let's say 2048 is a starting point
   m_num_strides = 2048;
   if (len % m_num_strides == 0)
@@ -85,8 +87,8 @@ void speck::Conditioner::m_adjust_strides(size_t len) const {
   m_num_strides = num;
 }
 
-auto speck::Conditioner::condition(vecd_type& buf) const
-    -> std::pair<RTNType, meta_type> {
+auto speck::Conditioner::condition(vecd_type& buf) -> std::pair<RTNType, meta_type>
+{
   meta_type meta;
   meta.fill(0);
   double mean = 0.0;
@@ -132,18 +134,17 @@ auto speck::Conditioner::condition(vecd_type& buf) const
   return {RTNType::Good, meta};
 }
 
-auto speck::Conditioner::inverse_condition(vecd_type& buf,
-                                           const uint8_t* meta) const
-    -> RTNType {
+auto speck::Conditioner::inverse_condition(vecd_type& buf, const meta_type& meta) -> RTNType
+{
   // unpack meta
   bool b8[8];
   speck::unpack_8_booleans(b8, meta[0]);
   double mean = 0.0;
   double rms = 0.0;
   size_t pos = 1;
-  std::memcpy(&mean, meta + pos, sizeof(mean));
+  std::memcpy(&mean, meta.data() + pos, sizeof(mean));
   pos += sizeof(mean);
-  std::memcpy(&rms, meta + pos, sizeof(rms));
+  std::memcpy(&rms, meta.data() + pos, sizeof(rms));
   pos += sizeof(rms);  // NOLINT
   assert(pos == m_meta_size);
 

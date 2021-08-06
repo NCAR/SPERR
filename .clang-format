@@ -42,3 +42,4 @@ JavaImportGroups: ['android', 'androidx', 'com', 'dalvik', 'junit', 'org', 'com.
 
 #Sam's addition:
 ColumnLimit: 100
+BreakBeforeBraces: Stroustrup

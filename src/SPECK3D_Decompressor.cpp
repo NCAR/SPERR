@@ -38,11 +38,10 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
 #endif
 
   // Step 1: extract conditioner stream from it
-  m_condi_stream.clear();
+  m_condi_stream.fill(0);
   const auto condi_size = m_conditioner.get_meta_size();
-  if (condi_size > ptr_len)
+  if (condi_size > ptr_len || condi_size != m_condi_stream.size())
     return RTNType::WrongSize;
-  m_condi_stream.resize(condi_size, 0);
   std::copy(ptr, ptr + condi_size, m_condi_stream.begin());
   size_t pos = condi_size;
 
@@ -129,7 +128,7 @@ auto SPECK3D_Decompressor::decompress() -> RTNType {
   auto cdf_out = m_cdf.view_data();
   m_val_buf.resize(cdf_out.size());
   std::copy(cdf_out.begin(), cdf_out.end(), m_val_buf.begin());
-  m_conditioner.inverse_condition(m_val_buf, m_condi_stream.data());
+  m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
 
 #ifdef QZ_TERM
   // Step 4: If there's SPERR data, then do the correction.

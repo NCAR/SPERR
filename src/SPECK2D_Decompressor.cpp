@@ -59,11 +59,10 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
 #endif
 
   // Task 4)
-  m_condi_stream.clear();
+  m_condi_stream.fill(0);
   const auto condi_size = m_conditioner.get_meta_size();
-  if (condi_size > plen)
+  if (condi_size > plen || condi_size != m_condi_stream.size())
     return RTNType::WrongSize;
-  m_condi_stream.resize(condi_size, 0);
   std::copy(u8p, u8p + condi_size, m_condi_stream.begin());
   u8p += condi_size;
   plen -= condi_size;
@@ -143,7 +142,7 @@ auto SPECK2D_Decompressor::decompress() -> RTNType {
 
   // Step 3: Inverse Conditioning
   auto cdf_out = m_cdf.release_data();
-  m_conditioner.inverse_condition(cdf_out, m_condi_stream.data());
+  m_conditioner.inverse_condition(cdf_out, m_condi_stream);
 
   m_val_buf = std::move(cdf_out);
 

@@ -51,7 +51,7 @@ auto SPECK3D_Compressor::release_encoded_bitstream() -> std::vector<uint8_t>&& {
 auto SPECK3D_Compressor::compress() -> RTNType {
   if (m_val_buf.empty())
     return RTNType::Error;
-  m_condi_stream.clear();
+  m_condi_stream.fill(0);
   m_speck_stream.clear();
   m_sperr_stream.clear();
   m_num_outlier = 0;
@@ -67,8 +67,7 @@ auto SPECK3D_Compressor::compress() -> RTNType {
   auto [rtn, condi_meta] = m_conditioner.condition(m_val_buf2);
   if (rtn != RTNType::Good)
     return rtn;
-  m_condi_stream.resize(condi_meta.size());
-  std::copy(condi_meta.begin(), condi_meta.end(), m_condi_stream.begin());
+  m_condi_stream = condi_meta;
 
   // Step 2: wavelet transform
   rtn = m_cdf.take_data(std::move(m_val_buf2), m_dims);
@@ -106,7 +105,7 @@ auto SPECK3D_Compressor::compress() -> RTNType {
   else
     m_cdf.idwt3d_wavelet_packet();
   m_val_buf2 = m_cdf.release_data();
-  m_conditioner.inverse_condition(m_val_buf2, m_condi_stream.data());
+  m_conditioner.inverse_condition(m_val_buf2, m_condi_stream);
 
   // Step 5: we find all the outliers!
   //
@@ -159,7 +158,7 @@ auto SPECK3D_Compressor::compress() -> RTNType {
   const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
   if (m_val_buf.size() != total_vals)
     return RTNType::Error;
-  m_condi_stream.clear();
+  m_condi_stream.fill(0);
   m_speck_stream.clear();
 
   // Step 1: data goes through the conditioner
@@ -167,8 +166,7 @@ auto SPECK3D_Compressor::compress() -> RTNType {
   auto [rtn, condi_meta] = m_conditioner.condition(m_val_buf);
   if (rtn != RTNType::Good)
     return rtn;
-  m_condi_stream.resize(condi_meta.size());
-  std::copy(condi_meta.begin(), condi_meta.end(), m_condi_stream.begin());
+  m_condi_stream = condi_meta;
 
   // Step 2: wavelet transform
   rtn = m_cdf.take_data(std::move(m_val_buf), m_dims);
@@ -205,8 +203,7 @@ auto SPECK3D_Compressor::compress() -> RTNType {
 #ifdef USE_ZSTD
 auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType {
 #ifdef QZ_TERM
-  const size_t total_size =
-      m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
+  const size_t total_size = m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
 #else
   const size_t total_size = m_condi_stream.size() + m_speck_stream.size();
 #endif
@@ -257,15 +254,13 @@ auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType {
 //
 auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType {
 #ifdef QZ_TERM
-  const size_t total_size =
-      m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
+  const size_t total_size = m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
 #else
   const size_t total_size = m_condi_stream.size() + m_speck_stream.size();
 #endif
 
   m_encoded_stream.resize(total_size);
-  std::copy(m_condi_stream.begin(), m_condi_stream.end(),
-            m_encoded_stream.begin());
+  std::copy(m_condi_stream.begin(), m_condi_stream.end(), m_encoded_stream.begin());
   auto buf_itr = m_encoded_stream.begin() + m_condi_stream.size();
   std::copy(m_speck_stream.begin(), m_speck_stream.end(), buf_itr);
   buf_itr += m_speck_stream.size();

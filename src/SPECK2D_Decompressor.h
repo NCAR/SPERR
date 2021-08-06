@@ -31,7 +31,7 @@ class SPECK2D_Decompressor {
 
  private:
   speck::dims_type m_dims = {0, 0, 0};
-  speck::vec8_type m_condi_stream;
+  speck::Conditioner::meta_type m_condi_stream;
   speck::vec8_type m_speck_stream;
   speck::vecd_type m_val_buf;
 
