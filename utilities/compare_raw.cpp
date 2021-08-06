@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <sys/stat.h>
 
-using FLOAT = double;
+using FLOAT = float;
 
 int sam_read_n_bytes(const char* filename,
                      size_t n_bytes, /* input  */
@@ -46,6 +46,24 @@ void calc_stats(const T* arr1,
                 T& psnr,
                 T& arr1min,
                 T& arr1max) {
+  //
+  // Calculate min and max of arr1
+  //
+  const auto minmax = std::minmax_element(arr1, arr1 + len);
+  arr1min = *minmax.first;
+  arr1max = *minmax.second;
+
+  //
+  // In rare cases, the two input arrays are identical.
+  //
+  auto mism = std::mismatch( arr1, arr1 + len, arr2, arr2 + len );
+  if( mism.first == arr1 + len && mism.second == arr2 + len ) {
+    rmse = 0.0;
+    linfty = 0.0;
+    psnr = std::numeric_limits<T>::infinity();
+    return;
+  }
+
   const size_t stride_size = 4096;
   const size_t num_of_strides = len / stride_size;
   const size_t remainder_size = len - stride_size * num_of_strides;
@@ -86,11 +104,8 @@ void calc_stats(const T* arr1,
   linfty_vec[num_of_strides] = last_linfty;
 
   //
-  // Now calculate min, max, linfty
+  // Now calculate linfty
   //
-  const auto minmax = std::minmax_element(arr1, arr1 + len);
-  arr1min = *minmax.first;
-  arr1max = *minmax.second;
   linfty = *(std::max_element(linfty_vec.begin(), linfty_vec.end()));
 
   //

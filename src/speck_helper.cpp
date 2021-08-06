@@ -243,6 +243,24 @@ void speck::calc_stats(const T* arr1,
   const size_t num_of_strides = len / stride_size;
   const size_t remainder_size = len - stride_size * num_of_strides;
 
+  //
+  // Calculate min and max of arr1
+  //
+  const auto minmax = std::minmax_element(arr1, arr1 + len);
+  arr1min = *minmax.first;
+  arr1max = *minmax.second;
+
+  //
+  // In rare cases, the two input arrays are identical.
+  //
+  auto mism = std::mismatch( arr1, arr1 + len, arr2, arr2 + len );
+  if( mism.first == arr1 + len && mism.second == arr2 + len ) {
+    rmse = 0.0;
+    linfty = 0.0;
+    psnr = std::numeric_limits<T>::infinity();
+    return;
+  }
+
   auto sum_vec = std::vector<T>(num_of_strides + 1);
   auto linfty_vec = std::vector<T>(num_of_strides + 1);
 
@@ -281,11 +299,8 @@ void speck::calc_stats(const T* arr1,
   linfty_vec[num_of_strides] = last_linfty;
 
   //
-  // Now calculate min, max, linfty
+  // Now calculate linfty
   //
-  const auto minmax = std::minmax_element(arr1, arr1 + len);
-  arr1min = *minmax.first;
-  arr1max = *minmax.second;
   linfty = *(std::max_element(linfty_vec.begin(), linfty_vec.end()));
 
   //

@@ -194,19 +194,20 @@ int main(int argc, char* argv[]) {
   // range.
   //
   double min_orig = 0.0, max_orig = 0.0;
+  if( use_double ) {
+    const auto* begin = reinterpret_cast<const double*>(input_buf.data());
+    auto minmax = std::minmax_element(begin, begin + total_vals);
+    min_orig = *minmax.first;
+    max_orig = *minmax.second;
+  }
+  else {
+    const auto* begin = reinterpret_cast<const float*>(input_buf.data());
+    auto minmax = std::minmax_element(begin, begin + total_vals);
+    min_orig = *minmax.first;
+    max_orig = *minmax.second;
+  }
+
   if (!(*qz_level_ptr)) {
-    if( use_double ) {
-      const auto* begin = reinterpret_cast<const double*>(input_buf.data());
-      auto minmax = std::minmax_element(begin, begin + total_vals);
-      min_orig = *minmax.first;
-      max_orig = *minmax.second;
-    }
-    else {
-      const auto* begin = reinterpret_cast<const float*>(input_buf.data());
-      auto minmax = std::minmax_element(begin, begin + total_vals);
-      min_orig = *minmax.first;
-      max_orig = *minmax.second;
-    }
     double range = max_orig - min_orig;
     assert( range > 0.0 );
     qz_level = int32_t(std::floor(std::log2(range / 1000.0)));
