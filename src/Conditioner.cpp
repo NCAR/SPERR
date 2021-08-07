@@ -12,9 +12,11 @@ auto speck::Conditioner::get_meta_size() const -> size_t
   return m_meta_size;
 }
 
-void speck::Conditioner::toggle_all_settings(std::array<bool, 8> b8)
+void speck::Conditioner::toggle_all_settings(std::array<bool, 4> b4)
 {
-  m_settings = b8;
+  m_settings[0] = b4[0];
+  m_settings[1] = b4[1];
+  // The rest of fields in `m_settings` is unused, so not assigning them.
 }
 
 auto speck::Conditioner::m_calc_mean(const vecd_type& buf) -> double

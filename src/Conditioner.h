@@ -15,12 +15,13 @@ class Conditioner {
   // Define a data type for meta data
   using meta_type = std::array<uint8_t, 17>;
   auto get_meta_size() const -> size_t;
+  using settings_type = std::array<bool, 4>;
 
   // Booleans recording what operations are applied:
   // bool[0] : subtract mean
   // bool[1] : divide by rms
-  // bool[2-7] : unused
-  void toggle_all_settings(std::array<bool, 8>);
+  // bool[2-3] : unused
+  void toggle_all_settings( settings_type );
 
   // The 17 bytes returned by `condition()`: 1 byte (8 booleans) followed by two
   // doubles. The byte of booleans records what operations are applied:

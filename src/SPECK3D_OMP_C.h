@@ -22,7 +22,7 @@ class SPECK3D_OMP_C {
   template <typename T>
   auto use_volume(const T*, size_t) -> RTNType;
 
-  void toggle_conditioning(std::array<bool, 8>);
+  void toggle_conditioning( speck::Conditioner::settings_type );
 
 #ifdef QZ_TERM
   void set_qz_level(int32_t);
@@ -43,8 +43,7 @@ class SPECK3D_OMP_C {
   speck::dims_type m_chunk_dims = {0, 0,
                                    0};  // Preferred dimensions for a chunk
   size_t m_num_threads = 1;
-  std::array<bool, 8> m_conditioning_settings = {true,  false, false, false,
-                                                 false, false, false, false};
+  speck::Conditioner::settings_type m_conditioning_settings = {true,  false, false, false};
 
   std::vector<speck::vecd_type> m_chunk_buffers;
   std::vector<speck::vec8_type> m_encoded_streams;

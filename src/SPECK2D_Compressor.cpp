@@ -66,8 +66,7 @@ auto SPECK2D_Compressor::compress() -> RTNType {
 
   // Step 1: data goes through the conditioner
   // Only applying subtract mean here.
-  std::array<bool, 8> settings = {true,  false, false, false,
-                                  false, false, false, false};
+  auto settings = speck::Conditioner::settings_type {true,  false, false, false};
   m_conditioner.toggle_all_settings(settings);
   auto [rtn, condi_meta] = m_conditioner.condition(m_val_buf);
   if (rtn != RTNType::Good)

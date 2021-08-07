@@ -19,8 +19,9 @@ void SPECK3D_OMP_C::set_num_threads(size_t n) {
     m_num_threads = n;
 }
 
-void SPECK3D_OMP_C::toggle_conditioning(std::array<bool, 8> b8) {
-  m_conditioning_settings = b8;
+void SPECK3D_OMP_C::toggle_conditioning(speck::Conditioner::settings_type b4)
+{
+  m_conditioning_settings = b4;
 }
 
 #ifdef QZ_TERM

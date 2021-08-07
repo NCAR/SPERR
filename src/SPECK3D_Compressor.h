@@ -26,7 +26,7 @@ class SPECK3D_Compressor {
   // Accept incoming data: take ownership of a memory block
   auto take_data(std::vector<double>&& buf, speck::dims_type dims) -> RTNType;
 
-  void toggle_conditioning(std::array<bool, 8>);
+  void toggle_conditioning( speck::Conditioner::settings_type );
 
 #ifdef QZ_TERM
   void set_qz_level(int32_t);
@@ -51,8 +51,7 @@ class SPECK3D_Compressor {
   speck::CDF97 m_cdf;
   speck::SPECK3D m_encoder;
 
-  std::array<bool, 8> m_conditioning_settings = {true,  false, false, false,
-                                                 false, false, false, false};
+  speck::Conditioner::settings_type m_conditioning_settings = {true,  false, false, false};
 
   // Store bitstreams from the conditioner and SPECK encoding, and the overall
   // bitstream.

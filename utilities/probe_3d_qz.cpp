@@ -23,7 +23,7 @@ auto test_configuration_omp(const T* in_buf,
                             speck::dims_type chunks,
                             int32_t qz_level,
                             double tolerance,
-                            std::array<bool, 8> condi_settings,
+                            speck::Conditioner::settings_type condi_settings,
                             size_t omp_num_threads,
                             std::vector<T>& output_buf) -> int {
   // Setup
@@ -165,14 +165,11 @@ int main(int argc, char* argv[]) {
   }
 
   const auto dims = std::array<size_t, 3>{dims_v[0], dims_v[1], dims_v[2]};
-  const auto condi_settings = std::array<bool, 8>{true,     // subtract mean
-                                                  div_rms,  // divide by rms
-                                                  false,    // unused
-                                                  false,    // unused
-                                                  false,    // unused
-                                                  false,    // unused
-                                                  false,    // unused
-                                                  false};   // unused
+  const auto condi_settings = speck::Conditioner::settings_type
+                              {true,     // subtract mean
+                               div_rms,  // divide by rms
+                               false,    // unused
+                               false};   // unused
 
   //
   // Read and keep a copy of input data (will be re-used for different qz

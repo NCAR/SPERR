@@ -302,6 +302,7 @@ auto SPECK3D_Compressor::set_bpp(float bpp) -> RTNType {
 }
 #endif
 
-void SPECK3D_Compressor::toggle_conditioning(std::array<bool, 8> b8) {
-  m_conditioning_settings = b8;
+void SPECK3D_Compressor::toggle_conditioning(speck::Conditioner::settings_type b4) 
+{
+  m_conditioning_settings = b4;
 }
