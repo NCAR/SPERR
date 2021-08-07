@@ -57,6 +57,15 @@ auto SPECK3D_Compressor::compress() -> RTNType {
   m_num_outlier = 0;
   const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
 
+  // Believe it or not, there are constant fields passed in for compression! 
+  // Let's detect that case and skip the rest of the compression routine if it occurs.
+  auto constant = m_conditioner.test_constant( m_val_buf );
+  if( constant.first ) {
+    m_condi_stream = constant.second;
+    auto tmp = m_assemble_encoded_bitstream();
+    return tmp;
+  }
+
   // Note that we keep the original buffer untouched for outlier calculations
   // later. The buffer `m_val_buf2` will be recycled and reused though.
   m_val_buf2.resize(m_val_buf.size());
@@ -161,6 +170,15 @@ auto SPECK3D_Compressor::compress() -> RTNType {
   m_condi_stream.fill(0);
   m_speck_stream.clear();
 
+  // Believe it or not, there are constant fields passed in for compression! 
+  // Let's detect that case and skip the rest of the compression routine if it occurs.
+  auto constant = m_conditioner.test_constant( m_val_buf );
+  if( constant.first ) {
+    m_condi_stream = constant.second;
+    auto tmp = m_assemble_encoded_bitstream();
+    return tmp;
+  }
+
   // Step 1: data goes through the conditioner
   m_conditioner.toggle_all_settings(m_conditioning_settings);
   auto [rtn, condi_meta] = m_conditioner.condition(m_val_buf);
@@ -201,7 +219,8 @@ auto SPECK3D_Compressor::compress() -> RTNType {
 #endif
 
 #ifdef USE_ZSTD
-auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType {
+auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType 
+{
 #ifdef QZ_TERM
   const size_t total_size = m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
 #else
@@ -217,7 +236,7 @@ auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType {
       m_cctx.reset(ctx_p);
   }
 
-  // If `m_zstd_buf` is not big enough for the decompressed buffer, we re-size
+  // If `m_zstd_buf` is not big enough for the total buffer, we re-size
   // it.
   if (total_size > m_zstd_buf_len) {
     m_zstd_buf_len = std::max(total_size, m_zstd_buf_len * 2);
@@ -227,9 +246,9 @@ auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType {
   std::copy(m_condi_stream.begin(), m_condi_stream.end(), zstd_itr);
   zstd_itr += m_condi_stream.size();
   std::copy(m_speck_stream.begin(), m_speck_stream.end(), zstd_itr);
-  zstd_itr += m_speck_stream.size();  // NOLINT
 
 #ifdef QZ_TERM
+  zstd_itr += m_speck_stream.size();
   std::copy(m_sperr_stream.begin(), m_sperr_stream.end(), zstd_itr);
 #endif
 
@@ -252,7 +271,8 @@ auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType {
 //
 // Start the no-ZSTD case
 //
-auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType {
+auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
+{
 #ifdef QZ_TERM
   const size_t total_size = m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
 #else
@@ -263,11 +283,10 @@ auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType {
   std::copy(m_condi_stream.begin(), m_condi_stream.end(), m_encoded_stream.begin());
   auto buf_itr = m_encoded_stream.begin() + m_condi_stream.size();
   std::copy(m_speck_stream.begin(), m_speck_stream.end(), buf_itr);
-  buf_itr += m_speck_stream.size();
 
 #ifdef QZ_TERM
+  buf_itr += m_speck_stream.size();
   std::copy(m_sperr_stream.begin(), m_sperr_stream.end(), buf_itr);
-  buf_itr += m_sperr_stream.size();
 #endif
 
   return RTNType::Good;

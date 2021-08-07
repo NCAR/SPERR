@@ -166,3 +166,36 @@ auto speck::Conditioner::inverse_condition(vecd_type& buf, const meta_type& meta
 
   return RTNType::Good;
 }
+
+
+auto speck::Conditioner::test_constant( const speck::vecd_type& buf ) const 
+            -> std::pair<bool, meta_type>
+{
+  assert( buf.size() > 0 );
+
+  const double val = buf[0];
+  auto b8 = settings_type();
+  b8.fill(false);
+
+  if( std::all_of( buf.begin(), buf.end(), [val](auto v){ return v == val; } ))
+    b8[4] = true;
+
+  // Prepare the meta block
+  auto meta = meta_type();
+  meta.fill(0);
+  speck::pack_8_booleans(meta[0], b8.data());
+  std::memcpy(meta.data() + 1, &val, sizeof(val));
+
+  return {b8[4], meta};
+}
+
+
+auto speck::Conditioner::parse_constant( const meta_type& meta ) const -> std::pair<bool, double>
+{
+  auto b8 = settings_type();
+  speck::unpack_8_booleans(b8.data(), meta[0]);
+  double mean = 0.0;
+  std::memcpy(&mean, meta.data() + 1, sizeof(mean));
+
+  return {b8[4], mean};
+}

@@ -12,10 +12,11 @@ namespace speck {
 class Conditioner {
  public:
 
-  // Define a data type for meta data
+  // Define a few data types
   using meta_type = std::array<uint8_t, 17>;
-  auto get_meta_size() const -> size_t;
   using settings_type = std::array<bool, 4>;
+
+  auto get_meta_size() const -> size_t;
 
   // Booleans recording what operations are applied:
   // bool[0] : subtract mean
@@ -29,15 +30,22 @@ class Conditioner {
   auto condition(speck::vecd_type&) -> std::pair<RTNType, meta_type>;
   auto inverse_condition(speck::vecd_type&, const meta_type&) -> RTNType;
 
+  // Given an array, test if it's a constant field. The test result (true/false)
+  // is returned as boolean and a properly packed meta data if true.
+  // Similarly, `parse_constant` takes in a meta data block and returns if it
+  // represents a constant field. If true, it also returns the constant value.
+  auto test_constant( const speck::vecd_type& ) const -> std::pair<bool, meta_type>;
+  auto parse_constant( const meta_type& ) const -> std::pair<bool, double>;
+
  private:
   //
-  // what treatments are applied?
+  // what settings are applied?
   //
   std::array<bool, 8> m_settings = {true,    // subtract mean
                                     false,   // divide by rms
                                     false,   // unused
                                     false,   // unused
-                                    false,   // unused
+                                    false,   // [4]: is this a constant field?
                                     false,   // unused
                                     false,   // unused
                                     false};  // unused
