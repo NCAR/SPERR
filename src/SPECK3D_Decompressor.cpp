@@ -3,7 +3,16 @@
 #include <cassert>
 #include <cstring>
 
-auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
+auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
+{
+  // It'd be bad to have some buffers updated, and some others not.
+  // So let's clean up everything at the very beginning of this routine
+  m_condi_stream.fill(0);
+  m_speck_stream.clear();
+#ifdef QZ_TERM
+  m_sperr_stream.clear();
+#endif
+
 #ifdef USE_ZSTD
   // Make sure that we have a ZSTD Decompression Context first
   if (m_dctx == nullptr) {
@@ -19,15 +28,13 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
       content_size == ZSTD_CONTENTSIZE_UNKNOWN)
     return RTNType::ZSTDError;
 
-  // If `m_zstd_buf` is not big enough for the decompressed buffer, we re-size
-  // it.
+  // If `m_zstd_buf` is not big enough for the decompressed buffer, we re-size it.
   if (content_size > m_zstd_buf_len) {
     m_zstd_buf_len = std::max(content_size, m_zstd_buf_len * 2);
     m_zstd_buf = std::make_unique<uint8_t[]>(m_zstd_buf_len);
   }
 
-  const auto decomp_size =
-      ZSTD_decompressDCtx(m_dctx.get(), m_zstd_buf.get(), content_size, p, len);
+  auto decomp_size = ZSTD_decompressDCtx(m_dctx.get(), m_zstd_buf.get(), content_size, p, len);
   if (ZSTD_isError(decomp_size) || decomp_size != content_size)
     return RTNType::ZSTDError;
   const uint8_t* const ptr = m_zstd_buf.get();
@@ -38,15 +45,25 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
 #endif
 
   // Step 1: extract conditioner stream from it
-  m_condi_stream.fill(0);
-  const auto condi_size = m_conditioner.get_meta_size();
-  if (condi_size > ptr_len || condi_size != m_condi_stream.size())
+  const auto condi_size = m_condi_stream.size();
+  if (condi_size > ptr_len )
     return RTNType::WrongSize;
   std::copy(ptr, ptr + condi_size, m_condi_stream.begin());
   size_t pos = condi_size;
 
+  // `m_condi_stream` might be indicating that the field is a constant field.
+  // In that case, there will be no more speck or sperr streams.
+  // Let's detect that case here and return early if it is true.
+  // It will be up to the decompress() routine to restore the actual constant field.
+  auto constant = m_conditioner.parse_constant( m_condi_stream );
+  if( constant.first ) {
+    if( condi_size == ptr_len )
+      return RTNType::Good;
+    else
+      return RTNType::WrongSize;
+  }
+
   // Step 2: extract SPECK stream from it
-  m_speck_stream.clear();
   const uint8_t* const speck_p = ptr + pos;
   const auto speck_size = m_decoder.get_speck_stream_size(speck_p);
   if (pos + speck_size > ptr_len)
@@ -60,7 +77,6 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
 
 #ifdef QZ_TERM
   // Step 4: extract SPERR stream from it
-  m_sperr_stream.clear();
   if (pos < ptr_len) {
     const uint8_t* const sperr_p = ptr + pos;
     const auto sperr_size = m_sperr.get_sperr_stream_size(sperr_p);
@@ -88,13 +104,23 @@ auto SPECK3D_Decompressor::set_bpp(float bpp) -> RTNType {
 }
 #endif
 
-auto SPECK3D_Decompressor::decompress() -> RTNType {
+auto SPECK3D_Decompressor::decompress() -> RTNType 
+{
+  // `m_condi_stream` might be indicating a constant field, so let's see if that's 
+  // the case, and if it is, we don't need to go through dwt and speck stuff anymore.
+  auto constant = m_conditioner.parse_constant( m_condi_stream );
+  if( constant.first ) {
+    m_val_buf.assign(m_dims[0] * m_dims[1] * m_dims[2], constant.second);
+    return RTNType::Good;
+  }
+
+  // The following steps are for a normal speck->speck->sperr pipeline.
+  //
   // Step 1: SPECK decode.
   if (m_speck_stream.empty())
     return RTNType::Error;
 
-  auto rtn = m_decoder.parse_encoded_bitstream(m_speck_stream.data(),
-                                               m_speck_stream.size());
+  auto rtn = m_decoder.parse_encoded_bitstream(m_speck_stream.data(), m_speck_stream.size());
   if (rtn != RTNType::Good)
     return rtn;
 

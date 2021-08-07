@@ -60,8 +60,8 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
 
   // Task 4)
   m_condi_stream.fill(0);
-  const auto condi_size = m_conditioner.get_meta_size();
-  if (condi_size > plen || condi_size != m_condi_stream.size())
+  const auto condi_size = m_condi_stream.size();
+  if (condi_size > plen )
     return RTNType::WrongSize;
   std::copy(u8p, u8p + condi_size, m_condi_stream.begin());
   u8p += condi_size;

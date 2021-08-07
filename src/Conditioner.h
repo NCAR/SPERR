@@ -16,8 +16,6 @@ class Conditioner {
   using meta_type = std::array<uint8_t, 17>;
   using settings_type = std::array<bool, 4>;
 
-  auto get_meta_size() const -> size_t;
-
   // Booleans recording what operations are applied:
   // bool[0] : subtract mean
   // bool[1] : divide by rms
@@ -49,8 +47,6 @@ class Conditioner {
                                     false,   // unused
                                     false,   // unused
                                     false};  // unused
-
-  const size_t m_meta_size = 17;
 
   // Calculations are carried out by strides, which
   // should be a divisor of the input data size.

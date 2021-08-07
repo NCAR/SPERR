@@ -7,11 +7,6 @@
 
 #include "Conditioner.h"
 
-auto speck::Conditioner::get_meta_size() const -> size_t
-{
-  return m_meta_size;
-}
-
 void speck::Conditioner::toggle_all_settings(std::array<bool, 4> b4)
 {
   m_settings[0] = b4[0];
@@ -131,7 +126,7 @@ auto speck::Conditioner::condition(vecd_type& buf) -> std::pair<RTNType, meta_ty
   pos += sizeof(mean);
   std::memcpy(meta.data() + pos, &rms, sizeof(rms));
   pos += sizeof(rms);  // NOLINT
-  assert(pos == m_meta_size);
+  assert(pos == meta.size());
 
   return {RTNType::Good, meta};
 }
@@ -148,7 +143,7 @@ auto speck::Conditioner::inverse_condition(vecd_type& buf, const meta_type& meta
   pos += sizeof(mean);
   std::memcpy(&rms, meta.data() + pos, sizeof(rms));
   pos += sizeof(rms);  // NOLINT
-  assert(pos == m_meta_size);
+  assert(pos == meta.size());
 
   m_adjust_strides(buf.size());
 
@@ -174,7 +169,7 @@ auto speck::Conditioner::test_constant( const speck::vecd_type& buf ) const
   assert( buf.size() > 0 );
 
   const double val = buf[0];
-  auto b8 = settings_type();
+  auto b8 = std::array<bool, 8>();
   b8.fill(false);
 
   if( std::all_of( buf.begin(), buf.end(), [val](auto v){ return v == val; } ))
@@ -192,7 +187,7 @@ auto speck::Conditioner::test_constant( const speck::vecd_type& buf ) const
 
 auto speck::Conditioner::parse_constant( const meta_type& meta ) const -> std::pair<bool, double>
 {
-  auto b8 = settings_type();
+  auto b8 = std::array<bool, 8>();
   speck::unpack_8_booleans(b8.data(), meta[0]);
   double mean = 0.0;
   std::memcpy(&mean, meta.data() + 1, sizeof(mean));
