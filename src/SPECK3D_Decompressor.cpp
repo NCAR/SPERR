@@ -56,7 +56,7 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   // Let's detect that case here and return early if it is true.
   // It will be up to the decompress() routine to restore the actual constant field.
   auto constant = m_conditioner.parse_constant( m_condi_stream );
-  if( constant.first ) {
+  if( std::get<0>(constant) ) {
     if( condi_size == ptr_len )
       return RTNType::Good;
     else
@@ -109,8 +109,10 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
   // `m_condi_stream` might be indicating a constant field, so let's see if that's 
   // the case, and if it is, we don't need to go through dwt and speck stuff anymore.
   auto constant = m_conditioner.parse_constant( m_condi_stream );
-  if( constant.first ) {
-    m_val_buf.assign(m_dims[0] * m_dims[1] * m_dims[2], constant.second);
+  if( std::get<0>(constant) ) {
+    auto val  = std::get<1>(constant);
+    auto nval = std::get<2>(constant);
+    m_val_buf.assign(nval, val);
     return RTNType::Good;
   }
 
@@ -182,7 +184,7 @@ auto SPECK3D_Decompressor::get_data() const -> std::vector<T> {
   auto out_buf = std::vector<T>(m_val_buf.size());
   std::copy(m_val_buf.begin(), m_val_buf.end(), out_buf.begin());
 
-  return std::move(out_buf);
+  return out_buf;
 }
 template auto SPECK3D_Decompressor::get_data() const -> std::vector<double>;
 template auto SPECK3D_Decompressor::get_data() const -> std::vector<float>;

@@ -166,7 +166,8 @@ auto speck::Conditioner::inverse_condition(vecd_type& buf, const meta_type& meta
 auto speck::Conditioner::test_constant( const speck::vecd_type& buf ) const 
             -> std::pair<bool, meta_type>
 {
-  assert( buf.size() > 0 );
+  const uint64_t nval = buf.size();
+  assert( nval > 0 );
 
   const double val = buf[0];
   auto b8 = std::array<bool, 8>();
@@ -178,19 +179,32 @@ auto speck::Conditioner::test_constant( const speck::vecd_type& buf ) const
   // Prepare the meta block
   auto meta = meta_type();
   meta.fill(0);
+  // First byte of meta
   speck::pack_8_booleans(meta[0], b8.data());
-  std::memcpy(meta.data() + 1, &val, sizeof(val));
+  // Next 8 bytes of meta: the constant value
+  size_t pos = 1;
+  std::memcpy(meta.data() + pos, &val, sizeof(val));
+  // Next 8 bytes of meta: how many constant values?
+  pos += sizeof(val);
+  std::memcpy(meta.data() + pos, &nval, sizeof(nval));
 
   return {b8[4], meta};
 }
 
 
-auto speck::Conditioner::parse_constant( const meta_type& meta ) const -> std::pair<bool, double>
+auto speck::Conditioner::parse_constant( const meta_type& meta ) const 
+                          -> std::tuple<bool, double, uint64_t>
 {
   auto b8 = std::array<bool, 8>();
   speck::unpack_8_booleans(b8.data(), meta[0]);
-  double mean = 0.0;
-  std::memcpy(&mean, meta.data() + 1, sizeof(mean));
+  // Next 8 bytes: the constant value
+  double val = 0.0;
+  size_t pos = 1;
+  std::memcpy(&val, meta.data() + pos, sizeof(val));
+  // Next 8 bytes: how many constant values:
+  uint64_t nval = 0;
+  pos += sizeof(val);
+  std::memcpy( &nval, meta.data() + pos, sizeof(nval) );
 
-  return {b8[4], mean};
+  return {b8[4], val, nval};
 }

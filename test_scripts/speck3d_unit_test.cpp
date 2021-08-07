@@ -118,6 +118,11 @@ public:
         m_num_t      = num_t;
     }
 
+    void prefer_chunk_dims( speck::dims_type dims )
+    {
+      m_chunk_dims = dims;
+    }
+
     float get_psnr() const
     {
         return m_psnr;
@@ -154,7 +159,7 @@ public:
 
         SPECK3D_OMP_C compressor;
         compressor.set_dims( m_dims );
-        compressor.prefer_chunk_dims( {64, 64, 64} );
+        compressor.prefer_chunk_dims( m_chunk_dims );
         compressor.set_num_threads( m_num_t );
 
         if( compressor.use_volume( in_buf.data(), total_vals ) != RTNType::Good )
@@ -207,10 +212,47 @@ public:
 private:
     std::string m_input_name;
     speck::dims_type m_dims = {0, 0, 0};
+    speck::dims_type m_chunk_dims = {64, 64, 64};
     std::string m_output_name = "output.tmp";
     float m_psnr, m_lmax;
     int   m_num_t;
 };
+
+//
+// Test constant fields.
+//
+TEST( speck3d_constant, one_chunk )
+{
+  speck_tester tester( "../test_data/const32x20x16.float", {32, 20, 16} );
+#ifdef QZ_TERM
+  auto rtn = tester.execute( -1, 1 );
+#else
+  auto rtn = tester.execute( 1.0f ); 
+#endif
+  EXPECT_EQ( rtn, 0 );
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
+  auto infty = std::numeric_limits<float>::infinity();
+  EXPECT_EQ( psnr, infty );
+  EXPECT_EQ( lmax, 0.0f );
+}
+
+TEST( speck3d_constant, omp_chunks )
+{
+  speck_tester_omp tester( "../test_data/const32x32x59.float", {32, 32, 59}, 2 );
+  tester.prefer_chunk_dims({32, 32, 32});
+#ifdef QZ_TERM
+  auto rtn = tester.execute( -1, 1 );
+#else
+  auto rtn = tester.execute( 1.0f ); 
+#endif
+  EXPECT_EQ( rtn, 0 );
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
+  auto infty = std::numeric_limits<float>::infinity();
+  EXPECT_EQ( psnr, infty );
+  EXPECT_EQ( lmax, 0.0f );
+}
 
 
 #ifdef QZ_TERM

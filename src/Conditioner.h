@@ -7,6 +7,8 @@
 
 #include "speck_helper.h"
 
+#include <tuple>
+
 namespace speck {
 
 class Conditioner {
@@ -33,7 +35,7 @@ class Conditioner {
   // Similarly, `parse_constant` takes in a meta data block and returns if it
   // represents a constant field. If true, it also returns the constant value.
   auto test_constant( const speck::vecd_type& ) const -> std::pair<bool, meta_type>;
-  auto parse_constant( const meta_type& ) const -> std::pair<bool, double>;
+  auto parse_constant( const meta_type& ) const -> std::tuple<bool, double, uint64_t>;
 
  private:
   //
