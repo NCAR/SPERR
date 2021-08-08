@@ -39,17 +39,16 @@ auto SPECK3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType {
   size_t loc = 1;
 
   // Parse Step 2: ZSTD application and 3D/2D recording need to be consistent.
-  bool b[8];
-  speck::unpack_8_booleans(b, u8p[loc]);
+  auto b8 = speck::unpack_8_booleans(u8p[loc]);
   loc++;
 #ifdef USE_ZSTD
-  if (b[0] == false)
+  if (b8[0] == false)
     return RTNType::ZSTDMismatch;
 #else
-  if (b[0] == true)
+  if (b8[0] == true)
     return RTNType::ZSTDMismatch;
 #endif
-  if (b[1] == false)
+  if (b8[1] == false)
     return RTNType::SliceVolumeMismatch;
 
   // Parse Step 3: Extract volume and chunk dimensions

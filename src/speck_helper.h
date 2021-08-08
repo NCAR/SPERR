@@ -136,17 +136,13 @@ auto unpack_booleans(std::vector<bool>& dest,
 
 // Pack and unpack exactly 8 booleans to/from a single byte
 // Note: memory for the 8 booleans should already be allocated!
-// Note: the choice of using bool* instead of std::array<bool, 8>, hmm, the
-// former is less pixie dust Note: these two methods only work on little endian
-// machines.
-void pack_8_booleans(uint8_t& dest, const bool* src);
-void unpack_8_booleans(bool* dest, uint8_t src);
+// Note: these two methods only work on little endian machines.
+auto pack_8_booleans(std::array<bool, 8>) -> uint8_t;
+auto unpack_8_booleans(uint8_t) -> std::array<bool, 8>;
 
 // Read from and write to a file
-auto write_n_bytes(const char* filename, size_t n_bytes, const void* buffer)
-    -> RTNType;
-auto read_n_bytes(const char* filename, size_t n_bytes, void* buffer)
-    -> RTNType;
+auto write_n_bytes(const char* filename, size_t n_bytes, const void* buffer) -> RTNType;
+auto read_n_bytes(const char* filename, size_t n_bytes, void* buffer) -> RTNType;
 template <typename T>
 auto read_whole_file(const char* filename) -> std::vector<T>;
 

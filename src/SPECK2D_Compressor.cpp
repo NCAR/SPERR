@@ -118,13 +118,13 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType {
   //
   uint8_t meta[2] = {uint8_t(SPERR_VERSION_MAJOR), 0};
   assert(sizeof(meta) == m_meta_size);
-  bool metabool[8] = {false, false, false, false, false, false, false, false};
+  auto metabool = std::array<bool, 8>{false, false, false, false, false, false, false, false};
 #ifdef USE_ZSTD
   metabool[0] = true;
 #else
   metabool[0] = false;
 #endif
-  speck::pack_8_booleans(meta[1], metabool);
+  meta[1] = speck::pack_8_booleans(metabool);
 
   const auto total_size =
       m_meta_size + m_condi_stream.size() + m_speck_stream.size();

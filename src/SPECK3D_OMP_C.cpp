@@ -185,11 +185,11 @@ auto SPECK3D_OMP_C::m_generate_header() const -> speck::vec8_type {
   // bool[0]  : if ZSTD is used
   // bool[1]  : if this bitstream is for 3D (true) or 2D (false) data.
   // bool[2-7]: undefined
-  bool b[8] = {false, true, false, false, false, false, false, false};
+  auto b8 = std::array<bool, 8>{false, true, false, false, false, false, false, false};
 #ifdef USE_ZSTD
-  b[0] = true;
+  b8[0] = true;
 #endif
-  speck::pack_8_booleans(header[loc], b);
+  header[loc] = speck::pack_8_booleans(b8);
   loc += 1;
 
   // Volume and chunk dimensions

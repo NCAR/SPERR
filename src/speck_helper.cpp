@@ -107,13 +107,13 @@ auto speck::unpack_booleans(std::vector<bool>& dest,
   const uint64_t mask = 0x8080808080808080;
 
 #ifndef OMP_UNPACK_BOOLEANS
-  uint8_t a[8];  // NOLINT
+  auto a = std::array<uint8_t, 8>();
   uint64_t t = 0;
   size_t dest_idx = 0;
   for (size_t byte_idx = 0; byte_idx < num_of_bytes; byte_idx++) {
     const uint8_t* ptr = src_ptr + byte_idx;
     t = ((magic * (*ptr)) & mask) >> 7;
-    std::memcpy(a, &t, 8);
+    std::memcpy(a.data(), &t, 8);
 #pragma GCC unroll 8
     for (size_t i = 0; i < 8; i++)
       dest[dest_idx + i] = a[i];
@@ -152,24 +152,31 @@ auto speck::unpack_booleans(std::vector<bool>& dest,
   return RTNType::Good;
 }
 
-void speck::pack_8_booleans(uint8_t& dest, const bool* src) {
+auto speck::pack_8_booleans(std::array<bool, 8> src) -> uint8_t
+{
+  // It turns out that C++ doesn't specify bool to be one byte, 
+  // so to be safe we copy the content of src to array of uint8_t.
+  auto bytes = std::array<uint8_t, 8>();
+  std::copy(src.begin(), src.end(), bytes.begin());
   const uint64_t magic = 0x8040201008040201;
   uint64_t t = 0;
-  auto a = std::array<uint8_t, 8>{};
-  for (size_t i = 0; i < 8; i++)
-    a[i] = src[i];
-  std::memcpy(&t, a.data(), 8);
-  dest = (magic * t) >> 56;
+  std::memcpy(&t, bytes.data(), 8);
+  uint8_t dest = (magic * t) >> 56;
+  return dest;
 }
 
-void speck::unpack_8_booleans(bool* dest, uint8_t src) {
+auto speck::unpack_8_booleans(uint8_t src) -> std::array<bool, 8>
+{
   const uint64_t magic = 0x8040201008040201;
   const uint64_t mask = 0x8080808080808080;
   uint64_t t = ((magic * src) & mask) >> 7;
-  uint8_t a[8]{0};  // NOLINT
-  std::memcpy(a, &t, 8);
-  for (size_t i = 0; i < 8; i++)
-    dest[i] = a[i];
+  // It turns out that C++ doesn't specify bool to be one byte, 
+  // so to be safe we use an array of uint8_t.
+  auto bytes = std::array<uint8_t, 8>();
+  std::memcpy(bytes.data(), &t, 8);
+  auto b8 = std::array<bool, 8>();
+  std::copy(bytes.begin(), bytes.end(), b8.begin());
+  return b8;;
 }
 
 auto speck::read_n_bytes(const char* filename, size_t n_bytes, void* buffer)

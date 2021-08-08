@@ -78,39 +78,36 @@ TEST( speck_helper, bit_packing )
 
 TEST( speck_helper, bit_packing_one_byte )
 {
-    unsigned char byte;
-    bool output[8];
-
     // All true 
-    bool input[8] {true,  true,  true,  true,  true,  true,  true,  true };
+    auto input = std::array<bool, 8>{true,  true,  true,  true,  true,  true,  true,  true };
     // Pack booleans
-    speck::pack_8_booleans( byte, input );
+    auto byte = speck::pack_8_booleans( input );
     // Unpack booleans
-    speck::unpack_8_booleans( output, byte );
+    auto output = speck::unpack_8_booleans( byte );
     for( size_t i = 0; i < 8; i++ )
         EXPECT_EQ( input[i], output[i] );
 
     // Odd locations false
     for( size_t i = 1; i < 8; i += 2 )
         input[i] = false;
-    speck::pack_8_booleans( byte, input );
-    speck::unpack_8_booleans( output, byte );
+    byte = speck::pack_8_booleans( input );
+    output = speck::unpack_8_booleans( byte );
     for( size_t i = 0; i < 8; i++ )
         EXPECT_EQ( input[i], output[i] );
 
     // All false
     for (bool & val : input)
         val = false;
-    speck::pack_8_booleans( byte, input );
-    speck::unpack_8_booleans( output, byte );
+    byte = speck::pack_8_booleans( input );
+    output = speck::unpack_8_booleans( byte );
     for( size_t i = 0; i < 8; i++ )
         EXPECT_EQ( input[i], output[i] );
 
     // Odd locations true
     for( size_t i = 1; i < 8; i += 2 )
         input[i] = true;
-    speck::pack_8_booleans( byte, input );
-    speck::unpack_8_booleans( output, byte );
+    byte = speck::pack_8_booleans( input );
+    output = speck::unpack_8_booleans( byte );
     for( size_t i = 0; i < 8; i++ )
         EXPECT_EQ( input[i], output[i] );
 }

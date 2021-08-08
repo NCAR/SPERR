@@ -120,7 +120,7 @@ auto speck::Conditioner::condition(vecd_type& buf) -> std::pair<RTNType, meta_ty
   }
 
   // pack meta
-  speck::pack_8_booleans(meta[0], m_settings.data());
+  meta[0] = speck::pack_8_booleans(m_settings);
   size_t pos = 1;
   std::memcpy(meta.data() + pos, &mean, sizeof(mean));
   pos += sizeof(mean);
@@ -134,8 +134,7 @@ auto speck::Conditioner::condition(vecd_type& buf) -> std::pair<RTNType, meta_ty
 auto speck::Conditioner::inverse_condition(vecd_type& buf, const meta_type& meta) -> RTNType
 {
   // unpack meta
-  bool b8[8];
-  speck::unpack_8_booleans(b8, meta[0]);
+  auto b8 = speck::unpack_8_booleans(meta[0]);
   double mean = 0.0;
   double rms = 0.0;
   size_t pos = 1;
@@ -180,7 +179,7 @@ auto speck::Conditioner::test_constant( const speck::vecd_type& buf ) const
   auto meta = meta_type();
   meta.fill(0);
   // First byte of meta
-  speck::pack_8_booleans(meta[0], b8.data());
+  meta[0] = speck::pack_8_booleans(b8);
   // Next 8 bytes of meta: the constant value
   size_t pos = 1;
   std::memcpy(meta.data() + pos, &val, sizeof(val));
@@ -195,8 +194,7 @@ auto speck::Conditioner::test_constant( const speck::vecd_type& buf ) const
 auto speck::Conditioner::parse_constant( const meta_type& meta ) const 
                           -> std::tuple<bool, double, uint64_t>
 {
-  auto b8 = std::array<bool, 8>();
-  speck::unpack_8_booleans(b8.data(), meta[0]);
+  auto b8 = speck::unpack_8_booleans(meta[0]);
   // Next 8 bytes: the constant value
   double val = 0.0;
   size_t pos = 1;
