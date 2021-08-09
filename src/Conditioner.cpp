@@ -161,18 +161,17 @@ auto speck::Conditioner::inverse_condition(vecd_type& buf, const meta_type& meta
   return RTNType::Good;
 }
 
-
-auto speck::Conditioner::test_constant( const speck::vecd_type& buf ) const 
-            -> std::pair<bool, meta_type>
+auto speck::Conditioner::test_constant(const speck::vecd_type& buf) const
+    -> std::pair<bool, meta_type>
 {
   const uint64_t nval = buf.size();
-  assert( nval > 0 );
+  assert(nval > 0);
 
   const double val = buf[0];
   auto b8 = std::array<bool, 8>();
   b8.fill(false);
 
-  if( std::all_of( buf.begin(), buf.end(), [val](auto v){ return v == val; } ))
+  if (std::all_of(buf.begin(), buf.end(), [val](auto v) { return v == val; }))
     b8[4] = true;
 
   // Prepare the meta block
@@ -190,9 +189,8 @@ auto speck::Conditioner::test_constant( const speck::vecd_type& buf ) const
   return {b8[4], meta};
 }
 
-
-auto speck::Conditioner::parse_constant( const meta_type& meta ) const 
-                          -> std::tuple<bool, double, uint64_t>
+auto speck::Conditioner::parse_constant(const meta_type& meta) const
+    -> std::tuple<bool, double, uint64_t>
 {
   auto b8 = speck::unpack_8_booleans(meta[0]);
   // Next 8 bytes: the constant value
@@ -202,7 +200,7 @@ auto speck::Conditioner::parse_constant( const meta_type& meta ) const
   // Next 8 bytes: how many constant values:
   uint64_t nval = 0;
   pos += sizeof(val);
-  std::memcpy( &nval, meta.data() + pos, sizeof(nval) );
+  std::memcpy(&nval, meta.data() + pos, sizeof(nval));
 
   return {b8[4], val, nval};
 }

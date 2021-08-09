@@ -1,10 +1,10 @@
+#include <sys/stat.h>
 #include <algorithm>
-#include <numeric>
-#include <memory>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
-#include <sys/stat.h>
+#include <memory>
+#include <numeric>
 
 using FLOAT = float;
 
@@ -20,8 +20,7 @@ int sam_read_n_bytes(const char* filename,
   fseek(f, 0, SEEK_END);
   if (ftell(f) < n_bytes) {
     fprintf(stderr, "Error! Input file size error: %s\n", filename);
-    fprintf(stderr, "  Expecting %ld bytes, got %ld bytes.\n", n_bytes,
-            ftell(f));
+    fprintf(stderr, "  Expecting %ld bytes, got %ld bytes.\n", n_bytes, ftell(f));
     fclose(f);
     return 1;
   }
@@ -45,7 +44,8 @@ void calc_stats(const T* arr1,
                 T& linfty,
                 T& psnr,
                 T& arr1min,
-                T& arr1max) {
+                T& arr1max)
+{
   //
   // Calculate min and max of arr1
   //
@@ -56,8 +56,8 @@ void calc_stats(const T* arr1,
   //
   // In rare cases, the two input arrays are identical.
   //
-  auto mism = std::mismatch( arr1, arr1 + len, arr2, arr2 + len );
-  if( mism.first == arr1 + len && mism.second == arr2 + len ) {
+  auto mism = std::mismatch(arr1, arr1 + len, arr2, arr2 + len);
+  if (mism.first == arr1 + len && mism.second == arr2 + len) {
     rmse = 0.0;
     linfty = 0.0;
     psnr = std::numeric_limits<T>::infinity();
@@ -83,7 +83,7 @@ void calc_stats(const T* arr1,
       linfty = std::max(linfty, diff);
       buf[i] = diff * diff;
     }
-    sum_vec[stride_i] = std::accumulate( buf.begin(), buf.end(), T{0.0} );
+    sum_vec[stride_i] = std::accumulate(buf.begin(), buf.end(), T{0.0});
     linfty_vec[stride_i] = linfty;
   }
 
@@ -99,8 +99,8 @@ void calc_stats(const T* arr1,
     last_linfty = std::max(last_linfty, diff);
     last_buf[i] = diff * diff;
   }
-  sum_vec[num_of_strides] = std::accumulate(last_buf.begin(), 
-                            last_buf.begin() + remainder_size, T{0.0} );
+  sum_vec[num_of_strides] =
+      std::accumulate(last_buf.begin(), last_buf.begin() + remainder_size, T{0.0});
   linfty_vec[num_of_strides] = last_linfty;
 
   //
@@ -121,8 +121,8 @@ void calc_stats(const T* arr1,
   psnr = std::log10(range_sq / msr) * 10.0;
 }
 
-
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
   if (argc != 3) {
     printf("Usage: ./a.out file1 file2\n");
     return 1;
@@ -142,16 +142,15 @@ int main(int argc, char* argv[]) {
   auto n_bytes = st1.st_size;
   auto n_vals = n_bytes / sizeof(FLOAT);
 
-  auto buf1 = std::make_unique<FLOAT[]>( n_vals );
-  auto buf2 = std::make_unique<FLOAT[]>( n_vals );
+  auto buf1 = std::make_unique<FLOAT[]>(n_vals);
+  auto buf2 = std::make_unique<FLOAT[]>(n_vals);
 
   sam_read_n_bytes(file1, n_bytes, buf1.get());
   sam_read_n_bytes(file2, n_bytes, buf2.get());
 
   FLOAT rmse, lmax, psnr, arr1min, arr1max;
-  //sam_get_statsf(buf1, buf2, n_vals, &rmse, &lmax, &psnr, &arr1min, &arr1max);
+  // sam_get_statsf(buf1, buf2, n_vals, &rmse, &lmax, &psnr, &arr1min, &arr1max);
   calc_stats(buf1.get(), buf2.get(), n_vals, rmse, lmax, psnr, arr1min, arr1max);
-  printf("rmse = %e, lmax = %e, psnr = %f dB, orig_min = %f, orig_max = %f\n",
-         rmse, lmax, psnr, arr1min, arr1max);
-
+  printf("rmse = %e, lmax = %e, psnr = %f dB, orig_min = %f, orig_max = %f\n", rmse, lmax, psnr,
+         arr1min, arr1max);
 }

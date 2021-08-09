@@ -4,29 +4,34 @@
 #include <cassert>
 #include <cstring>  // std::memcpy()
 
-void speck::bit_buffer::reserve(size_t N) {
+void speck::bit_buffer::reserve(size_t N)
+{
   auto num_bytes = N / 8;
   if (N % 8 != 0)
     num_bytes++;
   m_vec.reserve(num_bytes);
 }
 
-void speck::bit_buffer::clear() noexcept {
+void speck::bit_buffer::clear() noexcept
+{
   m_vec.clear();
   m_total_bits = 0;
   m_cache_full = 0;
   m_cache_vec_pos = 0;
 }
 
-auto speck::bit_buffer::empty() const noexcept -> bool {
+auto speck::bit_buffer::empty() const noexcept -> bool
+{
   return (m_total_bits == 0);
 }
 
-auto speck::bit_buffer::size() const noexcept -> size_t {
+auto speck::bit_buffer::size() const noexcept -> size_t
+{
   return m_total_bits;
 }
 
-void speck::bit_buffer::m_flush_cache() const {
+void speck::bit_buffer::m_flush_cache() const
+{
   assert(m_cache_vec_pos <= m_vec.size());
   assert(m_cache_full <= 8);
 
@@ -41,7 +46,8 @@ void speck::bit_buffer::m_flush_cache() const {
   }
 }
 
-void speck::bit_buffer::push_back(bool val) {
+void speck::bit_buffer::push_back(bool val)
+{
   // If m_cache_vec_pos is at the middle of m_vec, then try to either unpack the
   // last byte if it's half-full, or manually set it up to point
   // to the end of m_vec.
@@ -74,25 +80,29 @@ void speck::bit_buffer::push_back(bool val) {
   m_total_bits++;
 }
 
-auto speck::bit_buffer::data() const noexcept -> const uint8_t* {
+auto speck::bit_buffer::data() const noexcept -> const uint8_t*
+{
   m_flush_cache();
   return m_vec.data();
 }
 
-auto speck::bit_buffer::data_size() const noexcept -> size_t {
+auto speck::bit_buffer::data_size() const noexcept -> size_t
+{
   auto nbytes = m_total_bits / 8;
   if (m_total_bits % 8 != 0)
     nbytes++;
   return nbytes;
 }
 
-auto speck::bit_buffer::peek(size_t idx) const -> bool {
+auto speck::bit_buffer::peek(size_t idx) const -> bool
+{
   auto byte_idx = idx / 8;
   auto cache_idx = idx % 8;
 
   if (byte_idx == m_cache_vec_pos && cache_idx < m_cache_full) {
     return m_cache[cache_idx];
-  } else {
+  }
+  else {
     // Need to flush before overwriting content in m_cache!
     m_flush_cache();
 
@@ -107,7 +117,8 @@ auto speck::bit_buffer::peek(size_t idx) const -> bool {
   }
 }
 
-auto speck::bit_buffer::par_peek(size_t idx) const -> bool {
+auto speck::bit_buffer::par_peek(size_t idx) const -> bool
+{
   auto byte_idx = idx / 8;
   auto cache_idx = idx % 8;
 
@@ -118,9 +129,8 @@ auto speck::bit_buffer::par_peek(size_t idx) const -> bool {
   return cache[cache_idx];
 }
 
-auto speck::bit_buffer::populate(const void* memory,
-                                 size_t mem_len,
-                                 size_t num_bits) -> bool {
+auto speck::bit_buffer::populate(const void* memory, size_t mem_len, size_t num_bits) -> bool
+{
   auto nbytes = num_bits / 8;
   if (num_bits % 8 != 0)
     nbytes++;

@@ -10,14 +10,15 @@
 // Given a big volume with dimension `dims` and logical indices  `ijk`,
 // return a location in the 1D array representing the volume.
 //
-size_t translate_idx(const std::array<size_t, 3>& dims,
-                     std::array<size_t, 3> ijk) {
+size_t translate_idx(const std::array<size_t, 3>& dims, std::array<size_t, 3> ijk)
+{
   const auto plane = ijk[2] * dims[0] * dims[1];
   const auto col = ijk[1] * dims[0];
   return (ijk[0] + col + plane);
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
   if (argc != 12) {
     std::cerr << "Usage: big_vol_name, big_vol_NX, big_vol_NY, big_vol_NZ, \n"
               << "small_vol_name, small_vol_nx, small_vol_ny, small_vol_nz, \n"
@@ -29,10 +30,9 @@ int main(int argc, char* argv[]) {
   // It is the user's responsibility to make sure the range and dimensions are
   // good.
   //
-  auto big_dims = std::array<size_t, 3>{std::atol(argv[2]), std::atol(argv[3]),
-                                        std::atol(argv[4])};
-  auto small_dims = std::array<size_t, 3>{
-      std::atol(argv[6]), std::atol(argv[7]), std::atol(argv[8])};
+  auto big_dims = std::array<size_t, 3>{std::atol(argv[2]), std::atol(argv[3]), std::atol(argv[4])};
+  auto small_dims =
+      std::array<size_t, 3>{std::atol(argv[6]), std::atol(argv[7]), std::atol(argv[8])};
   auto big_n_vals = big_dims[0] * big_dims[1] * big_dims[2];
   auto small_n_vals = small_dims[0] * small_dims[1] * small_dims[2];
   size_t put_at_big_x = std::atol(argv[9]);

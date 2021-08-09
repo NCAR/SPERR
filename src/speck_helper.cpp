@@ -12,14 +12,16 @@
 //
 // #include <omp.h>
 
-auto speck::num_of_xforms(size_t len) -> size_t {
+auto speck::num_of_xforms(size_t len) -> size_t
+{
   assert(len > 0);
   // I decide 8 is the minimal length to do one level of xform.
   float f = std::log2(float(len) / 8.0f);
   return (f < 0.0f ? 0 : size_t(f) + 1);
 }
 
-auto speck::num_of_partitions(size_t len) -> size_t {
+auto speck::num_of_partitions(size_t len) -> size_t
+{
   size_t num_of_parts = 0;  // Num. of partitions we can do
   while (len > 1) {
     num_of_parts++;
@@ -29,8 +31,8 @@ auto speck::num_of_partitions(size_t len) -> size_t {
   return num_of_parts;
 }
 
-auto speck::calc_approx_detail_len(size_t orig_len, size_t lev)
-    -> std::array<size_t, 2> {
+auto speck::calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<size_t, 2>
+{
   size_t low_len = orig_len;
   size_t high_len = 0;
   for (size_t i = 0; i < lev; i++) {
@@ -41,8 +43,8 @@ auto speck::calc_approx_detail_len(size_t orig_len, size_t lev)
   return {low_len, high_len};
 }
 
-auto speck::make_coeff_positive(vecd_type& buf, std::vector<bool>& signs)
-    -> double {
+auto speck::make_coeff_positive(vecd_type& buf, std::vector<bool>& signs) -> double
+{
   signs.resize(buf.size(), false);
   auto max = std::abs(buf[0]);
 
@@ -61,9 +63,9 @@ auto speck::make_coeff_positive(vecd_type& buf, std::vector<bool>& signs)
 
 // Good solution to deal with bools and unsigned chars
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
-auto speck::pack_booleans(std::vector<uint8_t>& dest,
-                          const std::vector<bool>& src,
-                          size_t offset) -> RTNType {
+auto speck::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& src, size_t offset)
+    -> RTNType
+{
   if (src.size() % 8 != 0)  // `src` has to have a size of multiples of 8.
     return RTNType::WrongSize;
 
@@ -90,7 +92,8 @@ auto speck::pack_booleans(std::vector<uint8_t>& dest,
 auto speck::unpack_booleans(std::vector<bool>& dest,
                             const void* src,
                             size_t src_len,
-                            size_t src_offset) -> RTNType {
+                            size_t src_offset) -> RTNType
+{
   if (src == nullptr)
     return RTNType::InvalidParam;
 
@@ -138,8 +141,7 @@ auto speck::unpack_booleans(std::vector<bool>& dest,
       dest[stride * 64 + i] = a[i];
   }
   // This loop is at most 7 iterations, so not to worry about parallel anymore.
-  for (size_t byte_idx = stride_size * num_of_strides; byte_idx < num_of_bytes;
-       byte_idx++) {
+  for (size_t byte_idx = stride_size * num_of_strides; byte_idx < num_of_bytes; byte_idx++) {
     const uint8_t* ptr = src_ptr + byte_idx;
     const uint64_t t = ((magic * (*ptr)) & mask) >> 7;
     uint8_t a[8]{0};
@@ -154,7 +156,7 @@ auto speck::unpack_booleans(std::vector<bool>& dest,
 
 auto speck::pack_8_booleans(std::array<bool, 8> src) -> uint8_t
 {
-  // It turns out that C++ doesn't specify bool to be one byte, 
+  // It turns out that C++ doesn't specify bool to be one byte,
   // so to be safe we copy the content of src to array of uint8_t.
   auto bytes = std::array<uint8_t, 8>();
   std::copy(src.begin(), src.end(), bytes.begin());
@@ -170,19 +172,19 @@ auto speck::unpack_8_booleans(uint8_t src) -> std::array<bool, 8>
   const uint64_t magic = 0x8040201008040201;
   const uint64_t mask = 0x8080808080808080;
   uint64_t t = ((magic * src) & mask) >> 7;
-  // It turns out that C++ doesn't specify bool to be one byte, 
+  // It turns out that C++ doesn't specify bool to be one byte,
   // so to be safe we use an array of uint8_t.
   auto bytes = std::array<uint8_t, 8>();
   std::memcpy(bytes.data(), &t, 8);
   auto b8 = std::array<bool, 8>();
   std::copy(bytes.begin(), bytes.end(), b8.begin());
-  return b8;;
+  return b8;
+  ;
 }
 
-auto speck::read_n_bytes(const char* filename, size_t n_bytes, void* buffer)
-    -> RTNType {
-  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(
-      std::fopen(filename, "rb"), &std::fclose);
+auto speck::read_n_bytes(const char* filename, size_t n_bytes, void* buffer) -> RTNType
+{
+  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename, "rb"), &std::fclose);
 
   if (!fp)
     return RTNType::IOError;
@@ -199,11 +201,11 @@ auto speck::read_n_bytes(const char* filename, size_t n_bytes, void* buffer)
 }
 
 template <typename T>
-auto speck::read_whole_file(const char* filename) -> std::vector<T> {
+auto speck::read_whole_file(const char* filename) -> std::vector<T>
+{
   std::vector<T> buf;
 
-  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(
-      std::fopen(filename, "rb"), &std::fclose);
+  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename, "rb"), &std::fclose);
   if (!fp)
     return buf;
 
@@ -223,11 +225,9 @@ template auto speck::read_whole_file(const char*) -> std::vector<float>;
 template auto speck::read_whole_file(const char*) -> std::vector<double>;
 template auto speck::read_whole_file(const char*) -> std::vector<uint8_t>;
 
-auto speck::write_n_bytes(const char* filename,
-                          size_t n_bytes,
-                          const void* buffer) -> RTNType {
-  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(
-      std::fopen(filename, "wb"), &std::fclose);
+auto speck::write_n_bytes(const char* filename, size_t n_bytes, const void* buffer) -> RTNType
+{
+  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename, "wb"), &std::fclose);
   if (!fp)
     return RTNType::IOError;
 
@@ -245,7 +245,8 @@ void speck::calc_stats(const T* arr1,
                        T& linfty,
                        T& psnr,
                        T& arr1min,
-                       T& arr1max) {
+                       T& arr1max)
+{
   const size_t stride_size = 4096;
   const size_t num_of_strides = len / stride_size;
   const size_t remainder_size = len - stride_size * num_of_strides;
@@ -260,8 +261,8 @@ void speck::calc_stats(const T* arr1,
   //
   // In rare cases, the two input arrays are identical.
   //
-  auto mism = std::mismatch( arr1, arr1 + len, arr2, arr2 + len );
-  if( mism.first == arr1 + len && mism.second == arr2 + len ) {
+  auto mism = std::mismatch(arr1, arr1 + len, arr2, arr2 + len);
+  if (mism.first == arr1 + len && mism.second == arr2 + len) {
     rmse = 0.0;
     linfty = 0.0;
     psnr = std::numeric_limits<T>::infinity();
@@ -301,8 +302,8 @@ void speck::calc_stats(const T* arr1,
     last_linfty = std::max(last_linfty, diff);
     last_buf[i] = diff * diff;
   }
-  sum_vec[num_of_strides] = std::accumulate( last_buf.begin(), 
-                            last_buf.begin() + remainder_size, T{0.0});
+  sum_vec[num_of_strides] =
+      std::accumulate(last_buf.begin(), last_buf.begin() + remainder_size, T{0.0});
   linfty_vec[num_of_strides] = last_linfty;
 
   //
@@ -322,14 +323,8 @@ void speck::calc_stats(const T* arr1,
   range_sq *= range_sq;
   psnr = std::log10(range_sq / msr) * T{10.0};
 }
-template void speck::calc_stats(const float*,
-                                const float*,
-                                size_t,
-                                float&,
-                                float&,
-                                float&,
-                                float&,
-                                float&);
+template void
+speck::calc_stats(const float*, const float*, size_t, float&, float&, float&, float&, float&);
 template void speck::calc_stats(const double*,
                                 const double*,
                                 size_t,
@@ -340,7 +335,8 @@ template void speck::calc_stats(const double*,
                                 double&);
 
 template <typename T>
-auto speck::kahan_summation(const T* arr, size_t len) -> T {
+auto speck::kahan_summation(const T* arr, size_t len) -> T
+{
   T sum = 0.0, c = 0.0;
   T t, y;
   for (size_t i = 0; i < len; i++) {
@@ -357,7 +353,8 @@ template auto speck::kahan_summation(const double*, size_t) -> double;
 
 auto speck::chunk_volume(const std::array<size_t, 3>& vol_dim,
                          const std::array<size_t, 3>& chunk_dim)
-    -> std::vector<std::array<size_t, 6>> {
+    -> std::vector<std::array<size_t, 6>>
+{
   // Step 1: figure out how many segments are there along each axis.
   auto n_segs = std::array<size_t, 3>();
   for (size_t i = 0; i < 3; i++) {
@@ -406,9 +403,9 @@ auto speck::chunk_volume(const std::array<size_t, 3>& vol_dim,
 }
 
 template <typename T>
-auto speck::gather_chunk(const T* vol,
-                         dims_type vol_dim,
-                         const std::array<size_t, 6>& chunk) -> vecd_type {
+auto speck::gather_chunk(const T* vol, dims_type vol_dim, const std::array<size_t, 6>& chunk)
+    -> vecd_type
+{
   auto buf = std::vector<double>();
   if (chunk[0] + chunk[1] > vol_dim[0] || chunk[2] + chunk[3] > vol_dim[1] ||
       chunk[4] + chunk[5] > vol_dim[2])
@@ -430,17 +427,16 @@ auto speck::gather_chunk(const T* vol,
   // Will be subject to Named Return Value Optimization.
   return buf;
 }
-template auto speck::gather_chunk(const float*,
-                                  dims_type,
-                                  const std::array<size_t, 6>&) -> vecd_type;
-template auto speck::gather_chunk(const double*,
-                                  dims_type,
-                                  const std::array<size_t, 6>&) -> vecd_type;
+template auto speck::gather_chunk(const float*, dims_type, const std::array<size_t, 6>&)
+    -> vecd_type;
+template auto speck::gather_chunk(const double*, dims_type, const std::array<size_t, 6>&)
+    -> vecd_type;
 
 void speck::scatter_chunk(vecd_type& big_vol,
                           dims_type vol_dim,
                           const vecd_type& small_vol,
-                          const std::array<size_t, 6>& chunk) {
+                          const std::array<size_t, 6>& chunk)
+{
   size_t idx = 0;
   for (size_t z = chunk[4]; z < chunk[4] + chunk[5]; z++) {
     const size_t plane_offset = z * vol_dim[0] * vol_dim[1];

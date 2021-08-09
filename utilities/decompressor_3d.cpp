@@ -6,22 +6,22 @@
 #include <cstring>
 #include <iostream>
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
   // Parse command line options
   CLI::App app("");
 
   std::string input_file;
-  app.add_option("input_filename", input_file,
-                 "Input compressed file to the decompressor")
+  app.add_option("input_filename", input_file, "Input compressed file to the decompressor")
       ->required()
       ->check(CLI::ExistingFile);
 
 #ifndef QZ_TERM
   // Partial bitstream decompression is only applicable to fixed-size mode.
   float decomp_bpp = 0.0;
-  app.add_option( "--partial_bpp", decomp_bpp,
-         "Partially decode the bitstream up to a certain bit-per-pixel. \n"
-         "If not specified, the entire bitstream will be decoded.")
+  app.add_option("--partial_bpp", decomp_bpp,
+                 "Partially decode the bitstream up to a certain bit-per-pixel. \n"
+                 "If not specified, the entire bitstream will be decoded.")
       ->check(CLI::Range(0.0f, 64.0f))
       ->group("Decompression Options");
 #endif
@@ -30,26 +30,27 @@ int main(int argc, char* argv[]) {
   app.add_option("-o", output_file, "Output filename\n")->required();
 
   size_t omp_num_threads = 4;
-  app.add_option("--omp", omp_num_threads,
-                 "Number of OpenMP threads to use. Default: 4\n");
+  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4\n");
 
   std::string compare_single;
-  auto* compare_single_ptr = app.add_option( "--compare_single", compare_single,
-             "Pass in the original data file (in single precision) so\n"
-             "the decompressor could compare the decompressed data against\n"
-             "(PSNR, L-Infty, etc.).")
+  auto* compare_single_ptr =
+      app.add_option("--compare_single", compare_single,
+                     "Pass in the original data file (in single precision) so\n"
+                     "the decompressor could compare the decompressed data against\n"
+                     "(PSNR, L-Infty, etc.).")
           ->check(CLI::ExistingFile);
 
   std::string compare_double;
-  auto* compare_double_ptr = app.add_option( "--compare_double", compare_double,
-             "Pass in the original data file (in single double) so\n"
-             "the decompressor could compare the decompressed data against\n"
-             "(PSNR, L-Infty, etc.).")
+  auto* compare_double_ptr =
+      app.add_option("--compare_double", compare_double,
+                     "Pass in the original data file (in single double) so\n"
+                     "the decompressor could compare the decompressed data against\n"
+                     "(PSNR, L-Infty, etc.).")
           ->excludes(compare_single_ptr)
           ->check(CLI::ExistingFile);
 
   bool output_double = false;
-  app.add_flag("--output_double", output_double, 
+  app.add_flag("--output_double", output_double,
                "Specify to output data to be in double type.\n"
                "Data is output as float by default.\n");
 
@@ -63,8 +64,7 @@ int main(int argc, char* argv[]) {
     return 1;
   SPECK3D_OMP_D decompressor;
   decompressor.set_num_threads(omp_num_threads);
-  if (decompressor.use_bitstream(in_stream.data(), in_stream.size()) !=
-      speck::RTNType::Good) {
+  if (decompressor.use_bitstream(in_stream.data(), in_stream.size()) != speck::RTNType::Good) {
     std::cerr << "Read compressed file error: " << input_file << std::endl;
     return 1;
   }
@@ -83,12 +83,12 @@ int main(int argc, char* argv[]) {
   in_stream.clear();
   in_stream.shrink_to_fit();
 
-  if( output_double ) {
+  if (output_double) {
     auto vol = decompressor.view_data();
     if (vol.empty())
       return 1;
-    if (speck::write_n_bytes(output_file.c_str(), vol.size() * sizeof(double),
-                             vol.data()) != speck::RTNType::Good) {
+    if (speck::write_n_bytes(output_file.c_str(), vol.size() * sizeof(double), vol.data()) !=
+        speck::RTNType::Good) {
       std::cerr << "Write to disk failed!" << std::endl;
       return 1;
     }
@@ -97,17 +97,16 @@ int main(int argc, char* argv[]) {
     auto vol = decompressor.get_data<float>();
     if (vol.empty())
       return 1;
-    if (speck::write_n_bytes(output_file.c_str(), vol.size() * sizeof(double),
-                             vol.data()) != speck::RTNType::Good) {
+    if (speck::write_n_bytes(output_file.c_str(), vol.size() * sizeof(double), vol.data()) !=
+        speck::RTNType::Good) {
       std::cerr << "Write to disk failed!" << std::endl;
       return 1;
     }
-
   }
 
   // Compare with the original data if user specifies
   if (*compare_double_ptr) {
-    auto vol  = decompressor.view_data();
+    auto vol = decompressor.view_data();
     auto orig = speck::read_whole_file<double>(compare_double.c_str());
     if (orig.size() != vol.size()) {
       std::cerr << "File to compare with has difference size with the decompressed file!"
@@ -121,8 +120,8 @@ int main(int argc, char* argv[]) {
     printf("Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
     printf("Decompressed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
   }
-  else if( *compare_single_ptr) {
-    auto vol  = decompressor.get_data<float>();
+  else if (*compare_single_ptr) {
+    auto vol = decompressor.get_data<float>();
     auto orig = speck::read_whole_file<float>(compare_single.c_str());
     if (orig.size() != vol.size()) {
       std::cerr << "File to compare with has difference size with the decompressed file!"

@@ -4,11 +4,9 @@
 #include <cstring>
 
 template <typename T>
-auto SPECK3D_Compressor::copy_data(const T* p,
-                                   size_t len,
-                                   speck::dims_type dims) -> RTNType {
-  static_assert(std::is_floating_point<T>::value,
-                "!! Only floating point values are supported !!");
+auto SPECK3D_Compressor::copy_data(const T* p, size_t len, speck::dims_type dims) -> RTNType
+{
+  static_assert(std::is_floating_point<T>::value, "!! Only floating point values are supported !!");
 
   if (len != dims[0] * dims[1] * dims[2])
     return RTNType::WrongSize;
@@ -20,15 +18,11 @@ auto SPECK3D_Compressor::copy_data(const T* p,
 
   return RTNType::Good;
 }
-template auto SPECK3D_Compressor::copy_data(const double*,
-                                            size_t,
-                                            speck::dims_type) -> RTNType;
-template auto SPECK3D_Compressor::copy_data(const float*,
-                                            size_t,
-                                            speck::dims_type) -> RTNType;
+template auto SPECK3D_Compressor::copy_data(const double*, size_t, speck::dims_type) -> RTNType;
+template auto SPECK3D_Compressor::copy_data(const float*, size_t, speck::dims_type) -> RTNType;
 
-auto SPECK3D_Compressor::take_data(speck::vecd_type&& buf,
-                                   speck::dims_type dims) -> RTNType {
+auto SPECK3D_Compressor::take_data(speck::vecd_type&& buf, speck::dims_type dims) -> RTNType
+{
   if (buf.size() != dims[0] * dims[1] * dims[2])
     return RTNType::WrongSize;
 
@@ -38,17 +32,19 @@ auto SPECK3D_Compressor::take_data(speck::vecd_type&& buf,
   return RTNType::Good;
 }
 
-auto SPECK3D_Compressor::view_encoded_bitstream() const
-    -> const std::vector<uint8_t>& {
+auto SPECK3D_Compressor::view_encoded_bitstream() const -> const std::vector<uint8_t>&
+{
   return m_encoded_stream;
 }
 
-auto SPECK3D_Compressor::release_encoded_bitstream() -> std::vector<uint8_t>&& {
+auto SPECK3D_Compressor::release_encoded_bitstream() -> std::vector<uint8_t>&&
+{
   return std::move(m_encoded_stream);
 }
 
 #ifdef QZ_TERM
-auto SPECK3D_Compressor::compress() -> RTNType {
+auto SPECK3D_Compressor::compress() -> RTNType
+{
   if (m_val_buf.empty())
     return RTNType::Error;
   m_condi_stream.fill(0);
@@ -57,10 +53,10 @@ auto SPECK3D_Compressor::compress() -> RTNType {
   m_num_outlier = 0;
   const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
 
-  // Believe it or not, there are constant fields passed in for compression! 
+  // Believe it or not, there are constant fields passed in for compression!
   // Let's detect that case and skip the rest of the compression routine if it occurs.
-  auto constant = m_conditioner.test_constant( m_val_buf );
-  if( constant.first ) {
+  auto constant = m_conditioner.test_constant(m_val_buf);
+  if (constant.first) {
     m_condi_stream = constant.second;
     auto tmp = m_assemble_encoded_bitstream();
     return tmp;
@@ -136,8 +132,7 @@ auto SPECK3D_Compressor::compress() -> RTNType {
     if (std::abs(m_diffv[i]) >= new_tol)
       m_LOS.emplace_back(i, m_diffv[i]);
   }
-  m_sperr.set_tolerance(
-      new_tol);  // Don't forget to pass in the new tolerance value!
+  m_sperr.set_tolerance(new_tol);  // Don't forget to pass in the new tolerance value!
 
   // Now we encode any outlier that's found.
   if (!m_LOS.empty()) {
@@ -163,17 +158,18 @@ auto SPECK3D_Compressor::compress() -> RTNType {
 //
 // Start fixed-size mode
 //
-auto SPECK3D_Compressor::compress() -> RTNType {
+auto SPECK3D_Compressor::compress() -> RTNType
+{
   const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
   if (m_val_buf.size() != total_vals)
     return RTNType::Error;
   m_condi_stream.fill(0);
   m_speck_stream.clear();
 
-  // Believe it or not, there are constant fields passed in for compression! 
+  // Believe it or not, there are constant fields passed in for compression!
   // Let's detect that case and skip the rest of the compression routine if it occurs.
-  auto constant = m_conditioner.test_constant( m_val_buf );
-  if( constant.first ) {
+  auto constant = m_conditioner.test_constant(m_val_buf);
+  if (constant.first) {
     m_condi_stream = constant.second;
     auto tmp = m_assemble_encoded_bitstream();
     return tmp;
@@ -219,7 +215,7 @@ auto SPECK3D_Compressor::compress() -> RTNType {
 #endif
 
 #ifdef USE_ZSTD
-auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType 
+auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 {
 #ifdef QZ_TERM
   const size_t total_size = m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
@@ -254,9 +250,8 @@ auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 
   const size_t comp_buf_size = ZSTD_compressBound(total_size);
   m_encoded_stream.resize(comp_buf_size);
-  const size_t comp_size =
-      ZSTD_compressCCtx(m_cctx.get(), m_encoded_stream.data(), comp_buf_size,
-                        m_zstd_buf.get(), total_size, ZSTD_CLEVEL_DEFAULT + 6);
+  const size_t comp_size = ZSTD_compressCCtx(m_cctx.get(), m_encoded_stream.data(), comp_buf_size,
+                                             m_zstd_buf.get(), total_size, ZSTD_CLEVEL_DEFAULT + 6);
   if (ZSTD_isError(comp_size))
     return RTNType::ZSTDError;
   else {
@@ -294,10 +289,12 @@ auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 #endif
 
 #ifdef QZ_TERM
-void SPECK3D_Compressor::set_qz_level(int32_t q) {
+void SPECK3D_Compressor::set_qz_level(int32_t q)
+{
   m_qz_lev = q;
 }
-auto SPECK3D_Compressor::set_tolerance(double tol) -> RTNType {
+auto SPECK3D_Compressor::set_tolerance(double tol) -> RTNType
+{
   if (tol <= 0.0)
     return RTNType::InvalidParam;
   else {
@@ -306,12 +303,13 @@ auto SPECK3D_Compressor::set_tolerance(double tol) -> RTNType {
     return RTNType::Good;
   }
 }
-auto SPECK3D_Compressor::get_outlier_stats() const
-    -> std::pair<size_t, size_t> {
+auto SPECK3D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
+{
   return {m_num_outlier, m_sperr_stream.size()};
 }
 #else
-auto SPECK3D_Compressor::set_bpp(float bpp) -> RTNType {
+auto SPECK3D_Compressor::set_bpp(float bpp) -> RTNType
+{
   if (bpp < 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
   else {
@@ -321,7 +319,7 @@ auto SPECK3D_Compressor::set_bpp(float bpp) -> RTNType {
 }
 #endif
 
-void SPECK3D_Compressor::toggle_conditioning(speck::Conditioner::settings_type b4) 
+void SPECK3D_Compressor::toggle_conditioning(speck::Conditioner::settings_type b4)
 {
   m_conditioning_settings = b4;
 }

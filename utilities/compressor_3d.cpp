@@ -6,7 +6,8 @@
 #include <cstring>
 #include <iostream>
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
   // Parse command line options
   CLI::App app("");
 
@@ -30,21 +31,20 @@ int main(int argc, char* argv[]) {
       ->expected(3);
 
   size_t omp_num_threads = 4;
-  app.add_option("--omp", omp_num_threads,
-                 "Number of OpenMP threads to use. Default: 4\n");
+  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4\n");
 
   bool use_double = false;
-  app.add_flag("-d", use_double, "Specify that input data is in double type.\n"
+  app.add_flag("-d", use_double,
+               "Specify that input data is in double type.\n"
                "Data is treated as float by default.\n");
 
 #ifdef QZ_TERM
   int32_t qz_level = 0;
-  app.add_option(
-         "-q,--qz_level", qz_level,
-         "Quantization level to reach when encoding\n"
-         "E.g., `-q n` means that the last quantization level is 2^n.\n"
-         "Note 1: smaller n usually yields smaller compression errors.\n"
-         "Note 2: n could be negative integers as well.")
+  app.add_option("-q,--qz_level", qz_level,
+                 "Quantization level to reach when encoding\n"
+                 "E.g., `-q n` means that the last quantization level is 2^n.\n"
+                 "Note 1: smaller n usually yields smaller compression errors.\n"
+                 "Note 2: n could be negative integers as well.")
       ->group("Compression Parameters")
       ->required();
   double tolerance = 0.0;
@@ -96,12 +96,12 @@ int main(int argc, char* argv[]) {
 
   auto orig = speck::read_whole_file<uint8_t>(input_file.c_str());
   if ((use_double && orig.size() != total_vals * sizeof(double)) ||
-     (!use_double && orig.size() != total_vals * sizeof(float)) ) {
+      (!use_double && orig.size() != total_vals * sizeof(float))) {
     std::cerr << "Read input file error: " << input_file << std::endl;
     return 1;
   }
   auto rtn = speck::RTNType::Good;
-  if( use_double )
+  if (use_double)
     rtn = compressor.use_volume(reinterpret_cast<const double*>(orig.data()), total_vals);
   else
     rtn = compressor.use_volume(reinterpret_cast<const float*>(orig.data()), total_vals);

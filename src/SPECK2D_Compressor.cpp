@@ -8,11 +8,9 @@
 #endif
 
 template <typename T>
-auto SPECK2D_Compressor::copy_data(const T* p,
-                                   size_t len,
-                                   speck::dims_type dims) -> RTNType {
-  static_assert(std::is_floating_point<T>::value,
-                "!! Only floating point values are supported !!");
+auto SPECK2D_Compressor::copy_data(const T* p, size_t len, speck::dims_type dims) -> RTNType
+{
+  static_assert(std::is_floating_point<T>::value, "!! Only floating point values are supported !!");
 
   if (len != dims[0] * dims[1] || dims[2] != 1)
     return RTNType::WrongSize;
@@ -23,15 +21,11 @@ auto SPECK2D_Compressor::copy_data(const T* p,
 
   return RTNType::Good;
 }
-template auto SPECK2D_Compressor::copy_data(const double*,
-                                            size_t,
-                                            speck::dims_type) -> RTNType;
-template auto SPECK2D_Compressor::copy_data(const float*,
-                                            size_t,
-                                            speck::dims_type) -> RTNType;
+template auto SPECK2D_Compressor::copy_data(const double*, size_t, speck::dims_type) -> RTNType;
+template auto SPECK2D_Compressor::copy_data(const float*, size_t, speck::dims_type) -> RTNType;
 
-auto SPECK2D_Compressor::take_data(std::vector<double>&& buf,
-                                   speck::dims_type dims) -> RTNType {
+auto SPECK2D_Compressor::take_data(std::vector<double>&& buf, speck::dims_type dims) -> RTNType
+{
   if (buf.size() != dims[0] * dims[1] || dims[2] != 1)
     return RTNType::WrongSize;
 
@@ -41,7 +35,8 @@ auto SPECK2D_Compressor::take_data(std::vector<double>&& buf,
   return RTNType::Good;
 }
 
-auto SPECK2D_Compressor::set_bpp(float bpp) -> RTNType {
+auto SPECK2D_Compressor::set_bpp(float bpp) -> RTNType
+{
   if (bpp < 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
   else {
@@ -50,23 +45,25 @@ auto SPECK2D_Compressor::set_bpp(float bpp) -> RTNType {
   }
 }
 
-auto SPECK2D_Compressor::view_encoded_bitstream() const
-    -> const std::vector<uint8_t>& {
+auto SPECK2D_Compressor::view_encoded_bitstream() const -> const std::vector<uint8_t>&
+{
   return m_encoded_stream;
 }
 
-auto SPECK2D_Compressor::get_encoded_bitstream() -> std::vector<uint8_t> {
+auto SPECK2D_Compressor::get_encoded_bitstream() -> std::vector<uint8_t>
+{
   return std::move(m_encoded_stream);
 }
 
-auto SPECK2D_Compressor::compress() -> RTNType {
+auto SPECK2D_Compressor::compress() -> RTNType
+{
   const auto total_vals = m_dims[0] * m_dims[1];
   if (m_val_buf.size() != total_vals)
     return RTNType::Error;
 
   // Step 1: data goes through the conditioner
   // Only applying subtract mean here.
-  auto settings = speck::Conditioner::settings_type {true,  false, false, false};
+  auto settings = speck::Conditioner::settings_type{true, false, false, false};
   m_conditioner.toggle_all_settings(settings);
   auto [rtn, condi_meta] = m_conditioner.condition(m_val_buf);
   if (rtn != RTNType::Good)
@@ -102,7 +99,8 @@ auto SPECK2D_Compressor::compress() -> RTNType {
   return rtn;
 }
 
-auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType {
+auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
+{
   // This method does 3 things:
   // 1) prepend a proper header containing meta data.
   // 2) assemble conditioner and SPECK bitstreams together
@@ -126,8 +124,7 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType {
 #endif
   meta[1] = speck::pack_8_booleans(metabool);
 
-  const auto total_size =
-      m_meta_size + m_condi_stream.size() + m_speck_stream.size();
+  const auto total_size = m_meta_size + m_condi_stream.size() + m_speck_stream.size();
 
   // Task 2: assemble pieces of info together.
   m_encoded_stream.resize(total_size);
@@ -147,9 +144,9 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType {
   auto comp_buf = std::vector<uint8_t>(m_meta_size + comp_buf_len);
   std::copy(std::begin(meta), std::end(meta), comp_buf.begin());
 
-  auto comp_size = ZSTD_compress(comp_buf.data() + m_meta_size, comp_buf_len,
-                                 m_encoded_stream.data() + m_meta_size,
-                                 uncomp_size, ZSTD_CLEVEL_DEFAULT + 3);
+  auto comp_size =
+      ZSTD_compress(comp_buf.data() + m_meta_size, comp_buf_len,
+                    m_encoded_stream.data() + m_meta_size, uncomp_size, ZSTD_CLEVEL_DEFAULT + 3);
   if (ZSTD_isError(comp_size))
     return RTNType::ZSTDError;
   else {
