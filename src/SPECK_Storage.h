@@ -49,8 +49,7 @@ class SPECK_Storage {
   //
   const size_t m_header_size = 24;
   int32_t m_max_coeff_bits = 0;
-  int32_t m_qz_term_lev =
-      0;  // At which quantization level does encoding terminate?
+  int32_t m_qz_term_lev = 0;  // At which quantization level does encoding terminate?
   dims_type m_dims = {0, 0, 0};
 
   std::vector<double> m_coeff_buf;

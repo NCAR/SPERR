@@ -7,7 +7,8 @@
 #include "zstd.h"
 #endif
 
-auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
+auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
+{
   // This method parses the metadata of a bitstream and performs the following
   // tasks: 1) Verify if the major version number is consistant. 2) Make sure if
   // the bitstream is for 2D encoding. 3) Verify that the application of ZSTD is
@@ -18,9 +19,8 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
 
   uint8_t meta[2];
   assert(sizeof(meta) == m_meta_size);
-  bool metabool[8];
   std::memcpy(meta, p, sizeof(meta));
-  speck::unpack_8_booleans(metabool, meta[1]);
+  auto metabool = speck::unpack_8_booleans(meta[1]);
 
   // Task 1)
   if (meta[0] != uint8_t(SPERR_VERSION_MAJOR))
@@ -40,13 +40,11 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
     return RTNType::ZSTDMismatch;
 
   const auto content_size = ZSTD_getFrameContentSize(u8p, len - m_meta_size);
-  if (content_size == ZSTD_CONTENTSIZE_ERROR ||
-      content_size == ZSTD_CONTENTSIZE_UNKNOWN)
+  if (content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN)
     return RTNType::ZSTDError;
 
   auto content_buf = std::make_unique<uint8_t[]>(content_size);
-  const auto decomp_size =
-      ZSTD_decompress(content_buf.get(), content_size, u8p, len - m_meta_size);
+  const auto decomp_size = ZSTD_decompress(content_buf.get(), content_size, u8p, len - m_meta_size);
   if (ZSTD_isError(decomp_size) || decomp_size != content_size)
     return RTNType::ZSTDError;
 
@@ -59,11 +57,10 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
 #endif
 
   // Task 4)
-  m_condi_stream.clear();
-  const auto condi_size = m_conditioner.get_meta_size();
+  m_condi_stream.fill(0);
+  const auto condi_size = m_condi_stream.size();
   if (condi_size > plen)
     return RTNType::WrongSize;
-  m_condi_stream.resize(condi_size, 0);
   std::copy(u8p, u8p + condi_size, m_condi_stream.begin());
   u8p += condi_size;
   plen -= condi_size;
@@ -86,7 +83,8 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
   return RTNType::Good;
 }
 
-auto SPECK2D_Decompressor::set_bpp(float bpp) -> RTNType {
+auto SPECK2D_Decompressor::set_bpp(float bpp) -> RTNType
+{
   if (bpp < 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
   else {
@@ -96,7 +94,8 @@ auto SPECK2D_Decompressor::set_bpp(float bpp) -> RTNType {
 }
 
 template <typename T>
-auto SPECK2D_Decompressor::get_data() const -> std::vector<T> {
+auto SPECK2D_Decompressor::get_data() const -> std::vector<T>
+{
   auto out_buf = std::vector<T>(m_val_buf.size());
   std::copy(m_val_buf.begin(), m_val_buf.end(), out_buf.begin());
 
@@ -105,26 +104,29 @@ auto SPECK2D_Decompressor::get_data() const -> std::vector<T> {
 template auto SPECK2D_Decompressor::get_data() const -> std::vector<double>;
 template auto SPECK2D_Decompressor::get_data() const -> std::vector<float>;
 
-auto SPECK2D_Decompressor::view_data() const -> const std::vector<double>& {
+auto SPECK2D_Decompressor::view_data() const -> const std::vector<double>&
+{
   return m_val_buf;
 }
 
-auto SPECK2D_Decompressor::release_data() -> std::vector<double>&& {
+auto SPECK2D_Decompressor::release_data() -> std::vector<double>&&
+{
   m_dims = {0, 0, 0};
   return std::move(m_val_buf);
 }
 
-auto SPECK2D_Decompressor::get_dims() const -> std::array<size_t, 3> {
+auto SPECK2D_Decompressor::get_dims() const -> std::array<size_t, 3>
+{
   return m_dims;
 }
 
-auto SPECK2D_Decompressor::decompress() -> RTNType {
+auto SPECK2D_Decompressor::decompress() -> RTNType
+{
   // Step 1: SPECK decode
   if (m_speck_stream.empty())
     return RTNType::Error;
 
-  auto rtn = m_decoder.parse_encoded_bitstream(m_speck_stream.data(),
-                                               m_speck_stream.size());
+  auto rtn = m_decoder.parse_encoded_bitstream(m_speck_stream.data(), m_speck_stream.size());
   if (rtn != RTNType::Good)
     return rtn;
 
@@ -143,7 +145,7 @@ auto SPECK2D_Decompressor::decompress() -> RTNType {
 
   // Step 3: Inverse Conditioning
   auto cdf_out = m_cdf.release_data();
-  m_conditioner.inverse_condition(cdf_out, m_condi_stream.data());
+  m_conditioner.inverse_condition(cdf_out, m_condi_stream);
 
   m_val_buf = std::move(cdf_out);
 

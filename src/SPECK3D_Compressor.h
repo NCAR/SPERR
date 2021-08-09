@@ -26,7 +26,7 @@ class SPECK3D_Compressor {
   // Accept incoming data: take ownership of a memory block
   auto take_data(std::vector<double>&& buf, speck::dims_type dims) -> RTNType;
 
-  void toggle_conditioning(std::array<bool, 8>);
+  void toggle_conditioning(speck::Conditioner::settings_type);
 
 #ifdef QZ_TERM
   void set_qz_level(int32_t);
@@ -51,12 +51,11 @@ class SPECK3D_Compressor {
   speck::CDF97 m_cdf;
   speck::SPECK3D m_encoder;
 
-  std::array<bool, 8> m_conditioning_settings = {true,  false, false, false,
-                                                 false, false, false, false};
+  speck::Conditioner::settings_type m_conditioning_settings = {true, false, false, false};
 
   // Store bitstreams from the conditioner and SPECK encoding, and the overall
   // bitstream.
-  speck::vec8_type m_condi_stream;
+  speck::Conditioner::meta_type m_condi_stream;
   speck::vec8_type m_speck_stream;
   speck::vec8_type m_encoded_stream;
 
@@ -67,9 +66,8 @@ class SPECK3D_Compressor {
   double m_tol = 0.0;  // tolerance used in error correction
   size_t m_num_outlier = 0;
   std::vector<speck::Outlier> m_LOS;  // List of OutlierS
-  speck::vecd_type
-      m_val_buf2;            // Copy of `m_val_buf` that goes through encoding.
-  speck::vecd_type m_diffv;  // Store differences in double in a vector.
+  speck::vecd_type m_val_buf2;        // Copy of `m_val_buf` that goes through encoding.
+  speck::vecd_type m_diffv;           // Store differences in double in a vector.
 #else
   float m_bpp = 0.0;
 #endif
@@ -77,8 +75,7 @@ class SPECK3D_Compressor {
 #ifdef USE_ZSTD
   std::unique_ptr<uint8_t[]> m_zstd_buf = nullptr;
   size_t m_zstd_buf_len = 0;
-  std::unique_ptr<ZSTD_CCtx, decltype(&ZSTD_freeCCtx)> m_cctx = {
-      nullptr, &ZSTD_freeCCtx};
+  std::unique_ptr<ZSTD_CCtx, decltype(&ZSTD_freeCCtx)> m_cctx = {nullptr, &ZSTD_freeCCtx};
 #endif
 
   auto m_assemble_encoded_bitstream() -> speck::RTNType;

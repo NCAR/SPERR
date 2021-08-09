@@ -9,8 +9,9 @@
 //
 // Class SPECKSet1D
 //
-speck::SPECKSet1D::SPECKSet1D(size_t s, size_t l, uint32_t p)
-    : start(s), length(l), part_level(p) {}
+speck::SPECKSet1D::SPECKSet1D(size_t s, size_t l, uint32_t p) : start(s), length(l), part_level(p)
+{
+}
 
 //
 // Struct Outlier
@@ -20,33 +21,39 @@ speck::Outlier::Outlier(size_t loc, double e) : location(loc), error(e) {}
 //
 // Class SPERR
 //
-void speck::SPERR::add_outlier(size_t pos, double e) {
+void speck::SPERR::add_outlier(size_t pos, double e)
+{
   m_LOS.emplace_back(pos, e);
 }
 
-void speck::SPERR::copy_outlier_list(const std::vector<Outlier>& list) {
+void speck::SPERR::copy_outlier_list(const std::vector<Outlier>& list)
+{
   // Not using the "pass by value and move" idiom because we want to
   // reuse the storage of `m_LOS` here.
   m_LOS = list;
 }
 
-void speck::SPERR::set_length(uint64_t len) {
+void speck::SPERR::set_length(uint64_t len)
+{
   m_total_len = len;
 }
 
-void speck::SPERR::set_tolerance(double t) {
+void speck::SPERR::set_tolerance(double t)
+{
   m_tolerance = t;
 }
 
-auto speck::SPERR::release_outliers() -> std::vector<Outlier>&& {
+auto speck::SPERR::release_outliers() -> std::vector<Outlier>&&
+{
   return std::move(m_LOS);
 }
-auto speck::SPERR::view_outliers() -> const std::vector<Outlier>& {
+auto speck::SPERR::view_outliers() -> const std::vector<Outlier>&
+{
   return m_LOS;
 }
 
-auto speck::SPERR::m_part_set(const SPECKSet1D& set) const
-    -> std::array<SPECKSet1D, 2> {
+auto speck::SPERR::m_part_set(const SPECKSet1D& set) const -> std::array<SPECKSet1D, 2>
+{
   std::array<SPECKSet1D, 2> subsets;
   // Prepare the 1st set
   auto& set1 = subsets[0];
@@ -62,7 +69,8 @@ auto speck::SPERR::m_part_set(const SPECKSet1D& set) const
   return subsets;
 }
 
-void speck::SPERR::m_initialize_LIS() {
+void speck::SPERR::m_initialize_LIS()
+{
   // Note that `m_LIS` is a 2D array. In order to avoid unnecessary memory
   // allocation, we don't clear `m_LIS` itself, but clear every secondary array
   // it holds. This is OK as long as the extra secondary arrays are cleared.
@@ -80,16 +88,17 @@ void speck::SPERR::m_initialize_LIS() {
   m_LIS[sets[1].part_level].push_back(sets[1]);
 }
 
-void speck::SPERR::m_clean_LIS() {
+void speck::SPERR::m_clean_LIS()
+{
   for (auto& list : m_LIS) {
-    auto itr = std::remove_if(list.begin(), list.end(), [](auto& s) {
-      return s.type == SetType::Garbage;
-    });
+    auto itr = std::remove_if(list.begin(), list.end(),
+                              [](auto& s) { return s.type == SetType::Garbage; });
     list.erase(itr, list.end());
   }
 }
 
-auto speck::SPERR::m_ready_to_encode() const -> bool {
+auto speck::SPERR::m_ready_to_encode() const -> bool
+{
   if (m_total_len == 0)
     return false;
   if (m_tolerance <= 0.0)
@@ -99,9 +108,8 @@ auto speck::SPERR::m_ready_to_encode() const -> bool {
 
   // Make sure each outlier to process has an error greater or equal to the
   // tolerance.
-  if (!std::all_of(m_LOS.begin(), m_LOS.end(), [tol = m_tolerance](auto& out) {
-        return std::abs(out.error) >= tol;
-      }))
+  if (!std::all_of(m_LOS.begin(), m_LOS.end(),
+                   [tol = m_tolerance](auto& out) { return std::abs(out.error) >= tol; }))
     return false;
 
   // Make sure there are no duplicate locations in the outlier list,
@@ -110,13 +118,13 @@ auto speck::SPERR::m_ready_to_encode() const -> bool {
   // encoding.
   if (m_LOS.back().location >= m_total_len)
     return false;
-  auto adj = std::adjacent_find(
-      m_LOS.begin(), m_LOS.end(),
-      [](auto& a, auto& b) { return a.location == b.location; });
+  auto adj = std::adjacent_find(m_LOS.begin(), m_LOS.end(),
+                                [](auto& a, auto& b) { return a.location == b.location; });
   return (adj == m_LOS.end());
 }
 
-auto speck::SPERR::m_ready_to_decode() const -> bool {
+auto speck::SPERR::m_ready_to_decode() const -> bool
+{
   if (m_total_len == 0)
     return false;
   if (m_bit_buffer.empty())
@@ -125,11 +133,11 @@ auto speck::SPERR::m_ready_to_decode() const -> bool {
   return true;
 }
 
-auto speck::SPERR::encode() -> RTNType {
+auto speck::SPERR::encode() -> RTNType
+{
   // Let's sort the list of outliers so it'll be easier to locate particular
   // individuals.
-  std::sort(m_LOS.begin(), m_LOS.end(),
-            [](auto& a, auto& b) { return a.location < b.location; });
+  std::sort(m_LOS.begin(), m_LOS.end(), [](auto& a, auto& b) { return a.location < b.location; });
   if (!m_ready_to_encode())
     return RTNType::InvalidParam;
   m_bit_buffer.clear();
@@ -177,7 +185,8 @@ auto speck::SPERR::encode() -> RTNType {
   return RTNType::Good;
 }
 
-auto speck::SPERR::decode() -> RTNType {
+auto speck::SPERR::decode() -> RTNType
+{
   if (!m_ready_to_decode())
     return RTNType::InvalidParam;
   m_encode_mode = false;
@@ -214,42 +223,37 @@ auto speck::SPERR::decode() -> RTNType {
   return RTNType::Good;
 }
 
-auto speck::SPERR::m_decide_significance(const SPECKSet1D& set) const
-    -> std::pair<bool, size_t> {
+auto speck::SPERR::m_decide_significance(const SPECKSet1D& set) const -> std::pair<bool, size_t>
+{
   // This function is only used during encoding.
 
   // Step 1: use the significance map to decide if this set is significant
   std::pair<bool, size_t> sig{false, 0};
-  for (size_t i = set.start; i < set.start + set.length; i++) {
-    if (m_sig_map[i]) {
-      sig = {true, i};
-      break;
-    }
-  }
+  auto begin = m_sig_map.begin() + set.start;
+  auto end = begin + set.length;
+  auto itr1 = std::find(begin, end, true);
+  if (itr1 != end)
+    sig.first = true;
 
   // Step 2: if this set is significant, then find the index of the outlier in
   //         `m_LSO` that caused it being significant.
   // Note that `m_LSO` is sorted at the beginning of encoding.
   if (sig.first) {
-    auto itr = std::lower_bound(
-        m_LOS.begin(), m_LOS.end(), sig.second,
-        [](auto& otl, auto& val) { return otl.location < val; });
-    assert(itr != m_LOS.end());
-    assert((*itr).location == sig.second);  // Must find exactly this index
-    sig.second = std::distance(m_LOS.begin(), itr);
+    auto itr2 = std::lower_bound(m_LOS.begin(), m_LOS.end(), std::distance(m_sig_map.begin(), itr1),
+                                 [](auto& otl, auto& val) { return otl.location < val; });
+    assert(itr2 != m_LOS.end());
+    assert((*itr2).location == sig.second);  // Must find exactly this index
+    sig.second = std::distance(m_LOS.begin(), itr2);
   }
 
   return sig;
 }
 
-auto speck::SPERR::m_process_S_encoding(size_t idx1,
-                                        size_t idx2,
-                                        size_t& counter,
-                                        bool output) -> bool {
+auto speck::SPERR::m_process_S_encoding(size_t idx1, size_t idx2, size_t& counter, bool output)
+    -> bool
+{
   auto& set = m_LIS[idx1][idx2];
-  auto sig_rtn = m_decide_significance(set);
-  bool is_sig = sig_rtn.first;
-  auto sig_idx = sig_rtn.second;
+  auto [is_sig, sig_idx] = m_decide_significance(set);
 
   if (output)
     m_bit_buffer.push_back(is_sig);
@@ -266,7 +270,8 @@ auto speck::SPERR::m_process_S_encoding(size_t idx1,
       // Refine this pixel!
       if (m_refinement_new_SP(sig_idx))
         return true;
-    } else {  // Not a pixel
+    }
+    else {  // Not a pixel
       if (m_code_S(idx1, idx2))
         return true;
     }
@@ -277,7 +282,8 @@ auto speck::SPERR::m_process_S_encoding(size_t idx1,
   return false;
 }
 
-auto speck::SPERR::m_code_S(size_t idx1, size_t idx2) -> bool {
+auto speck::SPERR::m_code_S(size_t idx1, size_t idx2) -> bool
+{
   auto sets = m_part_set(m_LIS[idx1][idx2]);
   size_t counter = 0;
 
@@ -289,8 +295,7 @@ auto speck::SPERR::m_code_S(size_t idx1, size_t idx2) -> bool {
     auto newi2 = m_LIS[newi1].size() - 1;
     if (m_encode_mode && m_process_S_encoding(newi1, newi2, counter, true))
       return true;
-    else if (!m_encode_mode &&
-             m_process_S_decoding(newi1, newi2, counter, true))
+    else if (!m_encode_mode && m_process_S_decoding(newi1, newi2, counter, true))
       return true;
   }
 
@@ -313,7 +318,8 @@ auto speck::SPERR::m_code_S(size_t idx1, size_t idx2) -> bool {
   return false;
 }
 
-auto speck::SPERR::m_sorting_pass() -> bool {
+auto speck::SPERR::m_sorting_pass() -> bool
+{
   size_t dummy = 0;
   for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
     size_t idx1 = m_LIS.size() - tmp;
@@ -328,7 +334,8 @@ auto speck::SPERR::m_sorting_pass() -> bool {
   return false;
 }
 
-auto speck::SPERR::m_refinement_pass_encoding() -> bool {
+auto speck::SPERR::m_refinement_pass_encoding() -> bool
+{
   for (auto idx : m_LSP_old) {
     // First test if this pixel is still an outlier
     // Note that every refinement pass generates exactly 1 bit for each pixel in
@@ -361,7 +368,8 @@ auto speck::SPERR::m_refinement_pass_encoding() -> bool {
   return false;
 }
 
-auto speck::SPERR::m_refinement_new_SP(size_t idx) -> bool {
+auto speck::SPERR::m_refinement_new_SP(size_t idx) -> bool
+{
   m_q[idx] -= m_threshold;
 
   m_err_hat[idx] = m_threshold * 1.5;
@@ -376,10 +384,9 @@ auto speck::SPERR::m_refinement_new_SP(size_t idx) -> bool {
   return (m_outlier_cnt == 0);
 }
 
-auto speck::SPERR::m_process_S_decoding(size_t idx1,
-                                        size_t idx2,
-                                        size_t& counter,
-                                        bool input) -> bool {
+auto speck::SPERR::m_process_S_decoding(size_t idx1, size_t idx2, size_t& counter, bool input)
+    -> bool
+{
   bool is_sig = true;
   if (input) {
     is_sig = m_bit_buffer[m_bit_idx++];
@@ -401,7 +408,8 @@ auto speck::SPERR::m_process_S_decoding(size_t idx1,
       // The bit buffer CAN be depleted at this point, so let's do a test
       if (m_bit_idx == m_bit_buffer.size())
         return true;
-    } else {
+    }
+    else {
       if (m_code_S(idx1, idx2))
         return true;
     }
@@ -412,7 +420,8 @@ auto speck::SPERR::m_process_S_decoding(size_t idx1,
   return false;
 }
 
-auto speck::SPERR::m_refinement_decoding() -> bool {
+auto speck::SPERR::m_refinement_decoding() -> bool
+{
   // Refine significant pixels from previous iterations only,
   //   because pixels added from this iteration are already refined.
   for (size_t idx = 0; idx < m_LOS_size; idx++) {
@@ -431,19 +440,23 @@ auto speck::SPERR::m_refinement_decoding() -> bool {
   return false;
 }
 
-auto speck::SPERR::num_of_outliers() const -> size_t {
+auto speck::SPERR::num_of_outliers() const -> size_t
+{
   return m_LOS.size();
 }
 
-auto speck::SPERR::num_of_bits() const -> size_t {
+auto speck::SPERR::num_of_bits() const -> size_t
+{
   return m_bit_buffer.size();
 }
 
-auto speck::SPERR::max_coeff_bits() const -> int32_t {
+auto speck::SPERR::max_coeff_bits() const -> int32_t
+{
   return m_max_coeff_bits;
 }
 
-auto speck::SPERR::get_encoded_bitstream() const -> std::vector<uint8_t> {
+auto speck::SPERR::get_encoded_bitstream() const -> std::vector<uint8_t>
+{
   // Header definition:
   // total_len  max_coeff_bits  num_of_bits
   // uint64_t   int32_t         uint64_t
@@ -484,8 +497,8 @@ auto speck::SPERR::get_encoded_bitstream() const -> std::vector<uint8_t> {
   return buf;
 }
 
-auto speck::SPERR::parse_encoded_bitstream(const void* buf, size_t len)
-    -> RTNType {
+auto speck::SPERR::parse_encoded_bitstream(const void* buf, size_t len) -> RTNType
+{
   // The buffer passed in is supposed to consist a header and then a compacted
   // bitstream, just like what was returned by `get_encoded_bitstream()`. Note:
   // header definition is documented in get_encoded_bitstream().
@@ -517,7 +530,8 @@ auto speck::SPERR::parse_encoded_bitstream(const void* buf, size_t len)
   return RTNType::Good;
 }
 
-auto speck::SPERR::get_sperr_stream_size(const void* buf) const -> uint64_t {
+auto speck::SPERR::get_sperr_stream_size(const void* buf) const -> uint64_t
+{
   // Given the header definition in `get_encoded_bitstream()`, directly
   // go retrieve the value stored in byte 12-20.
   const uint8_t* const ptr = static_cast<const uint8_t*>(buf);

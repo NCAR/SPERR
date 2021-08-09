@@ -6,28 +6,34 @@
 #include <cstring>
 #include <numeric>  // std::accumulate()
 
-void SPECK3D_OMP_C::set_dims(speck::dims_type dims) {
+void SPECK3D_OMP_C::set_dims(speck::dims_type dims)
+{
   m_dims = dims;
 }
 
-void SPECK3D_OMP_C::prefer_chunk_dims(speck::dims_type dims) {
+void SPECK3D_OMP_C::prefer_chunk_dims(speck::dims_type dims)
+{
   m_chunk_dims = dims;
 }
 
-void SPECK3D_OMP_C::set_num_threads(size_t n) {
+void SPECK3D_OMP_C::set_num_threads(size_t n)
+{
   if (n > 0)
     m_num_threads = n;
 }
 
-void SPECK3D_OMP_C::toggle_conditioning(std::array<bool, 8> b8) {
-  m_conditioning_settings = b8;
+void SPECK3D_OMP_C::toggle_conditioning(speck::Conditioner::settings_type b4)
+{
+  m_conditioning_settings = b4;
 }
 
 #ifdef QZ_TERM
-void SPECK3D_OMP_C::set_qz_level(int32_t q) {
+void SPECK3D_OMP_C::set_qz_level(int32_t q)
+{
   m_qz_lev = q;
 }
-auto SPECK3D_OMP_C::set_tolerance(double t) -> RTNType {
+auto SPECK3D_OMP_C::set_tolerance(double t) -> RTNType
+{
   if (t <= 0.0)
     return RTNType::InvalidParam;
   else {
@@ -35,17 +41,18 @@ auto SPECK3D_OMP_C::set_tolerance(double t) -> RTNType {
     return RTNType::Good;
   }
 }
-auto SPECK3D_OMP_C::get_outlier_stats() const -> std::pair<size_t, size_t> {
+auto SPECK3D_OMP_C::get_outlier_stats() const -> std::pair<size_t, size_t>
+{
   using pair = std::pair<size_t, size_t>;
   pair sum{0, 0};
   auto op = [](const pair& a, const pair& b) -> pair {
     return {a.first + b.first, a.second + b.second};
   };
-  return std::accumulate(m_outlier_stats.begin(), m_outlier_stats.end(), sum,
-                         op);
+  return std::accumulate(m_outlier_stats.begin(), m_outlier_stats.end(), sum, op);
 }
 #else
-auto SPECK3D_OMP_C::set_bpp(float bpp) -> RTNType {
+auto SPECK3D_OMP_C::set_bpp(float bpp) -> RTNType
+{
   if (bpp < 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
   else {
@@ -56,7 +63,8 @@ auto SPECK3D_OMP_C::set_bpp(float bpp) -> RTNType {
 #endif
 
 template <typename T>
-auto SPECK3D_OMP_C::use_volume(const T* vol, size_t len) -> RTNType {
+auto SPECK3D_OMP_C::use_volume(const T* vol, size_t len) -> RTNType
+{
   if (len != m_dims[0] * m_dims[1] * m_dims[2])
     return RTNType::WrongSize;
 
@@ -81,7 +89,8 @@ auto SPECK3D_OMP_C::use_volume(const T* vol, size_t len) -> RTNType {
 template auto SPECK3D_OMP_C::use_volume(const float*, size_t) -> RTNType;
 template auto SPECK3D_OMP_C::use_volume(const double*, size_t) -> RTNType;
 
-auto SPECK3D_OMP_C::compress() -> RTNType {
+auto SPECK3D_OMP_C::compress() -> RTNType
+{
   // Need to make sure that the chunks are ready!
   auto chunks = speck::chunk_volume(m_dims, m_chunk_dims);
   const auto num_chunks = chunks.size();
@@ -95,8 +104,7 @@ auto SPECK3D_OMP_C::compress() -> RTNType {
   auto compressors = std::vector<SPECK3D_Compressor>(m_num_threads);
   auto chunk_rtn = std::vector<RTNType>(num_chunks, RTNType::Good);
   m_encoded_streams.resize(num_chunks);
-  std::for_each(m_encoded_streams.begin(), m_encoded_streams.end(),
-                [](auto& v) { v.clear(); });
+  std::for_each(m_encoded_streams.begin(), m_encoded_streams.end(), [](auto& v) { v.clear(); });
 
 #ifdef QZ_TERM
   m_outlier_stats.assign(num_chunks, {0, 0});
@@ -109,8 +117,7 @@ auto SPECK3D_OMP_C::compress() -> RTNType {
     auto& compressor = compressors[omp_get_thread_num()];
 
     // The following few operations have no chance to fail.
-    compressor.take_data(std::move(m_chunk_buffers[i]),
-                         {chunks[i][1], chunks[i][3], chunks[i][5]});
+    compressor.take_data(std::move(m_chunk_buffers[i]), {chunks[i][1], chunks[i][3], chunks[i][5]});
 
     compressor.toggle_conditioning(m_conditioning_settings);
 
@@ -130,24 +137,26 @@ auto SPECK3D_OMP_C::compress() -> RTNType {
 #endif
   }
 
-  if (std::any_of(chunk_rtn.begin(), chunk_rtn.end(),
-                  [](auto r) { return r != RTNType::Good; }))
-    return RTNType::Error;
+  auto fail =
+      std::find_if(chunk_rtn.begin(), chunk_rtn.end(), [](auto r) { return r != RTNType::Good; });
+  if (fail != chunk_rtn.end())
+    return (*fail);
+
   if (std::any_of(m_encoded_streams.begin(), m_encoded_streams.end(),
                   [](auto& s) { return s.empty(); }))
-    return RTNType::Error;
+    return RTNType::EmptyStream;
 
   return RTNType::Good;
 }
 
-auto SPECK3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t> {
+auto SPECK3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
+{
   auto header = m_generate_header();
   if (header.empty())
     return std::vector<uint8_t>(0);
 
-  auto total_size = std::accumulate(
-      m_encoded_streams.begin(), m_encoded_streams.end(), header.size(),
-      [](auto a, auto& b) { return a + b.size(); });
+  auto total_size = std::accumulate(m_encoded_streams.begin(), m_encoded_streams.end(),
+                                    header.size(), [](size_t a, auto& b) { return a + b.size(); });
   auto buf = std::vector<uint8_t>(total_size);
 
   std::copy(header.begin(), header.end(), buf.begin());
@@ -160,7 +169,8 @@ auto SPECK3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t> {
   return buf;
 }
 
-auto SPECK3D_OMP_C::m_generate_header() const -> speck::vec8_type {
+auto SPECK3D_OMP_C::m_generate_header() const -> speck::vec8_type
+{
   // The header would contain the following information
   //  -- a version number                     (1 byte)
   //  -- 8 booleans                           (1 byte)
@@ -182,11 +192,11 @@ auto SPECK3D_OMP_C::m_generate_header() const -> speck::vec8_type {
   // bool[0]  : if ZSTD is used
   // bool[1]  : if this bitstream is for 3D (true) or 2D (false) data.
   // bool[2-7]: undefined
-  bool b[8] = {false, true, false, false, false, false, false, false};
+  auto b8 = std::array<bool, 8>{false, true, false, false, false, false, false, false};
 #ifdef USE_ZSTD
-  b[0] = true;
+  b8[0] = true;
 #endif
-  speck::pack_8_booleans(header[loc], b);
+  header[loc] = speck::pack_8_booleans(b8);
   loc += 1;
 
   // Volume and chunk dimensions

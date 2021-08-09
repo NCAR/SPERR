@@ -39,3 +39,7 @@ PPAPI_END_MESSAGE_MAP$"
 
 # TODO: Remove this once clang-format r357700 is rolled in.
 JavaImportGroups: ['android', 'androidx', 'com', 'dalvik', 'junit', 'org', 'com.google.android.apps.chrome', 'org.chromium', 'java', 'javax']
+
+#Sam's addition:
+ColumnLimit: 100
+BreakBeforeBraces: Stroustrup

@@ -23,8 +23,7 @@ class CDF97 {
   //
   auto view_data() const -> const std::vector<double>&;
   auto release_data() -> std::vector<double>&&;
-  auto get_dims() const
-      -> std::array<size_t, 3>;  // In 2D case, the 3rd value equals 1.
+  auto get_dims() const -> std::array<size_t, 3>;  // In 2D case, the 3rd value equals 1.
 
   // Action items
   void dwt1d();
@@ -52,12 +51,8 @@ class CDF97 {
 
   // Multiple levels of 2D DWT/IDWT on a given plane by repeatedly invoking
   // m_dwt2d_one_level(). The plane has a dimension (len_xy[0], len_xy[1]).
-  void m_dwt2d(double* plane,
-               std::array<size_t, 2> len_xy,
-               size_t num_of_xforms);
-  void m_idwt2d(double* plane,
-                std::array<size_t, 2> len_xy,
-                size_t num_of_xforms);
+  void m_dwt2d(double* plane, std::array<size_t, 2> len_xy, size_t num_of_xforms);
+  void m_idwt2d(double* plane, std::array<size_t, 2> len_xy, size_t num_of_xforms);
 
   // Perform one level of interleaved 3D dwt/idwt on a given volume (m_dims),
   // specifically on its top left (len_xyz) subset.
@@ -92,14 +87,10 @@ class CDF97 {
   //
   // Methods from QccPack, keep their original names.
   //
-  void QccWAVCDF97AnalysisSymmetricEvenEven(double* signal,
-                                            size_t signal_length);
-  void QccWAVCDF97AnalysisSymmetricOddEven(double* signal,
-                                           size_t signal_length);
-  void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal,
-                                             size_t signal_length);
-  void QccWAVCDF97SynthesisSymmetricOddEven(double* signal,
-                                            size_t signal_length);
+  void QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length);
+  void QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length);
+  void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length);
+  void QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length);
 
   //
   // Private data members
@@ -129,8 +120,7 @@ class CDF97 {
    */
 
   // Paper coefficients
-  const double h[5]{.602949018236, .266864118443, -.078223266529,
-                    -.016864118443, .026748757411};
+  const double h[5]{.602949018236, .266864118443, -.078223266529, -.016864118443, .026748757411};
   const double r0 = h[0] - 2.0 * h[4] * h[1] / h[3];
   const double r1 = h[2] - h[4] - h[4] * h[1] / h[3];
   const double s0 = h[1] - h[3] - h[3] * r0 / r1;

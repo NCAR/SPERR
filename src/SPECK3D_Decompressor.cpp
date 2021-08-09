@@ -3,7 +3,16 @@
 #include <cassert>
 #include <cstring>
 
-auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
+auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
+{
+  // It'd be bad to have some buffers updated, and some others not.
+  // So let's clean up everything at the very beginning of this routine
+  m_condi_stream.fill(0);
+  m_speck_stream.clear();
+#ifdef QZ_TERM
+  m_sperr_stream.clear();
+#endif
+
 #ifdef USE_ZSTD
   // Make sure that we have a ZSTD Decompression Context first
   if (m_dctx == nullptr) {
@@ -15,19 +24,16 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
   }
 
   const size_t content_size = ZSTD_getFrameContentSize(p, len);
-  if (content_size == ZSTD_CONTENTSIZE_ERROR ||
-      content_size == ZSTD_CONTENTSIZE_UNKNOWN)
+  if (content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN)
     return RTNType::ZSTDError;
 
-  // If `m_zstd_buf` is not big enough for the decompressed buffer, we re-size
-  // it.
+  // If `m_zstd_buf` is not big enough for the decompressed buffer, we re-size it.
   if (content_size > m_zstd_buf_len) {
     m_zstd_buf_len = std::max(content_size, m_zstd_buf_len * 2);
     m_zstd_buf = std::make_unique<uint8_t[]>(m_zstd_buf_len);
   }
 
-  const auto decomp_size =
-      ZSTD_decompressDCtx(m_dctx.get(), m_zstd_buf.get(), content_size, p, len);
+  auto decomp_size = ZSTD_decompressDCtx(m_dctx.get(), m_zstd_buf.get(), content_size, p, len);
   if (ZSTD_isError(decomp_size) || decomp_size != content_size)
     return RTNType::ZSTDError;
   const uint8_t* const ptr = m_zstd_buf.get();
@@ -38,16 +44,25 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
 #endif
 
   // Step 1: extract conditioner stream from it
-  m_condi_stream.clear();
-  const auto condi_size = m_conditioner.get_meta_size();
+  const auto condi_size = m_condi_stream.size();
   if (condi_size > ptr_len)
     return RTNType::WrongSize;
-  m_condi_stream.resize(condi_size, 0);
   std::copy(ptr, ptr + condi_size, m_condi_stream.begin());
   size_t pos = condi_size;
 
+  // `m_condi_stream` might be indicating that the field is a constant field.
+  // In that case, there will be no more speck or sperr streams.
+  // Let's detect that case here and return early if it is true.
+  // It will be up to the decompress() routine to restore the actual constant field.
+  auto constant = m_conditioner.parse_constant(m_condi_stream);
+  if (std::get<0>(constant)) {
+    if (condi_size == ptr_len)
+      return RTNType::Good;
+    else
+      return RTNType::WrongSize;
+  }
+
   // Step 2: extract SPECK stream from it
-  m_speck_stream.clear();
   const uint8_t* const speck_p = ptr + pos;
   const auto speck_size = m_decoder.get_speck_stream_size(speck_p);
   if (pos + speck_size > ptr_len)
@@ -61,7 +76,6 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
 
 #ifdef QZ_TERM
   // Step 4: extract SPERR stream from it
-  m_sperr_stream.clear();
   if (pos < ptr_len) {
     const uint8_t* const sperr_p = ptr + pos;
     const auto sperr_size = m_sperr.get_sperr_stream_size(sperr_p);
@@ -79,7 +93,8 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType {
 }
 
 #ifndef QZ_TERM
-auto SPECK3D_Decompressor::set_bpp(float bpp) -> RTNType {
+auto SPECK3D_Decompressor::set_bpp(float bpp) -> RTNType
+{
   if (bpp < 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
   else {
@@ -89,19 +104,30 @@ auto SPECK3D_Decompressor::set_bpp(float bpp) -> RTNType {
 }
 #endif
 
-auto SPECK3D_Decompressor::decompress() -> RTNType {
+auto SPECK3D_Decompressor::decompress() -> RTNType
+{
+  // `m_condi_stream` might be indicating a constant field, so let's see if that's
+  // the case, and if it is, we don't need to go through dwt and speck stuff anymore.
+  auto constant = m_conditioner.parse_constant(m_condi_stream);
+  if (std::get<0>(constant)) {
+    auto val = std::get<1>(constant);
+    auto nval = std::get<2>(constant);
+    m_val_buf.assign(nval, val);
+    return RTNType::Good;
+  }
+
+  // The following steps are for a normal speck->speck->sperr pipeline.
+  //
   // Step 1: SPECK decode.
   if (m_speck_stream.empty())
     return RTNType::Error;
 
-  auto rtn = m_decoder.parse_encoded_bitstream(m_speck_stream.data(),
-                                               m_speck_stream.size());
+  auto rtn = m_decoder.parse_encoded_bitstream(m_speck_stream.data(), m_speck_stream.size());
   if (rtn != RTNType::Good)
     return rtn;
 
 #ifndef QZ_TERM
-  m_decoder.set_bit_budget(
-      size_t(m_bpp * float(m_dims[0] * m_dims[1] * m_dims[2])));
+  m_decoder.set_bit_budget(size_t(m_bpp * float(m_dims[0] * m_dims[1] * m_dims[2])));
 #endif
 
   rtn = m_decoder.decode();
@@ -129,14 +155,13 @@ auto SPECK3D_Decompressor::decompress() -> RTNType {
   auto cdf_out = m_cdf.view_data();
   m_val_buf.resize(cdf_out.size());
   std::copy(cdf_out.begin(), cdf_out.end(), m_val_buf.begin());
-  m_conditioner.inverse_condition(m_val_buf, m_condi_stream.data());
+  m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
 
 #ifdef QZ_TERM
   // Step 4: If there's SPERR data, then do the correction.
   // This condition occurs only in QZ_TERM mode.
   if (!m_sperr_stream.empty()) {
-    rtn = m_sperr.parse_encoded_bitstream(m_sperr_stream.data(),
-                                          m_sperr_stream.size());
+    rtn = m_sperr.parse_encoded_bitstream(m_sperr_stream.data(), m_sperr_stream.size());
     if (rtn != RTNType::Good)
       return rtn;
     rtn = m_sperr.decode();
@@ -153,24 +178,28 @@ auto SPECK3D_Decompressor::decompress() -> RTNType {
 }
 
 template <typename T>
-auto SPECK3D_Decompressor::get_data() const -> std::vector<T> {
+auto SPECK3D_Decompressor::get_data() const -> std::vector<T>
+{
   auto out_buf = std::vector<T>(m_val_buf.size());
   std::copy(m_val_buf.begin(), m_val_buf.end(), out_buf.begin());
 
-  return std::move(out_buf);
+  return out_buf;
 }
 template auto SPECK3D_Decompressor::get_data() const -> std::vector<double>;
 template auto SPECK3D_Decompressor::get_data() const -> std::vector<float>;
 
-auto SPECK3D_Decompressor::view_data() const -> const std::vector<double>& {
+auto SPECK3D_Decompressor::view_data() const -> const std::vector<double>&
+{
   return m_val_buf;
 }
 
-auto SPECK3D_Decompressor::release_data() -> std::vector<double>&& {
+auto SPECK3D_Decompressor::release_data() -> std::vector<double>&&
+{
   m_dims = {0, 0, 0};
   return std::move(m_val_buf);
 }
 
-auto SPECK3D_Decompressor::get_dims() const -> std::array<size_t, 3> {
+auto SPECK3D_Decompressor::get_dims() const -> std::array<size_t, 3>
+{
   return m_dims;
 }

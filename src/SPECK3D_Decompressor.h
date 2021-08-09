@@ -39,7 +39,7 @@ class SPECK3D_Decompressor {
  private:
   speck::dims_type m_dims = {0, 0, 0};
 
-  speck::vec8_type m_condi_stream;
+  speck::Conditioner::meta_type m_condi_stream;
   speck::vec8_type m_speck_stream;
   speck::vecd_type m_val_buf;
 
@@ -57,8 +57,7 @@ class SPECK3D_Decompressor {
 #ifdef USE_ZSTD
   std::unique_ptr<uint8_t[]> m_zstd_buf = nullptr;
   size_t m_zstd_buf_len = 0;
-  std::unique_ptr<ZSTD_DCtx, decltype(&ZSTD_freeDCtx)> m_dctx = {
-      nullptr, &ZSTD_freeDCtx};
+  std::unique_ptr<ZSTD_DCtx, decltype(&ZSTD_freeDCtx)> m_dctx = {nullptr, &ZSTD_freeDCtx};
 #endif
 };
 

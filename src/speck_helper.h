@@ -38,6 +38,8 @@ enum class RTNType {  // Return Type
   WrongSize,
   IOError,
   InvalidParam,
+  QzLevelTooBig,  // a very specific type of invalid param
+  EmptyStream,    // a condition but not sure if it's an error
   BitBudgetMet,
   VersionMismatch,
   ZSTDMismatch,
@@ -69,12 +71,14 @@ class ptr_iterator : public std::iterator<std::bidirectional_iterator_tag, T> {
 
   // Requirements for a bidirectional iterator
   iterator operator++(int) /* postfix */ { return ptr_iterator<T>(m_pos++); }
-  iterator& operator++() /* prefix  */ {
+  iterator& operator++() /* prefix  */
+  {
     ++m_pos;
     return *this;
   }
   iterator operator--(int) /* postfix */ { return ptr_iterator<T>(m_pos--); }
-  iterator& operator--() /* prefix  */ {
+  iterator& operator--() /* prefix  */
+  {
     --m_pos;
     return *this;
   }
@@ -82,9 +86,7 @@ class ptr_iterator : public std::iterator<std::bidirectional_iterator_tag, T> {
   T* operator->() const { return m_pos; }
   bool operator==(const iterator& rhs) const { return m_pos == rhs.m_pos; }
   bool operator!=(const iterator& rhs) const { return m_pos != rhs.m_pos; }
-  iterator operator+(std::ptrdiff_t n) const {
-    return ptr_iterator<T>(m_pos + n);
-  }
+  iterator operator+(std::ptrdiff_t n) const { return ptr_iterator<T>(m_pos + n); }
 
   // The last operation is a random access iterator requirement.
   // To make it a complete random access iterator, more operations need to be
@@ -107,8 +109,7 @@ auto num_of_partitions(size_t len) -> size_t;
 // transformation level lev: 0 <= lev < num_of_xforms.
 // It puts the approximation and detail length as the 1st and 2nd
 // element of the return array.
-auto calc_approx_detail_len(size_t orig_len, size_t lev)
-    -> std::array<size_t, 2>;
+auto calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<size_t, 2>;
 
 // 1) fill sign_array based on coeff_buffer signs, and
 // 2) make coeff_buffer containing all positive values.
@@ -124,9 +125,8 @@ auto make_coeff_positive(vecd_type& buf, std::vector<bool>&) -> double;
 // provided by others,
 //       and others most likely provide it by raw pointers.
 // Note: these two methods only work on little endian machines.
-auto pack_booleans(std::vector<uint8_t>& dest,
-                   const std::vector<bool>& src,
-                   size_t dest_offset = 0) -> RTNType;
+auto pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& src, size_t dest_offset = 0)
+    -> RTNType;
 auto unpack_booleans(std::vector<bool>& dest,
                      const void* src,
                      size_t src_len,
@@ -134,17 +134,13 @@ auto unpack_booleans(std::vector<bool>& dest,
 
 // Pack and unpack exactly 8 booleans to/from a single byte
 // Note: memory for the 8 booleans should already be allocated!
-// Note: the choice of using bool* instead of std::array<bool, 8>, hmm, the
-// former is less pixie dust Note: these two methods only work on little endian
-// machines.
-void pack_8_booleans(uint8_t& dest, const bool* src);
-void unpack_8_booleans(bool* dest, uint8_t src);
+// Note: these two methods only work on little endian machines.
+auto pack_8_booleans(std::array<bool, 8>) -> uint8_t;
+auto unpack_8_booleans(uint8_t) -> std::array<bool, 8>;
 
 // Read from and write to a file
-auto write_n_bytes(const char* filename, size_t n_bytes, const void* buffer)
-    -> RTNType;
-auto read_n_bytes(const char* filename, size_t n_bytes, void* buffer)
-    -> RTNType;
+auto write_n_bytes(const char* filename, size_t n_bytes, const void* buffer) -> RTNType;
+auto read_n_bytes(const char* filename, size_t n_bytes, void* buffer) -> RTNType;
 template <typename T>
 auto read_whole_file(const char* filename) -> std::vector<T>;
 
@@ -155,11 +151,12 @@ template <typename T>
 void calc_stats(const T* arr1,
                 const T* arr2,
                 size_t len,
-                T* rmse,
-                T* linfty,
-                T* psnr,
-                T* arr1min,
-                T* arr1max);
+                T& rmse,
+                T& linfty,
+                T& psnr,
+                T& arr1min,
+                T& arr1max);
+
 template <typename T>
 auto kahan_summation(const T*, size_t) -> T;
 
@@ -171,9 +168,7 @@ auto chunk_volume(const dims_type& vol_dim, const dims_type& chunk_dim)
 
 // Gather a chunk from a bigger volume
 template <typename T>
-auto gather_chunk(const T* vol,
-                  dims_type vol_dim,
-                  const std::array<size_t, 6>& chunk) -> vecd_type;
+auto gather_chunk(const T* vol, dims_type vol_dim, const std::array<size_t, 6>& chunk) -> vecd_type;
 
 // Put this chunk to a bigger volume
 void scatter_chunk(vecd_type& big_vol,

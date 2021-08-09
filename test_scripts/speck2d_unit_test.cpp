@@ -52,7 +52,7 @@ public:
             return 1;
         if( compressor.compress() != RTNType::Good )
             return 1;
-        auto bitstream = compressor.get_encoded_bitstream();
+        auto bitstream = compressor.release_encoded_bitstream();
 
         //
         // Then use a decompressor
@@ -71,7 +71,7 @@ public:
         //
         float rmse, lmax, psnr, arr1min, arr1max;
         speck::calc_stats( in_buf.data(), slice.data(), total_vals,
-                           &rmse, &lmax, &psnr, &arr1min, &arr1max );
+                           rmse, lmax, psnr, arr1min, arr1max );
         m_psnr = psnr;
         m_lmax = lmax;
 

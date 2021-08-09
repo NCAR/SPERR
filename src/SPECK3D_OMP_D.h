@@ -34,17 +34,15 @@ class SPECK3D_OMP_D {
   auto get_dims() const -> std::array<size_t, 3>;
 
  private:
-  speck::dims_type m_dims = {0, 0, 0};  // Dimension of the entire volume
-  speck::dims_type m_chunk_dims = {0, 0,
-                                   0};  // Preferred dimensions for a chunk
-  size_t m_num_threads = 1;  // number of theads to use in OpenMP sections
+  speck::dims_type m_dims = {0, 0, 0};        // Dimension of the entire volume
+  speck::dims_type m_chunk_dims = {0, 0, 0};  // Preferred dimensions for a chunk
+  size_t m_num_threads = 1;                   // number of theads to use in OpenMP sections
 
 #ifndef QZ_TERM
   float m_bpp = 0.0;
 #endif
 
-  const size_t m_header_magic =
-      26;  // header size would be this number + num_chunks * 4
+  const size_t m_header_magic = 26;  // header size would be this number + num_chunks * 4
 
   std::vector<double> m_vol_buf;
   std::vector<size_t> m_offsets;

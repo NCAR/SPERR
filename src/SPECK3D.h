@@ -64,8 +64,7 @@ class SPECK3D : public SPECK_Storage {
 
   auto m_ready_to_encode() const -> bool;
   auto m_ready_to_decode() const -> bool;
-  void
-  m_clean_LIS();  // Clean garbage sets from m_LIS if too much garbage exists.
+  void m_clean_LIS();  // Clean garbage sets from m_LIS if too much garbage exists.
   void m_initialize_sets_lists();
   auto m_sorting_pass_encode() -> RTNType;
   auto m_sorting_pass_decode() -> RTNType;
@@ -75,18 +74,11 @@ class SPECK3D : public SPECK_Storage {
   // code_S routine, code_S will pass in a counter to record how many subsets
   // are discovered significant already. That counter, however, doesn't do
   // anything if process_S or process_P is called from the sorting pass.
-  auto m_process_S_encode(size_t idx1,
-                          size_t idx2,
-                          SigType,
-                          size_t& counter,
-                          bool) -> RTNType;
-  auto m_code_S_encode(size_t idx1, size_t idx2, std::array<SigType, 8>)
-      -> RTNType;
-  auto m_process_P_encode(size_t idx, SigType, size_t& counter, bool)
-      -> RTNType;
+  auto m_process_S_encode(size_t idx1, size_t idx2, SigType, size_t& counter, bool) -> RTNType;
+  auto m_code_S_encode(size_t idx1, size_t idx2, std::array<SigType, 8>) -> RTNType;
+  auto m_process_P_encode(size_t idx, SigType, size_t& counter, bool) -> RTNType;
 
-  auto m_process_S_decode(size_t idx1, size_t idx2, size_t& counter, bool)
-      -> RTNType;
+  auto m_process_S_decode(size_t idx1, size_t idx2, size_t& counter, bool) -> RTNType;
   auto m_code_S_decode(size_t idx1, size_t idx2) -> RTNType;
   auto m_process_P_decode(size_t idx, size_t& counter, bool) -> RTNType;
 
@@ -96,8 +88,7 @@ class SPECK3D : public SPECK_Storage {
   auto m_partition_S_Z(const SPECKSet3D&) const -> std::array<SPECKSet3D, 2>;
 
   // Decide if a set is significant or not
-  auto m_decide_significance(const SPECKSet3D&,
-                             std::array<uint32_t, 3>& xyz) const -> SigType;
+  auto m_decide_significance(const SPECKSet3D&, std::array<uint32_t, 3>& xyz) const -> SigType;
 
 #ifdef QZ_TERM
   // Quantize a pixel to the specified `m_qz_term_lev`.

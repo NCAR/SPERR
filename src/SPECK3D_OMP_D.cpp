@@ -8,7 +8,8 @@
 #include <numeric>
 
 #ifndef QZ_TERM
-auto SPECK3D_OMP_D::set_bpp(float bpp) -> RTNType {
+auto SPECK3D_OMP_D::set_bpp(float bpp) -> RTNType
+{
   if (bpp < 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
   else {
@@ -18,12 +19,14 @@ auto SPECK3D_OMP_D::set_bpp(float bpp) -> RTNType {
 }
 #endif
 
-void SPECK3D_OMP_D::set_num_threads(size_t n) {
+void SPECK3D_OMP_D::set_num_threads(size_t n)
+{
   if (n > 0)
     m_num_threads = n;
 }
 
-auto SPECK3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType {
+auto SPECK3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
+{
   // This method parses the header of a bitstream and puts volume dimension and
   // chunk size information in respective member variables.
   // It also stores the offset number to reach all chunks.
@@ -39,17 +42,16 @@ auto SPECK3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType {
   size_t loc = 1;
 
   // Parse Step 2: ZSTD application and 3D/2D recording need to be consistent.
-  bool b[8];
-  speck::unpack_8_booleans(b, u8p[loc]);
+  auto b8 = speck::unpack_8_booleans(u8p[loc]);
   loc++;
 #ifdef USE_ZSTD
-  if (b[0] == false)
+  if (b8[0] == false)
     return RTNType::ZSTDMismatch;
 #else
-  if (b[0] == true)
+  if (b8[0] == true)
     return RTNType::ZSTDMismatch;
 #endif
-  if (b[1] == false)
+  if (b8[1] == false)
     return RTNType::SliceVolumeMismatch;
 
   // Parse Step 3: Extract volume and chunk dimensions
@@ -76,8 +78,7 @@ auto SPECK3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType {
 
   // Sanity check: if the buffer size matches what the header claims
   const auto header_size = m_header_magic + num_chunks * 4;
-  const auto suppose_size =
-      std::accumulate(chunk_sizes.begin(), chunk_sizes.end(), header_size);
+  const auto suppose_size = std::accumulate(chunk_sizes.begin(), chunk_sizes.end(), header_size);
   if (suppose_size != total_len)
     return RTNType::WrongSize;
 
@@ -93,7 +94,8 @@ auto SPECK3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType {
   return RTNType::Good;
 }
 
-auto SPECK3D_OMP_D::decompress(const void* p) -> RTNType {
+auto SPECK3D_OMP_D::decompress(const void* p) -> RTNType
+{
   auto eq0 = [](auto v) { return v == 0; };
   if (std::any_of(m_dims.begin(), m_dims.end(), eq0) ||
       std::any_of(m_chunk_dims.begin(), m_chunk_dims.end(), eq0))
@@ -127,8 +129,8 @@ auto SPECK3D_OMP_D::decompress(const void* p) -> RTNType {
     decompressor.set_bpp(m_bpp);
 #endif
 
-    chunk_rtn[i * 3] = decompressor.use_bitstream(
-        m_bitstream_ptr + m_offsets[i], m_offsets[i + 1] - m_offsets[i]);
+    chunk_rtn[i * 3] =
+        decompressor.use_bitstream(m_bitstream_ptr + m_offsets[i], m_offsets[i + 1] - m_offsets[i]);
 
     chunk_rtn[i * 3 + 1] = decompressor.decompress();
     const auto small_vol = decompressor.view_data();
@@ -140,28 +142,33 @@ auto SPECK3D_OMP_D::decompress(const void* p) -> RTNType {
     }
   }
 
-  if (std::any_of(chunk_rtn.begin(), chunk_rtn.end(),
-                  [](auto r) { return r != RTNType::Good; }))
-    return RTNType::Error;
+  auto fail =
+      std::find_if(chunk_rtn.begin(), chunk_rtn.end(), [](auto r) { return r != RTNType::Good; });
+  if (fail != chunk_rtn.end())
+    return *fail;
   else
     return RTNType::Good;
 }
 
-auto SPECK3D_OMP_D::release_data() -> speck::vecd_type&& {
+auto SPECK3D_OMP_D::release_data() -> speck::vecd_type&&
+{
   m_dims = {0, 0, 0};
   return std::move(m_vol_buf);
 }
 
-auto SPECK3D_OMP_D::view_data() const -> const std::vector<double>& {
+auto SPECK3D_OMP_D::view_data() const -> const std::vector<double>&
+{
   return m_vol_buf;
 }
 
-auto SPECK3D_OMP_D::get_dims() const -> std::array<size_t, 3> {
+auto SPECK3D_OMP_D::get_dims() const -> std::array<size_t, 3>
+{
   return m_dims;
 }
 
 template <typename T>
-auto SPECK3D_OMP_D::get_data() const -> std::vector<T> {
+auto SPECK3D_OMP_D::get_data() const -> std::vector<T>
+{
   auto rtn_buf = std::vector<T>(m_vol_buf.size());
   std::copy(m_vol_buf.begin(), m_vol_buf.end(), rtn_buf.begin());
   return rtn_buf;

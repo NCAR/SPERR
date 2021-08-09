@@ -7,15 +7,33 @@
 
 #include "Conditioner.h"
 
-auto speck::Conditioner::get_meta_size() const -> size_t {
-  return m_meta_size;
+void speck::Conditioner::toggle_all_settings(std::array<bool, 4> b4)
+{
+  m_settings[0] = b4[0];
+  m_settings[1] = b4[1];
+  // The rest of fields in `m_settings` is unused, so not assigning them.
 }
 
-void speck::Conditioner::toggle_all_settings(std::array<bool, 8> b8) {
-  m_settings = b8;
+auto speck::Conditioner::m_calc_mean(const vecd_type& buf) -> double
+{
+  assert(buf.size() % m_num_strides == 0);
+
+  m_stride_buf.resize(m_num_strides);
+  const size_t stride_size = buf.size() / m_num_strides;
+
+  for (size_t s = 0; s < m_num_strides; s++) {
+    auto begin = buf.begin() + stride_size * s;
+    auto end = begin + stride_size;
+    m_stride_buf[s] = std::accumulate(begin, end, double{0.0}) / double(stride_size);
+  }
+
+  double sum = std::accumulate(m_stride_buf.begin(), m_stride_buf.end(), double{0.0});
+
+  return (sum / double(m_stride_buf.size()));
 }
 
-auto speck::Conditioner::m_calc_mean(const vecd_type& buf) const -> double {
+auto speck::Conditioner::m_calc_rms(const vecd_type& buf) -> double
+{
   assert(buf.size() % m_num_strides == 0);
 
   m_stride_buf.resize(m_num_strides);
@@ -25,39 +43,20 @@ auto speck::Conditioner::m_calc_mean(const vecd_type& buf) const -> double {
     auto begin = buf.begin() + stride_size * s;
     auto end = begin + stride_size;
     m_stride_buf[s] =
-        std::accumulate(begin, end, double{0.0}) / double(stride_size);
-  }
-
-  double sum =
-      std::accumulate(m_stride_buf.begin(), m_stride_buf.end(), double{0.0});
-
-  return (sum / double(m_stride_buf.size()));
-}
-
-auto speck::Conditioner::m_calc_rms(const vecd_type& buf) const -> double {
-  assert(buf.size() % m_num_strides == 0);
-
-  m_stride_buf.resize(m_num_strides);
-  const size_t stride_size = buf.size() / m_num_strides;
-
-  for (size_t s = 0; s < m_num_strides; s++) {
-    auto begin = buf.begin() + stride_size * s;
-    auto end = begin + stride_size;
-    m_stride_buf[s] = std::accumulate(begin, end, double{0.0},
-                                      [](auto a, auto b) { return a + b * b; });
+        std::accumulate(begin, end, double{0.0}, [](auto a, auto b) { return a + b * b; });
 
     m_stride_buf[s] /= double(stride_size);
   }
 
-  double rms =
-      std::accumulate(m_stride_buf.begin(), m_stride_buf.end(), double{0.0});
+  double rms = std::accumulate(m_stride_buf.begin(), m_stride_buf.end(), double{0.0});
   rms /= double(m_stride_buf.size());
   rms = std::sqrt(rms);
 
   return rms;
 }
 
-void speck::Conditioner::m_adjust_strides(size_t len) const {
+void speck::Conditioner::m_adjust_strides(size_t len)
+{
   // Let's say 2048 is a starting point
   m_num_strides = 2048;
   if (len % m_num_strides == 0)
@@ -85,8 +84,8 @@ void speck::Conditioner::m_adjust_strides(size_t len) const {
   m_num_strides = num;
 }
 
-auto speck::Conditioner::condition(vecd_type& buf) const
-    -> std::pair<RTNType, meta_type> {
+auto speck::Conditioner::condition(vecd_type& buf) -> std::pair<RTNType, meta_type>
+{
   meta_type meta;
   meta.fill(0);
   double mean = 0.0;
@@ -121,31 +120,29 @@ auto speck::Conditioner::condition(vecd_type& buf) const
   }
 
   // pack meta
-  speck::pack_8_booleans(meta[0], m_settings.data());
+  meta[0] = speck::pack_8_booleans(m_settings);
   size_t pos = 1;
   std::memcpy(meta.data() + pos, &mean, sizeof(mean));
   pos += sizeof(mean);
   std::memcpy(meta.data() + pos, &rms, sizeof(rms));
   pos += sizeof(rms);  // NOLINT
-  assert(pos == m_meta_size);
+  assert(pos == meta.size());
 
   return {RTNType::Good, meta};
 }
 
-auto speck::Conditioner::inverse_condition(vecd_type& buf,
-                                           const uint8_t* meta) const
-    -> RTNType {
+auto speck::Conditioner::inverse_condition(vecd_type& buf, const meta_type& meta) -> RTNType
+{
   // unpack meta
-  bool b8[8];
-  speck::unpack_8_booleans(b8, meta[0]);
+  auto b8 = speck::unpack_8_booleans(meta[0]);
   double mean = 0.0;
   double rms = 0.0;
   size_t pos = 1;
-  std::memcpy(&mean, meta + pos, sizeof(mean));
+  std::memcpy(&mean, meta.data() + pos, sizeof(mean));
   pos += sizeof(mean);
-  std::memcpy(&rms, meta + pos, sizeof(rms));
+  std::memcpy(&rms, meta.data() + pos, sizeof(rms));
   pos += sizeof(rms);  // NOLINT
-  assert(pos == m_meta_size);
+  assert(pos == meta.size());
 
   m_adjust_strides(buf.size());
 
@@ -162,4 +159,47 @@ auto speck::Conditioner::inverse_condition(vecd_type& buf,
   }
 
   return RTNType::Good;
+}
+
+auto speck::Conditioner::test_constant(const vecd_type& buf) const -> std::pair<bool, meta_type>
+{
+  const uint64_t nval = buf.size();
+  assert(nval > 0);
+
+  const double val = buf[0];
+  auto b8 = std::array<bool, 8>();
+  b8.fill(false);
+
+  if (std::all_of(buf.begin(), buf.end(), [val](auto v) { return v == val; }))
+    b8[4] = true;
+
+  // Prepare the meta block
+  auto meta = meta_type();
+  meta.fill(0);
+  // First byte of meta
+  meta[0] = speck::pack_8_booleans(b8);
+  // Next 8 bytes of meta: the constant value
+  size_t pos = 1;
+  std::memcpy(meta.data() + pos, &val, sizeof(val));
+  // Next 8 bytes of meta: how many constant values?
+  pos += sizeof(val);
+  std::memcpy(meta.data() + pos, &nval, sizeof(nval));
+
+  return {b8[4], meta};
+}
+
+auto speck::Conditioner::parse_constant(const meta_type& meta) const
+    -> std::tuple<bool, double, uint64_t>
+{
+  auto b8 = speck::unpack_8_booleans(meta[0]);
+  // Next 8 bytes: the constant value
+  double val = 0.0;
+  size_t pos = 1;
+  std::memcpy(&val, meta.data() + pos, sizeof(val));
+  // Next 8 bytes: how many constant values:
+  uint64_t nval = 0;
+  pos += sizeof(val);
+  std::memcpy(&nval, meta.data() + pos, sizeof(nval));
+
+  return {b8[4], val, nval};
 }

@@ -15,10 +15,9 @@ class SPECKSet2D {
   //
   uint32_t start_x = 0;
   uint32_t start_y = 0;
-  uint32_t length_x = 0;  // For typeI set, this value equals to m_dim_x
-  uint32_t length_y = 0;  // For typeI set, this value equals to m_dim_y
-  uint16_t part_level =
-      0;  // which partition level is this set at (starting from zero).
+  uint32_t length_x = 0;    // For typeI set, this value equals to m_dim_x
+  uint32_t length_y = 0;    // For typeI set, this value equals to m_dim_y
+  uint16_t part_level = 0;  // which partition level is this set at (starting from zero).
   SigType signif = SigType::Insig;
   SetType type = SetType::TypeS;
 
@@ -68,8 +67,7 @@ class SPECK2D : public SPECK_Storage {
   void m_calc_root_size(SPECKSet2D& root) const;
   // How many partitions available to perform given the 2D dimensions?
   auto m_num_of_partitions() const -> size_t;
-  void
-  m_clean_LIS();  // Clean garbage sets from m_LIS if too much garbage exists.
+  void m_clean_LIS();  // Clean garbage sets from m_LIS if too much garbage exists.
   auto m_ready_to_encode() const -> bool;
   auto m_ready_to_decode() const -> bool;
 

@@ -90,7 +90,7 @@ public:
         //
         float rmse, lmax, psnr, arr1min, arr1max;
         speck::calc_stats( in_buf.data(), vol.data(), total_vals,
-                           &rmse, &lmax, &psnr, &arr1min, &arr1max );
+                           rmse, lmax, psnr, arr1min, arr1max );
         m_psnr = psnr;
         m_lmax = lmax;
 
@@ -116,6 +116,11 @@ public:
         m_input_name = in;
         m_dims       = dims;
         m_num_t      = num_t;
+    }
+
+    void prefer_chunk_dims( speck::dims_type dims )
+    {
+      m_chunk_dims = dims;
     }
 
     float get_psnr() const
@@ -154,7 +159,7 @@ public:
 
         SPECK3D_OMP_C compressor;
         compressor.set_dims( m_dims );
-        compressor.prefer_chunk_dims( {64, 64, 64} );
+        compressor.prefer_chunk_dims( m_chunk_dims );
         compressor.set_num_threads( m_num_t );
 
         if( compressor.use_volume( in_buf.data(), total_vals ) != RTNType::Good )
@@ -197,7 +202,7 @@ public:
 
         float rmse, lmax, psnr, arr1min, arr1max;
         speck::calc_stats( orig.get(), vol.data(), total_vals,
-                           &rmse, &lmax, &psnr, &arr1min, &arr1max );
+                           rmse, lmax, psnr, arr1min, arr1max );
         m_psnr = psnr;
         m_lmax = lmax;
 
@@ -207,10 +212,47 @@ public:
 private:
     std::string m_input_name;
     speck::dims_type m_dims = {0, 0, 0};
+    speck::dims_type m_chunk_dims = {64, 64, 64};
     std::string m_output_name = "output.tmp";
     float m_psnr, m_lmax;
     int   m_num_t;
 };
+
+//
+// Test constant fields.
+//
+TEST( speck3d_constant, one_chunk )
+{
+  speck_tester tester( "../test_data/const32x20x16.float", {32, 20, 16} );
+#ifdef QZ_TERM
+  auto rtn = tester.execute( -1, 1 );
+#else
+  auto rtn = tester.execute( 1.0f ); 
+#endif
+  EXPECT_EQ( rtn, 0 );
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
+  auto infty = std::numeric_limits<float>::infinity();
+  EXPECT_EQ( psnr, infty );
+  EXPECT_EQ( lmax, 0.0f );
+}
+
+TEST( speck3d_constant, omp_chunks )
+{
+  speck_tester_omp tester( "../test_data/const32x32x59.float", {32, 32, 59}, 2 );
+  tester.prefer_chunk_dims({32, 32, 32});
+#ifdef QZ_TERM
+  auto rtn = tester.execute( -1, 1 );
+#else
+  auto rtn = tester.execute( 1.0f ); 
+#endif
+  EXPECT_EQ( rtn, 0 );
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
+  auto infty = std::numeric_limits<float>::infinity();
+  EXPECT_EQ( psnr, infty );
+  EXPECT_EQ( lmax, 0.0f );
+}
 
 
 #ifdef QZ_TERM
@@ -225,8 +267,8 @@ TEST( speck3d_qz_term, large_tolerance )
     EXPECT_EQ( rtn, 0 );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 5.7630912e+01 );
-    EXPECT_LT( psnr, 5.7630914e+01 );
+    EXPECT_GT( psnr, 5.76309160e+01 );
+    EXPECT_LT( psnr, 5.76309166e+01 );
     EXPECT_LE( lmax, tol );
 
     rtn = tester.execute( -1, tol );
@@ -241,8 +283,8 @@ TEST( speck3d_qz_term, large_tolerance )
     EXPECT_EQ( rtn, 0 );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 7.2108825e+01 );
-    EXPECT_LT( psnr, 7.2108827e+01 );
+    EXPECT_GT( psnr, 7.21088180e+01 );
+    EXPECT_LT( psnr, 7.21088181e+01 );
     EXPECT_LT( lmax, 5.623770e-01 );
 }
 TEST( speck3d_qz_term, small_tolerance )
@@ -280,8 +322,8 @@ TEST( speck3d_qz_term, narrow_data_range)
     EXPECT_EQ( rtn, 0 );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 50.522224 );
-    EXPECT_LT( psnr, 50.522225 );
+    EXPECT_GT( psnr, 5.05222282e+01 );
+    EXPECT_LT( psnr, 5.05222283e+01 );
     EXPECT_LT( lmax, 6.997870e-06 );
 }
 TEST( speck3d_qz_term_omp, narrow_data_range)
@@ -293,8 +335,8 @@ TEST( speck3d_qz_term_omp, narrow_data_range)
     EXPECT_EQ( rtn, 0 );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 42.207504 );
-    EXPECT_LT( psnr, 42.207505 );
+    EXPECT_GT( psnr, 4.22075080e+01 );
+    EXPECT_LT( psnr, 4.22075081e+01 );
     EXPECT_LT( lmax, 2.987783e-05 );
 
     rtn = tester.execute( -18, 7e-6 );
@@ -336,8 +378,8 @@ TEST( speck3d_bit_rate, small )
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 5.3370711e+01 );
-    EXPECT_LT( psnr, 5.3370713e+01 );
+    EXPECT_GT( psnr, 5.337071e+01 );
+    EXPECT_LT( psnr, 5.337072e+01 );
     EXPECT_LT( lmax, 1.4303418e+0 );
 
     tester.execute( 2.0f );
@@ -362,15 +404,15 @@ TEST( speck3d_bit_rate, big )
     tester.execute( 2.0f );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 5.4840751e+01 );
-    EXPECT_LT( psnr, 5.4840752e+01 );
+    EXPECT_GT( psnr, 5.484075e+01 );
+    EXPECT_LT( psnr, 5.484076e+01 );
     EXPECT_LT( lmax, 4.9368744e+00 );
 
     tester.execute( 1.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 4.8009902e+01 );
-    EXPECT_LT( psnr, 4.8009903e+01 );
+    EXPECT_GT( psnr, 4.800989e+01 );
+    EXPECT_LT( psnr, 4.800990e+01 );
     EXPECT_LT( lmax, 1.0140460e+01 );
 
     tester.execute( 0.5f );
@@ -442,8 +484,8 @@ TEST( speck3d_bit_rate_omp, narrow_data_range )
     tester.execute( 1.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 48.912769 );
-    EXPECT_LT( psnr, 48.912770 );
+    EXPECT_GT( psnr, 4.891277e+01 );
+    EXPECT_LT( psnr, 4.891278e+01 );
     EXPECT_LT( lmax, 1.396333e-05 );
 }
 

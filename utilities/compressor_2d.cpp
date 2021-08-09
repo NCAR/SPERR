@@ -8,7 +8,8 @@
 #include <cstring>
 #include <iostream>
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
   // Parse command line options
   CLI::App app("Parse CLI options to compressor_3d");
 
@@ -18,10 +19,9 @@ int main(int argc, char* argv[]) {
       ->check(CLI::ExistingFile);
 
   bool decomp = false;
-  auto* decomp_ptr =
-      app.add_flag("-d", decomp,
-                   "Perform decompression. \n"
-                   "If not specified, the program performs compression.");
+  auto* decomp_ptr = app.add_flag("-d", decomp,
+                                  "Perform decompression. \n"
+                                  "If not specified, the program performs compression.");
 
   std::vector<size_t> dims;
   app.add_option("--dims", dims,
@@ -47,16 +47,14 @@ int main(int argc, char* argv[]) {
   app.add_option("-o,--ofile", output_file, "Output filename.");
 
   bool print_stats = false;
-  app.add_flag("-p,--print_stats", print_stats,
-               "Print statistics (RMSE and L-Infinity)")
+  app.add_flag("-p,--print_stats", print_stats, "Print statistics (RMSE and L-Infinity)")
       ->group("Compression Options");
 
   float decomp_bpp = 0.0;
   auto* decomp_bpp_ptr =
-      app.add_option(
-             "--partial_bpp", decomp_bpp,
-             "Partially decode the bitstream up to a certain bit-per-pixel. \n"
-             "If not specified, the entire bitstream will be decoded.")
+      app.add_option("--partial_bpp", decomp_bpp,
+                     "Partially decode the bitstream up to a certain bit-per-pixel. \n"
+                     "If not specified, the entire bitstream will be decoded.")
           ->check(CLI::Range(0.0f, 64.0f))
           ->group("Decompression Options");
 
@@ -87,8 +85,7 @@ int main(int argc, char* argv[]) {
 
     const size_t total_vals = dims[0] * dims[1];
     SPECK2D_Compressor compressor(dims[0], dims[1]);
-    if ((rtn = compressor.read_floats(input_file.c_str())) !=
-        speck::RTNType::Good) {
+    if ((rtn = compressor.read_floats(input_file.c_str())) != speck::RTNType::Good) {
       std::cerr << "Read raw data failed!" << std::endl;
       return 1;
     }
@@ -111,9 +108,7 @@ int main(int argc, char* argv[]) {
 
     if (print_stats) {
       // Print compression time
-      auto diff =
-          std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-              .count();
+      auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
       std::cout << "Compression takes time: " << diff << "ms\n";
 
       // Need to do a decompression anyway
@@ -143,16 +138,15 @@ int main(int argc, char* argv[]) {
       }
 
       float rmse, lmax, psnr, arr1min, arr1max;
-      speck::calc_stats(orig.first.get(), slice.first.get(), total_vals, &rmse,
-                        &lmax, &psnr, &arr1min, &arr1max);
+      speck::calc_stats(orig.first.get(), slice.first.get(), total_vals, &rmse, &lmax, &psnr,
+                        &arr1min, &arr1max);
 
       printf("RMSE = %f, L-Infty = %f, PSNR = %f\n", rmse, lmax, psnr);
       printf("The original data range is: (%f, %f)\n", arr1min, arr1max);
     }
 
     if (!output_file.empty()) {
-      if (compressor.write_bitstream(output_file.c_str()) !=
-          speck::RTNType::Good) {
+      if (compressor.write_bitstream(output_file.c_str()) != speck::RTNType::Good) {
         std::cerr << "write to file Failed!" << std::endl;
         return 1;
       }
@@ -168,8 +162,7 @@ int main(int argc, char* argv[]) {
       return 1;
     }
     SPECK2D_Decompressor decompressor;
-    if (decompressor.read_bitstream(input_file.c_str()) !=
-        speck::RTNType::Good) {
+    if (decompressor.read_bitstream(input_file.c_str()) != speck::RTNType::Good) {
       std::cerr << "Read file failed!" << std::endl;
       return 1;
     }
@@ -178,8 +171,7 @@ int main(int argc, char* argv[]) {
       std::cerr << "Decompression failed!" << std::endl;
       return 1;
     }
-    if (decompressor.write_slice_f(output_file.c_str()) !=
-        speck::RTNType::Good) {
+    if (decompressor.write_slice_f(output_file.c_str()) != speck::RTNType::Good) {
       std::cerr << "Write to file failed!" << std::endl;
       return 1;
     }
