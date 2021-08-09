@@ -19,8 +19,7 @@ int main(int argc, char* argv[]) {
 #ifndef QZ_TERM
   // Partial bitstream decompression is only applicable to fixed-size mode.
   float decomp_bpp = 0.0;
-  app.add_option(
-         "--partial_bpp", decomp_bpp,
+  app.add_option( "--partial_bpp", decomp_bpp,
          "Partially decode the bitstream up to a certain bit-per-pixel. \n"
          "If not specified, the entire bitstream will be decoded.")
       ->check(CLI::Range(0.0f, 64.0f))
@@ -34,13 +33,25 @@ int main(int argc, char* argv[]) {
   app.add_option("--omp", omp_num_threads,
                  "Number of OpenMP threads to use. Default: 4\n");
 
-  std::string compare_file;
-  auto* compare_file_ptr =
-      app.add_option(
-             "--compare", compare_file,
-             "Pass in the original data file so the decompressor could\n"
-             "compare the decompressed data against (PSNR, L-Infty, etc.).")
+  std::string compare_single;
+  auto* compare_single_ptr = app.add_option( "--compare_single", compare_single,
+             "Pass in the original data file (in single precision) so\n"
+             "the decompressor could compare the decompressed data against\n"
+             "(PSNR, L-Infty, etc.).")
           ->check(CLI::ExistingFile);
+
+  std::string compare_double;
+  auto* compare_double_ptr = app.add_option( "--compare_double", compare_double,
+             "Pass in the original data file (in single double) so\n"
+             "the decompressor could compare the decompressed data against\n"
+             "(PSNR, L-Infty, etc.).")
+          ->excludes(compare_single_ptr)
+          ->check(CLI::ExistingFile);
+
+  bool output_double = false;
+  app.add_flag("--output_double", output_double, 
+               "Specify to output data to be in double type.\n"
+               "Data is output as float by default.\n");
 
   CLI11_PARSE(app, argc, argv);
 
@@ -72,34 +83,58 @@ int main(int argc, char* argv[]) {
   in_stream.clear();
   in_stream.shrink_to_fit();
 
-  auto vol = decompressor.get_data<float>();
-  if (vol.empty())
-    return 1;
-  if (speck::write_n_bytes(output_file.c_str(), vol.size() * sizeof(float),
-                           vol.data()) != speck::RTNType::Good) {
-    std::cerr << "Write to disk failed!" << std::endl;
-    return 1;
+  if( output_double ) {
+    auto vol = decompressor.view_data();
+    if (vol.empty())
+      return 1;
+    if (speck::write_n_bytes(output_file.c_str(), vol.size() * sizeof(double),
+                             vol.data()) != speck::RTNType::Good) {
+      std::cerr << "Write to disk failed!" << std::endl;
+      return 1;
+    }
+  }
+  else {
+    auto vol = decompressor.get_data<float>();
+    if (vol.empty())
+      return 1;
+    if (speck::write_n_bytes(output_file.c_str(), vol.size() * sizeof(double),
+                             vol.data()) != speck::RTNType::Good) {
+      std::cerr << "Write to disk failed!" << std::endl;
+      return 1;
+    }
+
   }
 
   // Compare with the original data if user specifies
-  if (*compare_file_ptr) {
-    auto orig = speck::read_whole_file<float>(compare_file.c_str());
+  if (*compare_double_ptr) {
+    auto vol  = decompressor.view_data();
+    auto orig = speck::read_whole_file<double>(compare_double.c_str());
     if (orig.size() != vol.size()) {
-      std::cerr << "File to compare with has difference size "
-                   "with the decompressed file!"
+      std::cerr << "File to compare with has difference size with the decompressed file!"
                 << std::endl;
       return 1;
     }
 
-    printf("Average bit-per-pixel = %.2f\n",
-           in_stream_num_bytes * 8.0f / orig.size());
-
-    float rmse, lmax, psnr, arr1min, arr1max;
-    speck::calc_stats(orig.data(), vol.data(), orig.size(), rmse, lmax, psnr,
-                      arr1min, arr1max);
+    printf("Average bit-per-pixel = %.2f\n", in_stream_num_bytes * 8.0f / orig.size());
+    double rmse, lmax, psnr, arr1min, arr1max;
+    speck::calc_stats(orig.data(), vol.data(), orig.size(), rmse, lmax, psnr, arr1min, arr1max);
     printf("Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
-    printf("Decompressed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n",
-           rmse, lmax, psnr);
+    printf("Decompressed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
+  }
+  else if( *compare_single_ptr) {
+    auto vol  = decompressor.get_data<float>();
+    auto orig = speck::read_whole_file<float>(compare_single.c_str());
+    if (orig.size() != vol.size()) {
+      std::cerr << "File to compare with has difference size with the decompressed file!"
+                << std::endl;
+      return 1;
+    }
+
+    printf("Average bit-per-pixel = %.2f\n", in_stream_num_bytes * 8.0f / orig.size());
+    float rmse, lmax, psnr, arr1min, arr1max;
+    speck::calc_stats(orig.data(), vol.data(), orig.size(), rmse, lmax, psnr, arr1min, arr1max);
+    printf("Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
+    printf("Decompressed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
   }
 
   return 0;
