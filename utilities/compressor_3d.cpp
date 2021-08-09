@@ -33,6 +33,10 @@ int main(int argc, char* argv[]) {
   app.add_option("--omp", omp_num_threads,
                  "Number of OpenMP threads to use. Default: 4\n");
 
+  bool use_double = false;
+  app.add_flag("-d", use_double, "Specify that input data is in double type.\n"
+               "Data is treated as float by default.\n");
+
 #ifdef QZ_TERM
   int32_t qz_level = 0;
   app.add_option(
@@ -90,12 +94,18 @@ int main(int argc, char* argv[]) {
   compressor.set_bpp(bpp);
 #endif
 
-  auto orig = speck::read_whole_file<float>(input_file.c_str());
-  if (orig.size() != total_vals) {
+  auto orig = speck::read_whole_file<uint8_t>(input_file.c_str());
+  if ((use_double && orig.size() != total_vals * sizeof(double)) ||
+     (!use_double && orig.size() != total_vals * sizeof(float)) ) {
     std::cerr << "Read input file error: " << input_file << std::endl;
     return 1;
   }
-  if (compressor.use_volume(orig.data(), orig.size()) != speck::RTNType::Good) {
+  auto rtn = speck::RTNType::Good;
+  if( use_double )
+    rtn = compressor.use_volume(reinterpret_cast<const double*>(orig.data()), total_vals);
+  else
+    rtn = compressor.use_volume(reinterpret_cast<const float*>(orig.data()), total_vals);
+  if (rtn != speck::RTNType::Good) {
     std::cerr << "Copy data failed!" << std::endl;
     return 1;
   }
@@ -113,8 +123,8 @@ int main(int argc, char* argv[]) {
   if (stream.empty())
     return 1;
 
-  if (speck::write_n_bytes(output_file.c_str(), stream.size(), stream.data()) !=
-      speck::RTNType::Good) {
+  rtn = speck::write_n_bytes(output_file.c_str(), stream.size(), stream.data());
+  if (rtn != speck::RTNType::Good) {
     std::cerr << "Write to disk failed!" << std::endl;
     return 1;
   }
