@@ -52,7 +52,7 @@ public:
             return 1;
         if( compressor.compress() != RTNType::Good )
             return 1;
-        auto bitstream = compressor.get_encoded_bitstream();
+        auto bitstream = compressor.release_encoded_bitstream();
 
         //
         // Then use a decompressor

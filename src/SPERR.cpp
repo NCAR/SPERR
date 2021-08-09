@@ -229,22 +229,21 @@ auto speck::SPERR::m_decide_significance(const SPECKSet1D& set) const -> std::pa
 
   // Step 1: use the significance map to decide if this set is significant
   std::pair<bool, size_t> sig{false, 0};
-  for (size_t i = set.start; i < set.start + set.length; i++) {
-    if (m_sig_map[i]) {
-      sig = {true, i};
-      break;
-    }
-  }
+  auto begin = m_sig_map.begin() + set.start;
+  auto end = begin + set.length;
+  auto itr1 = std::find(begin, end, true);
+  if (itr1 != end)
+    sig.first = true;
 
   // Step 2: if this set is significant, then find the index of the outlier in
   //         `m_LSO` that caused it being significant.
   // Note that `m_LSO` is sorted at the beginning of encoding.
   if (sig.first) {
-    auto itr = std::lower_bound(m_LOS.begin(), m_LOS.end(), sig.second,
-                                [](auto& otl, auto& val) { return otl.location < val; });
-    assert(itr != m_LOS.end());
-    assert((*itr).location == sig.second);  // Must find exactly this index
-    sig.second = std::distance(m_LOS.begin(), itr);
+    auto itr2 = std::lower_bound(m_LOS.begin(), m_LOS.end(), std::distance(m_sig_map.begin(), itr1),
+                                 [](auto& otl, auto& val) { return otl.location < val; });
+    assert(itr2 != m_LOS.end());
+    assert((*itr2).location == sig.second);  // Must find exactly this index
+    sig.second = std::distance(m_LOS.begin(), itr2);
   }
 
   return sig;
@@ -254,9 +253,7 @@ auto speck::SPERR::m_process_S_encoding(size_t idx1, size_t idx2, size_t& counte
     -> bool
 {
   auto& set = m_LIS[idx1][idx2];
-  auto sig_rtn = m_decide_significance(set);
-  bool is_sig = sig_rtn.first;
-  auto sig_idx = sig_rtn.second;
+  auto [is_sig, sig_idx] = m_decide_significance(set);
 
   if (output)
     m_bit_buffer.push_back(is_sig);

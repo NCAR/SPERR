@@ -10,7 +10,8 @@
 #define OUT_NX 15
 #define OUT_NY 15
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
   if (argc != 3) {
     fprintf(stderr, "Usage: ./a.out input_filename output_filename.\n");
     return 1;
@@ -30,8 +31,7 @@ int main(int argc, char** argv) {
   fseek(f, 0, SEEK_END);
   if (ftell(f) != in_num_of_bytes) {
     fprintf(stderr, "Error! Input file size error: %s\n", argv[1]);
-    fprintf(stderr, "  Expecting %ld bytes, got %ld bytes.\n", in_num_of_bytes,
-            ftell(f));
+    fprintf(stderr, "  Expecting %ld bytes, got %ld bytes.\n", in_num_of_bytes, ftell(f));
     fclose(f);
     return 1;
   }

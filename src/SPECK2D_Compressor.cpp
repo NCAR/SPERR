@@ -50,7 +50,7 @@ auto SPECK2D_Compressor::view_encoded_bitstream() const -> const std::vector<uin
   return m_encoded_stream;
 }
 
-auto SPECK2D_Compressor::get_encoded_bitstream() -> std::vector<uint8_t>
+auto SPECK2D_Compressor::release_encoded_bitstream() -> std::vector<uint8_t>&&
 {
   return std::move(m_encoded_stream);
 }

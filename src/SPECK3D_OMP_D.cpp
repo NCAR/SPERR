@@ -142,8 +142,10 @@ auto SPECK3D_OMP_D::decompress(const void* p) -> RTNType
     }
   }
 
-  if (std::any_of(chunk_rtn.begin(), chunk_rtn.end(), [](auto r) { return r != RTNType::Good; }))
-    return RTNType::Error;
+  auto fail =
+      std::find_if(chunk_rtn.begin(), chunk_rtn.end(), [](auto r) { return r != RTNType::Good; });
+  if (fail != chunk_rtn.end())
+    return *fail;
   else
     return RTNType::Good;
 }

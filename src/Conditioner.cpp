@@ -161,8 +161,7 @@ auto speck::Conditioner::inverse_condition(vecd_type& buf, const meta_type& meta
   return RTNType::Good;
 }
 
-auto speck::Conditioner::test_constant(const speck::vecd_type& buf) const
-    -> std::pair<bool, meta_type>
+auto speck::Conditioner::test_constant(const vecd_type& buf) const -> std::pair<bool, meta_type>
 {
   const uint64_t nval = buf.size();
   assert(nval > 0);

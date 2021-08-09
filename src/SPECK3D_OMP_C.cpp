@@ -137,10 +137,10 @@ auto SPECK3D_OMP_C::compress() -> RTNType
 #endif
   }
 
-  auto found1 =
+  auto fail =
       std::find_if(chunk_rtn.begin(), chunk_rtn.end(), [](auto r) { return r != RTNType::Good; });
-  if (found1 != chunk_rtn.end())
-    return (*found1);
+  if (fail != chunk_rtn.end())
+    return (*fail);
 
   if (std::any_of(m_encoded_streams.begin(), m_encoded_streams.end(),
                   [](auto& s) { return s.empty(); }))
@@ -156,7 +156,7 @@ auto SPECK3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
     return std::vector<uint8_t>(0);
 
   auto total_size = std::accumulate(m_encoded_streams.begin(), m_encoded_streams.end(),
-                                    header.size(), [](auto a, auto& b) { return a + b.size(); });
+                                    header.size(), [](size_t a, auto& b) { return a + b.size(); });
   auto buf = std::vector<uint8_t>(total_size);
 
   std::copy(header.begin(), header.end(), buf.begin());
