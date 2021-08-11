@@ -239,10 +239,11 @@ auto speck::SPERR::m_decide_significance(const SPECKSet1D& set) const -> std::pa
   //         `m_LSO` that caused it being significant.
   // Note that `m_LSO` is sorted at the beginning of encoding.
   if (sig.first) {
-    auto itr2 = std::lower_bound(m_LOS.begin(), m_LOS.end(), std::distance(m_sig_map.begin(), itr1),
-                                 [](auto& otl, auto& val) { return otl.location < val; });
+    auto idx_to_find = std::distance(m_sig_map.begin(), itr1);
+    auto itr2 = std::lower_bound(m_LOS.begin(), m_LOS.end(), idx_to_find,
+                                 [](auto& otl, auto idx) { return otl.location < idx; });
     assert(itr2 != m_LOS.end());
-    assert((*itr2).location == sig.second);  // Must find exactly this index
+    assert((*itr2).location == idx_to_find);  // Must find exactly this index
     sig.second = std::distance(m_LOS.begin(), itr2);
   }
 
