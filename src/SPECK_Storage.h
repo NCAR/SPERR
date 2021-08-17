@@ -27,7 +27,7 @@ class SPECK_Storage {
 
   // Get the encoded bitstream.
   auto view_encoded_bitstream() const -> const vec8_type&;
-  auto get_encoded_bitstream() -> vec8_type;
+  auto release_encoded_bitstream() -> vec8_type&&;
 
   // Prepare internal states for a decompression operation from an encoded
   // bitstream

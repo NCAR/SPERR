@@ -84,8 +84,8 @@ auto speck::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t 
     -> RTNType
 {
   // The buffer passed in is supposed to consist a header and then a compacted
-  // bitstream, just like what was returned by `get_encoded_bitstream()`. Note:
-  // header definition is documented in get_encoded_bitstream().
+  // bitstream, just like what was returned by `prepare_encoded_bitstream()`. Note:
+  // header definition is documented in prepare_encoded_bitstream().
 
   const uint8_t* const ptr = static_cast<const uint8_t*>(comp_buf);
 
@@ -124,14 +124,14 @@ auto speck::SPECK_Storage::view_encoded_bitstream() const -> const vec8_type&
   return m_encoded_stream;
 }
 
-auto speck::SPECK_Storage::get_encoded_bitstream() -> vec8_type
+auto speck::SPECK_Storage::release_encoded_bitstream() -> vec8_type&&
 {
   return std::move(m_encoded_stream);
 }
 
 auto speck::SPECK_Storage::get_speck_stream_size(const void* buf) const -> uint64_t
 {
-  // Given the header definition in `get_encoded_bitstream()`, directly
+  // Given the header definition in `prepare_encoded_bitstream()`, directly
   // go retrieve the value stored in the last 8 bytes of the header
   const uint8_t* const ptr = static_cast<const uint8_t*>(buf);
   uint64_t bit_in_byte;
@@ -142,7 +142,7 @@ auto speck::SPECK_Storage::get_speck_stream_size(const void* buf) const -> uint6
 
 auto speck::SPECK_Storage::get_speck_stream_dims(const void* buf) const -> std::array<size_t, 3>
 {
-  // Given the header definition in `get_encoded_bitstream()`, directly
+  // Given the header definition in `prepare_encoded_bitstream()`, directly
   // go retrieve the value stored in byte 0-12.
   auto dims = std::array<uint32_t, 3>();
   std::memcpy(dims.data(), buf, sizeof(dims));

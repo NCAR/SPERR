@@ -151,13 +151,14 @@ auto SPECK3D_OMP_C::compress() -> RTNType
 
 auto SPECK3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
 {
+  auto buf = std::vector<uint8_t>();
   auto header = m_generate_header();
   if (header.empty())
-    return std::vector<uint8_t>(0);
+    return buf;
 
   auto total_size = std::accumulate(m_encoded_streams.begin(), m_encoded_streams.end(),
                                     header.size(), [](size_t a, auto& b) { return a + b.size(); });
-  auto buf = std::vector<uint8_t>(total_size);
+  buf.resize(total_size, 0);
 
   std::copy(header.begin(), header.end(), buf.begin());
   auto itr = buf.begin() + header.size();
