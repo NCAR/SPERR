@@ -40,3 +40,24 @@ quantization level. In this case, the output size is non-deterministic.
 Experiments show that this step can further reduce the output size by ~ 5% without obvious
 performance impact.
 
+## Naming Convention on Memory Access Methods
+For methods managing memory access of big chunks of memory, the following naming convention applies.
+Notice the use of `const` and rvalue references, and choice of verbs in method names.
+### Input
+1. Make a copy of the input data block: 
+- `auto copy_something(const T* buf, size_t len) -> status`
+- `auto copy_something(const std::vector<T>& buf) -> status`
+2. Take the ownership of the input data block:
+- `auto take_something(std::vector<T>&& buf) -> status`
+- `auto take_something(std::unique_ptr<T[]>&& buf, size_t len) -> status`
+
+### Output
+1. Provide read-only access to a block of memory:
+- `auto view_something() const -> const std::vector<T>&`
+- `auto view_something() const -> const T*`
+2. Provide a copy of a block of memory that the class holds:
+- `auto get_something() const -> std::vector<T>`
+- `auto get_something() const -> std::unique_ptr<T[]>`
+3. Release ownership of a block of memory that the class holds:
+- `auto release_something() -> std::vector<T>&&`
+- `auto release_something() -> std::unique_ptr<T[]>`
