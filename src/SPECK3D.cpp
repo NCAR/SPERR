@@ -590,8 +590,7 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1,
 
   // Strategy to decide the significance of this set;
   // 1) If sig == dunno, then find the significance of this set. We do it in a
-  // way that
-  //    some of its 8 subsets' significance become known as well.
+  //    way that some of its 8 subsets' significance become known as well.
   // 2) If sig is significant, then we directly proceed to `m_code_s()`, but its
   //    subsets' significance is unknown.
   // 3) if sig is insignificant, then this set is not processed.
