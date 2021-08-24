@@ -48,7 +48,7 @@ auto speck::make_coeff_positive(vecd_type& buf, std::vector<bool>& signs) -> dou
   signs.resize(buf.size(), false);
 
   // Step 1: fill sign array
-  std::generate(signs.begin(), signs.end(), [it = buf.begin()]() mutable { return *it++ >= 0.0; });
+  std::generate(signs.begin(), signs.end(), [it = buf.cbegin()]() mutable { return *it++ >= 0.0; });
 
   // Step 2: make every value positive
   std::for_each(buf.begin(), buf.end(), [](auto& v) { v = std::abs(v); });
@@ -406,7 +406,7 @@ auto speck::chunk_volume(const std::array<size_t, 3>& vol_dim,
         chunk_idx++;
       }
 
-  return std::move(chunks);
+  return chunks;
 }
 
 template <typename T>

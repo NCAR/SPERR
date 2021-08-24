@@ -548,8 +548,8 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
 }
 #endif
 
-auto speck::SPECK3D::m_decide_significance(const SPECKSet3D& set,
-                                           std::array<uint32_t, 3>& xyz) const -> SigType
+auto speck::SPECK3D::m_decide_significance(const SPECKSet3D& set) const
+    -> std::pair<SigType, std::array<uint32_t, 3>>
 {
   assert(!set.is_empty());
 
@@ -563,17 +563,18 @@ auto speck::SPECK3D::m_decide_significance(const SPECKSet3D& set,
     for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
       auto first = m_coeff_buf.begin() + (slice_offset + y * m_dims[0] + set.start_x);
       auto last = first + set.length_x;
-      auto find = std::find_if(first, last, gtr);
-      if (find != last) {
-        xyz[0] = std::distance(first, find);
+      auto found = std::find_if(first, last, gtr);
+      if (found != last) {
+        auto xyz = std::array<uint32_t, 3>();
+        xyz[0] = std::distance(first, found);
         xyz[1] = y - set.start_y;
         xyz[2] = z - set.start_z;
-        return SigType::Sig;
+        return {SigType::Sig, xyz};
       }
     }
   }
 
-  return SigType::Insig;
+  return {SigType::Insig, {0, 0, 0}};
 }
 
 auto speck::SPECK3D::m_process_S_encode(size_t idx1,
@@ -599,12 +600,13 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1,
   subset_sigs.fill(SigType::Dunno);
 
   if (sig == SigType::Dunno) {
-    std::array<uint32_t, 3> xyz;
-    set.signif = m_decide_significance(set, xyz);
+    auto set_sig = m_decide_significance(set);
+    set.signif = set_sig.first;
     if (set.signif == SigType::Sig) {
       // Try to deduce the significance of some of its subsets.
       // Step 1: which one of the 8 subsets makes it significant?
       //         (Refer to m_partition_S_XYZ() for subset ordering.)
+      auto xyz = set_sig.second;
       size_t sub_i = 0;
       sub_i += (xyz[0] < (set.length_x - set.length_x / 2)) ? 0 : 1;
       sub_i += (xyz[1] < (set.length_y - set.length_y / 2)) ? 0 : 2;
