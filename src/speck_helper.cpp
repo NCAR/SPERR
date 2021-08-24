@@ -46,19 +46,17 @@ auto speck::calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<si
 auto speck::make_coeff_positive(vecd_type& buf, std::vector<bool>& signs) -> double
 {
   signs.resize(buf.size(), false);
-  auto max = std::abs(buf[0]);
 
-  const auto tmpb = std::array<bool, 2>{true, false};
+  // Step 1: fill sign array
+  std::generate(signs.begin(), signs.end(), [it = buf.begin()]() mutable { return *it++ >= 0.0; });
 
-  for (size_t i = 0; i < buf.size(); i++) {
-    auto tmpd = std::array<double, 2>{buf[i], -buf[i]};
-    size_t idx = buf[i] < 0.0;
-    buf[i] = tmpd[idx];
-    signs[i] = tmpb[idx];
-    max = std::max(max, buf[i]);
-  }
+  // Step 2: make every value positive
+  std::for_each(buf.begin(), buf.end(), [](auto& v) { v = std::abs(v); });
 
-  return max;
+  // Step 3: find the maximum of all values
+  auto maxit = std::max_element(buf.begin(), buf.end());
+
+  return *maxit;
 }
 
 // Good solution to deal with bools and unsigned chars
