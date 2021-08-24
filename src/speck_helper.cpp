@@ -76,13 +76,17 @@ auto speck::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& s
   auto a = std::array<uint8_t, 8>{};
   uint64_t t = 0;
   size_t dest_idx = offset;
+  auto src_itr1 = src.cbegin();
+  auto src_itr2 = src.cbegin() + 8;
   for (size_t i = 0; i < src.size(); i += 8) {
     //#pragma GCC unroll 8
     // for (size_t j = 0; j < 8; j++)
     //  a[j] = src[i + j];
-    std::copy(src.cbegin() + i, src.cbegin() + i + 8, a.begin());
+    std::copy(src_itr1, src_itr2, a.begin());
     std::memcpy(&t, a.data(), 8);
     dest[dest_idx++] = (magic * t) >> 56;
+    src_itr1 += 8;
+    src_itr2 += 8;
   }
 
   return RTNType::Good;
@@ -109,9 +113,11 @@ auto speck::unpack_booleans(std::vector<bool>& dest,
   const uint64_t mask = 0x8080808080808080;
 
 #ifndef OMP_UNPACK_BOOLEANS
+  // Serial implementation
   auto a = std::array<uint8_t, 8>();
   uint64_t t = 0;
-  size_t dest_idx = 0;
+  // size_t dest_idx = 0;
+  auto dest_itr = dest.begin();
   for (size_t byte_idx = 0; byte_idx < num_of_bytes; byte_idx++) {
     const uint8_t* ptr = src_ptr + byte_idx;
     t = ((magic * (*ptr)) & mask) >> 7;
@@ -119,8 +125,9 @@ auto speck::unpack_booleans(std::vector<bool>& dest,
     //#pragma GCC unroll 8
     // for (size_t i = 0; i < 8; i++)
     //  dest[dest_idx + i] = a[i];
-    std::copy(a.cbegin(), a.cend(), dest.begin() + dest_idx);
-    dest_idx += 8;
+    // dest_idx += 8;
+    std::copy(a.cbegin(), a.cend(), dest_itr);
+    dest_itr += 8;
   }
 #else
   // Because in most implementations std::vector<bool> is stored as uint64_t
