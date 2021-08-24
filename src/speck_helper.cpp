@@ -77,9 +77,10 @@ auto speck::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& s
   uint64_t t = 0;
   size_t dest_idx = offset;
   for (size_t i = 0; i < src.size(); i += 8) {
-#pragma GCC unroll 8
-    for (size_t j = 0; j < 8; j++)
-      a[j] = src[i + j];
+    //#pragma GCC unroll 8
+    // for (size_t j = 0; j < 8; j++)
+    //  a[j] = src[i + j];
+    std::copy(src.cbegin() + i, src.cbegin() + i + 8, a.begin());
     std::memcpy(&t, a.data(), 8);
     dest[dest_idx++] = (magic * t) >> 56;
   }
@@ -115,9 +116,10 @@ auto speck::unpack_booleans(std::vector<bool>& dest,
     const uint8_t* ptr = src_ptr + byte_idx;
     t = ((magic * (*ptr)) & mask) >> 7;
     std::memcpy(a.data(), &t, 8);
-#pragma GCC unroll 8
-    for (size_t i = 0; i < 8; i++)
-      dest[dest_idx + i] = a[i];
+    //#pragma GCC unroll 8
+    // for (size_t i = 0; i < 8; i++)
+    //  dest[dest_idx + i] = a[i];
+    std::copy(a.cbegin(), a.cend(), dest.begin() + dest_idx);
     dest_idx += 8;
   }
 #else
