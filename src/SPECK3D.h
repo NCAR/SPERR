@@ -87,7 +87,8 @@ class SPECK3D : public SPECK_Storage {
   auto m_partition_S_XY(const SPECKSet3D&) const -> std::array<SPECKSet3D, 4>;
   auto m_partition_S_Z(const SPECKSet3D&) const -> std::array<SPECKSet3D, 2>;
 
-  // Decide if a set is significant or not
+  // Decide if a set is significant or not.
+  // If it is significant, also identify the pixel that makes it significant.
   auto m_decide_significance(const SPECKSet3D&) const
       -> std::pair<SigType, std::array<uint32_t, 3>>;
 
