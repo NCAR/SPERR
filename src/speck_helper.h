@@ -161,8 +161,9 @@ template <typename T>
 auto kahan_summation(const T*, size_t) -> T;
 
 // Given a whole volume size and a desired chunk size, this helper function
-// returns a list of chunks specified by 6 integers: chunk[0], [2], [4]:
-// starting index of this chunk chunk[1], [3], [5]: length of this chunk
+// returns a list of chunks specified by 6 integers:
+// chunk[0], [2], [4]: starting index of this chunk;
+// chunk[1], [3], [5]: length of this chunk.
 auto chunk_volume(const dims_type& vol_dim, const dims_type& chunk_dim)
     -> std::vector<std::array<size_t, 6>>;
 
