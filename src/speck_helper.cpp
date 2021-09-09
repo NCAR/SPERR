@@ -268,8 +268,8 @@ void speck::calc_stats(const T* arr1,
   //
   // In rare cases, the two input arrays are identical.
   //
-  auto mism = std::mismatch(arr1, arr1 + len, arr2, arr2 + len);
-  if (mism.first == arr1 + len && mism.second == arr2 + len) {
+  auto is_equal = std::equal(arr1, arr1 + len, arr2);
+  if (is_equal) {
     rmse = 0.0;
     linfty = 0.0;
     psnr = std::numeric_limits<T>::infinity();
