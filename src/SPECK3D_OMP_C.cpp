@@ -137,8 +137,8 @@ auto SPECK3D_OMP_C::compress() -> RTNType
 #endif
   }
 
-  auto fail = std::find_if(chunk_rtn.begin(), chunk_rtn.end(),
-                           [](auto r) { return r != RTNType::Good; });
+  auto fail =
+      std::find_if(chunk_rtn.begin(), chunk_rtn.end(), [](auto r) { return r != RTNType::Good; });
   if (fail != chunk_rtn.end())
     return (*fail);
 
