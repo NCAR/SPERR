@@ -70,17 +70,21 @@ class CDF97 {
   void m_dwt1d_one_level(double* array, size_t array_len);
   void m_idwt1d_one_level(double* array, size_t array_len);
 
-  // Separate even and odd indexed elements to be at the front
-  // and back of the dest array. Note: sufficient memory space
-  // should be allocated by the caller.
+  // Separate even and odd indexed elements to be at the front and back of the dest array.
+  // Note 1: sufficient memory space should be allocated by the caller.
   // Note 2: two versions for even and odd length input.
+  void m_gather_even(vecd_type& dest, size_t dest_offset, const vecd_type& orig, size_t orig_offset, size_t len) const;
+  void m_gather_odd(vecd_type& dest, size_t dest_offset, const vecd_type& orig, size_t orig_offset, size_t len) const;
+
   void m_gather_even(double* dest, const double* orig, size_t len) const;
   void m_gather_odd(double* dest, const double* orig, size_t len) const;
 
-  // Interleave low and high pass elements to be at even and
-  // odd positions of the dest array. Note: sufficient memory
-  // space should be allocated by the caller.
+  // Interleave low and high pass elements to be at even and odd positions of the dest array.
+  // Note 1: sufficient memory space should be allocated by the caller.
   // Note 2: two versions for even and odd length input.
+  void m_scatter_even(vecd_type& dest, size_t dest_offset, const vecd_type& orig, size_t orig_offset, size_t len) const;
+  void m_scatter_odd(vecd_type& dest, size_t dest_offset, const vecd_type& orig, size_t orig_offset, size_t len) const;
+
   void m_scatter_even(double* dest, const double* orig, size_t len) const;
   void m_scatter_odd(double* dest, const double* orig, size_t len) const;
 
