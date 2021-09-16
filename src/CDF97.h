@@ -85,12 +85,12 @@ class CDF97 {
   void m_scatter_odd(double* dest, const double* orig, size_t len) const;
 
   //
-  // Methods from QccPack, keep their original names.
+  // Methods from QccPack, so keep their original names.
   //
-  void QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length);
-  void QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length);
-  void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length);
-  void QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length);
+  void QccWAVCDF97AnalysisSymmetricEvenEven(vecd_type& signal, size_t offset, size_t signal_len);
+  void QccWAVCDF97AnalysisSymmetricOddEven(vecd_type& signal, size_t offset, size_t signal_len);
+  void QccWAVCDF97SynthesisSymmetricEvenEven(vecd_type& signal, size_t offset, size_t signal_len);
+  void QccWAVCDF97SynthesisSymmetricOddEven(vecd_type& signal, size_t offset, size_t signal_len);
 
   //
   // Private data members
@@ -99,10 +99,11 @@ class CDF97 {
   dims_type m_dims = {0, 0, 0};  // Dimension of the data volume
 
   // Temporary buffers that are big enough for any (1D column * 2) or any 2D
-  // slice. Note: `m_qcc_buf` should be used by ***_one_level functions and
+  // slice. Note: `m_qcc_buf` should be used by m_***_one_level() functions and
   // should not be used by higher-level functions. `m_slice_buf` is only used by
   // wavelet-packet transforms.
-  vecd_type m_qcc_buf, m_slice_buf;
+  vecd_type m_qcc_buf;
+  vecd_type m_slice_buf;
 
   /*
    * Note on the coefficients and constants:

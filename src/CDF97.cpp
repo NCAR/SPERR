@@ -275,11 +275,11 @@ void speck::CDF97::m_dwt1d_one_level(double* array, size_t array_len)
 #else
   if (array_len % 2 == 0) {
 #endif
-    this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf.data(), array_len);
+    this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf, 0, array_len);
     m_gather_even(array, m_qcc_buf.data(), array_len);
   }
   else {
-    this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf.data(), array_len);
+    this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf, 0, array_len);
     m_gather_odd(array, m_qcc_buf.data(), array_len);
   }
 }
@@ -292,11 +292,11 @@ void speck::CDF97::m_idwt1d_one_level(double* array, size_t array_len)
   if (array_len % 2 == 0) {
 #endif
     m_scatter_even(m_qcc_buf.data(), array, array_len);
-    this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf.data(), array_len);
+    this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf, 0, array_len);
   }
   else {
     m_scatter_odd(m_qcc_buf.data(), array, array_len);
-    this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf.data(), array_len);
+    this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf, 0, array_len);
   }
   std::memcpy(array, m_qcc_buf.data(), sizeof(double) * array_len);
 }
@@ -320,7 +320,7 @@ void speck::CDF97::m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy
     for (size_t i = 0; i < len_xy[1]; i++) {
       auto* pos = plane + i * m_dims[0];
       std::memcpy(buf_ptr, pos, sizeof(double) * len_xy[0]);
-      this->QccWAVCDF97AnalysisSymmetricEvenEven(buf_ptr, len_xy[0]);
+      this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf, 0, len_xy[0]);
       // pub back the resluts in low-pass and high-pass groups
       m_gather_even(pos, buf_ptr, len_xy[0]);
     }
@@ -330,7 +330,7 @@ void speck::CDF97::m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy
     for (size_t i = 0; i < len_xy[1]; i++) {
       auto* pos = plane + i * m_dims[0];
       std::memcpy(buf_ptr, pos, sizeof(double) * len_xy[0]);
-      this->QccWAVCDF97AnalysisSymmetricOddEven(buf_ptr, len_xy[0]);
+      this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf, 0, len_xy[0]);
       // pub back the resluts in low-pass and high-pass groups
       m_gather_odd(pos, buf_ptr, len_xy[0]);
     }
@@ -351,7 +351,7 @@ void speck::CDF97::m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy
     for (size_t x = 0; x < len_xy[0]; x++) {
       for (size_t y = 0; y < len_xy[1]; y++)
         buf_ptr[y] = plane[y * m_dims[0] + x];
-      this->QccWAVCDF97AnalysisSymmetricEvenEven(buf_ptr, len_xy[1]);
+      this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf, 0, len_xy[1]);
       // Re-organize the resluts in low-pass and high-pass groups
       m_gather_even(buf_ptr2, buf_ptr, len_xy[1]);
       for (size_t y = 0; y < len_xy[1]; y++)
@@ -363,7 +363,7 @@ void speck::CDF97::m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy
     for (size_t x = 0; x < len_xy[0]; x++) {
       for (size_t y = 0; y < len_xy[1]; y++)
         buf_ptr[y] = plane[y * m_dims[0] + x];
-      this->QccWAVCDF97AnalysisSymmetricOddEven(buf_ptr, len_xy[1]);
+      this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf, 0, len_xy[1]);
       // Re-organize the resluts in low-pass and high-pass groups
       m_gather_odd(buf_ptr2, buf_ptr, len_xy[1]);
       for (size_t y = 0; y < len_xy[1]; y++)
@@ -389,7 +389,7 @@ void speck::CDF97::m_idwt2d_one_level(double* plane, std::array<size_t, 2> len_x
         buf_ptr[y] = plane[y * m_dims[0] + x];
       // Re-organize the coefficients as interleaved low-pass and high-pass ones
       m_scatter_even(buf_ptr2, buf_ptr, len_xy[1]);
-      this->QccWAVCDF97SynthesisSymmetricEvenEven(buf_ptr2, len_xy[1]);
+      this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf, max_len, len_xy[1]);
       for (size_t y = 0; y < len_xy[1]; y++)
         plane[y * m_dims[0] + x] = buf_ptr2[y];
     }
@@ -401,7 +401,7 @@ void speck::CDF97::m_idwt2d_one_level(double* plane, std::array<size_t, 2> len_x
         buf_ptr[y] = plane[y * m_dims[0] + x];
       // Re-organize the coefficients as interleaved low-pass and high-pass ones
       m_scatter_odd(buf_ptr2, buf_ptr, len_xy[1]);
-      this->QccWAVCDF97SynthesisSymmetricOddEven(buf_ptr2, len_xy[1]);
+      this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf, max_len, len_xy[1]);
       for (size_t y = 0; y < len_xy[1]; y++)
         plane[y * m_dims[0] + x] = buf_ptr2[y];
     }
@@ -417,7 +417,7 @@ void speck::CDF97::m_idwt2d_one_level(double* plane, std::array<size_t, 2> len_x
       auto* pos = plane + i * m_dims[0];
       // Re-organize the coefficients as interleaved low-pass and high-pass ones
       m_scatter_even(buf_ptr, pos, len_xy[0]);
-      this->QccWAVCDF97SynthesisSymmetricEvenEven(buf_ptr, len_xy[0]);
+      this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf, 0, len_xy[0]);
       std::memcpy(pos, buf_ptr, sizeof(double) * len_xy[0]);
     }
   }
@@ -427,7 +427,7 @@ void speck::CDF97::m_idwt2d_one_level(double* plane, std::array<size_t, 2> len_x
       auto* pos = plane + i * m_dims[0];
       // Re-organize the coefficients as interleaved low-pass and high-pass ones
       m_scatter_odd(buf_ptr, pos, len_xy[0]);
-      this->QccWAVCDF97SynthesisSymmetricOddEven(buf_ptr, len_xy[0]);
+      this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf, 0, len_xy[0]);
       std::memcpy(pos, buf_ptr, sizeof(double) * len_xy[0]);
     }
   }
@@ -463,7 +463,7 @@ void speck::CDF97::m_dwt3d_one_level(double* vol, std::array<size_t, 3> len_xyz)
         for (size_t z = 0; z < len_xyz[2]; z++)
           buf_ptr[z] = m_data_buf[z * plane_size_xy + xy_offset];
         // Step 2
-        this->QccWAVCDF97AnalysisSymmetricEvenEven(buf_ptr, len_xyz[2]);
+        this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf, 0, len_xyz[2]);
         // Step 3
         m_gather_even(buf_ptr2, buf_ptr, len_xyz[2]);
         // Step 4
@@ -481,7 +481,7 @@ void speck::CDF97::m_dwt3d_one_level(double* vol, std::array<size_t, 3> len_xyz)
         for (size_t z = 0; z < len_xyz[2]; z++)
           buf_ptr[z] = m_data_buf[z * plane_size_xy + xy_offset];
         // Step 2
-        this->QccWAVCDF97AnalysisSymmetricOddEven(buf_ptr, len_xyz[2]);
+        this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf, 0, len_xyz[2]);
         // Step 3
         m_gather_odd(buf_ptr2, buf_ptr, len_xyz[2]);
         // Step 4
@@ -518,7 +518,7 @@ void speck::CDF97::m_idwt3d_one_level(double* vol, std::array<size_t, 3> len_xyz
         // Step 2
         m_scatter_even(buf_ptr2, buf_ptr, len_xyz[2]);
         // Step 3
-        this->QccWAVCDF97SynthesisSymmetricEvenEven(buf_ptr2, len_xyz[2]);
+        this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf, len_xyz[2], len_xyz[2]);
         // Step 4
         for (size_t z = 0; z < len_xyz[2]; z++)
           m_data_buf[z * plane_size_xy + xy_offset] = buf_ptr2[z];
@@ -536,7 +536,7 @@ void speck::CDF97::m_idwt3d_one_level(double* vol, std::array<size_t, 3> len_xyz
         // Step 2
         m_scatter_odd(buf_ptr2, buf_ptr, len_xyz[2]);
         // Step 3
-        this->QccWAVCDF97SynthesisSymmetricOddEven(buf_ptr2, len_xyz[2]);
+        this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf, len_xyz[2], len_xyz[2]);
         // Step 4
         for (size_t z = 0; z < len_xyz[2]; z++)
           m_data_buf[z * plane_size_xy + xy_offset] = buf_ptr2[z];
@@ -596,107 +596,110 @@ void speck::CDF97::m_scatter_odd(double* dest, const double* orig, size_t len) c
 //
 // Methods from QccPack
 //
-void speck::CDF97::QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length)
+void speck::CDF97::QccWAVCDF97AnalysisSymmetricEvenEven(vecd_type& signal, size_t offset, size_t signal_length)
 {
+  auto* const ptr = signal.data() + offset;
   for (size_t index = 1; index < signal_length - 2; index += 2)
-    signal[index] += ALPHA * (signal[index - 1] + signal[index + 1]);
+    ptr[index] += ALPHA * (ptr[index - 1] + ptr[index + 1]);
 
-  signal[signal_length - 1] += 2.0 * ALPHA * signal[signal_length - 2];
-  signal[0] += 2.0 * BETA * signal[1];
+  ptr[signal_length - 1] += 2.0 * ALPHA * ptr[signal_length - 2];
+  ptr[0] += 2.0 * BETA * ptr[1];
 
   for (size_t index = 2; index < signal_length; index += 2)
-    signal[index] += BETA * (signal[index + 1] + signal[index - 1]);
+    ptr[index] += BETA * (ptr[index + 1] + ptr[index - 1]);
 
   for (size_t index = 1; index < signal_length - 2; index += 2)
-    signal[index] += GAMMA * (signal[index - 1] + signal[index + 1]);
+    ptr[index] += GAMMA * (ptr[index - 1] + ptr[index + 1]);
 
-  signal[signal_length - 1] += 2.0 * GAMMA * signal[signal_length - 2];
-  signal[0] = EPSILON * (signal[0] + 2.0 * DELTA * signal[1]);
+  ptr[signal_length - 1] += 2.0 * GAMMA * ptr[signal_length - 2];
+  ptr[0] = EPSILON * (ptr[0] + 2.0 * DELTA * ptr[1]);
 
   for (size_t index = 2; index < signal_length; index += 2)
-    signal[index] = EPSILON * (signal[index] + DELTA * (signal[index + 1] + signal[index - 1]));
+    ptr[index] = EPSILON * (ptr[index] + DELTA * (ptr[index + 1] + ptr[index - 1]));
 
   for (size_t index = 1; index < signal_length; index += 2)
-    signal[index] *= -INV_EPSILON;
+    ptr[index] *= -INV_EPSILON;
 }
 
-void speck::CDF97::QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length)
+void speck::CDF97::QccWAVCDF97SynthesisSymmetricEvenEven(vecd_type& signal, size_t offset, size_t signal_length)
 {
+  auto* const ptr = signal.data() + offset;
   for (size_t index = 1; index < signal_length; index += 2)
-    signal[index] *= (-EPSILON);
+    ptr[index] *= (-EPSILON);
 
-  signal[0] = signal[0] * INV_EPSILON - 2.0 * DELTA * signal[1];
-
-  for (size_t index = 2; index < signal_length; index += 2)
-    signal[index] = signal[index] * INV_EPSILON - DELTA * (signal[index + 1] + signal[index - 1]);
-
-  for (size_t index = 1; index < signal_length - 2; index += 2)
-    signal[index] -= GAMMA * (signal[index - 1] + signal[index + 1]);
-
-  signal[signal_length - 1] -= 2.0 * GAMMA * signal[signal_length - 2];
-  signal[0] -= 2.0 * BETA * signal[1];
+  ptr[0] = ptr[0] * INV_EPSILON - 2.0 * DELTA * ptr[1];
 
   for (size_t index = 2; index < signal_length; index += 2)
-    signal[index] -= BETA * (signal[index + 1] + signal[index - 1]);
+    ptr[index] = ptr[index] * INV_EPSILON - DELTA * (ptr[index + 1] + ptr[index - 1]);
 
   for (size_t index = 1; index < signal_length - 2; index += 2)
-    signal[index] -= ALPHA * (signal[index - 1] + signal[index + 1]);
+    ptr[index] -= GAMMA * (ptr[index - 1] + ptr[index + 1]);
 
-  signal[signal_length - 1] -= 2.0 * ALPHA * signal[signal_length - 2];
+  ptr[signal_length - 1] -= 2.0 * GAMMA * ptr[signal_length - 2];
+  ptr[0] -= 2.0 * BETA * ptr[1];
+
+  for (size_t index = 2; index < signal_length; index += 2)
+    ptr[index] -= BETA * (ptr[index + 1] + ptr[index - 1]);
+
+  for (size_t index = 1; index < signal_length - 2; index += 2)
+    ptr[index] -= ALPHA * (ptr[index - 1] + ptr[index + 1]);
+
+  ptr[signal_length - 1] -= 2.0 * ALPHA * ptr[signal_length - 2];
 }
 
-void speck::CDF97::QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length)
+void speck::CDF97::QccWAVCDF97SynthesisSymmetricOddEven(vecd_type& signal, size_t offset, size_t signal_length)
 {
+  auto* const ptr = signal.data() + offset;
   for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] *= (-EPSILON);
+    ptr[index] *= (-EPSILON);
 
-  signal[0] = signal[0] * INV_EPSILON - 2.0 * DELTA * signal[1];
+  ptr[0] = ptr[0] * INV_EPSILON - 2.0 * DELTA * ptr[1];
 
   for (size_t index = 2; index < signal_length - 2; index += 2)
-    signal[index] = signal[index] * INV_EPSILON - DELTA * (signal[index + 1] + signal[index - 1]);
+    ptr[index] = ptr[index] * INV_EPSILON - DELTA * (ptr[index + 1] + ptr[index - 1]);
 
-  signal[signal_length - 1] =
-      signal[signal_length - 1] * INV_EPSILON - 2.0 * DELTA * signal[signal_length - 2];
+  ptr[signal_length - 1] =
+      ptr[signal_length - 1] * INV_EPSILON - 2.0 * DELTA * ptr[signal_length - 2];
 
   for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] -= GAMMA * (signal[index - 1] + signal[index + 1]);
+    ptr[index] -= GAMMA * (ptr[index - 1] + ptr[index + 1]);
 
-  signal[0] -= 2.0 * BETA * signal[1];
+  ptr[0] -= 2.0 * BETA * ptr[1];
 
   for (size_t index = 2; index < signal_length - 2; index += 2)
-    signal[index] -= BETA * (signal[index + 1] + signal[index - 1]);
+    ptr[index] -= BETA * (ptr[index + 1] + ptr[index - 1]);
 
-  signal[signal_length - 1] -= 2.0 * BETA * signal[signal_length - 2];
+  ptr[signal_length - 1] -= 2.0 * BETA * ptr[signal_length - 2];
 
   for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] -= ALPHA * (signal[index - 1] + signal[index + 1]);
+    ptr[index] -= ALPHA * (ptr[index - 1] + ptr[index + 1]);
 }
 
-void speck::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length)
+void speck::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(vecd_type& signal, size_t offset, size_t signal_length)
 {
+  auto* const ptr = signal.data() + offset;
   for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] += ALPHA * (signal[index - 1] + signal[index + 1]);
+    ptr[index] += ALPHA * (ptr[index - 1] + ptr[index + 1]);
 
-  signal[0] += 2.0 * BETA * signal[1];
+  ptr[0] += 2.0 * BETA * ptr[1];
 
   for (size_t index = 2; index < signal_length - 2; index += 2)
-    signal[index] += BETA * (signal[index + 1] + signal[index - 1]);
+    ptr[index] += BETA * (ptr[index + 1] + ptr[index - 1]);
 
-  signal[signal_length - 1] += 2.0 * BETA * signal[signal_length - 2];
+  ptr[signal_length - 1] += 2.0 * BETA * ptr[signal_length - 2];
 
   for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] += GAMMA * (signal[index - 1] + signal[index + 1]);
+    ptr[index] += GAMMA * (ptr[index - 1] + ptr[index + 1]);
 
-  signal[0] = EPSILON * (signal[0] + 2.0 * DELTA * signal[1]);
+  ptr[0] = EPSILON * (ptr[0] + 2.0 * DELTA * ptr[1]);
 
   for (size_t index = 2; index < signal_length - 2; index += 2)
-    signal[index] = EPSILON * (signal[index] + DELTA * (signal[index + 1] + signal[index - 1]));
+    ptr[index] = EPSILON * (ptr[index] + DELTA * (ptr[index + 1] + ptr[index - 1]));
 
-  signal[signal_length - 1] =
-      EPSILON * (signal[signal_length - 1] + 2.0 * DELTA * signal[signal_length - 2]);
+  ptr[signal_length - 1] = EPSILON * (ptr[signal_length - 1] + 2.0 * DELTA * ptr[signal_length - 2]);
 
   for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] *= (-INV_EPSILON);
+    ptr[index] *= (-INV_EPSILON);
 }
 
 auto speck::CDF97::get_dims() const -> std::array<size_t, 3>
