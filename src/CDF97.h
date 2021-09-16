@@ -102,10 +102,7 @@ class CDF97 {
   // slice. Note: `m_qcc_buf` should be used by ***_one_level functions and
   // should not be used by higher-level functions. `m_slice_buf` is only used by
   // wavelet-packet transforms.
-  std::unique_ptr<double[]> m_qcc_buf = nullptr;
-  std::unique_ptr<double[]> m_slice_buf = nullptr;
-  size_t m_qcc_buf_len = 0;
-  size_t m_slice_buf_len = 0;
+  vecd_type m_qcc_buf, m_slice_buf;
 
   /*
    * Note on the coefficients and constants:

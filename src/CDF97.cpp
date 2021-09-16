@@ -19,16 +19,12 @@ auto speck::CDF97::copy_data(const T* data, size_t len, dims_type dims) -> RTNTy
   m_dims = dims;
 
   auto max_col = std::max(std::max(dims[0], dims[1]), dims[2]);
-  if (m_qcc_buf_len < max_col * 2) {
-    m_qcc_buf_len = max_col * 2;
-    m_qcc_buf = std::make_unique<double[]>(m_qcc_buf_len);
-  }
+  if( max_col * 2 > m_qcc_buf.size() )
+    m_qcc_buf.resize( std::max(m_qcc_buf.size(), max_col) * 2 );
 
   auto max_slice = std::max(std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2]);
-  if (m_slice_buf_len < max_slice) {
-    m_slice_buf_len = max_slice;
-    m_slice_buf = std::make_unique<double[]>(m_slice_buf_len);
-  }
+  if( max_slice > m_slice_buf.size() )
+    m_slice_buf.resize( std::max(m_slice_buf.size() * 2, max_slice) );
 
   return RTNType::Good;
 }
@@ -44,16 +40,12 @@ auto speck::CDF97::take_data(vecd_type&& buf, dims_type dims) -> RTNType
   m_dims = dims;
 
   auto max_col = std::max(std::max(dims[0], dims[1]), dims[2]);
-  if (m_qcc_buf_len < max_col * 2) {
-    m_qcc_buf_len = max_col * 2;
-    m_qcc_buf = std::make_unique<double[]>(m_qcc_buf_len);
-  }
+  if( max_col * 2 > m_qcc_buf.size() )
+    m_qcc_buf.resize( std::max(m_qcc_buf.size(), max_col) * 2 );
 
   auto max_slice = std::max(std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2]);
-  if (m_slice_buf_len < max_slice) {
-    m_slice_buf_len = max_slice;
-    m_slice_buf = std::make_unique<double[]>(m_slice_buf_len);
-  }
+  if( max_slice > m_slice_buf.size() )
+    m_slice_buf.resize( std::max(m_slice_buf.size() * 2, max_slice) );
 
   return RTNType::Good;
 }
@@ -130,7 +122,7 @@ void speck::CDF97::dwt3d_wavelet_packet()
 
     // DWT1D on every z_column
     for (size_t x = 0; x < m_dims[0]; x++)
-      m_dwt1d(m_slice_buf.get() + x * m_dims[2], m_dims[2], num_xforms_z);
+      m_dwt1d(m_slice_buf.data() + x * m_dims[2], m_dims[2], num_xforms_z);
 
     // Put back values of the z_columns to the cube
     for (size_t z = 0; z < m_dims[2]; z++) {
@@ -198,7 +190,7 @@ void speck::CDF97::idwt3d_wavelet_packet()
 
     // IDWT1D on every z_column
     for (size_t x = 0; x < m_dims[0]; x++)
-      m_idwt1d(m_slice_buf.get() + x * m_dims[2], m_dims[2], num_xforms_z);
+      m_idwt1d(m_slice_buf.data() + x * m_dims[2], m_dims[2], num_xforms_z);
 
     // Put back values from the z_columns to the cube
     for (size_t z = 0; z < m_dims[2]; z++) {
@@ -277,18 +269,18 @@ void speck::CDF97::m_idwt1d(double* array, size_t array_len, size_t num_of_lev)
 
 void speck::CDF97::m_dwt1d_one_level(double* array, size_t array_len)
 {
-  std::memcpy(m_qcc_buf.get(), array, sizeof(double) * array_len);
+  std::copy( array, array + array_len, m_qcc_buf.begin() );
 #if __cplusplus >= 202002L
   if (array_len % 2 == 0) [[likely]] {
 #else
   if (array_len % 2 == 0) {
 #endif
-    this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf.get(), array_len);
-    m_gather_even(array, m_qcc_buf.get(), array_len);
+    this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf.data(), array_len);
+    m_gather_even(array, m_qcc_buf.data(), array_len);
   }
   else {
-    this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf.get(), array_len);
-    m_gather_odd(array, m_qcc_buf.get(), array_len);
+    this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf.data(), array_len);
+    m_gather_odd(array, m_qcc_buf.data(), array_len);
   }
 }
 
@@ -299,20 +291,20 @@ void speck::CDF97::m_idwt1d_one_level(double* array, size_t array_len)
 #else
   if (array_len % 2 == 0) {
 #endif
-    m_scatter_even(m_qcc_buf.get(), array, array_len);
-    this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf.get(), array_len);
+    m_scatter_even(m_qcc_buf.data(), array, array_len);
+    this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf.data(), array_len);
   }
   else {
-    m_scatter_odd(m_qcc_buf.get(), array, array_len);
-    this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf.get(), array_len);
+    m_scatter_odd(m_qcc_buf.data(), array, array_len);
+    this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf.data(), array_len);
   }
-  std::memcpy(array, m_qcc_buf.get(), sizeof(double) * array_len);
+  std::memcpy(array, m_qcc_buf.data(), sizeof(double) * array_len);
 }
 
 void speck::CDF97::m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy)
 {
   size_t max_len = std::max(len_xy[0], len_xy[1]);
-  double* const buf_ptr = m_qcc_buf.get();     // First half of the buffer
+  double* const buf_ptr = m_qcc_buf.data();     // First half of the buffer
   double* const buf_ptr2 = buf_ptr + max_len;  // Second half of the buffer
 
   // Note: here we call low-level functions (Qcc*()) instead of
@@ -383,7 +375,7 @@ void speck::CDF97::m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy
 void speck::CDF97::m_idwt2d_one_level(double* plane, std::array<size_t, 2> len_xy)
 {
   size_t max_len = std::max(len_xy[0], len_xy[1]);
-  double* const buf_ptr = m_qcc_buf.get();     // First half of the buffer
+  double* const buf_ptr = m_qcc_buf.data();     // First half of the buffer
   double* const buf_ptr2 = buf_ptr + max_len;  // Second half of the buffer
 
   // First, perform IDWT along Y for every column
@@ -450,7 +442,7 @@ void speck::CDF97::m_dwt3d_one_level(double* vol, std::array<size_t, 3> len_xyz)
     m_dwt2d_one_level(vol + offset, {len_xyz[0], len_xyz[1]});
   }
 
-  double* const buf_ptr = m_qcc_buf.get();        // First half of the buffer
+  double* const buf_ptr = m_qcc_buf.data();        // First half of the buffer
   double* const buf_ptr2 = buf_ptr + len_xyz[2];  // Second half of the buffer
 
   // Second, do one level of transform on all Z columns.  Strategy:
@@ -503,7 +495,7 @@ void speck::CDF97::m_dwt3d_one_level(double* vol, std::array<size_t, 3> len_xyz)
 void speck::CDF97::m_idwt3d_one_level(double* vol, std::array<size_t, 3> len_xyz)
 {
   const size_t plane_size_xy = m_dims[0] * m_dims[1];
-  double* const buf_ptr = m_qcc_buf.get();        // First half of the buffer
+  double* const buf_ptr = m_qcc_buf.data();        // First half of the buffer
   double* const buf_ptr2 = buf_ptr + len_xyz[2];  // Second half of the buffer
 
   // First, do one level of inverse transform on all Z columns.  Strategy:
