@@ -94,12 +94,12 @@ class CDF97 {
   void m_scatter_odd(Itr_S begin, Itr_S end, Itr_D dest) const;
 
   //
-  // Methods from QccPack, so keep their original names.
+  // Methods from QccPack, so keep their original names and interface.
   //
-  void QccWAVCDF97AnalysisSymmetricEvenEven(vecd_type& signal, size_t offset, size_t signal_len);
-  void QccWAVCDF97AnalysisSymmetricOddEven(vecd_type& signal, size_t offset, size_t signal_len);
-  void QccWAVCDF97SynthesisSymmetricEvenEven(vecd_type& signal, size_t offset, size_t signal_len);
-  void QccWAVCDF97SynthesisSymmetricOddEven(vecd_type& signal, size_t offset, size_t signal_len);
+  void QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length);
+  void QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length);
+  void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length);
+  void QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length);
 
   //
   // Private data members
