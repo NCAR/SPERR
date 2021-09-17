@@ -72,3 +72,10 @@ sense and they can be used.
 - Example: when SPERR calls ZSTD compression routines.
 3. When doing type punning stuff.
 - Example: when SPERR puts a double of 8 bytes to an arbitrary position in an outptu stream.
+
+### What are the alternatives?
+If I want to specify a function to process a specific range of a long array, what are
+my options?
+1. Iterators. This is the convention of modern C++.
+2. A reference to the array and then an offset value.
+Note: `src/CDF97.h/cpp` provide some good examples.

@@ -38,7 +38,6 @@ class CDF97 {
   void idwt3d_dyadic();
 
  private:
-
   using itd_type = vecd_type::iterator;
   using citd_type = vecd_type::iterator;
 
