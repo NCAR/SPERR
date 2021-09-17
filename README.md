@@ -65,7 +65,8 @@ Notice the use of `const` and rvalue references, and choice of verbs in method n
 ## When to use raw pointers?
 This project is *strongly* against using raw pointers in the codebase. 
 However, there are a few exceptional cases where raw pointers make a lot more
-sense and they can be used.
+sense and they can be used. Overall, the use of raw pointers needs to be looked
+at on a case-by-case basis, and most of the time, an alternative is preferred.
 1. When SPERR interacts with other projects and they might give SPERR a raw pointer.
 - Example: when SPERR takes in input which is expressed as a raw pointer.
 2. When SPERR *has* to use C interfaces that use raw pointers.
@@ -78,4 +79,5 @@ If I want to specify a function to process a specific range of a long array, wha
 my options?
 1. Iterators. This is the convention of modern C++.
 2. A reference to the array and then an offset value.
+
 Note: `src/CDF97.h/cpp` provide some good examples.
