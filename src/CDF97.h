@@ -38,6 +38,9 @@ class CDF97 {
   void idwt3d_dyadic();
 
  private:
+
+  using itd_type = vecd_type::iterator;
+
   //
   // Private methods helping DWT.
   //
@@ -61,14 +64,18 @@ class CDF97 {
 
   // Perform one level of 2D dwt/idwt on a given plane (m_dims),
   // specifically on its top left (len_xy) subset.
-  void m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy);
-  void m_idwt2d_one_level(double* plane, std::array<size_t, 2> len_xy);
+  template<typename T>
+  void m_dwt2d_one_level(T plane, std::array<size_t, 2> len_xy);
+  template<typename T>
+  void m_idwt2d_one_level(T plane, std::array<size_t, 2> len_xy);
 
   // Perform one level of 1D dwt/idwt on a given array (array_len).
   // A buffer space (tmp_buf) should be passed in for
   // this method to work on with length at least 2*array_len.
-  void m_dwt1d_one_level(double* array, size_t array_len);
-  void m_idwt1d_one_level(double* array, size_t array_len);
+  template<typename T>
+  void m_dwt1d_one_level(T array, size_t array_len);
+  template<typename T>
+  void m_idwt1d_one_level(T array, size_t array_len);
 
   // Separate even and odd indexed elements to be at the front and back of the dest array.
   // Note 1: sufficient memory space should be allocated by the caller.
