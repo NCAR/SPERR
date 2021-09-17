@@ -70,19 +70,21 @@ class CDF97 {
   void m_dwt1d_one_level(double* array, size_t array_len);
   void m_idwt1d_one_level(double* array, size_t array_len);
 
-  // Separate even and odd indexed elements to be at the front
-  // and back of the dest array. Note: sufficient memory space
-  // should be allocated by the caller.
+  // Separate even and odd indexed elements to be at the front and back of the dest array.
+  // Note 1: sufficient memory space should be allocated by the caller.
   // Note 2: two versions for even and odd length input.
-  void m_gather_even(double* dest, const double* orig, size_t len) const;
-  void m_gather_odd(double* dest, const double* orig, size_t len) const;
+  template<typename Itr_S, typename Itr_D>
+  void m_gather_even(Itr_S begin, Itr_S end, Itr_D dest) const;
+  template<typename Itr_S, typename Itr_D>
+  void m_gather_odd(Itr_S begin, Itr_S end, Itr_D dest) const;
 
-  // Interleave low and high pass elements to be at even and
-  // odd positions of the dest array. Note: sufficient memory
-  // space should be allocated by the caller.
+  // Interleave low and high pass elements to be at even and odd positions of the dest array.
+  // Note 1: sufficient memory space should be allocated by the caller.
   // Note 2: two versions for even and odd length input.
-  void m_scatter_even(double* dest, const double* orig, size_t len) const;
-  void m_scatter_odd(double* dest, const double* orig, size_t len) const;
+  template<typename Itr_S, typename Itr_D>
+  void m_scatter_even(Itr_S begin, Itr_S end, Itr_D dest) const;
+  template<typename Itr_S, typename Itr_D>
+  void m_scatter_odd(Itr_S begin, Itr_S end, Itr_D dest) const;
 
   //
   // Methods from QccPack, so keep their original names.
