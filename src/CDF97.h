@@ -40,63 +40,52 @@ class CDF97 {
  private:
 
   using itd_type = vecd_type::iterator;
+  using citd_type = vecd_type::iterator;
 
   //
   // Private methods helping DWT.
   //
-  // Note: most of these methods operate on a partial array, i.e., not from the
-  //       beginning of an array and not ending at the actual end.
-  //       Thus, raw pointers are used here.
 
   // Multiple levels of 1D DWT/IDWT on a given array of length array_len.
-  void m_dwt1d(double* array, size_t array_len, size_t num_of_xforms);
-  void m_idwt1d(double* array, size_t array_len, size_t num_of_xforms);
+  void m_dwt1d(itd_type array, size_t array_len, size_t num_of_xforms);
+  void m_idwt1d(itd_type array, size_t array_len, size_t num_of_xforms);
 
   // Multiple levels of 2D DWT/IDWT on a given plane by repeatedly invoking
   // m_dwt2d_one_level(). The plane has a dimension (len_xy[0], len_xy[1]).
-  void m_dwt2d(double* plane, std::array<size_t, 2> len_xy, size_t num_of_xforms);
-  void m_idwt2d(double* plane, std::array<size_t, 2> len_xy, size_t num_of_xforms);
+  void m_dwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t num_of_xforms);
+  void m_idwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t num_of_xforms);
 
   // Perform one level of interleaved 3D dwt/idwt on a given volume (m_dims),
   // specifically on its top left (len_xyz) subset.
-  template<typename T>
-  void m_dwt3d_one_level(T vol, std::array<size_t, 3> len_xyz);
-  template<typename T>
-  void m_idwt3d_one_level(T vol, std::array<size_t, 3> len_xyz);
+  void m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz);
+  void m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz);
 
   // Perform one level of 2D dwt/idwt on a given plane (m_dims),
   // specifically on its top left (len_xy) subset.
-  template<typename T>
-  void m_dwt2d_one_level(T plane, std::array<size_t, 2> len_xy);
-  template<typename T>
-  void m_idwt2d_one_level(T plane, std::array<size_t, 2> len_xy);
+  void m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_xy);
+  void m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_xy);
 
   // Perform one level of 1D dwt/idwt on a given array (array_len).
   // A buffer space (tmp_buf) should be passed in for
   // this method to work on with length at least 2*array_len.
-  template<typename T>
-  void m_dwt1d_one_level(T array, size_t array_len);
-  template<typename T>
-  void m_idwt1d_one_level(T array, size_t array_len);
+  void m_dwt1d_one_level(itd_type array, size_t array_len);
+  void m_idwt1d_one_level(itd_type array, size_t array_len);
 
   // Separate even and odd indexed elements to be at the front and back of the dest array.
   // Note 1: sufficient memory space should be allocated by the caller.
   // Note 2: two versions for even and odd length input.
-  template<typename Itr_S, typename Itr_D>
-  void m_gather_even(Itr_S begin, Itr_S end, Itr_D dest) const;
-  template<typename Itr_S, typename Itr_D>
-  void m_gather_odd(Itr_S begin, Itr_S end, Itr_D dest) const;
+  void m_gather_even(citd_type begin, citd_type end, itd_type dest) const;
+  void m_gather_odd(citd_type begin, citd_type end, itd_type dest) const;
 
   // Interleave low and high pass elements to be at even and odd positions of the dest array.
   // Note 1: sufficient memory space should be allocated by the caller.
   // Note 2: two versions for even and odd length input.
-  template<typename Itr_S, typename Itr_D>
-  void m_scatter_even(Itr_S begin, Itr_S end, Itr_D dest) const;
-  template<typename Itr_S, typename Itr_D>
-  void m_scatter_odd(Itr_S begin, Itr_S end, Itr_D dest) const;
+  void m_scatter_even(citd_type begin, citd_type end, itd_type dest) const;
+  void m_scatter_odd(citd_type begin, citd_type end, itd_type dest) const;
 
   //
-  // Methods from QccPack, so keep their original names and interface.
+  // Methods from QccPack, so keep their original names, interface, and the use
+  // of raw pointers.
   //
   void QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length);
   void QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length);
