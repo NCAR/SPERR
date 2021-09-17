@@ -447,7 +447,7 @@ void speck::SPECK3D::m_quantize_P_encode(size_t idx)
   auto coeff = m_coeff_buf[idx] - m_threshold_arr[m_threshold_idx];
 
   auto tmpd = arrd2_type{0.0, 0.0};
-  const auto tmpb = arrb2_type{false, true};
+  const auto tmpb = std::array<bool, 2>{false, true};
   const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
     tmpd[1] = m_threshold_arr[i];

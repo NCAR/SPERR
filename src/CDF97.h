@@ -38,54 +38,53 @@ class CDF97 {
   void idwt3d_dyadic();
 
  private:
+  using itd_type = vecd_type::iterator;
+  using citd_type = vecd_type::iterator;
+
   //
   // Private methods helping DWT.
   //
-  // Note: most of these methods operate on a partial array, i.e., not from the
-  //       beginning of an array and not ending at the actual end.
-  //       Thus, raw pointers are used here.
 
   // Multiple levels of 1D DWT/IDWT on a given array of length array_len.
-  void m_dwt1d(double* array, size_t array_len, size_t num_of_xforms);
-  void m_idwt1d(double* array, size_t array_len, size_t num_of_xforms);
+  void m_dwt1d(itd_type array, size_t array_len, size_t num_of_xforms);
+  void m_idwt1d(itd_type array, size_t array_len, size_t num_of_xforms);
 
   // Multiple levels of 2D DWT/IDWT on a given plane by repeatedly invoking
   // m_dwt2d_one_level(). The plane has a dimension (len_xy[0], len_xy[1]).
-  void m_dwt2d(double* plane, std::array<size_t, 2> len_xy, size_t num_of_xforms);
-  void m_idwt2d(double* plane, std::array<size_t, 2> len_xy, size_t num_of_xforms);
+  void m_dwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t num_of_xforms);
+  void m_idwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t num_of_xforms);
 
   // Perform one level of interleaved 3D dwt/idwt on a given volume (m_dims),
   // specifically on its top left (len_xyz) subset.
-  void m_dwt3d_one_level(double* vol, std::array<size_t, 3> len_xyz);
-  void m_idwt3d_one_level(double* vol, std::array<size_t, 3> len_xyz);
+  void m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz);
+  void m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz);
 
   // Perform one level of 2D dwt/idwt on a given plane (m_dims),
   // specifically on its top left (len_xy) subset.
-  void m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy);
-  void m_idwt2d_one_level(double* plane, std::array<size_t, 2> len_xy);
+  void m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_xy);
+  void m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_xy);
 
   // Perform one level of 1D dwt/idwt on a given array (array_len).
   // A buffer space (tmp_buf) should be passed in for
   // this method to work on with length at least 2*array_len.
-  void m_dwt1d_one_level(double* array, size_t array_len);
-  void m_idwt1d_one_level(double* array, size_t array_len);
+  void m_dwt1d_one_level(itd_type array, size_t array_len);
+  void m_idwt1d_one_level(itd_type array, size_t array_len);
 
-  // Separate even and odd indexed elements to be at the front
-  // and back of the dest array. Note: sufficient memory space
-  // should be allocated by the caller.
+  // Separate even and odd indexed elements to be at the front and back of the dest array.
+  // Note 1: sufficient memory space should be allocated by the caller.
   // Note 2: two versions for even and odd length input.
-  void m_gather_even(double* dest, const double* orig, size_t len) const;
-  void m_gather_odd(double* dest, const double* orig, size_t len) const;
+  void m_gather_even(citd_type begin, citd_type end, itd_type dest) const;
+  void m_gather_odd(citd_type begin, citd_type end, itd_type dest) const;
 
-  // Interleave low and high pass elements to be at even and
-  // odd positions of the dest array. Note: sufficient memory
-  // space should be allocated by the caller.
+  // Interleave low and high pass elements to be at even and odd positions of the dest array.
+  // Note 1: sufficient memory space should be allocated by the caller.
   // Note 2: two versions for even and odd length input.
-  void m_scatter_even(double* dest, const double* orig, size_t len) const;
-  void m_scatter_odd(double* dest, const double* orig, size_t len) const;
+  void m_scatter_even(citd_type begin, citd_type end, itd_type dest) const;
+  void m_scatter_odd(citd_type begin, citd_type end, itd_type dest) const;
 
   //
-  // Methods from QccPack, keep their original names.
+  // Methods from QccPack, so keep their original names, interface, and the use
+  // of raw pointers.
   //
   void QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length);
   void QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length);
@@ -99,13 +98,11 @@ class CDF97 {
   dims_type m_dims = {0, 0, 0};  // Dimension of the data volume
 
   // Temporary buffers that are big enough for any (1D column * 2) or any 2D
-  // slice. Note: `m_qcc_buf` should be used by ***_one_level functions and
+  // slice. Note: `m_qcc_buf` should be used by m_***_one_level() functions and
   // should not be used by higher-level functions. `m_slice_buf` is only used by
   // wavelet-packet transforms.
-  std::unique_ptr<double[]> m_qcc_buf = nullptr;
-  std::unique_ptr<double[]> m_slice_buf = nullptr;
-  size_t m_qcc_buf_len = 0;
-  size_t m_slice_buf_len = 0;
+  vecd_type m_qcc_buf;
+  vecd_type m_slice_buf;
 
   /*
    * Note on the coefficients and constants:

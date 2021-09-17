@@ -37,8 +37,8 @@ class SPECK_Storage {
   auto parse_encoded_bitstream(const void*, size_t) -> RTNType;
 
   // Given a SPECK stream, tell how long the speck stream (including header) is
-  // in bytes, and what the volume/slice dimension is in num. of elements. Note:
-  // don't need to provide the buffer size because this function
+  // in bytes, and what the volume/slice dimension is in num. of elements.
+  // Note: don't need to provide the buffer size because this function
   //       goes to a fixed location to retrieve the stream size.
   auto get_speck_stream_size(const void*) const -> uint64_t;
   auto get_speck_stream_dims(const void*) const -> std::array<size_t, 3>;
