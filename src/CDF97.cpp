@@ -435,7 +435,8 @@ void speck::CDF97::m_idwt2d_one_level(T plane, std::array<size_t, 2> len_xy)
   }
 }
 
-void speck::CDF97::m_dwt3d_one_level(double* vol, std::array<size_t, 3> len_xyz)
+template<typename T>
+void speck::CDF97::m_dwt3d_one_level(T vol, std::array<size_t, 3> len_xyz)
 {
   // First, do one level of transform on all XY planes.
   const size_t plane_size_xy = m_dims[0] * m_dims[1];
@@ -444,8 +445,6 @@ void speck::CDF97::m_dwt3d_one_level(double* vol, std::array<size_t, 3> len_xyz)
     m_dwt2d_one_level(vol + offset, {len_xyz[0], len_xyz[1]});
   }
 
-  double* const buf_ptr = m_qcc_buf.data();        
-  double* const buf_ptr2 = buf_ptr + len_xyz[2];  
   const auto beg = m_qcc_buf.begin(); // First half of the buffer
   const auto beg2 = beg + len_xyz[2]; // Second half of the buffer
 
@@ -466,14 +465,14 @@ void speck::CDF97::m_dwt3d_one_level(double* vol, std::array<size_t, 3> len_xyz)
         const size_t xy_offset = y * m_dims[0] + x;
         // Step 1
         for (size_t z = 0; z < len_xyz[2]; z++)
-          buf_ptr[z] = m_data_buf[z * plane_size_xy + xy_offset];
+          m_qcc_buf[z] = m_data_buf[z * plane_size_xy + xy_offset];
         // Step 2
         this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf.data(), len_xyz[2]);
         // Step 3
         m_gather_even(beg, beg2, beg2); 
         // Step 4
         for (size_t z = 0; z < len_xyz[2]; z++)
-          m_data_buf[z * plane_size_xy + xy_offset] = buf_ptr2[z];
+          m_data_buf[z * plane_size_xy + xy_offset] = *(beg2 + z);
       }
     }
   }
@@ -484,24 +483,23 @@ void speck::CDF97::m_dwt3d_one_level(double* vol, std::array<size_t, 3> len_xyz)
         const size_t xy_offset = y * m_dims[0] + x;
         // Step 1
         for (size_t z = 0; z < len_xyz[2]; z++)
-          buf_ptr[z] = m_data_buf[z * plane_size_xy + xy_offset];
+          m_qcc_buf[z] = m_data_buf[z * plane_size_xy + xy_offset];
         // Step 2
         this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf.data(), len_xyz[2]);
         // Step 3
         m_gather_odd(beg, beg2, beg2);
         // Step 4
         for (size_t z = 0; z < len_xyz[2]; z++)
-          m_data_buf[z * plane_size_xy + xy_offset] = buf_ptr2[z];
+          m_data_buf[z * plane_size_xy + xy_offset] = *(beg2 + z);
       }
     }
   }
 }
 
-void speck::CDF97::m_idwt3d_one_level(double* vol, std::array<size_t, 3> len_xyz)
+template<typename T>
+void speck::CDF97::m_idwt3d_one_level(T vol, std::array<size_t, 3> len_xyz)
 {
   const size_t plane_size_xy = m_dims[0] * m_dims[1];
-  double* const buf_ptr = m_qcc_buf.data();        
-  double* const buf_ptr2 = buf_ptr + len_xyz[2];  
   const auto beg = m_qcc_buf.begin(); // First half of the buffer
   const auto beg2 = beg + len_xyz[2]; // Second half of the buffer
 
@@ -522,14 +520,14 @@ void speck::CDF97::m_idwt3d_one_level(double* vol, std::array<size_t, 3> len_xyz
         const size_t xy_offset = y * m_dims[0] + x;
         // Step 1
         for (size_t z = 0; z < len_xyz[2]; z++)
-          buf_ptr[z] = m_data_buf[z * plane_size_xy + xy_offset];
+          m_qcc_buf[z] = m_data_buf[z * plane_size_xy + xy_offset];
         // Step 2
         m_scatter_even(beg, beg2, beg2);
         // Step 3
         this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf.data() + len_xyz[2], len_xyz[2]);
         // Step 4
         for (size_t z = 0; z < len_xyz[2]; z++)
-          m_data_buf[z * plane_size_xy + xy_offset] = buf_ptr2[z];
+          m_data_buf[z * plane_size_xy + xy_offset] = *(beg2 + z);
       }
     }
   }
@@ -540,14 +538,14 @@ void speck::CDF97::m_idwt3d_one_level(double* vol, std::array<size_t, 3> len_xyz
         const size_t xy_offset = y * m_dims[0] + x;
         // Step 1
         for (size_t z = 0; z < len_xyz[2]; z++)
-          buf_ptr[z] = m_data_buf[z * plane_size_xy + xy_offset];
+          m_qcc_buf[z] = m_data_buf[z * plane_size_xy + xy_offset];
         // Step 2
         m_scatter_odd(beg, beg2, beg2);
         // Step 3
         this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf.data() + len_xyz[2], len_xyz[2]);
         // Step 4
         for (size_t z = 0; z < len_xyz[2]; z++)
-          m_data_buf[z * plane_size_xy + xy_offset] = buf_ptr2[z];
+          m_data_buf[z * plane_size_xy + xy_offset] = *(beg2 + z);
       }
     }
   }
