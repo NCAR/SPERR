@@ -111,7 +111,7 @@ private:
 class speck_tester_omp
 {
 public:
-    speck_tester_omp( const char* in, speck::dims_type dims, int num_t )
+    speck_tester_omp( const char* in, speck::dims_type dims, size_t num_t )
     {
         m_input_name = in;
         m_dims       = dims;
@@ -215,7 +215,7 @@ private:
     speck::dims_type m_chunk_dims = {64, 64, 64};
     std::string m_output_name = "output.tmp";
     float m_psnr, m_lmax;
-    int   m_num_t;
+    size_t m_num_t;
 };
 
 //
@@ -239,7 +239,7 @@ TEST( speck3d_constant, one_chunk )
 
 TEST( speck3d_constant, omp_chunks )
 {
-  speck_tester_omp tester( "../test_data/const32x32x59.float", {32, 32, 59}, 2 );
+  speck_tester_omp tester( "../test_data/const32x32x59.float", {32, 32, 59}, 8 );
   tester.prefer_chunk_dims({32, 32, 32});
 #ifdef QZ_TERM
   auto rtn = tester.execute( -1, 1 );
@@ -349,7 +349,7 @@ TEST( speck3d_qz_term_omp, narrow_data_range)
 }
 TEST( speck3d_qz_term_omp, small_tolerance )
 {
-    speck_tester_omp tester( "../test_data/wmag128.float", {128, 128, 128}, 3 );
+    speck_tester_omp tester( "../test_data/wmag128.float", {128, 128, 128}, 7 );
     auto rtn = tester.execute( -3, 0.07);
     EXPECT_EQ( rtn, 0 );
     float psnr = tester.get_psnr();
@@ -491,7 +491,7 @@ TEST( speck3d_bit_rate_omp, narrow_data_range )
 
 TEST( speck3d_bit_rate_omp, big )
 {
-    speck_tester_omp tester( "../test_data/wmag128.float", {128, 128, 128}, 4 );
+    speck_tester_omp tester( "../test_data/wmag128.float", {128, 128, 128}, 8 );
 
     tester.execute( 2.0f );
     float psnr = tester.get_psnr();
