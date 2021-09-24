@@ -92,8 +92,8 @@ auto test_configuration_omp(const T* in_buf,
 
   // Collect statistics
   T rmse, lmax, psnr, arr1min, arr1max;
-  speck::calc_stats(in_buf, output_buf.data(), total_vals, omp_num_threads, 
-                    rmse, lmax, psnr, arr1min, arr1max);
+  speck::calc_stats(in_buf, output_buf.data(), total_vals, omp_num_threads, rmse, lmax, psnr,
+                    arr1min, arr1max);
   printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
   printf("    Reconstructed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
 
