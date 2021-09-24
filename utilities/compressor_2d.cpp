@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
 
   CLI11_PARSE(app, argc, argv);
 
-  speck::RTNType rtn;
+  sperr::RTNType rtn;
 
   //
   // Compression mode
@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
 
     const size_t total_vals = dims[0] * dims[1];
     SPECK2D_Compressor compressor(dims[0], dims[1]);
-    if ((rtn = compressor.read_floats(input_file.c_str())) != speck::RTNType::Good) {
+    if ((rtn = compressor.read_floats(input_file.c_str())) != sperr::RTNType::Good) {
       std::cerr << "Read raw data failed!" << std::endl;
       return 1;
     }
@@ -93,14 +93,14 @@ int main(int argc, char* argv[])
 #ifdef QZ_TERM
     // compressor.set_qz_level( qz_level );
 #else
-    if ((rtn = compressor.set_bpp(bpp)) != speck::RTNType::Good) {
+    if ((rtn = compressor.set_bpp(bpp)) != sperr::RTNType::Good) {
       std::cerr << "Bit-per-pixel value invalid!" << std::endl;
       return 1;
     }
 #endif
 
     auto start = std::chrono::steady_clock::now();
-    if ((rtn = compressor.compress()) != speck::RTNType::Good) {
+    if ((rtn = compressor.compress()) != sperr::RTNType::Good) {
       std::cerr << "Compression Failed!" << std::endl;
       return 1;
     }
@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
       }
       SPECK2D_Decompressor decompressor;
       decompressor.take_bitstream(std::move(stream.first), stream.second);
-      if (decompressor.decompress() != speck::RTNType::Good) {
+      if (decompressor.decompress() != sperr::RTNType::Good) {
         std::cerr << "decompress() Failed!" << std::endl;
         return 1;
       }
@@ -131,14 +131,14 @@ int main(int argc, char* argv[])
       }
 
       // Read the original input data again
-      auto orig = speck::read_whole_file<float>(input_file.c_str());
-      if (!speck::size_is(orig, total_vals)) {
+      auto orig = sperr::read_whole_file<float>(input_file.c_str());
+      if (!sperr::size_is(orig, total_vals)) {
         std::cerr << "Read the original data failed!" << std::endl;
         return 1;
       }
 
       float rmse, lmax, psnr, arr1min, arr1max;
-      speck::calc_stats(orig.first.get(), slice.first.get(), total_vals, &rmse, &lmax, &psnr,
+      sperr::calc_stats(orig.first.get(), slice.first.get(), total_vals, &rmse, &lmax, &psnr,
                         &arr1min, &arr1max);
 
       printf("RMSE = %f, L-Infty = %f, PSNR = %f\n", rmse, lmax, psnr);
@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
     }
 
     if (!output_file.empty()) {
-      if (compressor.write_bitstream(output_file.c_str()) != speck::RTNType::Good) {
+      if (compressor.write_bitstream(output_file.c_str()) != sperr::RTNType::Good) {
         std::cerr << "write to file Failed!" << std::endl;
         return 1;
       }
@@ -162,16 +162,16 @@ int main(int argc, char* argv[])
       return 1;
     }
     SPECK2D_Decompressor decompressor;
-    if (decompressor.read_bitstream(input_file.c_str()) != speck::RTNType::Good) {
+    if (decompressor.read_bitstream(input_file.c_str()) != sperr::RTNType::Good) {
       std::cerr << "Read file failed!" << std::endl;
       return 1;
     }
     decompressor.set_bpp(decomp_bpp);
-    if (decompressor.decompress() != speck::RTNType::Good) {
+    if (decompressor.decompress() != sperr::RTNType::Good) {
       std::cerr << "Decompression failed!" << std::endl;
       return 1;
     }
-    if (decompressor.write_slice_f(output_file.c_str()) != speck::RTNType::Good) {
+    if (decompressor.write_slice_f(output_file.c_str()) != sperr::RTNType::Good) {
       std::cerr << "Write to file failed!" << std::endl;
       return 1;
     }

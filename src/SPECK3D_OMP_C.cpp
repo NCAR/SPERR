@@ -6,12 +6,12 @@
 #include <cstring>
 #include <numeric>  // std::accumulate()
 
-void SPECK3D_OMP_C::set_dims(speck::dims_type dims)
+void SPECK3D_OMP_C::set_dims(sperr::dims_type dims)
 {
   m_dims = dims;
 }
 
-void SPECK3D_OMP_C::prefer_chunk_dims(speck::dims_type dims)
+void SPECK3D_OMP_C::prefer_chunk_dims(sperr::dims_type dims)
 {
   m_chunk_dims = dims;
 }
@@ -22,7 +22,7 @@ void SPECK3D_OMP_C::set_num_threads(size_t n)
     m_num_threads = n;
 }
 
-void SPECK3D_OMP_C::toggle_conditioning(speck::Conditioner::settings_type b4)
+void SPECK3D_OMP_C::toggle_conditioning(sperr::Conditioner::settings_type b4)
 {
   m_conditioning_settings = b4;
 }
@@ -75,13 +75,13 @@ auto SPECK3D_OMP_C::use_volume(const T* vol, size_t len) -> RTNType
   }
 
   // Block the volume into smaller chunks
-  auto chunks = speck::chunk_volume(m_dims, m_chunk_dims);
+  auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
   const auto num_chunks = chunks.size();
   m_chunk_buffers.resize(num_chunks);
 
 #pragma omp parallel for num_threads(m_num_threads)
   for (size_t i = 0; i < num_chunks; i++) {
-    m_chunk_buffers[i] = speck::gather_chunk(vol, m_dims, chunks[i]);
+    m_chunk_buffers[i] = sperr::gather_chunk(vol, m_dims, chunks[i]);
   }
 
   return RTNType::Good;
@@ -92,7 +92,7 @@ template auto SPECK3D_OMP_C::use_volume(const double*, size_t) -> RTNType;
 auto SPECK3D_OMP_C::compress() -> RTNType
 {
   // Need to make sure that the chunks are ready!
-  auto chunks = speck::chunk_volume(m_dims, m_chunk_dims);
+  auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
   const auto num_chunks = chunks.size();
   if (m_chunk_buffers.size() != num_chunks)
     return RTNType::Error;
@@ -170,7 +170,7 @@ auto SPECK3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
   return buf;
 }
 
-auto SPECK3D_OMP_C::m_generate_header() const -> speck::vec8_type
+auto SPECK3D_OMP_C::m_generate_header() const -> sperr::vec8_type
 {
   // The header would contain the following information
   //  -- a version number                     (1 byte)
@@ -178,7 +178,7 @@ auto SPECK3D_OMP_C::m_generate_header() const -> speck::vec8_type
   //  -- volume and chunk dimensions          (4 x 6 = 24 bytes)
   //  -- length of bitstream for each chunk   (4 x num_chunks)
 
-  auto chunks = speck::chunk_volume(m_dims, m_chunk_dims);
+  auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
   const auto num_chunks = chunks.size();
   if (num_chunks != m_encoded_streams.size())
     return std::vector<uint8_t>(0);
@@ -197,7 +197,7 @@ auto SPECK3D_OMP_C::m_generate_header() const -> speck::vec8_type
 #ifdef USE_ZSTD
   b8[0] = true;
 #endif
-  header[loc] = speck::pack_8_booleans(b8);
+  header[loc] = sperr::pack_8_booleans(b8);
   loc += 1;
 
   // Volume and chunk dimensions

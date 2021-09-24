@@ -20,7 +20,7 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   uint8_t meta[2];
   assert(sizeof(meta) == m_meta_size);
   std::memcpy(meta, p, sizeof(meta));
-  auto metabool = speck::unpack_8_booleans(meta[1]);
+  auto metabool = sperr::unpack_8_booleans(meta[1]);
 
   // Task 1)
   if (meta[0] != uint8_t(SPERR_VERSION_MAJOR))

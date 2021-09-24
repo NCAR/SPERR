@@ -3,16 +3,16 @@
 #include <cstdlib>
 #include "gtest/gtest.h"
 
-using speck::RTNType;
+using sperr::RTNType;
 
 namespace
 {
 
 // Create a class that executes the entire pipeline, and calculates the error metrics
-class speck_tester
+class sperr_tester
 {
 public:
-    speck_tester( const char* in, size_t x, size_t y )
+    sperr_tester( const char* in, size_t x, size_t y )
     {
         m_input_name = in;
         m_dim_x      = x;
@@ -37,7 +37,7 @@ public:
         m_lmax = 10000.0;
 
         const size_t  total_vals = m_dim_x * m_dim_y;
-        auto in_buf = speck::read_whole_file<float>( m_input_name.c_str() );
+        auto in_buf = sperr::read_whole_file<float>( m_input_name.c_str() );
         if( in_buf.size() != total_vals )
             return 1;
 
@@ -70,7 +70,7 @@ public:
         // Compare results 
         //
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( in_buf.data(), slice.data(), total_vals, 8,
+        sperr::calc_stats( in_buf.data(), slice.data(), total_vals, 8,
                            rmse, lmax, psnr, arr1min, arr1max );
         m_psnr = psnr;
         m_lmax = lmax;
@@ -87,9 +87,9 @@ private:
 };
 
 
-TEST( speck2d, lena )
+TEST( sperr2d, lena )
 {
-    speck_tester tester( "../test_data/lena512.float", 512, 512 );
+    sperr_tester tester( "../test_data/lena512.float", 512, 512 );
 
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
@@ -117,9 +117,9 @@ TEST( speck2d, lena )
 }
 
 
-TEST( speck2d, odd_dim_image )
+TEST( sperr2d, odd_dim_image )
 {
-    speck_tester tester( "../test_data/90x90.float", 90, 90 );
+    sperr_tester tester( "../test_data/90x90.float", 90, 90 );
 
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
@@ -147,9 +147,9 @@ TEST( speck2d, odd_dim_image )
 }
 
 
-TEST( speck2d, small_data_range )
+TEST( sperr2d, small_data_range )
 {
-    speck_tester tester( "../test_data/vorticity.512_512", 512, 512 );
+    sperr_tester tester( "../test_data/vorticity.512_512", 512, 512 );
 
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();

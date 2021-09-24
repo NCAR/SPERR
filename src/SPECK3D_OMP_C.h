@@ -9,12 +9,12 @@
 
 #include "SPECK3D_Compressor.h"
 
-using speck::RTNType;
+using sperr::RTNType;
 
 class SPECK3D_OMP_C {
  public:
-  void set_dims(speck::dims_type);
-  void prefer_chunk_dims(speck::dims_type);
+  void set_dims(sperr::dims_type);
+  void prefer_chunk_dims(sperr::dims_type);
   void set_num_threads(size_t);
 
   // Upon receiving incoming data, a chunking scheme is decided, and the volume
@@ -22,7 +22,7 @@ class SPECK3D_OMP_C {
   template <typename T>
   auto use_volume(const T*, size_t) -> RTNType;
 
-  void toggle_conditioning(speck::Conditioner::settings_type);
+  void toggle_conditioning(sperr::Conditioner::settings_type);
 
 #ifdef QZ_TERM
   void set_qz_level(int32_t);
@@ -39,14 +39,14 @@ class SPECK3D_OMP_C {
   auto get_encoded_bitstream() const -> std::vector<uint8_t>;
 
  private:
-  speck::dims_type m_dims = {0, 0, 0};        // Dimension of the entire volume
-  speck::dims_type m_chunk_dims = {0, 0, 0};  // Preferred dimensions for a chunk
+  sperr::dims_type m_dims = {0, 0, 0};        // Dimension of the entire volume
+  sperr::dims_type m_chunk_dims = {0, 0, 0};  // Preferred dimensions for a chunk
   size_t m_num_threads = 1;
-  speck::Conditioner::settings_type m_conditioning_settings = {true, false, false, false};
+  sperr::Conditioner::settings_type m_conditioning_settings = {true, false, false, false};
 
-  std::vector<speck::vecd_type> m_chunk_buffers;
-  std::vector<speck::vec8_type> m_encoded_streams;
-  speck::vec8_type m_total_stream;
+  std::vector<sperr::vecd_type> m_chunk_buffers;
+  std::vector<sperr::vec8_type> m_encoded_streams;
+  sperr::vec8_type m_total_stream;
 
   const size_t m_header_magic = 26;  // header size would be this number + num_chunks * 4
 
@@ -63,7 +63,7 @@ class SPECK3D_OMP_C {
   //
   // Private methods
   //
-  auto m_generate_header() const -> speck::vec8_type;
+  auto m_generate_header() const -> sperr::vec8_type;
 };
 
 #endif

@@ -76,7 +76,7 @@ file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/latest/download/CLI11.h
 
 add_subdirectory( src )
 
-list( APPEND HELPER_LIBS    speck_helper         )
+list( APPEND HELPER_LIBS    sperr_helper         )
 list( APPEND HELPER_LIBS    Conditioner          )
 list( APPEND HELPER_LIBS    OpenMP::OpenMP_CXX   )
 list( APPEND CDF_LIBS       CDF97                )
@@ -169,11 +169,11 @@ if( BUILD_UNIT_TESTS )
 
     # Now we have all the tests! 
 
-    add_executable( test_speck_helper 
-                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck_helper_unit_test.cpp" )
-    target_link_libraries( test_speck_helper PUBLIC ${HELPER_LIBS}
+    add_executable( test_sperr_helper 
+                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/sperr_helper_unit_test.cpp" )
+    target_link_libraries( test_sperr_helper PUBLIC ${HELPER_LIBS}
                                              PUBLIC gtest_main   )
-    add_test( NAME test_speck_helper COMMAND test_speck_helper   )
+    add_test( NAME test_sperr_helper COMMAND test_sperr_helper   )
 
     add_executable( test_dwt
                     "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/dwt_unit_test.cpp" )

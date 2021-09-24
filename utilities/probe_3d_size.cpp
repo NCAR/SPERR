@@ -19,10 +19,10 @@
 
 template <typename T>
 auto test_configuration_omp(const T* in_buf,
-                            speck::dims_type dims,
-                            speck::dims_type chunks,
+                            sperr::dims_type dims,
+                            sperr::dims_type chunks,
                             float bpp,
-                            speck::Conditioner::settings_type condi_settings,
+                            sperr::Conditioner::settings_type condi_settings,
                             size_t omp_num_threads,
                             std::vector<T>& output_buf) -> int
 {
@@ -76,7 +76,7 @@ auto test_configuration_omp(const T* in_buf,
 
   // Collect statistics
   T rmse, lmax, psnr, arr1min, arr1max;
-  speck::calc_stats(in_buf, output_buf.data(), total_vals, omp_num_threads, rmse, lmax, psnr,
+  sperr::calc_stats(in_buf, output_buf.data(), total_vals, omp_num_threads, rmse, lmax, psnr,
                     arr1min, arr1max);
   printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
   printf("    Reconstructed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
   CLI11_PARSE(app, argc, argv);
 
   const auto dims = std::array<size_t, 3>{dims_v[0], dims_v[1], dims_v[2]};
-  const auto condi_settings = speck::Conditioner::settings_type{true,     // subtract mean
+  const auto condi_settings = sperr::Conditioner::settings_type{true,     // subtract mean
                                                                 div_rms,  // divide by rms
                                                                 false,    // unused
                                                                 false};   // unused
@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
   // configurations) Also create a buffer to hold decompressed data.
   //
   const size_t total_vals = dims[0] * dims[1] * dims[2];
-  auto input_buf = speck::read_whole_file<uint8_t>(input_file.c_str());
+  auto input_buf = sperr::read_whole_file<uint8_t>(input_file.c_str());
   if ((use_double && input_buf.size() != total_vals * sizeof(double)) ||
       (!use_double && input_buf.size() != total_vals * sizeof(float))) {
     std::cerr << "  -- reading input file failed!" << std::endl;
@@ -226,11 +226,11 @@ int main(int argc, char* argv[])
         std::cin >> fname;
         auto rtn2 = RTNType::Good;
         if (use_double) {
-          rtn2 = speck::write_n_bytes(fname.c_str(), sizeof(double) * output_buf_d.size(),
+          rtn2 = sperr::write_n_bytes(fname.c_str(), sizeof(double) * output_buf_d.size(),
                                       output_buf_d.data());
         }
         else {
-          rtn2 = speck::write_n_bytes(fname.c_str(), sizeof(float) * output_buf_f.size(),
+          rtn2 = sperr::write_n_bytes(fname.c_str(), sizeof(float) * output_buf_f.size(),
                                       output_buf_f.data());
         }
         if (rtn2 == RTNType::Good)

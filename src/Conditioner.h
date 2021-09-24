@@ -5,11 +5,11 @@
 // Applies conditioning operations to an array of data.
 //
 
-#include "speck_helper.h"
+#include "sperr_helper.h"
 
 #include <tuple>
 
-namespace speck {
+namespace sperr {
 
 class Conditioner {
  public:
@@ -26,14 +26,14 @@ class Conditioner {
   // The 17 bytes returned by `condition()`: 1 byte (8 booleans) followed by two
   // doubles. The byte of booleans records what operations are applied:
   // Accordingly, `inverse_condition()` takes a buffer of 17 bytes.
-  auto condition(speck::vecd_type&) -> std::pair<RTNType, meta_type>;
-  auto inverse_condition(speck::vecd_type&, const meta_type&) -> RTNType;
+  auto condition(vecd_type&) -> std::pair<RTNType, meta_type>;
+  auto inverse_condition(vecd_type&, const meta_type&) -> RTNType;
 
   // Given an array, test if it's a constant field. The test result (true/false)
   // is returned as boolean and a properly packed meta data if true.
   // Similarly, `parse_constant` takes in a meta data block and returns if it
   // represents a constant field. If true, it also returns the constant value.
-  auto test_constant(const speck::vecd_type&) const -> std::pair<bool, meta_type>;
+  auto test_constant(const vecd_type&) const -> std::pair<bool, meta_type>;
   auto parse_constant(const meta_type&) const -> std::tuple<bool, double, uint64_t>;
 
  private:
@@ -57,12 +57,12 @@ class Conditioner {
   // Action items
   // Buffers passed in here are guaranteed to have correct lengths and
   // conditions.
-  auto m_calc_mean(const speck::vecd_type& buf) -> double;
-  auto m_calc_rms(const speck::vecd_type& buf) -> double;
+  auto m_calc_mean(const vecd_type& buf) -> double;
+  auto m_calc_rms(const vecd_type& buf) -> double;
   // adjust the value of `m_num_strides` so it'll be a divisor of `len`
   void m_adjust_strides(size_t len);
 };
 
-};  // namespace speck
+};  // namespace sperr
 
 #endif

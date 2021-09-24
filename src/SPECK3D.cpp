@@ -7,12 +7,12 @@
 //
 // Class SPECKSet3D
 //
-auto speck::SPECKSet3D::is_pixel() const -> bool
+auto sperr::SPECKSet3D::is_pixel() const -> bool
 {
   return (length_x == 1 && length_y == 1 && length_z == 1);
 }
 
-auto speck::SPECKSet3D::is_empty() const -> bool
+auto sperr::SPECKSet3D::is_empty() const -> bool
 {
   return (length_z == 0 || length_y == 0 || length_x == 0);
 }
@@ -21,12 +21,12 @@ auto speck::SPECKSet3D::is_empty() const -> bool
 // Class SPECK3D
 //
 #ifdef QZ_TERM
-void speck::SPECK3D::set_quantization_term_level(int32_t lev)
+void sperr::SPECK3D::set_quantization_term_level(int32_t lev)
 {
   m_qz_term_lev = lev;
 }
 #else
-void speck::SPECK3D::set_bit_budget(size_t budget)
+void sperr::SPECK3D::set_bit_budget(size_t budget)
 {
   size_t mod = budget % 8;
   if (mod == 0)
@@ -36,7 +36,7 @@ void speck::SPECK3D::set_bit_budget(size_t budget)
 }
 #endif
 
-void speck::SPECK3D::m_clean_LIS()
+void sperr::SPECK3D::m_clean_LIS()
 {
   for (auto& list : m_LIS) {
     auto it = std::remove_if(list.begin(), list.end(),
@@ -49,7 +49,7 @@ void speck::SPECK3D::m_clean_LIS()
   m_LIP.erase(it, m_LIP.end());
 }
 
-auto speck::SPECK3D::encode() -> RTNType
+auto sperr::SPECK3D::encode() -> RTNType
 {
   if (m_ready_to_encode() == false)
     return RTNType::Error;
@@ -59,7 +59,7 @@ auto speck::SPECK3D::encode() -> RTNType
 
   m_encoded_stream.clear();
   m_bit_buffer.clear();
-  auto max_coeff = speck::make_coeff_positive(m_coeff_buf, m_sign_array);
+  auto max_coeff = sperr::make_coeff_positive(m_coeff_buf, m_sign_array);
 
   // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
   // negative value. std::floor() will always find the smaller integer value,
@@ -113,7 +113,7 @@ auto speck::SPECK3D::encode() -> RTNType
   return rtn;
 }
 
-auto speck::SPECK3D::decode() -> RTNType
+auto sperr::SPECK3D::decode() -> RTNType
 {
   if (m_ready_to_decode() == false)
     return RTNType::Error;
@@ -182,12 +182,12 @@ auto speck::SPECK3D::decode() -> RTNType
   return RTNType::Good;
 }
 
-void speck::SPECK3D::m_initialize_sets_lists()
+void sperr::SPECK3D::m_initialize_sets_lists()
 {
   std::array<size_t, 3> num_of_parts;  // how many times each dimension could be partitioned?
-  num_of_parts[0] = speck::num_of_partitions(m_dims[0]);
-  num_of_parts[1] = speck::num_of_partitions(m_dims[1]);
-  num_of_parts[2] = speck::num_of_partitions(m_dims[2]);
+  num_of_parts[0] = sperr::num_of_partitions(m_dims[0]);
+  num_of_parts[1] = sperr::num_of_partitions(m_dims[1]);
+  num_of_parts[2] = sperr::num_of_partitions(m_dims[2]);
   size_t num_of_sizes = 1;
   for (size_t i = 0; i < 3; i++)
     num_of_sizes += num_of_parts[i];
@@ -211,8 +211,8 @@ void speck::SPECK3D::m_initialize_sets_lists()
   big.length_y = uint32_t(m_dims[1]);  // Truncate 64-bit int to 32-bit, but should be OK.
   big.length_z = uint32_t(m_dims[2]);  // Truncate 64-bit int to 32-bit, but should be OK.
 
-  const auto num_of_xforms_xy = speck::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  const auto num_of_xforms_z = speck::num_of_xforms(m_dims[2]);
+  const auto num_of_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  const auto num_of_xforms_z = sperr::num_of_xforms(m_dims[2]);
   size_t xf = 0;
 
   while (xf < num_of_xforms_xy && xf < num_of_xforms_z) {
@@ -267,7 +267,7 @@ void speck::SPECK3D::m_initialize_sets_lists()
 #endif
 }
 
-auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
+auto sperr::SPECK3D::m_sorting_pass_encode() -> RTNType
 {
 #ifndef QZ_TERM
   // Note that a large portion of the content in `m_LIP` will go to `m_LSP_new`,
@@ -334,7 +334,7 @@ auto speck::SPECK3D::m_sorting_pass_encode() -> RTNType
   return RTNType::Good;
 }
 
-auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
+auto sperr::SPECK3D::m_sorting_pass_decode() -> RTNType
 {
 #ifndef QZ_TERM
   // Note that a large portion of the content in `m_LIP` will go to `m_LSP_new`,
@@ -394,7 +394,7 @@ auto speck::SPECK3D::m_sorting_pass_decode() -> RTNType
 // Refinement pass is only used in fixed-size mode.
 #endif
 
-auto speck::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter, bool output)
+auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter, bool output)
     -> RTNType
 {
   auto& pixel_idx = m_LIP[loc];
@@ -440,7 +440,7 @@ auto speck::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
 }
 
 #ifdef QZ_TERM
-void speck::SPECK3D::m_quantize_P_encode(size_t idx)
+void sperr::SPECK3D::m_quantize_P_encode(size_t idx)
 {
   // Since only identified significant pixels come here, it's immediately
   // subject to a QZ operation based on the current threshold.
@@ -457,7 +457,7 @@ void speck::SPECK3D::m_quantize_P_encode(size_t idx)
   }
   m_coeff_buf[idx] = coeff;
 }
-void speck::SPECK3D::m_quantize_P_decode(size_t idx)
+void sperr::SPECK3D::m_quantize_P_decode(size_t idx)
 {
   // Since only identified significant pixels come here, it's immediately
   // subject to a QZ operation based on the current threshold.
@@ -478,7 +478,7 @@ void speck::SPECK3D::m_quantize_P_decode(size_t idx)
 //
 // Start fixed-size specific functions
 //
-auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
+auto sperr::SPECK3D::m_refinement_pass_encode() -> RTNType
 {
   // First, process `m_LSP_old`.
   //
@@ -514,7 +514,7 @@ auto speck::SPECK3D::m_refinement_pass_encode() -> RTNType
 
   return RTNType::Good;
 }
-auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
+auto sperr::SPECK3D::m_refinement_pass_decode() -> RTNType
 {
   // First, process `m_LSP_old`
   //
@@ -548,7 +548,7 @@ auto speck::SPECK3D::m_refinement_pass_decode() -> RTNType
 }
 #endif
 
-auto speck::SPECK3D::m_decide_significance(const SPECKSet3D& set) const
+auto sperr::SPECK3D::m_decide_significance(const SPECKSet3D& set) const
     -> std::pair<SigType, std::array<uint32_t, 3>>
 {
   assert(!set.is_empty());
@@ -577,7 +577,7 @@ auto speck::SPECK3D::m_decide_significance(const SPECKSet3D& set) const
   return {SigType::Insig, {0, 0, 0}};
 }
 
-auto speck::SPECK3D::m_process_S_encode(size_t idx1,
+auto sperr::SPECK3D::m_process_S_encode(size_t idx1,
                                         size_t idx2,
                                         SigType sig,
                                         size_t& counter,
@@ -652,7 +652,7 @@ auto speck::SPECK3D::m_process_S_encode(size_t idx1,
   return RTNType::Good;
 }
 
-auto speck::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) -> RTNType
+auto sperr::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) -> RTNType
 {
   bool is_sig;
   if (read) {
@@ -688,7 +688,7 @@ auto speck::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) 
   return RTNType::Good;
 }
 
-auto speck::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2, size_t& counter, bool read)
+auto sperr::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2, size_t& counter, bool read)
     -> RTNType
 {
   auto& set = m_LIS[idx1][idx2];
@@ -723,7 +723,7 @@ auto speck::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2, size_t& counte
   return RTNType::Good;
 }
 
-auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2, std::array<SigType, 8> subset_sigs)
+auto sperr::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2, std::array<SigType, 8> subset_sigs)
     -> RTNType
 {
   auto subsets = m_partition_S_XYZ(m_LIS[idx1][idx2]);
@@ -784,7 +784,7 @@ auto speck::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2, std::array<SigTyp
   return RTNType::Good;
 }
 
-auto speck::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
+auto sperr::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
 {
   auto subsets = m_partition_S_XYZ(m_LIS[idx1][idx2]);
   const auto set_end =
@@ -830,7 +830,7 @@ auto speck::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
   return RTNType::Good;
 }
 
-auto speck::SPECK3D::m_ready_to_encode() const -> bool
+auto sperr::SPECK3D::m_ready_to_encode() const -> bool
 {
   if (m_coeff_buf.empty())
     return false;
@@ -845,7 +845,7 @@ auto speck::SPECK3D::m_ready_to_encode() const -> bool
   return true;
 }
 
-auto speck::SPECK3D::m_ready_to_decode() const -> bool
+auto sperr::SPECK3D::m_ready_to_decode() const -> bool
 {
   if (m_bit_buffer.empty())
     return false;
@@ -855,7 +855,7 @@ auto speck::SPECK3D::m_ready_to_decode() const -> bool
   return true;
 }
 
-auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::array<SPECKSet3D, 8>
+auto sperr::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::array<SPECKSet3D, 8>
 {
   using u2_type = std::array<uint32_t, 2>;
 
@@ -964,7 +964,7 @@ auto speck::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::arra
   return subsets;
 }
 
-auto speck::SPECK3D::m_partition_S_XY(const SPECKSet3D& set) const -> std::array<SPECKSet3D, 4>
+auto sperr::SPECK3D::m_partition_S_XY(const SPECKSet3D& set) const -> std::array<SPECKSet3D, 4>
 {
   std::array<SPECKSet3D, 4> subsets;
 
@@ -1027,7 +1027,7 @@ auto speck::SPECK3D::m_partition_S_XY(const SPECKSet3D& set) const -> std::array
   return subsets;
 }
 
-auto speck::SPECK3D::m_partition_S_Z(const SPECKSet3D& set) const -> std::array<SPECKSet3D, 2>
+auto sperr::SPECK3D::m_partition_S_Z(const SPECKSet3D& set) const -> std::array<SPECKSet3D, 2>
 {
   std::array<SPECKSet3D, 2> subsets;
 

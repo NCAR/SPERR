@@ -1,8 +1,8 @@
-#ifndef SPECK_HELPER_H
-#define SPECK_HELPER_H
+#ifndef SPERR_HELPER_H
+#define SPERR_HELPER_H
 
 //
-// We put common functions that are used across the speck encoder here.
+// We put common functions that are used across the project here.
 //
 
 #include <array>
@@ -15,7 +15,7 @@
 #include <vector>
 #include "SperrConfig.h"
 
-namespace speck {
+namespace sperr {
 
 using std::size_t;  // Seems most appropriate
 
@@ -178,6 +178,6 @@ void scatter_chunk(vecd_type& big_vol,
                    const vecd_type& small_vol,
                    const std::array<size_t, 6>& chunk);
 
-};  // namespace speck
+};  // namespace sperr
 
 #endif

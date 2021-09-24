@@ -4,7 +4,7 @@
 #include <cstring>
 
 template <typename T>
-auto speck::SPECK_Storage::copy_data(const T* p, size_t len, dims_type dims) -> RTNType
+auto sperr::SPECK_Storage::copy_data(const T* p, size_t len, dims_type dims) -> RTNType
 {
   static_assert(std::is_floating_point<T>::value, "!! Only floating point values are supported !!");
   if (len != dims[0] * dims[1] * dims[2])
@@ -19,10 +19,10 @@ auto speck::SPECK_Storage::copy_data(const T* p, size_t len, dims_type dims) -> 
 
   return RTNType::Good;
 }
-template auto speck::SPECK_Storage::copy_data(const double*, size_t, dims_type) -> RTNType;
-template auto speck::SPECK_Storage::copy_data(const float*, size_t, dims_type) -> RTNType;
+template auto sperr::SPECK_Storage::copy_data(const double*, size_t, dims_type) -> RTNType;
+template auto sperr::SPECK_Storage::copy_data(const float*, size_t, dims_type) -> RTNType;
 
-auto speck::SPECK_Storage::take_data(vecd_type&& coeffs, dims_type dims) -> RTNType
+auto sperr::SPECK_Storage::take_data(vecd_type&& coeffs, dims_type dims) -> RTNType
 {
   if (coeffs.size() != dims[0] * dims[1] * dims[2])
     return RTNType::WrongSize;
@@ -33,21 +33,21 @@ auto speck::SPECK_Storage::take_data(vecd_type&& coeffs, dims_type dims) -> RTNT
   return RTNType::Good;
 }
 
-auto speck::SPECK_Storage::release_data() -> vecd_type&&
+auto sperr::SPECK_Storage::release_data() -> vecd_type&&
 {
   m_dims = {0, 0, 0};
   return std::move(m_coeff_buf);
 }
-auto speck::SPECK_Storage::view_data() const -> const vecd_type&
+auto sperr::SPECK_Storage::view_data() const -> const vecd_type&
 {
   return m_coeff_buf;
 }
-auto speck::SPECK_Storage::get_dims() const -> std::array<size_t, 3>
+auto sperr::SPECK_Storage::get_dims() const -> std::array<size_t, 3>
 {
   return m_dims;
 }
 
-auto speck::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
+auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
 {
   // Header definition:
   // dim_x,     dim_y,     dim_z,     max_coeff_bits,  qz_term_lev,
@@ -76,11 +76,11 @@ auto speck::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
   assert(pos == m_header_size);
 
   // Assemble the bitstream into bytes
-  auto rtn = speck::pack_booleans(m_encoded_stream, m_bit_buffer, pos);
+  auto rtn = sperr::pack_booleans(m_encoded_stream, m_bit_buffer, pos);
   return rtn;
 }
 
-auto speck::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t comp_size)
+auto sperr::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t comp_size)
     -> RTNType
 {
   // The buffer passed in is supposed to consist a header and then a compacted
@@ -107,7 +107,7 @@ auto speck::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t 
   pos += sizeof(bit_in_byte);
 
   // Unpack bits
-  auto rtn = speck::unpack_booleans(m_bit_buffer, comp_buf, comp_size, pos);
+  auto rtn = sperr::unpack_booleans(m_bit_buffer, comp_buf, comp_size, pos);
   if (rtn != RTNType::Good)
     return rtn;
 
@@ -119,17 +119,17 @@ auto speck::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t 
   return RTNType::Good;
 }
 
-auto speck::SPECK_Storage::view_encoded_bitstream() const -> const vec8_type&
+auto sperr::SPECK_Storage::view_encoded_bitstream() const -> const vec8_type&
 {
   return m_encoded_stream;
 }
 
-auto speck::SPECK_Storage::release_encoded_bitstream() -> vec8_type&&
+auto sperr::SPECK_Storage::release_encoded_bitstream() -> vec8_type&&
 {
   return std::move(m_encoded_stream);
 }
 
-auto speck::SPECK_Storage::get_speck_stream_size(const void* buf) const -> uint64_t
+auto sperr::SPECK_Storage::get_speck_stream_size(const void* buf) const -> uint64_t
 {
   // Given the header definition in `prepare_encoded_bitstream()`, directly
   // go retrieve the value stored in the last 8 bytes of the header
@@ -140,7 +140,7 @@ auto speck::SPECK_Storage::get_speck_stream_size(const void* buf) const -> uint6
   return (m_header_size + size_t(bit_in_byte));
 }
 
-auto speck::SPECK_Storage::get_speck_stream_dims(const void* buf) const -> std::array<size_t, 3>
+auto sperr::SPECK_Storage::get_speck_stream_dims(const void* buf) const -> std::array<size_t, 3>
 {
   // Given the header definition in `prepare_encoded_bitstream()`, directly
   // go retrieve the value stored in byte 0-12.

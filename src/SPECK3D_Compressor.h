@@ -15,18 +15,18 @@
 #include "zstd.h"
 #endif
 
-using speck::RTNType;
+using sperr::RTNType;
 
 class SPECK3D_Compressor {
  public:
   // Accept incoming data: copy from a raw memory block
   template <typename T>
-  auto copy_data(const T* p, size_t len, speck::dims_type dims) -> RTNType;
+  auto copy_data(const T* p, size_t len, sperr::dims_type dims) -> RTNType;
 
   // Accept incoming data: take ownership of a memory block
-  auto take_data(std::vector<double>&& buf, speck::dims_type dims) -> RTNType;
+  auto take_data(std::vector<double>&& buf, sperr::dims_type dims) -> RTNType;
 
-  void toggle_conditioning(speck::Conditioner::settings_type);
+  void toggle_conditioning(sperr::Conditioner::settings_type);
 
 #ifdef QZ_TERM
   void set_qz_level(int32_t);
@@ -44,30 +44,30 @@ class SPECK3D_Compressor {
   auto release_encoded_bitstream() -> std::vector<uint8_t>&&;
 
  private:
-  speck::dims_type m_dims = {0, 0, 0};
-  speck::vecd_type m_val_buf;
+  sperr::dims_type m_dims = {0, 0, 0};
+  sperr::vecd_type m_val_buf;
 
-  speck::Conditioner m_conditioner;
-  speck::CDF97 m_cdf;
-  speck::SPECK3D m_encoder;
+  sperr::Conditioner m_conditioner;
+  sperr::CDF97 m_cdf;
+  sperr::SPECK3D m_encoder;
 
-  speck::Conditioner::settings_type m_conditioning_settings = {true, false, false, false};
+  sperr::Conditioner::settings_type m_conditioning_settings = {true, false, false, false};
 
   // Store bitstreams from the conditioner and SPECK encoding, and the overall
   // bitstream.
-  speck::Conditioner::meta_type m_condi_stream;
-  speck::vec8_type m_speck_stream;
-  speck::vec8_type m_encoded_stream;
+  sperr::Conditioner::meta_type m_condi_stream;
+  sperr::vec8_type m_speck_stream;
+  sperr::vec8_type m_encoded_stream;
 
 #ifdef QZ_TERM
-  speck::vec8_type m_sperr_stream;
-  speck::SPERR m_sperr;
+  sperr::vec8_type m_sperr_stream;
+  sperr::SPERR m_sperr;
   int32_t m_qz_lev = 0;
   double m_tol = 0.0;  // tolerance used in error correction
   size_t m_num_outlier = 0;
-  std::vector<speck::Outlier> m_LOS;  // List of OutlierS
-  speck::vecd_type m_val_buf2;        // Copy of `m_val_buf` that goes through encoding.
-  speck::vecd_type m_diffv;           // Store differences in double in a vector.
+  std::vector<sperr::Outlier> m_LOS;  // List of OutlierS
+  sperr::vecd_type m_val_buf2;        // Copy of `m_val_buf` that goes through encoding.
+  sperr::vecd_type m_diffv;           // Store differences in double in a vector.
 #else
   float m_bpp = 0.0;
 #endif
@@ -78,7 +78,7 @@ class SPECK3D_Compressor {
   std::unique_ptr<ZSTD_CCtx, decltype(&ZSTD_freeCCtx)> m_cctx = {nullptr, &ZSTD_freeCCtx};
 #endif
 
-  auto m_assemble_encoded_bitstream() -> speck::RTNType;
+  auto m_assemble_encoded_bitstream() -> sperr::RTNType;
 };
 
 #endif

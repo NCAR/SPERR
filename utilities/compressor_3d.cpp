@@ -94,18 +94,18 @@ int main(int argc, char* argv[])
   compressor.set_bpp(bpp);
 #endif
 
-  auto orig = speck::read_whole_file<uint8_t>(input_file.c_str());
+  auto orig = sperr::read_whole_file<uint8_t>(input_file.c_str());
   if ((use_double && orig.size() != total_vals * sizeof(double)) ||
       (!use_double && orig.size() != total_vals * sizeof(float))) {
     std::cerr << "Read input file error: " << input_file << std::endl;
     return 1;
   }
-  auto rtn = speck::RTNType::Good;
+  auto rtn = sperr::RTNType::Good;
   if (use_double)
     rtn = compressor.use_volume(reinterpret_cast<const double*>(orig.data()), total_vals);
   else
     rtn = compressor.use_volume(reinterpret_cast<const float*>(orig.data()), total_vals);
-  if (rtn != speck::RTNType::Good) {
+  if (rtn != sperr::RTNType::Good) {
     std::cerr << "Copy data failed!" << std::endl;
     return 1;
   }
@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
   orig.clear();
   orig.shrink_to_fit();
 
-  if (compressor.compress() != speck::RTNType::Good) {
+  if (compressor.compress() != sperr::RTNType::Good) {
     std::cerr << "Compression failed!" << std::endl;
     return 1;
   }
@@ -123,8 +123,8 @@ int main(int argc, char* argv[])
   if (stream.empty())
     return 1;
 
-  rtn = speck::write_n_bytes(output_file.c_str(), stream.size(), stream.data());
-  if (rtn != speck::RTNType::Good) {
+  rtn = sperr::write_n_bytes(output_file.c_str(), stream.size(), stream.data());
+  if (rtn != sperr::RTNType::Good) {
     std::cerr << "Write to disk failed!" << std::endl;
     return 1;
   }

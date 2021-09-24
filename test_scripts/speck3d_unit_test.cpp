@@ -10,14 +10,14 @@
 namespace
 {
 
-using speck::RTNType;
+using sperr::RTNType;
 
 // Create a class that executes the entire pipeline, and calculates the error metrics
 // This class tests objects SPECK3D_Compressor and SPECK3D_Decompressor
-class speck_tester
+class sperr_tester
 {
 public:
-    speck_tester( const char* in, speck::dims_type dims )
+    sperr_tester( const char* in, sperr::dims_type dims )
     {
         m_input_name = in;
         m_dims       = dims;
@@ -53,7 +53,7 @@ public:
         //
         // Use a compressor 
         //
-        auto in_buf = speck::read_whole_file<float>( m_input_name.c_str() );
+        auto in_buf = sperr::read_whole_file<float>( m_input_name.c_str() );
         if( in_buf.size() != total_vals )
             return 1;
         SPECK3D_Compressor compressor;
@@ -89,7 +89,7 @@ public:
         // Compare results
         //
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( in_buf.data(), vol.data(), total_vals, 8,
+        sperr::calc_stats( in_buf.data(), vol.data(), total_vals, 8,
                            rmse, lmax, psnr, arr1min, arr1max );
         m_psnr = psnr;
         m_lmax = lmax;
@@ -100,7 +100,7 @@ public:
 
 private:
     std::string m_input_name;
-    speck::dims_type m_dims = {0, 0, 0};
+    sperr::dims_type m_dims = {0, 0, 0};
     std::string m_output_name = "output.tmp";
     float m_psnr, m_lmax;
 };
@@ -108,17 +108,17 @@ private:
 
 // Create a class that executes the entire pipeline, and calculates the error metrics
 // This class tests objects SPECK3D_OMP_C and SPECK3D_OMP_D
-class speck_tester_omp
+class sperr_tester_omp
 {
 public:
-    speck_tester_omp( const char* in, speck::dims_type dims, size_t num_t )
+    sperr_tester_omp( const char* in, sperr::dims_type dims, size_t num_t )
     {
         m_input_name = in;
         m_dims       = dims;
         m_num_t      = num_t;
     }
 
-    void prefer_chunk_dims( speck::dims_type dims )
+    void prefer_chunk_dims( sperr::dims_type dims )
     {
       m_chunk_dims = dims;
     }
@@ -153,7 +153,7 @@ public:
         //
         // Use a compressor 
         //
-        auto in_buf = speck::read_whole_file<float>( m_input_name.c_str() );
+        auto in_buf = sperr::read_whole_file<float>( m_input_name.c_str() );
         if( in_buf.size() != total_vals )
             return 1;
 
@@ -196,12 +196,12 @@ public:
         //
         const size_t nbytes = sizeof(float) * total_vals;
         auto orig = std::make_unique<float[]>(total_vals);
-        if( speck::read_n_bytes( m_input_name.c_str(), nbytes, orig.get() ) != 
-            speck::RTNType::Good )
+        if( sperr::read_n_bytes( m_input_name.c_str(), nbytes, orig.get() ) != 
+            sperr::RTNType::Good )
             return 1;
 
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( orig.get(), vol.data(), total_vals, 8,
+        sperr::calc_stats( orig.get(), vol.data(), total_vals, 8,
                            rmse, lmax, psnr, arr1min, arr1max );
         m_psnr = psnr;
         m_lmax = lmax;
@@ -211,8 +211,8 @@ public:
 
 private:
     std::string m_input_name;
-    speck::dims_type m_dims = {0, 0, 0};
-    speck::dims_type m_chunk_dims = {64, 64, 64};
+    sperr::dims_type m_dims = {0, 0, 0};
+    sperr::dims_type m_chunk_dims = {64, 64, 64};
     std::string m_output_name = "output.tmp";
     float m_psnr, m_lmax;
     size_t m_num_t;
@@ -221,9 +221,9 @@ private:
 //
 // Test constant fields.
 //
-TEST( speck3d_constant, one_chunk )
+TEST( sperr3d_constant, one_chunk )
 {
-  speck_tester tester( "../test_data/const32x20x16.float", {32, 20, 16} );
+  sperr_tester tester( "../test_data/const32x20x16.float", {32, 20, 16} );
 #ifdef QZ_TERM
   auto rtn = tester.execute( -1, 1 );
 #else
@@ -237,9 +237,9 @@ TEST( speck3d_constant, one_chunk )
   EXPECT_EQ( lmax, 0.0f );
 }
 
-TEST( speck3d_constant, omp_chunks )
+TEST( sperr3d_constant, omp_chunks )
 {
-  speck_tester_omp tester( "../test_data/const32x32x59.float", {32, 32, 59}, 8 );
+  sperr_tester_omp tester( "../test_data/const32x32x59.float", {32, 32, 59}, 8 );
   tester.prefer_chunk_dims({32, 32, 32});
 #ifdef QZ_TERM
   auto rtn = tester.execute( -1, 1 );
@@ -259,10 +259,10 @@ TEST( speck3d_constant, omp_chunks )
 //
 // Error bound mode
 //
-TEST( speck3d_qz_term, large_tolerance )
+TEST( sperr3d_qz_term, large_tolerance )
 {
     const float tol = 1.0;
-    speck_tester tester( "../test_data/wmag128.float", {128, 128, 128} );
+    sperr_tester tester( "../test_data/wmag128.float", {128, 128, 128} );
     auto rtn = tester.execute( 2, tol );
     EXPECT_EQ( rtn, 0 );
     float psnr = tester.get_psnr();
@@ -287,10 +287,10 @@ TEST( speck3d_qz_term, large_tolerance )
     EXPECT_LT( psnr, 7.2108826e+01 );
     EXPECT_LT( lmax, 5.623770e-01 );
 }
-TEST( speck3d_qz_term, small_tolerance )
+TEST( sperr3d_qz_term, small_tolerance )
 {
     const double tol = 0.07;
-    speck_tester tester( "../test_data/wmag128.float", {128, 128, 128} );
+    sperr_tester tester( "../test_data/wmag128.float", {128, 128, 128} );
     auto rtn = tester.execute( -3, tol );
     EXPECT_EQ( rtn, 0 );
     float psnr = tester.get_psnr();
@@ -307,9 +307,9 @@ TEST( speck3d_qz_term, small_tolerance )
     EXPECT_LT( psnr, 9.1753350e+01 );
     EXPECT_LE( lmax, 5.3462983e-02 );
 }
-TEST( speck3d_qz_term, narrow_data_range)
+TEST( sperr3d_qz_term, narrow_data_range)
 {
-    speck_tester tester( "../test_data/vorticity.128_128_41", {128, 128, 41} );
+    sperr_tester tester( "../test_data/vorticity.128_128_41", {128, 128, 41} );
     auto rtn = tester.execute( -16, 3e-5 );
     EXPECT_EQ( rtn, 0 );
     float psnr = tester.get_psnr();
@@ -326,11 +326,11 @@ TEST( speck3d_qz_term, narrow_data_range)
     EXPECT_LT( psnr, 5.05222283e+01 );
     EXPECT_LT( lmax, 6.997870e-06 );
 }
-TEST( speck3d_qz_term_omp, narrow_data_range)
+TEST( sperr3d_qz_term_omp, narrow_data_range)
 {
     // We specify to use 1 thread to make sure that object re-use has no side effects.
     // The next set of tests will use multiple threads.
-    speck_tester_omp tester( "../test_data/vorticity.128_128_41", {128, 128, 41}, 1 );
+    sperr_tester_omp tester( "../test_data/vorticity.128_128_41", {128, 128, 41}, 1 );
     auto rtn = tester.execute( -16, 3e-5 );
     EXPECT_EQ( rtn, 0 );
     float psnr = tester.get_psnr();
@@ -347,9 +347,9 @@ TEST( speck3d_qz_term_omp, narrow_data_range)
     EXPECT_LT( psnr, 50.486733 );
     EXPECT_LT( lmax, 6.991625e-06 );
 }
-TEST( speck3d_qz_term_omp, small_tolerance )
+TEST( sperr3d_qz_term_omp, small_tolerance )
 {
-    speck_tester_omp tester( "../test_data/wmag128.float", {128, 128, 128}, 7 );
+    sperr_tester_omp tester( "../test_data/wmag128.float", {128, 128, 128}, 7 );
     auto rtn = tester.execute( -3, 0.07);
     EXPECT_EQ( rtn, 0 );
     float psnr = tester.get_psnr();
@@ -371,9 +371,9 @@ TEST( speck3d_qz_term_omp, small_tolerance )
 //
 // fixed-size mode
 //
-TEST( speck3d_bit_rate, small )
+TEST( sperr3d_bit_rate, small )
 {
-    speck_tester tester( "../test_data/wmag17.float", {17, 17, 17} );
+    sperr_tester tester( "../test_data/wmag17.float", {17, 17, 17} );
 
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
@@ -397,9 +397,9 @@ TEST( speck3d_bit_rate, small )
     EXPECT_LT( lmax, 1.0009356e+01 );
 }
 
-TEST( speck3d_bit_rate, big )
+TEST( sperr3d_bit_rate, big )
 {
-    speck_tester tester( "../test_data/wmag128.float", {128, 128, 128} );
+    sperr_tester tester( "../test_data/wmag128.float", {128, 128, 128} );
 
     tester.execute( 2.0f );
     float psnr = tester.get_psnr();
@@ -430,9 +430,9 @@ TEST( speck3d_bit_rate, big )
     EXPECT_LT( lmax, 3.9112084e+01 );
 }
 
-TEST( speck3d_bit_rate, narrow_data_range )
+TEST( sperr3d_bit_rate, narrow_data_range )
 {
-    speck_tester tester( "../test_data/vorticity.128_128_41", {128, 128, 41} );
+    sperr_tester tester( "../test_data/vorticity.128_128_41", {128, 128, 41} );
 
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
@@ -470,9 +470,9 @@ TEST( speck3d_bit_rate, narrow_data_range )
     EXPECT_LT( lmax, 3.329716e-05 );
 }
 
-TEST( speck3d_bit_rate_omp, narrow_data_range )
+TEST( sperr3d_bit_rate_omp, narrow_data_range )
 {
-    speck_tester_omp tester( "../test_data/vorticity.128_128_41", {128, 128, 41}, 1 );
+    sperr_tester_omp tester( "../test_data/vorticity.128_128_41", {128, 128, 41}, 1 );
 
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
@@ -489,9 +489,9 @@ TEST( speck3d_bit_rate_omp, narrow_data_range )
     EXPECT_LT( lmax, 1.396333e-05 );
 }
 
-TEST( speck3d_bit_rate_omp, big )
+TEST( sperr3d_bit_rate_omp, big )
 {
-    speck_tester_omp tester( "../test_data/wmag128.float", {128, 128, 128}, 8 );
+    sperr_tester_omp tester( "../test_data/wmag128.float", {128, 128, 128}, 8 );
 
     tester.execute( 2.0f );
     float psnr = tester.get_psnr();

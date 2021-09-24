@@ -10,7 +10,7 @@
 
 #include "SPECK3D_Decompressor.h"
 
-using speck::RTNType;
+using sperr::RTNType;
 
 class SPECK3D_OMP_D {
  public:
@@ -34,8 +34,8 @@ class SPECK3D_OMP_D {
   auto get_dims() const -> std::array<size_t, 3>;
 
  private:
-  speck::dims_type m_dims = {0, 0, 0};        // Dimension of the entire volume
-  speck::dims_type m_chunk_dims = {0, 0, 0};  // Preferred dimensions for a chunk
+  sperr::dims_type m_dims = {0, 0, 0};        // Dimension of the entire volume
+  sperr::dims_type m_chunk_dims = {0, 0, 0};  // Preferred dimensions for a chunk
   size_t m_num_threads = 1;                   // number of theads to use in OpenMP sections
 
 #ifndef QZ_TERM
