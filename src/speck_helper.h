@@ -148,15 +148,15 @@ auto read_whole_file(const char* filename) -> std::vector<T>;
 // Note that arr1 is considered as the ground truth array, so it's the range of
 // arr1 that is used internally for psnr calculations.
 template <typename T>
-void calc_stats(const T* arr1,    // input
-                const T* arr2,    // input
-                size_t arr_len,   // input
+void calc_stats(const T* arr1,   // input
+                const T* arr2,   // input
+                size_t arr_len,  // input
                 size_t omp_nthreads,
-                T& rmse,          // output
-                T& linfty,        // output
-                T& psnr,          // output
-                T& arr1min,       // output
-                T& arr1max);      // output
+                T& rmse,      // output
+                T& linfty,    // output
+                T& psnr,      // output
+                T& arr1min,   // output
+                T& arr1max);  // output
 
 template <typename T>
 auto kahan_summation(const T*, size_t) -> T;

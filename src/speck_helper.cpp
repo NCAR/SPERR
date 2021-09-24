@@ -280,10 +280,10 @@ void speck::calc_stats(const T* arr1,
   auto sum_vec = std::vector<T>(num_of_strides + 1);
   auto linfty_vec = std::vector<T>(num_of_strides + 1);
 
-  //
-  // Calculate summation and l-infty of each stride
-  //
-  #pragma omp parallel for num_threads(omp_nthreads)
+//
+// Calculate summation and l-infty of each stride
+//
+#pragma omp parallel for num_threads(omp_nthreads)
   for (size_t stride_i = 0; stride_i < num_of_strides; stride_i++) {
     T linfty = 0.0;
     auto buf = std::array<T, stride_size>();
@@ -330,8 +330,15 @@ void speck::calc_stats(const T* arr1,
   range_sq *= range_sq;
   psnr = std::log10(range_sq / msr) * T{10.0};
 }
-template void
-speck::calc_stats(const float*, const float*, size_t, size_t, float&, float&, float&, float&, float&);
+template void speck::calc_stats(const float*,
+                                const float*,
+                                size_t,
+                                size_t,
+                                float&,
+                                float&,
+                                float&,
+                                float&,
+                                float&);
 template void speck::calc_stats(const double*,
                                 const double*,
                                 size_t,
