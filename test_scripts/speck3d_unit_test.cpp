@@ -89,7 +89,7 @@ public:
         // Compare results
         //
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( in_buf.data(), vol.data(), total_vals,
+        speck::calc_stats( in_buf.data(), vol.data(), total_vals, 8,
                            rmse, lmax, psnr, arr1min, arr1max );
         m_psnr = psnr;
         m_lmax = lmax;
@@ -201,7 +201,7 @@ public:
             return 1;
 
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( orig.get(), vol.data(), total_vals,
+        speck::calc_stats( orig.get(), vol.data(), total_vals, 8,
                            rmse, lmax, psnr, arr1min, arr1max );
         m_psnr = psnr;
         m_lmax = lmax;

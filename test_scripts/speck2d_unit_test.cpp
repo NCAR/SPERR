@@ -70,7 +70,7 @@ public:
         // Compare results 
         //
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( in_buf.data(), slice.data(), total_vals,
+        speck::calc_stats( in_buf.data(), slice.data(), total_vals, 8,
                            rmse, lmax, psnr, arr1min, arr1max );
         m_psnr = psnr;
         m_lmax = lmax;
