@@ -78,6 +78,7 @@ add_subdirectory( src )
 
 list( APPEND HELPER_LIBS    speck_helper         )
 list( APPEND HELPER_LIBS    Conditioner          )
+list( APPEND HELPER_LIBS    OpenMP::OpenMP_CXX   )
 list( APPEND CDF_LIBS       CDF97                )
 list( APPEND SPECK_Storage_LIBS SPECK_Storage    )
 list( APPEND SPECK3D_LIBS   SPECK3D_OMP_C        )
@@ -205,75 +206,11 @@ if( BUILD_UNIT_TESTS )
                         "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/sperr_unit_test.cpp" )
         target_link_libraries( test_sperr PUBLIC ${SPERR_LIBS}
                                           PUBLIC ${HELPER_LIBS}
-                                          PUBLIC gtest_main             )
-        add_test( NAME test_sperr COMMAND test_sperr                    )
+                                          PUBLIC gtest_main           )
+        add_test( NAME test_sperr COMMAND test_sperr                  )
     endif()
 
 
 endif()
 
 
-# block comment
-#[[
-option( BUILD_QCC_EXAMPLES "Build examples that link to QccPack?" OFF)
-if( BUILD_QCC_EXAMPLES )
-    set ( QCCPACK_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/QccPack-0.61-1/install/" 
-                              CACHE STRING "Where QccPack is installed"             )
-    find_library( QCCPACK_LIB QccPack      HINTS ${QCCPACK_INSTALL_DIR}/lib         )
-    find_path(    QCCPACK_INC libQccPack.h HINTS ${QCCPACK_INSTALL_DIR}/include     )
-    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/utilities/CohenDaubechiesFeauveau.9-7.lft" 
-         DESTINATION ${PROJECT_BINARY_DIR}                                          )
-
-    # Qcc Executable #1
-    add_executable( example_qcc_dwt2d  "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_qcc_dwt2d.c" )
-    target_link_libraries(      example_qcc_dwt2d PUBLIC sam_helper
-                                                  PUBLIC ${QCCPACK_LIB}
-                                                  PUBLIC m                   )
-    target_include_directories( example_qcc_dwt2d PUBLIC ${PROJECT_BINARY_DIR}
-                                                  PUBLIC ${QCCPACK_INC}      )
-
-    # Qcc Executable #2
-    add_executable( example_qcc_dwt3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_qcc_dwt3d.c" )
-    target_link_libraries(      example_qcc_dwt3d PUBLIC sam_helper
-                                                  PUBLIC ${QCCPACK_LIB}
-                                                  PUBLIC m                   )
-    target_include_directories( example_qcc_dwt3d PUBLIC ${PROJECT_BINARY_DIR}
-                                                  PUBLIC ${QCCPACK_INC}      )
-
-    # Qcc Executable #3
-    add_executable( example_qcc_speck2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_qcc_speck2d.c" )
-    target_link_libraries(      example_qcc_speck2d PUBLIC sam_helper
-                                                    PUBLIC ${QCCPACK_LIB}
-                                                    PUBLIC m                   )
-    target_include_directories( example_qcc_speck2d PUBLIC ${PROJECT_BINARY_DIR}
-                                                    PUBLIC ${QCCPACK_INC}      )
-
-    # Qcc Executable #4
-    add_executable( example_qcc_speck3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_qcc_speck3d.c" )
-    target_link_libraries(      example_qcc_speck3d PUBLIC sam_helper
-                                                    PUBLIC ${QCCPACK_LIB}
-                                                    PUBLIC m                   )
-    target_include_directories( example_qcc_speck3d PUBLIC ${PROJECT_BINARY_DIR}
-                                                    PUBLIC ${QCCPACK_INC}      )
-endif() 
-
-#
-# Examples that I decide not to maintain anymore.
-#
-add_executable( example_dwt2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt2d.cpp" )
-target_include_directories( example_dwt2d PUBLIC ${PROJECT_BINARY_DIR} )
-target_link_libraries(      example_dwt2d PUBLIC ${CDF_LIBS}
-                                          PUBLIC ${HELPER_LIBS} )
-
-add_executable( example_dwt3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_dwt3d.cpp" )
-target_include_directories( example_dwt3d PUBLIC ${PROJECT_BINARY_DIR} )
-target_link_libraries(      example_dwt3d PUBLIC ${CDF_LIBS}
-                                          PUBLIC ${HELPER_LIBS} )
-
-add_executable( example_sperr "${CMAKE_CURRENT_SOURCE_DIR}/utilities/example_sperr.cpp" )
-target_include_directories( example_sperr PUBLIC ${PROJECT_BINARY_DIR} )
-target_link_libraries(      example_sperr PUBLIC ${SPERR_LIBS}
-                                          PUBLIC ${CDF_LIBS}
-                                          PUBLIC ${HELPER_LIBS} )
-]]
-# end of block comment

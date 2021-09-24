@@ -17,6 +17,7 @@ target_include_directories( SPECK2D       INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} 
 target_include_directories( SPECK3D       INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( SPERR         INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 
+target_compile_options( speck_helper  PUBLIC ${OpenMP_CXX_FLAGS} )
 
 #
 # Wraps core libraries with easy-to-use interfaces

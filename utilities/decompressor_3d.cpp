@@ -116,7 +116,8 @@ int main(int argc, char* argv[])
 
     printf("Average bit-per-pixel = %.2f\n", in_stream_num_bytes * 8.0f / orig.size());
     double rmse, lmax, psnr, arr1min, arr1max;
-    speck::calc_stats(orig.data(), vol.data(), orig.size(), rmse, lmax, psnr, arr1min, arr1max);
+    speck::calc_stats(orig.data(), vol.data(), orig.size(), omp_num_threads, rmse, lmax, psnr,
+                      arr1min, arr1max);
     printf("Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
     printf("Decompressed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
   }
@@ -131,7 +132,8 @@ int main(int argc, char* argv[])
 
     printf("Average bit-per-pixel = %.2f\n", in_stream_num_bytes * 8.0f / orig.size());
     float rmse, lmax, psnr, arr1min, arr1max;
-    speck::calc_stats(orig.data(), vol.data(), orig.size(), rmse, lmax, psnr, arr1min, arr1max);
+    speck::calc_stats(orig.data(), vol.data(), orig.size(), omp_num_threads, rmse, lmax, psnr,
+                      arr1min, arr1max);
     printf("Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
     printf("Decompressed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
   }
