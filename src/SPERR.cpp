@@ -9,7 +9,9 @@
 //
 // Class SPECKSet1D
 //
-sperr::SPECKSet1D::SPECKSet1D(size_t s, size_t l, uint32_t p) : start(s), length(l), part_level(p) {}
+sperr::SPECKSet1D::SPECKSet1D(size_t s, size_t l, uint32_t p) : start(s), length(l), part_level(p)
+{
+}
 
 //
 // Struct Outlier

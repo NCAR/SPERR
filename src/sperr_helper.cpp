@@ -7,7 +7,6 @@
 #include <cstring>
 #include <numeric>
 
-
 auto sperr::num_of_xforms(size_t len) -> size_t
 {
   assert(len > 0);
