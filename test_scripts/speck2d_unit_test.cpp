@@ -9,10 +9,10 @@ namespace
 {
 
 // Create a class that executes the entire pipeline, and calculates the error metrics
-class sperr_tester
+class speck_tester
 {
 public:
-    sperr_tester( const char* in, size_t x, size_t y )
+    speck_tester( const char* in, size_t x, size_t y )
     {
         m_input_name = in;
         m_dim_x      = x;
@@ -87,9 +87,9 @@ private:
 };
 
 
-TEST( sperr2d, lena )
+TEST( speck2d, lena )
 {
-    sperr_tester tester( "../test_data/lena512.float", 512, 512 );
+    speck_tester tester( "../test_data/lena512.float", 512, 512 );
 
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
@@ -117,9 +117,9 @@ TEST( sperr2d, lena )
 }
 
 
-TEST( sperr2d, odd_dim_image )
+TEST( speck2d, odd_dim_image )
 {
-    sperr_tester tester( "../test_data/90x90.float", 90, 90 );
+    speck_tester tester( "../test_data/90x90.float", 90, 90 );
 
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
@@ -147,9 +147,9 @@ TEST( sperr2d, odd_dim_image )
 }
 
 
-TEST( sperr2d, small_data_range )
+TEST( speck2d, small_data_range )
 {
-    sperr_tester tester( "../test_data/vorticity.512_512", 512, 512 );
+    speck_tester tester( "../test_data/vorticity.512_512", 512, 512 );
 
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();

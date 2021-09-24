@@ -166,6 +166,8 @@ if( BUILD_UNIT_TESTS )
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
     # Add googletest directly to our build. This defines the gtest and gtest_main targets.
+    # These two added directories are essentially the SOURCE_DIR and BINARY_DIR 
+    # of the external project (googletest)
     add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest
                      ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest-build
                      EXCLUDE_FROM_ALL)
