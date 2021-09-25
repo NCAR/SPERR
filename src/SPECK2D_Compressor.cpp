@@ -8,7 +8,7 @@
 #endif
 
 template <typename T>
-auto SPECK2D_Compressor::copy_data(const T* p, size_t len, speck::dims_type dims) -> RTNType
+auto SPECK2D_Compressor::copy_data(const T* p, size_t len, sperr::dims_type dims) -> RTNType
 {
   static_assert(std::is_floating_point<T>::value, "!! Only floating point values are supported !!");
 
@@ -21,10 +21,10 @@ auto SPECK2D_Compressor::copy_data(const T* p, size_t len, speck::dims_type dims
 
   return RTNType::Good;
 }
-template auto SPECK2D_Compressor::copy_data(const double*, size_t, speck::dims_type) -> RTNType;
-template auto SPECK2D_Compressor::copy_data(const float*, size_t, speck::dims_type) -> RTNType;
+template auto SPECK2D_Compressor::copy_data(const double*, size_t, sperr::dims_type) -> RTNType;
+template auto SPECK2D_Compressor::copy_data(const float*, size_t, sperr::dims_type) -> RTNType;
 
-auto SPECK2D_Compressor::take_data(std::vector<double>&& buf, speck::dims_type dims) -> RTNType
+auto SPECK2D_Compressor::take_data(std::vector<double>&& buf, sperr::dims_type dims) -> RTNType
 {
   if (buf.size() != dims[0] * dims[1] || dims[2] != 1)
     return RTNType::WrongSize;
@@ -63,7 +63,7 @@ auto SPECK2D_Compressor::compress() -> RTNType
 
   // Step 1: data goes through the conditioner
   // Only applying subtract mean here.
-  auto settings = speck::Conditioner::settings_type{true, false, false, false};
+  auto settings = sperr::Conditioner::settings_type{true, false, false, false};
   m_conditioner.toggle_all_settings(settings);
   auto [rtn, condi_meta] = m_conditioner.condition(m_val_buf);
   if (rtn != RTNType::Good)
@@ -122,7 +122,7 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 #else
   metabool[0] = false;
 #endif
-  meta[1] = speck::pack_8_booleans(metabool);
+  meta[1] = sperr::pack_8_booleans(metabool);
 
   const auto total_size = m_meta_size + m_condi_stream.size() + m_speck_stream.size();
 

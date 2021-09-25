@@ -1,4 +1,4 @@
-#include "speck_helper.h"
+#include "sperr_helper.h"
 
 #include <algorithm>
 #include <cassert>
@@ -7,12 +7,7 @@
 #include <cstring>
 #include <numeric>
 
-//
-// Uncomment the following lines to enable OpenMP
-//
-// #include <omp.h>
-
-auto speck::num_of_xforms(size_t len) -> size_t
+auto sperr::num_of_xforms(size_t len) -> size_t
 {
   assert(len > 0);
   // I decide 8 is the minimal length to do one level of xform.
@@ -20,7 +15,7 @@ auto speck::num_of_xforms(size_t len) -> size_t
   return (f < 0.0f ? 0 : size_t(f) + 1);
 }
 
-auto speck::num_of_partitions(size_t len) -> size_t
+auto sperr::num_of_partitions(size_t len) -> size_t
 {
   size_t num_of_parts = 0;  // Num. of partitions we can do
   while (len > 1) {
@@ -31,7 +26,7 @@ auto speck::num_of_partitions(size_t len) -> size_t
   return num_of_parts;
 }
 
-auto speck::calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<size_t, 2>
+auto sperr::calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<size_t, 2>
 {
   size_t low_len = orig_len;
   size_t high_len = 0;
@@ -43,7 +38,7 @@ auto speck::calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<si
   return {low_len, high_len};
 }
 
-auto speck::make_coeff_positive(vecd_type& buf, std::vector<bool>& signs) -> double
+auto sperr::make_coeff_positive(vecd_type& buf, std::vector<bool>& signs) -> double
 {
   signs.resize(buf.size(), false);
 
@@ -61,7 +56,7 @@ auto speck::make_coeff_positive(vecd_type& buf, std::vector<bool>& signs) -> dou
 
 // Good solution to deal with bools and unsigned chars
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
-auto speck::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& src, size_t offset)
+auto sperr::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& src, size_t offset)
     -> RTNType
 {
   if (src.size() % 8 != 0)  // `src` has to have a size of multiples of 8.
@@ -92,7 +87,7 @@ auto speck::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& s
   return RTNType::Good;
 }
 
-auto speck::unpack_booleans(std::vector<bool>& dest,
+auto sperr::unpack_booleans(std::vector<bool>& dest,
                             const void* src,
                             size_t src_len,
                             size_t src_offset) -> RTNType
@@ -161,7 +156,7 @@ auto speck::unpack_booleans(std::vector<bool>& dest,
   return RTNType::Good;
 }
 
-auto speck::pack_8_booleans(std::array<bool, 8> src) -> uint8_t
+auto sperr::pack_8_booleans(std::array<bool, 8> src) -> uint8_t
 {
   // It turns out that C++ doesn't specify bool to be one byte,
   // so to be safe we copy the content of src to array of uint8_t.
@@ -174,7 +169,7 @@ auto speck::pack_8_booleans(std::array<bool, 8> src) -> uint8_t
   return dest;
 }
 
-auto speck::unpack_8_booleans(uint8_t src) -> std::array<bool, 8>
+auto sperr::unpack_8_booleans(uint8_t src) -> std::array<bool, 8>
 {
   const uint64_t magic = 0x8040201008040201;
   const uint64_t mask = 0x8080808080808080;
@@ -189,7 +184,7 @@ auto speck::unpack_8_booleans(uint8_t src) -> std::array<bool, 8>
   ;
 }
 
-auto speck::read_n_bytes(const char* filename, size_t n_bytes, void* buffer) -> RTNType
+auto sperr::read_n_bytes(const char* filename, size_t n_bytes, void* buffer) -> RTNType
 {
   std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename, "rb"), &std::fclose);
 
@@ -208,7 +203,7 @@ auto speck::read_n_bytes(const char* filename, size_t n_bytes, void* buffer) -> 
 }
 
 template <typename T>
-auto speck::read_whole_file(const char* filename) -> std::vector<T>
+auto sperr::read_whole_file(const char* filename) -> std::vector<T>
 {
   std::vector<T> buf;
 
@@ -228,11 +223,11 @@ auto speck::read_whole_file(const char* filename) -> std::vector<T>
 
   return buf;
 }
-template auto speck::read_whole_file(const char*) -> std::vector<float>;
-template auto speck::read_whole_file(const char*) -> std::vector<double>;
-template auto speck::read_whole_file(const char*) -> std::vector<uint8_t>;
+template auto sperr::read_whole_file(const char*) -> std::vector<float>;
+template auto sperr::read_whole_file(const char*) -> std::vector<double>;
+template auto sperr::read_whole_file(const char*) -> std::vector<uint8_t>;
 
-auto speck::write_n_bytes(const char* filename, size_t n_bytes, const void* buffer) -> RTNType
+auto sperr::write_n_bytes(const char* filename, size_t n_bytes, const void* buffer) -> RTNType
 {
   std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename, "wb"), &std::fclose);
   if (!fp)
@@ -245,7 +240,7 @@ auto speck::write_n_bytes(const char* filename, size_t n_bytes, const void* buff
 }
 
 template <typename T>
-void speck::calc_stats(const T* arr1,
+void sperr::calc_stats(const T* arr1,
                        const T* arr2,
                        size_t arr_len,
                        size_t omp_nthreads,
@@ -330,7 +325,7 @@ void speck::calc_stats(const T* arr1,
   range_sq *= range_sq;
   psnr = std::log10(range_sq / msr) * T{10.0};
 }
-template void speck::calc_stats(const float*,
+template void sperr::calc_stats(const float*,
                                 const float*,
                                 size_t,
                                 size_t,
@@ -339,7 +334,7 @@ template void speck::calc_stats(const float*,
                                 float&,
                                 float&,
                                 float&);
-template void speck::calc_stats(const double*,
+template void sperr::calc_stats(const double*,
                                 const double*,
                                 size_t,
                                 size_t,
@@ -350,7 +345,7 @@ template void speck::calc_stats(const double*,
                                 double&);
 
 template <typename T>
-auto speck::kahan_summation(const T* arr, size_t len) -> T
+auto sperr::kahan_summation(const T* arr, size_t len) -> T
 {
   T sum = 0.0, c = 0.0;
   T t, y;
@@ -363,10 +358,10 @@ auto speck::kahan_summation(const T* arr, size_t len) -> T
 
   return sum;
 }
-template auto speck::kahan_summation(const float*, size_t) -> float;
-template auto speck::kahan_summation(const double*, size_t) -> double;
+template auto sperr::kahan_summation(const float*, size_t) -> float;
+template auto sperr::kahan_summation(const double*, size_t) -> double;
 
-auto speck::chunk_volume(const std::array<size_t, 3>& vol_dim,
+auto sperr::chunk_volume(const std::array<size_t, 3>& vol_dim,
                          const std::array<size_t, 3>& chunk_dim)
     -> std::vector<std::array<size_t, 6>>
 {
@@ -418,7 +413,7 @@ auto speck::chunk_volume(const std::array<size_t, 3>& vol_dim,
 }
 
 template <typename T>
-auto speck::gather_chunk(const T* vol, dims_type vol_dim, const std::array<size_t, 6>& chunk)
+auto sperr::gather_chunk(const T* vol, dims_type vol_dim, const std::array<size_t, 6>& chunk)
     -> vecd_type
 {
   auto buf = std::vector<double>();
@@ -442,12 +437,12 @@ auto speck::gather_chunk(const T* vol, dims_type vol_dim, const std::array<size_
   // Will be subject to Named Return Value Optimization.
   return buf;
 }
-template auto speck::gather_chunk(const float*, dims_type, const std::array<size_t, 6>&)
+template auto sperr::gather_chunk(const float*, dims_type, const std::array<size_t, 6>&)
     -> vecd_type;
-template auto speck::gather_chunk(const double*, dims_type, const std::array<size_t, 6>&)
+template auto sperr::gather_chunk(const double*, dims_type, const std::array<size_t, 6>&)
     -> vecd_type;
 
-void speck::scatter_chunk(vecd_type& big_vol,
+void sperr::scatter_chunk(vecd_type& big_vol,
                           dims_type vol_dim,
                           const vecd_type& small_vol,
                           const std::array<size_t, 6>& chunk)

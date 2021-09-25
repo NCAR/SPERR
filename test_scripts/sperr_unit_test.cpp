@@ -6,7 +6,7 @@
 
 namespace {
 
-using speck::RTNType;
+using sperr::RTNType;
 
 class err_tester 
 {
@@ -14,7 +14,7 @@ private:
     const size_t length = 256 * 128* 415;
     const double tolerance = 0.05;
     
-    std::vector<speck::Outlier> LOS, recovered;
+    std::vector<sperr::Outlier> LOS, recovered;
 
 public:
     // A method to generate `N` outliers 
@@ -45,7 +45,7 @@ public:
 
     void test_outliers() {
         // Create an encoder
-        speck::SPERR encoder;
+        sperr::SPERR encoder;
         encoder.set_length( length );
         encoder.set_tolerance( tolerance );
         encoder.copy_outlier_list( LOS );
@@ -55,7 +55,7 @@ public:
         auto stream = encoder.get_encoded_bitstream();
 
         // Create a decoder
-        speck::SPERR decoder;
+        sperr::SPERR decoder;
         if( decoder.parse_encoded_bitstream(stream.data(), stream.size()) != RTNType::Good )
             return;
         if( decoder.decode() != RTNType::Good )

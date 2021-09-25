@@ -42,7 +42,7 @@ auto SPECK3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
   size_t loc = 1;
 
   // Parse Step 2: ZSTD application and 3D/2D recording need to be consistent.
-  auto b8 = speck::unpack_8_booleans(u8p[loc]);
+  auto b8 = sperr::unpack_8_booleans(u8p[loc]);
   loc++;
 #ifdef USE_ZSTD
   if (b8[0] == false)
@@ -66,7 +66,7 @@ auto SPECK3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
   m_chunk_dims[2] = vcdim[5];
 
   // Figure out how many chunks and their length
-  auto chunks = speck::chunk_volume(m_dims, m_chunk_dims);
+  auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
   const auto num_chunks = chunks.size();
   auto chunk_sizes = std::vector<size_t>(num_chunks, 0);
   for (size_t i = 0; i < num_chunks; i++) {
@@ -106,7 +106,7 @@ auto SPECK3D_OMP_D::decompress(const void* p) -> RTNType
     return RTNType::Error;
 
   // Let's figure out the chunk information
-  const auto chunks = speck::chunk_volume(m_dims, m_chunk_dims);
+  const auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
   const auto num_chunks = chunks.size();
   if (m_offsets.size() != num_chunks + 1)
     return RTNType::Error;
@@ -138,7 +138,7 @@ auto SPECK3D_OMP_D::decompress(const void* p) -> RTNType
       chunk_rtn[i * 3 + 2] = RTNType::Error;
     else {
       chunk_rtn[i * 3 + 2] = RTNType::Good;
-      speck::scatter_chunk(m_vol_buf, m_dims, small_vol, chunks[i]);
+      sperr::scatter_chunk(m_vol_buf, m_dims, small_vol, chunks[i]);
     }
   }
 
@@ -150,7 +150,7 @@ auto SPECK3D_OMP_D::decompress(const void* p) -> RTNType
     return RTNType::Good;
 }
 
-auto SPECK3D_OMP_D::release_data() -> speck::vecd_type&&
+auto SPECK3D_OMP_D::release_data() -> sperr::vecd_type&&
 {
   m_dims = {0, 0, 0};
   return std::move(m_vol_buf);

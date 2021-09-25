@@ -5,9 +5,9 @@
 #ifndef SPERR_H
 #define SPERR_H
 
-#include "speck_helper.h"
+#include "sperr_helper.h"
 
-namespace speck {
+namespace sperr {
 
 //
 // Auxiliary class to hold a 1D SPECK Set
@@ -128,6 +128,6 @@ class SPERR {
   mutable std::vector<bool> m_bvec_tmp;
 };
 
-};  // namespace speck
+};  // namespace sperr
 
 #endif

@@ -16,7 +16,7 @@
 #include "zstd.h"
 #endif
 
-using speck::RTNType;
+using sperr::RTNType;
 
 class SPECK3D_Decompressor {
  public:
@@ -37,19 +37,19 @@ class SPECK3D_Decompressor {
   auto get_dims() const -> std::array<size_t, 3>;
 
  private:
-  speck::dims_type m_dims = {0, 0, 0};
+  sperr::dims_type m_dims = {0, 0, 0};
 
-  speck::Conditioner::meta_type m_condi_stream;
-  speck::vec8_type m_speck_stream;
-  speck::vecd_type m_val_buf;
+  sperr::Conditioner::meta_type m_condi_stream;
+  sperr::vec8_type m_speck_stream;
+  sperr::vecd_type m_val_buf;
 
-  speck::Conditioner m_conditioner;
-  speck::CDF97 m_cdf;
-  speck::SPECK3D m_decoder;
+  sperr::Conditioner m_conditioner;
+  sperr::CDF97 m_cdf;
+  sperr::SPECK3D m_decoder;
 
 #ifdef QZ_TERM
-  speck::SPERR m_sperr;
-  speck::vec8_type m_sperr_stream;
+  sperr::SPERR m_sperr;
+  sperr::vec8_type m_sperr_stream;
 #else
   float m_bpp = 0.0;
 #endif

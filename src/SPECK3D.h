@@ -5,7 +5,7 @@
 
 #include <limits>
 
-namespace speck {
+namespace sperr {
 
 //
 // Auxiliary class to hold a 3D SPECK Set
@@ -126,6 +126,6 @@ class SPECK3D : public SPECK_Storage {
   std::array<double, 64> m_threshold_arr;
 };
 
-};  // namespace speck
+};  // namespace sperr
 
 #endif

@@ -1,4 +1,3 @@
-
 #include "CDF97.h"
 #include "Conditioner.h"
 #include <cstdlib>
@@ -15,17 +14,17 @@ TEST( dwt1d, big_image_even )
 
     // Let read in binaries as 4-byte floats
     auto in_buf = std::make_unique<float[]>( total_vals );
-    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
+    if( sperr::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != sperr::RTNType::Good )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and then use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.get(), in_buf.get() + total_vals, in_copy.begin() );
-    auto condi = speck::Conditioner(); 
+    auto condi = sperr::Conditioner(); 
     auto [rtn, meta] = condi.condition( in_copy );
 
-    // Use a speck::CDF97 to perform DWT and IDWT.
-    speck::CDF97 cdf;
+    // Use a sperr::CDF97 to perform DWT and IDWT.
+    sperr::CDF97 cdf;
     cdf.take_data( std::move(in_copy), {dim_x, 1, 1} );
     cdf.dwt1d();
     cdf.idwt1d();
@@ -51,17 +50,17 @@ TEST( dwt1d, big_image_odd )
 
     // Let read in binaries as 4-byte floats
     auto in_buf = std::make_unique<float[]>( total_vals );
-    if( speck::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != speck::RTNType::Good )
+    if( sperr::read_n_bytes( input, sizeof(float) * total_vals, in_buf.get() ) != sperr::RTNType::Good )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.get(), in_buf.get() + total_vals, in_copy.begin() );
-    auto condi = speck::Conditioner();
+    auto condi = sperr::Conditioner();
     auto [rtn, meta] = condi.condition( in_copy );
 
-    // Use a speck::CDF97 to perform DWT and IDWT.
-    speck::CDF97 cdf;
+    // Use a sperr::CDF97 to perform DWT and IDWT.
+    sperr::CDF97 cdf;
     cdf.take_data( std::move(in_copy), {dim_x, 1, 1} );
     cdf.dwt1d();
     cdf.idwt1d();
@@ -86,18 +85,18 @@ TEST( dwt2d, small_image_even )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
-    auto in_buf = speck::read_whole_file<float>(input);
+    auto in_buf = sperr::read_whole_file<float>(input);
     if( in_buf.size() != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
-    auto condi = speck::Conditioner(); 
+    auto condi = sperr::Conditioner(); 
     auto [rtn, meta] = condi.condition( in_copy );
 
-    // Use a speck::CDF97 to perform DWT and IDWT.
-    speck::CDF97 cdf;
+    // Use a sperr::CDF97 to perform DWT and IDWT.
+    sperr::CDF97 cdf;
     cdf.take_data( std::move(in_copy), {dim_x, dim_y, 1} );
     cdf.dwt2d();
     cdf.idwt2d();
@@ -122,18 +121,18 @@ TEST( dwt2d, small_image_odd )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
-    auto in_buf = speck::read_whole_file<float>(input);
+    auto in_buf = sperr::read_whole_file<float>(input);
     if( in_buf.size() != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
-    auto condi = speck::Conditioner(); 
+    auto condi = sperr::Conditioner(); 
     auto [rtn, meta] = condi.condition( in_copy );
 
-    // Use a speck::CDF97 to perform DWT and IDWT.
-    speck::CDF97 cdf;
+    // Use a sperr::CDF97 to perform DWT and IDWT.
+    sperr::CDF97 cdf;
     cdf.take_data( std::move(in_copy), {dim_x, dim_y, 1} );
     cdf.dwt2d();
     cdf.idwt2d();
@@ -158,18 +157,18 @@ TEST( dwt2d, big_image_even )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
-    auto in_buf = speck::read_whole_file<float>(input);
+    auto in_buf = sperr::read_whole_file<float>(input);
     if( in_buf.size() != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
-    auto condi = speck::Conditioner();
+    auto condi = sperr::Conditioner();
     auto [rtn, meta] = condi.condition( in_copy );
 
-    // Use a speck::CDF97 to perform DWT and IDWT.
-    speck::CDF97 cdf;
+    // Use a sperr::CDF97 to perform DWT and IDWT.
+    sperr::CDF97 cdf;
     cdf.take_data( std::move(in_copy), {dim_x, dim_y, 1} );
     cdf.dwt2d();
     cdf.idwt2d();
@@ -194,18 +193,18 @@ TEST( dwt2d, big_image_odd )
     const size_t  total_vals = dim_x * dim_y;
 
     // Let read in binaries as 4-byte floats
-    auto in_buf = speck::read_whole_file<float>(input);
+    auto in_buf = sperr::read_whole_file<float>(input);
     if( in_buf.size() != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
-    auto condi = speck::Conditioner();
+    auto condi = sperr::Conditioner();
     auto [rtn, meta] = condi.condition( in_copy );
 
-    // Use a speck::CDF97 to perform DWT and IDWT.
-    speck::CDF97 cdf;
+    // Use a sperr::CDF97 to perform DWT and IDWT.
+    sperr::CDF97 cdf;
     cdf.take_data( std::move(in_copy), {dim_x, dim_y, 1} );
     cdf.dwt2d();
     cdf.idwt2d();
@@ -230,18 +229,18 @@ TEST( dwt3d, small_even_cube )
     const size_t  total_vals = dim_x * dim_y * dim_z;
 
     // Let read in binaries as 4-byte floats
-    auto in_buf = speck::read_whole_file<float>(input);
+    auto in_buf = sperr::read_whole_file<float>(input);
     if( in_buf.size() != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
-    auto condi = speck::Conditioner();
+    auto condi = sperr::Conditioner();
     auto [rtn, meta] = condi.condition( in_copy );
 
-    // Use a speck::CDF97 to perform DWT and IDWT, wavelet-packet.
-    speck::CDF97 cdf;
+    // Use a sperr::CDF97 to perform DWT and IDWT, wavelet-packet.
+    sperr::CDF97 cdf;
     cdf.copy_data( in_copy.data(), dim_x * dim_y * dim_z, {dim_x, dim_y, dim_z} );
     cdf.dwt3d_wavelet_packet();
     cdf.idwt3d_wavelet_packet();
@@ -277,18 +276,18 @@ TEST( dwt3d, big_odd_cube )
     const size_t  total_vals = dim_x * dim_y * dim_z;
 
     // Let read in binaries as 4-byte floats
-    auto in_buf = speck::read_whole_file<float>(input);
+    auto in_buf = sperr::read_whole_file<float>(input);
     if( in_buf.size() != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
-    auto condi = speck::Conditioner(); 
+    auto condi = sperr::Conditioner(); 
     auto [rtn, meta] = condi.condition( in_copy );
 
-    // Use a speck::CDF97 to perform DWT and IDWT, wavelet-packet
-    speck::CDF97 cdf;
+    // Use a sperr::CDF97 to perform DWT and IDWT, wavelet-packet
+    sperr::CDF97 cdf;
     cdf.copy_data( in_copy.data(), dim_x * dim_y * dim_z, {dim_x, dim_y, dim_z} );
     cdf.dwt3d_wavelet_packet();
     cdf.idwt3d_wavelet_packet();
@@ -324,18 +323,18 @@ TEST( dwt3d, big_even_cube )
     const size_t  total_vals = dim_x * dim_y * dim_z;
 
     // Let read in binaries as 4-byte floats
-    auto in_buf = speck::read_whole_file<float>(input);
+    auto in_buf = sperr::read_whole_file<float>(input);
     if( in_buf.size() != total_vals )
         std::cerr << "Input read error!" << std::endl;
 
     // Make a copy and use a conditioner
     auto in_copy = std::vector<double>( total_vals );
     std::copy( in_buf.begin(), in_buf.end(), in_copy.begin() );
-    auto condi = speck::Conditioner( );
+    auto condi = sperr::Conditioner( );
     auto [rtn, meta] = condi.condition( in_copy );
 
-    // Use a speck::CDF97 to perform DWT and IDWT: wavelet-packet strategy
-    speck::CDF97 cdf;
+    // Use a sperr::CDF97 to perform DWT and IDWT: wavelet-packet strategy
+    sperr::CDF97 cdf;
     cdf.copy_data( in_copy.data(), dim_x * dim_y * dim_z, {dim_x, dim_y, dim_z} );
     cdf.dwt3d_wavelet_packet();
     cdf.idwt3d_wavelet_packet();

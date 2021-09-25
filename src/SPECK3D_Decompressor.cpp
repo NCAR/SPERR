@@ -116,8 +116,6 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
     return RTNType::Good;
   }
 
-  // The following steps are for a normal speck->speck->sperr pipeline.
-  //
   // Step 1: SPECK decode.
   if (m_speck_stream.empty())
     return RTNType::Error;
@@ -144,8 +142,8 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
   m_cdf.copy_data(decoder_out.data(), decoder_out.size(), m_dims);
   // Figure out which dwt3d strategy to use.
   // Note: this strategy needs to be consistent with SPECK3D_Compressor.
-  auto xforms_xy = speck::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  auto xforms_z = speck::num_of_xforms(m_dims[2]);
+  auto xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  auto xforms_z = sperr::num_of_xforms(m_dims[2]);
   if (xforms_xy == xforms_z)
     m_cdf.idwt3d_dyadic();
   else

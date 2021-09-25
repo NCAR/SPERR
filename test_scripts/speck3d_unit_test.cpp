@@ -10,14 +10,14 @@
 namespace
 {
 
-using speck::RTNType;
+using sperr::RTNType;
 
 // Create a class that executes the entire pipeline, and calculates the error metrics
 // This class tests objects SPECK3D_Compressor and SPECK3D_Decompressor
 class speck_tester
 {
 public:
-    speck_tester( const char* in, speck::dims_type dims )
+    speck_tester( const char* in, sperr::dims_type dims )
     {
         m_input_name = in;
         m_dims       = dims;
@@ -53,7 +53,7 @@ public:
         //
         // Use a compressor 
         //
-        auto in_buf = speck::read_whole_file<float>( m_input_name.c_str() );
+        auto in_buf = sperr::read_whole_file<float>( m_input_name.c_str() );
         if( in_buf.size() != total_vals )
             return 1;
         SPECK3D_Compressor compressor;
@@ -89,7 +89,7 @@ public:
         // Compare results
         //
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( in_buf.data(), vol.data(), total_vals, 8,
+        sperr::calc_stats( in_buf.data(), vol.data(), total_vals, 8,
                            rmse, lmax, psnr, arr1min, arr1max );
         m_psnr = psnr;
         m_lmax = lmax;
@@ -100,7 +100,7 @@ public:
 
 private:
     std::string m_input_name;
-    speck::dims_type m_dims = {0, 0, 0};
+    sperr::dims_type m_dims = {0, 0, 0};
     std::string m_output_name = "output.tmp";
     float m_psnr, m_lmax;
 };
@@ -111,14 +111,14 @@ private:
 class speck_tester_omp
 {
 public:
-    speck_tester_omp( const char* in, speck::dims_type dims, size_t num_t )
+    speck_tester_omp( const char* in, sperr::dims_type dims, size_t num_t )
     {
         m_input_name = in;
         m_dims       = dims;
         m_num_t      = num_t;
     }
 
-    void prefer_chunk_dims( speck::dims_type dims )
+    void prefer_chunk_dims( sperr::dims_type dims )
     {
       m_chunk_dims = dims;
     }
@@ -153,7 +153,7 @@ public:
         //
         // Use a compressor 
         //
-        auto in_buf = speck::read_whole_file<float>( m_input_name.c_str() );
+        auto in_buf = sperr::read_whole_file<float>( m_input_name.c_str() );
         if( in_buf.size() != total_vals )
             return 1;
 
@@ -196,12 +196,12 @@ public:
         //
         const size_t nbytes = sizeof(float) * total_vals;
         auto orig = std::make_unique<float[]>(total_vals);
-        if( speck::read_n_bytes( m_input_name.c_str(), nbytes, orig.get() ) != 
-            speck::RTNType::Good )
+        if( sperr::read_n_bytes( m_input_name.c_str(), nbytes, orig.get() ) != 
+            sperr::RTNType::Good )
             return 1;
 
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( orig.get(), vol.data(), total_vals, 8,
+        sperr::calc_stats( orig.get(), vol.data(), total_vals, 8,
                            rmse, lmax, psnr, arr1min, arr1max );
         m_psnr = psnr;
         m_lmax = lmax;
@@ -211,8 +211,8 @@ public:
 
 private:
     std::string m_input_name;
-    speck::dims_type m_dims = {0, 0, 0};
-    speck::dims_type m_chunk_dims = {64, 64, 64};
+    sperr::dims_type m_dims = {0, 0, 0};
+    sperr::dims_type m_chunk_dims = {64, 64, 64};
     std::string m_output_name = "output.tmp";
     float m_psnr, m_lmax;
     size_t m_num_t;

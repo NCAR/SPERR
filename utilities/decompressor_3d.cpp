@@ -59,12 +59,12 @@ int main(int argc, char* argv[])
   //
   // Let's do the actual work
   //
-  auto in_stream = speck::read_whole_file<uint8_t>(input_file.c_str());
+  auto in_stream = sperr::read_whole_file<uint8_t>(input_file.c_str());
   if (in_stream.empty())
     return 1;
   SPECK3D_OMP_D decompressor;
   decompressor.set_num_threads(omp_num_threads);
-  if (decompressor.use_bitstream(in_stream.data(), in_stream.size()) != speck::RTNType::Good) {
+  if (decompressor.use_bitstream(in_stream.data(), in_stream.size()) != sperr::RTNType::Good) {
     std::cerr << "Read compressed file error: " << input_file << std::endl;
     return 1;
   }
@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
   decompressor.set_bpp(decomp_bpp);
 #endif
 
-  if (decompressor.decompress(in_stream.data()) != speck::RTNType::Good) {
+  if (decompressor.decompress(in_stream.data()) != sperr::RTNType::Good) {
     std::cerr << "Decompression failed!" << std::endl;
     return 1;
   }
@@ -87,8 +87,8 @@ int main(int argc, char* argv[])
     auto vol = decompressor.view_data();
     if (vol.empty())
       return 1;
-    if (speck::write_n_bytes(output_file.c_str(), vol.size() * sizeof(double), vol.data()) !=
-        speck::RTNType::Good) {
+    if (sperr::write_n_bytes(output_file.c_str(), vol.size() * sizeof(double), vol.data()) !=
+        sperr::RTNType::Good) {
       std::cerr << "Write to disk failed!" << std::endl;
       return 1;
     }
@@ -97,8 +97,8 @@ int main(int argc, char* argv[])
     auto vol = decompressor.get_data<float>();
     if (vol.empty())
       return 1;
-    if (speck::write_n_bytes(output_file.c_str(), vol.size() * sizeof(double), vol.data()) !=
-        speck::RTNType::Good) {
+    if (sperr::write_n_bytes(output_file.c_str(), vol.size() * sizeof(double), vol.data()) !=
+        sperr::RTNType::Good) {
       std::cerr << "Write to disk failed!" << std::endl;
       return 1;
     }
@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
   // Compare with the original data if user specifies
   if (*compare_double_ptr) {
     auto vol = decompressor.view_data();
-    auto orig = speck::read_whole_file<double>(compare_double.c_str());
+    auto orig = sperr::read_whole_file<double>(compare_double.c_str());
     if (orig.size() != vol.size()) {
       std::cerr << "File to compare with has difference size with the decompressed file!"
                 << std::endl;
@@ -116,14 +116,14 @@ int main(int argc, char* argv[])
 
     printf("Average bit-per-pixel = %.2f\n", in_stream_num_bytes * 8.0f / orig.size());
     double rmse, lmax, psnr, arr1min, arr1max;
-    speck::calc_stats(orig.data(), vol.data(), orig.size(), omp_num_threads, rmse, lmax, psnr,
+    sperr::calc_stats(orig.data(), vol.data(), orig.size(), omp_num_threads, rmse, lmax, psnr,
                       arr1min, arr1max);
     printf("Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
     printf("Decompressed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
   }
   else if (*compare_single_ptr) {
     auto vol = decompressor.get_data<float>();
-    auto orig = speck::read_whole_file<float>(compare_single.c_str());
+    auto orig = sperr::read_whole_file<float>(compare_single.c_str());
     if (orig.size() != vol.size()) {
       std::cerr << "File to compare with has difference size with the decompressed file!"
                 << std::endl;
@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
 
     printf("Average bit-per-pixel = %.2f\n", in_stream_num_bytes * 8.0f / orig.size());
     float rmse, lmax, psnr, arr1min, arr1max;
-    speck::calc_stats(orig.data(), vol.data(), orig.size(), omp_num_threads, rmse, lmax, psnr,
+    sperr::calc_stats(orig.data(), vol.data(), orig.size(), omp_num_threads, rmse, lmax, psnr,
                       arr1min, arr1max);
     printf("Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
     printf("Decompressed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);

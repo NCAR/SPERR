@@ -11,7 +11,7 @@
 #include "Conditioner.h"
 #include "SPECK2D.h"
 
-using speck::RTNType;
+using sperr::RTNType;
 
 class SPECK2D_Decompressor {
  public:
@@ -30,17 +30,17 @@ class SPECK2D_Decompressor {
   auto get_dims() const -> std::array<size_t, 3>;
 
  private:
-  speck::dims_type m_dims = {0, 0, 0};
-  speck::Conditioner::meta_type m_condi_stream;
-  speck::vec8_type m_speck_stream;
-  speck::vecd_type m_val_buf;
+  sperr::dims_type m_dims = {0, 0, 0};
+  sperr::Conditioner::meta_type m_condi_stream;
+  sperr::vec8_type m_speck_stream;
+  sperr::vecd_type m_val_buf;
 
   const size_t m_meta_size = 2;
   float m_bpp = 0.0;
 
-  speck::Conditioner m_conditioner;
-  speck::CDF97 m_cdf;
-  speck::SPECK2D m_decoder;
+  sperr::Conditioner m_conditioner;
+  sperr::CDF97 m_cdf;
+  sperr::SPECK2D m_decoder;
 };
 
 #endif

@@ -9,9 +9,9 @@
 #include <string>
 #include <utility>  // std::pair<>
 #include <vector>
-#include "speck_helper.h"
+#include "sperr_helper.h"
 
-namespace speck {
+namespace sperr {
 
 class SPECK_Storage {
  public:
@@ -59,6 +59,6 @@ class SPECK_Storage {
   auto m_prepare_encoded_bitstream() -> RTNType;
 };
 
-};  // namespace speck
+};  // namespace sperr
 
 #endif

@@ -4,7 +4,7 @@
 #include <cstring>
 
 template <typename T>
-auto SPECK3D_Compressor::copy_data(const T* p, size_t len, speck::dims_type dims) -> RTNType
+auto SPECK3D_Compressor::copy_data(const T* p, size_t len, sperr::dims_type dims) -> RTNType
 {
   static_assert(std::is_floating_point<T>::value, "!! Only floating point values are supported !!");
 
@@ -18,10 +18,10 @@ auto SPECK3D_Compressor::copy_data(const T* p, size_t len, speck::dims_type dims
 
   return RTNType::Good;
 }
-template auto SPECK3D_Compressor::copy_data(const double*, size_t, speck::dims_type) -> RTNType;
-template auto SPECK3D_Compressor::copy_data(const float*, size_t, speck::dims_type) -> RTNType;
+template auto SPECK3D_Compressor::copy_data(const double*, size_t, sperr::dims_type) -> RTNType;
+template auto SPECK3D_Compressor::copy_data(const float*, size_t, sperr::dims_type) -> RTNType;
 
-auto SPECK3D_Compressor::take_data(speck::vecd_type&& buf, speck::dims_type dims) -> RTNType
+auto SPECK3D_Compressor::take_data(sperr::vecd_type&& buf, sperr::dims_type dims) -> RTNType
 {
   if (buf.size() != dims[0] * dims[1] * dims[2])
     return RTNType::WrongSize;
@@ -80,8 +80,8 @@ auto SPECK3D_Compressor::compress() -> RTNType
     return rtn;
   // Figure out which dwt3d strategy to use.
   // Note: this strategy needs to be consistent with SPECK3D_Decompressor.
-  auto xforms_xy = speck::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  auto xforms_z = speck::num_of_xforms(m_dims[2]);
+  auto xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  auto xforms_z = sperr::num_of_xforms(m_dims[2]);
   if (xforms_xy == xforms_z)
     m_cdf.dwt3d_dyadic();
   else
@@ -188,8 +188,8 @@ auto SPECK3D_Compressor::compress() -> RTNType
     return rtn;
   // Figure out which dwt3d strategy to use.
   // Note: this strategy needs to be consistent with SPECK3D_Decompressor.
-  auto xforms_xy = speck::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  auto xforms_z = speck::num_of_xforms(m_dims[2]);
+  auto xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  auto xforms_z = sperr::num_of_xforms(m_dims[2]);
   if (xforms_xy == xforms_z)
     m_cdf.dwt3d_dyadic();
   else
@@ -319,7 +319,7 @@ auto SPECK3D_Compressor::set_bpp(float bpp) -> RTNType
 }
 #endif
 
-void SPECK3D_Compressor::toggle_conditioning(speck::Conditioner::settings_type b4)
+void SPECK3D_Compressor::toggle_conditioning(sperr::Conditioner::settings_type b4)
 {
   m_conditioning_settings = b4;
 }

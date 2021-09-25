@@ -3,7 +3,7 @@
 
 #include "SPECK_Storage.h"
 
-namespace speck {
+namespace sperr {
 
 //
 // Auxiliary class to hold a SPECK Set
@@ -92,6 +92,6 @@ class SPECK2D : public SPECK_Storage {
   std::vector<std::vector<SPECKSet2D>> m_LIS;
 };
 
-};  // namespace speck
+};  // namespace sperr
 
 #endif

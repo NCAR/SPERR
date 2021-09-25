@@ -3,9 +3,9 @@
 
 #include <cmath>
 
-#include "speck_helper.h"
+#include "sperr_helper.h"
 
-namespace speck {
+namespace sperr {
 
 class CDF97 {
  public:
@@ -139,6 +139,6 @@ class CDF97 {
    */
 };
 
-};  // namespace speck
+};  // namespace sperr
 
 #endif

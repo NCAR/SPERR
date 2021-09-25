@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include "gtest/gtest.h"
 
-using speck::RTNType;
+using sperr::RTNType;
 
 namespace
 {
@@ -37,7 +37,7 @@ public:
         m_lmax = 10000.0;
 
         const size_t  total_vals = m_dim_x * m_dim_y;
-        auto in_buf = speck::read_whole_file<float>( m_input_name.c_str() );
+        auto in_buf = sperr::read_whole_file<float>( m_input_name.c_str() );
         if( in_buf.size() != total_vals )
             return 1;
 
@@ -70,7 +70,7 @@ public:
         // Compare results 
         //
         float rmse, lmax, psnr, arr1min, arr1max;
-        speck::calc_stats( in_buf.data(), slice.data(), total_vals, 8,
+        sperr::calc_stats( in_buf.data(), slice.data(), total_vals, 8,
                            rmse, lmax, psnr, arr1min, arr1max );
         m_psnr = psnr;
         m_lmax = lmax;
