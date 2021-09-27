@@ -11,8 +11,11 @@ auto sperr::num_of_xforms(size_t len) -> size_t
 {
   assert(len > 0);
   // I decide 8 is the minimal length to do one level of xform.
-  float f = std::log2(float(len) / 8.0f);
-  return (f < 0.0f ? 0 : size_t(f) + 1);
+  auto f = std::log2(double(len) / 8.0);
+  auto num = f < 0.0 ? size_t{0}: size_t(f) + 1;
+  // I also decide that no matter what the input size is,
+  // six (6) is the maxinum number of transforms to do.
+  return std::min( num, size_t{6} );
 }
 
 auto sperr::num_of_partitions(size_t len) -> size_t

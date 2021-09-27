@@ -107,13 +107,13 @@ TEST( speck2d, lena )
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
     EXPECT_GT( psnr, 38.8008 );
-    EXPECT_LT( lmax, 14.4871 );
+    EXPECT_LT( lmax, 14.5204 );
 
     tester.execute( 0.5f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
     EXPECT_GT( psnr, 35.6299 );
-    EXPECT_LT( lmax, 37.109243 );
+    EXPECT_LT( lmax, 37.1734 );
 }
 
 
@@ -154,20 +154,20 @@ TEST( speck2d, small_data_range )
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 71.289436 ); // The big difference is to 
-    EXPECT_LT( psnr, 71.289444 ); // accomodate clang and gcc.
-    EXPECT_LT( lmax, 0.000002  );
+    EXPECT_GT( psnr, 71.289436 );
+    EXPECT_LT( psnr, 71.28975  );
+    EXPECT_LT( lmax, 0.000002 );
 
     tester.execute( 2.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 59.666803 );
+    EXPECT_GT( psnr, 59.66657 );
     EXPECT_LT( lmax, 0.0000084 );
 
     tester.execute( 1.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 52.396354 );
+    EXPECT_GT( psnr, 52.3961 );
     EXPECT_LT( lmax, 0.0000213 );
 
     tester.execute( 0.5f );
