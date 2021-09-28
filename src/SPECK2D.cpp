@@ -119,7 +119,8 @@ auto sperr::SPECK2D::decode() -> RTNType
 
 void sperr::SPECK2D::m_initialize_sets_lists()
 {
-  const auto num_of_parts = m_num_of_partitions();
+  const auto num_of_parts = std::max(sperr::num_of_partitions(m_dims[0]), 
+                                     sperr::num_of_partitions(m_dims[1]));
   const auto num_of_xforms = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
 
   // prepare m_LIS
@@ -640,19 +641,6 @@ auto sperr::SPECK2D::m_input_refinement(const SPECKSet2D& pixel) -> RTNType
   return RTNType::Good;
 }
 
-// Calculate the number of partitions able to be performed
-auto sperr::SPECK2D::m_num_of_partitions() const -> size_t
-{
-  size_t num_of_parts = 0;
-  size_t dim_x = m_dims[0], dim_y = m_dims[1];
-  while (dim_x > 1 || dim_y > 1) {
-    num_of_parts++;
-    dim_x -= dim_x / 2;
-    dim_y -= dim_y / 2;
-  }
-  return num_of_parts;
-}
-
 void sperr::SPECK2D::m_calc_root_size(SPECKSet2D& root) const
 {
   // approximation and detail lengths are placed as the 1st and 2nd element
@@ -702,9 +690,4 @@ auto sperr::SPECK2D::m_ready_to_decode() const -> bool
   return true;
 }
 
-#ifdef PRINT
-void sperr::SPECK2D::m_print_set(const char* str, const SPECKSet2D& set) const
-{
-  printf("%s: (%d, %d, %d, %d)\n", str, set.start_x, set.start_y, set.length_x, set.length_y);
-}
-#endif
+

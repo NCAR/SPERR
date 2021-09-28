@@ -65,15 +65,9 @@ class SPECK2D : public SPECK_Storage {
   auto m_output_refinement(const SPECKSet2D& pixel) -> RTNType;
 
   void m_calc_root_size(SPECKSet2D& root) const;
-  // How many partitions available to perform given the 2D dimensions?
-  auto m_num_of_partitions() const -> size_t;
   void m_clean_LIS();  // Clean garbage sets from m_LIS if too much garbage exists.
   auto m_ready_to_encode() const -> bool;
   auto m_ready_to_decode() const -> bool;
-
-#ifdef PRINT
-  void m_print_set(const char*, const SPECKSet2D& set) const;
-#endif
 
   //
   // Private data members
@@ -82,7 +76,6 @@ class SPECK2D : public SPECK_Storage {
   size_t m_budget = 0;        // What's the budget for num of bits?
   size_t m_bit_idx = 0;       // Used for decode. Which bit we're at?
   bool m_encode_mode = true;  // Encode (true) or Decode (false) mode?
-  SPECKSet2D m_I;
 
   std::vector<bool> m_significance_map;
   std::vector<bool> m_sign_array;
@@ -90,6 +83,7 @@ class SPECK2D : public SPECK_Storage {
 
   std::vector<SPECKSet2D> m_LSP;
   std::vector<std::vector<SPECKSet2D>> m_LIS;
+  SPECKSet2D m_I;
 };
 
 };  // namespace sperr
