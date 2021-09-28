@@ -119,27 +119,24 @@ auto sperr::SPECK2D::decode() -> RTNType
 
 void sperr::SPECK2D::m_initialize_sets_lists()
 {
-  const auto num_of_parts =
-      std::max(sperr::num_of_partitions(m_dims[0]), sperr::num_of_partitions(m_dims[1]));
-  const auto num_of_xforms = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-
   // prepare m_LIS
   // Note that `m_LIS` can only grow in size.
+  const auto num_of_parts =
+      std::max(sperr::num_of_partitions(m_dims[0]), sperr::num_of_partitions(m_dims[1]));
   if (m_LIS.size() < num_of_parts + 1)
     m_LIS.resize(num_of_parts + 1);
   for (auto& list : m_LIS)
     list.clear();
 
   // prepare the root, S
-  SPECKSet2D S;
-  S.part_level = num_of_xforms;
-  m_calc_root_size(S);
+  auto S = m_produce_root();
   m_LIS[S.part_level].emplace_back(S);
 
+  // clear m_LSP
   m_LSP.clear();
 
   // prepare m_I
-  m_I.part_level = num_of_xforms;
+  m_I.part_level = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
   m_I.start_x = S.length_x;
   m_I.start_y = S.length_y;
   m_I.length_x = m_dims[0];
@@ -583,16 +580,20 @@ auto sperr::SPECK2D::m_input_refinement(const SPECKSet2D& pixel) -> RTNType
   return RTNType::Good;
 }
 
-void sperr::SPECK2D::m_calc_root_size(SPECKSet2D& root) const
+auto sperr::SPECK2D::m_produce_root() const -> SPECKSet2D
 {
-  // approximation and detail lengths are placed as the 1st and 2nd element
-  auto len_x = sperr::calc_approx_detail_len(m_dims[0], root.part_level);
-  auto len_y = sperr::calc_approx_detail_len(m_dims[1], root.part_level);
+  auto num_of_xforms = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  auto len_x = sperr::calc_approx_detail_len(m_dims[0], num_of_xforms);
+  auto len_y = sperr::calc_approx_detail_len(m_dims[1], num_of_xforms);
 
-  root.start_x = 0;
-  root.start_y = 0;
-  root.length_x = len_x[0];
-  root.length_y = len_y[0];
+  SPECKSet2D S;
+  S.part_level = num_of_xforms;
+  S.start_x = 0;
+  S.start_y = 0;
+  S.length_x = len_x[0];
+  S.length_y = len_y[0];
+
+  return S;
 }
 
 void sperr::SPECK2D::m_clean_LIS()
