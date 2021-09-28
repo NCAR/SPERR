@@ -57,7 +57,8 @@ class SPECK2D : public SPECK_Storage {
   void m_initialize_sets_lists();
   auto m_partition_S(const SPECKSet2D&) const -> std::array<SPECKSet2D, 4>;
   void m_partition_I(std::array<SPECKSet2D, 3>& subsets);
-  auto m_decide_set_significance(SPECKSet2D& set) -> RTNType;
+  auto m_decide_set_S_significance(const SPECKSet2D& set) -> SigType;
+  auto m_decide_set_I_significance(const SPECKSet2D& set) -> SigType;
   auto m_output_set_significance(const SPECKSet2D& set) -> RTNType;
   auto m_input_pixel_sign(const SPECKSet2D& pixel) -> RTNType;
   auto m_output_pixel_sign(const SPECKSet2D& pixel) -> RTNType;
@@ -79,7 +80,6 @@ class SPECK2D : public SPECK_Storage {
 
   std::vector<bool> m_significance_map;
   std::vector<bool> m_sign_array;
-  std::vector<size_t> m_LIS_garbage_cnt;
 
   std::vector<SPECKSet2D> m_LSP;
   std::vector<std::vector<SPECKSet2D>> m_LIS;

@@ -119,8 +119,8 @@ auto sperr::SPECK2D::decode() -> RTNType
 
 void sperr::SPECK2D::m_initialize_sets_lists()
 {
-  const auto num_of_parts = std::max(sperr::num_of_partitions(m_dims[0]), 
-                                     sperr::num_of_partitions(m_dims[1]));
+  const auto num_of_parts =
+      std::max(sperr::num_of_partitions(m_dims[0]), sperr::num_of_partitions(m_dims[1]));
   const auto num_of_xforms = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
 
   // prepare m_LIS
@@ -129,7 +129,6 @@ void sperr::SPECK2D::m_initialize_sets_lists()
     m_LIS.resize(num_of_parts + 1);
   for (auto& list : m_LIS)
     list.clear();
-  m_LIS_garbage_cnt.assign(num_of_parts + 1, 0);
 
   // prepare the root, S
   SPECKSet2D S;
@@ -158,11 +157,7 @@ auto sperr::SPECK2D::m_sorting_pass() -> RTNType
     // significant at each iteration, so not touching every data value.
     m_significance_map.assign(m_coeff_buf.size(), false);
     for (size_t i = 0; i < m_coeff_buf.size(); i++) {
-#if __cplusplus >= 202002L
-      if (m_coeff_buf[i] >= m_threshold) [[unlikely]] {
-#else
       if (m_coeff_buf[i] >= m_threshold) {
-#endif
         m_significance_map[i] = true;
       }
     }
@@ -223,22 +218,16 @@ auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
 
   if (need_decide_signif) {
     if (m_encode_mode) {
-      m_decide_set_significance(set);  // Always returns RTNType::Good when encoding.
+      set.signif = m_decide_set_S_significance(set);
       auto rtn = m_output_set_significance(set);
       if (rtn == RTNType::BitBudgetMet)
         return rtn;
       assert(rtn == RTNType::Good);
     }
     else {
-      auto rtn = m_decide_set_significance(set);
-      if (rtn == RTNType::BitBudgetMet)
-        return rtn;
-      assert(rtn == RTNType::Good);
-#ifdef PRINT
-      auto bit = (set.signif == SigType::Sig);
-      std::string str = bit ? "s1" : "s0";
-      std::cout << str << std::endl;
-#endif
+      if (m_bit_idx >= m_budget)
+        return RTNType::BitBudgetMet;
+      set.signif = m_bit_buffer[m_bit_idx++] ? SigType::Sig : SigType::Insig;
     }
   }
   else {
@@ -272,7 +261,6 @@ auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
       assert(rtn == RTNType::Good);
     }
     set.type = SetType::Garbage;  // This particular object will be discarded.
-    m_LIS_garbage_cnt[set.part_level]++;
   }
 
   return RTNType::Good;
@@ -369,7 +357,7 @@ auto sperr::SPECK2D::m_process_I(bool need_decide_sig) -> RTNType
 
   if (m_encode_mode) {
     if (need_decide_sig)
-      m_decide_set_significance(m_I);
+      m_I.signif = m_decide_set_I_significance(m_I);
     else
       m_I.signif = SigType::Sig;
 
@@ -379,16 +367,9 @@ auto sperr::SPECK2D::m_process_I(bool need_decide_sig) -> RTNType
     assert(rtn == RTNType::Good);
   }
   else {
-    auto rtn = m_decide_set_significance(m_I);
-    if (rtn == RTNType::BitBudgetMet)
-      return rtn;
-    assert(rtn == RTNType::Good);
-
-#ifdef PRINT
-    auto bit = (m_I.signif == SigType::Sig);
-    std::string str = bit ? "s1" : "s0";
-    std::cout << str << std::endl;
-#endif
+    if (m_bit_idx >= m_budget)
+      return RTNType::BitBudgetMet;
+    m_I.signif = m_bit_buffer[m_bit_idx++] ? SigType::Sig : SigType::Insig;
   }
 
   if (m_I.signif == SigType::Sig) {
@@ -476,60 +457,39 @@ void sperr::SPECK2D::m_partition_I(std::array<SPECKSet2D, 3>& subsets)
   m_I.start_y += detail_len_y;
 }
 
-auto sperr::SPECK2D::m_decide_set_significance(SPECKSet2D& set) -> RTNType
+auto sperr::SPECK2D::m_decide_set_S_significance(const SPECKSet2D& set) -> SigType
 {
-  // Note: When encoding, this method always returns RTN::Good.
-  //       It could return RTNType::BitBudgetMet when decoding.
-
-  // If decoding, simply read a bit from the bitstream, no matter TypeS or
-  // TypeI.
-  if (!m_encode_mode) {
-    if (m_bit_idx >= m_budget)
-      return RTNType::BitBudgetMet;
-
-    auto bit = m_bit_buffer[m_bit_idx++];
-    set.signif = bit ? SigType::Sig : SigType::Insig;
-    return RTNType::Good;
-  }
-
-  // If encoding, we start by marking it insignificant, and then compare with
-  // the significance map.
-  set.signif = SigType::Insig;
-
   // For TypeS sets, we test an obvious rectangle specified by this set.
-  if (set.type == SetType::TypeS) {
-    for (auto y = set.start_y; y < (set.start_y + set.length_y); y++)
-      for (auto x = set.start_x; x < (set.start_x + set.length_x); x++) {
-        auto idx = y * m_dims[0] + x;
-        if (m_significance_map[idx]) {
-          set.signif = SigType::Sig;
-          return RTNType::Good;
-        }
-      }
-  }
-  else if (set.type == SetType::TypeI) {
-    // For TypeI sets, we need to test two rectangles!
-    // First rectangle: directly to the right of the missing top-left corner
-    for (size_t y = 0; y < set.start_y; y++)
-      for (auto x = set.start_x; x < set.length_x; x++) {
-        auto idx = y * m_dims[0] + x;
-        if (m_significance_map[idx]) {
-          set.signif = SigType::Sig;
-          return RTNType::Good;
-        }
-      }
-
-    // Second rectangle: the rest area at the bottom
-    // Note: this rectangle is stored in a contiguous chunk of memory :)
-    for (auto i = set.start_y * set.length_x; i < set.length_x * set.length_y; i++) {
-      if (m_significance_map[i]) {
-        set.signif = SigType::Sig;
-        return RTNType::Good;
-      }
+  assert(set.type == SetType::TypeS);
+  for (auto y = set.start_y; y < (set.start_y + set.length_y); y++)
+    for (auto x = set.start_x; x < (set.start_x + set.length_x); x++) {
+      auto idx = y * m_dims[0] + x;
+      if (m_significance_map[idx])
+        return SigType::Sig;
     }
+  return SigType::Insig;
+}
+
+auto sperr::SPECK2D::m_decide_set_I_significance(const SPECKSet2D& set) -> SigType
+{
+  // For TypeI sets, we need to test two rectangles!
+  // First rectangle: directly to the right of the missing top-left corner
+  assert(set.type == SetType::TypeI);
+  for (size_t y = 0; y < set.start_y; y++)
+    for (auto x = set.start_x; x < set.length_x; x++) {
+      auto idx = y * m_dims[0] + x;
+      if (m_significance_map[idx])
+        return SigType::Sig;
+    }
+
+  // Second rectangle: the rest area at the bottom
+  // Note: this rectangle is stored in a contiguous chunk of memory :)
+  for (auto i = set.start_y * set.length_x; i < set.length_x * set.length_y; i++) {
+    if (m_significance_map[i])
+      return SigType::Sig;
   }
 
-  return RTNType::Good;
+  return SigType::Insig;
 }
 
 auto sperr::SPECK2D::m_output_set_significance(const SPECKSet2D& set) -> RTNType
@@ -655,16 +615,10 @@ void sperr::SPECK2D::m_calc_root_size(SPECKSet2D& root) const
 
 void sperr::SPECK2D::m_clean_LIS()
 {
-  for (size_t i = 0; i < m_LIS.size(); i++) {
-    if (m_LIS_garbage_cnt[i] > m_LIS[i].size() / 4) {
-      // Erase-remove idiom:
-      // https://en.wikipedia.org/wiki/Erase%E2%80%93remove_idiom
-      auto it = std::remove_if(m_LIS[i].begin(), m_LIS[i].end(),
-                               [](const auto& s) { return s.type == SetType::Garbage; });
-      m_LIS[i].erase(it, m_LIS[i].end());
-
-      m_LIS_garbage_cnt[i] = 0;
-    }
+  for( auto& list : m_LIS ) {
+    auto it = std::remove_if(list.begin(), list.end(),
+                             [](const auto& s) { return s.type == SetType::Garbage; });
+    list.erase(it, list.end());
   }
 }
 
@@ -689,5 +643,3 @@ auto sperr::SPECK2D::m_ready_to_decode() const -> bool
 
   return true;
 }
-
-
