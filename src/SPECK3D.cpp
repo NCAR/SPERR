@@ -170,6 +170,7 @@ auto sperr::SPECK3D::decode() -> RTNType
   // If decoding finished before all newly-sig pixels are initialized, we finish them here!
   for (auto idx : m_LSP_new)
     m_coeff_buf[idx] = m_threshold_arr[m_threshold_idx] * 1.5;
+  m_LSP_new.clear();
 #endif
 
   // Restore coefficient signs by setting some of them negative
@@ -270,14 +271,12 @@ auto sperr::SPECK3D::m_sorting_pass_encode() -> RTNType
 {
 #ifndef QZ_TERM
   // Note that a large portion of the content in `m_LIP` will go to `m_LSP_new`,
-  //   and `m_LSP_new` is empty at this point, so cheapest to re-allocate right
-  //   now!
+  //   and `m_LSP_new` is empty at this point, so cheapest to re-allocate right now!
   if (m_LSP_new.capacity() < m_LIP.size())
     m_LSP_new.reserve(std::max(m_LSP_new.capacity() * 2, m_LIP.size()));
 #endif
 
-  // Since we have a separate representation of LIP, let's process that list
-  // first!
+  // Since we have a separate representation of LIP, let's process that list first!
   for (auto& pixel_idx : m_LIP) {
     if (m_coeff_buf[pixel_idx] >= m_threshold_arr[m_threshold_idx]) {
       // Record that this pixel is significant
@@ -297,6 +296,8 @@ auto sperr::SPECK3D::m_sorting_pass_encode() -> RTNType
 #ifdef QZ_TERM
       m_quantize_P_encode(pixel_idx);
 #else
+      // Refine this pixel while it's still in the cache!
+      m_coeff_buf[pixel_idx] -= m_threshold_arr[m_threshold_idx];
       m_LSP_new.push_back(pixel_idx);
 #endif
       pixel_idx = m_u64_garbage_val;
@@ -337,14 +338,12 @@ auto sperr::SPECK3D::m_sorting_pass_decode() -> RTNType
 {
 #ifndef QZ_TERM
   // Note that a large portion of the content in `m_LIP` will go to `m_LSP_new`,
-  //   and `m_LSP_new` is empty at this point, so cheapest to re-allocate right
-  //   now!
+  //   and `m_LSP_new` is empty at this point, so cheapest to re-allocate right now.
   if (m_LSP_new.capacity() < m_LIP.size())
     m_LSP_new.reserve(std::max(m_LSP_new.capacity() * 2, m_LIP.size()));
 #endif
 
-  // Since we have a separate representation of LIP, let's process that list
-  // first!
+  // Since we have a separate representation of LIP, let's process that list first
   for (auto& pixel_idx : m_LIP) {
 #ifndef QZ_TERM
     if (m_bit_idx >= m_budget)  // Check bit budget
@@ -388,11 +387,6 @@ auto sperr::SPECK3D::m_sorting_pass_decode() -> RTNType
   return RTNType::Good;
 }
 
-#ifndef QZ_TERM
-//
-// Refinement pass is only used in fixed-size mode.
-#endif
-
 auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter, bool output)
     -> RTNType
 {
@@ -430,6 +424,8 @@ auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
 #ifdef QZ_TERM
     m_quantize_P_encode(pixel_idx);
 #else
+    // refine this pixel while it's still in the cache
+    m_coeff_buf[pixel_idx] -= m_threshold_arr[m_threshold_idx];
     m_LSP_new.push_back(pixel_idx);
 #endif
     pixel_idx = m_u64_garbage_val;
@@ -496,22 +492,10 @@ auto sperr::SPECK3D::m_refinement_pass_encode() -> RTNType
   if (m_bit_buffer.size() >= m_budget)
     return RTNType::BitBudgetMet;
 
-  // Note that when encoding, it's OK to terminate here and leave `m_LSP_new` unprocessed,
-  // because processing `m_LSP_new` won't change the output bitstream.
-  // It's important to have `m_LSP_new` processed when decoding.
-
-  // Second, process `m_LSP_new`
-  //
-  for (auto loc : m_LSP_new)
-    m_coeff_buf[loc] -= m_threshold_arr[m_threshold_idx];
-
-  // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
+  // Second, attached `m_LSP_new` to the end of `m_LSP_old`, and then clear it.
   // (`m_LSP_old` has reserved the full coeff length capacity in advance.)
   //
   m_LSP_old.insert(m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend());
-
-  // Fourth, clear `m_LSP_new`.
-  //
   m_LSP_new.clear();
 
   return RTNType::Good;
