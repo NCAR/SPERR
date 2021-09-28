@@ -372,8 +372,7 @@ auto sperr::SPECK2D::m_process_I(bool need_decide_sig) -> RTNType
 
 auto sperr::SPECK2D::m_code_I() -> RTNType
 {
-  std::array<SPECKSet2D, 3> subsets;
-  m_partition_I(subsets);
+  auto subsets = m_partition_I();
 
   // We count how many subsets are significant, and if the 3 subsets resulted
   // from m_partition_I() are all insignificant, then it must be the remaining
@@ -408,8 +407,9 @@ auto sperr::SPECK2D::m_code_I() -> RTNType
   return RTNType::Good;
 }
 
-void sperr::SPECK2D::m_partition_I(std::array<SPECKSet2D, 3>& subsets)
+auto sperr::SPECK2D::m_partition_I() -> std::array<SPECKSet2D, 3>
 {
+  std::array<SPECKSet2D, 3> subsets;
   auto len_x = sperr::calc_approx_detail_len(m_dims[0], m_I.part_level);
   auto len_y = sperr::calc_approx_detail_len(m_dims[1], m_I.part_level);
   const auto approx_len_x = len_x[0];
@@ -443,6 +443,8 @@ void sperr::SPECK2D::m_partition_I(std::array<SPECKSet2D, 3>& subsets)
   m_I.part_level--;
   m_I.start_x += detail_len_x;
   m_I.start_y += detail_len_y;
+
+  return subsets;
 }
 
 auto sperr::SPECK2D::m_decide_set_S_significance(const SPECKSet2D& set) -> SigType
