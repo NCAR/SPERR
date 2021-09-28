@@ -46,7 +46,8 @@ class SPECK2D : public SPECK_Storage {
 
  private:
   auto m_sorting_pass() -> RTNType;
-  auto m_refinement_pass() -> RTNType;
+  auto m_refinement_pass_encode() -> RTNType;
+  auto m_refinement_pass_decode() -> RTNType;
   // For the following 2 methods, indices are used to locate which set to
   // process from m_LIS, because of the choice to use vectors to represent
   // lists, only indices are invariant.
@@ -62,8 +63,6 @@ class SPECK2D : public SPECK_Storage {
   auto m_output_set_significance(const SPECKSet2D& set) -> RTNType;
   auto m_input_pixel_sign(const SPECKSet2D& pixel) -> RTNType;
   auto m_output_pixel_sign(const SPECKSet2D& pixel) -> RTNType;
-  auto m_input_refinement(const SPECKSet2D& pixel) -> RTNType;
-  auto m_output_refinement(const SPECKSet2D& pixel) -> RTNType;
 
   auto m_produce_root() const -> SPECKSet2D;
   void m_clean_LIS();
@@ -80,7 +79,8 @@ class SPECK2D : public SPECK_Storage {
 
   std::vector<bool> m_sign_array;
 
-  std::vector<SPECKSet2D> m_LSP;
+  std::vector<size_t> m_LSP_new;
+  std::vector<size_t> m_LSP_old;
   std::vector<std::vector<SPECKSet2D>> m_LIS;
   SPECKSet2D m_I;
 };

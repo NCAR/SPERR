@@ -51,13 +51,14 @@ auto sperr::SPECK2D::encode() -> RTNType
 
   m_max_coeff_bits = int32_t(std::floor(std::log2(max_coeff)));
   m_threshold = std::pow(2.0, double(m_max_coeff_bits));
-  for (size_t bitplane = 0; bitplane < 128; bitplane++) {
+
+  for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     auto rtn = m_sorting_pass();
     if (rtn == RTNType::BitBudgetMet)
       break;
     assert(rtn == RTNType::Good);
 
-    rtn = m_refinement_pass();
+    rtn = m_refinement_pass_encode();
     if (rtn == RTNType::BitBudgetMet)
       break;
     assert(rtn == RTNType::Good);
@@ -98,7 +99,7 @@ auto sperr::SPECK2D::decode() -> RTNType
       break;
     assert(rtn == RTNType::Good);
 
-    rtn = m_refinement_pass();
+    rtn = m_refinement_pass_decode();
     if (rtn == RTNType::BitBudgetMet)
       break;
     assert(rtn == RTNType::Good);
@@ -131,7 +132,10 @@ void sperr::SPECK2D::m_initialize_sets_lists()
   m_LIS[S.part_level].emplace_back(S);
 
   // clear m_LSP
-  m_LSP.clear();
+  m_LSP_new.clear();
+  m_LSP_new.reserve( m_dims[0] * m_dims[1] );
+  m_LSP_old.clear();
+  m_LSP_old.reserve( m_dims[0] * m_dims[1] );
 
   // prepare m_I
   m_I.part_level = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
@@ -168,29 +172,41 @@ auto sperr::SPECK2D::m_sorting_pass() -> RTNType
   return RTNType::Good;
 }
 
-auto sperr::SPECK2D::m_refinement_pass() -> RTNType
+auto sperr::SPECK2D::m_refinement_pass_decode() -> RTNType
 {
-  for (auto& p : m_LSP) {
-    // This pixel should have one of the two significant markers
-    assert(p.signif == SigType::NewlySig || p.signif == SigType::Sig);
-
-    if (p.signif == SigType::NewlySig)
-      p.signif = SigType::Sig;
-    else {
-      if (m_encode_mode) {
-        auto rtn = m_output_refinement(p);
-        if (rtn == RTNType::BitBudgetMet)
-          return rtn;
-        assert(rtn == RTNType::Good);
-      }
-      else {
-        auto rtn = m_input_refinement(p);
-        if (rtn == RTNType::BitBudgetMet)
-          return rtn;
-        assert(rtn == RTNType::Good);
-      }
-    }
+  // First, process `m_LSP_old`
+  const auto tmp = std::array<double, 2>{m_threshold * -0.5, m_threshold * 0.5};
+  for( auto loc : m_LSP_old ) {
+    if (m_bit_idx >= m_budget)
+      return RTNType::BitBudgetMet;
+    m_coeff_buf[loc] += tmp[m_bit_buffer[m_bit_idx++]];
   }
+
+  // Second, attach `m_LSP_new` to the end of `m_LSP_old`, and clear `m_LSP_new`.
+  m_LSP_old.insert(m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend());
+  m_LSP_new.clear();
+  
+  return RTNType::Good;
+}
+
+auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
+{
+  // First, process `m_LSP_old`
+  const auto tmpb = std::array<bool, 2>{false, true};
+  const auto tmpd = std::array<double, 2>{0.0, -m_threshold};
+  const auto n_to_process = std::min(m_LSP_old.size(), m_budget - m_bit_buffer.size());
+  for( size_t i = 0; i < n_to_process; i++ ) {
+    auto loc = m_LSP_old[i];
+    const size_t o1 = m_coeff_buf[loc] >= m_threshold;
+    m_coeff_buf[loc] += tmpd[o1];
+    m_bit_buffer.push_back(tmpb[o1]);
+  }
+  if( m_bit_buffer.size() >= m_budget )
+    return RTNType::BitBudgetMet;
+
+  // Second, attach `m_LSP_new` to the end of `m_LSP_old`, and clear `m_LSP_new`.
+  m_LSP_old.insert(m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend());
+  m_LSP_new.clear();
 
   return RTNType::Good;
 }
@@ -235,7 +251,7 @@ auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
           return rtn;
         assert(rtn == RTNType::Good);
       }
-      m_LSP.emplace_back(set);  // A copy is saved to m_LSP.
+      m_LSP_new.push_back(set.start_y * m_dims[0] + set.start_x);
     }
     else {  // keep dividing this set
       auto rtn = m_code_S(idx1, idx2);
@@ -521,59 +537,6 @@ auto sperr::SPECK2D::m_input_pixel_sign(const SPECKSet2D& pixel) -> RTNType
 
   // Progressive quantization!
   m_coeff_buf[idx] = 1.5 * m_threshold;
-
-#ifdef PRINT
-  auto bit = m_sign_array[idx];
-  std::string str = bit ? "p1" : "p0";
-  std::cout << str << std::endl;
-#endif
-
-  return RTNType::Good;
-}
-
-auto sperr::SPECK2D::m_output_refinement(const SPECKSet2D& pixel) -> RTNType
-{
-  const auto idx = pixel.start_y * m_dims[0] + pixel.start_x;
-
-  if (m_coeff_buf[idx] >= m_threshold) {
-    m_bit_buffer.push_back(true);
-
-#ifdef PRINT
-    std::cout << "r1" << std::endl;
-#endif
-
-    m_coeff_buf[idx] -= m_threshold;
-  }
-  else {
-    m_bit_buffer.push_back(false);
-
-#ifdef PRINT
-    std::cout << "r0" << std::endl;
-#endif
-  }
-
-  // Let's also see if we're reached the bit budget
-  if (m_bit_buffer.size() >= m_budget)
-    return RTNType::BitBudgetMet;
-  else
-    return RTNType::Good;
-}
-
-auto sperr::SPECK2D::m_input_refinement(const SPECKSet2D& pixel) -> RTNType
-{
-  if (m_bit_idx >= m_budget)
-    return RTNType::BitBudgetMet;
-
-  const auto bit = m_bit_buffer[m_bit_idx++];
-  const auto idx = pixel.start_y * m_dims[0] + pixel.start_x;
-  m_coeff_buf[idx] += bit ? m_threshold * 0.5 : m_threshold * -0.5;
-
-#ifdef PRINT
-  if (bit)
-    std::cout << "r1" << std::endl;
-  else
-    std::cout << "r0" << std::endl;
-#endif
 
   return RTNType::Good;
 }

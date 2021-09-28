@@ -167,8 +167,7 @@ auto sperr::SPECK3D::decode() -> RTNType
   if (m_bit_idx > m_bit_buffer.size() || m_bit_buffer.size() - m_bit_idx >= 8)
     return RTNType::Error;
 #else
-  // If decoding finished before all newly-sig pixels are initialized, we finish
-  // them here!
+  // If decoding finished before all newly-sig pixels are initialized, we finish them here!
   for (auto idx : m_LSP_new)
     m_coeff_buf[idx] = m_threshold_arr[m_threshold_idx] * 1.5;
 #endif
@@ -447,13 +446,13 @@ void sperr::SPECK3D::m_quantize_P_encode(size_t idx)
   auto coeff = m_coeff_buf[idx] - m_threshold_arr[m_threshold_idx];
 
   auto tmpd = arrd2_type{0.0, 0.0};
-  const auto tmpb = std::array<bool, 2>{false, true};
+  const auto tmpb = arr2b_type{false, true};
   const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
     tmpd[1] = m_threshold_arr[i];
-    size_t O1 = coeff >= m_threshold_arr[i];  // C++ guarantees this conversion
-    coeff -= tmpd[O1];
-    m_bit_buffer.push_back(tmpb[O1]);
+    size_t o1 = coeff >= m_threshold_arr[i];  // C++ guarantees this conversion
+    coeff -= tmpd[o1];
+    m_bit_buffer.push_back(tmpb[o1]);
   }
   m_coeff_buf[idx] = coeff;
 }
@@ -485,18 +484,21 @@ auto sperr::SPECK3D::m_refinement_pass_encode() -> RTNType
   // In fixed-size mode, we either process all elements in `m_LSP_old`,
   // or process a portion of them that meets the total bit budget.
   //
+  const auto tmpb = arrb2_type{false, true};
+  const auto tmpd = arrd2_type{0.0, -m_threshold_arr[m_threshold_idx]};
   const size_t n_to_process = std::min(m_LSP_old.size(), m_budget - m_bit_buffer.size());
   for (size_t i = 0; i < n_to_process; i++) {
-    const auto loc = m_LSP_old[i];
-    if (m_coeff_buf[loc] >= m_threshold_arr[m_threshold_idx]) {
-      m_coeff_buf[loc] -= m_threshold_arr[m_threshold_idx];
-      m_bit_buffer.push_back(true);
-    }
-    else
-      m_bit_buffer.push_back(false);
+    const size_t loc = m_LSP_old[i];
+    const size_t o1 = m_coeff_buf[loc] >= m_threshold_arr[m_threshold_idx];
+    m_coeff_buf[loc] += tmpd[o1];
+    m_bit_buffer.push_back(tmpb[o1]);
   }
   if (m_bit_buffer.size() >= m_budget)
     return RTNType::BitBudgetMet;
+
+  // Note that when encoding, it's OK to terminate here and leave `m_LSP_new` unprocessed,
+  // because processing `m_LSP_new` won't change the output bitstream.
+  // It's important to have `m_LSP_new` processed when decoding.
 
   // Second, process `m_LSP_new`
   //
@@ -523,7 +525,7 @@ auto sperr::SPECK3D::m_refinement_pass_decode() -> RTNType
   const double neg_half_T = m_threshold_arr[m_threshold_idx] * -0.5;
   const double one_half_T = m_threshold_arr[m_threshold_idx] * 1.5;
 
-  const double tmp[2] = {neg_half_T, half_T};
+  const auto tmp = arrd2_type{neg_half_T, half_T};
   for (size_t i = 0; i < num_bits; i++)
     m_coeff_buf[m_LSP_old[i]] += tmp[m_bit_buffer[m_bit_idx + i]];
   m_bit_idx += num_bits;
