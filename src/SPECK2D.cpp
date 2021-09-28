@@ -133,9 +133,9 @@ void sperr::SPECK2D::m_initialize_sets_lists()
 
   // clear m_LSP
   m_LSP_new.clear();
-  m_LSP_new.reserve( m_dims[0] * m_dims[1] );
+  m_LSP_new.reserve(m_dims[0] * m_dims[1]);
   m_LSP_old.clear();
-  m_LSP_old.reserve( m_dims[0] * m_dims[1] );
+  m_LSP_old.reserve(m_dims[0] * m_dims[1]);
 
   // prepare m_I
   m_I.part_level = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
@@ -174,7 +174,7 @@ auto sperr::SPECK2D::m_refinement_pass_decode() -> RTNType
 {
   // First, process `m_LSP_old`
   const auto tmp = std::array<double, 2>{m_threshold * -0.5, m_threshold * 0.5};
-  for( auto loc : m_LSP_old ) {
+  for (auto loc : m_LSP_old) {
     if (m_bit_idx >= m_budget)
       return RTNType::BitBudgetMet;
     m_coeff_buf[loc] += tmp[m_bit_buffer[m_bit_idx++]];
@@ -183,7 +183,7 @@ auto sperr::SPECK2D::m_refinement_pass_decode() -> RTNType
   // Second, attach `m_LSP_new` to the end of `m_LSP_old`, and clear `m_LSP_new`.
   m_LSP_old.insert(m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend());
   m_LSP_new.clear();
-  
+
   return RTNType::Good;
 }
 
@@ -193,13 +193,13 @@ auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
   const auto tmpb = std::array<bool, 2>{false, true};
   const auto tmpd = std::array<double, 2>{0.0, -m_threshold};
   const auto n_to_process = std::min(m_LSP_old.size(), m_budget - m_bit_buffer.size());
-  for( size_t i = 0; i < n_to_process; i++ ) {
+  for (size_t i = 0; i < n_to_process; i++) {
     auto loc = m_LSP_old[i];
     const size_t o1 = m_coeff_buf[loc] >= m_threshold;
     m_coeff_buf[loc] += tmpd[o1];
     m_bit_buffer.push_back(tmpb[o1]);
   }
-  if( m_bit_buffer.size() >= m_budget )
+  if (m_bit_buffer.size() >= m_budget)
     return RTNType::BitBudgetMet;
 
   // Second, attach `m_LSP_new` to the end of `m_LSP_old`, and clear `m_LSP_new`.
