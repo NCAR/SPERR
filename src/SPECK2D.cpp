@@ -120,11 +120,9 @@ auto sperr::SPECK2D::decode() -> RTNType
 void sperr::SPECK2D::m_initialize_sets_lists()
 {
   // prepare m_LIS
-  // Note that `m_LIS` can only grow in size.
   const auto num_of_parts =
       std::max(sperr::num_of_partitions(m_dims[0]), sperr::num_of_partitions(m_dims[1]));
-  if (m_LIS.size() < num_of_parts + 1)
-    m_LIS.resize(num_of_parts + 1);
+  m_LIS.resize(num_of_parts + 1);
   for (auto& list : m_LIS)
     list.clear();
 

@@ -66,7 +66,7 @@ class SPECK2D : public SPECK_Storage {
   auto m_output_refinement(const SPECKSet2D& pixel) -> RTNType;
 
   auto m_produce_root() const -> SPECKSet2D;
-  void m_clean_LIS();  // Clean garbage sets from m_LIS if too much garbage exists.
+  void m_clean_LIS();
   auto m_ready_to_encode() const -> bool;
   auto m_ready_to_decode() const -> bool;
 
