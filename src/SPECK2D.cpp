@@ -155,12 +155,10 @@ auto sperr::SPECK2D::m_sorting_pass() -> RTNType
     size_t idx1 = m_LIS.size() - 1 - tmp;
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
       const auto& s = m_LIS[idx1][idx2];
-      if (s.type != SetType::Garbage) {
-        auto rtn = m_process_S(idx1, idx2, true);
-        if (rtn == RTNType::BitBudgetMet)
-          return rtn;
-        assert(rtn == RTNType::Good);
-      }
+      auto rtn = m_process_S(idx1, idx2, true);
+      if (rtn == RTNType::BitBudgetMet)
+        return rtn;
+      assert(rtn == RTNType::Good);
     }
   }
 
@@ -238,7 +236,6 @@ auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
 
   if (set.signif == SigType::Sig) {
     if (set.is_pixel()) {
-      set.signif = SigType::NewlySig;
       if (m_encode_mode) {
         auto rtn = m_output_pixel_sign(set);
         if (rtn == RTNType::BitBudgetMet)
