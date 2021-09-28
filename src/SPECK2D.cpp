@@ -261,7 +261,7 @@ auto sperr::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> RTNType
 
   // We count how many subsets are significant, and if the first 3 subsets
   // ain't, then the 4th one must be significant.
-  int already_sig = 0, rtn = 0;
+  auto already_sig = 0;
   for (size_t i = 0; i < 3; i++) {
     const auto& s = subsets[i];
     if (!s.is_empty()) {
@@ -273,12 +273,10 @@ auto sperr::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> RTNType
         return rtn;
       assert(rtn == RTNType::Good);
 
-      // clang-format off
-            if (m_LIS[newidx1][newidx2].signif == SigType::Sig || 
-                m_LIS[newidx1][newidx2].signif == SigType::NewlySig) {
-                already_sig++;
-            }
-      // clang-format on
+      if (m_LIS[newidx1][newidx2].signif == SigType::Sig ||
+          m_LIS[newidx1][newidx2].signif == SigType::NewlySig) {
+        already_sig++;
+      }
     }
   }
 
@@ -377,7 +375,7 @@ auto sperr::SPECK2D::m_code_I() -> RTNType
   // We count how many subsets are significant, and if the 3 subsets resulted
   // from m_partition_I() are all insignificant, then it must be the remaining
   // m_I to be significant.
-  int already_sig = 0;
+  auto already_sig = 0;
   for (size_t i = 0; i < 3; i++) {
     const auto& s = subsets[i];
     if (!s.is_empty()) {
@@ -389,12 +387,10 @@ auto sperr::SPECK2D::m_code_I() -> RTNType
         return rtn;
       assert(rtn == RTNType::Good);
 
-      // clang-format off
-            if (m_LIS[newidx1][newidx2].signif == SigType::Sig || 
-                m_LIS[newidx1][newidx2].signif == SigType::NewlySig) {
-                already_sig++;
-            }
-      // clang-format on
+      if (m_LIS[newidx1][newidx2].signif == SigType::Sig ||
+          m_LIS[newidx1][newidx2].signif == SigType::NewlySig) {
+        already_sig++;
+      }
     }
   }
 
@@ -452,11 +448,11 @@ auto sperr::SPECK2D::m_decide_set_S_significance(const SPECKSet2D& set) -> SigTy
   // For TypeS sets, we test an obvious rectangle specified by this set.
   assert(set.type == SetType::TypeS);
 
-  const auto gtr = [thld = m_threshold](auto v){return v >= thld;};
+  const auto gtr = [thld = m_threshold](auto v) { return v >= thld; };
   for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
     auto first = m_coeff_buf.begin() + y * m_dims[0] + set.start_x;
     auto last = first + set.length_x;
-    if( std::any_of(first, last, gtr) )
+    if (std::any_of(first, last, gtr))
       return SigType::Sig;
   }
   return SigType::Insig;
@@ -468,18 +464,18 @@ auto sperr::SPECK2D::m_decide_set_I_significance(const SPECKSet2D& set) -> SigTy
   // First rectangle: directly to the right of the missing top-left corner
   assert(set.type == SetType::TypeI);
 
-  const auto gtr = [thld = m_threshold](auto v){return v >= thld;};
+  const auto gtr = [thld = m_threshold](auto v) { return v >= thld; };
   for (size_t y = 0; y < set.start_y; y++) {
     auto first = m_coeff_buf.begin() + y * m_dims[0] + set.start_x;
-    auto last = m_coeff_buf.begin() + (y + 1)* m_dims[0];
-    if( std::any_of(first, last, gtr) )
+    auto last = m_coeff_buf.begin() + (y + 1) * m_dims[0];
+    if (std::any_of(first, last, gtr))
       return SigType::Sig;
   }
 
   // Second rectangle: the rest area at the bottom
   // Note: this rectangle is stored in a contiguous chunk of memory till the end of the buffer :)
   auto first = m_coeff_buf.begin() + set.start_y * set.length_x;
-  if( std::any_of(first, m_coeff_buf.end(), gtr) )
+  if (std::any_of(first, m_coeff_buf.end(), gtr))
     return SigType::Sig;
   else
     return SigType::Insig;
@@ -601,7 +597,7 @@ void sperr::SPECK2D::m_calc_root_size(SPECKSet2D& root) const
 
 void sperr::SPECK2D::m_clean_LIS()
 {
-  for( auto& list : m_LIS ) {
+  for (auto& list : m_LIS) {
     auto it = std::remove_if(list.begin(), list.end(),
                              [](const auto& s) { return s.type == SetType::Garbage; });
     list.erase(it, list.end());
