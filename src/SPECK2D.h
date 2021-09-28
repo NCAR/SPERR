@@ -15,8 +15,8 @@ class SPECKSet2D {
   //
   uint32_t start_x = 0;
   uint32_t start_y = 0;
-  uint32_t length_x = 0;    // For typeI set, this value equals to m_dim_x
-  uint32_t length_y = 0;    // For typeI set, this value equals to m_dim_y
+  uint32_t length_x = 0;    // For typeI set, this value is always m_dims[0].
+  uint32_t length_y = 0;    // For typeI set, this value is always m_dims[1].
   uint16_t part_level = 0;  // which partition level is this set at (starting from zero).
   SigType signif = SigType::Insig;
   SetType type = SetType::TypeS;
@@ -78,7 +78,6 @@ class SPECK2D : public SPECK_Storage {
   size_t m_bit_idx = 0;       // Used for decode. Which bit we're at?
   bool m_encode_mode = true;  // Encode (true) or Decode (false) mode?
 
-  std::vector<bool> m_significance_map;
   std::vector<bool> m_sign_array;
 
   std::vector<SPECKSet2D> m_LSP;

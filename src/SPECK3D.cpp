@@ -555,8 +555,7 @@ auto sperr::SPECK3D::m_decide_significance(const SPECKSet3D& set) const
 
   const size_t slice_size = m_dims[0] * m_dims[1];
 
-  const auto thld = m_threshold_arr[m_threshold_idx];
-  const auto gtr = [thld](auto v) { return v >= thld; };
+  const auto gtr = [thld = m_threshold_arr[m_threshold_idx]](auto v) { return v >= thld; };
 
   for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
     const size_t slice_offset = z * slice_size;

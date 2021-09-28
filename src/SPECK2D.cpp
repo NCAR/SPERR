@@ -151,18 +151,6 @@ void sperr::SPECK2D::m_initialize_sets_lists()
 //
 auto sperr::SPECK2D::m_sorting_pass() -> RTNType
 {
-  if (m_encode_mode) {
-    // Update the significance map based on the current threshold
-    // Note that there are only a small number of values identified as
-    // significant at each iteration, so not touching every data value.
-    m_significance_map.assign(m_coeff_buf.size(), false);
-    for (size_t i = 0; i < m_coeff_buf.size(); i++) {
-      if (m_coeff_buf[i] >= m_threshold) {
-        m_significance_map[i] = true;
-      }
-    }
-  }
-
   for (size_t tmp = 0; tmp < m_LIS.size(); tmp++) {
     // From the end to the front of m_LIS, smaller sets first.
     size_t idx1 = m_LIS.size() - 1 - tmp;
@@ -461,12 +449,14 @@ auto sperr::SPECK2D::m_decide_set_S_significance(const SPECKSet2D& set) -> SigTy
 {
   // For TypeS sets, we test an obvious rectangle specified by this set.
   assert(set.type == SetType::TypeS);
-  for (auto y = set.start_y; y < (set.start_y + set.length_y); y++)
-    for (auto x = set.start_x; x < (set.start_x + set.length_x); x++) {
-      auto idx = y * m_dims[0] + x;
-      if (m_significance_map[idx])
-        return SigType::Sig;
-    }
+
+  const auto gtr = [thld = m_threshold](auto v){return v >= thld;};
+  for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
+    auto first = m_coeff_buf.begin() + y * m_dims[0] + set.start_x;
+    auto last = first + set.length_x;
+    if( std::any_of(first, last, gtr) )
+      return SigType::Sig;
+  }
   return SigType::Insig;
 }
 
@@ -475,32 +465,26 @@ auto sperr::SPECK2D::m_decide_set_I_significance(const SPECKSet2D& set) -> SigTy
   // For TypeI sets, we need to test two rectangles!
   // First rectangle: directly to the right of the missing top-left corner
   assert(set.type == SetType::TypeI);
-  for (size_t y = 0; y < set.start_y; y++)
-    for (auto x = set.start_x; x < set.length_x; x++) {
-      auto idx = y * m_dims[0] + x;
-      if (m_significance_map[idx])
-        return SigType::Sig;
-    }
 
-  // Second rectangle: the rest area at the bottom
-  // Note: this rectangle is stored in a contiguous chunk of memory :)
-  for (auto i = set.start_y * set.length_x; i < set.length_x * set.length_y; i++) {
-    if (m_significance_map[i])
+  const auto gtr = [thld = m_threshold](auto v){return v >= thld;};
+  for (size_t y = 0; y < set.start_y; y++) {
+    auto first = m_coeff_buf.begin() + y * m_dims[0] + set.start_x;
+    auto last = m_coeff_buf.begin() + (y + 1)* m_dims[0];
+    if( std::any_of(first, last, gtr) )
       return SigType::Sig;
   }
 
-  return SigType::Insig;
+  // Second rectangle: the rest area at the bottom
+  // Note: this rectangle is stored in a contiguous chunk of memory till the end of the buffer :)
+  auto first = m_coeff_buf.begin() + set.start_y * set.length_x;
+  if( std::any_of(first, m_coeff_buf.end(), gtr) )
+    return SigType::Sig;
+  else
+    return SigType::Insig;
 }
 
 auto sperr::SPECK2D::m_output_set_significance(const SPECKSet2D& set) -> RTNType
 {
-#ifdef PRINT
-  if (set.signif == SigType::Sig)
-    std::cout << "s1" << std::endl;
-  else
-    std::cout << "s0" << std::endl;
-#endif
-
   auto bit = (set.signif == SigType::Sig);
   m_bit_buffer.push_back(bit);
 
