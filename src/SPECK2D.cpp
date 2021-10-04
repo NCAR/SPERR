@@ -230,24 +230,25 @@ auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
     set.signif = SigType::Sig;
   }
 
-  // set should not have a Dunno marker
+  // set should not have a Dunno marker at this point
   assert(set.signif != SigType::Dunno);
 
   if (set.signif == SigType::Sig) {
     if (set.is_pixel()) {
       const auto g_idx = set.start_y * m_dims[0] + set.start_x;
       if (m_encode_mode) {
-        // Progressive quantization for this pixel now, because it's already in the cache :)
-        m_coeff_buf[g_idx] -= m_threshold;
         m_bit_buffer.push_back(m_sign_array[g_idx]);
         if (m_bit_buffer.size() >= m_budget)
           return RTNType::BitBudgetMet;
+        // Progressive quantization for this pixel now!
+        m_coeff_buf[g_idx] -= m_threshold;
       }
       else {
-        auto rtn = m_input_pixel_sign(set);
-        if (rtn == RTNType::BitBudgetMet)
-          return rtn;
-        assert(rtn == RTNType::Good);
+        if (m_bit_idx >= m_budget)
+          return RTNType::BitBudgetMet;
+        m_sign_array[g_idx] = m_bit_buffer[m_bit_idx++];
+        // Progressive quantization!
+        m_coeff_buf[g_idx] = 1.5 * m_threshold;
       }
       m_LSP_new.push_back(g_idx);
     }
@@ -487,20 +488,6 @@ auto sperr::SPECK2D::m_decide_set_I_significance(const SPECKSet2D& set) -> SigTy
     return SigType::Sig;
   else
     return SigType::Insig;
-}
-
-auto sperr::SPECK2D::m_input_pixel_sign(const SPECKSet2D& pixel) -> RTNType
-{
-  if (m_bit_idx >= m_budget)
-    return RTNType::BitBudgetMet;
-
-  const auto idx = pixel.start_y * m_dims[0] + pixel.start_x;
-  m_sign_array[idx] = m_bit_buffer[m_bit_idx++];
-
-  // Progressive quantization!
-  m_coeff_buf[idx] = 1.5 * m_threshold;
-
-  return RTNType::Good;
 }
 
 auto sperr::SPECK2D::m_produce_root() const -> SPECKSet2D

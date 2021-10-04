@@ -718,8 +718,7 @@ auto sperr::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2, std::array<SigTyp
     if (subsets[i].is_empty())
       subset_sigs[i] = SigType::Garbage;  // SigType::Garbage is only used locally here.
   }
-  // Also need to organize `subset_sigs` to maintain the relative order with
-  // subsets.
+  // Also need to organize `subset_sigs` to maintain the relative order with subsets.
   std::remove(subset_sigs.begin(), subset_sigs.end(), SigType::Garbage);
 
   const auto set_end =

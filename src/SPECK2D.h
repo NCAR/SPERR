@@ -60,7 +60,6 @@ class SPECK2D : public SPECK_Storage {
   auto m_partition_I() -> std::array<SPECKSet2D, 3>;
   auto m_decide_set_S_significance(const SPECKSet2D& set) -> SigType;
   auto m_decide_set_I_significance(const SPECKSet2D& set) -> SigType;
-  auto m_input_pixel_sign(const SPECKSet2D& pixel) -> RTNType;
 
   auto m_produce_root() const -> SPECKSet2D;
   void m_clean_LIS();
