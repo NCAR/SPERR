@@ -216,10 +216,9 @@ auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
   if (need_decide_signif) {
     if (m_encode_mode) {
       set.signif = m_decide_set_S_significance(set);
-      auto rtn = m_output_set_significance(set);
-      if (rtn == RTNType::BitBudgetMet)
-        return rtn;
-      assert(rtn == RTNType::Good);
+      m_bit_buffer.push_back(set.signif == SigType::Sig);
+      if (m_bit_buffer.size() >= m_budget)
+        return RTNType::BitBudgetMet;
     }
     else {
       if (m_bit_idx >= m_budget)
@@ -355,10 +354,9 @@ auto sperr::SPECK2D::m_process_I(bool need_decide_sig) -> RTNType
     else
       m_I.signif = SigType::Sig;
 
-    auto rtn = m_output_set_significance(m_I);
-    if (rtn == RTNType::BitBudgetMet)
-      return rtn;
-    assert(rtn == RTNType::Good);
+    m_bit_buffer.push_back(set.signif == SigType::Sig);
+    if (m_bit_buffer.size() >= m_budget)
+      return RTNType::BitBudgetMet;
   }
   else {
     if (m_bit_idx >= m_budget)
