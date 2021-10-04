@@ -235,11 +235,13 @@ auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
 
   if (set.signif == SigType::Sig) {
     if (set.is_pixel()) {
+      const auto g_idx = set.start_y * m_dims[0] + set.start_x;
       if (m_encode_mode) {
-        auto rtn = m_output_pixel_sign(set);
-        if (rtn == RTNType::BitBudgetMet)
-          return rtn;
-        assert(rtn == RTNType::Good);
+        // Progressive quantization for this pixel now, because it's already in the cache :)
+        m_coeff_buf[g_idx] -= m_threshold;
+        m_bit_buffer.push_back(m_sign_array[g_idx]);
+        if (m_bit_buffer.size() >= m_budget)
+          return RTNType::BitBudgetMet;
       }
       else {
         auto rtn = m_input_pixel_sign(set);
@@ -247,7 +249,7 @@ auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
           return rtn;
         assert(rtn == RTNType::Good);
       }
-      m_LSP_new.push_back(set.start_y * m_dims[0] + set.start_x);
+      m_LSP_new.push_back(g_idx);
     }
     else {  // keep dividing this set
       auto rtn = m_code_S(idx1, idx2);
@@ -485,29 +487,6 @@ auto sperr::SPECK2D::m_decide_set_I_significance(const SPECKSet2D& set) -> SigTy
     return SigType::Sig;
   else
     return SigType::Insig;
-}
-
-auto sperr::SPECK2D::m_output_pixel_sign(const SPECKSet2D& pixel) -> RTNType
-{
-  const auto idx = pixel.start_y * m_dims[0] + pixel.start_x;
-
-#ifdef PRINT
-  if (m_sign_array[idx])
-    std::cout << "p1" << std::endl;
-  else
-    std::cout << "p0" << std::endl;
-#endif
-
-  m_bit_buffer.push_back(m_sign_array[idx]);
-
-  // Progressive quantization!
-  m_coeff_buf[idx] -= m_threshold;
-
-  // Let's also see if we're reached the bit budget
-  if (m_bit_buffer.size() >= m_budget)
-    return RTNType::BitBudgetMet;
-  else
-    return RTNType::Good;
 }
 
 auto sperr::SPECK2D::m_input_pixel_sign(const SPECKSet2D& pixel) -> RTNType
