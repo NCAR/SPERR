@@ -290,7 +290,7 @@ auto sperr::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> RTNType
 
   const auto& s4 = subsets[3];
   if (!s4.is_empty()) {
-    bool need_decide_sig = already_sig == 0 ? false : true;
+    bool need_decide_sig = already_sig != 0;
     m_LIS[s4.part_level].emplace_back(s4);
     auto rtn = m_process_S(s4.part_level, m_LIS[s4.part_level].size() - 1, need_decide_sig);
     if (rtn == RTNType::BitBudgetMet)
