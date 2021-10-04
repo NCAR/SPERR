@@ -354,7 +354,7 @@ auto sperr::SPECK2D::m_process_I(bool need_decide_sig) -> RTNType
     else
       m_I.signif = SigType::Sig;
 
-    m_bit_buffer.push_back(set.signif == SigType::Sig);
+    m_bit_buffer.push_back(m_I.signif == SigType::Sig);
     if (m_bit_buffer.size() >= m_budget)
       return RTNType::BitBudgetMet;
   }
@@ -485,18 +485,6 @@ auto sperr::SPECK2D::m_decide_set_I_significance(const SPECKSet2D& set) -> SigTy
     return SigType::Sig;
   else
     return SigType::Insig;
-}
-
-auto sperr::SPECK2D::m_output_set_significance(const SPECKSet2D& set) -> RTNType
-{
-  auto bit = (set.signif == SigType::Sig);
-  m_bit_buffer.push_back(bit);
-
-  // Let's also see if we're reached the bit budget
-  if (m_bit_buffer.size() >= m_budget)
-    return RTNType::BitBudgetMet;
-  else
-    return RTNType::Good;
 }
 
 auto sperr::SPECK2D::m_output_pixel_sign(const SPECKSet2D& pixel) -> RTNType
