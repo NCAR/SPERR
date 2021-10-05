@@ -94,7 +94,8 @@ TEST( speck2d, lena )
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 54.2830 );
+    EXPECT_GT( psnr, 54.2828 );
+    EXPECT_LT( psnr, 54.2829 );
     EXPECT_LT( lmax,  2.2361 );
 
     tester.execute( 2.0f );
@@ -124,26 +125,30 @@ TEST( speck2d, odd_dim_image )
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 58.7325 );
+    EXPECT_GT( psnr, 58.7091 );
+    EXPECT_LT( psnr, 58.7092 );
     EXPECT_LT( lmax,  0.7588 );
 
     tester.execute( 2.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 46.7979 );
+    EXPECT_GT( psnr, 46.7725 );
+    EXPECT_LT( psnr, 46.7726 );
     EXPECT_LT( lmax,  2.9545 );
 
     tester.execute( 1.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 40.05257 );
+    EXPECT_GT( psnr, 40.0297 );
+    EXPECT_LT( psnr, 40.0298 );
     EXPECT_LT( lmax,  6.25197 );
 
     tester.execute( 0.5f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 34.9631 );
-    EXPECT_LT( lmax, 18.644617 );
+    EXPECT_GT( psnr, 34.9525 );
+    EXPECT_LT( psnr, 34.9526 );
+    EXPECT_LT( lmax, 18.6514 );
 }
 
 
@@ -154,20 +159,22 @@ TEST( speck2d, small_data_range )
     tester.execute( 4.0f );
     float psnr = tester.get_psnr();
     float lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 71.289436 );
-    EXPECT_LT( psnr, 71.28975  );
+    EXPECT_GT( psnr, 71.2888 );
+    EXPECT_LT( psnr, 71.2889 );
     EXPECT_LT( lmax, 0.000002 );
 
     tester.execute( 2.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 59.66657 );
+    EXPECT_GT( psnr, 59.6661 );
+    EXPECT_LT( psnr, 59.6662 );
     EXPECT_LT( lmax, 0.0000084 );
 
     tester.execute( 1.0f );
     psnr = tester.get_psnr();
     lmax = tester.get_lmax();
-    EXPECT_GT( psnr, 52.3961 );
+    EXPECT_GT( psnr, 52.3953 );
+    EXPECT_LT( psnr, 52.3954 );
     EXPECT_LT( lmax, 0.0000213 );
 
     tester.execute( 0.5f );
