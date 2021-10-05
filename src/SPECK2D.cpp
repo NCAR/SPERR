@@ -28,7 +28,7 @@ sperr::SPECK2D::SPECK2D()
 
 void sperr::SPECK2D::set_bit_budget(size_t budget)
 {
-  if( budget <= m_header_size ) {
+  if (budget <= m_header_size) {
     m_budget = 0;
     return;
   }
@@ -116,7 +116,7 @@ auto sperr::SPECK2D::decode() -> RTNType
 
   // Restore coefficient signs
   for (size_t i = 0; i < m_sign_array.size(); i++) {
-    auto tmp = std::array<double, 2> {-m_coeff_buf[i], m_coeff_buf[i]};
+    auto tmp = std::array<double, 2>{-m_coeff_buf[i], m_coeff_buf[i]};
     m_coeff_buf[i] = tmp[m_sign_array[i]];
   }
 
@@ -245,13 +245,13 @@ auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
         m_bit_buffer.push_back(m_sign_array[g_idx]);
         if (m_bit_buffer.size() >= m_budget)
           return RTNType::BitBudgetMet;
-        m_coeff_buf[g_idx] -= m_threshold; // Progressive quantization now!
+        m_coeff_buf[g_idx] -= m_threshold;  // Progressive quantization now!
       }
       else {
         if (m_bit_idx >= m_budget)
           return RTNType::BitBudgetMet;
         m_sign_array[g_idx] = m_bit_buffer[m_bit_idx++];
-        m_coeff_buf[g_idx] = 1.5 * m_threshold; // Progressive quantization!
+        m_coeff_buf[g_idx] = 1.5 * m_threshold;  // Progressive quantization!
       }
       m_LSP_new.push_back(g_idx);
     }
@@ -388,7 +388,7 @@ auto sperr::SPECK2D::m_code_I() -> RTNType
   // from m_partition_I() are all insignificant, then it must be the remaining
   // `m_I` to be significant.
   auto already_sig = 0;
-  for( const auto& s : subsets ) {
+  for (const auto& s : subsets) {
     if (!s.is_empty()) {
       m_LIS[s.part_level].emplace_back(s);
       auto newidx1 = size_t{s.part_level};
