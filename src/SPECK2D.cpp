@@ -105,13 +105,12 @@ auto sperr::SPECK2D::decode() -> RTNType
     assert(rtn == RTNType::Good);
 
     m_threshold *= 0.5;
-
     m_clean_LIS();
   }
 
   // Restore coefficient signs
   for (size_t i = 0; i < m_sign_array.size(); i++) {
-    double tmp[2] = {-m_coeff_buf[i], m_coeff_buf[i]};
+    auto tmp = std::array<double, 2> {-m_coeff_buf[i], m_coeff_buf[i]};
     m_coeff_buf[i] = tmp[m_sign_array[i]];
   }
 
@@ -240,15 +239,13 @@ auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
         m_bit_buffer.push_back(m_sign_array[g_idx]);
         if (m_bit_buffer.size() >= m_budget)
           return RTNType::BitBudgetMet;
-        // Progressive quantization for this pixel now!
-        m_coeff_buf[g_idx] -= m_threshold;
+        m_coeff_buf[g_idx] -= m_threshold; // Progressive quantization now!
       }
       else {
         if (m_bit_idx >= m_budget)
           return RTNType::BitBudgetMet;
         m_sign_array[g_idx] = m_bit_buffer[m_bit_idx++];
-        // Progressive quantization!
-        m_coeff_buf[g_idx] = 1.5 * m_threshold;
+        m_coeff_buf[g_idx] = 1.5 * m_threshold; // Progressive quantization!
       }
       m_LSP_new.push_back(g_idx);
     }
@@ -305,7 +302,7 @@ auto sperr::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> RTNType
 
 auto sperr::SPECK2D::m_partition_S(const SPECKSet2D& set) const -> std::array<SPECKSet2D, 4>
 {
-  std::array<SPECKSet2D, 4> list;
+  auto list = std::array<SPECKSet2D, 4>();
 
   // The top-left set will have these bigger dimensions in case that
   // the current set has odd dimensions.
@@ -383,14 +380,13 @@ auto sperr::SPECK2D::m_code_I() -> RTNType
 
   // We count how many subsets are significant, and if the 3 subsets resulted
   // from m_partition_I() are all insignificant, then it must be the remaining
-  // m_I to be significant.
+  // `m_I` to be significant.
   auto already_sig = 0;
-  for (size_t i = 0; i < 3; i++) {
-    const auto& s = subsets[i];
+  for( const auto& s : subsets ) {
     if (!s.is_empty()) {
       m_LIS[s.part_level].emplace_back(s);
-      size_t newidx1 = s.part_level;
-      size_t newidx2 = m_LIS[newidx1].size() - 1;
+      auto newidx1 = size_t{s.part_level};
+      auto newidx2 = m_LIS[newidx1].size() - 1;
       auto rtn = m_process_S(newidx1, newidx2, true);
       if (rtn == RTNType::BitBudgetMet)
         return rtn;
@@ -403,7 +399,7 @@ auto sperr::SPECK2D::m_code_I() -> RTNType
     }
   }
 
-  bool need_decide_sig = already_sig == 0 ? false : true;
+  bool need_decide_sig = already_sig != 0;
   auto rtn = m_process_I(need_decide_sig);
   if (rtn == RTNType::BitBudgetMet)
     return rtn;
@@ -414,7 +410,7 @@ auto sperr::SPECK2D::m_code_I() -> RTNType
 
 auto sperr::SPECK2D::m_partition_I() -> std::array<SPECKSet2D, 3>
 {
-  std::array<SPECKSet2D, 3> subsets;
+  auto subsets = std::array<SPECKSet2D, 3>();
   auto len_x = sperr::calc_approx_detail_len(m_dims[0], m_I.part_level);
   auto len_y = sperr::calc_approx_detail_len(m_dims[1], m_I.part_level);
   const auto approx_len_x = len_x[0];
