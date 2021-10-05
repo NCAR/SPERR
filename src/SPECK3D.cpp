@@ -28,6 +28,12 @@ void sperr::SPECK3D::set_quantization_term_level(int32_t lev)
 #else
 void sperr::SPECK3D::set_bit_budget(size_t budget)
 {
+  if( budget <= m_header_size ) {
+    m_budget = 0;
+    return;
+  }
+  budget -= m_header_size;
+
   size_t mod = budget % 8;
   if (mod == 0)
     m_budget = budget;
