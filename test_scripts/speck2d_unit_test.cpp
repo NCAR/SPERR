@@ -45,8 +45,7 @@ public:
         // Use a compressor
         //
         SPECK2D_Compressor compressor;
-        if( compressor.copy_data(in_buf.data(), total_vals, {m_dim_x, m_dim_y, 1}) 
-            != RTNType::Good)
+        if( compressor.copy_data(in_buf.data(), total_vals, {m_dim_x, m_dim_y, 1}) != RTNType::Good)
             return 1;
         if( compressor.set_bpp( bpp ) != RTNType::Good )
             return 1;

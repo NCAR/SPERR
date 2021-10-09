@@ -11,7 +11,6 @@ void sperr::Conditioner::toggle_all_settings(std::array<bool, 4> b4)
 {
   m_settings[0] = b4[0];
   m_settings[1] = b4[1];
-  // The rest of fields in `m_settings` is unused, so not assigning them.
 }
 
 auto sperr::Conditioner::m_calc_mean(const vecd_type& buf) -> double

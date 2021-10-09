@@ -232,8 +232,7 @@ auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
       m_cctx.reset(ctx_p);
   }
 
-  // If `m_zstd_buf` is not big enough for the total buffer, we re-size
-  // it.
+  // If `m_zstd_buf` is not big enough for the total buffer, we re-size it.
   if (total_size > m_zstd_buf_len) {
     m_zstd_buf_len = std::max(total_size, m_zstd_buf_len * 2);
     m_zstd_buf = std::make_unique<uint8_t[]>(m_zstd_buf_len);

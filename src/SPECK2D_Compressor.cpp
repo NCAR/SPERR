@@ -37,12 +37,17 @@ auto SPECK2D_Compressor::take_data(std::vector<double>&& buf, sperr::dims_type d
 
 auto SPECK2D_Compressor::set_bpp(float bpp) -> RTNType
 {
-  if (bpp < 0.0 || bpp > 64.0)
+  if (bpp <= 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
   else {
     m_bpp = bpp;
     return RTNType::Good;
   }
+}
+
+void SPECK2D_Compressor::toggle_conditioning(sperr::Conditioner::settings_type settings)
+{
+  m_conditioning_settings = settings;
 }
 
 auto SPECK2D_Compressor::view_encoded_bitstream() const -> const std::vector<uint8_t>&
@@ -61,17 +66,26 @@ auto SPECK2D_Compressor::compress() -> RTNType
   if (m_val_buf.size() != total_vals)
     return RTNType::Error;
 
+  m_condi_stream.fill(0);
+  m_speck_stream.clear();
+
+  // Believe it or not, there are constant fields passed in for compression!
+  // Let's detect that case and skip the rest of the compression routine if it occurs.
+  auto constant = m_conditioner.test_constant(m_val_buf);
+  if (constant.first) {
+    m_condi_stream = constant.second;
+    auto tmp = m_assemble_encoded_bitstream();
+    return tmp;
+  }
+
   // Step 1: data goes through the conditioner
-  // Only applying subtract mean here.
-  auto settings = sperr::Conditioner::settings_type{true, false, false, false};
-  m_conditioner.toggle_all_settings(settings);
+  m_conditioner.toggle_all_settings(m_conditioning_settings);
   auto [rtn, condi_meta] = m_conditioner.condition(m_val_buf);
   if (rtn != RTNType::Good)
     return rtn;
 
   // Copy conditioner meta data to `m_condi_stream`
-  m_condi_stream.resize(condi_meta.size());
-  std::copy(condi_meta.begin(), condi_meta.end(), m_condi_stream.begin());
+  m_condi_stream = condi_meta;
 
   // Step 2: wavelet transform
   rtn = m_cdf.take_data(std::move(m_val_buf), m_dims);
@@ -141,7 +155,7 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   // Task 3: apply ZSTD compression.
   const auto uncomp_size = total_size - m_meta_size;
   const auto comp_buf_len = ZSTD_compressBound(uncomp_size);
-  auto comp_buf = std::vector<uint8_t>(m_meta_size + comp_buf_len);
+  auto comp_buf = vec8_type(m_meta_size + comp_buf_len);
   std::copy(std::begin(meta), std::end(meta), comp_buf.begin());
 
   auto comp_size =

@@ -1,7 +1,6 @@
 //
 // This is a the class object that is supposed to be used by most users, because
 // it provides easy-to-use APIs.
-// Functionality wise, it does not bring anything new though.
 //
 
 #ifndef SPECK2D_COMPRESSOR_H
@@ -22,6 +21,8 @@ class SPECK2D_Compressor {
   // Accept incoming data by taking ownership of the memory block
   auto take_data(std::vector<double>&& buf, sperr::dims_type dims) -> RTNType;
 
+  void toggle_conditioning(sperr::Conditioner::settings_type);
+
   auto set_bpp(float) -> RTNType;
 
   auto compress() -> RTNType;
@@ -40,9 +41,10 @@ class SPECK2D_Compressor {
   sperr::CDF97 m_cdf;
   sperr::SPECK2D m_encoder;
 
-  // Store bitstreams from the conditioner and SPECK encoding, and the overall
-  // bitstream.
-  sperr::vec8_type m_condi_stream;
+  sperr::Conditioner::settings_type m_conditioning_settings = {true, false, false, false};
+  sperr::Conditioner::meta_type m_condi_stream;
+
+  // Store bitstreams from the conditioner and SPECK encoding, and the overall bitstream.
   sperr::vec8_type m_speck_stream;
   sperr::vec8_type m_encoded_stream;
 
