@@ -8,7 +8,7 @@
 #include <numeric>
 
 #ifndef QZ_TERM
-auto SPECK3D_OMP_D::set_bpp(float bpp) -> RTNType
+auto SPECK3D_OMP_D::set_bpp(double bpp) -> RTNType
 {
   if (bpp < 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;

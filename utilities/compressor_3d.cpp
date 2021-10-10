@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
       ->group("Compression Parameters")
       ->required();
 #else
-  float bpp;
+  auto bpp = double{0.0};
   app.add_option("--bpp", bpp, "Target bit-per-pixel. E.g., `-bpp 2.3`.")
       ->check(CLI::Range(0.0f, 64.0f))
       ->group("Compression Parameters")

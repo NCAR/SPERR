@@ -83,7 +83,7 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   return RTNType::Good;
 }
 
-auto SPECK2D_Decompressor::set_bpp(float bpp) -> RTNType
+auto SPECK2D_Decompressor::set_bpp(double bpp) -> RTNType
 {
   if (bpp < 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;

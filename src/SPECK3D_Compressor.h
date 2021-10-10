@@ -35,7 +35,7 @@ class SPECK3D_Compressor {
   // Return 1) the number of outliers, and 2) the num of bytes to encode them.
   auto get_outlier_stats() const -> std::pair<size_t, size_t>;
 #else
-  auto set_bpp(float) -> RTNType;
+  auto set_bpp(double) -> RTNType;
 #endif
 
   auto compress() -> RTNType;
@@ -69,7 +69,7 @@ class SPECK3D_Compressor {
   sperr::vecd_type m_val_buf2;        // Copy of `m_val_buf` that goes through encoding.
   sperr::vecd_type m_diffv;           // Store differences in double in a vector.
 #else
-  float m_bpp = 0.0;
+  double m_bpp = 0.0;
 #endif
 
 #ifdef USE_ZSTD

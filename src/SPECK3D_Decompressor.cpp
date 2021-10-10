@@ -93,7 +93,7 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
 }
 
 #ifndef QZ_TERM
-auto SPECK3D_Decompressor::set_bpp(float bpp) -> RTNType
+auto SPECK3D_Decompressor::set_bpp(double bpp) -> RTNType
 {
   if (bpp < 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
@@ -125,7 +125,7 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
     return rtn;
 
 #ifndef QZ_TERM
-  m_decoder.set_bit_budget(size_t(m_bpp * float(m_dims[0] * m_dims[1] * m_dims[2])));
+  m_decoder.set_bit_budget(size_t(m_bpp * double(m_dims[0] * m_dims[1] * m_dims[2])));
 #endif
 
   rtn = m_decoder.decode();

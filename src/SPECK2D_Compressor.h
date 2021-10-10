@@ -23,7 +23,7 @@ class SPECK2D_Compressor {
 
   void toggle_conditioning(sperr::Conditioner::settings_type);
 
-  auto set_bpp(float) -> RTNType;
+  auto set_bpp(double) -> RTNType;
 
   auto compress() -> RTNType;
 
@@ -35,7 +35,7 @@ class SPECK2D_Compressor {
   sperr::vecd_type m_val_buf;
 
   const size_t m_meta_size = 2;
-  float m_bpp = 0.0;
+  double m_bpp = 0.0;
 
   sperr::Conditioner m_conditioner;
   sperr::CDF97 m_cdf;

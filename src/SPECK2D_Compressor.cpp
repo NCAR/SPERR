@@ -35,7 +35,7 @@ auto SPECK2D_Compressor::take_data(std::vector<double>&& buf, sperr::dims_type d
   return RTNType::Good;
 }
 
-auto SPECK2D_Compressor::set_bpp(float bpp) -> RTNType
+auto SPECK2D_Compressor::set_bpp(double bpp) -> RTNType
 {
   if (bpp <= 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
@@ -155,7 +155,7 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   // Task 3: apply ZSTD compression.
   const auto uncomp_size = total_size - m_meta_size;
   const auto comp_buf_len = ZSTD_compressBound(uncomp_size);
-  auto comp_buf = vec8_type(m_meta_size + comp_buf_len);
+  auto comp_buf = sperr::vec8_type(m_meta_size + comp_buf_len);
   std::copy(std::begin(meta), std::end(meta), comp_buf.begin());
 
   auto comp_size =

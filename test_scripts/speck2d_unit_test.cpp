@@ -30,7 +30,7 @@ public:
     }
 
     // Execute the compression/decompression pipeline. Return 0 on success
-    int execute( float bpp )
+    int execute( double bpp )
     {
         // Reset lmax and psnr
         m_psnr = 0.0;

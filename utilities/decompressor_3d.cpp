@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 
 #ifndef QZ_TERM
   // Partial bitstream decompression is only applicable to fixed-size mode.
-  float decomp_bpp = 0.0;
+  auto decomp_bpp = double{0.0};
   app.add_option("--partial_bpp", decomp_bpp,
                  "Partially decode the bitstream up to a certain bit-per-pixel. \n"
                  "If not specified, the entire bitstream will be decoded.")

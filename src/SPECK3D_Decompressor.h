@@ -24,7 +24,7 @@ class SPECK3D_Decompressor {
   auto use_bitstream(const void* p, size_t len) -> RTNType;
 
 #ifndef QZ_TERM
-  auto set_bpp(float) -> RTNType;
+  auto set_bpp(double) -> RTNType;
 #endif
 
   auto decompress() -> RTNType;
@@ -51,7 +51,7 @@ class SPECK3D_Decompressor {
   sperr::SPERR m_sperr;
   sperr::vec8_type m_sperr_stream;
 #else
-  float m_bpp = 0.0;
+  double m_bpp = 0.0;
 #endif
 
 #ifdef USE_ZSTD

@@ -307,7 +307,7 @@ auto SPECK3D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
   return {m_num_outlier, m_sperr_stream.size()};
 }
 #else
-auto SPECK3D_Compressor::set_bpp(float bpp) -> RTNType
+auto SPECK3D_Compressor::set_bpp(double bpp) -> RTNType
 {
   if (bpp < 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;

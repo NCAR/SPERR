@@ -30,7 +30,7 @@ class SPECK3D_OMP_C {
   // Return 1) the number of outliers, and 2) the num of bytes to encode them.
   auto get_outlier_stats() const -> std::pair<size_t, size_t>;
 #else
-  auto set_bpp(float) -> RTNType;
+  auto set_bpp(double) -> RTNType;
 #endif
 
   auto compress() -> RTNType;
@@ -57,7 +57,7 @@ class SPECK3D_OMP_C {
   // encode them.
   std::vector<std::pair<size_t, size_t>> m_outlier_stats;
 #else
-  float m_bpp = 0.0;
+  double m_bpp = 0.0;
 #endif
 
   //

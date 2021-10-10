@@ -40,7 +40,7 @@ public:
 #ifdef QZ_TERM
     int execute( int32_t qz_level, double tol )
 #else
-    int execute( float bpp )
+    int execute( double bpp )
 #endif
 
     {
@@ -140,7 +140,7 @@ public:
 #ifdef QZ_TERM
     int execute( int32_t qz_level, double tol )
 #else
-    int execute( float bpp )
+    int execute( double bpp )
 #endif
 
     {

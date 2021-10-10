@@ -21,7 +21,7 @@ template <typename T>
 auto test_configuration_omp(const T* in_buf,
                             sperr::dims_type dims,
                             sperr::dims_type chunks,
-                            float bpp,
+                            double bpp,
                             sperr::Conditioner::settings_type condi_settings,
                             size_t omp_num_threads,
                             std::vector<T>& output_buf) -> int
@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
                  "If not specified, then 64^3 will be used\n")
       ->expected(3);
 
-  float bpp;
+  auto bpp = double{0.0};
   auto* bpp_ptr = app.add_option("--bpp", bpp,
                                  "Target bit-per-pixel value.\n"
                                  "For example, `--bpp 0.5`.\n")

@@ -51,7 +51,7 @@ auto SPECK3D_OMP_C::get_outlier_stats() const -> std::pair<size_t, size_t>
   return std::accumulate(m_outlier_stats.begin(), m_outlier_stats.end(), sum, op);
 }
 #else
-auto SPECK3D_OMP_C::set_bpp(float bpp) -> RTNType
+auto SPECK3D_OMP_C::set_bpp(double bpp) -> RTNType
 {
   if (bpp < 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
