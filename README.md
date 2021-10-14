@@ -3,7 +3,7 @@
 [![clang-tidy-size](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-size.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-size.yml)
 [![cmake-release-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml)
 [![cmake-release-size](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml)
-
+[![CodeQL](https://github.com/shaomeng/SPERR/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/shaomeng/SPERR/actions/workflows/codeql-analysis.yml)
 
 ## Build
 SPERR uses `cmake` to build. It does require cmake version higher than `3.10`.
