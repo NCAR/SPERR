@@ -103,7 +103,9 @@ auto SPECK2D_Compressor::compress() -> RTNType
   if (rtn != RTNType::Good)
     return rtn;
 
-  // Copy SPECK bitstream to `m_speck_stream`
+  // Copy SPECK bitstream to `m_speck_stream` so `m_encoder` can keep its internal storage.
+  // The decision to copy rather than release is because that this stream is small so cheaper
+  // to copy, and alos it's grown gradually inside of `m_encoder`.
   m_speck_stream = m_encoder.view_encoded_bitstream();
   if (m_speck_stream.empty())
     return RTNType::Error;
