@@ -485,7 +485,7 @@ auto sperr::SPECK2D::m_decide_set_I_significance(const SPECKSet2D& set) -> SigTy
 
   // Second rectangle: the rest area at the bottom
   // Note: this rectangle is stored in a contiguous chunk of memory till the end of the buffer :)
-  auto first = m_coeff_buf.begin() + set.start_y * set.length_x;
+  auto first = m_coeff_buf.begin() + size_t{set.start_y} * size_t{set.length_x};
   if (std::any_of(first, m_coeff_buf.end(), gtr))
     return SigType::Sig;
   else
