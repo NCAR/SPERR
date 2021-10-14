@@ -4,8 +4,6 @@
 [![cmake-release-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml)
 [![cmake-release-size](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml)
 
-# SPERR
-SPERR: SPEck with ERRor bounding.
 
 ## Build
 SPERR uses `cmake` to build. It does require cmake version higher than `3.10`.
