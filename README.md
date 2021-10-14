@@ -4,16 +4,16 @@
 [![cmake-release-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml)
 [![cmake-release-size](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml)
 
-# SPECK2020
-Attempt in 2019-2020 to port SPECK algorithm for VAPOR.
+# SPERR
+SPERR: SPEck with ERRor bounding.
 
 ## Build
-SPECK2020 uses `cmake` to build. It does require cmake version higher than `3.10`.
-After downloading the source code in directory `SPECK2020`, follow the steps below
+SPERR uses `cmake` to build. It does require cmake version higher than `3.10`.
+After downloading the source code in directory `SPERR`, follow the steps below
 to have it built on a UNIX system.
 
 ```
-cd SPECK2020
+cd SPERR
 mkdir build
 cd build
 cmake ..
