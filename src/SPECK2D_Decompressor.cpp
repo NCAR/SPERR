@@ -77,7 +77,7 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   // It will be the responsibility of decompress() to actually restore the constant field.
   auto [constant, tmp1, tmp2] = m_conditioner.parse_constant(m_condi_stream);
   if (constant) {
-    if (condi_size == plen)
+    if (plen == 0)
       return RTNType::Good;
     else
       return RTNType::WrongSize;
