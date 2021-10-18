@@ -63,11 +63,12 @@ auto SPECK2D_Compressor::release_encoded_bitstream() -> std::vector<uint8_t>&&
 auto SPECK2D_Compressor::compress() -> RTNType
 {
   const auto total_vals = m_dims[0] * m_dims[1];
-  if (m_val_buf.size() != total_vals)
+  if (m_val_buf.size() != total_vals || m_val_buf.empty())
     return RTNType::Error;
 
   m_condi_stream.fill(0);
   m_speck_stream.clear();
+  m_encoded_stream.clear();
 
   // Believe it or not, there are constant fields passed in for compression!
   // Let's detect that case and skip the rest of the compression routine if it occurs.

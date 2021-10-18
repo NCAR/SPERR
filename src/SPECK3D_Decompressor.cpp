@@ -9,6 +9,7 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   // So let's clean up everything at the very beginning of this routine
   m_condi_stream.fill(0);
   m_speck_stream.clear();
+  m_val_buf.clear();
 #ifdef QZ_TERM
   m_sperr_stream.clear();
 #endif

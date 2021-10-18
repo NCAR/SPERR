@@ -50,6 +50,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
   m_condi_stream.fill(0);
   m_speck_stream.clear();
   m_sperr_stream.clear();
+  m_encoded_stream.clear();
   m_num_outlier = 0;
   const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
 

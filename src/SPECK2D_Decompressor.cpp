@@ -9,17 +9,22 @@
 
 auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
 {
-  // This method parses the metadata of a bitstream and performs the following
-  // tasks: 1) Verify if the major version number is consistant. 2) Make sure if
-  // the bitstream is for 2D encoding. 3) Verify that the application of ZSTD is
-  // consistant, and apply ZSTD if needed. 4) disassemble conditioner and SPECK
-  // streams. 5) Extract dimensions from the SPECK stream.
+  // This method parses the metadata of a bitstream and performs the following tasks:
+  // 1) Verify if the major version number is consistant.
+  // 2) Make sure that the bitstream is for 2D encoding.
+  // 3) Verify that the application of ZSTD is consistant, and apply ZSTD if needed.
+  // 4) disassemble conditioner and SPECK streams.
+  // 5) Extract dimensions from the SPECK stream.
 
-  assert(len > m_meta_size);
+  m_condi_stream.fill(0);
+  m_speck_stream.clear();
+  m_val_buf.clear();
 
-  uint8_t meta[2];
-  assert(sizeof(meta) == m_meta_size);
-  std::memcpy(meta, p, sizeof(meta));
+  const uint8_t* u8p = static_cast<const uint8_t*>(p);
+
+  auto meta = std::array<uint8_t, 2>();
+  assert(meta.size() == m_meta_size);
+  std::copy(u8p, u8p + m_meta_size, meta.begin());
   auto metabool = sperr::unpack_8_booleans(meta[1]);
 
   // Task 1)
@@ -30,21 +35,24 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   if (metabool[1] != false)  // false means it's 2D
     return RTNType::SliceVolumeMismatch;
 
-  size_t loc = m_meta_size;
-  const uint8_t* u8p = static_cast<const uint8_t*>(p) + loc;
-  size_t plen = len - m_meta_size;  // NOLINT
+  u8p += m_meta_size;
+  size_t plen = 0;
+  if (len >= m_meta_size)
+    plen = len - m_meta_size;
+  else
+    return RTNType::WrongSize;
 
-  // Task 3)
+    // Task 3)
 #ifdef USE_ZSTD
   if (metabool[0] == false)
     return RTNType::ZSTDMismatch;
 
-  const auto content_size = ZSTD_getFrameContentSize(u8p, len - m_meta_size);
+  const auto content_size = ZSTD_getFrameContentSize(u8p, plen);
   if (content_size == ZSTD_CONTENTSIZE_ERROR || content_size == ZSTD_CONTENTSIZE_UNKNOWN)
     return RTNType::ZSTDError;
 
   auto content_buf = std::make_unique<uint8_t[]>(content_size);
-  const auto decomp_size = ZSTD_decompress(content_buf.get(), content_size, u8p, len - m_meta_size);
+  const auto decomp_size = ZSTD_decompress(content_buf.get(), content_size, u8p, plen);
   if (ZSTD_isError(decomp_size) || decomp_size != content_size)
     return RTNType::ZSTDError;
 
@@ -57,7 +65,6 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
 #endif
 
   // Task 4)
-  m_condi_stream.fill(0);
   const auto condi_size = m_condi_stream.size();
   if (condi_size > plen)
     return RTNType::WrongSize;
@@ -65,15 +72,22 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   u8p += condi_size;
   plen -= condi_size;
 
-  m_speck_stream.clear();
+  // `m_condi_stream` could indicate that the field is constant, in which case,
+  // there is no speck stream anymore.  Let's detect that case and return early.
+  // It will be the responsibility of decompress() to actually restore the constant field.
+  auto [constant, tmp1, tmp2] = m_conditioner.parse_constant(m_condi_stream);
+  if (constant) {
+    if (condi_size == plen)
+      return RTNType::Good;
+    else
+      return RTNType::WrongSize;
+  }
+
   const auto speck_size = m_decoder.get_speck_stream_size(u8p);
-  if (speck_size > plen)
+  if (speck_size != plen)
     return RTNType::WrongSize;
   m_speck_stream.resize(speck_size, 0);
   std::copy(u8p, u8p + speck_size, m_speck_stream.begin());
-  u8p += speck_size;   // NOLINT
-  plen -= speck_size;  // NOLINT
-  assert(plen == 0);   // True if no other streams behind SPECK stream
 
   // Task 5)
   m_dims = m_decoder.get_speck_stream_dims(m_speck_stream.data());
@@ -122,6 +136,13 @@ auto SPECK2D_Decompressor::get_dims() const -> std::array<size_t, 3>
 
 auto SPECK2D_Decompressor::decompress() -> RTNType
 {
+  // `m_condi_stream` might be indicating a constant field, so let's test and handle that case.
+  auto [constant, const_val, nconst_vals] = m_conditioner.parse_constant(m_condi_stream);
+  if (constant) {
+    m_val_buf.assign(nconst_vals, const_val);
+    return RTNType::Good;
+  }
+
   // Step 1: SPECK decode
   if (m_speck_stream.empty())
     return RTNType::Error;

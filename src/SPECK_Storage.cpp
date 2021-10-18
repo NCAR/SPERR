@@ -90,9 +90,9 @@ auto sperr::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t 
   const uint8_t* const ptr = static_cast<const uint8_t*>(comp_buf);
 
   // Parse the header
-  uint32_t dims[3] = {0, 0, 0};
+  auto dims = std::array<uint32_t, 3>{0, 0, 0};
   size_t pos = 0;
-  std::memcpy(dims, ptr, sizeof(dims));
+  std::memcpy(dims.data(), ptr, sizeof(dims));
   pos += sizeof(dims);
   int16_t max_bits;
   std::memcpy(&max_bits, ptr + pos, sizeof(max_bits));
@@ -111,7 +111,7 @@ auto sperr::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t 
   if (rtn != RTNType::Good)
     return rtn;
 
-  std::copy(std::begin(dims), std::end(dims), m_dims.begin());
+  std::copy(dims.begin(), dims.end(), m_dims.begin());
   m_coeff_buf.resize(m_dims[0] * m_dims[1] * m_dims[2]);
 
   m_encoded_stream.clear();
@@ -147,5 +147,5 @@ auto sperr::SPECK_Storage::get_speck_stream_dims(const void* buf) const -> std::
   auto dims = std::array<uint32_t, 3>();
   std::memcpy(dims.data(), buf, sizeof(dims));
 
-  return {dims[0], dims[1], dims[2]};
+  return {size_t(dims[0]), size_t(dims[1]), size_t(dims[2])};
 }
