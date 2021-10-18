@@ -64,9 +64,9 @@ class ptr_iterator : public std::iterator<std::bidirectional_iterator_tag, T> {
   explicit ptr_iterator(T* p) : m_pos(p) {}
   ptr_iterator() = default;
   ptr_iterator(const ptr_iterator<T>&) = default;
-  ptr_iterator(ptr_iterator<T>&&) = default;
+  ptr_iterator(ptr_iterator<T>&&) noexcept = default;
   ptr_iterator& operator=(const ptr_iterator<T>&) = default;
-  ptr_iterator& operator=(ptr_iterator<T>&&) = default;
+  ptr_iterator& operator=(ptr_iterator<T>&&) noexcept = default;
   ~ptr_iterator() = default;
 
   // Requirements for a bidirectional iterator
