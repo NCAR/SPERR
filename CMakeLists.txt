@@ -118,12 +118,13 @@ target_link_libraries(      decompressor_3d PUBLIC ${SPECK3D_LIBS}
                                             PUBLIC ${CDF_LIBS}
                                             PUBLIC ${HELPER_LIBS} )
 
-# add_executable( compressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_2d.cpp" )
-# target_include_directories( compressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
-# target_link_libraries(      compressor_2d PUBLIC ${SPECK2D_LIBS}
-#                                           PUBLIC ${SPECK_Storage_LIBS}
-#                                           PUBLIC ${CDF_LIBS}
-#                                           PUBLIC ${HELPER_LIBS} )
+add_executable( compressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_2d.cpp" )
+set_target_properties( compressor_2d PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+target_include_directories( compressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
+target_link_libraries(      compressor_2d PUBLIC ${SPECK2D_LIBS}
+                                          PUBLIC ${SPECK_Storage_LIBS}
+                                          PUBLIC ${CDF_LIBS}
+                                          PUBLIC ${HELPER_LIBS} )
 
 if( QZ_TERM )
   add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_qz.cpp" )

@@ -14,6 +14,7 @@ int main(int argc, char* argv[])
   std::string input_file;
   app.add_option("filename", input_file, "Input data file to the compressor")
       ->required()
+      ->group("Input Specifications")
       ->check(CLI::ExistingFile);
 
   std::vector<size_t> dims;
@@ -21,45 +22,49 @@ int main(int argc, char* argv[])
                  "Dimensions of the input volume\n"
                  "E.g., `--dims 128 128 128`\n")
       ->expected(3)
-      ->required();
+      ->required()
+      ->group("Input Specifications");
+
+  auto use_double = bool{false};
+  app.add_flag("-d", use_double,
+               "Specify that input data is in double type.\n"
+               "Data is treated as float by default.")
+      ->group("Input Specifications");
 
   std::vector<size_t> chunks{64, 64, 64};
   app.add_option("--chunks", chunks,
-                 "Dimensions of the preferred chunk size.\n"
-                 "If not specified, then 64^3 will be used\n"
-                 "E.g., `--chunks 64 64 64`.\n")
-      ->expected(3);
-
-  size_t omp_num_threads = 4;
-  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4\n");
-
-  bool use_double = false;
-  app.add_flag("-d", use_double,
-               "Specify that input data is in double type.\n"
-               "Data is treated as float by default.\n");
+                 "Dimensions of the preferred chunk size\n"
+                 "If not specified, then 64^3 will be used.\n"
+                 "E.g., `--chunks 64 64 64`\n")
+      ->expected(3)
+      ->group("Compression Parameters");
 
 #ifdef QZ_TERM
   int32_t qz_level = 0;
-  app.add_option("-q,--qz_level", qz_level,
+  app.add_option("-q", qz_level,
                  "Quantization level to reach when encoding\n"
-                 "E.g., `-q n` means that the last quantization level is 2^n.\n"
                  "Note 1: smaller n usually yields smaller compression errors.\n"
-                 "Note 2: n could be negative integers as well.")
+                 "Note 2: n could be negative integers as well.\n")
       ->group("Compression Parameters")
       ->required();
-  double tolerance = 0.0;
-  app.add_option("-t,--tolerance", tolerance,
+
+  auto tolerance = double{0.0};
+  app.add_option("-t", tolerance,
                  "Maximum point-wise error tolerance\n"
-                 "E.g., `-t 1e-2`")
+                 "E.g., `-t 1e-2`\n")
       ->group("Compression Parameters")
       ->required();
 #else
   auto bpp = double{0.0};
-  app.add_option("--bpp", bpp, "Target bit-per-pixel. E.g., `-bpp 2.3`.")
+  app.add_option("--bpp", bpp, "Target bit-per-pixel. E.g., `-bpp 2.3`")
       ->check(CLI::Range(0.0f, 64.0f))
       ->group("Compression Parameters")
       ->required();
 #endif
+
+  size_t omp_num_threads = 4;
+  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4")
+      ->group("Compression Parameters");
 
   std::string output_file;
   app.add_option("-o", output_file, "Output filename")->required();
@@ -72,8 +77,8 @@ int main(int argc, char* argv[])
     return 1;
   }
 #else
-  if (bpp < 0.0 || bpp > 32.0) {
-    std::cerr << "Bit-per-pixel must be in the range (0.0, 32.0)!\n";
+  if (bpp < 0.0 || bpp > 64.0) {
+    std::cerr << "Bit-per-pixel must be in the range (0.0, 64.0)!\n";
     return 1;
   }
 #endif
@@ -120,12 +125,14 @@ int main(int argc, char* argv[])
   }
 
   auto stream = compressor.get_encoded_bitstream();
-  if (stream.empty())
+  if (stream.empty()) {
+    std::cerr << "Compression bitstream empty!" << std::endl;
     return 1;
+  }
 
   rtn = sperr::write_n_bytes(output_file.c_str(), stream.size(), stream.data());
   if (rtn != sperr::RTNType::Good) {
-    std::cerr << "Write to disk failed!" << std::endl;
+    std::cerr << "Write compressed file failed!" << std::endl;
     return 1;
   }
 
