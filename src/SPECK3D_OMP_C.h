@@ -13,14 +13,13 @@ using sperr::RTNType;
 
 class SPECK3D_OMP_C {
  public:
-  void set_dims(sperr::dims_type);
-  void prefer_chunk_dims(sperr::dims_type);
   void set_num_threads(size_t);
 
   // Upon receiving incoming data, a chunking scheme is decided, and the volume
   // is divided and kept in separate chunks.
   template <typename T>
-  auto use_volume(const T*, size_t) -> RTNType;
+  auto copy_data(const T*, size_t len, sperr::dims_type vol_dims, sperr::dims_type chunk_dims)
+      -> RTNType;
 
   void toggle_conditioning(sperr::Conditioner::settings_type);
 
@@ -53,8 +52,7 @@ class SPECK3D_OMP_C {
 #ifdef QZ_TERM
   int32_t m_qz_lev = 0;
   double m_tol = 0.0;
-  // Outlier stats include 1) the number of outliers, and 2) the num of bytes to
-  // encode them.
+  // Outlier stats include 1) the number of outliers, and 2) the num of bytes used to encode them.
   std::vector<std::pair<size_t, size_t>> m_outlier_stats;
 #else
   double m_bpp = 0.0;

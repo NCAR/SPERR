@@ -6,16 +6,6 @@
 #include <cstring>
 #include <numeric>  // std::accumulate()
 
-void SPECK3D_OMP_C::set_dims(sperr::dims_type dims)
-{
-  m_dims = dims;
-}
-
-void SPECK3D_OMP_C::prefer_chunk_dims(sperr::dims_type dims)
-{
-  m_chunk_dims = dims;
-}
-
 void SPECK3D_OMP_C::set_num_threads(size_t n)
 {
   if (n > 0)
@@ -63,16 +53,19 @@ auto SPECK3D_OMP_C::set_bpp(double bpp) -> RTNType
 #endif
 
 template <typename T>
-auto SPECK3D_OMP_C::use_volume(const T* vol, size_t len) -> RTNType
+auto SPECK3D_OMP_C::copy_data(const T* vol,
+                              size_t len,
+                              sperr::dims_type vol_dims,
+                              sperr::dims_type chunk_dims) -> RTNType
 {
-  if (len != m_dims[0] * m_dims[1] * m_dims[2])
+  if (len != vol_dims[0] * vol_dims[1] * vol_dims[2])
     return RTNType::WrongSize;
+  else
+    m_dims = vol_dims;
 
-  // If preferred chunk size is not set, then use the volume size as chunk size.
-  for (size_t i = 0; i < m_chunk_dims.size(); i++) {
-    if (m_chunk_dims[i] == 0)
-      m_chunk_dims[i] = m_dims[i];
-  }
+  // The preferred chunk size has to be between 1 and m_dims.
+  for (size_t i = 0; i < m_chunk_dims.size(); i++)
+    m_chunk_dims[i] = std::min(std::max(size_t{1}, chunk_dims[i]), vol_dims[i]);
 
   // Block the volume into smaller chunks
   auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
@@ -86,8 +79,10 @@ auto SPECK3D_OMP_C::use_volume(const T* vol, size_t len) -> RTNType
 
   return RTNType::Good;
 }
-template auto SPECK3D_OMP_C::use_volume(const float*, size_t) -> RTNType;
-template auto SPECK3D_OMP_C::use_volume(const double*, size_t) -> RTNType;
+template auto SPECK3D_OMP_C::copy_data(const float*, size_t, sperr::dims_type, sperr::dims_type)
+    -> RTNType;
+template auto SPECK3D_OMP_C::copy_data(const double*, size_t, sperr::dims_type, sperr::dims_type)
+    -> RTNType;
 
 auto SPECK3D_OMP_C::compress() -> RTNType
 {

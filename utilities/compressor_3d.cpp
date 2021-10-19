@@ -88,8 +88,6 @@ int main(int argc, char* argv[])
   //
   const size_t total_vals = dims[0] * dims[1] * dims[2];
   SPECK3D_OMP_C compressor;
-  compressor.set_dims({dims[0], dims[1], dims[2]});
-  compressor.prefer_chunk_dims({chunks[0], chunks[1], chunks[2]});
   compressor.set_num_threads(omp_num_threads);
 
 #ifdef QZ_TERM
@@ -106,10 +104,14 @@ int main(int argc, char* argv[])
     return 1;
   }
   auto rtn = sperr::RTNType::Good;
-  if (use_double)
-    rtn = compressor.use_volume(reinterpret_cast<const double*>(orig.data()), total_vals);
-  else
-    rtn = compressor.use_volume(reinterpret_cast<const float*>(orig.data()), total_vals);
+  if (use_double) {
+    rtn = compressor.copy_data(reinterpret_cast<const double*>(orig.data()), total_vals,
+                               {dims[0], dims[1], dims[2]}, {chunks[0], chunks[1], chunks[2]});
+  }
+  else {
+    rtn = compressor.copy_data(reinterpret_cast<const float*>(orig.data()), total_vals,
+                               {dims[0], dims[1], dims[2]}, {chunks[0], chunks[1], chunks[2]});
+  }
   if (rtn != sperr::RTNType::Good) {
     std::cerr << "Copy data failed!" << std::endl;
     return 1;

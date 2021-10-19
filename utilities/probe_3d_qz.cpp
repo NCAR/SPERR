@@ -30,11 +30,9 @@ auto test_configuration_omp(const T* in_buf,
   // Setup
   const size_t total_vals = dims[0] * dims[1] * dims[2];
   SPECK3D_OMP_C compressor;
-  compressor.set_dims(dims);
-  compressor.prefer_chunk_dims(chunks);
   compressor.toggle_conditioning(condi_settings);
   compressor.set_num_threads(omp_num_threads);
-  auto rtn = compressor.use_volume(in_buf, total_vals);
+  auto rtn = compressor.copy_data(in_buf, total_vals, dims, chunks);
   if (rtn != RTNType::Good)
     return 1;
 

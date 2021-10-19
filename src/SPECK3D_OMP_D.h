@@ -23,8 +23,7 @@ class SPECK3D_OMP_D {
 
   void set_num_threads(size_t);
 
-  // The pointer passed in here MUST be the same as the one passed to
-  // `use_bitstream`.
+  // The pointer passed in here MUST be the same as the one passed to `use_bitstream()`.
   auto decompress(const void*) -> RTNType;
 
   auto release_data() -> std::vector<double>&&;

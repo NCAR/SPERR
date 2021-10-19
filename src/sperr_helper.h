@@ -123,8 +123,7 @@ auto make_coeff_positive(vecd_type& buf, std::vector<bool>&) -> double;
 // start writing/reading the char array.
 //
 // Note: unpack_booleans() takes a raw pointer because it accesses memory
-// provided by others,
-//       and others most likely provide it by raw pointers.
+// provided by others, and others most likely provide it by raw pointers.
 // Note: these two methods only work on little endian machines.
 auto pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& src, size_t dest_offset = 0)
     -> RTNType;

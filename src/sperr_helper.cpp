@@ -106,7 +106,7 @@ auto sperr::unpack_booleans(std::vector<bool>& dest,
   if (dest.size() != num_of_bools)
     dest.resize(num_of_bools);
 
-  const uint8_t* src_ptr = reinterpret_cast<const uint8_t*>(src) + src_offset;
+  const uint8_t* src_ptr = static_cast<const uint8_t*>(src) + src_offset;
   const uint64_t magic = 0x8040201008040201;
   const uint64_t mask = 0x8080808080808080;
 
