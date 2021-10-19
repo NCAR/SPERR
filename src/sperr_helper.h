@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <iterator>
 #include <memory>
+#include <string>
 #include <utility>  // std::pair
 #include <vector>
 #include "SperrConfig.h"
@@ -139,10 +140,11 @@ auto pack_8_booleans(std::array<bool, 8>) -> uint8_t;
 auto unpack_8_booleans(uint8_t) -> std::array<bool, 8>;
 
 // Read from and write to a file
-auto write_n_bytes(const char* filename, size_t n_bytes, const void* buffer) -> RTNType;
-auto read_n_bytes(const char* filename, size_t n_bytes, void* buffer) -> RTNType;
+// Note: not using references for `filename` to allow a c-style string literal to be passed in.
+auto write_n_bytes(std::string filename, size_t n_bytes, const void* buffer) -> RTNType;
+auto read_n_bytes(std::string filename, size_t n_bytes, void* buffer) -> RTNType;
 template <typename T>
-auto read_whole_file(const char* filename) -> std::vector<T>;
+auto read_whole_file(std::string filename) -> std::vector<T>;
 
 // Calculate a suite of statistics
 // Note that arr1 is considered as the ground truth array, so it's the range of

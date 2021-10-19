@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
   //
   // Let's do the actual work
   //
-  auto in_stream = sperr::read_whole_file<uint8_t>(input_file.c_str());
+  auto in_stream = sperr::read_whole_file<uint8_t>(input_file);
   if (in_stream.empty())
     return 1;
   SPECK3D_OMP_D decompressor;
@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
     auto vol = decompressor.view_data();
     if (vol.empty())
       return 1;
-    if (sperr::write_n_bytes(output_file.c_str(), vol.size() * sizeof(double), vol.data()) !=
+    if (sperr::write_n_bytes(output_file, vol.size() * sizeof(double), vol.data()) !=
         sperr::RTNType::Good) {
       std::cerr << "Write to disk failed!" << std::endl;
       return 1;
@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
     auto vol = decompressor.get_data<float>();
     if (vol.empty())
       return 1;
-    if (sperr::write_n_bytes(output_file.c_str(), vol.size() * sizeof(double), vol.data()) !=
+    if (sperr::write_n_bytes(output_file, vol.size() * sizeof(double), vol.data()) !=
         sperr::RTNType::Good) {
       std::cerr << "Write to disk failed!" << std::endl;
       return 1;
@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
   // Compare with the original data if user specifies
   if (*compare_double_ptr) {
     auto vol = decompressor.view_data();
-    auto orig = sperr::read_whole_file<double>(compare_double.c_str());
+    auto orig = sperr::read_whole_file<double>(compare_double);
     if (orig.size() != vol.size()) {
       std::cerr << "File to compare with has difference size with the decompressed file!"
                 << std::endl;
@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
   }
   else if (*compare_single_ptr) {
     auto vol = decompressor.get_data<float>();
-    auto orig = sperr::read_whole_file<float>(compare_single.c_str());
+    auto orig = sperr::read_whole_file<float>(compare_single);
     if (orig.size() != vol.size()) {
       std::cerr << "File to compare with has difference size with the decompressed file!"
                 << std::endl;

@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
 
   // Read in the input file
   const size_t total_vals = dims[0] * dims[1];
-  auto orig = sperr::read_whole_file<uint8_t>(input_file.c_str());
+  auto orig = sperr::read_whole_file<uint8_t>(input_file);
   if ((use_double && orig.size() != total_vals * sizeof(double)) ||
       (!use_double && orig.size() != total_vals * sizeof(float))) {
     std::cerr << "Read input file error: " << input_file << std::endl;
@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  rtn = sperr::write_n_bytes(output_file.c_str(), stream.size(), stream.data());
+  rtn = sperr::write_n_bytes(output_file, stream.size(), stream.data());
   if (rtn != sperr::RTNType::Good) {
     std::cerr << "Write compressed file failed: " << output_file << std::endl;
     return 1;

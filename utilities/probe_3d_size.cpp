@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
   // configurations) Also create a buffer to hold decompressed data.
   //
   const size_t total_vals = dims[0] * dims[1] * dims[2];
-  auto input_buf = sperr::read_whole_file<uint8_t>(input_file.c_str());
+  auto input_buf = sperr::read_whole_file<uint8_t>(input_file);
   if ((use_double && input_buf.size() != total_vals * sizeof(double)) ||
       (!use_double && input_buf.size() != total_vals * sizeof(float))) {
     std::cerr << "  -- reading input file failed!" << std::endl;
@@ -226,12 +226,12 @@ int main(int argc, char* argv[])
         std::cin >> fname;
         auto rtn2 = RTNType::Good;
         if (use_double) {
-          rtn2 = sperr::write_n_bytes(fname.c_str(), sizeof(double) * output_buf_d.size(),
+          rtn2 = sperr::write_n_bytes(fname, sizeof(double) * output_buf_d.size(),
                                       output_buf_d.data());
         }
         else {
-          rtn2 = sperr::write_n_bytes(fname.c_str(), sizeof(float) * output_buf_f.size(),
-                                      output_buf_f.data());
+          rtn2 =
+              sperr::write_n_bytes(fname, sizeof(float) * output_buf_f.size(), output_buf_f.data());
         }
         if (rtn2 == RTNType::Good)
           std::cout << "written decompressed file: " << fname << std::endl;

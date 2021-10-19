@@ -187,9 +187,10 @@ auto sperr::unpack_8_booleans(uint8_t src) -> std::array<bool, 8>
   ;
 }
 
-auto sperr::read_n_bytes(const char* filename, size_t n_bytes, void* buffer) -> RTNType
+auto sperr::read_n_bytes(std::string filename, size_t n_bytes, void* buffer) -> RTNType
 {
-  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename, "rb"), &std::fclose);
+  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename.data(), "rb"),
+                                                        &std::fclose);
 
   if (!fp)
     return RTNType::IOError;
@@ -206,11 +207,12 @@ auto sperr::read_n_bytes(const char* filename, size_t n_bytes, void* buffer) -> 
 }
 
 template <typename T>
-auto sperr::read_whole_file(const char* filename) -> std::vector<T>
+auto sperr::read_whole_file(std::string filename) -> std::vector<T>
 {
   std::vector<T> buf;
 
-  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename, "rb"), &std::fclose);
+  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename.data(), "rb"),
+                                                        &std::fclose);
   if (!fp)
     return buf;
 
@@ -226,13 +228,14 @@ auto sperr::read_whole_file(const char* filename) -> std::vector<T>
 
   return buf;
 }
-template auto sperr::read_whole_file(const char*) -> std::vector<float>;
-template auto sperr::read_whole_file(const char*) -> std::vector<double>;
-template auto sperr::read_whole_file(const char*) -> std::vector<uint8_t>;
+template auto sperr::read_whole_file(std::string) -> std::vector<float>;
+template auto sperr::read_whole_file(std::string) -> std::vector<double>;
+template auto sperr::read_whole_file(std::string) -> std::vector<uint8_t>;
 
-auto sperr::write_n_bytes(const char* filename, size_t n_bytes, const void* buffer) -> RTNType
+auto sperr::write_n_bytes(std::string filename, size_t n_bytes, const void* buffer) -> RTNType
 {
-  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename, "wb"), &std::fclose);
+  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename.data(), "wb"),
+                                                        &std::fclose);
   if (!fp)
     return RTNType::IOError;
 
