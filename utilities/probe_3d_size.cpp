@@ -87,47 +87,48 @@ int main(int argc, char* argv[])
   //
   // Parse command line options
   //
-  CLI::App app("CLI options to probe_3d");
+  CLI::App app("Test and evaluate SPERR compression on 3D volumes");
 
-  std::string input_file;
+  auto input_file = std::string();
   app.add_option("filename", input_file, "Input data file to probe")
       ->required()
-      ->check(CLI::ExistingFile);
+      ->check(CLI::ExistingFile)
+      ->group("Input Specifications");
 
-  std::vector<size_t> dims_v;
-  app.add_option("--dims", dims_v,
-                 "Dimensions of the input volume.\n"
-                 "For example, `--dims 128 128 128`.\n")
+  auto dims_v = std::vector<size_t>();
+  app.add_option("--dims", dims_v, "Dimensions of the input volume. E.g., `--dims 128 128 128`")
       ->required()
-      ->expected(3);
+      ->expected(3)
+      ->group("Input Specifications");
 
-  std::vector<size_t> chunks_v{64, 64, 64};
-  app.add_option("--chunks", chunks_v,
-                 "Dimensions of the preferred chunk size. "
-                 "E.g., `--chunks 64 64 64`.\n"
-                 "If not specified, then 64^3 will be used\n")
-      ->expected(3);
-
-  auto bpp = double{0.0};
-  auto* bpp_ptr = app.add_option("--bpp", bpp,
-                                 "Target bit-per-pixel value.\n"
-                                 "For example, `--bpp 0.5`.\n")
-                      ->check(CLI::Range(0.0f, 64.0f));
-
-  bool div_rms = false;
-  app.add_flag("--div-rms", div_rms,
-               "Conditioning: calculate rms of each chunk and divide every\n"
-               "value by rms of its chunk. Default: not applied.\n");
-
-  size_t omp_num_threads = 4;
-  app.add_option("--omp", omp_num_threads,
-                 "Number of OpenMP threads to use. "
-                 "Default: 4\n");
-
-  bool use_double = false;
+  auto use_double = bool{false};
   app.add_flag("-d", use_double,
                "Specify that input data is in double type.\n"
-               "Data is treated as float by default.\n");
+               "Data is treated as float by default.")
+      ->group("Input Specifications");
+
+  auto chunks_v = std::vector<size_t>{128, 128, 128};
+  app.add_option("--chunks", chunks_v,
+                 "Dimensions of the preferred chunk size. Default: 128 128 128\n"
+                 "E.g., `--chunks 64 64 64`")
+      ->expected(3)
+      ->group("Compression Parameters");
+
+  auto bpp = double{0.0};
+  app.add_option("--bpp", bpp, "Target bit-per-pixel value. E.g., `--bpp 0.5`.")
+      ->check(CLI::Range(0.0, 64.0))
+      ->required()
+      ->group("Compression Parameters");
+
+  auto div_rms = bool{false};
+  app.add_flag("--div-rms", div_rms,
+               "Conditioning: calculate rms of each chunk and divide every\n"
+               "value by rms of its chunk. Default: not applied.")
+      ->group("Compression Parameters");
+
+  auto omp_num_threads = size_t{4};
+  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4")
+      ->group("Compression Parameters");
 
   CLI11_PARSE(app, argc, argv);
 
@@ -141,7 +142,7 @@ int main(int argc, char* argv[])
   // Read and keep a copy of input data (will be used for testing different
   // configurations) Also create a buffer to hold decompressed data.
   //
-  const size_t total_vals = dims[0] * dims[1] * dims[2];
+  const auto total_vals = dims[0] * dims[1] * dims[2];
   auto input_buf = sperr::read_whole_file<uint8_t>(input_file);
   if ((use_double && input_buf.size() != total_vals * sizeof(double)) ||
       (!use_double && input_buf.size() != total_vals * sizeof(float))) {
@@ -154,9 +155,6 @@ int main(int argc, char* argv[])
   //
   // Let's do an initial analysis
   //
-  if (!(*bpp_ptr)) {
-    bpp = 4.0;  // We decide to use 4 bpp for initial analysis
-  }
   if (use_double) {
     const auto* begin = reinterpret_cast<const double*>(input_buf.data());
     auto minmax = std::minmax_element(begin, begin + total_vals);

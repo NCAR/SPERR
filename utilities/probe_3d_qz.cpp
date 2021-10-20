@@ -103,60 +103,59 @@ int main(int argc, char* argv[])
   //
   // Parse command line options
   //
-  CLI::App app("CLI options to probe_3d");
+  CLI::App app("Test and evaluate SPERR compression on 3D volumes");
 
-  std::string input_file;
+  auto input_file = std::string();
   app.add_option("filename", input_file, "Input file to the probe")
       ->required()
-      ->check(CLI::ExistingFile);
+      ->check(CLI::ExistingFile)
+      ->group("Input Specifications");
 
-  std::vector<size_t> dims_v;
-  app.add_option("--dims", dims_v,
-                 "Dimensions of the input volume. "
-                 "E.g., `--dims 128 128 128`.\n")
+  auto dims_v = std::vector<size_t>();
+  app.add_option("--dims", dims_v, "Dimensions of the input volume. E.g., `--dims 128 128 128`.")
       ->required()
-      ->expected(3);
+      ->expected(3)
+      ->group("Input Specifications");
 
-  std::vector<size_t> chunks_v{64, 64, 64};
-  app.add_option("--chunks", chunks_v,
-                 "Dimensions of the preferred chunk size. "
-                 "E.g., `--chunks 64 64 64`.\n"
-                 "If not specified, then 64^3 will be used\n")
-      ->expected(3);
-
-  double tolerance = 0.0;
-  app.add_option("-t", tolerance,
-                 "Maximum point-wise error tolerance. E.g., `-t 0.001`.\n"
-                 "It takes a positive value as the absolute error tolerance.\n"
-                 "Note: if flag --div-rms is enabled, then this tolerance applies\n"
-                 "to conditioned data.\n")
-      ->required()
-      ->check(CLI::PositiveNumber);
-
-  int32_t qz_level;
-  auto* qz_level_ptr = app.add_option("-q,--qz_level", qz_level,
-                                      "Integer quantization level to test. E.g., `-q -10`. \n"
-                                      "If not specified, the probe will pick one for you.\n");
-
-  bool div_rms = false;
-  app.add_flag("--div-rms", div_rms,
-               "Conditioning: calculate rms of each chunk and divide every\n"
-               "value by rms of its chunk. Default: not applied.\n");
-
-  size_t omp_num_threads = 4;
-  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4\n");
-
-  bool use_double = false;
+  auto use_double = bool{false};
   app.add_flag("-d", use_double,
                "Specify that input data is in double type.\n"
-               "Data is treated as float by default.\n");
+               "Data is treated as float by default.")
+      ->group("Input Specifications");
+
+  auto chunks_v = std::vector<size_t>{128, 128, 128};
+  app.add_option("--chunks", chunks_v,
+                 "Dimensions of the preferred chunk size. Default: 128 128 128\n"
+                 "E.g., `--chunks 64 64 64`")
+      ->expected(3)
+      ->group("Compression Parameters");
+
+  auto tolerance = double{0.0};
+  app.add_option("-t", tolerance,
+                 "Maximum point-wise error tolerance. E.g., `-t 0.001`.\n"
+                 "Note: if flag --div-rms is enabled, then this tolerance applies\n"
+                 "to conditioned data.")
+      ->required()
+      ->check(CLI::PositiveNumber)
+      ->group("Compression Parameters");
+
+  auto qz_level = int32_t{0};
+  auto* qz_level_ptr = app.add_option("-q", qz_level,
+                                      "Integer quantization level to test. E.g., `-q -10`. \n"
+                                      "If not specified, the probe will pick one for you.")
+                           ->group("Compression Parameters");
+
+  auto div_rms = bool{false};
+  app.add_flag("--div-rms", div_rms,
+               "Conditioning: calculate rms of each chunk and divide every\n"
+               "value by rms of its chunk. Default: not applied.")
+      ->group("Compression Parameters");
+
+  auto omp_num_threads = size_t{4};
+  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4")
+      ->group("Compression Parameters");
 
   CLI11_PARSE(app, argc, argv);
-
-  if (tolerance <= 0.0) {
-    std::cerr << "Absolute error tolerance must be a positive value!\n";
-    return 1;
-  }
 
   const auto dims = std::array<size_t, 3>{dims_v[0], dims_v[1], dims_v[2]};
   const auto condi_settings = sperr::Conditioner::settings_type{true,     // subtract mean

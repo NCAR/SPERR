@@ -9,18 +9,16 @@
 int main(int argc, char* argv[])
 {
   // Parse command line options
-  CLI::App app("");
+  CLI::App app("Compress a 3D volume and output a SPERR bitstream");
 
-  std::string input_file;
+  auto input_file = std::string(); 
   app.add_option("filename", input_file, "Input data file to the compressor")
       ->required()
-      ->group("Input Specifications")
-      ->check(CLI::ExistingFile);
+      ->check(CLI::ExistingFile)
+      ->group("Input Specifications");
 
-  std::vector<size_t> dims;
-  app.add_option("--dims", dims,
-                 "Dimensions of the input volume\n"
-                 "E.g., `--dims 128 128 128`\n")
+  auto dims = std::vector<size_t>();
+  app.add_option("--dims", dims, "Dimensions of the input volume. E.g., `--dims 128 128 128`")
       ->expected(3)
       ->required()
       ->group("Input Specifications");
@@ -31,57 +29,43 @@ int main(int argc, char* argv[])
                "Data is treated as float by default.")
       ->group("Input Specifications");
 
-  std::vector<size_t> chunks{64, 64, 64};
+  auto output_file = std::string();
+  app.add_option("-o", output_file, "Output filename")->required()->group("Output Specifications");
+
+  auto chunks = std::vector<size_t>{128, 128, 128};
   app.add_option("--chunks", chunks,
-                 "Dimensions of the preferred chunk size\n"
-                 "If not specified, then 64^3 will be used.\n"
-                 "E.g., `--chunks 64 64 64`\n")
+                 "Dimensions of the preferred chunk size. Default: 128 128 128\n"
+                 "E.g., `--chunks 64 64 64`")
       ->expected(3)
       ->group("Compression Parameters");
 
 #ifdef QZ_TERM
-  int32_t qz_level = 0;
+  auto qz_level = int32_t{0};
   app.add_option("-q", qz_level,
                  "Quantization level to reach when encoding\n"
                  "Note 1: smaller n usually yields smaller compression errors.\n"
-                 "Note 2: n could be negative integers as well.\n")
+                 "Note 2: n could be negative integers as well.")
       ->group("Compression Parameters")
       ->required();
 
   auto tolerance = double{0.0};
-  app.add_option("-t", tolerance,
-                 "Maximum point-wise error tolerance\n"
-                 "E.g., `-t 1e-2`\n")
-      ->group("Compression Parameters")
-      ->required();
+  app.add_option("-t", tolerance, "Maximum point-wise error tolerance. E.g., `-t 1e-2`")
+      ->check(CLI::PositiveNumber)
+      ->required()
+      ->group("Compression Parameters");
 #else
   auto bpp = double{0.0};
   app.add_option("--bpp", bpp, "Target bit-per-pixel. E.g., `-bpp 2.3`")
-      ->check(CLI::Range(0.0f, 64.0f))
+      ->check(CLI::Range(0.0, 64.0))
       ->group("Compression Parameters")
       ->required();
 #endif
 
-  size_t omp_num_threads = 4;
+  auto omp_num_threads = size_t{4};
   app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4")
       ->group("Compression Parameters");
 
-  std::string output_file;
-  app.add_option("-o", output_file, "Output filename")->required();
-
   CLI11_PARSE(app, argc, argv);
-
-#ifdef QZ_TERM
-  if (tolerance <= 0.0) {
-    std::cerr << "Tolerance must be a positive value!\n";
-    return 1;
-  }
-#else
-  if (bpp < 0.0 || bpp > 64.0) {
-    std::cerr << "Bit-per-pixel must be in the range (0.0, 64.0)!\n";
-    return 1;
-  }
-#endif
 
   //
   // Let's do the actual work

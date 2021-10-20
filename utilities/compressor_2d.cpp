@@ -9,18 +9,16 @@
 int main(int argc, char* argv[])
 {
   // Parse command line options
-  CLI::App app("");
+  CLI::App app("Compress a 2D slice and output a SPERR bitstream");
 
-  std::string input_file;
+  auto input_file = std::string();
   app.add_option("filename", input_file, "Input file to the compressor")
       ->required()
-      ->group("Input Specifications")
-      ->check(CLI::ExistingFile);
+      ->check(CLI::ExistingFile)
+      ->group("Input Specifications");
 
-  std::vector<size_t> dims;
-  app.add_option("--dims", dims,
-                 "Dimensions of the input 2D plane. \n"
-                 "For example, `--dims 128 128`.\n")
+  auto dims = std::vector<size_t>();
+  app.add_option("--dims", dims, "Dimensions of the input 2D slice. E.g., `--dims 128 128`")
       ->expected(2)
       ->required()
       ->group("Input Specifications");
@@ -31,14 +29,14 @@ int main(int argc, char* argv[])
                "Data is treated as float by default.")
       ->group("Input Specifications");
 
+  auto output_file = std::string();
+  app.add_option("-o", output_file, "Output filename")->required()->group("Output Specifications");
+
   auto bpp = double{0.0};
   app.add_option("--bpp", bpp, "Average bit-per-pixel")
       ->check(CLI::Range(0.0, 64.0))
       ->required()
       ->group("Compression Parameters");
-
-  std::string output_file;
-  app.add_option("-o", output_file, "Output filename.")->required();
 
   CLI11_PARSE(app, argc, argv);
 
@@ -76,7 +74,7 @@ int main(int argc, char* argv[])
   }
 
   // Output the encoded bitstream
-  auto& stream = compressor.view_encoded_bitstream();
+  const auto& stream = compressor.view_encoded_bitstream();
   if (stream.empty()) {
     std::cerr << "Compression bitstream empty!" << std::endl;
     return 1;
