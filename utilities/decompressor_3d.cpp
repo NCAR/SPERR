@@ -40,22 +40,6 @@ int main(int argc, char* argv[])
   app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4")
       ->group("Decompression Options");
 
-  // std::string compare_single;
-  // auto* compare_single_ptr =
-  //     app.add_option("--compare_single", compare_single,
-  //                    "Pass in the original data file (in single precision) so\n"
-  //                    "the decompressor could compare the decompressed data against\n"
-  //                    "(PSNR, L-Infty, etc.).")
-  //         ->check(CLI::ExistingFile);
-
-  // std::string compare_double;
-  // auto* compare_double_ptr =
-  //     app.add_option("--compare_double", compare_double,
-  //                    "Pass in the original data file (in single double) so\n"
-  //                    "the decompressor could compare the decompressed data against\n"
-  //                    "(PSNR, L-Infty, etc.).")
-  //         ->excludes(compare_single_ptr)
-  //         ->check(CLI::ExistingFile);
 
   CLI11_PARSE(app, argc, argv);
 
@@ -82,7 +66,6 @@ int main(int argc, char* argv[])
   }
 
   // Let's free up some memory here
-  const auto in_stream_num_bytes = in_stream.size();
   in_stream.clear();
   in_stream.shrink_to_fit();
 
@@ -106,40 +89,6 @@ int main(int argc, char* argv[])
       return 1;
     }
   }
-
-  // Compare with the original data if user specifies
-  // if (*compare_double_ptr) {
-  //  auto vol = decompressor.view_data();
-  //  auto orig = sperr::read_whole_file<double>(compare_double);
-  //  if (orig.size() != vol.size()) {
-  //    std::cerr << "File to compare with has difference size with the decompressed file!"
-  //              << std::endl;
-  //    return 1;
-  //  }
-
-  //  printf("Average bit-per-pixel = %.2f\n", in_stream_num_bytes * 8.0f / orig.size());
-  //  double rmse, lmax, psnr, arr1min, arr1max;
-  //  sperr::calc_stats(orig.data(), vol.data(), orig.size(), omp_num_threads, rmse, lmax, psnr,
-  //                    arr1min, arr1max);
-  //  printf("Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
-  //  printf("Decompressed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
-  //}
-  // else if (*compare_single_ptr) {
-  //  auto vol = decompressor.get_data<float>();
-  //  auto orig = sperr::read_whole_file<float>(compare_single);
-  //  if (orig.size() != vol.size()) {
-  //    std::cerr << "File to compare with has difference size with the decompressed file!"
-  //              << std::endl;
-  //    return 1;
-  //  }
-
-  //  printf("Average bit-per-pixel = %.2f\n", in_stream_num_bytes * 8.0f / orig.size());
-  //  float rmse, lmax, psnr, arr1min, arr1max;
-  //  sperr::calc_stats(orig.data(), vol.data(), orig.size(), omp_num_threads, rmse, lmax, psnr,
-  //                    arr1min, arr1max);
-  //  printf("Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
-  //  printf("Decompressed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
-  //}
 
   return 0;
 }

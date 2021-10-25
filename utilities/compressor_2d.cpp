@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
   compressor.set_bpp(bpp);
 
   // Perform the actual compression
-  if ((rtn = compressor.compress()) != sperr::RTNType::Good) {
+  if (compressor.compress() != sperr::RTNType::Good) {
     std::cerr << "Compression Failed!" << std::endl;
     return 1;
   }

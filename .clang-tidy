@@ -3,6 +3,7 @@
 # performance-*
 # portability-*
 # clang-analyzer-*,
+# openmp-exception-escape,
 
 # Updated: 10/25/2021
 
@@ -37,6 +38,7 @@
                     performance-*,
                     portability-*,
                     clang-analyzer-*,
+                    openmp-exception-escape,
                     readability-redundant-member-init'
   CheckOptions:
     - key:          bugprone-dangling-handle.HandleClasses
