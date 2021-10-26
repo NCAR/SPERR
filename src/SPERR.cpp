@@ -294,10 +294,14 @@ auto sperr::SPERR::m_code_S(size_t idx1, size_t idx2) -> bool
     auto newi1 = s1.part_level;
     m_LIS[newi1].emplace_back(s1);
     auto newi2 = m_LIS[newi1].size() - 1;
-    if (m_encode_mode && m_process_S_encoding(newi1, newi2, counter, true))
-      return true;
-    else if (!m_encode_mode && m_process_S_decoding(newi1, newi2, counter, true))
-      return true;
+    if (m_encode_mode) {
+      if (m_process_S_encoding(newi1, newi2, counter, true))
+        return true;
+    }
+    else {
+      if (m_process_S_decoding(newi1, newi2, counter, true))
+        return true;
+    }
   }
 
   // Process the 2nd set
@@ -310,10 +314,14 @@ auto sperr::SPERR::m_code_S(size_t idx1, size_t idx2) -> bool
     // If the 1st set wasn't significant, then the 2nd set must be significant,
     // thus don't need to output/input this information.
     bool IO = (counter == 0 ? false : true);
-    if (m_encode_mode && m_process_S_encoding(newi1, newi2, counter, IO))
-      return true;
-    else if (!m_encode_mode && m_process_S_decoding(newi1, newi2, counter, IO))
-      return true;
+    if (m_encode_mode) {
+      if (m_process_S_encoding(newi1, newi2, counter, IO))
+        return true;
+    }
+    else {
+      if (m_process_S_decoding(newi1, newi2, counter, IO))
+        return true;
+    }
   }
 
   return false;
@@ -325,10 +333,14 @@ auto sperr::SPERR::m_sorting_pass() -> bool
   for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
     size_t idx1 = m_LIS.size() - tmp;
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
-      if (m_encode_mode && m_process_S_encoding(idx1, idx2, dummy, true))
-        return true;
-      else if (!m_encode_mode && m_process_S_decoding(idx1, idx2, dummy, true))
-        return true;
+      if (m_encode_mode) {
+        if (m_process_S_encoding(idx1, idx2, dummy, true))
+          return true;
+      }
+      else {
+        if (m_process_S_decoding(idx1, idx2, dummy, true))
+          return true;
+      }
     }
   }
 
