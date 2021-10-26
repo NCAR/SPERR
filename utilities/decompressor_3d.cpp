@@ -40,7 +40,6 @@ int main(int argc, char* argv[])
   app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4")
       ->group("Decompression Options");
 
-
   CLI11_PARSE(app, argc, argv);
 
   //
