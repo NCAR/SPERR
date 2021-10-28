@@ -77,9 +77,6 @@ auto sperr::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& s
   auto src_itr1 = src.cbegin();
   auto src_itr2 = src.cbegin() + 8;
   for (size_t i = 0; i < src.size(); i += 8) {
-    //#pragma GCC unroll 8
-    // for (size_t j = 0; j < 8; j++)
-    //  a[j] = src[i + j];
     std::copy(src_itr1, src_itr2, a.begin());
     std::memcpy(&t, a.data(), 8);
     dest[dest_idx++] = (magic * t) >> 56;
@@ -112,25 +109,22 @@ auto sperr::unpack_booleans(std::vector<bool>& dest,
 
 #ifndef OMP_UNPACK_BOOLEANS
   // Serial implementation
+  //
   auto a = std::array<uint8_t, 8>();
   uint64_t t = 0;
-  // size_t dest_idx = 0;
   auto dest_itr = dest.begin();
   for (size_t byte_idx = 0; byte_idx < num_of_bytes; byte_idx++) {
     const uint8_t* ptr = src_ptr + byte_idx;
     t = ((magic * (*ptr)) & mask) >> 7;
     std::memcpy(a.data(), &t, 8);
-    //#pragma GCC unroll 8
-    // for (size_t i = 0; i < 8; i++)
-    //  dest[dest_idx + i] = a[i];
-    // dest_idx += 8;
     std::copy(a.cbegin(), a.cend(), dest_itr);
     dest_itr += 8;
   }
 #else
+  // Parallel implementation
+  //
   // Because in most implementations std::vector<bool> is stored as uint64_t
-  // values,
-  //   we parallel in strides of 64 bits, or 8 bytes.
+  // values, we parallel in strides of 64 bits, or 8 bytes.
   const size_t stride_size = 8;
   const size_t num_of_strides = num_of_bytes / stride_size;
 
@@ -302,8 +296,7 @@ void sperr::calc_stats(const T* arr1,
   // Calculate summation and l-infty of the remaining elements
   //
   T last_linfty = 0.0;
-  auto last_buf = std::array<T, stride_size>{};  // must be enough for
-                                                 // `remainder_size` elements.
+  auto last_buf = std::array<T, stride_size>{};  // must be enough for `remainder_size` elements.
   for (size_t i = 0; i < remainder_size; i++) {
     const size_t idx = stride_size * num_of_strides + i;
     auto diff = std::abs(arr1[idx] - arr2[idx]);

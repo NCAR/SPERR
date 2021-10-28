@@ -80,8 +80,7 @@ auto sperr::SPECK3D::encode() -> RTNType
     m_threshold_arr[i] = m_threshold_arr[i - 1] * 0.5;
 
 #ifdef QZ_TERM
-  // If the requested termination level is already above max_coeff_bits, return
-  // right away.
+  // If the requested termination level is already above max_coeff_bits, return right away.
   if (m_qz_term_lev > m_max_coeff_bits)
     return RTNType::QzLevelTooBig;
 
@@ -210,8 +209,7 @@ void sperr::SPECK3D::m_initialize_sets_lists()
     list.clear();
 
   // Starting from a set representing the whole volume, identify the smaller
-  // sets
-  //   and put them in LIS accordingly.
+  // sets and put them in LIS accordingly.
   SPECKSet3D big;
   big.length_x = uint32_t(m_dims[0]);  // Truncate 64-bit int to 32-bit, but should be OK.
   big.length_y = uint32_t(m_dims[1]);  // Truncate 64-bit int to 32-bit, but should be OK.
@@ -232,8 +230,7 @@ void sperr::SPECK3D::m_initialize_sets_lists()
     xf++;
   }
 
-  // One of these two conditions could happen if num_of_xforms_xy !=
-  // num_of_xforms_z
+  // One of these two conditions could happen if num_of_xforms_xy != num_of_xforms_z
   if (xf < num_of_xforms_xy) {
     while (xf < num_of_xforms_xy) {
       auto subsets = m_partition_S_XY(big);
@@ -264,8 +261,7 @@ void sperr::SPECK3D::m_initialize_sets_lists()
   m_LIP.clear();
 
 #ifndef QZ_TERM
-  // Note that `m_LSP_old` usually grow close to the full length, so we reserve
-  // space now.
+  // Note that `m_LSP_old` usually grow close to the full length, so we reserve space now.
   m_LSP_new.clear();
   m_LSP_old.clear();
   m_LSP_old.reserve(m_dims[0] * m_dims[1] * m_dims[2]);
