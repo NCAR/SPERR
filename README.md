@@ -1,8 +1,8 @@
 [![clang-format](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-format.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-format.yml)
 [![clang-tidy-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-qz.yml)
 [![clang-tidy-size](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-size.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-size.yml)
-[![unit-test-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml)
-[![unit-test-size](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml)
+[![unit-test-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/unit-test-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/unit-test-qz.yml)
+[![unit-test-size](https://github.com/shaomeng/SPECK2020/actions/workflows/unit-test-size.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/unit-test-size.yml)
 [![CodeQL](https://github.com/shaomeng/SPERR/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/shaomeng/SPERR/actions/workflows/codeql-analysis.yml)
 
 
