@@ -9,14 +9,14 @@ project(SPERR VERSION 0.1)
 # CMake will `decay` to a previous supported flag, e.g. -std=c++11.
 set(CMAKE_CXX_STANDARD 20)
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
     # Set the possible values of build type for cmake-gui
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "DEBUG" "RELEASE" "RELWITHDEBINFO")
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo")
 endif()
 
-option( BUILD_UNIT_TESTS "Build unit tests using googletest?" ON)
-option( USE_ZSTD "Incorporate zstd to achieve further 5% compression?" OFF)
-option( QZ_TERM  "Operational mode which terminates by quantization level" ON)
+option( BUILD_UNIT_TESTS "Build unit tests using Google Test" ON)
+option( USE_ZSTD "Incorporate ZSTD to achieve further 5% reduction" OFF)
+option( QZ_TERM  "Coding terminates by quantization level" ON)
 
 find_package(OpenMP REQUIRED)
 if( OpenMP_CXX_FOUND AND OpenMP_CXX_FLAGS )
@@ -30,6 +30,12 @@ endif()
 #
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/SperrConfig.h.in" "SperrConfig.h")
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+if( qz_TERM )
+    message(STATUS "Compiling in point-wise-error-bounded mode")
+else()
+    message(STATUS "Compiling in size-bounded mode")
+endif()
 
 if( USE_ZSTD )
     message(STATUS "ZSTD add-on enabled!")
@@ -128,11 +134,10 @@ target_link_libraries(      compressor_2d PUBLIC ${SPECK2D_LIBS}
 
 if( QZ_TERM )
   add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_qz.cpp" )
-  message(STATUS "Building error-bound mode")
 else()
   add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_size.cpp" )
-  message(STATUS "Building size-bound mode")
 endif()
+
 set_target_properties( probe_3d PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 target_include_directories( probe_3d PUBLIC ${PROJECT_BINARY_DIR} )
 target_link_libraries(      probe_3d PUBLIC ${SPECK3D_LIBS}

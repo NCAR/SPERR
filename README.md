@@ -1,29 +1,17 @@
 [![clang-format](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-format.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-format.yml)
 [![clang-tidy-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-qz.yml)
 [![clang-tidy-size](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-size.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/clang-tidy-size.yml)
-[![cmake-release-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml)
-[![cmake-release-size](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml)
+[![unit-test-qz](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-qz.yml)
+[![unit-test-size](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml/badge.svg)](https://github.com/shaomeng/SPECK2020/actions/workflows/cmake-release-size.yml)
 [![CodeQL](https://github.com/shaomeng/SPERR/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/shaomeng/SPERR/actions/workflows/codeql-analysis.yml)
 
-## Build
-SPERR uses `cmake` to build. It does require cmake version higher than `3.10`.
-After downloading the source code in directory `SPERR`, follow the steps below
-to have it built on a UNIX system.
-
-```
-cd SPERR
-mkdir build
-cd build
-cmake ..
-make -j 4
-```
 
 ## Default Executables
 After building it, there will be 3 executable in the current directory:
 `compressor_3d`, `decompressor_3d`, and `probe_3d`.
 While the compressor and decompressor are supposed to be used in production,
-the probe is supposed to provide richer information (PSNR, L-Infty, etc.) 
-on how well SPERR works on a particular data with a particular setting. 
+the probe is supposed to provide richer information (PSNR, L-Infty, etc.)
+on how well SPERR works on a particular data with a particular setting.
 
 ## Optional Configurations
 A user could use `ccmake` to toggle optional configurations.
@@ -31,7 +19,7 @@ A user could use `ccmake` to toggle optional configurations.
 
 2. `QZ_TERM`: Determines the algorithm termination criterion. If set `OFF`, then
 the encoding algorithm will terminate when a user-defined storage budget is met.
-If set `On`, then the encoding algorithm will terminate after processing a user-defined 
+If set `On`, then the encoding algorithm will terminate after processing a user-defined
 quantization level. In this case, the output size is non-deterministic.
 
 3. `USE_ZSTD`. Determines if the SPECK output bitstream further goes through an [ZSTD] compression.
@@ -42,7 +30,7 @@ performance impact.
 For methods managing memory access of big chunks of memory, the following naming convention applies.
 Notice the use of `const` and rvalue references, and choice of verbs in method names.
 ### Input
-1. Make a copy of the input data block: 
+1. Make a copy of the input data block:
 - `auto copy_something(const T* buf, size_t len) -> status`
 - `auto copy_something(const std::vector<T>& buf) -> status`
 2. Take the ownership of the input data block:
@@ -61,7 +49,7 @@ Notice the use of `const` and rvalue references, and choice of verbs in method n
 - `auto release_something() -> std::unique_ptr<T[]>`
 
 ## When to use raw pointers?
-This project is *strongly* against using raw pointers in the codebase. 
+This project is *strongly* against using raw pointers in the codebase.
 However, there are a few exceptional cases where raw pointers make a lot more
 sense and they can be used. Overall, the use of raw pointers needs to be looked
 at on a case-by-case basis, and most of the time, an alternative is preferred.
