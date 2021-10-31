@@ -1,4 +1,4 @@
-name: cmake-release-size
+name: unit-test-size
 
 on:
   push:
