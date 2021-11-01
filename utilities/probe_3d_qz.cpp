@@ -133,8 +133,8 @@ int main(int argc, char* argv[])
   auto tolerance = double{0.0};
   app.add_option("-t", tolerance,
                  "Maximum point-wise error tolerance. E.g., `-t 0.001`.\n"
-                 "Note: if flag --div-rms is enabled, then this tolerance applies\n"
-                 "to conditioned data.")
+                 "Note: if flag --div-rms is enabled, then this tolerance\n"
+                 "applies to conditioned data.")
       ->required()
       ->check(CLI::PositiveNumber)
       ->group("Compression Parameters");
