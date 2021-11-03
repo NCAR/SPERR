@@ -46,7 +46,11 @@ auto sperr::make_coeff_positive(vecd_type& buf, std::vector<bool>& signs) -> dou
   signs.resize(buf.size(), false);
 
   // Step 1: fill sign array
-  std::generate(signs.begin(), signs.end(), [it = buf.cbegin()]() mutable { return *it++ >= 0.0; });
+  std::generate(signs.begin(), signs.end(), [it = buf.cbegin()]() mutable {
+    auto b = *it >= 0.0;
+    ++it;
+    return b;
+  });
 
   // Step 2: make every value positive
   std::for_each(buf.begin(), buf.end(), [](auto& v) { v = std::abs(v); });
