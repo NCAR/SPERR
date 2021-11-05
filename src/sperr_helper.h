@@ -112,19 +112,20 @@ auto num_of_partitions(size_t len) -> size_t;
 // element of the return array.
 auto calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<size_t, 2>;
 
-// 1) fill sign_array based on coeff_buffer signs, and
-// 2) make coeff_buffer containing all positive values.
-// 3) returns the maximum magnitude of all encountered values.
-auto make_coeff_positive(vecd_type& buf, std::vector<bool>&) -> double;
+// Requires that buf is not empty.
+// 1) Make buf containing all positive values.
+// 2) Returns the maximum magnitude of all encountered values.
+auto make_coeff_positive(vecd_type& buf) -> double;
 
 // Pack and unpack booleans to array of chars.
 // When packing, the caller should make sure the number of booleans is a
 // multiplier of 8. It optionally takes in an offset that specifies where to
 // start writing/reading the char array.
 //
-// Note: unpack_booleans() takes a raw pointer because it accesses memory
+// Note 1: unpack_booleans() takes a raw pointer because it accesses memory
 // provided by others, and others most likely provide it by raw pointers.
-// Note: these two methods only work on little endian machines.
+// Note 2: these two methods only work on little endian machines.
+// Note 3: the caller should have already allocated enough space for `dest`.
 auto pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& src, size_t dest_offset = 0)
     -> RTNType;
 auto unpack_booleans(std::vector<bool>& dest,
