@@ -41,21 +41,14 @@ auto sperr::calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<si
   return {low_len, high_len};
 }
 
-auto sperr::make_coeff_positive(vecd_type& buf, std::vector<bool>& signs) -> double
+auto sperr::make_coeff_positive(vecd_type& buf) -> double
 {
-  signs.resize(buf.size(), false);
+  assert(!buf.empty());
 
-  // Step 1: fill sign array
-  std::generate(signs.begin(), signs.end(), [it = buf.cbegin()]() mutable {
-    auto b = *it >= 0.0;
-    ++it;
-    return b;
-  });
-
-  // Step 2: make every value positive
+  // Step 1: make every value positive
   std::for_each(buf.begin(), buf.end(), [](auto& v) { v = std::abs(v); });
 
-  // Step 3: find the maximum of all values
+  // Step 2: find the maximum of all values
   auto maxit = std::max_element(buf.begin(), buf.end());
 
   return *maxit;
@@ -66,8 +59,12 @@ auto sperr::make_coeff_positive(vecd_type& buf, std::vector<bool>& signs) -> dou
 auto sperr::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& src, size_t offset)
     -> RTNType
 {
-  if (src.size() % 8 != 0)  // `src` has to have a size of multiples of 8.
+  // `src` has to have a size of multiples of 8.
+  if (src.size() % 8 != 0)
     return RTNType::WrongSize;
+
+  // `dest` should have enough space, as the API specifies.
+  assert(dest.size() >= offset + src.size() / 8);
 
   const uint64_t magic = 0x8040201008040201;
 
@@ -75,7 +72,7 @@ auto sperr::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& s
   // uint8_t here which is definitely 1 byte in size.
   // Also, C++ guarantees conversion between booleans and integers:
   // true <--> 1, false <--> 0.
-  auto a = std::array<uint8_t, 8>{};
+  auto a = std::array<uint8_t, 8>();
   uint64_t t = 0;
   size_t dest_idx = offset;
   auto src_itr1 = src.cbegin();
@@ -103,9 +100,9 @@ auto sperr::unpack_booleans(std::vector<bool>& dest,
     return RTNType::WrongSize;
 
   const size_t num_of_bytes = src_len - src_offset;
-  const size_t num_of_bools = num_of_bytes * 8;
-  if (dest.size() != num_of_bools)
-    dest.resize(num_of_bools);
+
+  // `dest` needs to have enough space allocated, as the API specifies.
+  assert(dest.size() >= num_of_bytes * 8);
 
   const uint8_t* src_ptr = static_cast<const uint8_t*>(src) + src_offset;
   const uint64_t magic = 0x8040201008040201;
@@ -419,13 +416,13 @@ template <typename T>
 auto sperr::gather_chunk(const T* vol, dims_type vol_dim, const std::array<size_t, 6>& chunk)
     -> vecd_type
 {
-  auto buf = std::vector<double>();
+  auto chunk_buf = std::vector<double>();
   if (chunk[0] + chunk[1] > vol_dim[0] || chunk[2] + chunk[3] > vol_dim[1] ||
       chunk[4] + chunk[5] > vol_dim[2])
-    return buf;
+    return chunk_buf;
 
   auto len = chunk[1] * chunk[3] * chunk[5];
-  buf.resize(len);
+  chunk_buf.resize(len);
 
   size_t idx = 0;
   for (size_t z = chunk[4]; z < chunk[4] + chunk[5]; z++) {
@@ -433,12 +430,12 @@ auto sperr::gather_chunk(const T* vol, dims_type vol_dim, const std::array<size_
     for (size_t y = chunk[2]; y < chunk[2] + chunk[3]; y++) {
       const size_t col_offset = plane_offset + y * vol_dim[0];
       for (size_t x = chunk[0]; x < chunk[0] + chunk[1]; x++)
-        buf[idx++] = vol[col_offset + x];
+        chunk_buf[idx++] = vol[col_offset + x];
     }
   }
 
   // Will be subject to Named Return Value Optimization.
-  return buf;
+  return chunk_buf;
 }
 template auto sperr::gather_chunk(const float*, dims_type, const std::array<size_t, 6>&)
     -> vecd_type;

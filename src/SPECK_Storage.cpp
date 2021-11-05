@@ -107,6 +107,8 @@ auto sperr::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t 
   pos += sizeof(bit_in_byte);
 
   // Unpack bits
+  const auto num_of_bools = (comp_size - pos) * 8;
+  m_bit_buffer.resize(num_of_bools, false);  // allocate enough space before passing it around
   auto rtn = sperr::unpack_booleans(m_bit_buffer, comp_buf, comp_size, pos);
   if (rtn != RTNType::Good)
     return rtn;

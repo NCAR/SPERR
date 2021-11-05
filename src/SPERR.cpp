@@ -533,6 +533,8 @@ auto sperr::SPERR::parse_encoded_bitstream(const void* buf, size_t len) -> RTNTy
   assert(pos == m_header_size);
 
   // Unpack bits
+  const auto num_of_bools = (len - pos) * 8;
+  m_bit_buffer.resize(num_of_bools, false);  // allocate enough space before passing it around
   auto rtn = sperr::unpack_booleans(m_bit_buffer, buf, len, pos);
   if (rtn != RTNType::Good)
     return rtn;
