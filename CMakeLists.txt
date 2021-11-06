@@ -31,7 +31,7 @@ endif()
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/SperrConfig.h.in" "SperrConfig.h")
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-if( qz_TERM )
+if( QZ_TERM )
     message(STATUS "Compiling in point-wise-error-bounded mode")
 else()
     message(STATUS "Compiling in size-bounded mode")
@@ -73,7 +73,6 @@ else()
     message(STATUS "ZSTD add-on disabled!")
 endif()
 
-
 #
 # Download CLI11
 #
@@ -105,52 +104,15 @@ if( USE_ZSTD )
     list( APPEND SPECK2D_LIBS zstd )
 endif()
 
-
-add_executable( compressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_3d.cpp" )
-set_target_properties( compressor_3d PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-target_include_directories( compressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
-target_link_libraries(      compressor_3d PUBLIC ${SPECK3D_LIBS}
-                                          PUBLIC ${SPECK_Storage_LIBS}
-                                          PUBLIC ${SPERR_LIBS}
-                                          PUBLIC ${CDF_LIBS}
-                                          PUBLIC ${HELPER_LIBS} )
-
-add_executable( decompressor_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/decompressor_3d.cpp" )
-set_target_properties( decompressor_3d PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-target_include_directories( decompressor_3d PUBLIC ${PROJECT_BINARY_DIR} )
-target_link_libraries(      decompressor_3d PUBLIC ${SPECK3D_LIBS}
-                                            PUBLIC ${SPECK_Storage_LIBS}
-                                            PUBLIC ${SPERR_LIBS}
-                                            PUBLIC ${CDF_LIBS}
-                                            PUBLIC ${HELPER_LIBS} )
-
-add_executable( compressor_2d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/compressor_2d.cpp" )
-set_target_properties( compressor_2d PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-target_include_directories( compressor_2d PUBLIC ${PROJECT_BINARY_DIR} )
-target_link_libraries(      compressor_2d PUBLIC ${SPECK2D_LIBS}
-                                          PUBLIC ${SPECK_Storage_LIBS}
-                                          PUBLIC ${CDF_LIBS}
-                                          PUBLIC ${HELPER_LIBS} )
-
-if( QZ_TERM )
-  add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_qz.cpp" )
-else()
-  add_executable( probe_3d "${CMAKE_CURRENT_SOURCE_DIR}/utilities/probe_3d_size.cpp" )
-endif()
-
-set_target_properties( probe_3d PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-target_include_directories( probe_3d PUBLIC ${PROJECT_BINARY_DIR} )
-target_link_libraries(      probe_3d PUBLIC ${SPECK3D_LIBS}
-                                     PUBLIC ${SPECK_Storage_LIBS}
-                                     PUBLIC ${SPERR_LIBS}
-                                     PUBLIC ${CDF_LIBS}
-                                     PUBLIC ${HELPER_LIBS} )
-
+add_subdirectory( utilities )
 
 if( BUILD_UNIT_TESTS )
+
     enable_testing()
 
+    #
     # Download and unpack googletest at configure time
+    #
     configure_file(GTestCMake.txt.in googletest-working/CMakeLists.txt)
     execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .  RESULT_VARIABLE result
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-working
@@ -165,67 +127,26 @@ if( BUILD_UNIT_TESTS )
                     OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest-working/googletest.stdout
                     ERROR_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest-working/googletest.stderr )
     if(result)
-      message(FATAL_ERROR "Build step for googletest failed: ${result}")
+        message(FATAL_ERROR "Build step for googletest failed: ${result}")
     endif()
 
     # Prevent overriding the parent project's compiler/linker settings on Windows
+    #
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
     # Add googletest directly to our build. This defines the gtest and gtest_main targets.
     # These two added directories are essentially the SOURCE_DIR and BINARY_DIR 
     # of the external project (googletest)
+    #
     add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest
                      ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest-build
                      EXCLUDE_FROM_ALL)
+    #
+    # Copy test data sets to the build directory
+    #
+    file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/test_data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 
-    # Now we have all the tests! 
-
-    add_executable( test_sperr_helper 
-                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/sperr_helper_unit_test.cpp" )
-    set_target_properties( test_sperr_helper PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Testing")
-    target_link_libraries( test_sperr_helper PUBLIC ${HELPER_LIBS}
-                                             PUBLIC gtest_main   )
-    add_test( NAME test_sperr_helper COMMAND test_sperr_helper   )
-
-    add_executable( test_dwt
-                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/dwt_unit_test.cpp" )
-    set_target_properties( test_dwt PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Testing")
-    target_link_libraries( test_dwt PUBLIC ${CDF_LIBS}
-                                    PUBLIC ${HELPER_LIBS}
-                                    PUBLIC gtest_main   )
-    add_test( NAME test_dwt COMMAND test_dwt            )
-
-    add_executable( test_speck2d
-                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck2d_unit_test.cpp" )
-    set_target_properties( test_speck2d PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Testing")
-    target_link_libraries( test_speck2d PUBLIC ${SPECK2D_LIBS}
-                                        PUBLIC ${SPECK_Storage_LIBS} 
-                                        PUBLIC ${CDF_LIBS} 
-                                        PUBLIC ${HELPER_LIBS}
-                                        PUBLIC gtest_main            )
-    add_test( NAME test_speck2d COMMAND test_speck2d                 )
-
-    add_executable( test_speck3d
-                    "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/speck3d_unit_test.cpp" )
-    set_target_properties( test_speck3d PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Testing")
-    target_link_libraries( test_speck3d PUBLIC ${SPECK3D_LIBS}
-                                        PUBLIC ${SPECK_Storage_LIBS} 
-                                        PUBLIC ${SPERR_LIBS}
-                                        PUBLIC ${CDF_LIBS} 
-                                        PUBLIC ${HELPER_LIBS}
-                                        PUBLIC gtest_main            )
-    add_test( NAME test_speck3d COMMAND test_speck3d                 )
-
-    if( QZ_TERM )
-        add_executable( test_sperr
-                        "${CMAKE_CURRENT_SOURCE_DIR}/test_scripts/sperr_unit_test.cpp" )
-        set_target_properties( test_sperr PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Testing")
-        target_link_libraries( test_sperr PUBLIC ${SPERR_LIBS}
-                                          PUBLIC ${HELPER_LIBS}
-                                          PUBLIC gtest_main           )
-        add_test( NAME test_sperr COMMAND test_sperr                  )
-    endif()
-
+    add_subdirectory( test_scripts )
 
 endif()
 
