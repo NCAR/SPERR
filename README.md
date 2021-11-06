@@ -8,7 +8,7 @@
 
 This repository hosts the source code for SPERR.
 More introduction and documentation about SPERR can be found on its main
-webpate: https://shaomeng.github.io/SPERR/.
-Many specific topics can also be found on 
+webpage: https://shaomeng.github.io/SPERR/.
+A number of specific topics can also be found on 
 SPERR wiki: https://github.com/shaomeng/SPERR/wiki.
 
