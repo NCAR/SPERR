@@ -26,9 +26,18 @@ else()
 endif()
 
 #
+# Gather git commit SHA1
+#
+execute_process(COMMAND
+  "${GIT_EXECUTABLE}" describe --always --dirty
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+  OUTPUT_VARIABLE GIT_SHA1
+  ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+#
 # configure a header file to pass some of the CMake settings to the source code
 #
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/SperrConfig.h.in" "SperrConfig.h")
+configure_file("${CMAKE_SOURCE_DIR}/SperrConfig.h.in" "SperrConfig.h" @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if( QZ_TERM )
