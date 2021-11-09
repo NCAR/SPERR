@@ -181,7 +181,7 @@ auto SPECK3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   auto header = std::vector<uint8_t>(header_size);
 
   // Version number
-  header[0] = 10 * uint8_t(SPERR_VERSION_MAJOR) + uint8_t(SPERR_VERSION_MINOR);
+  header[0] = uint8_t(10) * uint8_t(SPERR_VERSION_MAJOR) + uint8_t(SPERR_VERSION_MINOR);
   size_t loc = 1;
 
   // 8 booleans:

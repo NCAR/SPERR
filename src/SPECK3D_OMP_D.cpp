@@ -37,7 +37,7 @@ auto SPECK3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
 
   // Parse Step 1: Major version number need to match
   uint8_t ver = *u8p;
-  if (ver / 10 != uint8_t(SPERR_VERSION_MAJOR))
+  if (ver / uint8_t(10) != uint8_t(SPERR_VERSION_MAJOR))
     return RTNType::VersionMismatch;
   size_t loc = 1;
 
