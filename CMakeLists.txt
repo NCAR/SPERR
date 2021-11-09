@@ -113,7 +113,7 @@ if( USE_ZSTD )
     list( APPEND SPECK2D_LIBS zstd )
 endif()
 
-add_subdirectory( utilities )
+add_subdirectory( utilities ${CMAKE_BINARY_DIR}/bin )
 
 if( BUILD_UNIT_TESTS )
 
