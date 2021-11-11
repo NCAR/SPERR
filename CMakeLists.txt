@@ -28,11 +28,14 @@ endif()
 #
 # Gather git commit SHA1
 #
+find_package(Git)
 execute_process(COMMAND
-  "${GIT_EXECUTABLE}" describe --always --dirty
+  ${GIT_EXECUTABLE} describe --always --dirty
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
   OUTPUT_VARIABLE GIT_SHA1
-  ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+message(STATUS "Repository Git SHA1: ${GIT_SHA1}")
 
 #
 # configure a header file to pass some of the CMake settings to the source code
@@ -85,8 +88,10 @@ endif()
 #
 # Download CLI11
 #
-file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/latest/download/CLI11.hpp 
-              "${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp" )
+if( NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp )
+    file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/latest/download/CLI11.hpp
+                  ${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp )
+endif()
 
 add_subdirectory( src )
 
