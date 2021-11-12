@@ -241,19 +241,18 @@ auto sperr::write_n_bytes(std::string filename, size_t n_bytes, const void* buff
 }
 
 template <typename T>
-void sperr::calc_stats(const T* arr1,
-                       const T* arr2,
-                       size_t arr_len,
-                       size_t omp_nthreads,
-                       T& rmse,
-                       T& linfty,
-                       T& psnr,
-                       T& arr1min,
-                       T& arr1max)
+auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_nthreads)
+    -> std::array<T, 5>
 {
   const size_t stride_size = 4096;
   const size_t num_of_strides = arr_len / stride_size;
   const size_t remainder_size = arr_len - stride_size * num_of_strides;
+
+  auto rmse = T{0.0};
+  auto linfty = T{0.0};
+  auto psnr = T{0.0};
+  auto arr1min = T{0.0};
+  auto arr1max = T{0.0};
 
   //
   // Calculate min and max of arr1
@@ -267,10 +266,8 @@ void sperr::calc_stats(const T* arr1,
   //
   auto is_equal = std::equal(arr1, arr1 + arr_len, arr2);
   if (is_equal) {
-    rmse = 0.0;
-    linfty = 0.0;
     psnr = std::numeric_limits<T>::infinity();
-    return;
+    return {rmse, linfty, psnr, arr1min, arr1max};
   }
 
   auto sum_vec = std::vector<T>(num_of_strides + 1);
@@ -281,16 +278,16 @@ void sperr::calc_stats(const T* arr1,
 //
 #pragma omp parallel for num_threads(omp_nthreads)
   for (size_t stride_i = 0; stride_i < num_of_strides; stride_i++) {
-    T linfty = 0.0;
+    T maxerr = 0.0;
     auto buf = std::array<T, stride_size>();
     for (size_t i = 0; i < stride_size; i++) {
       const size_t idx = stride_i * stride_size + i;
       auto diff = std::abs(arr1[idx] - arr2[idx]);
-      linfty = std::max(linfty, diff);
+      maxerr = std::max(maxerr, diff);
       buf[i] = diff * diff;
     }
     sum_vec[stride_i] = std::accumulate(buf.begin(), buf.end(), T{0.0});
-    linfty_vec[stride_i] = linfty;
+    linfty_vec[stride_i] = maxerr;
   }
 
   //
@@ -324,25 +321,12 @@ void sperr::calc_stats(const T* arr1,
   auto range_sq = *minmax.first - *minmax.second;
   range_sq *= range_sq;
   psnr = std::log10(range_sq / msr) * T{10.0};
+
+  return {rmse, linfty, psnr, arr1min, arr1max};
 }
-template void sperr::calc_stats(const float*,
-                                const float*,
-                                size_t,
-                                size_t,
-                                float&,
-                                float&,
-                                float&,
-                                float&,
-                                float&);
-template void sperr::calc_stats(const double*,
-                                const double*,
-                                size_t,
-                                size_t,
-                                double&,
-                                double&,
-                                double&,
-                                double&,
-                                double&);
+template auto sperr::calc_stats(const float*, const float*, size_t, size_t) -> std::array<float, 5>;
+template auto sperr::calc_stats(const double*, const double*, size_t, size_t)
+    -> std::array<double, 5>;
 
 template <typename T>
 auto sperr::kahan_summation(const T* arr, size_t len) -> T

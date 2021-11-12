@@ -80,10 +80,9 @@ class speck_tester {
     //
     // Compare results
     //
-    float rmse, lmax, psnr, arr1min, arr1max;
-    sperr::calc_stats(in_buf.data(), vol.data(), total_vals, 8, rmse, lmax, psnr, arr1min, arr1max);
-    m_psnr = psnr;
-    m_lmax = lmax;
+    auto ret = sperr::calc_stats(in_buf.data(), vol.data(), total_vals, 8);
+    m_psnr = ret[2];
+    m_lmax = ret[1];
 
     return 0;
   }
@@ -176,10 +175,9 @@ class speck_tester_omp {
     if (sperr::read_n_bytes(m_input_name.c_str(), nbytes, orig.get()) != sperr::RTNType::Good)
       return 1;
 
-    float rmse, lmax, psnr, arr1min, arr1max;
-    sperr::calc_stats(orig.get(), vol.data(), total_vals, 8, rmse, lmax, psnr, arr1min, arr1max);
-    m_psnr = psnr;
-    m_lmax = lmax;
+    auto ret = sperr::calc_stats(orig.get(), vol.data(), total_vals, 8);
+    m_psnr = ret[2];
+    m_lmax = ret[1];
 
     return 0;
   }

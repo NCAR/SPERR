@@ -89,11 +89,10 @@ auto test_configuration_omp(const T* in_buf,
     return 1;
 
   // Collect statistics
-  T rmse, lmax, psnr, arr1min, arr1max;
-  sperr::calc_stats(in_buf, output_buf.data(), total_vals, omp_num_threads, rmse, lmax, psnr,
-                    arr1min, arr1max);
-  printf("    Original data range = (%.2e, %.2e)\n", arr1min, arr1max);
-  printf("    Reconstructed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", rmse, lmax, psnr);
+  auto ret = sperr::calc_stats(in_buf, output_buf.data(), total_vals, omp_num_threads);
+  printf("    Original data range = (%.2e, %.2e)\n", ret[3], ret[4]);
+  printf("    Reconstructed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", ret[0], ret[1],
+         ret[2]);
 
   return 0;
 }
