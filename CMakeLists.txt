@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-project(SPERR VERSION 0.1)
+project(SPERR VERSION 0.1 DESCRIPTION "Lossy Scientific Compression with SPERR")
 
 # specify the C++ standard
 # CMake will try to add a -std=c++20 flag if the compiler supports, but if it doesn't,
@@ -95,27 +95,12 @@ endif()
 
 add_subdirectory( src )
 
-list( APPEND HELPER_LIBS    sperr_helper         )
-list( APPEND HELPER_LIBS    Conditioner          )
-list( APPEND HELPER_LIBS    OpenMP::OpenMP_CXX   )
-list( APPEND CDF_LIBS       CDF97                )
-list( APPEND SPECK_Storage_LIBS SPECK_Storage    )
-list( APPEND SPECK3D_LIBS   SPECK3D_OMP_C        )
-list( APPEND SPECK3D_LIBS   SPECK3D_OMP_D        )
-list( APPEND SPECK3D_LIBS   SPECK3D_Compressor   )
-list( APPEND SPECK3D_LIBS   SPECK3D_Decompressor )
-list( APPEND SPECK3D_LIBS   SPECK3D              )
-list( APPEND SPECK3D_LIBS   OpenMP::OpenMP_CXX   )
-list( APPEND SPECK2D_LIBS   SPECK2D_Compressor   )
-list( APPEND SPECK2D_LIBS   SPECK2D_Decompressor )
-list( APPEND SPECK2D_LIBS   SPECK2D              )
-list( APPEND SPERR_LIBS     SPERR )
-
+list( APPEND LINK_LIST SPERR )
+list( APPEND LINK_LIST OpenMP::OpenMP_CXX )
 if( USE_ZSTD )
     ExternalProject_Get_Property( zstd-download INSTALL_DIR )
     link_directories( "${INSTALL_DIR}/lib" )
-    list( APPEND SPECK3D_LIBS zstd )
-    list( APPEND SPECK2D_LIBS zstd )
+    list( APPEND LINK_LIST zstd )
 endif()
 
 add_subdirectory( utilities ${CMAKE_BINARY_DIR}/bin )
