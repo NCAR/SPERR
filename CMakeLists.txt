@@ -35,7 +35,13 @@ execute_process(COMMAND
   OUTPUT_VARIABLE GIT_SHA1
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-message(STATUS "Repository Git SHA1: ${GIT_SHA1}")
+execute_process(COMMAND
+  ${GIT_EXECUTABLE} branch --show-current
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+  OUTPUT_VARIABLE GIT_BRANCH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+message(STATUS "Repository Git Branch: ${GIT_BRANCH}, SHA1: ${GIT_SHA1}")
 
 #
 # configure a header file to pass some of the CMake settings to the source code
