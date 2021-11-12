@@ -1,5 +1,5 @@
 
-add_library( SPERR 
+add_library( SPERR
              sperr_helper.cpp
              Conditioner.cpp
              CDF97.cpp
@@ -16,6 +16,20 @@ add_library( SPERR
 target_include_directories( SPERR PUBLIC ${CMAKE_SOURCE_DIR}/include )
 target_compile_options( SPERR PUBLIC ${OpenMP_CXX_FLAGS} )
 set_target_properties( SPERR PROPERTIES VERSION ${SPERR_VERSION} )
+
+#
+# The list specifying public header is formatted a little cumbersome,
+# but don't change it!
+#
+set( public_h_list 
+"include/sperr_helper.h;\
+include/SPECK3D_Compressor.h;\
+include/SPECK3D_Decompressor.h;\
+include/SPECK3D_OMP_C.h;\
+include/SPECK3D_OMP_D.h;\
+include/SPECK2D_Compressor.h;\
+include/SPECK2D_Decompressor.h" )
+set_target_properties( SPERR PROPERTIES PUBLIC_HEADER "${public_h_list}" )
 
 #
 # Though zstd libraries won't be needed until link time,

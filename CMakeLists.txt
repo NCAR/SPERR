@@ -63,6 +63,7 @@ if( USE_ZSTD )
       SOURCE_SUBDIR     "build/cmake/"                  # Specifies where the CMakeLists.txt file is
       CMAKE_ARGS        "-DCMAKE_BUILD_TYPE=Release"
       CMAKE_ARGS        "-DZSTD_MULTITHREAD_SUPPORT=False"
+      CMAKE_ARGS        "-DZSTD_BUILD_SHARED=False"     # Only build static library
       CMAKE_ARGS        "-DZSTD_BUILD_PROGRAMS=False"   # Don't build zstd command line utilities
       CMAKE_ARGS        "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/zstd/install"
       CMAKE_ARGS        "-DCMAKE_INSTALL_LIBDIR=lib"
@@ -93,8 +94,14 @@ if( NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp )
                   ${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp )
 endif()
 
+#
+# Compile the SPERR library
+#
 add_subdirectory( src )
 
+#
+# Create a list of libraries that can be liked by apps
+#
 list( APPEND LINK_LIST SPERR )
 list( APPEND LINK_LIST OpenMP::OpenMP_CXX )
 if( USE_ZSTD )
@@ -106,7 +113,6 @@ endif()
 add_subdirectory( utilities ${CMAKE_BINARY_DIR}/bin )
 
 if( BUILD_UNIT_TESTS )
-
     enable_testing()
 
     #
@@ -146,7 +152,26 @@ if( BUILD_UNIT_TESTS )
     file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/test_data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 
     add_subdirectory( test_scripts )
-
 endif()
 
-
+# Specify using GNU installation rules
+#
+include( GNUInstallDirs )
+# Install libSPERR.a
+#
+install( TARGETS SPERR ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                       PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
+# Install utilities
+#
+install( TARGETS show_version compressor_3d decompressor_3d probe_3d
+         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
+# Add a pkg-config file
+#
+configure_file("${CMAKE_SOURCE_DIR}/SPERR.pc.in" SPERR.pc @ONLY)
+install( FILES "${CMAKE_BINARY_DIR}/SPERR.pc" DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
+# Copy over libzstd.a
+#
+if( USE_ZSTD )
+    ExternalProject_Get_Property( zstd-download INSTALL_DIR )
+    install( FILES "${INSTALL_DIR}/lib/libzstd.a" DESTINATION ${CMAKE_INSTALL_LIBDIR} )
+endif()
