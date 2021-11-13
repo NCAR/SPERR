@@ -46,7 +46,7 @@ message(STATUS "Repository Git Branch: ${GIT_BRANCH}, SHA1: ${GIT_SHA1}")
 #
 # configure a header file to pass some of the CMake settings to the source code
 #
-configure_file("${CMAKE_SOURCE_DIR}/SperrConfig.h.in" "SperrConfig.h" @ONLY)
+configure_file("${CMAKE_SOURCE_DIR}/SperrConfig.h.in" SperrConfig.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if( QZ_TERM )
@@ -171,10 +171,12 @@ install( TARGETS SPERR ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 #
 install( TARGETS show_version compressor_3d decompressor_3d probe_3d
          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
-# Add a pkg-config file
+# Add a pkg-config file, also copy over SperrConfig.h
 #
 configure_file("${CMAKE_SOURCE_DIR}/SPERR.pc.in" SPERR.pc @ONLY)
 install( FILES "${CMAKE_BINARY_DIR}/SPERR.pc" DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
+install( FILES "${CMAKE_BINARY_DIR}/SperrConfig.h" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
+#
 # Copy over libzstd.a
 #
 if( USE_ZSTD )

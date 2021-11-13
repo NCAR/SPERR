@@ -18,8 +18,7 @@ target_compile_options( SPERR PUBLIC ${OpenMP_CXX_FLAGS} )
 set_target_properties( SPERR PROPERTIES VERSION ${SPERR_VERSION} )
 
 #
-# The list specifying public header is formatted a little cumbersome,
-# but don't change it!
+# The list of headers is formatted a little cumbersome, but don't change it!
 #
 set( public_h_list 
 "include/sperr_helper.h;\
@@ -28,7 +27,13 @@ include/SPECK3D_Decompressor.h;\
 include/SPECK3D_OMP_C.h;\
 include/SPECK3D_OMP_D.h;\
 include/SPECK2D_Compressor.h;\
-include/SPECK2D_Decompressor.h" )
+include/SPECK2D_Decompressor.h;\
+include/Conditioner.h;\
+include/CDF97.h;\
+include/SPECK_Storage.h;\
+include/SPECK2D.h;\
+include/SPECK3D.h;\
+include/SPERR.h;")
 set_target_properties( SPERR PROPERTIES PUBLIC_HEADER "${public_h_list}" )
 
 #
