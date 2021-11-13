@@ -78,6 +78,7 @@ if( USE_ZSTD )
       CMAKE_ARGS        "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"               # use the same CXX flags
       CMAKE_ARGS        "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}"                   # use the same C flags
       CMAKE_ARGS        "-DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}" # use the same linker flags
+      CMAKE_ARGS        "-DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}" # use the same deployment target
       INSTALL_DIR       "${CMAKE_CURRENT_BINARY_DIR}/zstd/install"
         # !! <INSTALL_DIR> doesn't contain any value now !!
         # But it can be used later by others to retrieve where the installation is.
