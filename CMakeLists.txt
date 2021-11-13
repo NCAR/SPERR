@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-project(SPERR VERSION 0.1)
+project(SPERR VERSION 0.1 DESCRIPTION "Lossy Scientific Compression with SPERR")
 
 # specify the C++ standard
 # CMake will try to add a -std=c++20 flag if the compiler supports, but if it doesn't,
@@ -28,16 +28,25 @@ endif()
 #
 # Gather git commit SHA1
 #
+find_package(Git)
 execute_process(COMMAND
-  "${GIT_EXECUTABLE}" describe --always --dirty
+  ${GIT_EXECUTABLE} describe --always --dirty
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
   OUTPUT_VARIABLE GIT_SHA1
-  ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+execute_process(COMMAND
+  ${GIT_EXECUTABLE} branch --show-current
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+  OUTPUT_VARIABLE GIT_BRANCH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+message(STATUS "Repository Git Branch: ${GIT_BRANCH}, SHA1: ${GIT_SHA1}")
 
 #
 # configure a header file to pass some of the CMake settings to the source code
 #
-configure_file("${CMAKE_SOURCE_DIR}/SperrConfig.h.in" "SperrConfig.h" @ONLY)
+configure_file("${CMAKE_SOURCE_DIR}/SperrConfig.h.in" SperrConfig.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if( QZ_TERM )
@@ -60,6 +69,7 @@ if( USE_ZSTD )
       SOURCE_SUBDIR     "build/cmake/"                  # Specifies where the CMakeLists.txt file is
       CMAKE_ARGS        "-DCMAKE_BUILD_TYPE=Release"
       CMAKE_ARGS        "-DZSTD_MULTITHREAD_SUPPORT=False"
+      CMAKE_ARGS        "-DZSTD_BUILD_SHARED=False"     # Only build static library
       CMAKE_ARGS        "-DZSTD_BUILD_PROGRAMS=False"   # Don't build zstd command line utilities
       CMAKE_ARGS        "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/zstd/install"
       CMAKE_ARGS        "-DCMAKE_INSTALL_LIBDIR=lib"
@@ -68,6 +78,7 @@ if( USE_ZSTD )
       CMAKE_ARGS        "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"               # use the same CXX flags
       CMAKE_ARGS        "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}"                   # use the same C flags
       CMAKE_ARGS        "-DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}" # use the same linker flags
+      CMAKE_ARGS        "-DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}" # use the same deployment target
       INSTALL_DIR       "${CMAKE_CURRENT_BINARY_DIR}/zstd/install"
         # !! <INSTALL_DIR> doesn't contain any value now !!
         # But it can be used later by others to retrieve where the installation is.
@@ -85,38 +96,30 @@ endif()
 #
 # Download CLI11
 #
-file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/latest/download/CLI11.hpp 
-              "${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp" )
+if( NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp )
+    file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/latest/download/CLI11.hpp
+                  ${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp )
+endif()
 
+#
+# Compile the SPERR library
+#
 add_subdirectory( src )
 
-list( APPEND HELPER_LIBS    sperr_helper         )
-list( APPEND HELPER_LIBS    Conditioner          )
-list( APPEND HELPER_LIBS    OpenMP::OpenMP_CXX   )
-list( APPEND CDF_LIBS       CDF97                )
-list( APPEND SPECK_Storage_LIBS SPECK_Storage    )
-list( APPEND SPECK3D_LIBS   SPECK3D_OMP_C        )
-list( APPEND SPECK3D_LIBS   SPECK3D_OMP_D        )
-list( APPEND SPECK3D_LIBS   SPECK3D_Compressor   )
-list( APPEND SPECK3D_LIBS   SPECK3D_Decompressor )
-list( APPEND SPECK3D_LIBS   SPECK3D              )
-list( APPEND SPECK3D_LIBS   OpenMP::OpenMP_CXX   )
-list( APPEND SPECK2D_LIBS   SPECK2D_Compressor   )
-list( APPEND SPECK2D_LIBS   SPECK2D_Decompressor )
-list( APPEND SPECK2D_LIBS   SPECK2D              )
-list( APPEND SPERR_LIBS     SPERR )
-
+#
+# Create a list of libraries that can be liked by apps
+#
+list( APPEND LINK_LIST SPERR )
+list( APPEND LINK_LIST OpenMP::OpenMP_CXX )
 if( USE_ZSTD )
     ExternalProject_Get_Property( zstd-download INSTALL_DIR )
     link_directories( "${INSTALL_DIR}/lib" )
-    list( APPEND SPECK3D_LIBS zstd )
-    list( APPEND SPECK2D_LIBS zstd )
+    list( APPEND LINK_LIST zstd )
 endif()
 
 add_subdirectory( utilities ${CMAKE_BINARY_DIR}/bin )
 
 if( BUILD_UNIT_TESTS )
-
     enable_testing()
 
     #
@@ -156,7 +159,28 @@ if( BUILD_UNIT_TESTS )
     file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/test_data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 
     add_subdirectory( test_scripts )
-
 endif()
 
-
+# Specify using GNU installation rules
+#
+include( GNUInstallDirs )
+# Install libSPERR.a
+#
+install( TARGETS SPERR ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                       PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
+# Install utilities
+#
+install( TARGETS show_version compressor_3d decompressor_3d probe_3d
+         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
+# Add a pkg-config file, also copy over SperrConfig.h
+#
+configure_file("${CMAKE_SOURCE_DIR}/SPERR.pc.in" SPERR.pc @ONLY)
+install( FILES "${CMAKE_BINARY_DIR}/SPERR.pc" DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
+install( FILES "${CMAKE_BINARY_DIR}/SperrConfig.h" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
+#
+# Copy over libzstd.a
+#
+if( USE_ZSTD )
+    ExternalProject_Get_Property( zstd-download INSTALL_DIR )
+    install( FILES "${INSTALL_DIR}/lib/libzstd.a" DESTINATION ${CMAKE_INSTALL_LIBDIR} )
+endif()

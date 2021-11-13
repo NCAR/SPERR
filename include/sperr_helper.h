@@ -146,19 +146,18 @@ auto read_n_bytes(std::string filename, size_t n_bytes, void* buffer) -> RTNType
 template <typename T>
 auto read_whole_file(std::string filename) -> std::vector<T>;
 
-// Calculate a suite of statistics
+// Calculate a suite of statistics.
 // Note that arr1 is considered as the ground truth array, so it's the range of
 // arr1 that is used internally for psnr calculations.
+// The return array contains statistics in the following order:
+// ret[0] : RMSE
+// ret[1] : L-Infinity
+// ret[2] : PSNR
+// ret[3] : min of arr1
+// ret[4] : max of arr1
 template <typename T>
-void calc_stats(const T* arr1,   // input
-                const T* arr2,   // input
-                size_t arr_len,  // input
-                size_t omp_nthreads,
-                T& rmse,      // output
-                T& linfty,    // output
-                T& psnr,      // output
-                T& arr1min,   // output
-                T& arr1max);  // output
+auto calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_nthreads)
+    -> std::array<T, 5>;
 
 template <typename T>
 auto kahan_summation(const T*, size_t) -> T;

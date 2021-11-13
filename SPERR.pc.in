@@ -1,0 +1,12 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
+libdir=${exec_prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+
+Name: SPERR
+Description: @SPERR_DESCRIPTION@
+Version: @SPERR_VERSION@
+
+Requires:
+Libs: -L${libdir} -lSPERR
+Cflags: -I${includedir}

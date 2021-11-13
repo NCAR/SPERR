@@ -75,16 +75,16 @@ void calc_stats(const T* arr1,
   // Calculate summation and l-infty of each stride
   //
   for (size_t stride_i = 0; stride_i < num_of_strides; stride_i++) {
-    T linfty = 0.0;
+    T maxerr = 0.0;
     auto buf = std::array<T, stride_size>();
     for (size_t i = 0; i < stride_size; i++) {
       const size_t idx = stride_i * stride_size + i;
       auto diff = std::abs(arr1[idx] - arr2[idx]);
-      linfty = std::max(linfty, diff);
+      maxerr = std::max(maxerr, diff);
       buf[i] = diff * diff;
     }
     sum_vec[stride_i] = std::accumulate(buf.begin(), buf.end(), T{0.0});
-    linfty_vec[stride_i] = linfty;
+    linfty_vec[stride_i] = maxerr;
   }
 
   //
@@ -149,7 +149,6 @@ int main(int argc, char* argv[])
   sam_read_n_bytes(file2, n_bytes, buf2.get());
 
   FLOAT rmse, lmax, psnr, arr1min, arr1max;
-  // sam_get_statsf(buf1, buf2, n_vals, &rmse, &lmax, &psnr, &arr1min, &arr1max);
   calc_stats(buf1.get(), buf2.get(), n_vals, rmse, lmax, psnr, arr1min, arr1max);
   printf("rmse = %e, lmax = %e, psnr = %f dB, orig_min = %f, orig_max = %f\n", rmse, lmax, psnr,
          arr1min, arr1max);
