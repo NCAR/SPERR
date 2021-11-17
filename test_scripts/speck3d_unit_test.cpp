@@ -267,7 +267,7 @@ TEST(speck3d_qz_term, small_tolerance)
   EXPECT_EQ(rtn, 0);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 8.1451720e+01);
+  EXPECT_GT(psnr, 8.1451713e+01);
   EXPECT_LT(psnr, 8.1451722e+01);
   EXPECT_LT(lmax, 6.9999696e-02);
 

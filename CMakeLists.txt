@@ -14,7 +14,8 @@ if(NOT CMAKE_BUILD_TYPE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo")
 endif()
 
-option( BUILD_UNIT_TESTS "Build unit tests using Google Test" ON)
+option( BUILD_UNIT_TESTS "Build unit tests using GoogleTest" ON)
+option( BUILD_CLI_UTILITIES "Build a set of command line utilities" ON)
 option( USE_ZSTD "Incorporate ZSTD to achieve further 5% reduction" OFF)
 option( QZ_TERM  "Coding terminates by quantization level" ON)
 
@@ -96,18 +97,12 @@ else()
     message(STATUS "ZSTD add-on disabled!")
 endif()
 
-#
-# Download CLI11
-#
-if( NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp )
-    file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/latest/download/CLI11.hpp
-                  ${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp )
-endif()
 
 #
 # Compile the SPERR library
 #
 add_subdirectory( src )
+
 
 #
 # Create a list of libraries that can be liked by apps
@@ -120,18 +115,39 @@ if( USE_ZSTD )
     list( APPEND LINK_LIST zstd )
 endif()
 
-add_subdirectory( utilities ${CMAKE_BINARY_DIR}/bin )
+
+#
+# Build command line utilities
+#
+if( BUILD_CLI_UTILITIES )
+  # Download CLI11
+  #
+  if( NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp )
+      file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/latest/download/CLI11.hpp
+                    ${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp )
+  endif()
+  add_subdirectory( utilities ${CMAKE_BINARY_DIR}/bin )
+endif()
 
 
 #
 # Fetch Google Test: https://google.github.io/googletest/quickstart-cmake.html
 #
 if( BUILD_UNIT_TESTS )
+  option( FORCE_LATEST_GTEST "Force using the latest version of GoogleTest" OFF)
+
   # Let's use the new mechanism to incorporate GoogleTest
   #
   include(FetchContent)
-  FetchContent_Declare( googletest
-    URL https://github.com/google/googletest/archive/refs/heads/main.zip )
+  if (FORCE_LATEST_GTEST OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    message (STATUS "Fetching the latest GoogleTest Framework")
+    FetchContent_Declare( googletest
+      URL https://github.com/google/googletest/archive/refs/heads/main.zip )
+  else()
+    message (STATUS "Fetching GoogleTest Framework Version 1.10.0")
+    FetchContent_Declare( googletest
+      URL https://github.com/google/googletest/archive/refs/tags/release-1.10.0.zip )
+  endif()
 
   # Prevent overriding the parent project's compiler/linker settings on Windows
   #
@@ -155,8 +171,10 @@ install( TARGETS SPERR ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
                        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
 # Install utilities
 #
-install( TARGETS show_version compressor_3d decompressor_3d probe_3d
-         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
+if( BUILD_CLI_UTILITIES )
+  install( TARGETS show_version compressor_3d decompressor_3d probe_3d
+           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
+endif()
 # Add a pkg-config file, also copy over SperrConfig.h
 #
 configure_file("${CMAKE_SOURCE_DIR}/SPERR.pc.in" SPERR.pc @ONLY)
