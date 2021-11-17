@@ -127,17 +127,25 @@ add_subdirectory( utilities ${CMAKE_BINARY_DIR}/bin )
 # Fetch Google Test: https://google.github.io/googletest/quickstart-cmake.html
 #
 if( BUILD_UNIT_TESTS )
+  option( FORCE_OLD_GTEST "Force using an older version of GoogleTest: 1.10.0" OFF)
+
   # Let's use the new mechanism to incorporate GoogleTest
   #
   include(FetchContent)
-  if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    message (STATUS "Fetching the latest GoogleTest Framework")
-    FetchContent_Declare( googletest
-      URL https://github.com/google/googletest/archive/refs/heads/main.zip )
-  else()
+  if( FORCE_OLD_GTEST )
     message (STATUS "Fetching GoogleTest Framework Version 1.10.0")
     FetchContent_Declare( googletest
       URL https://github.com/google/googletest/archive/refs/tags/release-1.10.0.zip )
+  else()
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      message (STATUS "Fetching the latest GoogleTest Framework")
+      FetchContent_Declare( googletest
+        URL https://github.com/google/googletest/archive/refs/heads/main.zip )
+    else()
+      message (STATUS "Fetching GoogleTest Framework Version 1.10.0")
+      FetchContent_Declare( googletest
+        URL https://github.com/google/googletest/archive/refs/tags/release-1.10.0.zip )
+    endif()
   endif()
 
   # Prevent overriding the parent project's compiler/linker settings on Windows
