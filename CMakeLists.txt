@@ -35,19 +35,15 @@ execute_process(COMMAND
   OUTPUT_VARIABLE GIT_SHA1
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-#if (${GIT_VERSION_STRING} STRGREATER_EQUAL "2.22")
-  execute_process(COMMAND
-    ${GIT_EXECUTABLE} branch --show-current
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE GIT_BRANCH
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-#else()
-#  execute_process(COMMAND
-#    ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
-#    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-#    OUTPUT_VARIABLE GIT_BRANCH
-#    OUTPUT_STRIP_TRAILING_WHITESPACE)
-#endif()
+execute_process(COMMAND
+  ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
+  # Note: when git version 2.22 is more common, then we can use the following command
+  #       to retrieve the current branch name.
+  # ${GIT_EXECUTABLE} branch --show-current
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_BRANCH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 message(STATUS "Repository Git Branch: ${GIT_BRANCH}, SHA1: ${GIT_SHA1}")
 
 #
