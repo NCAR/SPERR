@@ -130,8 +130,15 @@ if( BUILD_UNIT_TESTS )
   # Let's use the new mechanism to incorporate GoogleTest
   #
   include(FetchContent)
-  FetchContent_Declare( googletest
-    URL https://github.com/google/googletest/archive/refs/heads/main.zip )
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    message (STATUS "Fetching the latest GoogleTest Framework")
+    FetchContent_Declare( googletest
+      URL https://github.com/google/googletest/archive/refs/heads/main.zip )
+  else()
+    message (STATUS "Fetching GoogleTest Framework Version 1.10.0")
+    FetchContent_Declare( googletest
+      URL https://github.com/google/googletest/archive/refs/tags/release-1.10.0.zip )
+  endif()
 
   # Prevent overriding the parent project's compiler/linker settings on Windows
   #
