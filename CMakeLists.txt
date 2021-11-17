@@ -169,7 +169,6 @@ include( GNUInstallDirs )
 #
 install( TARGETS SPERR ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
                        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
-
 # Install utilities
 #
 if( BUILD_CLI_UTILITIES )
