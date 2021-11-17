@@ -1,6 +1,6 @@
 # Tutorial: https://cmake.org/cmake/help/latest/guide/tutorial/index.html
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 
 project(SPERR VERSION 0.1 DESCRIPTION "Lossy Scientific Compression with SPERR")
 
@@ -36,8 +36,11 @@ execute_process(COMMAND
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 execute_process(COMMAND
-  ${GIT_EXECUTABLE} branch --show-current
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+  ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
+  # Note: when git version 2.22 is more common, then we can use the following command
+  #       to retrieve the current branch name.
+  # ${GIT_EXECUTABLE} branch --show-current
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   OUTPUT_VARIABLE GIT_BRANCH
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
@@ -119,47 +122,29 @@ endif()
 
 add_subdirectory( utilities ${CMAKE_BINARY_DIR}/bin )
 
+
+#
+# Fetch Google Test: https://google.github.io/googletest/quickstart-cmake.html
+#
 if( BUILD_UNIT_TESTS )
-    enable_testing()
+  # Let's use the new mechanism to incorporate GoogleTest
+  #
+  include(FetchContent)
+  FetchContent_Declare( googletest
+    URL https://github.com/google/googletest/archive/refs/heads/main.zip )
 
-    #
-    # Download and unpack googletest at configure time
-    #
-    configure_file(GTestCMake.txt.in googletest-working/CMakeLists.txt)
-    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .  RESULT_VARIABLE result
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-working
-                    OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest-working/googletest.stdout
-                    ERROR_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest-working/googletest.stderr )
-    if(result)
-      message(FATAL_ERROR "CMake step for googletest failed: ${result}")
-    endif()
+  # Prevent overriding the parent project's compiler/linker settings on Windows
+  #
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(googletest)
 
-    execute_process(COMMAND ${CMAKE_COMMAND} --build .  RESULT_VARIABLE result
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-working
-                    OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest-working/googletest.stdout
-                    ERROR_FILE ${CMAKE_CURRENT_BINARY_DIR}/googletest-working/googletest.stderr )
-    if(result)
-        message(FATAL_ERROR "Build step for googletest failed: ${result}")
-    endif()
+  # Copy test data sets to the build directory
+  #
+  file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/test_data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 
-    # Prevent overriding the parent project's compiler/linker settings on Windows
-    #
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-    # Add googletest directly to our build. This defines the gtest and gtest_main targets.
-    # These two added directories are essentially the SOURCE_DIR and BINARY_DIR 
-    # of the external project (googletest)
-    #
-    add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest
-                     ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest-build
-                     EXCLUDE_FROM_ALL)
-    #
-    # Copy test data sets to the build directory
-    #
-    file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/test_data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
-
-    add_subdirectory( test_scripts )
+  add_subdirectory( test_scripts )
 endif()
+
 
 # Specify using GNU installation rules
 #
