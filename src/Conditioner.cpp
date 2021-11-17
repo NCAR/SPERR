@@ -200,5 +200,5 @@ auto sperr::Conditioner::parse_constant(const meta_type& meta) const
   pos += sizeof(val);
   std::memcpy(&nval, meta.data() + pos, sizeof(nval));
 
-  return {b8[4], val, nval};
+  return std::make_tuple(b8[4], val, nval);
 }
