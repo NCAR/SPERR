@@ -1,27 +1,27 @@
+enable_testing()
 
 add_executable( test_sperr_helper sperr_helper_unit_test.cpp )
-target_link_libraries( test_sperr_helper PUBLIC ${LINK_LIST}
-                                         PUBLIC gtest_main   )
-add_test( NAME test_sperr_helper COMMAND test_sperr_helper   )
+target_link_libraries( test_sperr_helper ${LINK_LIST} gtest_main )
 
 add_executable( test_dwt dwt_unit_test.cpp )
-target_link_libraries( test_dwt PUBLIC ${LINK_LIST}
-                                PUBLIC gtest_main   )
-add_test( NAME test_dwt COMMAND test_dwt            )
+target_link_libraries( test_dwt ${LINK_LIST} gtest_main )
 
 add_executable( test_speck2d speck2d_unit_test.cpp )
-target_link_libraries( test_speck2d PUBLIC ${LINK_LIST}
-                                    PUBLIC gtest_main   )
-add_test( NAME test_speck2d COMMAND test_speck2d        )
+target_link_libraries( test_speck2d ${LINK_LIST} gtest_main )
 
 add_executable( test_speck3d speck3d_unit_test.cpp )
-target_link_libraries( test_speck3d PUBLIC ${LINK_LIST}
-                                    PUBLIC gtest_main   )
-add_test( NAME test_speck3d COMMAND test_speck3d        )
+target_link_libraries( test_speck3d ${LINK_LIST} gtest_main )
 
 if( QZ_TERM )
     add_executable( test_sperr sperr_unit_test.cpp )
-    target_link_libraries( test_sperr PUBLIC ${LINK_LIST}
-                                      PUBLIC gtest_main   )
-    add_test( NAME test_sperr COMMAND test_sperr          )
+    target_link_libraries( test_sperr ${LINK_LIST} gtest_main )
+endif()
+
+include(GoogleTest)
+gtest_discover_tests( test_sperr_helper )
+gtest_discover_tests( test_dwt     )
+gtest_discover_tests( test_speck2d )
+gtest_discover_tests( test_speck3d )
+if( QZ_TERM )
+  gtest_discover_tests( test_sperr )
 endif()
