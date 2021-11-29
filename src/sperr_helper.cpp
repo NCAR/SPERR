@@ -75,14 +75,10 @@ auto sperr::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& s
   auto a = std::array<uint8_t, 8>();
   uint64_t t = 0;
   size_t dest_idx = offset;
-  auto src_itr1 = src.cbegin();
-  auto src_itr2 = src.cbegin() + 8;
-  for (size_t i = 0; i < src.size(); i += 8) {
-    std::copy(src_itr1, src_itr2, a.begin());
+  for( auto itr = src.cbegin(); itr != src.cend(); itr += 8 ) {
+    std::copy(itr, itr + 8, a.begin());
     std::memcpy(&t, a.data(), 8);
     dest[dest_idx++] = (magic * t) >> 56;
-    src_itr1 += 8;
-    src_itr2 += 8;
   }
 
   return RTNType::Good;
@@ -112,7 +108,7 @@ auto sperr::unpack_booleans(std::vector<bool>& dest,
   // Serial implementation
   //
   auto a = std::array<uint8_t, 8>();
-  uint64_t t = 0;
+  auto t = uint64_t{0};
   auto dest_itr = dest.begin();
   for (size_t byte_idx = 0; byte_idx < num_of_bytes; byte_idx++) {
     const uint8_t* ptr = src_ptr + byte_idx;
