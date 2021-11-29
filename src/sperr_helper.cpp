@@ -75,7 +75,7 @@ auto sperr::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& s
   auto a = std::array<uint8_t, 8>();
   uint64_t t = 0;
   size_t dest_idx = offset;
-  for( auto itr = src.cbegin(); itr != src.cend(); itr += 8 ) {
+  for (auto itr = src.cbegin(); itr != src.cend(); itr += 8) {
     std::copy(itr, itr + 8, a.begin());
     std::memcpy(&t, a.data(), 8);
     dest[dest_idx++] = (magic * t) >> 56;
@@ -111,8 +111,8 @@ auto sperr::unpack_booleans(std::vector<bool>& dest,
   auto t = uint64_t{0};
   auto dest_itr = dest.begin();
   for (size_t byte_idx = 0; byte_idx < num_of_bytes; byte_idx++) {
-    const uint8_t* ptr = src_ptr + byte_idx;
-    t = ((magic * (*ptr)) & mask) >> 7;
+    const uint64_t byte = *(src_ptr + byte_idx);
+    t = ((magic * byte) & mask) >> 7;
     std::memcpy(a.data(), &t, 8);
     std::copy(a.cbegin(), a.cend(), dest_itr);
     dest_itr += 8;
