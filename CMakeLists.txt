@@ -4,14 +4,29 @@ cmake_minimum_required(VERSION 3.14)
 
 project(SPERR VERSION 0.1 DESCRIPTION "Lossy Scientific Compression with SPERR")
 
+#
 # specify the C++ standard
 # CMake will try to add a -std=c++20 flag if the compiler supports, but if it doesn't,
 # CMake will `decay` to a previous supported flag, e.g. -std=c++11.
+#
 set(CMAKE_CXX_STANDARD 20)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
     # Set the possible values of build type for cmake-gui
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo")
+endif()
+
+#
+# Test system endian. SPERR only works on little endian machines,
+# which are pretty much all machines on the market in 2020.
+#
+include(TestBigEndian)
+test_big_endian(IS_BIG_ENDIAN)
+if(IS_BIG_ENDIAN)
+ message(FATAL_ERROR "CMake detects that the target machine is BIG ENDIAN,\
+                      which SPERR cannot work on!")
+else()
+ message(STATUS "Little endian machine, good!")
 endif()
 
 option( BUILD_UNIT_TESTS "Build unit tests using GoogleTest" ON)
