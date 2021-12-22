@@ -38,7 +38,7 @@ find_package(OpenMP REQUIRED)
 if( OpenMP_CXX_FOUND AND OpenMP_CXX_FLAGS )
     message(STATUS "OpenMP found! (${OpenMP_CXX_LIB_NAMES} ${OpenMP_CXX_VERSION}: ${OpenMP_CXX_FLAGS})")
 else()
-    message(STATUS "OpenMP NOT found!")
+    message(FATAL_ERROR "OpenMP NOT found, which is required by SPERR!")
 endif()
 
 #
@@ -120,7 +120,7 @@ add_subdirectory( src )
 
 
 #
-# Create a list of libraries that can be liked by apps
+# Create a list of libraries that can be linked by apps
 #
 list( APPEND LINK_LIST SPERR )
 list( APPEND LINK_LIST OpenMP::OpenMP_CXX )
@@ -141,6 +141,7 @@ if( BUILD_CLI_UTILITIES )
       file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/latest/download/CLI11.hpp
                     ${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp )
   endif()
+
   add_subdirectory( utilities ${CMAKE_BINARY_DIR}/bin )
 endif()
 
@@ -149,7 +150,11 @@ endif()
 # Fetch Google Test: https://google.github.io/googletest/quickstart-cmake.html
 #
 if( BUILD_UNIT_TESTS )
-  option( FORCE_LATEST_GTEST "Force using the latest version of GoogleTest" OFF)
+  option( FORCE_LATEST_GTEST "Force using the latest version of GoogleTest" OFF )
+
+  # Turn off an internal option of GoogleTest
+  #
+  set( INSTALL_GTEST OFF CACHE INTERNAL "Not install GoogleTest")
 
   # Let's use the new mechanism to incorporate GoogleTest
   #
@@ -177,6 +182,7 @@ if( BUILD_UNIT_TESTS )
 endif()
 
 
+#
 # Specify using GNU installation rules
 #
 include( GNUInstallDirs )
@@ -190,12 +196,13 @@ if( BUILD_CLI_UTILITIES )
   install( TARGETS show_version compressor_3d decompressor_3d probe_3d
            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
 endif()
+
 # Add a pkg-config file, also copy over SperrConfig.h
 #
 configure_file("${CMAKE_SOURCE_DIR}/SPERR.pc.in" SPERR.pc @ONLY)
 install( FILES "${CMAKE_BINARY_DIR}/SPERR.pc" DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
 install( FILES "${CMAKE_BINARY_DIR}/SperrConfig.h" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
-#
+
 # Copy over libzstd.a
 #
 if( USE_ZSTD )
