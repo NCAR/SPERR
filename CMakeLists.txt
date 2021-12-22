@@ -29,10 +29,11 @@ else()
  message(STATUS "Little endian machine, good!")
 endif()
 
-option( BUILD_UNIT_TESTS "Build unit tests using GoogleTest" ON)
-option( BUILD_CLI_UTILITIES "Build a set of command line utilities" ON)
-option( USE_ZSTD "Incorporate ZSTD to achieve further 5% reduction" OFF)
-option( QZ_TERM  "Coding terminates by quantization level" ON)
+option( BUILD_UNIT_TESTS "Build unit tests using GoogleTest" ON )
+option( BUILD_CLI_UTILITIES "Build a set of command line utilities" ON )
+option( USE_ZSTD "Incorporate ZSTD to achieve further 5% reduction" OFF )
+option( QZ_TERM  "Coding terminates by quantization level" ON )
+option( BUILD_SHARED_LIBS "Build shared SPERR library" ON )
 
 find_package(OpenMP REQUIRED)
 if( OpenMP_CXX_FOUND AND OpenMP_CXX_FLAGS )
@@ -186,10 +187,17 @@ endif()
 # Specify using GNU installation rules
 #
 include( GNUInstallDirs )
-# Install libSPERR.a
+
+# Install the SPERR library
 #
-install( TARGETS SPERR ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-                       PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
+if( BUILD_SHARED_LIBS )
+  install( TARGETS SPERR LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+           PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
+else()
+  install( TARGETS SPERR ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+           PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
+endif()
+
 # Install utilities
 #
 if( BUILD_CLI_UTILITIES )
