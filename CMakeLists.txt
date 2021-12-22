@@ -204,8 +204,9 @@ install( FILES "${CMAKE_BINARY_DIR}/SPERR.pc" DESTINATION ${CMAKE_INSTALL_DATARO
 install( FILES "${CMAKE_BINARY_DIR}/SperrConfig.h" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
 
 # Copy over libzstd.a
+# (Meanwhile I'm not sure if it's necessary to copy over a static library, so comment out now...)
 #
-if( USE_ZSTD )
-    ExternalProject_Get_Property( zstd-download INSTALL_DIR )
-    install( FILES "${INSTALL_DIR}/lib/libzstd.a" DESTINATION ${CMAKE_INSTALL_LIBDIR} )
-endif()
+#if( USE_ZSTD )
+#  ExternalProject_Get_Property( zstd-download INSTALL_DIR )
+#  install( FILES "${INSTALL_DIR}/lib/libzstd.a" DESTINATION ${CMAKE_INSTALL_LIBDIR} )
+#endif()
