@@ -14,8 +14,9 @@ add_library( SPERR
              SPECK2D_Compressor.cpp
              SPECK2D_Decompressor.cpp )
 target_include_directories( SPERR PUBLIC ${CMAKE_SOURCE_DIR}/include )
-target_compile_options( SPERR PUBLIC ${OpenMP_CXX_FLAGS} )
-set_target_properties( SPERR PROPERTIES VERSION ${SPERR_VERSION} )
+target_compile_options(     SPERR PUBLIC ${OpenMP_CXX_FLAGS} )
+target_link_libraries(      SPERR PUBLIC OpenMP::OpenMP_CXX )
+set_target_properties(      SPERR PROPERTIES VERSION ${SPERR_VERSION} )
 
 #
 # The list of headers is formatted a little cumbersome, but don't change it!

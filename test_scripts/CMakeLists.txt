@@ -1,5 +1,17 @@
 enable_testing()
 
+#
+# Create a list of libraries that can be linked by apps
+#
+list( APPEND LINK_LIST SPERR )
+list( APPEND LINK_LIST OpenMP::OpenMP_CXX )
+if( USE_ZSTD )
+    ExternalProject_Get_Property( zstd-download INSTALL_DIR )
+    link_directories( "${INSTALL_DIR}/lib" )
+    list( APPEND LINK_LIST zstd )
+endif()
+
+
 add_executable( test_sperr_helper sperr_helper_unit_test.cpp )
 target_link_libraries( test_sperr_helper ${LINK_LIST} gtest_main )
 

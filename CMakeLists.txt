@@ -121,18 +121,6 @@ add_subdirectory( src )
 
 
 #
-# Create a list of libraries that can be linked by apps
-#
-list( APPEND LINK_LIST SPERR )
-list( APPEND LINK_LIST OpenMP::OpenMP_CXX )
-if( USE_ZSTD )
-    ExternalProject_Get_Property( zstd-download INSTALL_DIR )
-    link_directories( "${INSTALL_DIR}/lib" )
-    list( APPEND LINK_LIST zstd )
-endif()
-
-
-#
 # Build command line utilities
 #
 if( BUILD_CLI_UTILITIES )
