@@ -89,7 +89,7 @@ if( USE_ZSTD )
       SOURCE_SUBDIR     "build/cmake/"                  # Specifies where the CMakeLists.txt file is
       CMAKE_ARGS        "-DCMAKE_BUILD_TYPE=Release"
       CMAKE_ARGS        "-DZSTD_MULTITHREAD_SUPPORT=False"
-      CMAKE_ARGS        "-DZSTD_BUILD_SHARED=False"     # Only build static library
+      # CMAKE_ARGS        "-DZSTD_BUILD_SHARED=False"     # Only build static library
       CMAKE_ARGS        "-DZSTD_BUILD_PROGRAMS=False"   # Don't build zstd command line utilities
       CMAKE_ARGS        "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/zstd/install"
       CMAKE_ARGS        "-DCMAKE_INSTALL_LIBDIR=lib"
@@ -109,6 +109,7 @@ if( USE_ZSTD )
 
     ExternalProject_Get_Property( zstd-download INSTALL_DIR )
     include_directories("${INSTALL_DIR}/include")
+    link_directories( "${INSTALL_DIR}/lib" )
 else()
     message(STATUS "ZSTD add-on disabled!")
 endif()
