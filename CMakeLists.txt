@@ -139,7 +139,7 @@ endif()
 # Fetch Google Test: https://google.github.io/googletest/quickstart-cmake.html
 #
 if( BUILD_UNIT_TESTS )
-  option( FORCE_LATEST_GTEST "Force using the latest version of GoogleTest" OFF )
+  option( USE_OLDER_GTEST "Force using an older version of GoogleTest (1.10.0)" OFF )
 
   # Turn off an internal option of GoogleTest
   #
@@ -148,14 +148,14 @@ if( BUILD_UNIT_TESTS )
   # Let's use the new mechanism to incorporate GoogleTest
   #
   include(FetchContent)
-  if (FORCE_LATEST_GTEST OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    message (STATUS "Fetching the latest GoogleTest Framework")
-    FetchContent_Declare( googletest
-      URL https://github.com/google/googletest/archive/refs/heads/main.zip )
-  else()
+  if( USE_OLDER_GTEST )
     message (STATUS "Fetching GoogleTest Framework Version 1.10.0")
     FetchContent_Declare( googletest
       URL https://github.com/google/googletest/archive/refs/tags/release-1.10.0.zip )
+  else()
+    message (STATUS "Fetching the latest GoogleTest Framework")
+    FetchContent_Declare( googletest
+      URL https://github.com/google/googletest/archive/refs/heads/main.zip )
   endif()
 
   # Prevent overriding the parent project's compiler/linker settings on Windows
@@ -172,7 +172,7 @@ endif()
 
 
 #
-# Specify using GNU installation rules
+# Start installation using GNU installation rules
 #
 include( GNUInstallDirs )
 
