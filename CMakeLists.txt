@@ -89,7 +89,6 @@ if( USE_ZSTD )
       SOURCE_SUBDIR     "build/cmake/"                  # Specifies where the CMakeLists.txt file is
       CMAKE_ARGS        "-DCMAKE_BUILD_TYPE=Release"
       CMAKE_ARGS        "-DZSTD_MULTITHREAD_SUPPORT=False"
-      # CMAKE_ARGS        "-DZSTD_BUILD_SHARED=False"     # Only build static library
       CMAKE_ARGS        "-DZSTD_BUILD_PROGRAMS=False"   # Don't build zstd command line utilities
       CMAKE_ARGS        "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/zstd/install"
       CMAKE_ARGS        "-DCMAKE_INSTALL_LIBDIR=lib"
@@ -116,15 +115,18 @@ endif()
 
 
 #
-# Kitware documentation on CMake's handle or rpath:
-#   https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
-# and a good discussion on rpath topics:
-#   https://stackoverflow.com/questions/32469953/why-is-cmake-designed-so-that-it-removes-runtime-path-when-installing
+# Basically always use full rpath when installing.
+# These specifications need to be placed before defining any targets.
 #
-set( CMAKE_SKIP_BUILD_RPATH FALSE )
-set( CMAKE_BUILD_WITH_INSTALL_RPATH FALSE )
+# Kitware documentation on CMake's handle or rpath:
+# https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
+# and a good discussion on rpath topics:
+# https://stackoverflow.com/questions/32469953/why-is-cmake-designed-so-that-it-removes-runtime-path-when-installing
+#
+set( CMAKE_SKIP_BUILD_RPATH             FALSE )
+set( CMAKE_BUILD_WITH_INSTALL_RPATH     FALSE )
 set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
-set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
+set( CMAKE_INSTALL_RPATH_USE_LINK_PATH  TRUE  )
 
 
 #

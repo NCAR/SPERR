@@ -1,4 +1,3 @@
-
 add_library( SPERR
              sperr_helper.cpp
              Conditioner.cpp
