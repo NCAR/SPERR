@@ -89,7 +89,6 @@ if( USE_ZSTD )
       SOURCE_SUBDIR     "build/cmake/"                  # Specifies where the CMakeLists.txt file is
       CMAKE_ARGS        "-DCMAKE_BUILD_TYPE=Release"
       CMAKE_ARGS        "-DZSTD_MULTITHREAD_SUPPORT=False"
-      CMAKE_ARGS        "-DZSTD_BUILD_SHARED=False"     # Only build static library
       CMAKE_ARGS        "-DZSTD_BUILD_PROGRAMS=False"   # Don't build zstd command line utilities
       CMAKE_ARGS        "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/zstd/install"
       CMAKE_ARGS        "-DCMAKE_INSTALL_LIBDIR=lib"
@@ -109,27 +108,31 @@ if( USE_ZSTD )
 
     ExternalProject_Get_Property( zstd-download INSTALL_DIR )
     include_directories("${INSTALL_DIR}/include")
+    link_directories( "${INSTALL_DIR}/lib" )
 else()
     message(STATUS "ZSTD add-on disabled!")
 endif()
 
 
 #
+# Basically always use full rpath when installing.
+# These specifications need to be placed before defining any targets.
+#
+# Kitware documentation on CMake's handle or rpath:
+# https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
+# and a good discussion on rpath topics:
+# https://stackoverflow.com/questions/32469953/why-is-cmake-designed-so-that-it-removes-runtime-path-when-installing
+#
+set( CMAKE_SKIP_BUILD_RPATH             FALSE )
+set( CMAKE_BUILD_WITH_INSTALL_RPATH     FALSE )
+set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
+set( CMAKE_INSTALL_RPATH_USE_LINK_PATH  TRUE  )
+
+
+#
 # Compile the SPERR library
 #
 add_subdirectory( src )
-
-
-#
-# Create a list of libraries that can be linked by apps
-#
-list( APPEND LINK_LIST SPERR )
-list( APPEND LINK_LIST OpenMP::OpenMP_CXX )
-if( USE_ZSTD )
-    ExternalProject_Get_Property( zstd-download INSTALL_DIR )
-    link_directories( "${INSTALL_DIR}/lib" )
-    list( APPEND LINK_LIST zstd )
-endif()
 
 
 #
@@ -151,23 +154,24 @@ endif()
 # Fetch Google Test: https://google.github.io/googletest/quickstart-cmake.html
 #
 if( BUILD_UNIT_TESTS )
-  option( FORCE_LATEST_GTEST "Force using the latest version of GoogleTest" OFF )
+  option( USE_OLDER_GTEST "Force using an older version of GoogleTest (1.10.0)" OFF )
 
-  # Turn off an internal option of GoogleTest
+  # Control internal options of GoogleTest
   #
   set( INSTALL_GTEST OFF CACHE INTERNAL "Not install GoogleTest")
+  set( BUILD_GMOCK ON CACHE INTERNAL "Build gmock")
 
   # Let's use the new mechanism to incorporate GoogleTest
   #
   include(FetchContent)
-  if (FORCE_LATEST_GTEST OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    message (STATUS "Fetching the latest GoogleTest Framework")
-    FetchContent_Declare( googletest
-      URL https://github.com/google/googletest/archive/refs/heads/main.zip )
-  else()
+  if( USE_OLDER_GTEST )
     message (STATUS "Fetching GoogleTest Framework Version 1.10.0")
     FetchContent_Declare( googletest
       URL https://github.com/google/googletest/archive/refs/tags/release-1.10.0.zip )
+  else()
+    message (STATUS "Fetching the latest GoogleTest Framework")
+    FetchContent_Declare( googletest
+      URL https://github.com/google/googletest/archive/refs/heads/main.zip )
   endif()
 
   # Prevent overriding the parent project's compiler/linker settings on Windows
@@ -184,7 +188,7 @@ endif()
 
 
 #
-# Specify using GNU installation rules
+# Start installation using GNU installation rules
 #
 include( GNUInstallDirs )
 
@@ -211,10 +215,9 @@ configure_file("${CMAKE_SOURCE_DIR}/SPERR.pc.in" SPERR.pc @ONLY)
 install( FILES "${CMAKE_BINARY_DIR}/SPERR.pc" DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
 install( FILES "${CMAKE_BINARY_DIR}/SperrConfig.h" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
 
-# Copy over libzstd.a
-# (Meanwhile I'm not sure if it's necessary to copy over a static library, so comment out now...)
+# Copy over ZSTD libraries
 #
-#if( USE_ZSTD )
-#  ExternalProject_Get_Property( zstd-download INSTALL_DIR )
-#  install( FILES "${INSTALL_DIR}/lib/libzstd.a" DESTINATION ${CMAKE_INSTALL_LIBDIR} )
-#endif()
+if( USE_ZSTD )
+  ExternalProject_Get_Property( zstd-download INSTALL_DIR )
+  install( DIRECTORY "${INSTALL_DIR}/lib/" TYPE LIB )
+endif()
