@@ -116,6 +116,18 @@ endif()
 
 
 #
+# Kitware documentation on CMake's handle or rpath:
+#   https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
+# and a good discussion on rpath topics:
+#   https://stackoverflow.com/questions/32469953/why-is-cmake-designed-so-that-it-removes-runtime-path-when-installing
+#
+set( CMAKE_SKIP_BUILD_RPATH FALSE )
+set( CMAKE_BUILD_WITH_INSTALL_RPATH FALSE )
+set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
+set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
+
+
+#
 # Compile the SPERR library
 #
 add_subdirectory( src )
@@ -142,9 +154,10 @@ endif()
 if( BUILD_UNIT_TESTS )
   option( USE_OLDER_GTEST "Force using an older version of GoogleTest (1.10.0)" OFF )
 
-  # Turn off an internal option of GoogleTest
+  # Control internal options of GoogleTest
   #
   set( INSTALL_GTEST OFF CACHE INTERNAL "Not install GoogleTest")
+  set( BUILD_GMOCK ON CACHE INTERNAL "Build gmock")
 
   # Let's use the new mechanism to incorporate GoogleTest
   #
@@ -200,10 +213,9 @@ configure_file("${CMAKE_SOURCE_DIR}/SPERR.pc.in" SPERR.pc @ONLY)
 install( FILES "${CMAKE_BINARY_DIR}/SPERR.pc" DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
 install( FILES "${CMAKE_BINARY_DIR}/SperrConfig.h" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
 
-# Copy over libzstd.a
-# (Meanwhile I'm not sure if it's necessary to copy over a static library, so comment out now...)
+# Copy over ZSTD libraries
 #
-#if( USE_ZSTD )
-#  ExternalProject_Get_Property( zstd-download INSTALL_DIR )
-#  install( FILES "${INSTALL_DIR}/lib/libzstd.a" DESTINATION ${CMAKE_INSTALL_LIBDIR} )
-#endif()
+if( USE_ZSTD )
+  ExternalProject_Get_Property( zstd-download INSTALL_DIR )
+  install( DIRECTORY "${INSTALL_DIR}/lib/" TYPE LIB )
+endif()

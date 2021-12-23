@@ -1,11 +1,3 @@
-#
-# Good documentation on CMake's handle or rpath:
-#   https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
-# and a good discussion on rpath topics:
-#   https://stackoverflow.com/questions/32469953/why-is-cmake-designed-so-that-it-removes-runtime-path-when-installing
-#
-set( CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_LIBDIR} )
-set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 add_executable( show_version show_version.cpp )
 
