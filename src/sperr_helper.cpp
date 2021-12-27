@@ -79,8 +79,8 @@ auto sperr::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& s
   auto a = std::array<uint8_t, bit_stride>();
   auto t = std::array<uint64_t, byte_stride>();
   size_t dest_idx = offset;
-
   auto itr_finish = src.cbegin() + (src.size() / bit_stride) * bit_stride;
+
   for (auto itr = src.cbegin(); itr != itr_finish; itr += bit_stride) {
     std::copy(itr, itr + bit_stride, a.begin());
     std::memcpy(t.data(), a.data(), a.size());
