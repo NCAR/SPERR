@@ -1,4 +1,5 @@
 
+#include <random>
 #include "gtest/gtest.h"
 #include "sperr_helper.h"
 
@@ -105,6 +106,34 @@ TEST(sperr_helper, bit_packing_one_byte)
   byte = sperr::pack_8_booleans(input);
   output = sperr::unpack_8_booleans(byte);
   for (size_t i = 0; i < 8; i++)
+    EXPECT_EQ(input[i], output[i]);
+}
+
+TEST(sperr_helper, bit_packing_1032_bools)
+{
+  const size_t num_of_bits = 1032;  // 1024 + 8, so the last stride is partial.
+  const size_t num_of_bytes = num_of_bits / 8;
+  const size_t byte_offset = 23;
+
+  std::random_device rd;   // Will be used to obtain a seed for the random number engine
+  std::mt19937 gen(rd());  // Standard mersenne_twister_engine seeded with rd()
+  std::uniform_int_distribution<> distrib(0, 2);
+  auto input = std::vector<bool>(num_of_bits);
+  auto bytes = std::vector<uint8_t>(num_of_bytes + byte_offset);
+  for (size_t i = 0; i < num_of_bits; i++)
+    input[i] = distrib(gen);
+
+  // Pack booleans
+  auto rtn = sperr::pack_booleans(bytes, input, byte_offset);
+  EXPECT_EQ(rtn, sperr::RTNType::Good);
+  // Unpack booleans
+  auto output = std::vector<bool>(num_of_bits);
+  rtn = sperr::unpack_booleans(output, bytes.data(), bytes.size(), byte_offset);
+
+  EXPECT_EQ(rtn, sperr::RTNType::Good);
+  EXPECT_EQ(input.size(), output.size());
+
+  for (size_t i = 0; i < input.size(); i++)
     EXPECT_EQ(input[i], output[i]);
 }
 
