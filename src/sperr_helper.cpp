@@ -66,19 +66,34 @@ auto sperr::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& s
   // `dest` should have enough space, as the API specifies.
   assert(dest.size() >= offset + src.size() / 8);
 
-  const uint64_t magic = 0x8040201008040201;
+  // How many bits to process at a time.
+  // Tests on multiple platforms suggest that 1024 provides the most speed up.
+  constexpr uint64_t bit_stride = 1024;
+  constexpr uint64_t byte_stride = bit_stride / 8;
+  constexpr uint64_t magic = 0x8040201008040201;
 
   // It turns out C++ doesn't specify bool to be 1 byte, so we have to use
   // uint8_t here which is definitely 1 byte in size.
   // Also, C++ guarantees conversion between booleans and integers:
   // true <--> 1, false <--> 0.
-  auto a = std::array<uint8_t, 8>();
-  uint64_t t = 0;
+  auto a = std::array<uint8_t, bit_stride>();
+  auto t = std::array<uint64_t, byte_stride>();
   size_t dest_idx = offset;
-  for (auto itr = src.cbegin(); itr != src.cend(); itr += 8) {
+
+  auto itr_finish = src.cbegin() + (src.size() / bit_stride) * bit_stride;
+  for (auto itr = src.cbegin(); itr != itr_finish; itr += bit_stride) {
+    std::copy(itr, itr + bit_stride, a.begin());
+    std::memcpy(t.data(), a.data(), a.size());
+    for (size_t i = 0; i < byte_stride; i++)
+      dest[dest_idx + i] = (magic * t[i]) >> 56;
+    dest_idx += byte_stride;
+  }
+
+  // For the remaining bits, process 8 bits at a time.
+  for (auto itr = itr_finish; itr != src.cend(); itr += 8) {
     std::copy(itr, itr + 8, a.begin());
-    std::memcpy(&t, a.data(), 8);
-    dest[dest_idx++] = (magic * t) >> 56;
+    std::memcpy(t.data(), a.data(), 8);
+    dest[dest_idx++] = (magic * t[0]) >> 56;
   }
 
   return RTNType::Good;
@@ -89,6 +104,10 @@ auto sperr::unpack_booleans(std::vector<bool>& dest,
                             size_t src_len,
                             size_t src_offset) -> RTNType
 {
+  // For some reason, a strided unpack implementation similar to the striding
+  // strategy used in `pack_booleans()` would result in slower runtime...
+  // See Github issue #122.
+
   if (src == nullptr)
     return RTNType::InvalidParam;
 
@@ -111,8 +130,8 @@ auto sperr::unpack_booleans(std::vector<bool>& dest,
   auto t = uint64_t{0};
   auto dest_itr = dest.begin();
   for (size_t byte_idx = 0; byte_idx < num_of_bytes; byte_idx++) {
-    const uint64_t byte = *(src_ptr + byte_idx);
-    t = ((magic * byte) & mask) >> 7;
+    const uint64_t b8 = *(src_ptr + byte_idx);
+    t = ((magic * b8) & mask) >> 7;
     std::memcpy(a.data(), &t, 8);
     std::copy(a.cbegin(), a.cend(), dest_itr);
     dest_itr += 8;
