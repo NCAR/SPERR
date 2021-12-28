@@ -123,10 +123,11 @@ auto SPECK3D_Compressor::compress() -> RTNType
   m_LOS.clear();
   auto new_tol = m_tol;
   m_diffv.resize(total_vals);
-  for (size_t i = 0; i < total_vals; i++) {
+  for (size_t i = 0; i < total_vals; i++)
     m_diffv[i] = m_val_buf[i] - m_val_buf2[i];
+  for (size_t i = 0; i < total_vals; i++) {
     auto f = std::abs(float(m_val_buf[i]) - float(m_val_buf2[i]));
-    if (f > m_tol && std::abs(m_diffv[i]) <= m_tol)
+    if (double(f) > m_tol && std::abs(m_diffv[i]) <= m_tol)
       new_tol = std::min(new_tol, std::abs(m_diffv[i]));
   }
   for (size_t i = 0; i < total_vals; i++) {
