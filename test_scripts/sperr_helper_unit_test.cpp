@@ -60,17 +60,17 @@ TEST(sperr_helper, bit_packing)
   auto bytes = std::vector<uint8_t>(num_of_bytes + byte_offset);
 
   // Pack booleans
-  auto rtn = sperr::pack_booleans(bytes, input, byte_offset);
-  EXPECT_EQ(rtn, sperr::RTNType::Good);
+  auto rtn1 = sperr::pack_booleans(bytes, input, byte_offset);
+  EXPECT_EQ(rtn1, sperr::RTNType::Good);
   // Unpack booleans
   auto output = std::vector<bool>(num_of_bytes * 8);
-  rtn = sperr::unpack_booleans(output, bytes.data(), bytes.size(), byte_offset);
+  auto rtn2 = sperr::unpack_booleans(output, bytes.data(), bytes.size(), byte_offset);
+  EXPECT_EQ(rtn2, sperr::RTNType::Good);
 
-  EXPECT_EQ(rtn, sperr::RTNType::Good);
-  EXPECT_EQ(input.size(), output.size());
-
-  for (size_t i = 0; i < input.size(); i++)
-    EXPECT_EQ(input[i], output[i]);
+  if (rtn1 == sperr::RTNType::Good && rtn1 == rtn2) {
+    for (size_t i = 0; i < input.size(); i++)
+      EXPECT_EQ(input[i], output[i]);
+  }
 }
 
 TEST(sperr_helper, bit_packing_one_byte)
@@ -124,17 +124,17 @@ TEST(sperr_helper, bit_packing_1032_bools)
     input[i] = distrib(gen);
 
   // Pack booleans
-  auto rtn = sperr::pack_booleans(bytes, input, byte_offset);
-  EXPECT_EQ(rtn, sperr::RTNType::Good);
+  auto rtn1 = sperr::pack_booleans(bytes, input, byte_offset);
+  EXPECT_EQ(rtn1, sperr::RTNType::Good);
   // Unpack booleans
   auto output = std::vector<bool>(num_of_bits);
-  rtn = sperr::unpack_booleans(output, bytes.data(), bytes.size(), byte_offset);
+  auto rtn2 = sperr::unpack_booleans(output, bytes.data(), bytes.size(), byte_offset);
+  EXPECT_EQ(rtn2, sperr::RTNType::Good);
 
-  EXPECT_EQ(rtn, sperr::RTNType::Good);
-  EXPECT_EQ(input.size(), output.size());
-
-  for (size_t i = 0; i < input.size(); i++)
-    EXPECT_EQ(input[i], output[i]);
+  if (rtn1 == sperr::RTNType::Good && rtn1 == rtn2) {
+    for (size_t i = 0; i < input.size(); i++)
+      EXPECT_EQ(input[i], output[i]);
+  }
 }
 
 }  // namespace
