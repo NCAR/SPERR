@@ -131,7 +131,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
       new_tol = std::min(new_tol, std::abs(m_diffv[i]));
   }
   for (size_t i = 0; i < total_vals; i++) {
-    if (std::abs(m_diffv[i]) >= new_tol)
+    if (std::abs(m_diffv[i]) > new_tol)
       m_LOS.emplace_back(i, m_diffv[i]);
   }
   m_sperr.set_tolerance(new_tol);  // Don't forget to pass in the new tolerance value!
