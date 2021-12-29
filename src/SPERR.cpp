@@ -33,6 +33,11 @@ void sperr::SPERR::copy_outlier_list(const std::vector<Outlier>& list)
   m_LOS = list;
 }
 
+void sperr::SPERR::take_outlier_list(std::vector<Outlier>&& list)
+{
+  m_LOS = std::move(list);
+}
+
 void sperr::SPERR::set_length(uint64_t len)
 {
   m_total_len = len;

@@ -44,8 +44,10 @@ class SPERR {
                                                         // Does not affect existing outliers.
   void copy_outlier_list(const std::vector<Outlier>&);  // Copy a given list of outliers.
                                                         // Existing outliers are erased.
-  void set_length(uint64_t);                            // set 1D array length
-  void set_tolerance(double);                           // set error tolerance (Must be positive)
+  void take_outlier_list(std::vector<Outlier>&&);  // Take ownership of a given list of outliers.
+                                                   // Existing outliers are erased.
+  void set_length(uint64_t);                       // set 1D array length
+  void set_tolerance(double);                      // set error tolerance (Must be positive)
 
   // Output
   auto release_outliers() -> std::vector<Outlier>&&;  // Release ownership of decoded outliers
