@@ -246,7 +246,7 @@ auto sperr::SPERR::m_decide_significance(const SPECKSet1D& set) const -> std::pa
   if (sig.first) {
     auto idx_to_find = std::distance(m_sig_map.begin(), itr1);
     auto itr2 = std::lower_bound(m_LOS.begin(), m_LOS.end(), idx_to_find,
-                                 [](auto& otl, auto idx) { return otl.location < idx; });
+                                 [](const auto& otl, auto idx) { return otl.location < idx; });
     assert(itr2 != m_LOS.end());
     assert((*itr2).location == idx_to_find);  // Must find exactly this index
     sig.second = std::distance(m_LOS.begin(), itr2);
