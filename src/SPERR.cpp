@@ -67,8 +67,8 @@ auto sperr::SPERR::m_part_set(const SPECKSet1D& set) const -> std::array<SPECKSe
   set1.part_level = set.part_level + 1;
   // Prepare the 2nd set
   auto& set2 = subsets[1];
-  set2.start = set1.start + set1.length;
-  set2.length = set.length - set1.length;
+  set2.start = set.start + set1.length;
+  set2.length = set.length / 2;
   set2.part_level = set.part_level + 1;
 
   return subsets;
