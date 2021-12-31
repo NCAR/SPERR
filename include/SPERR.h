@@ -18,15 +18,13 @@ class SPECKSet1D {
   size_t length = 0;
   uint32_t part_level = 0;
   SetType type = SetType::TypeS;  // only to indicate if it's garbage
-
-  SPECKSet1D() = default;
-  SPECKSet1D(size_t start, size_t len, uint32_t part_lev);
 };
 
 //
-// Auxiliary struct to hold represent an outlier
+// Auxiliary class to represent an outlier
 //
-struct Outlier {
+class Outlier {
+ public:
   size_t location = 0;
   double error = 0.0;
 

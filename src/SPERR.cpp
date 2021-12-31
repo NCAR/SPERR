@@ -7,14 +7,7 @@
 #include <iostream>
 
 //
-// Class SPECKSet1D
-//
-sperr::SPECKSet1D::SPECKSet1D(size_t s, size_t l, uint32_t p) : start(s), length(l), part_level(p)
-{
-}
-
-//
-// Struct Outlier
+// Class Outlier
 //
 sperr::Outlier::Outlier(size_t loc, double e) : location(loc), error(e) {}
 
@@ -87,10 +80,11 @@ void sperr::SPERR::m_initialize_LIS()
     list.clear();
 
   // Put in two sets, each representing a half of the long array.
-  SPECKSet1D set(0, m_total_len, 0);  // the whole 1D array
+  SPECKSet1D set;
+  set.length = m_total_len; // Set represents the whole 1D array.
   auto sets = m_part_set(set);
-  m_LIS[sets[0].part_level].push_back(sets[0]);
-  m_LIS[sets[1].part_level].push_back(sets[1]);
+  m_LIS[sets[0].part_level].emplace_back(sets[0]);
+  m_LIS[sets[1].part_level].emplace_back(sets[1]);
 }
 
 void sperr::SPERR::m_clean_LIS()
@@ -409,8 +403,6 @@ auto sperr::SPERR::m_process_S_decoding(size_t idx1, size_t idx2, size_t& counte
   if (input) {
     is_sig = m_bit_buffer[m_bit_idx++];
     // Sanity check: the bit buffer should NOT be depleted at this point
-    if (m_bit_idx == m_bit_buffer.size())
-      printf("m_bit_idx == %ld\n", m_bit_idx);
     assert(m_bit_idx < m_bit_buffer.size());
   }
 
