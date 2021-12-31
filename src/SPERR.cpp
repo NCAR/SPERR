@@ -81,7 +81,7 @@ void sperr::SPERR::m_initialize_LIS()
 
   // Put in two sets, each representing a half of the long array.
   SPECKSet1D set;
-  set.length = m_total_len; // Set represents the whole 1D array.
+  set.length = m_total_len;  // Set represents the whole 1D array.
   auto sets = m_part_set(set);
   m_LIS[sets[0].part_level].emplace_back(sets[0]);
   m_LIS[sets[1].part_level].emplace_back(sets[1]);
@@ -231,13 +231,13 @@ auto sperr::SPERR::m_decide_significance(const SPECKSet1D& set) const -> std::pa
   auto begin = m_sig_map.begin() + set.start;
   auto end = begin + set.length;
   auto itr1 = std::find(begin, end, true);
-  if (itr1 != end)
-    sig.first = true;
 
   // Step 2: if this set is significant, then find the index of the outlier in
   //         `m_LSO` that caused it being significant.
-  // Note that `m_LSO` is sorted at the beginning of encoding.
-  if (sig.first) {
+  if (itr1 != end) {
+    sig.first = true;
+
+    // Note that `m_LSO` is sorted at the beginning of encoding.
     auto idx_to_find = std::distance(m_sig_map.begin(), itr1);
     auto itr2 = std::lower_bound(m_LOS.begin(), m_LOS.end(), idx_to_find,
                                  [](const auto& otl, auto idx) { return otl.location < idx; });
