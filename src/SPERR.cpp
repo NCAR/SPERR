@@ -228,7 +228,7 @@ auto sperr::SPERR::m_decide_significance(const SPECKSet1D& set) const -> std::pa
 
   // Step 1: use the significance map to decide if this set is significant
   std::pair<bool, size_t> sig{false, 0};
-  auto begin = m_sig_map.begin() + set.start;
+  auto begin = m_sig_map.cbegin() + set.start;
   auto end = begin + set.length;
   auto itr1 = std::find(begin, end, true);
 
@@ -238,12 +238,12 @@ auto sperr::SPERR::m_decide_significance(const SPECKSet1D& set) const -> std::pa
     sig.first = true;
 
     // Note that `m_LSO` is sorted at the beginning of encoding.
-    auto idx_to_find = std::distance(m_sig_map.begin(), itr1);
-    auto itr2 = std::lower_bound(m_LOS.begin(), m_LOS.end(), idx_to_find,
+    auto idx_to_find = std::distance(m_sig_map.cbegin(), itr1);
+    auto itr2 = std::lower_bound(m_LOS.cbegin(), m_LOS.cend(), idx_to_find,
                                  [](const auto& otl, auto idx) { return otl.location < idx; });
-    assert(itr2 != m_LOS.end());
+    assert(itr2 != m_LOS.cend());
     assert((*itr2).location == idx_to_find);  // Must find exactly this index
-    sig.second = std::distance(m_LOS.begin(), itr2);
+    sig.second = std::distance(m_LOS.cbegin(), itr2);
   }
 
   return sig;
