@@ -134,8 +134,10 @@ auto sperr::SPERR::m_ready_to_decode() const -> bool
 
 auto sperr::SPERR::encode() -> RTNType
 {
-  // Let's sort the list of outliers so it'll be easier to locate particular
-  // individuals.
+  // Let's sort the list of outliers so it'll be easier to locate particular individuals.
+  // Actually, if the list of outliers is produced by this package (SPECK3D_Compressor),
+  // it's already in the desired order so this step has no cost!
+  // Outliers added individually will potentially trigger actual sorting operations though.
   std::sort(m_LOS.begin(), m_LOS.end(), [](auto& a, auto& b) { return a.location < b.location; });
   if (!m_ready_to_encode())
     return RTNType::InvalidParam;
