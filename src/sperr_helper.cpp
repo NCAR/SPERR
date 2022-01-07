@@ -11,8 +11,8 @@ auto sperr::num_of_xforms(size_t len) -> size_t
 {
   assert(len > 0);
   // I decide 8 is the minimal length to do one level of xform.
-  auto f = std::log2(double(len) / 8.0);
-  auto num = f < 0.0 ? size_t{0} : size_t(f) + 1;
+  auto const f = std::log2(double(len) / 8.0);
+  auto const num = f < 0.0 ? size_t{0} : static_cast<size_t>(f) + 1;
   // I also decide that no matter what the input size is,
   // six (6) is the maxinum number of transforms to do.
   return std::min(num, size_t{6});
@@ -46,12 +46,10 @@ auto sperr::make_coeff_positive(vecd_type& buf) -> double
   assert(!buf.empty());
 
   // Step 1: make every value positive
-  std::for_each(buf.begin(), buf.end(), [](auto& v) { v = std::abs(v); });
+  std::transform(buf.cbegin(), buf.cend(), buf.begin(), [](auto v) { return std::abs(v); });
 
   // Step 2: find the maximum of all values
-  auto maxit = std::max_element(buf.begin(), buf.end());
-
-  return *maxit;
+  return *std::max_element(buf.begin(), buf.end());
 }
 
 // Good solution to deal with bools and unsigned chars
@@ -84,8 +82,8 @@ auto sperr::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& s
   for (auto itr = src.cbegin(); itr != itr_finish; itr += bit_stride) {
     std::copy(itr, itr + bit_stride, a.begin());
     std::memcpy(t.data(), a.data(), a.size());
-    for (size_t i = 0; i < byte_stride; i++)
-      dest[dest_idx + i] = (magic * t[i]) >> 56;
+    std::transform(t.cbegin(), t.cend(), dest.begin() + dest_idx,
+                   [](auto e) { return (magic * e) >> 56; });
     dest_idx += byte_stride;
   }
 
