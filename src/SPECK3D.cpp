@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
+#include <numeric>
 
 //
 // Class SPECKSet3D
@@ -67,14 +68,11 @@ auto sperr::SPECK3D::encode() -> RTNType
   m_bit_buffer.clear();
 
   // Keep signs of all coefficients
-  m_sign_array.resize(m_coeff_buf.size(), false);
-  std::generate(m_sign_array.begin(), m_sign_array.end(), [it = m_coeff_buf.cbegin()]() mutable {
-    auto b = *it >= 0.0;
-    ++it;
-    return b;
-  });
+  m_sign_array.reserve(m_coeff_buf.size());
+  std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_sign_array.begin(),
+                 [](auto e) { return e >= 0.0; });
 
-  auto max_coeff = sperr::make_coeff_positive(m_coeff_buf);
+  auto const max_coeff = sperr::make_coeff_positive(m_coeff_buf);
 
   // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
   // negative value. std::floor() will always find the smaller integer value,
@@ -85,8 +83,9 @@ auto sperr::SPECK3D::encode() -> RTNType
   m_max_coeff_bits = int32_t(std::floor(std::log2(max_coeff)));
   m_threshold_idx = 0;
   m_threshold_arr[0] = std::pow(2.0, double(m_max_coeff_bits));
-  for (size_t i = 1; i < m_threshold_arr.size(); i++)
-    m_threshold_arr[i] = m_threshold_arr[i - 1] * 0.5;
+  std::transform(m_threshold_arr.cbegin(),           //
+                 std::prev(m_threshold_arr.cend()),  //
+                 std::next(m_threshold_arr.begin()), [](auto e) { return e * 0.5; });
 
 #ifdef QZ_TERM
   // If the requested termination level is already above max_coeff_bits, return right away.
@@ -245,10 +244,8 @@ void sperr::SPECK3D::m_initialize_sets_lists()
       auto subsets = m_partition_S_XY(big);
       big = subsets[0];
       // Iterate the rest subsets.
-      for (size_t i = 1; i < subsets.size(); i++) {
-        const auto parts = subsets[i].part_level;
-        m_LIS[parts].emplace_back(subsets[i]);
-      }
+      std::for_each(subsets.cbegin(), subsets.cend(),
+                    [&](auto const& s) { return m_LIS[s.part_level].emplace_back(s); });
       xf++;
     }
   }
