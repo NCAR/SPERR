@@ -738,7 +738,7 @@ auto sperr::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2, std::array<SigTyp
 
   auto sig_it = subset_sigs.begin();
   size_t sig_counter = 0;
-  for (auto it = subsets.begin(); it < set_end; ++it) {
+  for (auto it = subsets.begin(); it != set_end; ++it) {
     // If we're looking at the last subset, and no prior subset is found to be
     // significant, then we know that this last one *is* significant.
     bool output = true;
@@ -787,7 +787,7 @@ auto sperr::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
   const auto set_end_m1 = set_end - 1;
   size_t sig_counter = 0;
 
-  for (auto it = subsets.begin(); it < set_end; ++it) {
+  for (auto it = subsets.begin(); it != set_end; ++it) {
     // If we're looking at the last subset, and no prior subset is found to be
     // significant, then we know that this last one *is* significant.
     bool read = true;
