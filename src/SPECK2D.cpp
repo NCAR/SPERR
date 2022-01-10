@@ -62,7 +62,11 @@ auto sperr::SPECK2D::encode() -> RTNType
     return b;
   });
 
-  auto max_coeff = sperr::make_coeff_positive(m_coeff_buf);
+  // make every coefficient positive
+  std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
+                 [](auto v) { return std::abs(v); });
+
+  const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
 
   m_max_coeff_bits = int32_t(std::floor(std::log2(max_coeff)));
   m_threshold = std::pow(2.0, double(m_max_coeff_bits));

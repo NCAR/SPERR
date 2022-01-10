@@ -41,17 +41,6 @@ auto sperr::calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<si
   return {low_len, high_len};
 }
 
-auto sperr::make_coeff_positive(vecd_type& buf) -> double
-{
-  assert(!buf.empty());
-
-  // Step 1: make every value positive
-  std::transform(buf.cbegin(), buf.cend(), buf.begin(), [](auto v) { return std::abs(v); });
-
-  // Step 2: find the maximum of all values
-  return *std::max_element(buf.begin(), buf.end());
-}
-
 // Good solution to deal with bools and unsigned chars
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
 auto sperr::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& src, size_t offset)

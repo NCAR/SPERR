@@ -27,7 +27,7 @@ class SPECK3D_OMP_C {
   void set_qz_level(int32_t);
   auto set_tolerance(double) -> RTNType;
   // Return 1) the number of outliers, and 2) the num of bytes to encode them.
-  auto get_outlier_stats() const -> std::pair<size_t, size_t>;
+  [[nodiscard]] auto get_outlier_stats() const -> std::pair<size_t, size_t>;
 #else
   auto set_bpp(double) -> RTNType;
 #endif
@@ -35,7 +35,7 @@ class SPECK3D_OMP_C {
   auto compress() -> RTNType;
 
   // Provide a copy of the encoded bitstream to the caller.
-  auto get_encoded_bitstream() const -> std::vector<uint8_t>;
+  [[nodiscard]] auto get_encoded_bitstream() const -> std::vector<uint8_t>;
 
  private:
   sperr::dims_type m_dims = {0, 0, 0};        // Dimension of the entire volume
@@ -61,7 +61,7 @@ class SPECK3D_OMP_C {
   //
   // Private methods
   //
-  auto m_generate_header() const -> sperr::vec8_type;
+  [[nodiscard]] auto m_generate_header() const -> sperr::vec8_type;
 };
 
 #endif

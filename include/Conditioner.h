@@ -33,8 +33,8 @@ class Conditioner {
   // is returned as boolean and a properly packed meta data if true.
   // Similarly, `parse_constant` takes in a meta data block and returns if it
   // represents a constant field. If true, it also returns the constant value.
-  auto test_constant(const vecd_type&) const -> std::pair<bool, meta_type>;
-  auto parse_constant(const meta_type&) const -> std::tuple<bool, double, uint64_t>;
+  [[nodiscard]] auto test_constant(const vecd_type&) const -> std::pair<bool, meta_type>;
+  [[nodiscard]] auto parse_constant(const meta_type&) const -> std::tuple<bool, double, uint64_t>;
 
  private:
   //

@@ -4,8 +4,9 @@
 # portability-*
 # clang-analyzer-*,
 # openmp-exception-escape,
+# modernize-use-nodiscard
 
-# Updated: 10/25/2021
+# Updated: 1/10/2022
 
 ---
   Checks:          '-*,
@@ -20,6 +21,7 @@
                     google-explicit-constructor,
                     google-readability-casting,
                     modernize-avoid-bind,
+                    modernize-concat-nested-namespaces,
                     modernize-loop-convert,
                     modernize-make-shared,
                     modernize-make-unique,
@@ -35,21 +37,24 @@
                     modernize-use-nullptr,
                     modernize-use-override,
                     modernize-use-transparent-functors,
+                    readability-redundant-member-init,
                     performance-*,
                     portability-*,
                     clang-analyzer-*,
                     openmp-exception-escape,
-                    readability-redundant-member-init'
+                    modernize-use-nodiscard'
   CheckOptions:
     - key:          bugprone-dangling-handle.HandleClasses
       value:        ::std::basic_string_view;::std::span;::absl::string_view;::base::BasicStringPiece;::base::span
     - key:          bugprone-string-constructor.StringNames
       value:        ::std::basic_string;::std::basic_string_view;::base::BasicStringPiece
     - key:          modernize-use-default-member-init.UseAssignment
-      value:        1   
+      value:        1
     # This relaxes modernize-use-emplace in some cases; we might want to make it
     # more aggressive in the future. See discussion on
     # https://groups.google.com/a/chromium.org/g/cxx/c/noMMTNYiM0w .
     - key:          modernize-use-emplace.IgnoreImplicitConstructors
-      value:        1   
+      value:        1
+    # - key:          modernize-use-nodiscard.ReplacementString
+    #   value:        NODISCARD
 ...

@@ -72,7 +72,11 @@ auto sperr::SPECK3D::encode() -> RTNType
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_sign_array.begin(),
                  [](auto e) { return e >= 0.0; });
 
-  const auto max_coeff = sperr::make_coeff_positive(m_coeff_buf);
+  // make every coefficient positive
+  std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
+                 [](auto v) { return std::abs(v); });
+
+  const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
 
   // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
   // negative value. std::floor() will always find the smaller integer value,

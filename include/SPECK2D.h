@@ -25,8 +25,8 @@ class SPECKSet2D {
   //
   // Member functions
   //
-  auto is_pixel() const -> bool;
-  auto is_empty() const -> bool;
+  [[nodiscard]] auto is_pixel() const -> bool;
+  [[nodiscard]] auto is_empty() const -> bool;
 };
 
 //
@@ -53,14 +53,14 @@ class SPECK2D : public SPECK_Storage {
   auto m_process_I(bool) -> RTNType;
   auto m_code_I() -> RTNType;
   void m_initialize_sets_lists();
-  auto m_partition_S(const SPECKSet2D&) const -> std::array<SPECKSet2D, 4>;
+  [[nodiscard]] auto m_partition_S(const SPECKSet2D&) const -> std::array<SPECKSet2D, 4>;
   auto m_partition_I() -> std::array<SPECKSet2D, 3>;
   auto m_decide_set_S_significance(const SPECKSet2D& set) -> SigType;
   auto m_decide_set_I_significance(const SPECKSet2D& set) -> SigType;
-  auto m_produce_root() const -> SPECKSet2D;
+  [[nodiscard]] auto m_produce_root() const -> SPECKSet2D;
   void m_clean_LIS();
-  auto m_ready_to_encode() const -> bool;
-  auto m_ready_to_decode() const -> bool;
+  [[nodiscard]] auto m_ready_to_encode() const -> bool;
+  [[nodiscard]] auto m_ready_to_decode() const -> bool;
 
   //
   // Private data members

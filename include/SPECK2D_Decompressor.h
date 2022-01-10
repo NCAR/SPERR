@@ -25,9 +25,9 @@ class SPECK2D_Decompressor {
   // Get the decompressed data in a float or double buffer.
   template <typename T>
   auto get_data() const -> std::vector<T>;
-  auto view_data() const -> const std::vector<double>&;
+  [[nodiscard]] auto view_data() const -> const std::vector<double>&;
   auto release_data() -> std::vector<double>&&;
-  auto get_dims() const -> std::array<size_t, 3>;
+  [[nodiscard]] auto get_dims() const -> std::array<size_t, 3>;
 
  private:
   sperr::dims_type m_dims = {0, 0, 0};
