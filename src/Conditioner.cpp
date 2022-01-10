@@ -23,12 +23,12 @@ auto sperr::Conditioner::m_calc_mean(const vecd_type& buf) -> double
   for (size_t s = 0; s < m_num_strides; s++) {
     auto begin = buf.begin() + stride_size * s;
     auto end = begin + stride_size;
-    m_stride_buf[s] = std::accumulate(begin, end, double{0.0}) / double(stride_size);
+    m_stride_buf[s] = std::accumulate(begin, end, double{0.0}) / static_cast<double>(stride_size);
   }
 
   double sum = std::accumulate(m_stride_buf.begin(), m_stride_buf.end(), double{0.0});
 
-  return (sum / double(m_stride_buf.size()));
+  return (sum / static_cast<double>(m_stride_buf.size()));
 }
 
 auto sperr::Conditioner::m_calc_rms(const vecd_type& buf) -> double
@@ -44,11 +44,11 @@ auto sperr::Conditioner::m_calc_rms(const vecd_type& buf) -> double
     m_stride_buf[s] =
         std::accumulate(begin, end, double{0.0}, [](auto a, auto b) { return a + b * b; });
 
-    m_stride_buf[s] /= double(stride_size);
+    m_stride_buf[s] /= static_cast<double>(stride_size);
   }
 
   double rms = std::accumulate(m_stride_buf.begin(), m_stride_buf.end(), double{0.0});
-  rms /= double(m_stride_buf.size());
+  rms /= static_cast<double>(m_stride_buf.size());
   rms = std::sqrt(rms);
 
   return rms;
