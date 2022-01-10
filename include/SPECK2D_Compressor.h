@@ -27,7 +27,7 @@ class SPECK2D_Compressor {
 
   auto compress() -> RTNType;
 
-  auto view_encoded_bitstream() const -> const std::vector<uint8_t>&;
+  [[nodiscard]] auto view_encoded_bitstream() const -> const std::vector<uint8_t>&;
   auto release_encoded_bitstream() -> std::vector<uint8_t>&&;
 
  private:

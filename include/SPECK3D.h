@@ -31,8 +31,8 @@ class SPECKSet3D {
   //
   // Member functions
   //
-  auto is_pixel() const -> bool;
-  auto is_empty() const -> bool;
+  [[nodiscard]] auto is_pixel() const -> bool;
+  [[nodiscard]] auto is_empty() const -> bool;
 };
 
 //
@@ -62,8 +62,8 @@ class SPECK3D : public SPECK_Storage {
   using arrd2_type = std::array<double, 2>;
   using arrb2_type = std::array<bool, 2>;
 
-  auto m_ready_to_encode() const -> bool;
-  auto m_ready_to_decode() const -> bool;
+  [[nodiscard]] auto m_ready_to_encode() const -> bool;
+  [[nodiscard]] auto m_ready_to_decode() const -> bool;
   void m_clean_LIS();  // Clean garbage sets from m_LIS if too much garbage exists.
   void m_initialize_sets_lists();
   auto m_sorting_pass_encode() -> RTNType;
@@ -83,13 +83,13 @@ class SPECK3D : public SPECK_Storage {
   auto m_process_P_decode(size_t idx, size_t& counter, bool) -> RTNType;
 
   // Divide a SPECKSet3D into 8, 4, or 2 smaller subsets.
-  auto m_partition_S_XYZ(const SPECKSet3D&) const -> std::array<SPECKSet3D, 8>;
-  auto m_partition_S_XY(const SPECKSet3D&) const -> std::array<SPECKSet3D, 4>;
-  auto m_partition_S_Z(const SPECKSet3D&) const -> std::array<SPECKSet3D, 2>;
+  [[nodiscard]] auto m_partition_S_XYZ(const SPECKSet3D&) const -> std::array<SPECKSet3D, 8>;
+  [[nodiscard]] auto m_partition_S_XY(const SPECKSet3D&) const -> std::array<SPECKSet3D, 4>;
+  [[nodiscard]] auto m_partition_S_Z(const SPECKSet3D&) const -> std::array<SPECKSet3D, 2>;
 
   // Decide if a set is significant or not.
   // If it is significant, also identify the pixel that makes it significant.
-  auto m_decide_significance(const SPECKSet3D&) const
+  [[nodiscard]] auto m_decide_significance(const SPECKSet3D&) const
       -> std::pair<SigType, std::array<uint32_t, 3>>;
 
 #ifdef QZ_TERM
