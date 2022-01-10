@@ -112,11 +112,6 @@ auto num_of_partitions(size_t len) -> size_t;
 // element of the return array.
 auto calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<size_t, 2>;
 
-// Requires that buf is not empty.
-// 1) Make buf containing all positive values.
-// 2) Returns the maximum magnitude of all encountered values.
-auto make_coeff_positive(vecd_type& buf) -> double;
-
 // Pack and unpack booleans to array of chars.
 // When packing, the caller should make sure the number of booleans is a
 // multiplier of 8. It optionally takes in an offset that specifies where to
