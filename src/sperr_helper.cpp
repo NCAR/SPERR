@@ -407,8 +407,7 @@ auto sperr::gather_chunk(const T1* vol, dims_type vol_dim, const std::array<size
       chunk[4] + chunk[5] > vol_dim[2])
     return chunk_buf;
 
-  const auto len = chunk[1] * chunk[3] * chunk[5];
-  chunk_buf.resize(len);
+  chunk_buf.resize(chunk[1] * chunk[3] * chunk[5]);
 
   size_t idx = 0;
   for (size_t z = chunk[4]; z < chunk[4] + chunk[5]; z++) {
