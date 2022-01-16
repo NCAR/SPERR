@@ -398,16 +398,16 @@ auto sperr::chunk_volume(const std::array<size_t, 3>& vol_dim,
   return chunks;
 }
 
-template <typename T>
-auto sperr::gather_chunk(const T* vol, dims_type vol_dim, const std::array<size_t, 6>& chunk)
-    -> vecd_type
+template <typename T1, typename T2>
+auto sperr::gather_chunk(const T1* vol, dims_type vol_dim, const std::array<size_t, 6>& chunk)
+    -> std::vector<T2>
 {
-  auto chunk_buf = std::vector<double>();
+  auto chunk_buf = std::vector<T2>();
   if (chunk[0] + chunk[1] > vol_dim[0] || chunk[2] + chunk[3] > vol_dim[1] ||
       chunk[4] + chunk[5] > vol_dim[2])
     return chunk_buf;
 
-  auto len = chunk[1] * chunk[3] * chunk[5];
+  const auto len = chunk[1] * chunk[3] * chunk[5];
   chunk_buf.resize(len);
 
   size_t idx = 0;
@@ -424,13 +424,18 @@ auto sperr::gather_chunk(const T* vol, dims_type vol_dim, const std::array<size_
   return chunk_buf;
 }
 template auto sperr::gather_chunk(const float*, dims_type, const std::array<size_t, 6>&)
-    -> vecd_type;
+    -> std::vector<float>;
+template auto sperr::gather_chunk(const float*, dims_type, const std::array<size_t, 6>&)
+    -> std::vector<double>;
 template auto sperr::gather_chunk(const double*, dims_type, const std::array<size_t, 6>&)
-    -> vecd_type;
+    -> std::vector<float>;
+template auto sperr::gather_chunk(const double*, dims_type, const std::array<size_t, 6>&)
+    -> std::vector<double>;
 
-void sperr::scatter_chunk(vecd_type& big_vol,
+template <typename TBIG, typename TSML>
+void sperr::scatter_chunk(std::vector<TBIG>& big_vol,
                           dims_type vol_dim,
-                          const vecd_type& small_vol,
+                          const std::vector<TSML>& small_vol,
                           const std::array<size_t, 6>& chunk)
 {
   size_t idx = 0;
@@ -443,3 +448,19 @@ void sperr::scatter_chunk(vecd_type& big_vol,
     }
   }
 }
+template void sperr::scatter_chunk(std::vector<float>&,
+                                   dims_type,
+                                   const std::vector<float>&,
+                                   const std::array<size_t, 6>&);
+template void sperr::scatter_chunk(std::vector<float>&,
+                                   dims_type,
+                                   const std::vector<double>&,
+                                   const std::array<size_t, 6>&);
+template void sperr::scatter_chunk(std::vector<double>&,
+                                   dims_type,
+                                   const std::vector<float>&,
+                                   const std::array<size_t, 6>&);
+template void sperr::scatter_chunk(std::vector<double>&,
+                                   dims_type,
+                                   const std::vector<double>&,
+                                   const std::array<size_t, 6>&);

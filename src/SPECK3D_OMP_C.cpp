@@ -74,7 +74,7 @@ auto SPECK3D_OMP_C::copy_data(const T* vol,
 
 #pragma omp parallel for num_threads(m_num_threads)
   for (size_t i = 0; i < num_chunks; i++) {
-    m_chunk_buffers[i] = sperr::gather_chunk(vol, m_dims, chunks[i]);
+    m_chunk_buffers[i] = sperr::gather_chunk<T, double>(vol, m_dims, chunks[i]);
   }
 
   return RTNType::Good;

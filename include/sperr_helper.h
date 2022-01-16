@@ -165,13 +165,15 @@ auto chunk_volume(const dims_type& vol_dim, const dims_type& chunk_dim)
     -> std::vector<std::array<size_t, 6>>;
 
 // Gather a chunk from a bigger volume
-template <typename T>
-auto gather_chunk(const T* vol, dims_type vol_dim, const std::array<size_t, 6>& chunk) -> vecd_type;
+template <typename T1, typename T2>
+auto gather_chunk(const T1* vol, dims_type vol_dim, const std::array<size_t, 6>& chunk)
+    -> std::vector<T2>;
 
 // Put this chunk to a bigger volume
-void scatter_chunk(vecd_type& big_vol,
+template <typename TBIG, typename TSML>
+void scatter_chunk(std::vector<TBIG>& big_vol,
                    dims_type vol_dim,
-                   const vecd_type& small_vol,
+                   const std::vector<TSML>& small_vol,
                    const std::array<size_t, 6>& chunk);
 
 };  // namespace sperr
