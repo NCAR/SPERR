@@ -159,17 +159,25 @@ auto kahan_summation(const T*, size_t) -> T;
 
 // Given a whole volume size and a desired chunk size, this helper function
 // returns a list of chunks specified by 6 integers:
-// chunk[0], [2], [4]: starting index of this chunk;
-// chunk[1], [3], [5]: length of this chunk.
+// chunk[0], [2], [4]: starting index of this chunk in X, Y, and Z;
+// chunk[1], [3], [5]: length of this chunk in X, Y, and Z.
+// Note 1: the values in `chunk_dim` is only suggestive, meaning that when the volume
+//         dimension is not exact multiplies of requested chunk dimension,
+//         approximate values are used.
+// Note 2: this function works on degraded 2D or 1D volumes too.
 auto chunk_volume(const dims_type& vol_dim, const dims_type& chunk_dim)
     -> std::vector<std::array<size_t, 6>>;
 
 // Gather a chunk from a bigger volume
+// If the requested chunk lives outside of the volume, whole or part,
+// this function returns an empty vector.
 template <typename T1, typename T2>
 auto gather_chunk(const T1* vol, dims_type vol_dim, const std::array<size_t, 6>& chunk)
     -> std::vector<T2>;
 
 // Put this chunk to a bigger volume
+// The `big_vol` should have enough space allocated, and the `small_vol` should contain
+// enough elements to scatter. Memory errors will occur if the conditions are not met.
 template <typename TBIG, typename TSML>
 void scatter_chunk(std::vector<TBIG>& big_vol,
                    dims_type vol_dim,

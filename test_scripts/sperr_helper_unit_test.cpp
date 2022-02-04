@@ -137,4 +137,54 @@ TEST(sperr_helper, bit_packing_1032_bools)
   }
 }
 
+TEST(sperr_helper, domain_decomposition)
+{
+  using sperr::dims_type;
+  using cdef = std::array<size_t, 6>;  // chunk definition
+
+  auto vol = dims_type{4, 4, 4};
+  auto subd = dims_type{1, 2, 3};
+
+  auto chunks = sperr::chunk_volume(vol, subd);
+  EXPECT_EQ(chunks.size(), 8);
+  auto chunk = cdef{0, 1, 0, 2, 0, 4};
+  EXPECT_EQ(chunks[0], chunk);
+  chunk = cdef{1, 1, 0, 2, 0, 4};
+  EXPECT_EQ(chunks[1], chunk);
+  chunk = cdef{2, 1, 0, 2, 0, 4};
+  EXPECT_EQ(chunks[2], chunk);
+  chunk = cdef{3, 1, 0, 2, 0, 4};
+  EXPECT_EQ(chunks[3], chunk);
+
+  chunk = cdef{0, 1, 2, 2, 0, 4};
+  EXPECT_EQ(chunks[4], chunk);
+  chunk = cdef{1, 1, 2, 2, 0, 4};
+  EXPECT_EQ(chunks[5], chunk);
+  chunk = cdef{2, 1, 2, 2, 0, 4};
+  EXPECT_EQ(chunks[6], chunk);
+  chunk = cdef{3, 1, 2, 2, 0, 4};
+  EXPECT_EQ(chunks[7], chunk);
+
+  vol = dims_type{4, 4, 1};  // will essentially require a decomposition on a 2D plane.
+  chunks = sperr::chunk_volume(vol, subd);
+  EXPECT_EQ(chunks.size(), 8);
+  chunk = cdef{0, 1, 0, 2, 0, 1};
+  EXPECT_EQ(chunks[0], chunk);
+  chunk = cdef{1, 1, 0, 2, 0, 1};
+  EXPECT_EQ(chunks[1], chunk);
+  chunk = cdef{2, 1, 0, 2, 0, 1};
+  EXPECT_EQ(chunks[2], chunk);
+  chunk = cdef{3, 1, 0, 2, 0, 1};
+  EXPECT_EQ(chunks[3], chunk);
+
+  chunk = cdef{0, 1, 2, 2, 0, 1};
+  EXPECT_EQ(chunks[4], chunk);
+  chunk = cdef{1, 1, 2, 2, 0, 1};
+  EXPECT_EQ(chunks[5], chunk);
+  chunk = cdef{2, 1, 2, 2, 0, 1};
+  EXPECT_EQ(chunks[6], chunk);
+  chunk = cdef{3, 1, 2, 2, 0, 1};
+  EXPECT_EQ(chunks[7], chunk);
+}
+
 }  // namespace
