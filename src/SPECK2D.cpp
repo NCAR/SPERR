@@ -149,11 +149,14 @@ void sperr::SPECK2D::m_initialize_sets_lists()
   auto S = m_produce_root();
   m_LIS[S.part_level].emplace_back(S);
 
-  // clear m_LSP
+  // clear lists and reserve space.
+  // Using half of the total length is probaby long enough.
   m_LSP_new.clear();
-  m_LSP_new.reserve(m_dims[0] * m_dims[1]);
+  m_LSP_new.reserve(m_dims[0] * m_dims[1] / 2);
   m_LSP_old.clear();
-  m_LSP_old.reserve(m_dims[0] * m_dims[1]);
+  m_LSP_old.reserve(m_dims[0] * m_dims[1] / 2);
+  m_LIP.clear();
+  m_LIP.reserve(m_dims[0] * m_dims[1] / 2);
 
   // prepare m_I
   m_I.part_level = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
@@ -173,7 +176,8 @@ auto sperr::SPECK2D::m_sorting_pass() -> RTNType
     size_t idx1 = m_LIS.size() - 1 - tmp;
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
       const auto& s = m_LIS[idx1][idx2];
-      auto rtn = m_process_S(idx1, idx2, true);
+      size_t dummy = 0;
+      auto rtn = m_process_S(idx1, idx2, dummy, true);
       if (rtn == RTNType::BitBudgetMet)
         return rtn;
       assert(rtn == RTNType::Good);
@@ -227,11 +231,12 @@ auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
   return RTNType::Good;
 }
 
-auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_signif) -> RTNType
+auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, size_t& counter, bool need_decide_sig)
+    -> RTNType
 {
   auto& set = m_LIS[idx1][idx2];
 
-  if (need_decide_signif) {
+  if (need_decide_sig) {
     if (m_encode_mode) {
       set.signif = m_decide_set_S_significance(set);
       m_bit_buffer.push_back(set.signif == SigType::Sig);
@@ -252,6 +257,7 @@ auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, bool need_decide_sign
   assert(set.signif != SigType::Dunno);
 
   if (set.signif == SigType::Sig) {
+    counter++;  // increment the significant counter first!
     if (set.is_pixel()) {
       const auto g_idx = set.start_y * m_dims[0] + set.start_x;
       if (m_encode_mode) {
@@ -287,30 +293,26 @@ auto sperr::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> RTNType
 
   // We count how many subsets are significant, and if the first 3 subsets
   // ain't, then the 4th one must be significant.
-  auto already_sig = 0;
+  auto sig_counter = size_t{0};
   for (size_t i = 0; i < 3; i++) {
     const auto& s = subsets[i];
     if (!s.is_empty()) {
       m_LIS[s.part_level].emplace_back(s);
       size_t newidx1 = s.part_level;
       size_t newidx2 = m_LIS[newidx1].size() - 1;
-      auto rtn = m_process_S(newidx1, newidx2, true);
+      auto rtn = m_process_S(newidx1, newidx2, sig_counter, true);
       if (rtn == RTNType::BitBudgetMet)
         return rtn;
       assert(rtn == RTNType::Good);
-
-      if (m_LIS[newidx1][newidx2].signif == SigType::Sig ||
-          m_LIS[newidx1][newidx2].signif == SigType::NewlySig) {
-        already_sig++;
-      }
     }
   }
 
   const auto& s4 = subsets[3];
   if (!s4.is_empty()) {
-    bool need_decide_sig = already_sig != 0;
+    bool need_decide_sig = sig_counter != 0;
     m_LIS[s4.part_level].emplace_back(s4);
-    auto rtn = m_process_S(s4.part_level, m_LIS[s4.part_level].size() - 1, need_decide_sig);
+    auto rtn =
+        m_process_S(s4.part_level, m_LIS[s4.part_level].size() - 1, sig_counter, need_decide_sig);
     if (rtn == RTNType::BitBudgetMet)
       return rtn;
     assert(rtn == RTNType::Good);
@@ -400,25 +402,20 @@ auto sperr::SPECK2D::m_code_I() -> RTNType
   // We count how many subsets are significant, and if the 3 subsets resulted
   // from m_partition_I() are all insignificant, then it must be the remaining
   // `m_I` to be significant.
-  auto already_sig = 0;
+  auto sig_counter = size_t{0};
   for (const auto& s : subsets) {
     if (!s.is_empty()) {
       m_LIS[s.part_level].emplace_back(s);
       auto newidx1 = size_t{s.part_level};
       auto newidx2 = m_LIS[newidx1].size() - 1;
-      auto rtn = m_process_S(newidx1, newidx2, true);
+      auto rtn = m_process_S(newidx1, newidx2, sig_counter, true);
       if (rtn == RTNType::BitBudgetMet)
         return rtn;
       assert(rtn == RTNType::Good);
-
-      if (m_LIS[newidx1][newidx2].signif == SigType::Sig ||
-          m_LIS[newidx1][newidx2].signif == SigType::NewlySig) {
-        already_sig++;
-      }
     }
   }
 
-  bool need_decide_sig = already_sig != 0;
+  bool need_decide_sig = sig_counter != 0;
   auto rtn = m_process_I(need_decide_sig);
   if (rtn == RTNType::BitBudgetMet)
     return rtn;
