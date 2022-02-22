@@ -47,12 +47,16 @@ class SPECK2D : public SPECK_Storage {
   auto decode() -> RTNType;
 
  private:
-  auto m_sorting_pass() -> RTNType;
+  auto m_sorting_pass_encode() -> RTNType;
+  auto m_sorting_pass_decode() -> RTNType;
   auto m_refinement_pass_encode() -> RTNType;
   auto m_refinement_pass_decode() -> RTNType;
-  auto m_process_S(size_t, size_t, size_t&, bool) -> RTNType;
-  auto m_process_P(size_t, size_t&, bool) -> RTNType;
-  auto m_code_S(size_t, size_t) -> RTNType;
+  auto m_process_S_encode(size_t, size_t, size_t&, bool) -> RTNType;
+  auto m_process_S_decode(size_t, size_t, size_t&, bool) -> RTNType;
+  auto m_process_P_encode(size_t, size_t&, bool) -> RTNType;
+  auto m_process_P_decode(size_t, size_t&, bool) -> RTNType;
+  auto m_code_S_encode(size_t, size_t) -> RTNType;
+  auto m_code_S_decode(size_t, size_t) -> RTNType;
   auto m_process_I(bool) -> RTNType;
   auto m_code_I() -> RTNType;
   void m_initialize_sets_lists();
