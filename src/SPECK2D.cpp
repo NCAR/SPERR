@@ -171,6 +171,16 @@ void sperr::SPECK2D::m_initialize_sets_lists()
 //
 auto sperr::SPECK2D::m_sorting_pass() -> RTNType
 {
+  // First, process all insignificant pixels
+  for (size_t idx = 0; idx < m_LIP.size(); idx++) {
+    size_t dummy = 0;
+    auto rtn = m_process_P(idx, dummy, true);
+    if (rtn == RTNType::BitBudgetMet)
+      return rtn;
+    assert(rtn == RTNType::Good);
+  }
+
+  // Second, process all insignificant sets
   for (size_t tmp = 0; tmp < m_LIS.size(); tmp++) {
     // From the end to the front of m_LIS, smaller sets first.
     size_t idx1 = m_LIS.size() - 1 - tmp;
@@ -305,28 +315,10 @@ auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, size_t& counter, bool
 
   if (set.signif == SigType::Sig) {
     counter++;  // increment the significant counter first!
-    if (set.is_pixel()) {
-      const auto g_idx = set.start_y * m_dims[0] + set.start_x;
-      if (m_encode_mode) {
-        m_bit_buffer.push_back(m_sign_array[g_idx]);
-        if (m_bit_buffer.size() >= m_budget)
-          return RTNType::BitBudgetMet;
-        m_coeff_buf[g_idx] -= m_threshold;  // Progressive quantization now!
-      }
-      else {
-        if (m_bit_idx >= m_budget)
-          return RTNType::BitBudgetMet;
-        m_sign_array[g_idx] = m_bit_buffer[m_bit_idx++];
-        m_coeff_buf[g_idx] = 1.5 * m_threshold;  // Progressive quantization!
-      }
-      m_LSP_new.push_back(g_idx);
-    }
-    else {  // keep dividing this set
-      auto rtn = m_code_S(idx1, idx2);
-      if (rtn == RTNType::BitBudgetMet)
-        return rtn;
-      assert(rtn == RTNType::Good);
-    }
+    auto rtn = m_code_S(idx1, idx2);
+    if (rtn == RTNType::BitBudgetMet)
+      return rtn;
+    assert(rtn == RTNType::Good);
     set.type = SetType::Garbage;  // This particular object will be discarded.
   }
 
@@ -346,11 +338,19 @@ auto sperr::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> RTNType
   // the last non-empty one, then the last one must be significant.
   auto sig_counter = size_t{0};
   for (auto it = subsets.begin(); it != set_end; ++it) {
-    m_LIS[it->part_level].emplace_back(*it);
-    size_t newidx1 = it->part_level;
-    size_t newidx2 = m_LIS[newidx1].size() - 1;
-    bool need_decide_sig = (it != set_end_m1) || (sig_counter != 0);
-    auto rtn = m_process_S(newidx1, newidx2, sig_counter, need_decide_sig);
+    auto need_decide_sig = (it != set_end_m1) || (sig_counter != 0);
+    auto rtn = RTNType::Good;
+    if (it->is_pixel()) {
+      const auto pixel_idx = it->start_y * m_dims[0] + it->start_x;
+      m_LIP.push_back(pixel_idx);
+      rtn = m_process_P(m_LIP.size() - 1, sig_counter, need_decide_sig);
+    }
+    else {
+      m_LIS[it->part_level].emplace_back(*it);
+      size_t newidx1 = it->part_level;
+      size_t newidx2 = m_LIS[newidx1].size() - 1;
+      rtn = m_process_S(newidx1, newidx2, sig_counter, need_decide_sig);
+    }
     if (rtn == RTNType::BitBudgetMet)
       return rtn;
     assert(rtn == RTNType::Good);
