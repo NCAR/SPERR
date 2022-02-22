@@ -231,10 +231,57 @@ auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
   return RTNType::Good;
 }
 
+auto sperr::SPECK2D::m_process_P(size_t loc, size_t& counter, bool need_decide_sig) -> RTNType
+{
+  const auto tmps = std::array<SigType, 2>{SigType::Insig, SigType::Sig};
+  const auto tmpb = std::array<bool, 2>{false, true};
+
+  const auto pixel_idx = m_LIP[loc];
+
+  auto p_sig = SigType::Sig;
+  if (need_decide_sig) {
+    if (m_encode_mode) {
+      size_t sig = (m_coeff_buf[pixel_idx] >= m_threshold);
+      p_sig = tmps[sig];
+      m_bit_buffer.push_back(tmpb[sig]);
+      if (m_bit_buffer.size() >= m_budget)
+        return RTNType::BitBudgetMet;
+    }
+    else {
+      if (m_bit_idx >= m_budget)
+        return RTNType::BitBudgetMet;
+      p_sig = tmps[m_bit_buffer[m_bit_idx++]];
+    }
+  }
+
+  if (p_sig == SigType::Sig) {
+    counter++;
+    if (m_encode_mode) {
+      m_bit_buffer.push_back(m_sign_array[pixel_idx]);
+      if (m_bit_buffer.size() >= m_budget)
+        return RTNType::BitBudgetMet;
+      m_coeff_buf[pixel_idx] -= m_threshold;  // Progressive quantization now!
+    }
+    else {
+      if (m_bit_idx >= m_budget)
+        return RTNType::BitBudgetMet;
+      m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];
+      m_coeff_buf[pixel_idx] = 1.5 * m_threshold;  // Progressive quantization!
+    }
+    m_LSP_new.push_back(pixel_idx);
+    m_LIP[loc] = m_u64_garbage_val;
+  }
+
+  return RTNType::Good;
+}
+
 auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, size_t& counter, bool need_decide_sig)
     -> RTNType
 {
+  const auto tmps = std::array<SigType, 2>{SigType::Insig, SigType::Sig};
+
   auto& set = m_LIS[idx1][idx2];
+  assert( !set.is_pixel() );
 
   if (need_decide_sig) {
     if (m_encode_mode) {
@@ -246,7 +293,7 @@ auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, size_t& counter, bool
     else {
       if (m_bit_idx >= m_budget)
         return RTNType::BitBudgetMet;
-      set.signif = m_bit_buffer[m_bit_idx++] ? SigType::Sig : SigType::Insig;
+      set.signif = tmps[m_bit_buffer[m_bit_idx++]];
     }
   }
   else {
@@ -434,7 +481,7 @@ auto sperr::SPECK2D::m_partition_I() -> std::array<SPECKSet2D, 3>
   const auto approx_len_y = len_y[0];
   const auto detail_len_y = len_y[1];
 
-  // specify the subsets following the same order in QccPack
+  // Specify the subsets following the same order in QccPack
   auto& BR = subsets[0];  // Bottom right
   BR.part_level = m_I.part_level;
   BR.start_x = approx_len_x;
@@ -525,6 +572,10 @@ void sperr::SPECK2D::m_clean_LIS()
                              [](const auto& s) { return s.type == SetType::Garbage; });
     list.erase(it, list.end());
   }
+
+  // Let's also clean up m_LIP.
+  auto it = std::remove(m_LIP.begin(), m_LIP.end(), m_u64_garbage_val);
+  m_LIP.erase(it, m_LIP.end());
 }
 
 auto sperr::SPECK2D::m_ready_to_encode() const -> bool

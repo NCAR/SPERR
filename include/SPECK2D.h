@@ -51,6 +51,7 @@ class SPECK2D : public SPECK_Storage {
   auto m_refinement_pass_encode() -> RTNType;
   auto m_refinement_pass_decode() -> RTNType;
   auto m_process_S(size_t, size_t, size_t&, bool) -> RTNType;
+  auto m_process_P(size_t, size_t&, bool) -> RTNType;
   auto m_code_S(size_t, size_t) -> RTNType;
   auto m_process_I(bool) -> RTNType;
   auto m_code_I() -> RTNType;
