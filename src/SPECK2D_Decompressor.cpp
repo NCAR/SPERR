@@ -113,7 +113,7 @@ auto SPECK2D_Decompressor::get_data() const -> std::vector<T>
   auto out_buf = std::vector<T>(m_val_buf.size());
   std::copy(m_val_buf.begin(), m_val_buf.end(), out_buf.begin());
 
-  return std::move(out_buf);
+  return out_buf;
 }
 template auto SPECK2D_Decompressor::get_data() const -> std::vector<double>;
 template auto SPECK2D_Decompressor::get_data() const -> std::vector<float>;

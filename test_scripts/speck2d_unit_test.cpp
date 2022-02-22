@@ -17,9 +17,9 @@ class speck_tester {
     m_dim_y = y;
   }
 
-  float get_psnr() const { return m_psnr; }
+  [[nodiscard]] float get_psnr() const { return m_psnr; }
 
-  float get_lmax() const { return m_lmax; }
+  [[nodiscard]] float get_lmax() const { return m_lmax; }
 
   // Execute the compression/decompression pipeline. Return 0 on success
   int execute(double bpp)

@@ -240,7 +240,7 @@ auto sperr::SPERR::m_decide_significance(const SPECKSet1D& set) const -> std::pa
     sig.first = true;
 
     // Note that `m_LSO` is sorted at the beginning of encoding.
-    auto idx_to_find = std::distance(m_sig_map.cbegin(), itr1);
+    size_t idx_to_find = std::distance(m_sig_map.cbegin(), itr1);
     auto itr2 = std::lower_bound(m_LOS.cbegin(), m_LOS.cend(), idx_to_find,
                                  [](const auto& otl, auto idx) { return otl.location < idx; });
     assert(itr2 != m_LOS.cend());

@@ -185,7 +185,6 @@ auto sperr::SPECK2D::m_sorting_pass_encode() -> RTNType
     // From the end to the front of m_LIS, smaller sets first.
     size_t idx1 = m_LIS.size() - 1 - tmp;
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
-      const auto& s = m_LIS[idx1][idx2];
       size_t dummy = 0;
       auto rtn = m_process_S_encode(idx1, idx2, dummy, true);
       if (rtn == RTNType::BitBudgetMet)
@@ -218,7 +217,6 @@ auto sperr::SPECK2D::m_sorting_pass_decode() -> RTNType
     // From the end to the front of m_LIS, smaller sets first.
     size_t idx1 = m_LIS.size() - 1 - tmp;
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
-      const auto& s = m_LIS[idx1][idx2];
       size_t dummy = 0;
       auto rtn = m_process_S_decode(idx1, idx2, dummy, true);
       if (rtn == RTNType::BitBudgetMet)

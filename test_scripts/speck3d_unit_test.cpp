@@ -21,9 +21,9 @@ class speck_tester {
     m_dims = dims;
   }
 
-  float get_psnr() const { return m_psnr; }
+  [[nodiscard]] float get_psnr() const { return m_psnr; }
 
-  float get_lmax() const { return m_lmax; }
+  [[nodiscard]] float get_lmax() const { return m_lmax; }
 
   //
   // Execute the compression/decompression pipeline. Return 0 on success
@@ -107,9 +107,9 @@ class speck_tester_omp {
 
   void prefer_chunk_dims(sperr::dims_type dims) { m_chunk_dims = dims; }
 
-  float get_psnr() const { return m_psnr; }
+  [[nodiscard]] float get_psnr() const { return m_psnr; }
 
-  float get_lmax() const { return m_lmax; }
+  [[nodiscard]] float get_lmax() const { return m_lmax; }
 
   //
   // Execute the compression/decompression pipeline. Return 0 on success
