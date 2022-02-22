@@ -272,7 +272,8 @@ auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
   return RTNType::Good;
 }
 
-auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_decide_sig) -> RTNType
+auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_decide_sig)
+    -> RTNType
 {
   const auto pixel_idx = m_LIP[loc];
   auto p_sig = SigType::Sig;
@@ -300,7 +301,8 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
   return RTNType::Good;
 }
 
-auto sperr::SPECK2D::m_process_P_decode(size_t loc, size_t& counter, bool need_decide_sig) -> RTNType
+auto sperr::SPECK2D::m_process_P_decode(size_t loc, size_t& counter, bool need_decide_sig)
+    -> RTNType
 {
   const auto pixel_idx = m_LIP[loc];
   auto p_sig = SigType::Sig;
@@ -325,11 +327,13 @@ auto sperr::SPECK2D::m_process_P_decode(size_t loc, size_t& counter, bool need_d
   return RTNType::Good;
 }
 
-auto sperr::SPECK2D::m_process_S_encode(size_t idx1, size_t idx2, size_t& counter, bool need_decide_sig)
-    -> RTNType
+auto sperr::SPECK2D::m_process_S_encode(size_t idx1,
+                                        size_t idx2,
+                                        size_t& counter,
+                                        bool need_decide_sig) -> RTNType
 {
   auto& set = m_LIS[idx1][idx2];
-  assert( !set.is_pixel() );
+  assert(!set.is_pixel());
 
   if (need_decide_sig) {
     set.signif = m_decide_set_S_significance(set);
@@ -353,11 +357,13 @@ auto sperr::SPECK2D::m_process_S_encode(size_t idx1, size_t idx2, size_t& counte
   return RTNType::Good;
 }
 
-auto sperr::SPECK2D::m_process_S_decode(size_t idx1, size_t idx2, size_t& counter, bool need_decide_sig)
-    -> RTNType
+auto sperr::SPECK2D::m_process_S_decode(size_t idx1,
+                                        size_t idx2,
+                                        size_t& counter,
+                                        bool need_decide_sig) -> RTNType
 {
   auto& set = m_LIS[idx1][idx2];
-  assert( !set.is_pixel() );
+  assert(!set.is_pixel());
 
   if (need_decide_sig) {
     if (m_bit_idx >= m_budget)
