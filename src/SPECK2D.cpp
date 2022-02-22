@@ -336,30 +336,21 @@ auto sperr::SPECK2D::m_process_S(size_t idx1, size_t idx2, size_t& counter, bool
 auto sperr::SPECK2D::m_code_S(size_t idx1, size_t idx2) -> RTNType
 {
   const auto& set = m_LIS[idx1][idx2];
-  const auto subsets = m_partition_S(set);
+  auto subsets = m_partition_S(set);
+  // Put empty subsets at the end of this list
+  const auto set_end =
+      std::remove_if(subsets.begin(), subsets.end(), [](const auto& s) { return s.is_empty(); });
+  const auto set_end_m1 = set_end - 1;
 
-  // We count how many subsets are significant, and if the first 3 subsets
-  // ain't, then the 4th one must be significant.
+  // We count how many subsets are significant, and if no significant set encountered until
+  // the last non-empty one, then the last one must be significant.
   auto sig_counter = size_t{0};
-  for (size_t i = 0; i < 3; i++) {
-    const auto& s = subsets[i];
-    if (!s.is_empty()) {
-      m_LIS[s.part_level].emplace_back(s);
-      size_t newidx1 = s.part_level;
-      size_t newidx2 = m_LIS[newidx1].size() - 1;
-      auto rtn = m_process_S(newidx1, newidx2, sig_counter, true);
-      if (rtn == RTNType::BitBudgetMet)
-        return rtn;
-      assert(rtn == RTNType::Good);
-    }
-  }
-
-  const auto& s4 = subsets[3];
-  if (!s4.is_empty()) {
-    bool need_decide_sig = sig_counter != 0;
-    m_LIS[s4.part_level].emplace_back(s4);
-    auto rtn =
-        m_process_S(s4.part_level, m_LIS[s4.part_level].size() - 1, sig_counter, need_decide_sig);
+  for (auto it = subsets.begin(); it != set_end; ++it) {
+    m_LIS[it->part_level].emplace_back(*it);
+    size_t newidx1 = it->part_level;
+    size_t newidx2 = m_LIS[newidx1].size() - 1;
+    bool need_decide_sig = (it != set_end_m1) || (sig_counter != 0);
+    auto rtn = m_process_S(newidx1, newidx2, sig_counter, need_decide_sig);
     if (rtn == RTNType::BitBudgetMet)
       return rtn;
     assert(rtn == RTNType::Good);
