@@ -334,15 +334,13 @@ auto sperr::SPECK2D::m_process_S_encode(size_t idx1,
 {
   auto& set = m_LIS[idx1][idx2];
   assert(!set.is_pixel());
+  set.signif = SigType::Sig;
 
   if (need_decide_sig) {
     set.signif = m_decide_set_S_significance(set);
     m_bit_buffer.push_back(set.signif == SigType::Sig);
     if (m_bit_buffer.size() >= m_budget)
       return RTNType::BitBudgetMet;
-  }
-  else {
-    set.signif = SigType::Sig;
   }
 
   if (set.signif == SigType::Sig) {
@@ -364,15 +362,13 @@ auto sperr::SPECK2D::m_process_S_decode(size_t idx1,
 {
   auto& set = m_LIS[idx1][idx2];
   assert(!set.is_pixel());
+  set.signif = SigType::Sig;
 
   if (need_decide_sig) {
     if (m_bit_idx >= m_budget)
       return RTNType::BitBudgetMet;
     const auto tmps = std::array<SigType, 2>{SigType::Insig, SigType::Sig};
     set.signif = tmps[m_bit_buffer[m_bit_idx++]];
-  }
-  else {
-    set.signif = SigType::Sig;
   }
 
   if (set.signif == SigType::Sig) {
