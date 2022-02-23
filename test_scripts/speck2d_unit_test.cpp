@@ -74,6 +74,10 @@ class speck_tester {
   float m_psnr, m_lmax;
 };
 
+#ifndef QZ_TERM
+//
+// Fixed-rate mode
+//
 TEST(speck2d, lena)
 {
   speck_tester tester("../test_data/lena512.float", 512, 512);
@@ -168,6 +172,7 @@ TEST(speck2d, small_data_range)
   EXPECT_GT(psnr, 46.906871);
   EXPECT_LT(lmax, 0.0000475);
 }
+#endif
 
 //
 // Test constant fields.

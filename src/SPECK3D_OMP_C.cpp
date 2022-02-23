@@ -151,8 +151,9 @@ auto SPECK3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
   if (header.empty())
     return buf;
 
-  auto total_size = std::accumulate(m_encoded_streams.begin(), m_encoded_streams.end(),
-                                    header.size(), [](size_t a, const auto& b) { return a + b.size(); });
+  auto total_size =
+      std::accumulate(m_encoded_streams.begin(), m_encoded_streams.end(), header.size(),
+                      [](size_t a, const auto& b) { return a + b.size(); });
   buf.resize(total_size, 0);
 
   std::copy(header.begin(), header.end(), buf.begin());
