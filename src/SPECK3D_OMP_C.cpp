@@ -152,7 +152,7 @@ auto SPECK3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
     return buf;
 
   auto total_size = std::accumulate(m_encoded_streams.begin(), m_encoded_streams.end(),
-                                    header.size(), [](size_t a, auto& b) { return a + b.size(); });
+                                    header.size(), [](size_t a, const auto& b) { return a + b.size(); });
   buf.resize(total_size, 0);
 
   std::copy(header.begin(), header.end(), buf.begin());
@@ -206,6 +206,7 @@ auto SPECK3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   // Note that we use uint32_t to keep the length, and we need to make sure
   // that no chunk size is bigger than that.
   for (const auto& stream : m_encoded_streams) {
+    assert(stream.size() <= uint64_t{std::numeric_limits<uint32_t>::max()});
     uint32_t len = stream.size();
     std::memcpy(&header[loc], &len, sizeof(len));
     loc += sizeof(len);

@@ -81,8 +81,8 @@ TEST(speck2d, lena)
   tester.execute(4.0f);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 54.2828);
-  EXPECT_LT(psnr, 54.2829);
+  EXPECT_GT(psnr, 54.2830);
+  EXPECT_LT(psnr, 54.2831);
   EXPECT_LT(lmax, 2.2361);
 
   tester.execute(2.0f);
@@ -111,15 +111,15 @@ TEST(speck2d, odd_dim_image)
   tester.execute(4.0f);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 58.7394);
-  EXPECT_LT(psnr, 58.7395);
+  EXPECT_GT(psnr, 58.7464);
+  EXPECT_LT(psnr, 58.7465);
   EXPECT_LT(lmax, 0.77242);
 
   tester.execute(2.0f);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 46.8075);
-  EXPECT_LT(psnr, 46.8076);
+  EXPECT_GT(psnr, 46.8146);
+  EXPECT_LT(psnr, 46.8147);
   EXPECT_LT(lmax, 2.95943);
 
   tester.execute(1.0f);
@@ -144,22 +144,22 @@ TEST(speck2d, small_data_range)
   tester.execute(4.0f);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 71.2888);
-  EXPECT_LT(psnr, 71.2889);
+  EXPECT_GT(psnr, 71.2890);
+  EXPECT_LT(psnr, 71.2891);
   EXPECT_LT(lmax, 0.000002);
 
   tester.execute(2.0f);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 59.6661);
-  EXPECT_LT(psnr, 59.6662);
+  EXPECT_GT(psnr, 59.6663);
+  EXPECT_LT(psnr, 59.6664);
   EXPECT_LT(lmax, 0.0000084);
 
   tester.execute(1.0f);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 52.3953);
-  EXPECT_LT(psnr, 52.3954);
+  EXPECT_GT(psnr, 52.3954);
+  EXPECT_LT(psnr, 52.3955);
   EXPECT_LT(lmax, 0.0000213);
 
   tester.execute(0.5f);
