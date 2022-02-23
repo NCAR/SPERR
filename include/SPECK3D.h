@@ -69,7 +69,7 @@ class SPECK3D : public SPECK_Storage {
   auto m_sorting_pass_encode() -> RTNType;
   auto m_sorting_pass_decode() -> RTNType;
 
-  // For the following 5 methods, indices are used to locate which set to
+  // For the following 6 methods, indices are used to locate which set to
   // process from m_LIS, Note that when process_S or process_P is called from a
   // code_S routine, code_S will pass in a counter to record how many subsets
   // are discovered significant already. That counter, however, doesn't do

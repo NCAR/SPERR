@@ -17,9 +17,9 @@ class speck_tester {
     m_dim_y = y;
   }
 
-  float get_psnr() const { return m_psnr; }
+  [[nodiscard]] float get_psnr() const { return m_psnr; }
 
-  float get_lmax() const { return m_lmax; }
+  [[nodiscard]] float get_lmax() const { return m_lmax; }
 
   // Execute the compression/decompression pipeline. Return 0 on success
   int execute(double bpp)
@@ -111,22 +111,22 @@ TEST(speck2d, odd_dim_image)
   tester.execute(4.0f);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 58.7091);
-  EXPECT_LT(psnr, 58.7092);
-  EXPECT_LT(lmax, 0.7588);
+  EXPECT_GT(psnr, 58.7394);
+  EXPECT_LT(psnr, 58.7395);
+  EXPECT_LT(lmax, 0.77242);
 
   tester.execute(2.0f);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 46.7725);
-  EXPECT_LT(psnr, 46.7726);
-  EXPECT_LT(lmax, 2.9545);
+  EXPECT_GT(psnr, 46.8075);
+  EXPECT_LT(psnr, 46.8076);
+  EXPECT_LT(lmax, 2.95943);
 
   tester.execute(1.0f);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 40.0297);
-  EXPECT_LT(psnr, 40.0298);
+  EXPECT_GT(psnr, 40.0335);
+  EXPECT_LT(psnr, 40.0336);
   EXPECT_LT(lmax, 6.25197);
 
   tester.execute(0.5f);

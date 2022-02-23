@@ -3,6 +3,8 @@
 
 #include "SPECK_Storage.h"
 
+#include <limits>
+
 namespace sperr {
 
 //
@@ -45,20 +47,25 @@ class SPECK2D : public SPECK_Storage {
   auto decode() -> RTNType;
 
  private:
-  auto m_sorting_pass() -> RTNType;
+  auto m_sorting_pass_encode() -> RTNType;
+  auto m_sorting_pass_decode() -> RTNType;
   auto m_refinement_pass_encode() -> RTNType;
   auto m_refinement_pass_decode() -> RTNType;
-  auto m_process_S(size_t, size_t, bool) -> RTNType;
-  auto m_code_S(size_t, size_t) -> RTNType;
+  auto m_process_S_encode(size_t, size_t, size_t&, bool) -> RTNType;
+  auto m_process_S_decode(size_t, size_t, size_t&, bool) -> RTNType;
+  auto m_process_P_encode(size_t, size_t&, bool) -> RTNType;
+  auto m_process_P_decode(size_t, size_t&, bool) -> RTNType;
+  auto m_code_S_encode(size_t, size_t) -> RTNType;
+  auto m_code_S_decode(size_t, size_t) -> RTNType;
   auto m_process_I(bool) -> RTNType;
   auto m_code_I() -> RTNType;
   void m_initialize_sets_lists();
-  [[nodiscard]] auto m_partition_S(const SPECKSet2D&) const -> std::array<SPECKSet2D, 4>;
   auto m_partition_I() -> std::array<SPECKSet2D, 3>;
   auto m_decide_set_S_significance(const SPECKSet2D& set) -> SigType;
   auto m_decide_set_I_significance(const SPECKSet2D& set) -> SigType;
-  [[nodiscard]] auto m_produce_root() const -> SPECKSet2D;
   void m_clean_LIS();
+  [[nodiscard]] auto m_produce_root() const -> SPECKSet2D;
+  [[nodiscard]] auto m_partition_S(const SPECKSet2D&) const -> std::array<SPECKSet2D, 4>;
   [[nodiscard]] auto m_ready_to_encode() const -> bool;
   [[nodiscard]] auto m_ready_to_decode() const -> bool;
 
@@ -72,10 +79,14 @@ class SPECK2D : public SPECK_Storage {
 
   std::vector<bool> m_sign_array;
 
-  std::vector<size_t> m_LSP_new;
-  std::vector<size_t> m_LSP_old;
-  std::vector<std::vector<SPECKSet2D>> m_LIS;
+  std::vector<size_t> m_LSP_new;  // List of significant pixels, just identified
+  std::vector<size_t> m_LSP_old;  // List of significant pixels, previously identified
+
+  std::vector<std::vector<SPECKSet2D>> m_LIS; // List of insignificant sets
+  std::vector<size_t> m_LIP;                  // List of insignificant pixels
+
   SPECKSet2D m_I;
+  const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
 };
 
 };  // namespace sperr

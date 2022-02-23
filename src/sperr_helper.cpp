@@ -355,6 +355,8 @@ auto sperr::chunk_volume(const std::array<size_t, 3>& vol_dim,
   auto n_segs = std::array<size_t, 3>();
   for (size_t i = 0; i < 3; i++) {
     n_segs[i] = vol_dim[i] / chunk_dim[i];
+    // In case the last segment is shorter than `chunk_dim[i]`, test if it's
+    // longer than half of `chunk_dim[i]`. If it is, it can qualify another segment.
     if ((vol_dim[i] % chunk_dim[i]) > (chunk_dim[i] / 2))
       n_segs[i]++;
     // In case the volume has one dimension that's too small, let's make it
