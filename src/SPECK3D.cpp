@@ -38,7 +38,7 @@ void sperr::SPECK3D::set_bit_budget(size_t budget)
   size_t mod = budget % 8;
   if (mod == 0)
     m_budget = budget;
-  else  // we can fill up the last byte
+  else  // we can fill up the last byter!
     m_budget = budget + 8 - mod;
 }
 #endif
@@ -826,9 +826,9 @@ auto sperr::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
 
 auto sperr::SPECK3D::m_ready_to_encode() const -> bool
 {
-  if (m_coeff_buf.empty())
-    return false;
   if (std::any_of(m_dims.begin(), m_dims.end(), [](auto v) { return v == 0; }))
+    return false;
+  if (m_coeff_buf.size() != m_dims[0] * m_dims[1] * m_dims[2])
     return false;
 
 #ifndef QZ_TERM
@@ -841,9 +841,9 @@ auto sperr::SPECK3D::m_ready_to_encode() const -> bool
 
 auto sperr::SPECK3D::m_ready_to_decode() const -> bool
 {
-  if (m_bit_buffer.empty())
-    return false;
   if (std::any_of(m_dims.begin(), m_dims.end(), [](auto v) { return v == 0; }))
+    return false;
+  if (m_bit_buffer.empty())
     return false;
 
   return true;

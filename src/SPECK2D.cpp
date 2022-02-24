@@ -26,6 +26,12 @@ sperr::SPECK2D::SPECK2D()
   m_dims[2] = 1;
 }
 
+#ifdef QZ_TERM
+void sperr::SPECK3D::set_quantization_term_level(int32_t lev)
+{
+  m_qz_term_lev = lev;
+}
+#else
 void sperr::SPECK2D::set_bit_budget(size_t budget)
 {
   if (budget <= m_header_size) {
@@ -40,6 +46,7 @@ void sperr::SPECK2D::set_bit_budget(size_t budget)
   else  // we can fill up that last byte!
     m_budget = budget + 8 - mod;
 }
+#endif
 
 auto sperr::SPECK2D::encode() -> RTNType
 {
@@ -671,17 +678,20 @@ auto sperr::SPECK2D::m_ready_to_encode() const -> bool
     return false;
   if (m_coeff_buf.size() != m_dims[0] * m_dims[1])
     return false;
-  if (m_budget == 0)
+
+#ifndef QZ_TERM
+  if (m_budget == 0 || m_budget > m_dims[0] * m_dims[1] * 64)
     return false;
+#endif
 
   return true;
 }
 
 auto sperr::SPECK2D::m_ready_to_decode() const -> bool
 {
-  if (m_bit_buffer.empty())
-    return false;
   if (m_dims[0] == 0 || m_dims[1] == 0 || m_dims[2] != 1)
+    return false;
+  if (m_bit_buffer.empty())
     return false;
 
   return true;
