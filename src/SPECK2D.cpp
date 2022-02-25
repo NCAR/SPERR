@@ -63,11 +63,8 @@ auto sperr::SPECK2D::encode() -> RTNType
 
   // Keep signs of all coefficients
   m_sign_array.resize(m_coeff_buf.size(), false);
-  std::generate(m_sign_array.begin(), m_sign_array.end(), [it = m_coeff_buf.cbegin()]() mutable {
-    auto b = *it >= 0.0;
-    ++it;
-    return b;
-  });
+  std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_sign_array.begin(),
+                 [](auto e) { return e >= 0.0; });
 
   // make every coefficient positive
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
@@ -105,9 +102,11 @@ auto sperr::SPECK2D::decode() -> RTNType
 
   m_encode_mode = false;
 
+#ifndef QZ_TERM
   // By default, decode all the available bits
   if (m_budget == 0 || m_budget > m_bit_buffer.size())
     m_budget = m_bit_buffer.size();
+#endif
 
   // initialize coefficients to be zero, and signs to be all positive
   const auto coeff_len = m_dims[0] * m_dims[1];
@@ -133,6 +132,12 @@ auto sperr::SPECK2D::decode() -> RTNType
     m_threshold *= 0.5;
     m_clean_LIS();
   }
+
+  // If decoding finished before all newly-identified significant pixels are initialized in
+  // `m_refinement_pass_decode()`, we have them initialized here.
+  for (auto idx : m_LSP_new)
+    m_coeff_buf[idx] = m_threshold * 1.5;
+  m_LSP_new.clear();
 
   // Restore coefficient signs
   for (size_t i = 0; i < m_sign_array.size(); i++) {
@@ -243,6 +248,7 @@ auto sperr::SPECK2D::m_sorting_pass_decode() -> RTNType
 auto sperr::SPECK2D::m_refinement_pass_decode() -> RTNType
 {
   // First, process `m_LSP_old`
+  //
   const auto tmp = std::array<double, 2>{m_threshold * -0.5, m_threshold * 0.5};
   for (auto loc : m_LSP_old) {
     if (m_bit_idx >= m_budget)
@@ -250,7 +256,13 @@ auto sperr::SPECK2D::m_refinement_pass_decode() -> RTNType
     m_coeff_buf[loc] += tmp[m_bit_buffer[m_bit_idx++]];
   }
 
-  // Second, attach `m_LSP_new` to the end of `m_LSP_old`, and clear `m_LSP_new`.
+  // Second, process `m_LSP_new`
+  //
+  for (auto idx : m_LSP_new)
+    m_coeff_buf[idx] = m_threshold * 1.5;
+
+  // Third, attach `m_LSP_new` to the end of `m_LSP_old`, and clear `m_LSP_new`.
+  //
   m_LSP_old.insert(m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend());
   m_LSP_new.clear();
 
@@ -260,6 +272,7 @@ auto sperr::SPECK2D::m_refinement_pass_decode() -> RTNType
 auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
 {
   // First, process `m_LSP_old`
+  //
   const auto tmpb = std::array<bool, 2>{false, true};
   const auto tmpd = std::array<double, 2>{0.0, -m_threshold};
   const auto n_to_process = std::min(m_LSP_old.size(), m_budget - m_bit_buffer.size());
@@ -272,7 +285,13 @@ auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
   if (m_bit_buffer.size() >= m_budget)
     return RTNType::BitBudgetMet;
 
-  // Second, attach `m_LSP_new` to the end of `m_LSP_old`, and clear `m_LSP_new`.
+  // Second, process `m_LSP_new`
+  //
+  for (auto idx : m_LSP_new)
+    m_coeff_buf[idx] -= m_threshold;
+
+  // Third, attach `m_LSP_new` to the end of `m_LSP_old`, and clear `m_LSP_new`.
+  //
   m_LSP_old.insert(m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend());
   m_LSP_new.clear();
 
@@ -300,7 +319,6 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
     m_bit_buffer.push_back(m_sign_array[pixel_idx]);
     if (m_bit_buffer.size() >= m_budget)
       return RTNType::BitBudgetMet;
-    m_coeff_buf[pixel_idx] -= m_threshold;  // Progressive quantization now!
     m_LSP_new.push_back(pixel_idx);
     m_LIP[loc] = m_u64_garbage_val;
   }
@@ -326,7 +344,6 @@ auto sperr::SPECK2D::m_process_P_decode(size_t loc, size_t& counter, bool need_d
     if (m_bit_idx >= m_budget)
       return RTNType::BitBudgetMet;
     m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];
-    m_coeff_buf[pixel_idx] = 1.5 * m_threshold;  // Progressive quantization!
     m_LSP_new.push_back(pixel_idx);
     m_LIP[loc] = m_u64_garbage_val;
   }
