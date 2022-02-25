@@ -400,16 +400,13 @@ auto sperr::SPECK3D::m_sorting_pass_decode() -> RTNType
 auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter, bool output)
     -> RTNType
 {
-  auto& pixel_idx = m_LIP[loc];
+  const auto pixel_idx = m_LIP[loc];
 
   // Decide the significance of this pixel
   assert(sig != SigType::NewlySig);
-  bool is_sig = false;
+  bool is_sig = (sig == SigType::Sig);
   if (sig == SigType::Dunno) {
     is_sig = (m_coeff_buf[pixel_idx] >= m_threshold_arr[m_threshold_idx]);
-  }
-  else {
-    is_sig = (sig == SigType::Sig);
   }
 
   if (output) {
@@ -434,11 +431,11 @@ auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
 #ifdef QZ_TERM
     m_quantize_P_encode(pixel_idx);
 #else
-    // refine this pixel while it's still in the cache
     m_coeff_buf[pixel_idx] -= m_threshold_arr[m_threshold_idx];
     m_LSP_new.push_back(pixel_idx);
 #endif
-    pixel_idx = m_u64_garbage_val;
+
+    m_LIP[loc] = m_u64_garbage_val;
   }
 
   return RTNType::Good;
@@ -649,7 +646,9 @@ auto sperr::SPECK3D::m_process_S_encode(size_t idx1,
 
 auto sperr::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) -> RTNType
 {
-  bool is_sig;
+  bool is_sig = true;
+  const auto pixel_idx = m_LIP[loc];
+
   if (read) {
 #ifndef QZ_TERM
     if (m_bit_idx >= m_budget)  // Check bit budget
@@ -657,14 +656,10 @@ auto sperr::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) 
 #endif
     is_sig = m_bit_buffer[m_bit_idx++];
   }
-  else {
-    is_sig = true;
-  }
 
   if (is_sig) {
     // Let's increment the counter first!
     counter++;
-    auto& pixel_idx = m_LIP[loc];
 
 #ifndef QZ_TERM
     if (m_bit_idx >= m_budget)  // Check bit budget
@@ -677,7 +672,8 @@ auto sperr::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) 
 #else
     m_LSP_new.push_back(pixel_idx);
 #endif
-    pixel_idx = m_u64_garbage_val;
+
+    m_LIP[loc] = m_u64_garbage_val;
   }
 
   return RTNType::Good;
