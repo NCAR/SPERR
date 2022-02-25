@@ -267,12 +267,13 @@ void sperr::SPECK3D::m_initialize_sets_lists()
   m_LIS[parts].insert(m_LIS[parts].begin(), big);
 
   m_LIP.clear();
+  m_LIP.reserve(m_coeff_buf.size() / 2);
 
 #ifndef QZ_TERM
   // Note that `m_LSP_old` usually grow close to the full length, so we reserve space now.
   m_LSP_new.clear();
   m_LSP_old.clear();
-  m_LSP_old.reserve(m_dims[0] * m_dims[1] * m_dims[2]);
+  m_LSP_old.reserve(m_coeff_buf.size() / 2);
   m_bit_buffer.reserve(m_budget);
 #endif
 }

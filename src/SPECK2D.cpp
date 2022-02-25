@@ -59,7 +59,6 @@ auto sperr::SPECK2D::encode() -> RTNType
 
   m_encoded_stream.clear();
   m_bit_buffer.clear();
-  m_bit_buffer.reserve(m_budget);
 
   // Keep signs of all coefficients
   m_sign_array.resize(m_coeff_buf.size(), false);
@@ -133,11 +132,14 @@ auto sperr::SPECK2D::decode() -> RTNType
     m_clean_LIS();
   }
 
+#ifdef QZ_TERM
+#else
   // If decoding finished before all newly-identified significant pixels are initialized in
   // `m_refinement_pass_decode()`, we have them initialized here.
   for (auto idx : m_LSP_new)
     m_coeff_buf[idx] = m_threshold * 1.5;
   m_LSP_new.clear();
+#endif
 
   // Restore coefficient signs
   for (size_t i = 0; i < m_sign_array.size(); i++) {
@@ -156,19 +158,12 @@ void sperr::SPECK2D::m_initialize_sets_lists()
   m_LIS.resize(num_of_parts + 1);
   for (auto& list : m_LIS)
     list.clear();
+  m_LIP.clear();
+  m_LIP.reserve(m_coeff_buf.size() / 2);
 
   // prepare the root, S
   auto S = m_produce_root();
   m_LIS[S.part_level].emplace_back(S);
-
-  // clear lists and reserve space.
-  // Using half of the total length is probaby long enough.
-  m_LSP_new.clear();
-  m_LSP_new.reserve(m_coeff_buf.size() / 2);
-  m_LSP_old.clear();
-  m_LSP_old.reserve(m_coeff_buf.size() / 2);
-  m_LIP.clear();
-  m_LIP.reserve(m_coeff_buf.size() / 2);
 
   // prepare m_I
   m_I.part_level = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
@@ -176,6 +171,16 @@ void sperr::SPECK2D::m_initialize_sets_lists()
   m_I.start_y = S.length_y;
   m_I.length_x = m_dims[0];
   m_I.length_y = m_dims[1];
+
+#ifndef QZ_TERM
+  // clear lists and reserve space.
+  // Using half of the total length is probaby long enough.
+  m_LSP_new.clear();
+  m_LSP_new.reserve(m_coeff_buf.size() / 2);
+  m_LSP_old.clear();
+  m_LSP_old.reserve(m_coeff_buf.size() / 2);
+  m_bit_buffer.reserve(m_budget);
+#endif
 }
 
 //
