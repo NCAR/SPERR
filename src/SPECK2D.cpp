@@ -302,19 +302,18 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
     -> RTNType
 {
   const auto pixel_idx = m_LIP[loc];
-  auto p_sig = SigType::Sig;
+  bool is_sig = true;
 
   if (need_decide_sig) {
-    const auto tmps = std::array<SigType, 2>{SigType::Insig, SigType::Sig};
     const auto tmpb = std::array<bool, 2>{false, true};
     size_t o1 = (m_coeff_buf[pixel_idx] >= m_threshold);
-    p_sig = tmps[o1];
-    m_bit_buffer.push_back(tmpb[o1]);
+    is_sig = tmpb[o1];
+    m_bit_buffer.push_back(is_sig);
     if (m_bit_buffer.size() >= m_budget)
       return RTNType::BitBudgetMet;
   }
 
-  if (p_sig == SigType::Sig) {
+  if (is_sig) {
     counter++;
     m_bit_buffer.push_back(m_sign_array[pixel_idx]);
     if (m_bit_buffer.size() >= m_budget)
@@ -330,16 +329,15 @@ auto sperr::SPECK2D::m_process_P_decode(size_t loc, size_t& counter, bool need_d
     -> RTNType
 {
   const auto pixel_idx = m_LIP[loc];
-  auto p_sig = SigType::Sig;
+  bool is_sig = true;
 
   if (need_decide_sig) {
     if (m_bit_idx >= m_budget)
       return RTNType::BitBudgetMet;
-    const auto tmps = std::array<SigType, 2>{SigType::Insig, SigType::Sig};
-    p_sig = tmps[m_bit_buffer[m_bit_idx++]];
+    is_sig = m_bit_buffer[m_bit_idx++];
   }
 
-  if (p_sig == SigType::Sig) {
+  if (is_sig) {
     counter++;
     if (m_bit_idx >= m_budget)
       return RTNType::BitBudgetMet;
