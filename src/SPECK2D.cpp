@@ -275,13 +275,15 @@ auto sperr::SPECK2D::m_refinement_pass_decode() -> RTNType
   // First, process `m_LSP_old`
   //
   const auto tmp = std::array<double, 2>{m_threshold * -0.5, m_threshold * 0.5};
-  for (auto loc : m_LSP_old) {
+  const auto n_to_process = std::min(m_LSP_old.size(), m_budget - m_bit_idx);
+
+  for (size_t i = 0; i < n_to_process; i++)
+    m_coeff_buf[m_LSP_old[i]] += tmp[m_bit_buffer[m_bit_idx + i]];
+  m_bit_idx += n_to_process;
 #ifndef QZ_TERM
-    if (m_bit_idx >= m_budget)
-      return RTNType::BitBudgetMet;
+  if (m_bit_idx >= m_budget)
+    return RTNType::BitBudgetMet;
 #endif
-    m_coeff_buf[loc] += tmp[m_bit_buffer[m_bit_idx++]];
-  }
 
   // Second, process `m_LSP_new`
   //

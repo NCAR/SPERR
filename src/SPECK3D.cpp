@@ -512,8 +512,8 @@ auto sperr::SPECK3D::m_refinement_pass_decode() -> RTNType
   const double half_T = m_threshold_arr[m_threshold_idx] * 0.5;
   const double neg_half_T = m_threshold_arr[m_threshold_idx] * -0.5;
   const double one_half_T = m_threshold_arr[m_threshold_idx] * 1.5;
-
   const auto tmp = arrd2_type{neg_half_T, half_T};
+
   for (size_t i = 0; i < num_bits; i++)
     m_coeff_buf[m_LSP_old[i]] += tmp[m_bit_buffer[m_bit_idx + i]];
   m_bit_idx += num_bits;
