@@ -311,6 +311,7 @@ auto sperr::SPECK3D::m_sorting_pass_encode() -> RTNType
       m_coeff_buf[pixel_idx] -= m_threshold_arr[m_threshold_idx];
       m_LSP_new.push_back(pixel_idx);
 #endif
+
       pixel_idx = m_u64_garbage_val;
     }
     else {
@@ -370,6 +371,7 @@ auto sperr::SPECK3D::m_sorting_pass_decode() -> RTNType
 #else
       m_LSP_new.push_back(pixel_idx);
 #endif
+
       pixel_idx = m_u64_garbage_val;
     }
   }
@@ -663,6 +665,7 @@ auto sperr::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) 
 #else
     m_LSP_new.push_back(pixel_idx);
 #endif
+
     m_LIP[loc] = m_u64_garbage_val;
   }
 
