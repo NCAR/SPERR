@@ -68,28 +68,27 @@ auto sperr::SPECK3D::encode() -> RTNType
   m_bit_buffer.clear();
 
   // Keep signs of all coefficients
-  m_sign_array.resize(m_coeff_buf.size(), false);
+  m_sign_array.resize(m_coeff_buf.size());
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_sign_array.begin(),
                  [](auto e) { return e >= 0.0; });
 
-  // make every coefficient positive
+  // Make every coefficient positive
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
                  [](auto v) { return std::abs(v); });
 
-  const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
-
+  // Find the maximum coefficient bit and fill the threshold array.
   // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
   // negative value. std::floor() will always find the smaller integer value,
   // which will always reconstruct to a bitplane value that is smaller than
   // max_coeff. Also, when max_coeff is close to 0.0, std::log2(max_coeff) can
   // have a pretty big magnitude, so we use int32_t here.
   //
+  const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
   m_max_coeff_bits = int32_t(std::floor(std::log2(max_coeff)));
   m_threshold_idx = 0;
   m_threshold_arr[0] = std::pow(2.0, double(m_max_coeff_bits));
-  std::transform(m_threshold_arr.cbegin(),           //
-                 std::prev(m_threshold_arr.cend()),  // Notice the range specified by `std::prev()`
-                 std::next(m_threshold_arr.begin()), [](auto e) { return e * 0.5; });
+  for (size_t i = 1; i < m_threshold_arr.size(); i++)
+    m_threshold_arr[i] = m_threshold_arr[i - 1] * 0.5;
 
 #ifdef QZ_TERM
   // If the requested termination level is already above max_coeff_bits, return right away.
@@ -97,14 +96,13 @@ auto sperr::SPECK3D::encode() -> RTNType
     return RTNType::QzLevelTooBig;
 
   const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
-
   for (m_threshold_idx = 0; m_threshold_idx < num_qz_levs; m_threshold_idx++) {
     m_sorting_pass_encode();
     m_clean_LIS();
   }
 
   // If the bit buffer has the last byte half-empty, let's fill in zero's.
-  // The decoding process will not read them.
+  // The decoding process will not read them anyway.
   while (m_bit_buffer.size() % 8 != 0)
     m_bit_buffer.push_back(false);
 
@@ -270,8 +268,8 @@ void sperr::SPECK3D::m_initialize_sets_lists()
   m_LIP.reserve(m_coeff_buf.size() / 2);
 
 #ifndef QZ_TERM
-  // Note that `m_LSP_old` usually grow close to the full length, so we reserve space now.
   m_LSP_new.clear();
+  m_LSP_new.reserve(m_coeff_buf.size() / 8);
   m_LSP_old.clear();
   m_LSP_old.reserve(m_coeff_buf.size() / 2);
   m_bit_buffer.reserve(m_budget);
@@ -786,7 +784,7 @@ auto sperr::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
       m_LIS[newidx1].emplace_back(*it);
       const auto newidx2 = m_LIS[newidx1].size() - 1;
       auto rtn = m_process_S_decode(newidx1, newidx2, sig_counter, read);
-#ifdef QZ_TERM
+#ifndef QZ_TERM
       if (rtn == RTNType::BitBudgetMet)
         return rtn;
 #endif
