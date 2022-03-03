@@ -92,7 +92,7 @@ class SPECK3D : public SPECK_Storage {
       -> std::pair<SigType, std::array<uint32_t, 3>>;
 
 #ifdef QZ_TERM
-  // Quantize a pixel to the specified `m_qz_term_lev`.
+  // Quantize a pixel to the specified `m_qz_term_lev` (defined in SPECK_Storage).
   void m_quantize_P_encode(size_t idx);
   void m_quantize_P_decode(size_t idx);
 #else

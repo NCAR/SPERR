@@ -84,9 +84,9 @@ auto sperr::SPECK3D::encode() -> RTNType
   // have a pretty big magnitude, so we use int32_t here.
   //
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
-  m_max_coeff_bits = int32_t(std::floor(std::log2(max_coeff)));
+  m_max_coeff_bits = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
   m_threshold_idx = 0;
-  m_threshold_arr[0] = std::pow(2.0, double(m_max_coeff_bits));
+  m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
   for (size_t i = 1; i < m_threshold_arr.size(); i++)
     m_threshold_arr[i] = m_threshold_arr[i - 1] * 0.5;
 
@@ -109,7 +109,7 @@ auto sperr::SPECK3D::encode() -> RTNType
 #else
 
   // We say that we run 64 iterations at most.
-  for (int iteration = 0; iteration < 64; iteration++) {
+  for (int iteration = 0; iteration < m_threshold_arr.size(); iteration++) {
     // The following two functions only return `BitBudgetMet` or `Good`.
     if (m_sorting_pass_encode() == RTNType::BitBudgetMet)
       break;
@@ -149,38 +149,38 @@ auto sperr::SPECK3D::decode() -> RTNType
 
   m_bit_idx = 0;
   m_threshold_idx = 0;
-  m_threshold_arr[0] = std::pow(2.0, double(m_max_coeff_bits));
+  m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
   for (size_t i = 1; i < m_threshold_arr.size(); i++)
     m_threshold_arr[i] = m_threshold_arr[i - 1] * 0.5;
 
-  for (size_t bitplane = 0; bitplane < 64; bitplane++) {
+  for (size_t bitplane = 0; bitplane < m_threshold_arr.size(); bitplane++) {
     auto rtn = m_sorting_pass_decode();
 
 #ifdef QZ_TERM
+    assert(rtn == RTNType::Good);
     if (m_bit_idx > m_bit_buffer.size())
       return RTNType::Error;
-    // This is the actual terminating condition in QZ_TERM mode.
+    // This is the actual termination condition in QZ_TERM mode.
     if (m_threshold_idx >= m_max_coeff_bits - m_qz_term_lev)
       break;
 #else
     if (rtn == RTNType::BitBudgetMet)
       break;
     assert(rtn == RTNType::Good);
-    // We need to do a refinement pass in fixed size mode.
     rtn = m_refinement_pass_decode();
     if (rtn == RTNType::BitBudgetMet)
       break;
+    assert(rtn == RTNType::Good);
 #endif
 
-    assert(rtn == RTNType::Good);
     m_threshold_idx++;
     m_clean_LIS();
   }
 
 #ifdef QZ_TERM
-  // We should not have more than 7 bits left in the bit buffer!
+  // We should not have more than 7 unprocessed bits left in the bit buffer!
   if (m_bit_idx > m_bit_buffer.size() || m_bit_buffer.size() - m_bit_idx >= 8)
-    return RTNType::Error;
+    return RTNType::BitstreamWrongLen;
 #else
   // If decoding finished before all newly-sig pixels are initialized, we finish them here!
   for (auto idx : m_LSP_new)

@@ -19,7 +19,9 @@ auto sperr::SPECKSet2D::is_empty() const -> bool
   return (length_x == 0 || length_y == 0);
 }
 
-// Constructor
+//
+// Class SPECK2D
+//
 sperr::SPECK2D::SPECK2D()
 {
   m_I.type = SetType::TypeI;
@@ -52,7 +54,6 @@ auto sperr::SPECK2D::encode() -> RTNType
 {
   if (!m_ready_to_encode())
     return RTNType::Error;
-
   m_encode_mode = true;
 
   m_initialize_sets_lists();
@@ -61,37 +62,52 @@ auto sperr::SPECK2D::encode() -> RTNType
   m_bit_buffer.clear();
 
   // Keep signs of all coefficients
-  m_sign_array.resize(m_coeff_buf.size(), false);
+  m_sign_array.resize(m_coeff_buf.size());
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_sign_array.begin(),
                  [](auto e) { return e >= 0.0; });
 
-  // make every coefficient positive
+  // Make every coefficient positive
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
                  [](auto v) { return std::abs(v); });
 
+  // Find the threshold to start the algorithm
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
+  m_max_coeff_bits = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
+  m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
 
-  m_max_coeff_bits = int32_t(std::floor(std::log2(max_coeff)));
-  m_threshold = std::pow(2.0, double(m_max_coeff_bits));
+#ifdef QZ_term
+  // If the requested termination level is already above max_coeff_bits, return right away.
+  if (m_qz_term_lev > m_max_coeff_bits)
+    return RTNType::QzLevelTooBig;
+
+  const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
+  for (size_t bitplane = 0; bitplane < num_qz_levels; bitplane++) {
+    m_sorting_pass_encode();
+    m_threshold *= 0.5;
+    m_clean_LIS();
+  }
+
+  // Fill the bit buffer to multiplies of eight
+  while (m_bit_buffer.size() % 8 != 0)
+    m_bit_buffer.push_back(false);
+
+#else
 
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     auto rtn = m_sorting_pass_encode();
-#ifndef QZ_TERM
     if (rtn == RTNType::BitBudgetMet)
       break;
-#endif
     assert(rtn == RTNType::Good);
 
     rtn = m_refinement_pass_encode();
-#ifndef QZ_TERM
     if (rtn == RTNType::BitBudgetMet)
       break;
-#endif
     assert(rtn == RTNType::Good);
 
     m_threshold *= 0.5;
     m_clean_LIS();
   }
+#endif
 
   // Finally we prepare the bitstream
   auto rtn = m_prepare_encoded_bitstream();
@@ -102,7 +118,6 @@ auto sperr::SPECK2D::decode() -> RTNType
 {
   if (!m_ready_to_decode())
     return RTNType::Error;
-
   m_encode_mode = false;
 
 #ifndef QZ_TERM
@@ -119,28 +134,36 @@ auto sperr::SPECK2D::decode() -> RTNType
   m_initialize_sets_lists();
 
   m_bit_idx = 0;
-  m_threshold = std::pow(2.0, double(m_max_coeff_bits));
+  m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
 
-  for (size_t bitplane = 0; bitplane < 128; bitplane++) {
+  for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     auto rtn = m_sorting_pass_decode();
-#ifndef QZ_TERM
-    if (rtn == RTNType::BitBudgetMet)
-      break;
-#endif
-    assert(rtn == RTNType::Good);
 
-    rtn = m_refinement_pass_decode();
-#ifndef QZ_TERM
+#ifdef QZ_TERM
+    assert(rtn == RTNType::Good);
+    if (m_bit_idx > m_bit_buffer.size())
+      return RTNType::Error;
+    // This is the actual termination condition in QZ_TERM mode.
+    if (static_cast<int64_t>(bitplane) >= m_max_coeff_bits - m_qz_term_lev)
+      break;
+#else
     if (rtn == RTNType::BitBudgetMet)
       break;
-#endif
     assert(rtn == RTNType::Good);
+    rtn = m_refinement_pass_decode();
+    if (rtn == RTNType::BitBudgetMet)
+      break;
+    assert(rtn == RTNType::Good);
+#endif
 
     m_threshold *= 0.5;
     m_clean_LIS();
   }
 
 #ifdef QZ_TERM
+  // We should not have more than 7 unprocessed bits left in the bit buffer!
+  if (m_bit_idx > m_bit_buffer.size() || m_bit_buffer.size() - m_bit_idx >= 8)
+    return RTNType::BitstreamWrongLen;
 #else
   // If decoding finished before all newly-identified significant pixels are initialized in
   // `m_refinement_pass_decode()`, we have them initialized here.
@@ -182,9 +205,8 @@ void sperr::SPECK2D::m_initialize_sets_lists()
 
 #ifndef QZ_TERM
   // clear lists and reserve space.
-  // Using half of the total length is probaby long enough.
   m_LSP_new.clear();
-  m_LSP_new.reserve(m_coeff_buf.size() / 2);
+  m_LSP_new.reserve(m_coeff_buf.size() / 8);
   m_LSP_old.clear();
   m_LSP_old.reserve(m_coeff_buf.size() / 2);
   m_bit_buffer.reserve(m_budget);
@@ -194,6 +216,7 @@ void sperr::SPECK2D::m_initialize_sets_lists()
 //
 // Private methods
 //
+// TODO
 auto sperr::SPECK2D::m_sorting_pass_encode() -> RTNType
 {
   // First, process all insignificant pixels
@@ -526,7 +549,7 @@ auto sperr::SPECK2D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
 
 auto sperr::SPECK2D::m_partition_S(const SPECKSet2D& set) const -> std::array<SPECKSet2D, 4>
 {
-  auto list = std::array<SPECKSet2D, 4>();
+  auto subsets = std::array<SPECKSet2D, 4>();
 
   // The top-left set will have these bigger dimensions in case that
   // the current set has odd dimensions.
@@ -536,35 +559,35 @@ auto sperr::SPECK2D::m_partition_S(const SPECKSet2D& set) const -> std::array<SP
   const auto approx_len_y = set.length_y - detail_len_y;
 
   // Put generated subsets in the list the same order as did in QccPack.
-  auto& BR = list[0];  // Bottom right set
+  auto& BR = subsets[0];  // Bottom right set
   BR.part_level = set.part_level + 1;
   BR.start_x = set.start_x + approx_len_x;
   BR.start_y = set.start_y + approx_len_y;
   BR.length_x = detail_len_x;
   BR.length_y = detail_len_y;
 
-  auto& BL = list[1];  // Bottom left set
+  auto& BL = subsets[1];  // Bottom left set
   BL.part_level = set.part_level + 1;
   BL.start_x = set.start_x;
   BL.start_y = set.start_y + approx_len_y;
   BL.length_x = approx_len_x;
   BL.length_y = detail_len_y;
 
-  auto& TR = list[2];  // Top right set
+  auto& TR = subsets[2];  // Top right set
   TR.part_level = set.part_level + 1;
   TR.start_x = set.start_x + approx_len_x;
   TR.start_y = set.start_y;
   TR.length_x = detail_len_x;
   TR.length_y = approx_len_y;
 
-  auto& TL = list[3];  // Top left set
+  auto& TL = subsets[3];  // Top left set
   TL.part_level = set.part_level + 1;
   TL.start_x = set.start_x;
   TL.start_y = set.start_y;
   TL.length_x = approx_len_x;
   TL.length_y = approx_len_y;
 
-  return list;
+  return subsets;
 }
 
 auto sperr::SPECK2D::m_process_I(bool need_decide_sig) -> RTNType
