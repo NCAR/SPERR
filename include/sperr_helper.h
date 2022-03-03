@@ -34,9 +34,11 @@ enum class SigType : unsigned char { Insig, Sig, NewlySig, Dunno, Garbage };
 
 enum class SetType : unsigned char { TypeS, TypeI, Garbage };
 
-enum class RTNType {  // Return Type
-  Good,               // Initial value
-  WrongSize,
+// Return Type
+enum class RTNType {
+  Good,
+  WrongDims,
+  BitstreamWrongLen,
   IOError,
   InvalidParam,
   QzLevelTooBig,  // a very specific type of invalid param

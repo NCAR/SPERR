@@ -80,7 +80,7 @@ auto SPECK3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
   const auto header_size = m_header_magic + num_chunks * 4;
   const auto suppose_size = std::accumulate(chunk_sizes.begin(), chunk_sizes.end(), header_size);
   if (suppose_size != total_len)
-    return RTNType::WrongSize;
+    return RTNType::BitstreamWrongLen;
 
   // We also calculate the offset value to address each bitstream chunk.
   m_offsets.assign(num_chunks + 1, 0);

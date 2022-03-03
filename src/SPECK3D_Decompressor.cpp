@@ -47,7 +47,7 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   // Step 1: extract conditioner stream from it
   const auto condi_size = m_condi_stream.size();
   if (condi_size > ptr_len)
-    return RTNType::WrongSize;
+    return RTNType::BitstreamWrongLen;
   std::copy(ptr, ptr + condi_size, m_condi_stream.begin());
   size_t pos = condi_size;
 
@@ -60,14 +60,14 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
     if (condi_size == ptr_len)
       return RTNType::Good;
     else
-      return RTNType::WrongSize;
+      return RTNType::BitstreamWrongLen;
   }
 
   // Step 2: extract SPECK stream from it
   const uint8_t* const speck_p = ptr + pos;
   const auto speck_size = m_decoder.get_speck_stream_size(speck_p);
   if (pos + speck_size > ptr_len)
-    return RTNType::WrongSize;
+    return RTNType::BitstreamWrongLen;
   m_speck_stream.resize(speck_size, 0);
   std::copy(speck_p, speck_p + speck_size, m_speck_stream.begin());
   pos += speck_size;
@@ -81,13 +81,13 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
     const uint8_t* const sperr_p = ptr + pos;
     const auto sperr_size = m_sperr.get_sperr_stream_size(sperr_p);
     if (pos + sperr_size != ptr_len)
-      return RTNType::WrongSize;
+      return RTNType::BitstreamWrongLen;
     m_sperr_stream.resize(sperr_size, 0);
     std::copy(sperr_p, sperr_p + sperr_size, m_sperr_stream.begin());
   }
 #else
   if (pos != ptr_len)
-    return RTNType::WrongSize;
+    return RTNType::BitstreamWrongLen;
 #endif
 
   return RTNType::Good;

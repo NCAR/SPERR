@@ -13,7 +13,7 @@ auto SPECK2D_Compressor::copy_data(const T* p, size_t len, sperr::dims_type dims
   static_assert(std::is_floating_point<T>::value, "!! Only floating point values are supported !!");
 
   if (len != dims[0] * dims[1] || dims[2] != 1)
-    return RTNType::WrongSize;
+    return RTNType::WrongDims;
 
   m_val_buf.resize(len);
   std::copy(p, p + len, m_val_buf.begin());
@@ -27,7 +27,7 @@ template auto SPECK2D_Compressor::copy_data(const float*, size_t, sperr::dims_ty
 auto SPECK2D_Compressor::take_data(std::vector<double>&& buf, sperr::dims_type dims) -> RTNType
 {
   if (buf.size() != dims[0] * dims[1] || dims[2] != 1)
-    return RTNType::WrongSize;
+    return RTNType::WrongDims;
 
   m_dims = dims;
   m_val_buf = std::move(buf);

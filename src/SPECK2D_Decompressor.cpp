@@ -40,7 +40,7 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   if (len >= m_meta_size)
     plen = len - m_meta_size;
   else
-    return RTNType::WrongSize;
+    return RTNType::BitstreamWrongLen;
 
     // Task 3)
 #ifdef USE_ZSTD
@@ -67,7 +67,7 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   // Task 4)
   const auto condi_size = m_condi_stream.size();
   if (condi_size > plen)
-    return RTNType::WrongSize;
+    return RTNType::BitstreamWrongLen;
   std::copy(u8p, u8p + condi_size, m_condi_stream.begin());
   u8p += condi_size;
   plen -= condi_size;
@@ -80,12 +80,12 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
     if (plen == 0)
       return RTNType::Good;
     else
-      return RTNType::WrongSize;
+      return RTNType::BitstreamWrongLen;
   }
 
   const auto speck_size = m_decoder.get_speck_stream_size(u8p);
   if (speck_size != plen)
-    return RTNType::WrongSize;
+    return RTNType::BitstreamWrongLen;
   m_speck_stream.resize(speck_size, 0);
   std::copy(u8p, u8p + speck_size, m_speck_stream.begin());
 

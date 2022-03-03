@@ -59,7 +59,7 @@ auto SPECK3D_OMP_C::copy_data(const T* vol,
                               sperr::dims_type chunk_dims) -> RTNType
 {
   if (len != vol_dims[0] * vol_dims[1] * vol_dims[2])
-    return RTNType::WrongSize;
+    return RTNType::WrongDims;
   else
     m_dims = vol_dims;
 
