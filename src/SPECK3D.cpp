@@ -309,37 +309,23 @@ auto sperr::SPECK3D::m_sorting_pass_encode() -> RTNType
 auto sperr::SPECK3D::m_sorting_pass_decode() -> RTNType
 {
   // Since we have a separate representation of LIP, let's process that list first
-  // TODO: the functionalities of processing m_LIP is actually the same as 
-  //       m_process_P_encode(), so maybe simply call that function?
-  for (auto& pixel_idx : m_LIP) {
+  //
+  size_t dummy = 0;
+  for (size_t loc = 0; loc < m_LIP.size(); loc++) {
+    auto rtn = m_process_P_decode(loc, dummy, true);
 #ifndef QZ_TERM
-    if (m_bit_idx >= m_budget)  // Check bit budget
+    if (rtn == RTNType::BitBudgetMet)
       return RTNType::BitBudgetMet;
 #endif
-
-    if (m_bit_buffer[m_bit_idx++]) {  // Is this pixel significant?
-#ifndef QZ_TERM
-      if (m_bit_idx >= m_budget)  // Check bit budget
-        return RTNType::BitBudgetMet;
-#endif
-      m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];  // What sign is this pixel
-
-#ifdef QZ_TERM
-      m_quantize_P_decode(pixel_idx);
-#else
-      m_LSP_new.push_back(pixel_idx);
-#endif
-
-      pixel_idx = m_u64_garbage_val;
-    }
+    assert(rtn == RTNType::Good);
   }
 
   // Then we process regular sets in LIS.
+  //
   for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
     // From the end of m_LIS to its front
     size_t idx1 = m_LIS.size() - tmp;
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
-      size_t dummy = 0;
       auto rtn = m_process_S_decode(idx1, idx2, dummy, true);
 #ifndef QZ_TERM
       if (rtn == RTNType::BitBudgetMet)
