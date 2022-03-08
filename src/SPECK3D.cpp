@@ -431,17 +431,17 @@ void sperr::SPECK3D::m_quantize_P_encode(size_t idx)
   // subject to a QZ operation based on the current threshold.
   auto coeff = m_coeff_buf[idx] - m_threshold_arr[m_threshold_idx];
 
-  auto tmpd = arrd2_type{0.0, 0.0};
   const auto tmpb = arrb2_type{false, true};
   const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
-    tmpd[1] = m_threshold_arr[i];
-    size_t o1 = coeff >= m_threshold_arr[i];  // C++ guarantees this conversion
+    const auto tmpd = arrd2_type{0.0, m_threshold_arr[i]};
+    const size_t o1 = coeff >= m_threshold_arr[i];  // C++ guarantees this conversion
     coeff -= tmpd[o1];
     m_bit_buffer.push_back(tmpb[o1]);
   }
   m_coeff_buf[idx] = coeff;
 }
+
 void sperr::SPECK3D::m_quantize_P_decode(size_t idx)
 {
   // Since only identified significant pixels come here, it's immediately
@@ -451,18 +451,14 @@ void sperr::SPECK3D::m_quantize_P_decode(size_t idx)
   const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
     // C++ standard guarantees the conversion between bool and int.
-    auto tmp = arrd2_type{-m_threshold_arr[i + 1], m_threshold_arr[i + 1]};
+    const auto tmp = arrd2_type{-m_threshold_arr[i + 1], m_threshold_arr[i + 1]};
     coeff += tmp[m_bit_buffer[m_bit_idx++]];
   }
   m_coeff_buf[idx] = coeff;
 }
-//
-// Finish QZ_TERM specific functions
-//
+
 #else
-//
-// Start fixed-size specific functions
-//
+
 auto sperr::SPECK3D::m_refinement_pass_encode() -> RTNType
 {
   // First, process `m_LSP_old`.
@@ -490,6 +486,7 @@ auto sperr::SPECK3D::m_refinement_pass_encode() -> RTNType
 
   return RTNType::Good;
 }
+
 auto sperr::SPECK3D::m_refinement_pass_decode() -> RTNType
 {
   // First, process `m_LSP_old`
