@@ -173,10 +173,9 @@ auto sperr::SPECK2D::decode() -> RTNType
 #endif
 
   // Restore coefficient signs
-  for (size_t i = 0; i < m_sign_array.size(); i++) {
-    auto tmp = std::array<double, 2>{-m_coeff_buf[i], m_coeff_buf[i]};
-    m_coeff_buf[i] = tmp[m_sign_array[i]];
-  }
+  auto tmp = std::array<double, 2>{-1.0, 1.0};
+  for (size_t i = 0; i < m_sign_array.size(); i++)
+    m_coeff_buf[i] *= tmp[m_sign_array[i]];
 
   return RTNType::Good;
 }
