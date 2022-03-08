@@ -85,12 +85,6 @@ class SPECK2D : public SPECK_Storage {
   size_t m_bit_idx = 0;       // Used for decode. Which bit we're at?
   bool m_encode_mode = true;  // Encode (true) or Decode (false) mode?
 
-#ifndef QZ_TERM
-  std::vector<size_t> m_LSP_new;  // List of significant pixels, just identified
-  std::vector<size_t> m_LSP_old;  // List of significant pixels, previously identified
-  size_t m_budget = 0;            // What's the budget for num of bits in fixed-rate mode?
-#endif
-
   std::vector<std::vector<SPECKSet2D>> m_LIS;  // List of insignificant sets
   std::vector<size_t> m_LIP;                   // List of insignificant pixels
   SPECKSet2D m_I;
@@ -102,7 +96,10 @@ class SPECK2D : public SPECK_Storage {
   std::array<double, 64> m_threshold_arr;
   int32_t m_threshold_idx = 0;
 #else
-  double m_threshold = 0.0;   // Threshold that's used for an iteration.
+  double m_threshold = 0.0;       // Threshold that's used for an iteration.
+  std::vector<size_t> m_LSP_new;  // List of significant pixels, just identified
+  std::vector<size_t> m_LSP_old;  // List of significant pixels, previously identified
+  size_t m_budget = 0;            // What's the budget for num of bits in fixed-rate mode?
 #endif
   
 };
