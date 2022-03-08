@@ -111,10 +111,12 @@ auto sperr::SPECK3D::encode() -> RTNType
   // We say that we run 64 iterations at most.
   for (int iteration = 0; iteration < m_threshold_arr.size(); iteration++) {
     // The following two functions only return `BitBudgetMet` or `Good`.
-    if (m_sorting_pass_encode() == RTNType::BitBudgetMet)
+    auto rtn = m_sorting_pass_encode();
+    if (rtn == RTNType::BitBudgetMet)
       break;
 
-    if (m_refinement_pass_encode() == RTNType::BitBudgetMet)
+    rtn = m_refinement_pass_encode();
+    if (rtn == RTNType::BitBudgetMet)
       break;
 
     m_threshold_idx++;
@@ -372,7 +374,6 @@ auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
 #ifdef QZ_TERM
     m_quantize_P_encode(pixel_idx);
 #else
-    m_coeff_buf[pixel_idx] -= m_threshold_arr[m_threshold_idx];
     m_LSP_new.push_back(pixel_idx);
 #endif
 
@@ -436,7 +437,12 @@ auto sperr::SPECK3D::m_refinement_pass_encode() -> RTNType
   if (m_bit_buffer.size() >= m_budget)
     return RTNType::BitBudgetMet;
 
-  // Second, attached `m_LSP_new` to the end of `m_LSP_old`, and then clear it.
+  // Second, process `m_LSP_new`
+  //
+  for (auto idx : m_LSP_new)
+    m_coeff_buf[idx] -= m_threshold_arr[m_threshold_idx];
+
+  // Third, attached `m_LSP_new` to the end of `m_LSP_old`, and then clear it.
   // (`m_LSP_old` has reserved the full coeff length capacity in advance.)
   //
   m_LSP_old.insert(m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend());
