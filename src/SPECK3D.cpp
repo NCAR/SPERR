@@ -277,42 +277,15 @@ void sperr::SPECK3D::m_initialize_sets_lists()
 auto sperr::SPECK3D::m_sorting_pass_encode() -> RTNType
 {
   // Since we have a separate representation of LIP, let's process that list first!
-  // TODO: the functionalities of processing m_LIP is actually the same as 
-  //       m_process_P_encode(), so maybe simply call that function?
-  for (auto& pixel_idx : m_LIP) {
-    if (m_coeff_buf[pixel_idx] >= m_threshold_arr[m_threshold_idx]) {
-      // Record that this pixel is significant
-      m_bit_buffer.push_back(true);
+  //
+  size_t dummy = 0;
+  for (size_t loc = 0; loc < m_LIP.size(); loc++) {
+    auto rtn = m_process_P_encode(loc, SigType::Dunno, dummy, true);
 #ifndef QZ_TERM
-      if (m_bit_buffer.size() >= m_budget)  // Test bit budget
-        return RTNType::BitBudgetMet;
+    if (rtn == RTNType::BitBudgetMet)
+      return RTNType::BitBudgetMet;
 #endif
-
-      // Record if this pixel is positive or negative
-      m_bit_buffer.push_back(m_sign_array[pixel_idx]);
-#ifndef QZ_TERM
-      if (m_bit_buffer.size() >= m_budget)  // Test bit budget
-        return RTNType::BitBudgetMet;
-#endif
-
-#ifdef QZ_TERM
-      m_quantize_P_encode(pixel_idx);
-#else
-      // Refine this pixel while it's still in the cache!
-      m_coeff_buf[pixel_idx] -= m_threshold_arr[m_threshold_idx];
-      m_LSP_new.push_back(pixel_idx);
-#endif
-
-      pixel_idx = m_u64_garbage_val;
-    }
-    else {
-      // Record that this pixel isn't significant
-      m_bit_buffer.push_back(false);
-#ifndef QZ_TERM
-      if (m_bit_buffer.size() >= m_budget)  // Test bit budget
-        return RTNType::BitBudgetMet;
-#endif
-    }
+    assert(rtn == RTNType::Good);
   }
 
   // Then we process regular sets in LIS.
@@ -321,7 +294,6 @@ auto sperr::SPECK3D::m_sorting_pass_encode() -> RTNType
     // From the end of m_LIS to its front
     size_t idx1 = m_LIS.size() - tmp;
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
-      size_t dummy = 0;
       auto rtn = m_process_S_encode(idx1, idx2, SigType::Dunno, dummy, true);
 #ifndef QZ_TERM
       if (rtn == RTNType::BitBudgetMet)
