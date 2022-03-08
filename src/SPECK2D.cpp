@@ -84,7 +84,7 @@ auto sperr::SPECK2D::encode() -> RTNType
     return RTNType::QzLevelTooBig;
 
   const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
-  for (m_threshold_idx  = 0; m_threshold_idx < num_qz_levels; m_threshold_idx++) {
+  for (m_threshold_idx = 0; m_threshold_idx < num_qz_levels; m_threshold_idx++) {
     m_sorting_pass_encode();
     m_threshold *= 0.5;
     m_clean_LIS();
@@ -361,8 +361,30 @@ auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
 
   
 #ifdef QZ_TERM
-void sperr::SPECK2D::m_quantize_P_encode(size_t idx){}
-void sperr::SPECK2D::m_quantize_P_decode(size_t idx){}
+void sperr::SPECK2D::m_quantize_P_encode(size_t idx)
+{
+  auto coeff = m_coeff_buf[idx] - m_threshold_arr[m_threshold_idx];
+  const auto tmpb = arrb2_type{false, true};
+  const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
+  for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
+    const auto tmpd = arrd2_type{0.0, m_threshold_arr[i]};
+    const size_t o1 = coeff >= m_threshold_arr[i];
+    coeff -= tmpd[o1];
+    m_bit_buffer.push_back(tmpb[o1]);
+  }
+  m_coeff_buf[idx] = coeff;
+}
+
+void sperr::SPECK2D::m_quantize_P_decode(size_t idx)
+{
+  auto coeff = m_threshold_arr[m_threshold_idx] * 1.5;
+  const auto num_qz_levs = m_max_coeff_bits - m_az_term_lev + 1;
+  for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
+    const auto tmp = arrd2_type{-m_threshold_arr[i + 1], m_threshold_arr[i + 1]};
+    coeff += tmp[m_bit_buffer[m_bit_idx++]];
+  }
+  m_coeff_buf[idx] = coeff;
+}
 
 #else
 

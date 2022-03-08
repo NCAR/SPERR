@@ -5,6 +5,8 @@
 
 #include <limits>
 
+#undef QZ_TERM
+
 namespace sperr {
 
 //
