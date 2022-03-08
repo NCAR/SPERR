@@ -262,7 +262,6 @@ void sperr::SPECK3D::m_initialize_sets_lists()
   // it at the front of it's corresponding vector. One-time expense.
   const auto parts = big.part_level;
   m_LIS[parts].insert(m_LIS[parts].begin(), big);
-
   m_LIP.clear();
   m_LIP.reserve(m_coeff_buf.size() / 2);
 
@@ -277,14 +276,9 @@ void sperr::SPECK3D::m_initialize_sets_lists()
 
 auto sperr::SPECK3D::m_sorting_pass_encode() -> RTNType
 {
-#ifndef QZ_TERM
-  // Note that a large portion of the content in `m_LIP` will go to `m_LSP_new`,
-  //   and `m_LSP_new` is empty at this point, so cheapest to re-allocate right now!
-  if (m_LSP_new.capacity() < m_LIP.size())
-    m_LSP_new.reserve(std::max(m_LSP_new.capacity() * 2, m_LIP.size()));
-#endif
-
   // Since we have a separate representation of LIP, let's process that list first!
+  // TODO: the functionalities of processing m_LIP is actually the same as 
+  //       m_process_P_encode(), so maybe simply call that function?
   for (auto& pixel_idx : m_LIP) {
     if (m_coeff_buf[pixel_idx] >= m_threshold_arr[m_threshold_idx]) {
       // Record that this pixel is significant
@@ -342,14 +336,9 @@ auto sperr::SPECK3D::m_sorting_pass_encode() -> RTNType
 
 auto sperr::SPECK3D::m_sorting_pass_decode() -> RTNType
 {
-#ifndef QZ_TERM
-  // Note that a large portion of the content in `m_LIP` will go to `m_LSP_new`,
-  //   and `m_LSP_new` is empty at this point, so cheapest to re-allocate right now.
-  if (m_LSP_new.capacity() < m_LIP.size())
-    m_LSP_new.reserve(std::max(m_LSP_new.capacity() * 2, m_LIP.size()));
-#endif
-
   // Since we have a separate representation of LIP, let's process that list first
+  // TODO: the functionalities of processing m_LIP is actually the same as 
+  //       m_process_P_encode(), so maybe simply call that function?
   for (auto& pixel_idx : m_LIP) {
 #ifndef QZ_TERM
     if (m_bit_idx >= m_budget)  // Check bit budget
