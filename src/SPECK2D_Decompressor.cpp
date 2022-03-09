@@ -97,6 +97,7 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   return RTNType::Good;
 }
 
+#ifndef QZ_TERM
 auto SPECK2D_Decompressor::set_bpp(double bpp) -> RTNType
 {
   if (bpp < 0.0 || bpp > 64.0)
@@ -106,6 +107,7 @@ auto SPECK2D_Decompressor::set_bpp(double bpp) -> RTNType
     return RTNType::Good;
   }
 }
+#endif
 
 template <typename T>
 auto SPECK2D_Decompressor::get_data() const -> std::vector<T>
@@ -152,7 +154,9 @@ auto SPECK2D_Decompressor::decompress() -> RTNType
     return rtn;
 
   auto total_vals = m_dims[0] * m_dims[1];
+#ifndef QZ_TERM
   m_decoder.set_bit_budget(size_t(m_bpp * total_vals));
+#endif
   rtn = m_decoder.decode();
   if (rtn != RTNType::Good)
     return rtn;

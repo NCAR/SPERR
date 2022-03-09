@@ -23,19 +23,32 @@ class SPECK2D_Compressor {
 
   void toggle_conditioning(sperr::Conditioner::settings_type);
 
+#ifdef QZ_TERM
+  void set_qz_level(int32_t);
+  auto set_tolerance(double) -> RTNType;
+
+  // Return 1) the number of outliers, and 2) the number of bytes to encode them.
+  auto get_outlier_stats() const -> std::pair<size_t, size_t>;
+#else
   auto set_bpp(double) -> RTNType;
+#endif
 
   auto compress() -> RTNType;
 
-  [[nodiscard]] auto view_encoded_bitstream() const -> const std::vector<uint8_t>&;
+  auto view_encoded_bitstream() const -> const std::vector<uint8_t>&;
   auto release_encoded_bitstream() -> std::vector<uint8_t>&&;
 
  private:
   sperr::dims_type m_dims = {0, 0, 0};
   sperr::vecd_type m_val_buf;
-
   const size_t m_meta_size = 2;
+
+#ifdef QZ_TERM
+  int32_t m_qz_lev = 0;
+  double m_tol = 0.0;
+#else
   double m_bpp = 0.0;
+#endif
 
   sperr::Conditioner m_conditioner;
   sperr::CDF97 m_cdf;

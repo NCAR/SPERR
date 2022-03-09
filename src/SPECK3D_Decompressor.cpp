@@ -124,11 +124,9 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
   auto rtn = m_decoder.parse_encoded_bitstream(m_speck_stream.data(), m_speck_stream.size());
   if (rtn != RTNType::Good)
     return rtn;
-
 #ifndef QZ_TERM
   m_decoder.set_bit_budget(size_t(m_bpp * double(m_dims[0] * m_dims[1] * m_dims[2])));
 #endif
-
   rtn = m_decoder.decode();
   if (rtn != RTNType::Good)
     return rtn;

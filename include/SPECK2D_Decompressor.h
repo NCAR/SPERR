@@ -18,7 +18,9 @@ class SPECK2D_Decompressor {
   // Accept incoming data.
   auto use_bitstream(const void* p, size_t len) -> RTNType;
 
+#ifndef QZ_TERM
   auto set_bpp(double) -> RTNType;
+#endif
 
   auto decompress() -> RTNType;
 
@@ -34,9 +36,12 @@ class SPECK2D_Decompressor {
   sperr::Conditioner::meta_type m_condi_stream;
   sperr::vec8_type m_speck_stream;
   sperr::vecd_type m_val_buf;
-
   const size_t m_meta_size = 2;
+
+#ifdef QZ_TERM
+#else
   double m_bpp = 0.0;
+#endif
 
   sperr::Conditioner m_conditioner;
   sperr::CDF97 m_cdf;

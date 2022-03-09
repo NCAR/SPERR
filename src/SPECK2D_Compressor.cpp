@@ -35,6 +35,26 @@ auto SPECK2D_Compressor::take_data(std::vector<double>&& buf, sperr::dims_type d
   return RTNType::Good;
 }
 
+#ifdef QZ_TERM
+void SPECK2D_Compressor::set_qz_level(int32_t q)
+{
+  m_qz_lev = q;
+}
+auto SPECK2D_Compressor::set_tolerance(double tol) -> RTNType
+{
+  if (tol <= 0.0)
+    return RTNType::InvalidParam;
+  else {
+    m_tol = tol;
+    //m_sperr.set_tolerance(tol);
+    return RTNType::Good;
+  }
+}
+auto SPECK2D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
+{
+  return {0, 0};
+}
+#else
 auto SPECK2D_Compressor::set_bpp(double bpp) -> RTNType
 {
   if (bpp <= 0.0 || bpp > 64.0)
@@ -44,6 +64,7 @@ auto SPECK2D_Compressor::set_bpp(double bpp) -> RTNType
     return RTNType::Good;
   }
 }
+#endif
 
 void SPECK2D_Compressor::toggle_conditioning(sperr::Conditioner::settings_type settings)
 {
@@ -99,7 +120,13 @@ auto SPECK2D_Compressor::compress() -> RTNType
   rtn = m_encoder.take_data(std::move(cdf_out), m_dims);
   if (rtn != RTNType::Good)
     return rtn;
+
+#ifdef QZ_TERM
+  m_encoder.set_quantization_term_level(m_qz_lev);
+#else
   m_encoder.set_bit_budget(size_t(m_bpp * total_vals));
+#endif
+
   rtn = m_encoder.encode();
   if (rtn != RTNType::Good)
     return rtn;
