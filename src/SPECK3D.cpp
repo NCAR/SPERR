@@ -85,7 +85,6 @@ auto sperr::SPECK3D::encode() -> RTNType
   //
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
   m_max_coeff_bits = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
-  m_threshold_idx = 0;
   m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
   for (size_t i = 1; i < m_threshold_arr.size(); i++)
     m_threshold_arr[i] = m_threshold_arr[i - 1] * 0.5;
@@ -109,7 +108,7 @@ auto sperr::SPECK3D::encode() -> RTNType
 #else
 
   // We say that we run 64 iterations at most.
-  for (int iteration = 0; iteration < m_threshold_arr.size(); iteration++) {
+  for (m_threshold_idx = 0; m_threshold_idx < m_threshold_arr.size(); m_threshold_idx++) {
     // The following two functions only return `BitBudgetMet` or `Good`.
     auto rtn = m_sorting_pass_encode();
     if (rtn == RTNType::BitBudgetMet)
@@ -119,7 +118,6 @@ auto sperr::SPECK3D::encode() -> RTNType
     if (rtn == RTNType::BitBudgetMet)
       break;
 
-    m_threshold_idx++;
     m_clean_LIS();
   }
 #endif
@@ -150,12 +148,11 @@ auto sperr::SPECK3D::decode() -> RTNType
   m_initialize_sets_lists();
 
   m_bit_idx = 0;
-  m_threshold_idx = 0;
   m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
   for (size_t i = 1; i < m_threshold_arr.size(); i++)
     m_threshold_arr[i] = m_threshold_arr[i - 1] * 0.5;
 
-  for (size_t bitplane = 0; bitplane < m_threshold_arr.size(); bitplane++) {
+  for (m_threshold_idx = 0; m_threshold_idx < m_threshold_arr.size(); m_threshold_idx++) {
     auto rtn = m_sorting_pass_decode();
 
 #ifdef QZ_TERM
@@ -175,7 +172,6 @@ auto sperr::SPECK3D::decode() -> RTNType
     assert(rtn == RTNType::Good);
 #endif
 
-    m_threshold_idx++;
     m_clean_LIS();
   }
 
