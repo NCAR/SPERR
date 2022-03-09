@@ -29,7 +29,7 @@ sperr::SPECK2D::SPECK2D()
 }
 
 #ifdef QZ_TERM
-void sperr::SPECK3D::set_quantization_term_level(int32_t lev)
+void sperr::SPECK2D::set_quantization_term_level(int32_t lev)
 {
   m_qz_term_lev = lev;
 }
@@ -74,7 +74,7 @@ auto sperr::SPECK2D::encode() -> RTNType
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
   m_max_coeff_bits = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
 
-#ifdef QZ_term
+#ifdef QZ_TERM
   m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
   for (size_t i = 1; i < m_threshold_arr.size(); i++)
     m_threshold_arr[i] = m_threshold_arr[i - 1] * 0.5;
@@ -84,9 +84,8 @@ auto sperr::SPECK2D::encode() -> RTNType
     return RTNType::QzLevelTooBig;
 
   const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
-  for (m_threshold_idx = 0; m_threshold_idx < num_qz_levels; m_threshold_idx++) {
+  for (m_threshold_idx = 0; m_threshold_idx < num_qz_levs; m_threshold_idx++) {
     m_sorting_pass_encode();
-    m_threshold *= 0.5;
     m_clean_LIS();
   }
 
@@ -149,7 +148,7 @@ auto sperr::SPECK2D::decode() -> RTNType
     if (m_bit_idx > m_bit_buffer.size())
       return RTNType::Error;
     // This is the actual termination condition in QZ_TERM mode.
-    if (static_cast<int64_t>(bitplane) >= m_max_coeff_bits - m_qz_term_lev)
+    if (m_threshold_idx >= m_max_coeff_bits - m_qz_term_lev)
       break;
     m_clean_LIS();
   }
@@ -307,10 +306,10 @@ auto sperr::SPECK2D::m_sorting_pass_decode() -> RTNType
 void sperr::SPECK2D::m_quantize_P_encode(size_t idx)
 {
   auto coeff = m_coeff_buf[idx] - m_threshold_arr[m_threshold_idx];
-  const auto tmpb = arrb2_type{false, true};
+  const auto tmpb = std::array<bool, 2>{false, true};
   const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
-    const auto tmpd = arrd2_type{0.0, m_threshold_arr[i]};
+    const auto tmpd = std::array<double, 2>{0.0, m_threshold_arr[i]};
     const size_t o1 = coeff >= m_threshold_arr[i];
     coeff -= tmpd[o1];
     m_bit_buffer.push_back(tmpb[o1]);
@@ -321,9 +320,9 @@ void sperr::SPECK2D::m_quantize_P_encode(size_t idx)
 void sperr::SPECK2D::m_quantize_P_decode(size_t idx)
 {
   auto coeff = m_threshold_arr[m_threshold_idx] * 1.5;
-  const auto num_qz_levs = m_max_coeff_bits - m_az_term_lev + 1;
+  const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
-    const auto tmp = arrd2_type{-m_threshold_arr[i + 1], m_threshold_arr[i + 1]};
+    const auto tmp = std::array<double, 2>{-m_threshold_arr[i + 1], m_threshold_arr[i + 1]};
     coeff += tmp[m_bit_buffer[m_bit_idx++]];
   }
   m_coeff_buf[idx] = coeff;
@@ -387,7 +386,6 @@ auto sperr::SPECK2D::m_refinement_pass_decode() -> RTNType
 }
 #endif
 
-// TODO
 auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_decide_sig)
     -> RTNType
 {
@@ -395,20 +393,37 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
   bool is_sig = true;
 
   if (need_decide_sig) {
+
+#ifdef QZ_TERM
+    const auto thrd = m_threshold_arr[m_threshold_idx];
+#else
+    const auto thrd = m_threshold;
+#endif
+
+    const size_t o1 = (m_coeff_buf[pixel_idx] >= thrd);
     const auto tmpb = std::array<bool, 2>{false, true};
-    size_t o1 = (m_coeff_buf[pixel_idx] >= m_threshold);
     is_sig = tmpb[o1];
     m_bit_buffer.push_back(is_sig);
+#ifndef QZ_TERM
     if (m_bit_buffer.size() >= m_budget)
       return RTNType::BitBudgetMet;
+#endif
   }
 
   if (is_sig) {
     counter++;
     m_bit_buffer.push_back(m_sign_array[pixel_idx]);
+#ifndef QZ_TERM
     if (m_bit_buffer.size() >= m_budget)
       return RTNType::BitBudgetMet;
+#endif
+
+#ifdef QZ_TERM
+    m_quantize_P_encode(pixel_idx);
+#else
     m_LSP_new.push_back(pixel_idx);
+#endif
+
     m_LIP[loc] = m_u64_garbage_val;
   }
 
@@ -422,17 +437,27 @@ auto sperr::SPECK2D::m_process_P_decode(size_t loc, size_t& counter, bool need_d
   bool is_sig = true;
 
   if (need_decide_sig) {
+#ifndef QZ_TERM
     if (m_bit_idx >= m_budget)
       return RTNType::BitBudgetMet;
+#endif
     is_sig = m_bit_buffer[m_bit_idx++];
   }
 
   if (is_sig) {
     counter++;
+#ifndef QZ_TERM
     if (m_bit_idx >= m_budget)
       return RTNType::BitBudgetMet;
+#endif
     m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];
+
+#ifdef QZ_TERM
+    m_quantize_P_decode(pixel_idx);
+#else
     m_LSP_new.push_back(pixel_idx);
+#endif
+
     m_LIP[loc] = m_u64_garbage_val;
   }
 
@@ -465,7 +490,7 @@ auto sperr::SPECK2D::m_process_S_encode(size_t idx1,
       return rtn;
 #endif
     assert(rtn == RTNType::Good);
-    set.type = SetType::Garbage;  // This particular object will be discarded.
+    set.type = SetType::Garbage;  // This particular set will be discarded.
   }
 
   return RTNType::Good;
@@ -481,11 +506,11 @@ auto sperr::SPECK2D::m_process_S_decode(size_t idx1,
   set.signif = SigType::Sig;
 
   if (need_decide_sig) {
+    const auto tmps = std::array<SigType, 2>{SigType::Insig, SigType::Sig};
 #ifndef QZ_TERM
     if (m_bit_idx >= m_budget)
       return RTNType::BitBudgetMet;
 #endif
-    const auto tmps = std::array<SigType, 2>{SigType::Insig, SigType::Sig};
     set.signif = tmps[m_bit_buffer[m_bit_idx++]];
   }
 
@@ -524,8 +549,8 @@ auto sperr::SPECK2D::m_code_S_encode(size_t idx1, size_t idx2) -> RTNType
       rtn = m_process_P_encode(m_LIP.size() - 1, sig_counter, need_decide_sig);
     }
     else {
-      m_LIS[it->part_level].emplace_back(*it);
       size_t newidx1 = it->part_level;
+      m_LIS[newidx1].emplace_back(*it);
       size_t newidx2 = m_LIS[newidx1].size() - 1;
       rtn = m_process_S_encode(newidx1, newidx2, sig_counter, need_decide_sig);
     }
@@ -560,8 +585,8 @@ auto sperr::SPECK2D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
       rtn = m_process_P_decode(m_LIP.size() - 1, sig_counter, need_decide_sig);
     }
     else {
-      m_LIS[it->part_level].emplace_back(*it);
       size_t newidx1 = it->part_level;
+      m_LIS[newidx1].emplace_back(*it);
       size_t newidx2 = m_LIS[newidx1].size() - 1;
       rtn = m_process_S_decode(newidx1, newidx2, sig_counter, need_decide_sig);
     }
@@ -681,8 +706,7 @@ auto sperr::SPECK2D::m_code_I() -> RTNType
     }
   }
 
-  bool need_decide_sig = sig_counter != 0;
-  auto rtn = m_process_I(need_decide_sig);
+  auto rtn = m_process_I(sig_counter != 0);
 #ifndef QZ_TERM
   if (rtn == RTNType::BitBudgetMet)
     return rtn;
@@ -737,7 +761,13 @@ auto sperr::SPECK2D::m_decide_set_S_significance(const SPECKSet2D& set) -> SigTy
   // For TypeS sets, we test an obvious rectangle specified by this set.
   assert(set.type == SetType::TypeS);
 
-  const auto gtr = [thld = m_threshold](auto v) { return v >= thld; };
+#ifdef QZ_TERM
+    const auto thrd = m_threshold_arr[m_threshold_idx];
+#else
+    const auto thrd = m_threshold;
+#endif
+
+  const auto gtr = [thrd](auto v) { return v >= thrd; };
   for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
     auto first = m_coeff_buf.begin() + y * m_dims[0] + set.start_x;
     auto last = first + set.length_x;
@@ -753,7 +783,13 @@ auto sperr::SPECK2D::m_decide_set_I_significance(const SPECKSet2D& set) -> SigTy
   // First rectangle: directly to the right of the missing top-left corner
   assert(set.type == SetType::TypeI);
 
-  const auto gtr = [thld = m_threshold](auto v) { return v >= thld; };
+#ifdef QZ_TERM
+    const auto thrd = m_threshold_arr[m_threshold_idx];
+#else
+    const auto thrd = m_threshold;
+#endif
+
+  const auto gtr = [thrd](auto v) { return v >= thrd; };
   for (size_t y = 0; y < set.start_y; y++) {
     auto first = m_coeff_buf.begin() + y * m_dims[0] + set.start_x;
     auto last = m_coeff_buf.begin() + (y + 1) * m_dims[0];
