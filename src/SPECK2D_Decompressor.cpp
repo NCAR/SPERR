@@ -74,7 +74,7 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
 
   // `m_condi_stream` could indicate that the field is constant, in which case,
   // there is no speck stream anymore.  Let's detect that case and return early.
-  // It will be the responsibility of decompress() to actually restore the constant field.
+  // It will be the responsibility of `decompress()` to actually restore the constant field.
   auto [constant, tmp1, tmp2] = m_conditioner.parse_constant(m_condi_stream);
   if (constant) {
     if (plen == 0)
@@ -86,7 +86,7 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   const auto speck_size = m_decoder.get_speck_stream_size(u8p);
   if (speck_size != plen)
     return RTNType::BitstreamWrongLen;
-  m_speck_stream.resize(speck_size, 0);
+  m_speck_stream.resize(speck_size);
   std::copy(u8p, u8p + speck_size, m_speck_stream.begin());
 
   // Task 5)
@@ -148,12 +148,9 @@ auto SPECK2D_Decompressor::decompress() -> RTNType
   // Step 1: SPECK decode
   if (m_speck_stream.empty())
     return RTNType::Error;
-
   auto rtn = m_decoder.parse_encoded_bitstream(m_speck_stream.data(), m_speck_stream.size());
   if (rtn != RTNType::Good)
     return rtn;
-
-  auto total_vals = m_dims[0] * m_dims[1];
 #ifndef QZ_TERM
   m_decoder.set_bit_budget(size_t(m_bpp * total_vals));
 #endif
@@ -162,6 +159,7 @@ auto SPECK2D_Decompressor::decompress() -> RTNType
     return rtn;
 
   // Step 2: Inverse Wavelet transform
+  const auto total_vals = m_dims[0] * m_dims[1];
   auto decoder_out = m_decoder.release_data();
   if (decoder_out.size() != total_vals)
     return RTNType::Error;
