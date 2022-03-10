@@ -84,8 +84,7 @@ auto SPECK2D_Compressor::release_encoded_bitstream() -> std::vector<uint8_t>&&
 auto SPECK2D_Compressor::compress() -> RTNType
 {
   const auto total_vals = m_dims[0] * m_dims[1];
-  if (m_val_buf.size() != total_vals || m_val_buf.empty())
-    return RTNType::Error;
+  assert(m_val_buf.size() == total_vals);
 
   m_condi_stream.fill(0);
   m_speck_stream.clear();
@@ -105,7 +104,6 @@ auto SPECK2D_Compressor::compress() -> RTNType
   auto [rtn, condi_meta] = m_conditioner.condition(m_val_buf);
   if (rtn != RTNType::Good)
     return rtn;
-
   // Copy conditioner meta data to `m_condi_stream`
   m_condi_stream = condi_meta;
 
