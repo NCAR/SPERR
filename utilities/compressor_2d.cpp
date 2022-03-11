@@ -24,19 +24,34 @@ int main(int argc, char* argv[])
       ->group("Input Specifications");
 
   auto use_double = bool{false};
-  app.add_flag("-d", use_double,
-               "Specify that input data is in double type.\n"
-               "Data is treated as float by default.")
+  app.add_flag("-d", use_double, "Specify that input data is in double type.\n"
+                                 "Data is treated as float by default.")
       ->group("Input Specifications");
 
   auto output_file = std::string();
   app.add_option("-o", output_file, "Output filename")->required()->group("Output Specifications");
 
+#ifdef QZ_TERM
+  auto qz_level = int32_t{0};
+  app.add_option("-q", qz_level,
+                 "Quantization level to reach when encoding\n"
+                 "Note 1: smaller quantization levels yield less compression error.\n"
+                 "Note 2: quantization levels could be negative integers as well.")
+      ->group("Compression Parameters")
+      ->required();
+
+  //auto tolerance = double{0.0};
+  //app.add_option("-t", tolerance, "Maximum point-wise error tolerance. E.g., `-t 1e-2`")
+  //    ->check(CLI::PositiveNumber)
+  //    ->group("Compression Parameters")
+  //    ->required();
+#else
   auto bpp = double{0.0};
-  app.add_option("--bpp", bpp, "Average bit-per-pixel")
+  app.add_option("--bpp", bpp, "Target bit-per-pixel. E.g., `--bpp 4.5`")
       ->check(CLI::Range(0.0, 64.0))
       ->required()
       ->group("Compression Parameters");
+#endif
 
   CLI11_PARSE(app, argc, argv);
 
@@ -49,7 +64,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  auto rtn = sperr::RTNType{RTNType::Good};
+  auto rtn = sperr::RTNType::Good;
   auto compressor = SPECK2D_Compressor();
 
   // Pass data to the compressor
@@ -64,8 +79,11 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  // Set bpp value
+#ifdef QZ_TERM
+  compressor.set_qz_level(qz_level);
+#else
   compressor.set_bpp(bpp);
+#endif
 
   // Perform the actual compression
   if (compressor.compress() != sperr::RTNType::Good) {
@@ -79,6 +97,7 @@ int main(int argc, char* argv[])
     std::cerr << "Compression bitstream empty!" << std::endl;
     return 1;
   }
+  std::cout << "Average BPP = " << stream.size() * 8.0 / total_vals << std::endl;
 
   rtn = sperr::write_n_bytes(output_file, stream.size(), stream.data());
   if (rtn != sperr::RTNType::Good) {

@@ -146,6 +146,7 @@ auto SPECK2D_Decompressor::decompress() -> RTNType
   }
 
   // Step 1: SPECK decode
+  const auto total_vals = m_dims[0] * m_dims[1];
   if (m_speck_stream.empty())
     return RTNType::Error;
   auto rtn = m_decoder.parse_encoded_bitstream(m_speck_stream.data(), m_speck_stream.size());
@@ -159,7 +160,6 @@ auto SPECK2D_Decompressor::decompress() -> RTNType
     return rtn;
 
   // Step 2: Inverse Wavelet transform
-  const auto total_vals = m_dims[0] * m_dims[1];
   auto decoder_out = m_decoder.release_data();
   if (decoder_out.size() != total_vals)
     return RTNType::Error;
