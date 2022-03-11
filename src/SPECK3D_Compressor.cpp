@@ -202,7 +202,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
   rtn = m_encoder.take_data(std::move(cdf_out), m_dims);
   if (rtn != RTNType::Good)
     return rtn;
-  m_encoder.set_bit_budget(size_t(m_bpp * total_vals));
+  m_encoder.set_bit_budget(size_t(m_bpp * total_vals) - m_condi_stream.size() * 8);
   rtn = m_encoder.encode();
   if (rtn != RTNType::Good)
     return rtn;
@@ -312,6 +312,8 @@ auto SPECK3D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
 auto SPECK3D_Compressor::set_bpp(double bpp) -> RTNType
 {
   if (bpp < 0.0 || bpp > 64.0)
+    return RTNType::InvalidParam;
+  else if (size_t(m_bpp * total_vals) <= m_condi_stream.size() * 8)
     return RTNType::InvalidParam;
   else {
     m_bpp = bpp;

@@ -59,6 +59,8 @@ auto SPECK2D_Compressor::set_bpp(double bpp) -> RTNType
 {
   if (bpp <= 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
+  else if (size_t(m_bpp * total_vals) <= (m_meta_size + m_condi_stream.size()) * 8)
+    return RTNType::InvalidParam;
   else {
     m_bpp = bpp;
     return RTNType::Good;
@@ -122,7 +124,8 @@ auto SPECK2D_Compressor::compress() -> RTNType
 #ifdef QZ_TERM
   m_encoder.set_quantization_term_level(m_qz_lev);
 #else
-  m_encoder.set_bit_budget(size_t(m_bpp * total_vals));
+  m_encoder.set_bit_budget(size_t(m_bpp * total_vals) -
+                           (m_meta_size + m_condi_stream.size()) * 8);
 #endif
 
   rtn = m_encoder.encode();
