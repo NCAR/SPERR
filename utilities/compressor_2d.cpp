@@ -1,5 +1,8 @@
 #include "SPECK2D_Compressor.h"
 
+#include "SPECK2D_Decompressor.h"
+#include <cassert>
+
 #include "CLI11.hpp"
 
 #include <cstdlib>
@@ -57,7 +60,7 @@ int main(int argc, char* argv[])
 
   // Read in the input file
   const size_t total_vals = dims[0] * dims[1];
-  auto orig = sperr::read_whole_file<uint8_t>(input_file);
+  const auto orig = sperr::read_whole_file<uint8_t>(input_file);
   if ((use_double && orig.size() != total_vals * sizeof(double)) ||
       (!use_double && orig.size() != total_vals * sizeof(float))) {
     std::cerr << "Read input file error: " << input_file << std::endl;
@@ -97,7 +100,27 @@ int main(int argc, char* argv[])
     std::cerr << "Compression bitstream empty!" << std::endl;
     return 1;
   }
+
+// DEBUG START
   std::cout << "Average BPP = " << stream.size() * 8.0 / total_vals << std::endl;
+
+  SPECK2D_Decompressor decompressor;
+  rtn = decompressor.use_bitstream(stream.data(), stream.size());
+  if (rtn != RTNType::Good) {
+    std::printf("%d: rtn = %d\n", __LINE__, rtn);
+    return 1;
+  }
+  rtn = decompressor.decompress();
+  if (rtn != RTNType::Good) {
+    std::printf("%d: rtn = %d\n", __LINE__, rtn);
+    return 1;
+  }
+  const auto recover = decompressor.get_data<float>();
+  assert(recover.size() * 4 == orig.size());
+  auto stats = sperr::calc_stats(reinterpret_cast<const float*>(orig.data()), 
+                                 recover.data(), recover.size(), 4);
+  std::cout << "psnr = " << stats[2] << ",  linfty = " << stats[1] << std::endl;
+// DEBUG FINISH
 
   rtn = sperr::write_n_bytes(output_file, stream.size(), stream.data());
   if (rtn != sperr::RTNType::Good) {
