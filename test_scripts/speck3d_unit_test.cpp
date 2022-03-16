@@ -54,9 +54,11 @@ class speck_tester {
 
 #ifdef QZ_TERM
     compressor.set_qz_level(qz_level);
-    compressor.set_tolerance(tol);
+    if (compressor.set_tolerance(tol) != RTNType::Good)
+      return 1;
 #else
-    compressor.set_bpp(bpp);
+    if (compressor.set_bpp(bpp) != RTNType::Good)
+      return 1;
 #endif
 
     if (compressor.compress() != RTNType::Good)
@@ -200,14 +202,14 @@ TEST(speck3d_constant, one_chunk)
 #ifdef QZ_TERM
   auto rtn = tester.execute(-1, 1);
 #else
-  auto rtn = tester.execute(1.0f);
+  auto rtn = tester.execute(1.0);
 #endif
   EXPECT_EQ(rtn, 0);
   auto psnr = tester.get_psnr();
   auto lmax = tester.get_lmax();
   auto infty = std::numeric_limits<float>::infinity();
   EXPECT_EQ(psnr, infty);
-  EXPECT_EQ(lmax, 0.0f);
+  EXPECT_EQ(lmax, 0.0);
 }
 
 TEST(speck3d_constant, omp_chunks)
@@ -217,14 +219,14 @@ TEST(speck3d_constant, omp_chunks)
 #ifdef QZ_TERM
   auto rtn = tester.execute(-1, 1);
 #else
-  auto rtn = tester.execute(1.0f);
+  auto rtn = tester.execute(1.0);
 #endif
   EXPECT_EQ(rtn, 0);
   auto psnr = tester.get_psnr();
   auto lmax = tester.get_lmax();
   auto infty = std::numeric_limits<float>::infinity();
   EXPECT_EQ(psnr, infty);
-  EXPECT_EQ(lmax, 0.0f);
+  EXPECT_EQ(lmax, 0.0);
 }
 
 #ifdef QZ_TERM
@@ -347,21 +349,21 @@ TEST(speck3d_bit_rate, small)
 {
   speck_tester tester("../test_data/wmag17.float", {17, 17, 17});
 
-  tester.execute(4.0f);
+  tester.execute(4.0);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 53.3289);
-  EXPECT_LT(psnr, 53.3290);
-  EXPECT_LT(lmax, 1.4303418e+0);
+  EXPECT_GT(psnr, 53.1574);
+  EXPECT_LT(psnr, 53.1574);
+  EXPECT_LT(lmax, 1.8177);
 
-  tester.execute(2.0f);
+  tester.execute(2.0);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 41.7436);
   EXPECT_LT(psnr, 41.7437);
   EXPECT_LT(lmax, 6.3229772e+0);
 
-  tester.execute(1.0f);
+  tester.execute(1.0);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 35.3246);
@@ -373,28 +375,28 @@ TEST(speck3d_bit_rate, big)
 {
   speck_tester tester("../test_data/wmag128.float", {128, 128, 128});
 
-  tester.execute(2.0f);
+  tester.execute(2.0);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
   EXPECT_GT(psnr, 54.8406);
   EXPECT_LT(psnr, 54.8407);
   EXPECT_LT(lmax, 4.9368744e+00);
 
-  tester.execute(1.0f);
+  tester.execute(1.0);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 48.0098);
   EXPECT_LT(psnr, 48.0099);
   EXPECT_LT(lmax, 1.0140460e+01);
 
-  tester.execute(0.5f);
+  tester.execute(0.5);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 43.4284);
   EXPECT_LT(psnr, 43.4285);
   EXPECT_LT(lmax, 2.2674592e+01);
 
-  tester.execute(0.25f);
+  tester.execute(0.25);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 39.8516);
@@ -406,35 +408,35 @@ TEST(speck3d_bit_rate, narrow_data_range)
 {
   speck_tester tester("../test_data/vorticity.128_128_41", {128, 128, 41});
 
-  tester.execute(4.0f);
+  tester.execute(4.0);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
   EXPECT_GT(psnr, 69.0433);
   EXPECT_LT(psnr, 69.0434);
   EXPECT_LT(lmax, 9.103715e-07);
 
-  tester.execute(2.0f);
+  tester.execute(2.0);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 56.7869);
   EXPECT_LT(psnr, 56.7870);
   EXPECT_LT(lmax, 4.199554e-06);
 
-  tester.execute(1.0f);
+  tester.execute(1.0);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 49.7772);
   EXPECT_LT(psnr, 49.7773);
   EXPECT_LT(lmax, 1.0023e-05);
 
-  tester.execute(0.5f);
+  tester.execute(0.5);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 45.2073);
   EXPECT_LT(psnr, 45.2074);
   EXPECT_LT(lmax, 0.000024);
 
-  tester.execute(0.25f);
+  tester.execute(0.25);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 41.7554);
@@ -446,14 +448,14 @@ TEST(speck3d_bit_rate_omp, narrow_data_range)
 {
   speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 1);
 
-  tester.execute(4.0f);
+  tester.execute(4.0);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
   EXPECT_GT(psnr, 67.8229);
   EXPECT_LT(psnr, 67.8230);
   EXPECT_LT(lmax, 1.108655e-06);
 
-  tester.execute(1.0f);
+  tester.execute(1.0);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 48.9123);
@@ -465,14 +467,14 @@ TEST(speck3d_bit_rate_omp, big)
 {
   speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 8);
 
-  tester.execute(2.0f);
+  tester.execute(2.0);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
   EXPECT_GT(psnr, 53.8117);
   EXPECT_LT(psnr, 53.8118);
   EXPECT_LT(lmax, 7.6953269e+00);
 
-  tester.execute(1.0f);
+  tester.execute(1.0);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 47.2304);
