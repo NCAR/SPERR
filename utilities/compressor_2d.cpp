@@ -107,12 +107,12 @@ int main(int argc, char* argv[])
   SPECK2D_Decompressor decompressor;
   rtn = decompressor.use_bitstream(stream.data(), stream.size());
   if (rtn != RTNType::Good) {
-    std::printf("%d: rtn = %d\n", __LINE__, rtn);
+    std::printf("%d: rtn = %d\n", __LINE__, int(rtn));
     return 1;
   }
   rtn = decompressor.decompress();
   if (rtn != RTNType::Good) {
-    std::printf("%d: rtn = %d\n", __LINE__, rtn);
+    std::printf("%d: rtn = %d\n", __LINE__, int(rtn));
     return 1;
   }
   const auto recover = decompressor.get_data<float>();

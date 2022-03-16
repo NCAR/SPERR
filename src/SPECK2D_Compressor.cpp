@@ -57,9 +57,10 @@ auto SPECK2D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
 #else
 auto SPECK2D_Compressor::set_bpp(double bpp) -> RTNType
 {
+  const auto total_vals = m_dims[0] * m_dims[1];
   if (bpp <= 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
-  else if (size_t(m_bpp * total_vals) <= (m_meta_size + m_condi_stream.size()) * 8)
+  else if (size_t(bpp * total_vals) <= (m_meta_size + m_condi_stream.size()) * 8)
     return RTNType::InvalidParam;
   else {
     m_bpp = bpp;
