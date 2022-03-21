@@ -158,16 +158,23 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   //
   // bool_byte[0]  : if the rest of the stream is zstd compressed.
   // bool_byte[1]  : if this bitstream is for 3D (true) or 2D (false) data.
-  // bool_byte[2-7]: unused
+  // bool_byte[2]  : if this bitstream is in QZ_TERM mode (true) or fixed-size mode (false).
+  // bool_byte[3]  : if bool_byte[2]==true, the SPERR stream is non-empty (true) or not (false).
+  // bool_byte[4-7]: unused
   //
-  uint8_t meta[2] = {uint8_t(SPERR_VERSION_MAJOR), 0};
+  auto meta = std::array<uint8_t, 2>{uint8_t(SPERR_VERSION_MAJOR), 0};
   assert(sizeof(meta) == m_meta_size);
   auto metabool = std::array<bool, 8>{false, false, false, false, false, false, false, false};
+
 #ifdef USE_ZSTD
   metabool[0] = true;
-#else
-  metabool[0] = false;
 #endif
+
+#ifdef QZ_TERM
+  metabool[2] = true;
+  // TODO: Also need to adjust the value of metabool[3].
+#endif
+
   meta[1] = sperr::pack_8_booleans(metabool);
 
   const auto total_size = m_meta_size + m_condi_stream.size() + m_speck_stream.size();
