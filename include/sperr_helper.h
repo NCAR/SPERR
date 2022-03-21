@@ -48,6 +48,7 @@ enum class RTNType {
   ZSTDMismatch,
   ZSTDError,
   SliceVolumeMismatch,
+  QzModeMismatch,
   Error
 };
 
