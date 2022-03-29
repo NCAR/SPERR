@@ -87,11 +87,17 @@ auto SPECK2D_Compressor::release_encoded_bitstream() -> std::vector<uint8_t>&&
 auto SPECK2D_Compressor::compress() -> RTNType
 {
   const auto total_vals = m_dims[0] * m_dims[1];
-  assert(m_val_buf.size() == total_vals);
+  if (m_val_buf.empty() || m_val_buf.size() != total_vals)
+    return RTNType::Error;
 
   m_condi_stream.fill(0);
   m_speck_stream.clear();
   m_encoded_stream.clear();
+
+#ifdef QZ_TERM
+  m_sperr_stream.clear();
+  m_num_outlier = 0;
+#endif
 
   // Believe it or not, there are constant fields passed in for compression!
   // Let's detect that case and skip the rest of the compression routine if it occurs.
@@ -102,23 +108,27 @@ auto SPECK2D_Compressor::compress() -> RTNType
     return tmp;
   }
 
+#ifdef QZ_TERM
+  // We make a copy of the original buffer for the outlier calculation.
+  m_val_buf2.resize(total_vals);
+  std::copy(m_val_buf.begin(), m_val_buf.end(), m_val_buf2.begin());
+#endif
+
   // Step 1: data goes through the conditioner
   m_conditioner.toggle_all_settings(m_conditioning_settings);
   auto [rtn, condi_meta] = m_conditioner.condition(m_val_buf);
   if (rtn != RTNType::Good)
     return rtn;
-  // Copy conditioner meta data to `m_condi_stream`
-  m_condi_stream = condi_meta;
+  m_condi_stream = condi_meta; // Copy conditioner meta data to `m_condi_stream`
 
   // Step 2: wavelet transform
   rtn = m_cdf.take_data(std::move(m_val_buf), m_dims);
   if (rtn != RTNType::Good)
     return rtn;
   m_cdf.dwt2d();
-  auto cdf_out = m_cdf.release_data();
 
   // Step 3: SPECK encoding
-  rtn = m_encoder.take_data(std::move(cdf_out), m_dims);
+  rtn = m_encoder.take_data(m_cdf.release_data(), m_dims);
   if (rtn != RTNType::Good)
     return rtn;
 
@@ -132,13 +142,55 @@ auto SPECK2D_Compressor::compress() -> RTNType
   rtn = m_encoder.encode();
   if (rtn != RTNType::Good)
     return rtn;
-
   // Copy SPECK bitstream to `m_speck_stream` so `m_encoder` can keep its internal storage.
   // The decision to copy rather than release is because that this stream is small so cheaper
   // to copy, and alos it's grown gradually inside of `m_encoder`.
   m_speck_stream = m_encoder.view_encoded_bitstream();
   if (m_speck_stream.empty())
     return RTNType::Error;
+
+#ifdef QZ_TERM
+  // Step 4: perform a decompression pass
+  rtn = m_encoder.decode();
+  if (rtn != RTNType::Good)
+    return rtn;
+  m_cdf.take_data(m_encoder.release_data(), m_dims);
+  m_cdf.idwt2d();
+  m_val_buf = m_cdf.release_data();
+  m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
+
+  // Step 5: find all the outliers!
+  // Note: the cumbersome calculations below prevents the situation where deviations
+  // are below the threshold in double precision, but above in single precision!
+  m_LOS.clear();
+  auto new_tol = m_tol;
+  m_diffv.resize(total_vals);
+  for (size_t i = 0; i < total_vals; i++)
+    m_diffv[i] = m_val_buf2[i] - m_val_buf[i];
+  for (size_t i = 0; i < total_vals; i++) {
+    auto f = std::abs(float(m_val_buf2[i]) - float(m_val_buf[i]));
+    if (double(f) > m_tol && std::abs(m_diffv[i]) <= m_tol)
+      new_tol = std::min(new_tol, std::abs(m_diffv[i]));
+  }
+  for (size_t i = 0; i < total_vals; i++) {
+    if (std::abs(m_diffv[i]) > new_tol)
+      m_LOS.emplace_back(i, m_diffv[i]);
+  }
+
+  // Step 6: actually encode located outliers
+  if (!m_LOS.empty()) {
+    m_num_outlier = m_LOS.size();
+    m_sperr.set_tolerance(new_tol);
+    m_sperr.set_length(total_vals);
+    m_sperr.take_outlier_list(std::move(m_LOS));
+    rtn = m_sperr.encode();
+    if (rtn != RTNType::Good)
+      return rtn;
+    m_sperr_stream = m_sperr.get_encoded_bitstream();
+    if (m_sperr_stream.empty())
+      return RTNType::Error;
+  }
+#endif
 
   rtn = m_assemble_encoded_bitstream();
 
@@ -172,12 +224,17 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 
 #ifdef QZ_TERM
   metabool[2] = true;
-  // TODO: Also need to adjust the value of metabool[3].
+  metabool[3] = m_sperr_stream.empty() ? false : true;
 #endif
 
   meta[1] = sperr::pack_8_booleans(metabool);
 
+#ifdef QZ_TERM
+  const auto total_size = m_meta_size + m_condi_stream.size() + m_speck_stream.size() +
+                          m_sperr_stream.size();
+#else
   const auto total_size = m_meta_size + m_condi_stream.size() + m_speck_stream.size();
+#endif
 
   // Task 2: assemble pieces of info together.
   m_encoded_stream.resize(total_size);
@@ -188,6 +245,10 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   itr += m_condi_stream.size();
   std::copy(m_speck_stream.begin(), m_speck_stream.end(), itr);
   itr += m_speck_stream.size();
+#ifdef QZ_TERM
+  std::copy(m_sperr_stream.begin(), m_sperr_stream.end(), itr);
+  itr += m_sperr_stream.size();
+#endif
   assert(itr == m_encoded_stream.end());
 
 #ifdef USE_ZSTD
@@ -200,8 +261,9 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   auto comp_size =
       ZSTD_compress(comp_buf.data() + m_meta_size, comp_buf_len,
                     m_encoded_stream.data() + m_meta_size, uncomp_size, ZSTD_CLEVEL_DEFAULT + 3);
-  if (ZSTD_isError(comp_size))
+  if (ZSTD_isError(comp_size)) {
     return RTNType::ZSTDError;
+  }
   else {
     comp_buf.resize(m_meta_size + comp_size);
     m_encoded_stream = std::move(comp_buf);
