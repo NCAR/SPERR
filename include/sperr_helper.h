@@ -35,7 +35,7 @@ enum class SigType : unsigned char { Insig, Sig, NewlySig, Dunno, Garbage };
 enum class SetType : unsigned char { TypeS, TypeI, Garbage };
 
 enum class RTNType {  // Return Type
-  Good,               // Initial value
+  Good = 0,
   WrongSize,
   IOError,
   InvalidParam,
