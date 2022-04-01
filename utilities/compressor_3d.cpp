@@ -105,9 +105,16 @@ int main(int argc, char* argv[])
   orig.clear();
   orig.shrink_to_fit();
 
-  if (compressor.compress() != sperr::RTNType::Good) {
-    std::cerr << "Compression failed!" << std::endl;
-    return 1;
+  rtn = compressor.compress();
+  switch (rtn) {
+    case sperr::RTNType::QzLevelTooBig :
+      std::cerr << "Compression failed because `q` is too big!" << std::endl;
+      return 1;
+    case sperr::RTNType::Good :
+      break;
+    default:
+      std::cerr << "Compression failed!" << std::endl;
+      return 1;
   }
 
   auto stream = compressor.get_encoded_bitstream();
