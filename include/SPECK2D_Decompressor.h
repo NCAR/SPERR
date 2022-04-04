@@ -11,6 +11,10 @@
 #include "Conditioner.h"
 #include "SPECK2D.h"
 
+#ifdef QZ_TERM
+#include "SPERR.h"
+#endif
+
 using sperr::RTNType;
 
 class SPECK2D_Decompressor {
@@ -39,6 +43,8 @@ class SPECK2D_Decompressor {
   const size_t m_meta_size = 2;
 
 #ifdef QZ_TERM
+  sperr::SPERR m_sperr;
+  sperr::vec8_type m_sperr_stream;
 #else
   double m_bpp = 0.0;
 #endif

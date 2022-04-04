@@ -12,7 +12,7 @@
 int main(int argc, char* argv[])
 {
   // Parse command line options
-  CLI::App app("Compress a 2D slice and output a SPERR bitstream");
+  CLI::App app("Compress a 2D slice and output a SPERR bitstream\n");
 
   auto input_file = std::string();
   app.add_option("filename", input_file, "Input file to the compressor")
@@ -43,17 +43,17 @@ int main(int argc, char* argv[])
       ->group("Compression Parameters")
       ->required();
 
-  //auto tolerance = double{0.0};
-  //app.add_option("-t", tolerance, "Maximum point-wise error tolerance. E.g., `-t 1e-2`")
-  //    ->check(CLI::PositiveNumber)
-  //    ->group("Compression Parameters")
-  //    ->required();
+  auto tolerance = double{0.0};
+  app.add_option("-t", tolerance, "Maximum point-wise error tolerance. E.g., `-t 1e-2`")
+      ->check(CLI::PositiveNumber)
+      ->group("Compression Parameters")
+      ->required();
 #else
   auto bpp = double{0.0};
   app.add_option("--bpp", bpp, "Target bit-per-pixel. E.g., `--bpp 4.5`")
       ->check(CLI::Range(0.0, 64.0))
-      ->required()
-      ->group("Compression Parameters");
+      ->group("Compression Parameters")
+      ->required();
 #endif
 
   CLI11_PARSE(app, argc, argv);
@@ -71,12 +71,14 @@ int main(int argc, char* argv[])
   auto compressor = SPECK2D_Compressor();
 
   // Pass data to the compressor
-  if (use_double)
+  if (use_double) {
     rtn = compressor.copy_data(reinterpret_cast<const double*>(orig.data()),
                                orig.size() / sizeof(double), {dims[0], dims[1], 1});
-  else
+  }
+  else {
     rtn = compressor.copy_data(reinterpret_cast<const float*>(orig.data()),
                                orig.size() / sizeof(float), {dims[0], dims[1], 1});
+  }
   if (rtn != RTNType::Good) {
     std::cerr << "Copy data failed!" << std::endl;
     return 1;
@@ -84,6 +86,7 @@ int main(int argc, char* argv[])
 
 #ifdef QZ_TERM
   compressor.set_qz_level(qz_level);
+  compressor.set_tolerance(tolerance);
 #else
   compressor.set_bpp(bpp);
 #endif

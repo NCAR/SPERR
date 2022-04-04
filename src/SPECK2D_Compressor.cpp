@@ -201,7 +201,7 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 {
   // This method does 3 things:
   // 1) prepend a proper header containing meta data.
-  // 2) assemble conditioner and SPECK bitstreams together
+  // 2) assemble conditioner, SPECK, and possibly SPERR bitstreams together.
   // 3) potentially apply ZSTD on the entire memory block except the meta data.
 
   // Meta data definition:
@@ -211,7 +211,7 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   // bool_byte[0]  : if the rest of the stream is zstd compressed.
   // bool_byte[1]  : if this bitstream is for 3D (true) or 2D (false) data.
   // bool_byte[2]  : if this bitstream is in QZ_TERM mode (true) or fixed-size mode (false).
-  // bool_byte[3]  : if bool_byte[2]==true, the SPERR stream is non-empty (true) or not (false).
+  // bool_byte[3]  : if bool_byte[2]==true, the SPERR stream is empty (true) or not (false).
   // bool_byte[4-7]: unused
   //
   auto meta = std::array<uint8_t, 2>{uint8_t(SPERR_VERSION_MAJOR), 0};
@@ -224,7 +224,7 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 
 #ifdef QZ_TERM
   metabool[2] = true;
-  metabool[3] = m_sperr_stream.empty() ? false : true;
+  metabool[3] = m_sperr_stream.empty();
 #endif
 
   meta[1] = sperr::pack_8_booleans(metabool);
