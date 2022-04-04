@@ -9,7 +9,7 @@
 int main(int argc, char* argv[])
 {
   // Parse command line options
-  CLI::App app("Decompress a SPERR bitstream and output a reconstructed volume.");
+  CLI::App app("Decompress a SPERR bitstream and output a reconstructed volume\n");
 
   auto input_file = std::string();
   app.add_option("input_filename", input_file, "Input compressed file to the decompressor")

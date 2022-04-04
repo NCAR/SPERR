@@ -133,11 +133,10 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
 
   // Step 2: Inverse Wavelet Transform
   //
-  // (Here we ask `m_cdf` to make a copy of coefficients from `m_decoder`
-  // instead of
+  // (Here we ask `m_cdf` to make a copy of coefficients from `m_decoder` instead of
   //  transfer the ownership, because `m_decoder` will reuse that memory when
   //  processing the next chunk. For the same reason, `m_cdf` keeps its memory.)
-  auto decoder_out = m_decoder.view_data();
+  const auto decoder_out = m_decoder.view_data();
   m_cdf.copy_data(decoder_out.data(), decoder_out.size(), m_dims);
   // Figure out which dwt3d strategy to use.
   // Note: this strategy needs to be consistent with SPECK3D_Compressor.

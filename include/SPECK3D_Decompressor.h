@@ -10,7 +10,10 @@
 #include "CDF97.h"
 #include "Conditioner.h"
 #include "SPECK3D.h"
+
+#ifdef QZ_TERM
 #include "SPERR.h"
+#endif
 
 #ifdef USE_ZSTD
 #include "zstd.h"
@@ -38,7 +41,6 @@ class SPECK3D_Decompressor {
 
  private:
   sperr::dims_type m_dims = {0, 0, 0};
-
   sperr::Conditioner::meta_type m_condi_stream;
   sperr::vec8_type m_speck_stream;
   sperr::vecd_type m_val_buf;

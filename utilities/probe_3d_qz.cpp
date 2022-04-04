@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
   //
   // Parse command line options
   //
-  CLI::App app("Test and evaluate SPERR compression on 3D volumes");
+  CLI::App app("Test and evaluate SPERR compression on 3D volumes\n");
 
   auto input_file = std::string();
   app.add_option("filename", input_file, "Input file to the probe")
