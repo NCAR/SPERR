@@ -20,8 +20,8 @@ int main(int argc, char* argv[])
   auto output_file = std::string();
   app.add_option("-o", output_file, "Output filename")->required()->group("Output Specifications");
 
-  double output_double = bool{false};
-  app.add_flag("--output_double", output_double,
+  auto output_double = bool{false};
+  app.add_flag("-d", output_double,
                "Specify to output data to be in double type.\n"
                "Data is output as float by default.")
       ->group("Output Specifications");
@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
     auto vol = decompressor.get_data<float>();
     if (vol.empty())
       return 1;
-    if (sperr::write_n_bytes(output_file, vol.size() * sizeof(double), vol.data()) !=
+    if (sperr::write_n_bytes(output_file, vol.size() * sizeof(float), vol.data()) !=
         sperr::RTNType::Good) {
       std::cerr << "Write to disk failed!" << std::endl;
       return 1;

@@ -36,7 +36,7 @@ enum class SetType : unsigned char { TypeS, TypeI, Garbage };
 
 // Return Type
 enum class RTNType {
-  Good,
+  Good = 0,
   WrongDims,
   BitstreamWrongLen,
   IOError,

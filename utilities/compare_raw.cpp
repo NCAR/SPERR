@@ -5,8 +5,9 @@
 #include <cstdlib>
 #include <memory>
 #include <numeric>
+#include <vector>
 
-using FLOAT = float;
+using FLOAT = double;
 
 int sam_read_n_bytes(const char* filename,
                      size_t n_bytes, /* input  */
