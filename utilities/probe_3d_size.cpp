@@ -51,7 +51,7 @@ auto test_configuration_omp(const T* in_buf,
     return 1;
   else
     printf("    Total compressed size in bytes = %ld, average bpp = %.2f\n", encoded_stream.size(),
-           float(encoded_stream.size() * 8) / float(total_vals));
+           double(encoded_stream.size() * 8) / double(total_vals));
 
   // Perform decompression
   SPECK3D_OMP_D decompressor;

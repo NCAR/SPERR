@@ -52,7 +52,7 @@ auto SPECK2D_Compressor::set_tolerance(double tol) -> RTNType
 }
 auto SPECK2D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
 {
-  return {0, 0};
+  return {m_num_outlier, m_sperr_stream.size()};
 }
 #else
 auto SPECK2D_Compressor::set_bpp(double bpp) -> RTNType

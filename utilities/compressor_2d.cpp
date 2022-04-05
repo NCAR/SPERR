@@ -1,7 +1,7 @@
 #include "SPECK2D_Compressor.h"
 
-#include "SPECK2D_Decompressor.h"
 #include <cassert>
+#include "SPECK2D_Decompressor.h"
 
 #include "CLI11.hpp"
 
@@ -27,8 +27,9 @@ int main(int argc, char* argv[])
       ->group("Input Specifications");
 
   auto use_double = bool{false};
-  app.add_flag("-d", use_double, "Specify that input data is in double type.\n"
-                                 "Data is treated as float by default.")
+  app.add_flag("-d", use_double,
+               "Specify that input data is in double type.\n"
+               "Data is treated as float by default.")
       ->group("Input Specifications");
 
   auto output_file = std::string();
@@ -55,6 +56,12 @@ int main(int argc, char* argv[])
       ->group("Compression Parameters")
       ->required();
 #endif
+
+  auto show_stats = bool{false};
+  app.add_flag("--stats", show_stats,
+               "Show statistics measuring the compression quality.\n"
+               "They are not calculated by default.")
+      ->group("Compression Parameters");
 
   CLI11_PARSE(app, argc, argv);
 
@@ -111,26 +118,51 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-// DEBUG START
-  std::cout << "Average BPP = " << stream.size() * 8.0 / total_vals << std::endl;
+  // Calculate and print statistics
+  if (show_stats) {
+    std::cout << "Average bpp = " << stream.size() * 8.0 / total_vals;
 
-  SPECK2D_Decompressor decompressor;
-  rtn = decompressor.use_bitstream(stream.data(), stream.size());
-  if (rtn != RTNType::Good) {
-    std::printf("%d: rtn = %d\n", __LINE__, int(rtn));
-    return 1;
+    // Use a decompressor to decompress and collect error statistics
+    SPECK2D_Decompressor decompressor;
+    rtn = decompressor.use_bitstream(stream.data(), stream.size());
+    if (rtn != RTNType::Good)
+      return 1;
+
+    rtn = decompressor.decompress();
+    if (rtn != RTNType::Good)
+      return 1;
+
+    if (use_double) {
+      const auto recover = decompressor.get_data<double>();
+      assert(recover.size() * 4 == orig.size());
+      auto stats = sperr::calc_stats(reinterpret_cast<const double*>(orig.data()), recover.data(),
+                                     recover.size(), 4);
+      std::cout << ", PSNR = " << stats[2] << ",  L-Infty = " << stats[1];
+      std::printf(", Data range = (%.2e, %.2e).\n", stats[3], stats[4]);
+    }
+    else {
+      const auto recover = decompressor.get_data<float>();
+      assert(recover.size() * 4 == orig.size());
+      auto stats = sperr::calc_stats(reinterpret_cast<const float*>(orig.data()), recover.data(),
+                                     recover.size(), 4);
+      std::cout << ", PSNR = " << stats[2] << ",  L-Infty = " << stats[1];
+      std::printf(", Data range = (%.2e, %.2e).\n", stats[3], stats[4]);
+    }
+
+    // Also collect outlier statistics
+    const auto out_stats = compressor.get_outlier_stats();
+    if (out_stats.first == 0) {
+      printf("There were no outliers corrected!\n");
+    }
+    else {
+      printf(
+          "There were %ld outliers, percentage = %.2f%%.\n"
+          "Correcting them takes bpp = %.2f, using total storage = %.2f%%\n",
+          out_stats.first, double(out_stats.first * 100) / double(total_vals),
+          double(out_stats.second * 8) / double(out_stats.first),
+          double(out_stats.second * 100) / double(stream.size()));
+    }
   }
-  rtn = decompressor.decompress();
-  if (rtn != RTNType::Good) {
-    std::printf("%d: rtn = %d\n", __LINE__, int(rtn));
-    return 1;
-  }
-  const auto recover = decompressor.get_data<float>();
-  assert(recover.size() * 4 == orig.size());
-  auto stats = sperr::calc_stats(reinterpret_cast<const float*>(orig.data()), 
-                                 recover.data(), recover.size(), 4);
-  std::cout << "psnr = " << stats[2] << ",  linfty = " << stats[1] << std::endl;
-// DEBUG FINISH
 
   rtn = sperr::write_n_bytes(output_file, stream.size(), stream.data());
   if (rtn != sperr::RTNType::Good) {
