@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
   rtn = compressor.compress();
   switch (rtn) {
     case sperr::RTNType::QzLevelTooBig:
-      std::cerr << "Compression failed because `q` is too big!" << std::endl;
+      std::cerr << "Compression failed because `q` is set too big!" << std::endl;
       return 1;
     case sperr::RTNType::Good:
       break;

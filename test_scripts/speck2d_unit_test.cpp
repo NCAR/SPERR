@@ -94,7 +94,16 @@ class speck_tester {
 //
 // Fixed-error mode
 //
-
+TEST(speck2d, lena)
+{
+  speck_tester tester("../test_data/lena512.float", 512, 512);
+  tester.execute(0, 10.0);
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 55.0896);
+  EXPECT_LT(psnr, 55.0897);
+  EXPECT_LT(lmax, 1.77392);
+}
 #else
 //
 // Fixed-rate mode
@@ -104,8 +113,8 @@ TEST(speck2d, lena)
   speck_tester tester("../test_data/lena512.float", 512, 512);
 
   tester.execute(4.0);
-  float psnr = tester.get_psnr();
-  float lmax = tester.get_lmax();
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
   EXPECT_GT(psnr, 54.2790);
   EXPECT_LT(psnr, 54.2791);
   EXPECT_LT(lmax, 2.2361);

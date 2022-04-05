@@ -92,9 +92,16 @@ int main(int argc, char* argv[])
 #endif
 
   // Perform the actual compression
-  if (compressor.compress() != sperr::RTNType::Good) {
-    std::cerr << "Compression Failed!" << std::endl;
-    return 1;
+  rtn = compressor.compress();
+  switch (rtn) {
+    case sperr::RTNType::QzLevelTooBig:
+      std::cerr << "Compression failed because `q` is set too big!" << std::endl;
+      return 1;
+    case sperr::RTNType::Good:
+      break;
+    default:
+      std::cout << "Compression failed!" << std::endl;
+      return 1;
   }
 
   // Output the encoded bitstream
