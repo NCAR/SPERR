@@ -39,11 +39,11 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
     return RTNType::SliceVolumeMismatch;
 
 #ifdef QZ_TERM
-  if (metabool[2] == false) // false means it's in fixed-size mode
+  if (metabool[2] == false)  // false means it's in fixed-size mode
     return RTNType::QzModeMismatch;
   const auto sperr_empty = metabool[3];
 #else
-  if (metabool[2] == true) // true means it's in fixed-error mode
+  if (metabool[2] == true)  // true means it's in fixed-error mode
     return RTNType::QzModeMismatch;
 #endif
 
@@ -108,7 +108,7 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   plen -= speck_size;
 
 #ifdef QZ_TERM
-  if (sperr_empty){
+  if (sperr_empty) {
     if (plen != 0)
       return RTNType::BitstreamWrongLen;
   }

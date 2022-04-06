@@ -46,7 +46,6 @@ auto SPECK2D_Compressor::set_tolerance(double tol) -> RTNType
     return RTNType::InvalidParam;
   else {
     m_tol = tol;
-    //m_sperr.set_tolerance(tol);
     return RTNType::Good;
   }
 }
@@ -119,7 +118,7 @@ auto SPECK2D_Compressor::compress() -> RTNType
   auto [rtn, condi_meta] = m_conditioner.condition(m_val_buf);
   if (rtn != RTNType::Good)
     return rtn;
-  m_condi_stream = condi_meta; // Copy conditioner meta data to `m_condi_stream`
+  m_condi_stream = condi_meta;  // Copy conditioner meta data to `m_condi_stream`
 
   // Step 2: wavelet transform
   rtn = m_cdf.take_data(std::move(m_val_buf), m_dims);
@@ -135,8 +134,7 @@ auto SPECK2D_Compressor::compress() -> RTNType
 #ifdef QZ_TERM
   m_encoder.set_quantization_term_level(m_qz_lev);
 #else
-  m_encoder.set_bit_budget(size_t(m_bpp * total_vals) -
-                           (m_meta_size + m_condi_stream.size()) * 8);
+  m_encoder.set_bit_budget(size_t(m_bpp * total_vals) - (m_meta_size + m_condi_stream.size()) * 8);
 #endif
 
   rtn = m_encoder.encode();
@@ -230,8 +228,8 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   meta[1] = sperr::pack_8_booleans(metabool);
 
 #ifdef QZ_TERM
-  const auto total_size = m_meta_size + m_condi_stream.size() + m_speck_stream.size() +
-                          m_sperr_stream.size();
+  const auto total_size =
+      m_meta_size + m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
 #else
   const auto total_size = m_meta_size + m_condi_stream.size() + m_speck_stream.size();
 #endif
