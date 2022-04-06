@@ -18,9 +18,7 @@ int main(int argc, char* argv[])
       ->required();
 
   auto output_file = std::string();
-  app.add_option("-o", output_file, "Output filename")
-      ->group("Output Specifications")
-      ->required();
+  app.add_option("-o", output_file, "Output filename")->group("Output Specifications")->required();
 
   auto output_double = bool{false};
   app.add_flag("-d", output_double,

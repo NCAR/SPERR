@@ -19,9 +19,7 @@ int main(int argc, char* argv[])
       ->required();
 
   auto output_file = std::string();
-  app.add_option("-o", output_file, "Output filename")
-      ->group("Output Specifications")
-      ->required();
+  app.add_option("-o", output_file, "Output filename")->group("Output Specifications")->required();
 
   auto output_double = bool{false};
   app.add_flag("-d", output_double,
@@ -32,7 +30,7 @@ int main(int argc, char* argv[])
 #ifndef QZ_TERM
   // Partial bitstream decompression is only applicable to fixed-size mode.
   auto decomp_bpp = double{0.0};
-  app.add_option("--bpp", decomp_bpp, 
+  app.add_option("--bpp", decomp_bpp,
                  "Partially decode the bitstream up to a certain bit rate.\n"
                  "If not specified, the entire bitstream will be decoded.")
       ->check(CLI::Range(0.0, 64.0))
@@ -48,7 +46,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  // Use a decompressor 
+  // Use a decompressor
   SPECK2D_Decompressor decompressor;
   auto rtn = decompressor.use_bitstream(in_stream.data(), in_stream.size());
   if (rtn != RTNType::Good) {
