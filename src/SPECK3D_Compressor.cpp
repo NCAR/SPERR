@@ -249,8 +249,9 @@ auto SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 
   const size_t comp_buf_size = ZSTD_compressBound(total_size);
   m_encoded_stream.resize(comp_buf_size);
-  const size_t comp_size = ZSTD_compressCCtx(m_cctx.get(), m_encoded_stream.data(), comp_buf_size,
-                                             m_zstd_buf.data(), total_size, ZSTD_CLEVEL_DEFAULT + 6);
+  const size_t comp_size =
+      ZSTD_compressCCtx(m_cctx.get(), m_encoded_stream.data(), comp_buf_size, m_zstd_buf.data(),
+                        total_size, ZSTD_CLEVEL_DEFAULT + 6);
   if (ZSTD_isError(comp_size))
     return RTNType::ZSTDError;
   else {
