@@ -134,21 +134,22 @@ int main(int argc, char* argv[])
 
     if (use_double) {
       const auto recover = decompressor.get_data<double>();
-      assert(recover.size() * 4 == orig.size());
+      assert(recover.size() * sizeof(double) == orig.size());
       auto stats = sperr::calc_stats(reinterpret_cast<const double*>(orig.data()), recover.data(),
                                      recover.size(), 4);
-      std::cout << ", PSNR = " << stats[2] << ",  L-Infty = " << stats[1];
+      std::cout << ", PSNR = " << stats[2] << "dB,  L-Infty = " << stats[1];
       std::printf(", Data range = (%.2e, %.2e).\n", stats[3], stats[4]);
     }
     else {
       const auto recover = decompressor.get_data<float>();
-      assert(recover.size() * 4 == orig.size());
+      assert(recover.size() * sizeof(float) == orig.size());
       auto stats = sperr::calc_stats(reinterpret_cast<const float*>(orig.data()), recover.data(),
                                      recover.size(), 4);
-      std::cout << ", PSNR = " << stats[2] << ",  L-Infty = " << stats[1];
+      std::cout << ", PSNR = " << stats[2] << "dB,  L-Infty = " << stats[1];
       std::printf(", Data range = (%.2e, %.2e).\n", stats[3], stats[4]);
     }
 
+#ifdef QZ_TERM
     // Also collect outlier statistics
     const auto out_stats = compressor.get_outlier_stats();
     if (out_stats.first == 0) {
@@ -162,6 +163,7 @@ int main(int argc, char* argv[])
           double(out_stats.second * 8) / double(out_stats.first),
           double(out_stats.second * 100) / double(stream.size()));
     }
+#endif
   }
 
   rtn = sperr::write_n_bytes(output_file, stream.size(), stream.data());

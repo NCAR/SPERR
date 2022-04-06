@@ -9,16 +9,18 @@
 int main(int argc, char* argv[])
 {
   // Parse command line options
-  CLI::App app("Decompress a SPERR bitstream and output a reconstructed volume\n");
+  CLI::App app("Decompress a 3D SPERR bitstream and output a reconstructed volume\n");
 
   auto input_file = std::string();
-  app.add_option("input_filename", input_file, "Input compressed file to the decompressor")
-      ->required()
+  app.add_option("input_filename", input_file, "Input bitstream to the decompressor")
       ->check(CLI::ExistingFile)
-      ->group("Input Specifications");
+      ->group("Input Specifications")
+      ->required();
 
   auto output_file = std::string();
-  app.add_option("-o", output_file, "Output filename")->required()->group("Output Specifications");
+  app.add_option("-o", output_file, "Output filename")
+      ->group("Output Specifications")
+      ->required();
 
   auto output_double = bool{false};
   app.add_flag("-d", output_double,
@@ -46,8 +48,10 @@ int main(int argc, char* argv[])
   // Let's do the actual work
   //
   auto in_stream = sperr::read_whole_file<uint8_t>(input_file);
-  if (in_stream.empty())
+  if (in_stream.empty()) {
+    std::cerr << "Read input stream error: " << input_file << std::endl;
     return 1;
+  }
   SPECK3D_OMP_D decompressor;
   decompressor.set_num_threads(omp_num_threads);
   if (decompressor.use_bitstream(in_stream.data(), in_stream.size()) != sperr::RTNType::Good) {
@@ -69,22 +73,22 @@ int main(int argc, char* argv[])
   in_stream.shrink_to_fit();
 
   if (output_double) {
-    auto vol = decompressor.view_data();
+    const auto vol = decompressor.view_data();
     if (vol.empty())
       return 1;
     if (sperr::write_n_bytes(output_file, vol.size() * sizeof(double), vol.data()) !=
         sperr::RTNType::Good) {
-      std::cerr << "Write to disk failed!" << std::endl;
+      std::cerr << "Write to disk failed: " << output_file << std::endl;
       return 1;
     }
   }
   else {
-    auto vol = decompressor.get_data<float>();
+    const auto vol = decompressor.get_data<float>();
     if (vol.empty())
       return 1;
     if (sperr::write_n_bytes(output_file, vol.size() * sizeof(float), vol.data()) !=
         sperr::RTNType::Good) {
-      std::cerr << "Write to disk failed!" << std::endl;
+      std::cerr << "Write to disk failed: " << output_file << std::endl;
       return 1;
     }
   }
