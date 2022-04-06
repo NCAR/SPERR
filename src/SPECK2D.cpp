@@ -301,7 +301,6 @@ auto sperr::SPECK2D::m_sorting_pass_decode() -> RTNType
   return RTNType::Good;
 }
 
-  
 #ifdef QZ_TERM
 void sperr::SPECK2D::m_quantize_P_encode(size_t idx)
 {
@@ -393,7 +392,6 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
   bool is_sig = true;
 
   if (need_decide_sig) {
-
 #ifdef QZ_TERM
     const auto thrd = m_threshold_arr[m_threshold_idx];
 #else
@@ -762,9 +760,9 @@ auto sperr::SPECK2D::m_decide_set_S_significance(const SPECKSet2D& set) -> SigTy
   assert(set.type == SetType::TypeS);
 
 #ifdef QZ_TERM
-    const auto thrd = m_threshold_arr[m_threshold_idx];
+  const auto thrd = m_threshold_arr[m_threshold_idx];
 #else
-    const auto thrd = m_threshold;
+  const auto thrd = m_threshold;
 #endif
 
   const auto gtr = [thrd](auto v) { return v >= thrd; };
@@ -784,9 +782,9 @@ auto sperr::SPECK2D::m_decide_set_I_significance(const SPECKSet2D& set) -> SigTy
   assert(set.type == SetType::TypeI);
 
 #ifdef QZ_TERM
-    const auto thrd = m_threshold_arr[m_threshold_idx];
+  const auto thrd = m_threshold_arr[m_threshold_idx];
 #else
-    const auto thrd = m_threshold;
+  const auto thrd = m_threshold;
 #endif
 
   const auto gtr = [thrd](auto v) { return v >= thrd; };
