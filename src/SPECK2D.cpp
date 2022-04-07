@@ -76,8 +76,8 @@ auto sperr::SPECK2D::encode() -> RTNType
 
 #ifdef QZ_TERM
   m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
-  for (size_t i = 1; i < m_threshold_arr.size(); i++)
-    m_threshold_arr[i] = m_threshold_arr[i - 1] * 0.5;
+  std::generate(m_threshold_arr.begin(), m_threshold_arr.end(),
+                [v = m_threshold_arr[0]]() mutable { return std::exchange(v, v * 0.5); });
 
   // If the requested termination level is already above max_coeff_bits, return right away.
   if (m_qz_term_lev > m_max_coeff_bits)
@@ -139,8 +139,8 @@ auto sperr::SPECK2D::decode() -> RTNType
 
 #ifdef QZ_TERM
   m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
-  for (size_t i = 1; i < m_threshold_arr.size(); i++)
-    m_threshold_arr[i] = m_threshold_arr[i - 1] * 0.5;
+  std::generate(m_threshold_arr.begin(), m_threshold_arr.end(),
+                [v = m_threshold_arr[0]]() mutable { return std::exchange(v, v * 0.5); });
 
   for (m_threshold_idx = 0; m_threshold_idx < m_threshold_arr.size(); m_threshold_idx++) {
     auto rtn = m_sorting_pass_decode();
@@ -182,7 +182,7 @@ auto sperr::SPECK2D::decode() -> RTNType
 #endif
 
   // Restore coefficient signs
-  auto tmp = std::array<double, 2>{-1.0, 1.0};
+  const auto tmp = std::array<double, 2>{-1.0, 1.0};
   for (size_t i = 0; i < m_sign_array.size(); i++)
     m_coeff_buf[i] *= tmp[m_sign_array[i]];
 
@@ -395,7 +395,6 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
   bool is_sig = true;
 
   if (need_decide_sig) {
-
 #ifdef QZ_TERM
     const auto thrd = m_threshold_arr[m_threshold_idx];
 #else

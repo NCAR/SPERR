@@ -86,8 +86,8 @@ auto sperr::SPECK3D::encode() -> RTNType
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
   m_max_coeff_bits = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
   m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
-  for (size_t i = 1; i < m_threshold_arr.size(); i++)
-    m_threshold_arr[i] = m_threshold_arr[i - 1] * 0.5;
+  std::generate(m_threshold_arr.begin(), m_threshold_arr.end(),
+                [v = m_threshold_arr[0]]() mutable { return std::exchange(v, v * 0.5); });
 
 #ifdef QZ_TERM
   // If the requested termination level is already above max_coeff_bits, return right away.
@@ -148,8 +148,8 @@ auto sperr::SPECK3D::decode() -> RTNType
 
   m_bit_idx = 0;
   m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
-  for (size_t i = 1; i < m_threshold_arr.size(); i++)
-    m_threshold_arr[i] = m_threshold_arr[i - 1] * 0.5;
+  std::generate(m_threshold_arr.begin(), m_threshold_arr.end(),
+                [v = m_threshold_arr[0]]() mutable { return std::exchange(v, v * 0.5); });
 
   for (m_threshold_idx = 0; m_threshold_idx < m_threshold_arr.size(); m_threshold_idx++) {
     auto rtn = m_sorting_pass_decode();
