@@ -148,7 +148,8 @@ auto sperr::SPECK2D::decode() -> RTNType
     if (m_bit_idx > m_bit_buffer.size())
       return RTNType::Error;
     // This is the actual termination condition in QZ_TERM mode.
-    if (m_threshold_idx >= m_max_coeff_bits - m_qz_term_lev)
+    assert(m_max_coeff_bits >= m_qz_term_lev);
+    if (m_threshold_idx >= size_t(m_max_coeff_bits - m_qz_term_lev))
       break;
     m_clean_LIS();
   }
@@ -306,7 +307,8 @@ void sperr::SPECK2D::m_quantize_P_encode(size_t idx)
 {
   auto coeff = m_coeff_buf[idx] - m_threshold_arr[m_threshold_idx];
   const auto tmpb = std::array<bool, 2>{false, true};
-  const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
+  assert(m_max_coeff_bits >= m_qz_term_lev);
+  const size_t num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
     const auto tmpd = std::array<double, 2>{0.0, m_threshold_arr[i]};
     const size_t o1 = coeff >= m_threshold_arr[i];
@@ -319,7 +321,8 @@ void sperr::SPECK2D::m_quantize_P_encode(size_t idx)
 void sperr::SPECK2D::m_quantize_P_decode(size_t idx)
 {
   auto coeff = m_threshold_arr[m_threshold_idx] * 1.5;
-  const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
+  assert(m_max_coeff_bits >= m_qz_term_lev);
+  const size_t num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
     const auto tmp = std::array<double, 2>{-m_threshold_arr[i + 1], m_threshold_arr[i + 1]};
     coeff += tmp[m_bit_buffer[m_bit_idx++]];
@@ -392,6 +395,7 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
   bool is_sig = true;
 
   if (need_decide_sig) {
+
 #ifdef QZ_TERM
     const auto thrd = m_threshold_arr[m_threshold_idx];
 #else

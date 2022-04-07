@@ -94,7 +94,7 @@ class SPECK2D : public SPECK_Storage {
 
 #ifdef QZ_TERM
   std::array<double, 64> m_threshold_arr;
-  int32_t m_threshold_idx = 0;
+  size_t m_threshold_idx = 0;
 #else
   double m_threshold = 0.0;       // Threshold that's used for an iteration.
   std::vector<size_t> m_LSP_new;  // List of significant pixels, just identified

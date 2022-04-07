@@ -94,7 +94,7 @@ auto sperr::SPECK3D::encode() -> RTNType
   if (m_qz_term_lev > m_max_coeff_bits)
     return RTNType::QzLevelTooBig;
 
-  const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
+  const size_t num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
   for (m_threshold_idx = 0; m_threshold_idx < num_qz_levs; m_threshold_idx++) {
     m_sorting_pass_encode();
     m_clean_LIS();
@@ -107,7 +107,6 @@ auto sperr::SPECK3D::encode() -> RTNType
 
 #else
 
-  // We say that we run 64 iterations at most.
   for (m_threshold_idx = 0; m_threshold_idx < m_threshold_arr.size(); m_threshold_idx++) {
     // The following two functions only return `BitBudgetMet` or `Good`.
     auto rtn = m_sorting_pass_encode();
@@ -160,7 +159,8 @@ auto sperr::SPECK3D::decode() -> RTNType
     if (m_bit_idx > m_bit_buffer.size())
       return RTNType::Error;
     // This is the actual termination condition in QZ_TERM mode.
-    if (m_threshold_idx >= m_max_coeff_bits - m_qz_term_lev)
+    assert(m_max_coeff_bits >= m_qz_term_lev);
+    if (m_threshold_idx >= size_t(m_max_coeff_bits - m_qz_term_lev))
       break;
 #else
     if (rtn == RTNType::BitBudgetMet)
@@ -387,7 +387,8 @@ void sperr::SPECK3D::m_quantize_P_encode(size_t idx)
   auto coeff = m_coeff_buf[idx] - m_threshold_arr[m_threshold_idx];
 
   const auto tmpb = arrb2_type{false, true};
-  const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
+  assert(m_max_coeff_bits >= m_qz_term_lev);
+  const size_t num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
     const auto tmpd = arrd2_type{0.0, m_threshold_arr[i]};
     const size_t o1 = coeff >= m_threshold_arr[i];  // C++ guarantees this conversion
@@ -403,7 +404,8 @@ void sperr::SPECK3D::m_quantize_P_decode(size_t idx)
   // subject to a QZ operation based on the current threshold.
   auto coeff = m_threshold_arr[m_threshold_idx] * 1.5;
 
-  const auto num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
+  assert(m_max_coeff_bits >= m_qz_term_lev);
+  const size_t num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
     // C++ standard guarantees the conversion between bool and int.
     const auto tmp = arrd2_type{-m_threshold_arr[i + 1], m_threshold_arr[i + 1]};

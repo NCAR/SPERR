@@ -118,7 +118,7 @@ class SPECK3D : public SPECK_Storage {
   size_t m_budget = 0;
 #endif
 
-  int32_t m_threshold_idx = 0;
+  size_t m_threshold_idx = 0;
   std::array<double, 64> m_threshold_arr;
 };
 
