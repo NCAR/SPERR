@@ -9,7 +9,6 @@ using d2_type = std::array<double, 2>;
 using b2_type = std::array<bool, 2>;
 using u2_type = std::array<uint32_t, 2>;
 
-
 //
 // Class SPECKSet3D
 //
