@@ -5,6 +5,11 @@
 #include <cstring>
 #include <numeric>
 
+using d2_type = std::array<double, 2>;
+using b2_type = std::array<bool, 2>;
+using u2_type = std::array<uint32_t, 2>;
+
+
 //
 // Class SPECKSet3D
 //
@@ -38,7 +43,7 @@ void sperr::SPECK3D::set_bit_budget(size_t budget)
   size_t mod = budget % 8;
   if (mod == 0)
     m_budget = budget;
-  else  // we can fill up the last byter!
+  else  // we can fill up the last byte!
     m_budget = budget + 8 - mod;
 }
 #endif
@@ -187,7 +192,7 @@ auto sperr::SPECK3D::decode() -> RTNType
 #endif
 
   // Restore coefficient signs by setting some of them negative
-  auto tmp = arrd2_type{-1.0, 1.0};
+  const auto tmp = d2_type{-1.0, 1.0};
   for (size_t i = 0; i < m_sign_array.size(); i++)
     m_coeff_buf[i] *= tmp[m_sign_array[i]];
 
@@ -386,11 +391,11 @@ void sperr::SPECK3D::m_quantize_P_encode(size_t idx)
   // subject to a QZ operation based on the current threshold.
   auto coeff = m_coeff_buf[idx] - m_threshold_arr[m_threshold_idx];
 
-  const auto tmpb = arrb2_type{false, true};
+  const auto tmpb = b2_type{false, true};
   assert(m_max_coeff_bits >= m_qz_term_lev);
   const size_t num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
-    const auto tmpd = arrd2_type{0.0, m_threshold_arr[i]};
+    const auto tmpd = d2_type{0.0, m_threshold_arr[i]};
     const size_t o1 = coeff >= m_threshold_arr[i];  // C++ guarantees this conversion
     coeff -= tmpd[o1];
     m_bit_buffer.push_back(tmpb[o1]);
@@ -408,7 +413,7 @@ void sperr::SPECK3D::m_quantize_P_decode(size_t idx)
   const size_t num_qz_levs = m_max_coeff_bits - m_qz_term_lev + 1;
   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
     // C++ standard guarantees the conversion between bool and int.
-    const auto tmp = arrd2_type{-m_threshold_arr[i + 1], m_threshold_arr[i + 1]};
+    const auto tmp = d2_type{-m_threshold_arr[i + 1], m_threshold_arr[i + 1]};
     coeff += tmp[m_bit_buffer[m_bit_idx++]];
   }
   m_coeff_buf[idx] = coeff;
@@ -423,8 +428,8 @@ auto sperr::SPECK3D::m_refinement_pass_encode() -> RTNType
   // In fixed-size mode, we either process all elements in `m_LSP_old`,
   // or process a portion of them that meets the total bit budget.
   //
-  const auto tmpb = arrb2_type{false, true};
-  const auto tmpd = arrd2_type{0.0, -m_threshold_arr[m_threshold_idx]};
+  const auto tmpb = b2_type{false, true};
+  const auto tmpd = d2_type{0.0, -m_threshold_arr[m_threshold_idx]};
   const size_t n_to_process = std::min(m_LSP_old.size(), m_budget - m_bit_buffer.size());
   for (size_t i = 0; i < n_to_process; i++) {
     const size_t loc = m_LSP_old[i];
@@ -457,7 +462,7 @@ auto sperr::SPECK3D::m_refinement_pass_decode() -> RTNType
   const double half_T = m_threshold_arr[m_threshold_idx] * 0.5;
   const double neg_half_T = m_threshold_arr[m_threshold_idx] * -0.5;
   const double one_half_T = m_threshold_arr[m_threshold_idx] * 1.5;
-  const auto tmp = arrd2_type{neg_half_T, half_T};
+  const auto tmp = d2_type{neg_half_T, half_T};
 
   for (size_t i = 0; i < num_bits; i++)
     m_coeff_buf[m_LSP_old[i]] += tmp[m_bit_buffer[m_bit_idx + i]];
@@ -769,8 +774,6 @@ auto sperr::SPECK3D::m_ready_to_decode() const -> bool
 
 auto sperr::SPECK3D::m_partition_S_XYZ(const SPECKSet3D& set) const -> std::array<SPECKSet3D, 8>
 {
-  using u2_type = std::array<uint32_t, 2>;
-
   const auto split_x = u2_type{set.length_x - set.length_x / 2, set.length_x / 2};
   const auto split_y = u2_type{set.length_y - set.length_y / 2, set.length_y / 2};
   const auto split_z = u2_type{set.length_z - set.length_z / 2, set.length_z / 2};
@@ -880,7 +883,6 @@ auto sperr::SPECK3D::m_partition_S_XY(const SPECKSet3D& set) const -> std::array
 {
   std::array<SPECKSet3D, 4> subsets;
 
-  using u2_type = std::array<uint32_t, 2>;
   const auto split_x = u2_type{set.length_x - set.length_x / 2, set.length_x / 2};
   const auto split_y = u2_type{set.length_y - set.length_y / 2, set.length_y / 2};
 
