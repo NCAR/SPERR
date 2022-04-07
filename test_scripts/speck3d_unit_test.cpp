@@ -209,7 +209,7 @@ TEST(speck3d_constant, one_chunk)
   auto lmax = tester.get_lmax();
   auto infty = std::numeric_limits<float>::infinity();
   EXPECT_EQ(psnr, infty);
-  EXPECT_EQ(lmax, 0.0);
+  EXPECT_EQ(lmax, 0.0f);
 }
 
 TEST(speck3d_constant, omp_chunks)
@@ -226,7 +226,7 @@ TEST(speck3d_constant, omp_chunks)
   auto lmax = tester.get_lmax();
   auto infty = std::numeric_limits<float>::infinity();
   EXPECT_EQ(psnr, infty);
-  EXPECT_EQ(lmax, 0.0);
+  EXPECT_EQ(lmax, 0.0f);
 }
 
 #ifdef QZ_TERM
