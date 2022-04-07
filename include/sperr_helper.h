@@ -34,9 +34,11 @@ enum class SigType : unsigned char { Insig, Sig, NewlySig, Dunno, Garbage };
 
 enum class SetType : unsigned char { TypeS, TypeI, Garbage };
 
-enum class RTNType {  // Return Type
+// Return Type
+enum class RTNType {
   Good = 0,
-  WrongSize,
+  WrongDims,
+  BitstreamWrongLen,
   IOError,
   InvalidParam,
   QzLevelTooBig,  // a very specific type of invalid param
@@ -46,6 +48,7 @@ enum class RTNType {  // Return Type
   ZSTDMismatch,
   ZSTDError,
   SliceVolumeMismatch,
+  QzModeMismatch,
   Error
 };
 

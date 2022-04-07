@@ -40,7 +40,11 @@ class SPECK2D : public SPECK_Storage {
   SPECK2D();
 
   // trivial input
-  void set_bit_budget(size_t);  // How many bits does speck process?
+#ifdef QZ_TERM
+  void set_quantization_term_level(int32_t lev);
+#else
+  void set_bit_budget(size_t);
+#endif
 
   // core operations
   auto encode() -> RTNType;
@@ -49,8 +53,6 @@ class SPECK2D : public SPECK_Storage {
  private:
   auto m_sorting_pass_encode() -> RTNType;
   auto m_sorting_pass_decode() -> RTNType;
-  auto m_refinement_pass_encode() -> RTNType;
-  auto m_refinement_pass_decode() -> RTNType;
   auto m_process_S_encode(size_t, size_t, size_t&, bool) -> RTNType;
   auto m_process_S_decode(size_t, size_t, size_t&, bool) -> RTNType;
   auto m_process_P_encode(size_t, size_t&, bool) -> RTNType;
@@ -69,24 +71,37 @@ class SPECK2D : public SPECK_Storage {
   [[nodiscard]] auto m_ready_to_encode() const -> bool;
   [[nodiscard]] auto m_ready_to_decode() const -> bool;
 
+#ifdef QZ_TERM
+  void m_quantize_P_encode(size_t idx);
+  void m_quantize_P_decode(size_t idx);
+#else
+  auto m_refinement_pass_encode() -> RTNType;
+  auto m_refinement_pass_decode() -> RTNType;
+#endif
+
   //
   // Private data members
   //
-  double m_threshold = 0.0;   // Threshold that's used for an iteration
-  size_t m_budget = 0;        // What's the budget for num of bits?
   size_t m_bit_idx = 0;       // Used for decode. Which bit we're at?
   bool m_encode_mode = true;  // Encode (true) or Decode (false) mode?
 
+  std::vector<std::vector<SPECKSet2D>> m_LIS;  // List of insignificant sets
+  std::vector<size_t> m_LIP;                   // List of insignificant pixels
+  SPECKSet2D m_I;
+
+  const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
   std::vector<bool> m_sign_array;
 
+#ifdef QZ_TERM
+  std::array<double, 64> m_threshold_arr;
+  size_t m_threshold_idx = 0;
+#else
+  double m_threshold = 0.0;       // Threshold that's used for an iteration.
   std::vector<size_t> m_LSP_new;  // List of significant pixels, just identified
   std::vector<size_t> m_LSP_old;  // List of significant pixels, previously identified
-
-  std::vector<std::vector<SPECKSet2D>> m_LIS; // List of insignificant sets
-  std::vector<size_t> m_LIP;                  // List of insignificant pixels
-
-  SPECKSet2D m_I;
-  const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
+  size_t m_budget = 0;            // What's the budget for num of bits in fixed-rate mode?
+#endif
+  
 };
 
 };  // namespace sperr

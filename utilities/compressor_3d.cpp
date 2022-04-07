@@ -9,7 +9,7 @@
 int main(int argc, char* argv[])
 {
   // Parse command line options
-  CLI::App app("Compress a 3D volume and output a SPERR bitstream");
+  CLI::App app("Compress a 3D volume and output a SPERR bitstream\n");
 
   auto input_file = std::string();
   app.add_option("filename", input_file, "Input data file to the compressor")
@@ -43,19 +43,19 @@ int main(int argc, char* argv[])
   auto qz_level = int32_t{0};
   app.add_option("-q", qz_level,
                  "Quantization level to reach when encoding\n"
-                 "Note 1: smaller n usually yields smaller compression errors.\n"
-                 "Note 2: n could be negative integers as well.")
+                 "Note 1: smaller quantization levels yield less compression error.\n"
+                 "Note 2: quantization levels could be negative integers as well.")
       ->group("Compression Parameters")
       ->required();
 
   auto tolerance = double{0.0};
   app.add_option("-t", tolerance, "Maximum point-wise error tolerance. E.g., `-t 1e-2`")
       ->check(CLI::PositiveNumber)
-      ->required()
-      ->group("Compression Parameters");
+      ->group("Compression Parameters")
+      ->required();
 #else
   auto bpp = double{0.0};
-  app.add_option("--bpp", bpp, "Target bit-per-pixel. E.g., `-bpp 2.3`")
+  app.add_option("--bpp", bpp, "Target bit-per-pixel. E.g., `--bpp 2.3`")
       ->check(CLI::Range(0.0, 64.0))
       ->group("Compression Parameters")
       ->required();
@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
   rtn = compressor.compress();
   switch (rtn) {
     case sperr::RTNType::QzLevelTooBig:
-      std::cerr << "Compression failed because `q` is too big!" << std::endl;
+      std::cerr << "Compression failed because `q` is set too big!" << std::endl;
       return 1;
     case sperr::RTNType::Good:
       break;

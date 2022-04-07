@@ -175,14 +175,18 @@ auto sperr::Conditioner::test_constant(const vecd_type& buf) const -> std::pair<
   // Prepare the meta block
   auto meta = meta_type();
   meta.fill(0);
-  // First byte of meta
-  meta[0] = sperr::pack_8_booleans(b8);
-  // Next 8 bytes of meta: the constant value
-  size_t pos = 1;
-  std::memcpy(meta.data() + pos, &val, sizeof(val));
-  // Next 8 bytes of meta: how many constant values?
-  pos += sizeof(val);
-  std::memcpy(meta.data() + pos, &nval, sizeof(nval));
+
+  // It only makes sense to really prepare the meta block if the field tests to be constant.
+  if (b8[4]) {
+    // First byte of meta
+    meta[0] = sperr::pack_8_booleans(b8);
+    // Next 8 bytes of meta: the constant value
+    size_t pos = 1;
+    std::memcpy(meta.data() + pos, &val, sizeof(val));
+    // Next 8 bytes of meta: how many constant values?
+    pos += sizeof(val);
+    std::memcpy(meta.data() + pos, &nval, sizeof(nval));
+  }
 
   return {b8[4], meta};
 }
@@ -191,14 +195,18 @@ auto sperr::Conditioner::parse_constant(const meta_type& meta) const
     -> std::tuple<bool, double, uint64_t>
 {
   auto b8 = sperr::unpack_8_booleans(meta[0]);
-  // Next 8 bytes: the constant value
   double val = 0.0;
-  size_t pos = 1;
-  std::memcpy(&val, meta.data() + pos, sizeof(val));
-  // Next 8 bytes: how many constant values:
   uint64_t nval = 0;
-  pos += sizeof(val);
-  std::memcpy(&nval, meta.data() + pos, sizeof(nval));
+
+  // It only makes sense to really parse the meta block if the field tests to be constant.
+  if (b8[4]) {
+    // Next 8 bytes: the constant value
+    size_t pos = 1;
+    std::memcpy(&val, meta.data() + pos, sizeof(val));
+    // Next 8 bytes: how many constant values:
+    pos += sizeof(val);
+    std::memcpy(&nval, meta.data() + pos, sizeof(nval));
+  }
 
   return std::make_tuple(b8[4], val, nval);
 }

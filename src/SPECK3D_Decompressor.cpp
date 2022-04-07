@@ -47,7 +47,7 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   // Step 1: extract conditioner stream from it
   const auto condi_size = m_condi_stream.size();
   if (condi_size > ptr_len)
-    return RTNType::WrongSize;
+    return RTNType::BitstreamWrongLen;
   std::copy(ptr, ptr + condi_size, m_condi_stream.begin());
   size_t pos = condi_size;
 
@@ -60,14 +60,14 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
     if (condi_size == ptr_len)
       return RTNType::Good;
     else
-      return RTNType::WrongSize;
+      return RTNType::BitstreamWrongLen;
   }
 
   // Step 2: extract SPECK stream from it
   const uint8_t* const speck_p = ptr + pos;
   const auto speck_size = m_decoder.get_speck_stream_size(speck_p);
   if (pos + speck_size > ptr_len)
-    return RTNType::WrongSize;
+    return RTNType::BitstreamWrongLen;
   m_speck_stream.resize(speck_size, 0);
   std::copy(speck_p, speck_p + speck_size, m_speck_stream.begin());
   pos += speck_size;
@@ -81,13 +81,13 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
     const uint8_t* const sperr_p = ptr + pos;
     const auto sperr_size = m_sperr.get_sperr_stream_size(sperr_p);
     if (pos + sperr_size != ptr_len)
-      return RTNType::WrongSize;
+      return RTNType::BitstreamWrongLen;
     m_sperr_stream.resize(sperr_size, 0);
     std::copy(sperr_p, sperr_p + sperr_size, m_sperr_stream.begin());
   }
 #else
   if (pos != ptr_len)
-    return RTNType::WrongSize;
+    return RTNType::BitstreamWrongLen;
 #endif
 
   return RTNType::Good;
@@ -124,22 +124,19 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
   auto rtn = m_decoder.parse_encoded_bitstream(m_speck_stream.data(), m_speck_stream.size());
   if (rtn != RTNType::Good)
     return rtn;
-
 #ifndef QZ_TERM
   m_decoder.set_bit_budget(size_t(m_bpp * double(m_dims[0] * m_dims[1] * m_dims[2])));
 #endif
-
   rtn = m_decoder.decode();
   if (rtn != RTNType::Good)
     return rtn;
 
   // Step 2: Inverse Wavelet Transform
   //
-  // (Here we ask `m_cdf` to make a copy of coefficients from `m_decoder`
-  // instead of
+  // (Here we ask `m_cdf` to make a copy of coefficients from `m_decoder` instead of
   //  transfer the ownership, because `m_decoder` will reuse that memory when
   //  processing the next chunk. For the same reason, `m_cdf` keeps its memory.)
-  auto decoder_out = m_decoder.view_data();
+  const auto decoder_out = m_decoder.view_data();
   m_cdf.copy_data(decoder_out.data(), decoder_out.size(), m_dims);
   // Figure out which dwt3d strategy to use.
   // Note: this strategy needs to be consistent with SPECK3D_Compressor.

@@ -9,7 +9,10 @@
 #include "CDF97.h"
 #include "Conditioner.h"
 #include "SPECK3D.h"
+
+#ifdef QZ_TERM
 #include "SPERR.h"
+#endif
 
 #ifdef USE_ZSTD
 #include "zstd.h"
@@ -31,8 +34,7 @@ class SPECK3D_Compressor {
 #ifdef QZ_TERM
   void set_qz_level(int32_t);
   auto set_tolerance(double) -> RTNType;
-
-  // Return 1) the number of outliers, and 2) the num of bytes to encode them.
+  // Return 1) the number of outliers, and 2) the number of bytes to encode them.
   auto get_outlier_stats() const -> std::pair<size_t, size_t>;
 #else
   auto set_bpp(double) -> RTNType;
@@ -64,17 +66,15 @@ class SPECK3D_Compressor {
   sperr::SPERR m_sperr;
   int32_t m_qz_lev = 0;
   double m_tol = 0.0;  // tolerance used in error correction
-  size_t m_num_outlier = 0;
   std::vector<sperr::Outlier> m_LOS;  // List of OutlierS
   sperr::vecd_type m_val_buf2;        // Copy of `m_val_buf` that goes through encoding.
-  sperr::vecd_type m_diffv;           // Store differences in double in a vector.
+  sperr::vecd_type m_diffv;           // Store differences to locate outliers.
 #else
   double m_bpp = 0.0;
 #endif
 
 #ifdef USE_ZSTD
-  std::unique_ptr<uint8_t[]> m_zstd_buf = nullptr;
-  size_t m_zstd_buf_len = 0;
+  sperr::vec8_type m_zstd_buf;
   std::unique_ptr<ZSTD_CCtx, decltype(&ZSTD_freeCCtx)> m_cctx = {nullptr, &ZSTD_freeCCtx};
 #endif
 

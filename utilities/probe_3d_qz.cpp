@@ -56,7 +56,7 @@ auto test_configuration_omp(const T* in_buf,
     printf("    Total compressed size in bytes = %ld, average bpp = %.2f\n", encoded_stream.size(),
            T(encoded_stream.size() * 8) / T(total_vals));
 
-  auto outlier = compressor.get_outlier_stats();
+  const auto outlier = compressor.get_outlier_stats();
   if (outlier.first == 0) {
     printf("    There are no outliers at this quantization level!\n");
   }
@@ -64,9 +64,9 @@ auto test_configuration_omp(const T* in_buf,
     printf(
         "    Outliers: num = %ld, pct = %.2f%%, bpp ~ %.2f, "
         "using total storage ~ %.2f%%\n",
-        outlier.first, float(outlier.first * 100) / float(total_vals),
-        float(outlier.second * 8) / float(outlier.first),
-        float(outlier.second * 100) / float(encoded_stream.size()));
+        outlier.first, double(outlier.first * 100) / double(total_vals),
+        double(outlier.second * 8) / double(outlier.first),
+        double(outlier.second * 100) / double(encoded_stream.size()));
   }
 
   // Perform decompression
@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
   //
   // Parse command line options
   //
-  CLI::App app("Test and evaluate SPERR compression on 3D volumes");
+  CLI::App app("Test and evaluate SPERR compression on 3D volumes\n");
 
   auto input_file = std::string();
   app.add_option("filename", input_file, "Input file to the probe")

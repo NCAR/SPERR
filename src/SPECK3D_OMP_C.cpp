@@ -59,7 +59,7 @@ auto SPECK3D_OMP_C::copy_data(const T* vol,
                               sperr::dims_type chunk_dims) -> RTNType
 {
   if (len != vol_dims[0] * vol_dims[1] * vol_dims[2])
-    return RTNType::WrongSize;
+    return RTNType::WrongDims;
   else
     m_dims = vol_dims;
 
@@ -188,11 +188,21 @@ auto SPECK3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   // 8 booleans:
   // bool[0]  : if ZSTD is used
   // bool[1]  : if this bitstream is for 3D (true) or 2D (false) data.
-  // bool[2-7]: undefined
-  auto b8 = std::array<bool, 8>{false, true, false, false, false, false, false, false};
+  // bool[2]  : if this bitstream is in QZ_TERM mode (true) or fixed-size mode (false).
+  // bool[3-7]: undefined
+  //
+  auto b8 = std::array<bool, 8>{false, false, false, false, false, false, false, false};
+
 #ifdef USE_ZSTD
   b8[0] = true;
 #endif
+
+  b8[1] = true;
+
+#ifdef QZ_TERM
+  b8[2] = true;
+#endif
+
   header[loc] = sperr::pack_8_booleans(b8);
   loc += 1;
 

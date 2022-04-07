@@ -49,8 +49,7 @@ class SPECK3D : public SPECK_Storage {
   void set_quantization_term_level(int32_t lev);
 #else
   // How many bits does speck process (for encoding and decoding).
-  // If set to zero during decoding, then all bits in the bitstream will be
-  // processed.
+  // If set to zero during decoding, then all bits in the bitstream will be processed.
   void set_bit_budget(size_t);
 #endif
 
@@ -59,9 +58,6 @@ class SPECK3D : public SPECK_Storage {
   auto decode() -> RTNType;
 
  private:
-  using arrd2_type = std::array<double, 2>;
-  using arrb2_type = std::array<bool, 2>;
-
   [[nodiscard]] auto m_ready_to_encode() const -> bool;
   [[nodiscard]] auto m_ready_to_decode() const -> bool;
   void m_clean_LIS();  // Clean garbage sets from m_LIS if too much garbage exists.
@@ -93,11 +89,10 @@ class SPECK3D : public SPECK_Storage {
       -> std::pair<SigType, std::array<uint32_t, 3>>;
 
 #ifdef QZ_TERM
-  // Quantize a pixel to the specified `m_qz_term_lev`.
+  // Quantize a pixel to the specified `m_qz_term_lev` (defined in SPECK_Storage).
   void m_quantize_P_encode(size_t idx);
   void m_quantize_P_decode(size_t idx);
 #else
-  // Quantize pixels bitplane by bitplane.
   auto m_refinement_pass_encode() -> RTNType;
   auto m_refinement_pass_decode() -> RTNType;
 #endif
@@ -117,10 +112,10 @@ class SPECK3D : public SPECK_Storage {
 #ifndef QZ_TERM
   std::vector<size_t> m_LSP_new;
   std::vector<size_t> m_LSP_old;
-  size_t m_budget = 0;  // What's the budget for num of bits?
+  size_t m_budget = 0;
 #endif
 
-  int32_t m_threshold_idx = 0;
+  size_t m_threshold_idx = 0;
   std::array<double, 64> m_threshold_arr;
 };
 

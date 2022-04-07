@@ -1,5 +1,8 @@
 #include "SPECK2D_Compressor.h"
 
+#include <cassert>
+#include "SPECK2D_Decompressor.h"
+
 #include "CLI11.hpp"
 
 #include <cstdlib>
@@ -9,7 +12,7 @@
 int main(int argc, char* argv[])
 {
   // Parse command line options
-  CLI::App app("Compress a 2D slice and output a SPERR bitstream");
+  CLI::App app("Compress a 2D slice and output a SPERR bitstream\n");
 
   auto input_file = std::string();
   app.add_option("filename", input_file, "Input file to the compressor")
@@ -32,45 +35,80 @@ int main(int argc, char* argv[])
   auto output_file = std::string();
   app.add_option("-o", output_file, "Output filename")->required()->group("Output Specifications");
 
+#ifdef QZ_TERM
+  auto qz_level = int32_t{0};
+  app.add_option("-q", qz_level,
+                 "Quantization level to reach when encoding\n"
+                 "Note 1: smaller quantization levels yield less compression error.\n"
+                 "Note 2: quantization levels could be negative integers as well.")
+      ->group("Compression Parameters")
+      ->required();
+
+  auto tolerance = double{0.0};
+  app.add_option("-t", tolerance, "Maximum point-wise error tolerance. E.g., `-t 1e-2`")
+      ->check(CLI::PositiveNumber)
+      ->group("Compression Parameters")
+      ->required();
+#else
   auto bpp = double{0.0};
-  app.add_option("--bpp", bpp, "Average bit-per-pixel")
+  app.add_option("--bpp", bpp, "Target bit-per-pixel. E.g., `--bpp 4.5`")
       ->check(CLI::Range(0.0, 64.0))
-      ->required()
+      ->group("Compression Parameters")
+      ->required();
+#endif
+
+  auto show_stats = bool{false};
+  app.add_flag("--stats", show_stats,
+               "Show statistics measuring the compression quality.\n"
+               "They are not calculated by default.")
       ->group("Compression Parameters");
 
   CLI11_PARSE(app, argc, argv);
 
   // Read in the input file
   const size_t total_vals = dims[0] * dims[1];
-  auto orig = sperr::read_whole_file<uint8_t>(input_file);
+  const auto orig = sperr::read_whole_file<uint8_t>(input_file);
   if ((use_double && orig.size() != total_vals * sizeof(double)) ||
       (!use_double && orig.size() != total_vals * sizeof(float))) {
     std::cerr << "Read input file error: " << input_file << std::endl;
     return 1;
   }
 
-  auto rtn = sperr::RTNType{RTNType::Good};
+  auto rtn = sperr::RTNType::Good;
   auto compressor = SPECK2D_Compressor();
 
   // Pass data to the compressor
-  if (use_double)
+  if (use_double) {
     rtn = compressor.copy_data(reinterpret_cast<const double*>(orig.data()),
                                orig.size() / sizeof(double), {dims[0], dims[1], 1});
-  else
+  }
+  else {
     rtn = compressor.copy_data(reinterpret_cast<const float*>(orig.data()),
                                orig.size() / sizeof(float), {dims[0], dims[1], 1});
+  }
   if (rtn != RTNType::Good) {
     std::cerr << "Copy data failed!" << std::endl;
     return 1;
   }
 
-  // Set bpp value
+#ifdef QZ_TERM
+  compressor.set_qz_level(qz_level);
+  compressor.set_tolerance(tolerance);
+#else
   compressor.set_bpp(bpp);
+#endif
 
   // Perform the actual compression
-  if (compressor.compress() != sperr::RTNType::Good) {
-    std::cerr << "Compression Failed!" << std::endl;
-    return 1;
+  rtn = compressor.compress();
+  switch (rtn) {
+    case sperr::RTNType::QzLevelTooBig:
+      std::cerr << "Compression failed because `q` is set too big!" << std::endl;
+      return 1;
+    case sperr::RTNType::Good:
+      break;
+    default:
+      std::cout << "Compression failed!" << std::endl;
+      return 1;
   }
 
   // Output the encoded bitstream
@@ -78,6 +116,54 @@ int main(int argc, char* argv[])
   if (stream.empty()) {
     std::cerr << "Compression bitstream empty!" << std::endl;
     return 1;
+  }
+
+  // Calculate and print statistics
+  if (show_stats) {
+    std::cout << "Average bpp = " << stream.size() * 8.0 / total_vals;
+
+    // Use a decompressor to decompress and collect error statistics
+    SPECK2D_Decompressor decompressor;
+    rtn = decompressor.use_bitstream(stream.data(), stream.size());
+    if (rtn != RTNType::Good)
+      return 1;
+
+    rtn = decompressor.decompress();
+    if (rtn != RTNType::Good)
+      return 1;
+
+    if (use_double) {
+      const auto recover = decompressor.get_data<double>();
+      assert(recover.size() * sizeof(double) == orig.size());
+      auto stats = sperr::calc_stats(reinterpret_cast<const double*>(orig.data()), recover.data(),
+                                     recover.size(), 4);
+      std::cout << ", PSNR = " << stats[2] << "dB,  L-Infty = " << stats[1];
+      std::printf(", Data range = (%.2e, %.2e).\n", stats[3], stats[4]);
+    }
+    else {
+      const auto recover = decompressor.get_data<float>();
+      assert(recover.size() * sizeof(float) == orig.size());
+      auto stats = sperr::calc_stats(reinterpret_cast<const float*>(orig.data()), recover.data(),
+                                     recover.size(), 4);
+      std::cout << ", PSNR = " << stats[2] << "dB,  L-Infty = " << stats[1];
+      std::printf(", Data range = (%.2e, %.2e).\n", stats[3], stats[4]);
+    }
+
+#ifdef QZ_TERM
+    // Also collect outlier statistics
+    const auto out_stats = compressor.get_outlier_stats();
+    if (out_stats.first == 0) {
+      printf("There were no outliers corrected!\n");
+    }
+    else {
+      printf(
+          "There were %ld outliers, percentage = %.2f%%.\n"
+          "Correcting them takes bpp = %.2f, using total storage = %.2f%%\n",
+          out_stats.first, double(out_stats.first * 100) / double(total_vals),
+          double(out_stats.second * 8) / double(out_stats.first),
+          double(out_stats.second * 100) / double(stream.size()));
+    }
+#endif
   }
 
   rtn = sperr::write_n_bytes(output_file, stream.size(), stream.data());

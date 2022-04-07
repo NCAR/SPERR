@@ -48,7 +48,7 @@ auto sperr::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& s
 {
   // `src` has to have a size of multiples of 8.
   if (src.size() % 8 != 0)
-    return RTNType::WrongSize;
+    return RTNType::BitstreamWrongLen;
 
   // `dest` should have enough space, as the API specifies.
   assert(dest.size() >= offset + src.size() / 8);
@@ -99,7 +99,7 @@ auto sperr::unpack_booleans(std::vector<bool>& dest,
     return RTNType::InvalidParam;
 
   if (src_len < src_offset)
-    return RTNType::WrongSize;
+    return RTNType::BitstreamWrongLen;
 
   const size_t num_of_bytes = src_len - src_offset;
 
