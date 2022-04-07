@@ -53,7 +53,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
   m_speck_stream.clear();
   m_sperr_stream.clear();
   m_encoded_stream.clear();
-  m_num_outlier = 0;
+  m_LOS.clear();
 
   // Believe it or not, there are constant fields passed in for compression!
   // Let's detect that case and skip the rest of the compression routine if it occurs.
@@ -120,7 +120,6 @@ auto SPECK3D_Compressor::compress() -> RTNType
   // Solution: find those data points, and use their slightly reduced error as
   // the new tolerance.
   //
-  m_LOS.clear();
   auto new_tol = m_tol;
   m_diffv.resize(total_vals);
   for (size_t i = 0; i < total_vals; i++)
@@ -137,7 +136,6 @@ auto SPECK3D_Compressor::compress() -> RTNType
 
   // Step 6: encode any outlier that's found.
   if (!m_LOS.empty()) {
-    m_num_outlier = m_LOS.size();
     m_sperr.set_tolerance(new_tol);
     m_sperr.set_length(total_vals);
     m_sperr.copy_outlier_list(m_LOS);
@@ -306,7 +304,7 @@ auto SPECK3D_Compressor::set_tolerance(double tol) -> RTNType
 }
 auto SPECK3D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
 {
-  return {m_num_outlier, m_sperr_stream.size()};
+  return {m_LOS.size(), m_sperr_stream.size()};
 }
 #else
 auto SPECK3D_Compressor::set_bpp(double bpp) -> RTNType

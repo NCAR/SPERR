@@ -66,7 +66,6 @@ class SPECK3D_Compressor {
   sperr::SPERR m_sperr;
   int32_t m_qz_lev = 0;
   double m_tol = 0.0;  // tolerance used in error correction
-  size_t m_num_outlier = 0;
   std::vector<sperr::Outlier> m_LOS;  // List of OutlierS
   sperr::vecd_type m_val_buf2;        // Copy of `m_val_buf` that goes through encoding.
   sperr::vecd_type m_diffv;           // Store differences to locate outliers.

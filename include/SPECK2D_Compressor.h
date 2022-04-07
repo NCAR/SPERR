@@ -49,7 +49,6 @@ class SPECK2D_Compressor {
 #ifdef QZ_TERM
   sperr::vec8_type m_sperr_stream;
   sperr::SPERR m_sperr;
-  std::vector<sperr::Outlier> m_LOS;  // List of OutlierS
   sperr::vecd_type m_val_buf2;        // A copy of `m_val_buf` for outlier locating.
   sperr::vecd_type m_diffv;           // Store differences to locate outliers.
   int32_t m_qz_lev = 0;

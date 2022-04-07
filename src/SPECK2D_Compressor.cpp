@@ -160,7 +160,7 @@ auto SPECK2D_Compressor::compress() -> RTNType
   // Step 5: find all the outliers!
   // Note: the cumbersome calculations below prevents the situation where deviations
   // are below the threshold in double precision, but above in single precision!
-  m_LOS.clear();
+  auto LOS = std::vector<sperr::Outlier>();
   auto new_tol = m_tol;
   m_diffv.resize(total_vals);
   for (size_t i = 0; i < total_vals; i++)
@@ -172,15 +172,15 @@ auto SPECK2D_Compressor::compress() -> RTNType
   }
   for (size_t i = 0; i < total_vals; i++) {
     if (std::abs(m_diffv[i]) > new_tol)
-      m_LOS.emplace_back(i, m_diffv[i]);
+      LOS.emplace_back(i, m_diffv[i]);
   }
 
   // Step 6: actually encode located outliers
-  if (!m_LOS.empty()) {
-    m_num_outlier = m_LOS.size();
+  if (!LOS.empty()) {
+    m_num_outlier = LOS.size();
     m_sperr.set_tolerance(new_tol);
     m_sperr.set_length(total_vals);
-    m_sperr.take_outlier_list(std::move(m_LOS));
+    m_sperr.take_outlier_list(std::move(LOS));
     rtn = m_sperr.encode();
     if (rtn != RTNType::Good)
       return rtn;
