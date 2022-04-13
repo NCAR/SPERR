@@ -1,10 +1,9 @@
 #include "SPECK2D_Compressor.h"
-
-#include <cassert>
 #include "SPECK2D_Decompressor.h"
 
 #include "CLI11.hpp"
 
+#include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
