@@ -20,9 +20,9 @@ class SPECK2D_Compressor {
  public:
   // Accept incoming data: copy from a raw memory block
   template <typename T>
-  auto copy_data(const T* p,  // In: pointer to the data memory block
-                 size_t len,  // In: number of values (float or double) in the memory block
-                 sperr::dims_type dims)  // In: dimension of the 2D slice w/ dims[2] == 1
+  auto copy_data(const T* p,  // Input: pointer to the data memory block
+                 size_t len,  // Input: number of values (float or double) in the memory block
+                 sperr::dims_type dims)  // Input: dimension of the 2D slice w/ dims[2] == 1
       -> RTNType;
 
   // Accept incoming data by taking ownership of the memory block

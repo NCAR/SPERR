@@ -25,16 +25,21 @@
  * 3: `is_float` value not supported
  * -1: other errors
  */
-extern "C" int sperr_qzcomp_2d_double(
-    const void* src,         /* In: buffer that contains a 2D slice */
-    int32_t is_float,        /* In: input buffer type: 1 == float, 0 == double */
-    size_t dimx,             /* In: X (fastest-varying) dimension */
-    size_t dimy,             /* In: Y (slowest-varying) dimension */
-    int32_t qlev,            /* In: q (quantization) level for SPERR */
-    double tol,              /* In: tolerance for SPERR */
-    void* dst,               /* Out: pre-allocated buffer for output bitstream */
-    size_t dst_len,          /* Out: allocated length of `dst` in byte */
-    size_t* useful_dst_len); /* Out: length of valid bitstream in `dst` */
+extern "C" int sperr_qzcomp_2d(
+    const void* src,         /* Input: buffer that contains a 2D slice */
+    int32_t is_float,        /* Input: input buffer type: 1 == float, 0 == double */
+    size_t dimx,             /* Input: X (fastest-varying) dimension */
+    size_t dimy,             /* Input: Y (slowest-varying) dimension */
+    int32_t qlev,            /* Input: q (quantization) level for SPERR */
+    double tol,              /* Input: tolerance for SPERR */
+    void* dst,               /* Output: pre-allocated buffer for output bitstream */
+    size_t dst_len,          /* Output: allocated length of `dst` in byte */
+    size_t* useful_dst_len); /* Output: length of valid bitstream in `dst` */
+
+
+/* finish fixed-error mode */
+#else
+/* fixed-size mode */
 
 #endif
 #endif

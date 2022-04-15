@@ -3,15 +3,15 @@
 #include "SPECK2D_Compressor.h"
 #include "SPECK2D_Decompressor.h"
 
-int sperr_qzcomp_2d_double(const void* src,
-                           int32_t is_float,
-                           size_t dimx,
-                           size_t dimy,
-                           int32_t qlev,
-                           double tol,
-                           void* dst,
-                           size_t dst_len,
-                           size_t* useful_dst_len)
+int sperr_qzcomp_2d(const void* src,
+                    int32_t is_float,
+                    size_t dimx,
+                    size_t dimy,
+                    int32_t qlev,
+                    double tol,
+                    void* dst,
+                    size_t dst_len,
+                    size_t* useful_dst_len)
 {
   // Setup the compressor
   const auto total_vals = dimx * dimy;
