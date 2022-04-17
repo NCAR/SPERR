@@ -9,10 +9,13 @@ int sperr_qzcomp_2d(const void* src,
                     size_t dimy,
                     int32_t qlev,
                     double tol,
-                    size_t dst_len,
-                    void* dst,
-                    size_t* useful_dst_len)
+                    void** dst,
+                    size_t* dst_len)
 {
+  // Examine if `dst` is pointing to a NULL pointer
+  if (*dst != NULL)
+    return 1;
+
   // Setup the compressor
   const auto total_vals = dimx * dimy;
   auto compressor = SPECK2D_Compressor();
@@ -47,11 +50,10 @@ int sperr_qzcomp_2d(const void* src,
   const auto& stream = compressor.view_encoded_bitstream();
   if (stream.empty())
     return -1;
-  if (stream.size() > dst_len)
-    return 1;
-
-  *useful_dst_len = stream.size();
-  std::copy(stream.cbegin(), stream.cend(), static_cast<uint8_t*>(dst));
+  *dst_len = stream.size();
+  uint8_t* buf = (uint8_t*)std::malloc(stream.size());
+  std::copy(stream.cbegin(), stream.cend(), buf);
+  *dst = buf;
 
   return 0;
 }
@@ -68,7 +70,7 @@ int sperr_qzdecomp_2d(const void* src,
     return 1;
 
   // Use a decompressor to decompress this bitstream
-  SPECK2D_Decompressor decompressor;
+  auto decompressor = SPECK2D_Decompressor();
   auto rtn = decompressor.use_bitstream(src, src_len);
   if (rtn != RTNType::Good)
     return -1;
@@ -77,7 +79,7 @@ int sperr_qzdecomp_2d(const void* src,
     return -1;
 
   // Double check that the slice dimension is correct
-  const auto slice = decompressor.view_data();
+  const auto& slice = decompressor.view_data();
   const auto dims = decompressor.get_dims();
   if (slice.size() != dims[0] * dims[1])
     return -1;
