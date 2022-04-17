@@ -43,6 +43,7 @@ include/CDF97.h;\
 include/SPECK_Storage.h;\
 include/SPECK2D.h;\
 include/SPECK3D.h;\
+include/SPERR_C_API.h;\
 include/SPERR.h;")
 set_target_properties( SPERR PROPERTIES PUBLIC_HEADER "${public_h_list}" )
 
