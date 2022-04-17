@@ -9,8 +9,8 @@ int sperr_qzcomp_2d(const void* src,
                     size_t dimy,
                     int32_t qlev,
                     double tol,
-                    void* dst,
                     size_t dst_len,
+                    void* dst,
                     size_t* useful_dst_len)
 {
   // Setup the compressor
@@ -52,5 +52,55 @@ int sperr_qzcomp_2d(const void* src,
 
   *useful_dst_len = stream.size();
   std::copy(stream.cbegin(), stream.cend(), static_cast<uint8_t*>(dst));
+
+  return 0;
+}
+
+int sperr_qzdecomp_2d(const void* src,
+                      size_t src_len,
+                      int32_t output_float,
+                      size_t* dimx,
+                      size_t* dimy,
+                      void** dst)
+{
+  // Examine if `dst` is pointing to a NULL pointer
+  if (*dst != NULL)
+    return 1;
+
+  // Use a decompressor to decompress this bitstream
+  SPECK2D_Decompressor decompressor;
+  auto rtn = decompressor.use_bitstream(src, src_len);
+  if (rtn != RTNType::Good)
+    return -1;
+  rtn = decompressor.decompress();
+  if (rtn != RTNType::Good)
+    return -1;
+
+  // Double check that the slice dimension is correct
+  const auto slice = decompressor.view_data();
+  const auto dims = decompressor.get_dims();
+  if (slice.size() != dims[0] * dims[1])
+    return -1;
+  *dimx = dims[0];
+  *dimy = dims[1];
+
+  // write out the 2D slice in double or float format
+  switch (output_float) {
+    case 0: {  // double
+      double* buf = (double*)std::malloc(slice.size() * sizeof(double));
+      std::copy(slice.cbegin(), slice.cend(), buf);
+      *dst = buf;
+      break;
+    }
+    case 1: {  // float
+      float* buf = (float*)std::malloc(slice.size() * sizeof(float));
+      std::copy(slice.cbegin(), slice.cend(), buf);
+      *dst = buf;
+      break;
+    }
+    default:
+      return 2;
+  }
+
   return 0;
 }
