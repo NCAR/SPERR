@@ -8,6 +8,11 @@
 #ifndef SPERR_C_API_H
 #define SPERR_C_API_H
 
+#include "SperrConfig.h"
+
+#include <stdint.h> /* for fixed-width integers */
+#include <stddef.h> /* for size_t */
+
 #ifdef QZ_TERM
 /*
  * Compress a buffer that contains a 2D slice in float or double type.
@@ -26,7 +31,15 @@
  * 3: `is_float` value not supported
  * -1: other errors
  */
-extern "C" int sperr_qzcomp_2d(
+
+#ifdef __cplusplus
+namespace sperr {
+extern "C" {
+#endif
+
+int boring_f(double v1, int v2);
+
+int sperr_qzcomp_2d(
     const void* src,  /* Input: buffer that contains a 2D slice */
     int32_t is_float, /* Input: input buffer type: 1 == float, 0 == double */
     size_t dimx,      /* Input: X (fastest-varying) dimension */
@@ -52,13 +65,18 @@ extern "C" int sperr_qzcomp_2d(
  * 2: `output_float` value not supported
  * -1: other errors
  */
-extern "C" int sperr_qzdecomp_2d(
+int sperr_qzdecomp_2d(
     const void* src,      /* Input: buffer that contains a compressed bitstream */
     size_t src_len,       /* Input: length of the input bitstream in byte */
     int32_t output_float, /* Input: output data type: 1 == float, 0 == double */
     size_t* dimx,         /* Output: X (fast-varying) dimension */
     size_t* dimy,         /* Output: Y (slowest-varying) dimension */
     void** dst);          /* Output: buffer for the output 2D slice, allocated by this function */
+
+#ifdef __cplusplus
+} /* end of extern "C" */
+} /* end of namespace sperr */
+#endif
 
 /* finish fixed-error mode */
 #else

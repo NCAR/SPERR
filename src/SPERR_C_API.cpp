@@ -3,7 +3,16 @@
 #include "SPECK2D_Compressor.h"
 #include "SPECK2D_Decompressor.h"
 
-int sperr_qzcomp_2d(const void* src,
+
+#ifdef QZ_TERM
+
+int sperr::boring_f(double v1, int v2)
+{
+  int v1i = (int)v1;
+  return v1i + v2;
+}
+
+int sperr::sperr_qzcomp_2d(const void* src,
                     int32_t is_float,
                     size_t dimx,
                     size_t dimy,
@@ -58,7 +67,7 @@ int sperr_qzcomp_2d(const void* src,
   return 0;
 }
 
-int sperr_qzdecomp_2d(const void* src,
+int sperr::sperr_qzdecomp_2d(const void* src,
                       size_t src_len,
                       int32_t output_float,
                       size_t* dimx,
@@ -106,3 +115,7 @@ int sperr_qzdecomp_2d(const void* src,
 
   return 0;
 }
+
+#else
+
+#endif

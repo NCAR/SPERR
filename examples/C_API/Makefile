@@ -13,10 +13,10 @@ endif
 FLAGS = -O3 -march=native
 COMP_LIBS = libSPERR.a
 
-all: test.out
+all: 2d_qz.out
 
-test.out: test.c ${COMP_LIBS}
+2d_qz.out: 2d_qz.c ${COMP_LIBS}
 	${CC} ${FLAGS} -o $@ $^ -I${SPERR_INCDIR} -fopenmp
 
 clean:
-	rm -f test.out
+	rm -f 2d_qz.out
