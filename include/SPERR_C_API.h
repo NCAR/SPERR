@@ -13,12 +13,12 @@
 #include <stddef.h> /* for size_t */
 #include <stdint.h> /* for fixed-width integers */
 
-#ifdef QZ_TERM
-
 #ifdef __cplusplus
 namespace C {
 extern "C" {
 #endif
+
+#ifdef QZ_TERM
 
 /*
  * Compress a buffer that contains a 2D slice in float or double type.
@@ -71,14 +71,13 @@ int sperr_qzdecomp_2d(
     size_t* dimy,         /* Output: Y (slowest-varying) dimension */
     void** dst);          /* Output: buffer for the output 2D slice, allocated by this function */
 
+#else
+
+#endif
+
 #ifdef __cplusplus
 } /* end of extern "C" */
 } /* end of namespace C */
 #endif
 
-/* finish fixed-error mode */
-#else
-/* fixed-size mode */
-
-#endif
 #endif
