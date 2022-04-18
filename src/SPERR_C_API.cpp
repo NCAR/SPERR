@@ -3,23 +3,16 @@
 #include "SPECK2D_Compressor.h"
 #include "SPECK2D_Decompressor.h"
 
-
 #ifdef QZ_TERM
 
-int sperr::boring_f(double v1, int v2)
-{
-  int v1i = (int)v1;
-  return v1i + v2;
-}
-
-int sperr::sperr_qzcomp_2d(const void* src,
-                    int32_t is_float,
-                    size_t dimx,
-                    size_t dimy,
-                    int32_t qlev,
-                    double tol,
-                    void** dst,
-                    size_t* dst_len)
+int C::sperr_qzcomp_2d(const void* src,
+                       int32_t is_float,
+                       size_t dimx,
+                       size_t dimy,
+                       int32_t qlev,
+                       double tol,
+                       void** dst,
+                       size_t* dst_len)
 {
   // Examine if `dst` is pointing to a NULL pointer
   if (*dst != NULL)
@@ -67,12 +60,12 @@ int sperr::sperr_qzcomp_2d(const void* src,
   return 0;
 }
 
-int sperr::sperr_qzdecomp_2d(const void* src,
-                      size_t src_len,
-                      int32_t output_float,
-                      size_t* dimx,
-                      size_t* dimy,
-                      void** dst)
+int C::sperr_qzdecomp_2d(const void* src,
+                         size_t src_len,
+                         int32_t output_float,
+                         size_t* dimx,
+                         size_t* dimy,
+                         void** dst)
 {
   // Examine if `dst` is pointing to a NULL pointer
   if (*dst != NULL)

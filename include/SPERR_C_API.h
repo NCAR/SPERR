@@ -10,10 +10,16 @@
 
 #include "SperrConfig.h"
 
-#include <stdint.h> /* for fixed-width integers */
 #include <stddef.h> /* for size_t */
+#include <stdint.h> /* for fixed-width integers */
 
 #ifdef QZ_TERM
+
+#ifdef __cplusplus
+namespace C {
+extern "C" {
+#endif
+
 /*
  * Compress a buffer that contains a 2D slice in float or double type.
  *
@@ -31,14 +37,6 @@
  * 3: `is_float` value not supported
  * -1: other errors
  */
-
-#ifdef __cplusplus
-namespace sperr {
-extern "C" {
-#endif
-
-int boring_f(double v1, int v2);
-
 int sperr_qzcomp_2d(
     const void* src,  /* Input: buffer that contains a 2D slice */
     int32_t is_float, /* Input: input buffer type: 1 == float, 0 == double */
@@ -75,7 +73,7 @@ int sperr_qzdecomp_2d(
 
 #ifdef __cplusplus
 } /* end of extern "C" */
-} /* end of namespace sperr */
+} /* end of namespace C */
 #endif
 
 /* finish fixed-error mode */

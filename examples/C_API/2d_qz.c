@@ -1,10 +1,10 @@
 #include "SPERR_C_API.h"
 
 #include <assert.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-/* 
+/*
  * Given a file name, this function reads in its content and allocates a buffer `dst` to store it.
  * Upon success, it returns the size of the allocated buffer `dst`. Otherwise, it returns 0.
  * The caller is responsible of free'ing buffer `dst` using free().
@@ -18,13 +18,13 @@ size_t read_file(const char* filename, void** dst)
   const size_t len = ftell(f);
   fseek(f, 0, SEEK_SET);
   uint8_t* buf = malloc(len);
-  fread(buf, 1, len, f);
+  int rtn = fread(buf, 1, len, f);
+  assert(rtn == len);
   fclose(f);
   *dst = buf;
 
   return len;
 }
-
 
 int main(int argc, char** argv)
 {
@@ -44,25 +44,41 @@ int main(int argc, char** argv)
     is_float = 0;
 
   /* Read in a file and put its content in `inbuf` */
-  void* inbuf = NULL;
+  void* inbuf = NULL; /* Will be free'd later */
   size_t inlen = read_file(filename, &inbuf);
   if (inlen == 0)
     return 1;
 
   /* Compress `inbuf` and put the compressed bitstream in `bitstream` */
-  void* bitstream = NULL;
+  void* bitstream = NULL; /* Will be free'd later */
   size_t stream_len = 0;
-  /* int rtn = sperr_qzcomp_2d(inbuf, is_float, dimx, dimy, q, tol, &bitstream, &stream_len); */
-  int rtn = boring_f(tol, q);
-  printf("boring_f = %d\n", rtn);
+  int rtn = sperr_qzcomp_2d(inbuf, is_float, dimx, dimy, q, tol, &bitstream, &stream_len);
   if (rtn != 0) {
     printf("Compression error with code %d\n", rtn);
     return 1;
   }
 
-  /* Write the compressed bitstream to disk */
-  FILE* f = fopen("./out.stream", "w");
+  /* Decompress `bitstream` and put the decompressed slice in `outbuf` */
+  void* outbuf = NULL; /* Will be free'd later */
+  size_t out_dimx = 0;
+  size_t out_dimy = 0;
+  rtn = sperr_qzdecomp_2d(bitstream, stream_len, is_float, &out_dimx, &out_dimy, &outbuf);
+  if (rtn != 0) {
+    printf("Decompression error with code %d\n", rtn);
+    return 1;
+  }
+
+  /* Write the decompressed buffer to disk */
+  FILE* f = fopen("./out.buf", "w");
   assert(f != NULL);
-  fwrite(bitstream, 1, stream_len, f);
+  if (is_float)
+    fwrite(outbuf, sizeof(float), out_dimx * out_dimy, f);
+  else
+    fwrite(outbuf, sizeof(double), out_dimx * out_dimy, f);
   fclose(f);
+
+  /* Clean up */
+  free(outbuf);
+  free(bitstream);
+  free(inbuf);
 }
