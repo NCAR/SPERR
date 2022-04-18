@@ -33,7 +33,7 @@ option( BUILD_UNIT_TESTS "Build unit tests using GoogleTest" ON )
 option( BUILD_CLI_UTILITIES "Build a set of command line utilities" ON )
 option( USE_ZSTD "Incorporate ZSTD to achieve further 5% reduction" OFF )
 option( QZ_TERM  "Coding terminates by quantization level" ON )
-option( BUILD_SHARED_LIBS "Build shared SPERR library" OFF )
+option( BUILD_SHARED_LIBS "Build shared SPERR library" ON )
 
 find_package(OpenMP REQUIRED)
 if( OpenMP_CXX_FOUND AND OpenMP_CXX_FLAGS )

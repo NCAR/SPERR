@@ -3,16 +3,19 @@
 #include "SPECK2D_Compressor.h"
 #include "SPECK2D_Decompressor.h"
 
+#include "SPECK3D_Compressor.h"
+#include "SPECK3D_Decompressor.h"
+
 #ifdef QZ_TERM
 
-int C::sperr_qzcomp_2d(const void* src,
-                       int32_t is_float,
-                       size_t dimx,
-                       size_t dimy,
-                       int32_t qlev,
-                       double tol,
-                       void** dst,
-                       size_t* dst_len)
+int C_API::sperr_qzcomp_2d(const void* src,
+                           int32_t is_float,
+                           size_t dimx,
+                           size_t dimy,
+                           int32_t qlev,
+                           double tol,
+                           void** dst,
+                           size_t* dst_len)
 {
   // Examine if `dst` is pointing to a NULL pointer
   if (*dst != NULL)
@@ -60,12 +63,12 @@ int C::sperr_qzcomp_2d(const void* src,
   return 0;
 }
 
-int C::sperr_qzdecomp_2d(const void* src,
-                         size_t src_len,
-                         int32_t output_float,
-                         size_t* dimx,
-                         size_t* dimy,
-                         void** dst)
+int C_API::sperr_qzdecomp_2d(const void* src,
+                             size_t src_len,
+                             int32_t output_float,
+                             size_t* dimx,
+                             size_t* dimy,
+                             void** dst)
 {
   // Examine if `dst` is pointing to a NULL pointer
   if (*dst != NULL)
@@ -99,6 +102,113 @@ int C::sperr_qzdecomp_2d(const void* src,
     case 1: {  // float
       float* buf = (float*)std::malloc(slice.size() * sizeof(float));
       std::copy(slice.cbegin(), slice.cend(), buf);
+      *dst = buf;
+      break;
+    }
+    default:
+      return 2;
+  }
+
+  return 0;
+}
+
+int C_API::sperr_qzcomp_3d(const void* src,
+                           int32_t is_float,
+                           size_t dimx,
+                           size_t dimy,
+                           size_t dimz,
+                           int32_t qlev,
+                           double tol,
+                           void** dst,
+                           size_t* dst_len)
+{
+  // Examine if `dst` is pointing to a NULL pointer
+  if (*dst != NULL)
+    return 1;
+
+  // Setup the compressor
+  const auto total_vals = dimx * dimy * dimz;
+  auto compressor = SPECK3D_Compressor();
+  auto rtn = sperr::RTNType::Good;
+  switch (is_float) {
+    case 0:  // double
+      rtn = compressor.copy_data(static_cast<const double*>(src), total_vals, {dimx, dimy, dimz});
+      break;
+    case 1:  // float
+      rtn = compressor.copy_data(static_cast<const float*>(src), total_vals, {dimx, dimy, dimz});
+      break;
+    default:
+      return 3;
+  }
+  if (rtn != RTNType::Good)
+    return -1;
+  compressor.set_qz_level(qlev);
+  compressor.set_tolerance(tol);
+
+  // Do the actual compression work
+  rtn = compressor.compress();
+  switch (rtn) {
+    case RTNType::QzLevelTooBig:
+      return 2;
+    case RTNType::Good:
+      break;
+    default:
+      return -1;
+  }
+
+  // Output the compressed bitstream
+  const auto& stream = compressor.view_encoded_bitstream();
+  if (stream.empty())
+    return -1;
+  *dst_len = stream.size();
+  uint8_t* buf = (uint8_t*)std::malloc(stream.size());
+  std::copy(stream.cbegin(), stream.cend(), buf);
+  *dst = buf;
+
+  return 0;
+}
+
+int C_API::sperr_qzdecomp_3d(const void* src,
+                             size_t src_len,
+                             int32_t output_float,
+                             size_t* dimx,
+                             size_t* dimy,
+                             size_t* dimz,
+                             void** dst)
+{
+  // Examine if `dst` is pointing to a NULL pointer
+  if (*dst != NULL)
+    return 1;
+
+  // Use a decompressor to decompress this bitstream
+  auto decompressor = SPECK3D_Decompressor();
+  auto rtn = decompressor.use_bitstream(src, src_len);
+  if (rtn != RTNType::Good)
+    return -1;
+  rtn = decompressor.decompress();
+  if (rtn != RTNType::Good)
+    return -1;
+
+  // Double check that the volume dimension is correct
+  const auto& vol = decompressor.view_data();
+  const auto dims = decompressor.get_dims();
+  if (vol.size() != dims[0] * dims[1] * dims[2])
+    return -1;
+  *dimx = dims[0];
+  *dimy = dims[1];
+  *dimz = dims[2];
+
+  // write out the volume in double or float format
+  switch (output_float) {
+    case 0: {  // double
+      double* buf = (double*)std::malloc(vol.size() * sizeof(double));
+      std::copy(vol.cbegin(), vol.cend(), buf);
+      *dst = buf;
+      break;
+    }
+    case 1: {  // float
+      float* buf = (float*)std::malloc(vol.size() * sizeof(float));
+      std::copy(vol.cbegin(), vol.cend(), buf);
       *dst = buf;
       break;
     }
