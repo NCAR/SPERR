@@ -13,15 +13,14 @@ else
 endif
 
 FLAGS = -O3 -march=native
-COMP_LIBS = libSPERR.a
 
 all: 2d_qz.out 3d_qz.out
 
 2d_qz.out: 2d_qz.c
-	${CC} ${FLAGS} -o $@ $^ -I${SPERR_INCDIR} -L${SPERR_LIBDIR} -Wl,-rpath,${SPERR_LIBDIR} -lSPERR -fopenmp
+	${CC} ${FLAGS} -o $@ $^ -I${SPERR_INCDIR} -L${SPERR_LIBDIR} -Wl,-rpath,${SPERR_LIBDIR} -lSPERR
 
 3d_qz.out: 3d_qz.c
-	${CC} ${FLAGS} -o $@ $^ -I${SPERR_INCDIR} -L${SPERR_LIBDIR} -Wl,-rpath,${SPERR_LIBDIR} -lSPERR -fopenmp
+	${CC} ${FLAGS} -o $@ $^ -I${SPERR_INCDIR} -L${SPERR_LIBDIR} -Wl,-rpath,${SPERR_LIBDIR} -lSPERR
 
 clean:
 	rm -f 2d_qz.out 3d_qz.out
