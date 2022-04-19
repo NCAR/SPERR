@@ -308,15 +308,9 @@ void SPECK3D_Compressor::set_qz_level(int32_t q)
 {
   m_qz_lev = q;
 }
-auto SPECK3D_Compressor::set_tolerance(double tol) -> RTNType
+void SPECK3D_Compressor::set_tolerance(double tol);
 {
-  if (tol <= 0.0)
-    return RTNType::InvalidParam;
-  else {
-    m_tol = tol;
-    m_sperr.set_tolerance(tol);
-    return RTNType::Good;
-  }
+  m_tol = tol;
 }
 auto SPECK3D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
 {
