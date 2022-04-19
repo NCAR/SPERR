@@ -109,9 +109,13 @@ auto SPECK3D_Compressor::compress() -> RTNType
   if (m_speck_stream.empty())
     return RTNType::Error;
 
-  // Optional steps: outlier detection and correction
-  //
-  if (m_tol > 0.0) {
+  if (m_tol <= 0.0) {
+    // Not doing outlier correction, directly return the memory block to `m_val_buf`.
+    m_val_buf = m_encoder.release_data();
+  }
+  else {
+    // Optional steps: outlier detection and correction
+    //
     // Step 4: perform a decompression pass
     rtn = m_encoder.decode();
     if (rtn != RTNType::Good)
@@ -158,10 +162,6 @@ auto SPECK3D_Compressor::compress() -> RTNType
         return RTNType::Error;
     }
   } // Finish outlier detection and correction
-  else {
-    // Return the memory block to `m_val_buf`.
-    m_val_buf = m_encoder.release_data();
-  }
 
   rtn = m_assemble_encoded_bitstream();
 
