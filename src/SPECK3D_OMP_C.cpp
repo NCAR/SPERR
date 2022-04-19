@@ -22,14 +22,9 @@ void SPECK3D_OMP_C::set_qz_level(int32_t q)
 {
   m_qz_lev = q;
 }
-auto SPECK3D_OMP_C::set_tolerance(double t) -> RTNType
+void SPECK3D_OMP_C::set_tolerance(double t)
 {
-  if (t <= 0.0)
-    return RTNType::InvalidParam;
-  else {
-    m_tol = t;
-    return RTNType::Good;
-  }
+  m_tol = t;
 }
 auto SPECK3D_OMP_C::get_outlier_stats() const -> std::pair<size_t, size_t>
 {

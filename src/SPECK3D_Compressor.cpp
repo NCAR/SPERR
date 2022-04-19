@@ -308,7 +308,7 @@ void SPECK3D_Compressor::set_qz_level(int32_t q)
 {
   m_qz_lev = q;
 }
-void SPECK3D_Compressor::set_tolerance(double tol);
+void SPECK3D_Compressor::set_tolerance(double tol)
 {
   m_tol = tol;
 }

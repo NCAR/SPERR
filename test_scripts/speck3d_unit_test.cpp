@@ -54,8 +54,7 @@ class speck_tester {
 
 #ifdef QZ_TERM
     compressor.set_qz_level(qz_level);
-    if (compressor.set_tolerance(tol) != RTNType::Good)
-      return 1;
+    compressor.set_tolerance(tol);
 #else
     if (compressor.set_bpp(bpp) != RTNType::Good)
       return 1;
