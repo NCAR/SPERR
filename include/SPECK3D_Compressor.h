@@ -24,7 +24,10 @@ class SPECK3D_Compressor {
  public:
   // Accept incoming data: copy from a raw memory block
   template <typename T>
-  auto copy_data(const T* p, size_t len, sperr::dims_type dims) -> RTNType;
+  auto copy_data(const T* p,             // Input: pointer to the memory block
+                 size_t len,             // Input: number of values
+                 sperr::dims_type dims)  // Input: dimension of the 3D volume
+      -> RTNType;
 
   // Accept incoming data: take ownership of a memory block
   auto take_data(std::vector<double>&& buf, sperr::dims_type dims) -> RTNType;
@@ -65,7 +68,7 @@ class SPECK3D_Compressor {
   sperr::vec8_type m_sperr_stream;
   sperr::SPERR m_sperr;
   int32_t m_qz_lev = 0;
-  double m_tol = 0.0;  // tolerance used in error correction
+  double m_tol = 0.0;                 // tolerance used in error correction
   std::vector<sperr::Outlier> m_LOS;  // List of OutlierS
   sperr::vecd_type m_val_buf2;        // Copy of `m_val_buf` that goes through encoding.
   sperr::vecd_type m_diffv;           // Store differences to locate outliers.

@@ -1,5 +1,6 @@
-#include <iostream>
 #include "SperrConfig.h"
+
+#include <iostream>
 
 int main()
 {

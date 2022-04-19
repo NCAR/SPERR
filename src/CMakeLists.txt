@@ -11,7 +11,8 @@ add_library( SPERR
              SPECK3D_OMP_C.cpp
              SPECK3D_OMP_D.cpp
              SPECK2D_Compressor.cpp
-             SPECK2D_Decompressor.cpp )
+             SPECK2D_Decompressor.cpp
+             SPERR_C_API.cpp)
 target_include_directories( SPERR PUBLIC ${CMAKE_SOURCE_DIR}/include )
 target_compile_options(     SPERR PUBLIC ${OpenMP_CXX_FLAGS} )
 target_link_libraries(      SPERR PUBLIC OpenMP::OpenMP_CXX )
@@ -42,6 +43,7 @@ include/CDF97.h;\
 include/SPECK_Storage.h;\
 include/SPECK2D.h;\
 include/SPECK3D.h;\
+include/SPERR_C_API.h;\
 include/SPERR.h;")
 set_target_properties( SPERR PROPERTIES PUBLIC_HEADER "${public_h_list}" )
 

@@ -20,7 +20,10 @@ class SPECK2D_Compressor {
  public:
   // Accept incoming data: copy from a raw memory block
   template <typename T>
-  auto copy_data(const T* p, size_t len, sperr::dims_type dims) -> RTNType;
+  auto copy_data(const T* p,             // Input: pointer to the data memory block
+                 size_t len,             // Input: number of values in the memory block
+                 sperr::dims_type dims)  // Input: dimension of the 2D slice w/ dims[2] == 1
+      -> RTNType;
 
   // Accept incoming data by taking ownership of the memory block
   auto take_data(std::vector<double>&& buf, sperr::dims_type dims) -> RTNType;
@@ -49,8 +52,8 @@ class SPECK2D_Compressor {
 #ifdef QZ_TERM
   sperr::vec8_type m_sperr_stream;
   sperr::SPERR m_sperr;
-  sperr::vecd_type m_val_buf2;        // A copy of `m_val_buf` for outlier locating.
-  sperr::vecd_type m_diffv;           // Store differences to locate outliers.
+  sperr::vecd_type m_val_buf2;  // A copy of `m_val_buf` for outlier locating.
+  sperr::vecd_type m_diffv;     // Store differences to locate outliers.
   int32_t m_qz_lev = 0;
   double m_tol = 0.0;
   size_t m_num_outlier = 0;
