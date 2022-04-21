@@ -36,7 +36,7 @@ class SPECK3D_Compressor {
 
 #ifdef QZ_TERM
   void set_qz_level(int32_t);
-  auto set_tolerance(double) -> RTNType;
+  void set_tolerance(double);
   // Return 1) the number of outliers, and 2) the number of bytes to encode them.
   auto get_outlier_stats() const -> std::pair<size_t, size_t>;
 #else
@@ -71,7 +71,6 @@ class SPECK3D_Compressor {
   double m_tol = 0.0;                 // tolerance used in error correction
   std::vector<sperr::Outlier> m_LOS;  // List of OutlierS
   sperr::vecd_type m_val_buf2;        // Copy of `m_val_buf` that goes through encoding.
-  sperr::vecd_type m_diffv;           // Store differences to locate outliers.
 #else
   double m_bpp = 0.0;
 #endif

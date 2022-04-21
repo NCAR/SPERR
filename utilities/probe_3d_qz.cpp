@@ -131,11 +131,11 @@ int main(int argc, char* argv[])
 
   auto tolerance = double{0.0};
   app.add_option("-t", tolerance,
-                 "Maximum point-wise error tolerance. E.g., `-t 0.001`.\n"
-                 "Note: if flag --div-rms is enabled, then this tolerance\n"
-                 "applies to conditioned data.")
-      ->required()
-      ->check(CLI::PositiveNumber)
+                 "Maximum point-wise error tolerance. E.g., `-t 1e-3`.\n"
+                 "Note1 : if flag --div-rms is enabled, then this tolerance\n"
+                 "applies to conditioned data.\n"
+                 "Note 2: If not specified or a negative number is given, \n"
+                 "then the program will not perform any outlier correction.")
       ->group("Compression Parameters");
 
   auto qz_level = int32_t{0};

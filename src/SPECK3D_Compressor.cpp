@@ -64,20 +64,28 @@ auto SPECK3D_Compressor::compress() -> RTNType
     return tmp;
   }
 
-  // Note that we keep the original buffer untouched for outlier calculations later.
-  // The buffer `m_val_buf2` will be recycled and reused.
-  m_val_buf2.resize(m_val_buf.size());
-  std::copy(m_val_buf.begin(), m_val_buf.end(), m_val_buf2.begin());
+  // Note: in the case where a positive error tolerance is given, this
+  // method also performs error detection and correction.
+  // In the case where a zero or negative error tolerance is given, this
+  // method simply performs SPECK encoding and terminates at the specifie
+  // quantization level.
 
-  // Step 1: data (m_val_buf2) goes through the conditioner
+  if (m_tol > 0.0) {
+    m_val_buf2.resize(m_val_buf.size());
+    std::copy(m_val_buf.begin(), m_val_buf.end(), m_val_buf2.begin());
+  }
+  else
+    m_val_buf2.clear();
+
+  // Step 1: data goes through the conditioner
   m_conditioner.toggle_all_settings(m_conditioning_settings);
-  auto [rtn, condi_meta] = m_conditioner.condition(m_val_buf2);
+  auto [rtn, condi_meta] = m_conditioner.condition(m_val_buf);
   if (rtn != RTNType::Good)
     return rtn;
   m_condi_stream = condi_meta;
 
   // Step 2: wavelet transform
-  rtn = m_cdf.take_data(std::move(m_val_buf2), m_dims);
+  rtn = m_cdf.take_data(std::move(m_val_buf), m_dims);
   if (rtn != RTNType::Good)
     return rtn;
   // Figure out which dwt3d strategy to use.
@@ -101,51 +109,58 @@ auto SPECK3D_Compressor::compress() -> RTNType
   if (m_speck_stream.empty())
     return RTNType::Error;
 
-  // Step 4: perform a decompression pass (reusing the same object states and memory blocks).
-  rtn = m_encoder.decode();
-  if (rtn != RTNType::Good)
-    return rtn;
-  m_cdf.take_data(m_encoder.release_data(), m_dims);
-  if (xforms_xy == xforms_z)
-    m_cdf.idwt3d_dyadic();
-  else
-    m_cdf.idwt3d_wavelet_packet();
-  m_val_buf2 = m_cdf.release_data();
-  m_conditioner.inverse_condition(m_val_buf2, m_condi_stream);
-
-  // Step 5: we find all the outliers!
-  //
-  // Observation: for some data points, the reconstruction error in double falls
-  // below `m_tol`, while in float would fall above `m_tol`. (Github issue #78).
-  // Solution: find those data points, and use their slightly reduced error as
-  // the new tolerance.
-  //
-  auto new_tol = m_tol;
-  m_diffv.resize(total_vals);
-  for (size_t i = 0; i < total_vals; i++)
-    m_diffv[i] = m_val_buf[i] - m_val_buf2[i];
-  for (size_t i = 0; i < total_vals; i++) {
-    auto f = std::abs(float(m_val_buf[i]) - float(m_val_buf2[i]));
-    if (double(f) > m_tol && std::abs(m_diffv[i]) <= m_tol)
-      new_tol = std::min(new_tol, std::abs(m_diffv[i]));
+  if (m_tol <= 0.0) {
+    // Not doing outlier correction, directly return the memory block to `m_val_buf`.
+    m_val_buf = m_encoder.release_data();
   }
-  for (size_t i = 0; i < total_vals; i++) {
-    if (std::abs(m_diffv[i]) > new_tol)
-      m_LOS.emplace_back(i, m_diffv[i]);
-  }
-
-  // Step 6: encode any outlier that's found.
-  if (!m_LOS.empty()) {
-    m_sperr.set_tolerance(new_tol);
-    m_sperr.set_length(total_vals);
-    m_sperr.copy_outlier_list(m_LOS);
-    rtn = m_sperr.encode();
+  else {
+    // Optional steps: outlier detection and correction
+    //
+    // Step 4: perform a decompression pass
+    rtn = m_encoder.decode();
     if (rtn != RTNType::Good)
       return rtn;
-    m_sperr_stream = m_sperr.get_encoded_bitstream();
-    if (m_sperr_stream.empty())
-      return RTNType::Error;
-  }
+    m_cdf.take_data(m_encoder.release_data(), m_dims);
+    if (xforms_xy == xforms_z)
+      m_cdf.idwt3d_dyadic();
+    else
+      m_cdf.idwt3d_wavelet_packet();
+    m_val_buf = m_cdf.release_data();
+    m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
+
+    // Step 5: we find all the outliers!
+    //
+    // Observation: for some data points, the reconstruction error in double falls
+    // below `m_tol`, while in float would fall above `m_tol`. (Github issue #78).
+    // Solution: find those data points, and use their slightly reduced error as
+    // the new tolerance.
+    //
+    auto new_tol = m_tol;
+    for (size_t i = 0; i < total_vals; i++) {
+      const auto d = std::abs(m_val_buf2[i] - m_val_buf[i]);
+      const float f = std::abs(float(m_val_buf2[i]) - float(m_val_buf[i]));
+      if (double(f) > m_tol && d <= m_tol)
+        new_tol = std::min(new_tol, d);
+    }
+    for (size_t i = 0; i < total_vals; i++) {
+      const auto diff = m_val_buf2[i] - m_val_buf[i];
+      if (std::abs(diff) > new_tol)
+        m_LOS.emplace_back(i, diff);
+    }
+
+    // Step 6: encode any outlier that's found.
+    if (!m_LOS.empty()) {
+      m_sperr.set_tolerance(new_tol);
+      m_sperr.set_length(total_vals);
+      m_sperr.copy_outlier_list(m_LOS);
+      rtn = m_sperr.encode();
+      if (rtn != RTNType::Good)
+        return rtn;
+      m_sperr_stream = m_sperr.get_encoded_bitstream();
+      if (m_sperr_stream.empty())
+        return RTNType::Error;
+    }
+  }  // Finish outlier detection and correction
 
   rtn = m_assemble_encoded_bitstream();
 
@@ -292,15 +307,9 @@ void SPECK3D_Compressor::set_qz_level(int32_t q)
 {
   m_qz_lev = q;
 }
-auto SPECK3D_Compressor::set_tolerance(double tol) -> RTNType
+void SPECK3D_Compressor::set_tolerance(double tol)
 {
-  if (tol <= 0.0)
-    return RTNType::InvalidParam;
-  else {
-    m_tol = tol;
-    m_sperr.set_tolerance(tol);
-    return RTNType::Good;
-  }
+  m_tol = tol;
 }
 auto SPECK3D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
 {

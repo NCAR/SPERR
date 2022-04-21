@@ -44,10 +44,11 @@ int main(int argc, char* argv[])
       ->required();
 
   auto tolerance = double{0.0};
-  app.add_option("-t", tolerance, "Maximum point-wise error tolerance. E.g., `-t 1e-2`")
-      ->check(CLI::PositiveNumber)
-      ->group("Compression Parameters")
-      ->required();
+  app.add_option("-t", tolerance,
+                 "Maximum point-wise error tolerance. E.g., `-t 1e-2`\n"
+                 "If not specified or a negative number is given, \n"
+                 "then the program will not perform any outlier correction.")
+      ->group("Compression Parameters");
 #else
   auto bpp = double{0.0};
   app.add_option("--bpp", bpp, "Target bit-per-pixel. E.g., `--bpp 4.5`")
@@ -156,8 +157,8 @@ int main(int argc, char* argv[])
     }
     else {
       printf(
-          "There were %ld outliers, percentage = %.2f%%.\n"
-          "Correcting them takes bpp = %.2f, using total storage = %.2f%%\n",
+          "There were %ld outliers, percentage of total data points = %.2f%%.\n"
+          "Correcting them takes bpp = %.2f, percentage of total storage = %.2f%%\n",
           out_stats.first, double(out_stats.first * 100) / double(total_vals),
           double(out_stats.second * 8) / double(out_stats.first),
           double(out_stats.second * 100) / double(stream.size()));

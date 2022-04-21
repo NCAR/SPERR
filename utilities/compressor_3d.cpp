@@ -49,10 +49,11 @@ int main(int argc, char* argv[])
       ->required();
 
   auto tolerance = double{0.0};
-  app.add_option("-t", tolerance, "Maximum point-wise error tolerance. E.g., `-t 1e-2`")
-      ->check(CLI::PositiveNumber)
-      ->group("Compression Parameters")
-      ->required();
+  app.add_option("-t", tolerance,
+                 "Maximum point-wise error tolerance. E.g., `-t 1e-2`\n"
+                 "If not specified or a negative number is given, \n"
+                 "then the program will not perform any outlier correction.")
+      ->group("Compression Parameters");
 #else
   auto bpp = double{0.0};
   app.add_option("--bpp", bpp, "Target bit-per-pixel. E.g., `--bpp 2.3`")
