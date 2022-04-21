@@ -40,18 +40,13 @@ void SPECK2D_Compressor::set_qz_level(int32_t q)
 {
   m_qz_lev = q;
 }
-auto SPECK2D_Compressor::set_tolerance(double tol) -> RTNType
+void SPECK2D_Compressor::set_tolerance(double tol)
 {
-  if (tol <= 0.0)
-    return RTNType::InvalidParam;
-  else {
-    m_tol = tol;
-    return RTNType::Good;
-  }
+  m_tol = tol;
 }
 auto SPECK2D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
 {
-  return {m_num_outlier, m_sperr_stream.size()};
+  return {m_LOS.size(), m_sperr_stream.size()};
 }
 #else
 auto SPECK2D_Compressor::set_bpp(double bpp) -> RTNType
@@ -95,7 +90,7 @@ auto SPECK2D_Compressor::compress() -> RTNType
 
 #ifdef QZ_TERM
   m_sperr_stream.clear();
-  m_num_outlier = 0;
+  m_LOS.clear();
 #endif
 
   // Believe it or not, there are constant fields passed in for compression!
@@ -108,9 +103,13 @@ auto SPECK2D_Compressor::compress() -> RTNType
   }
 
 #ifdef QZ_TERM
-  // We make a copy of the original buffer for the outlier calculation.
-  m_val_buf2.resize(total_vals);
-  std::copy(m_val_buf.begin(), m_val_buf.end(), m_val_buf2.begin());
+  // If outlier correction is required, we make a copy of the original buffer
+  if (m_tol > 0.0) {
+    m_val_buf2.resize(total_vals);
+    std::copy(m_val_buf.begin(), m_val_buf.end(), m_val_buf2.begin());
+  }
+  else
+    m_val_buf2.clear();
 #endif
 
   // Step 1: data goes through the conditioner
@@ -148,46 +147,50 @@ auto SPECK2D_Compressor::compress() -> RTNType
     return RTNType::Error;
 
 #ifdef QZ_TERM
-  // Step 4: perform a decompression pass
-  rtn = m_encoder.decode();
-  if (rtn != RTNType::Good)
-    return rtn;
-  m_cdf.take_data(m_encoder.release_data(), m_dims);
-  m_cdf.idwt2d();
-  m_val_buf = m_cdf.release_data();
-  m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
-
-  // Step 5: find all the outliers!
-  // Note: the cumbersome calculations below prevents the situation where deviations
-  // are below the threshold in double precision, but above in single precision!
-  auto LOS = std::vector<sperr::Outlier>();
-  auto new_tol = m_tol;
-  m_diffv.resize(total_vals);
-  for (size_t i = 0; i < total_vals; i++)
-    m_diffv[i] = m_val_buf2[i] - m_val_buf[i];
-  for (size_t i = 0; i < total_vals; i++) {
-    auto f = std::abs(float(m_val_buf2[i]) - float(m_val_buf[i]));
-    if (double(f) > m_tol && std::abs(m_diffv[i]) <= m_tol)
-      new_tol = std::min(new_tol, std::abs(m_diffv[i]));
+  if (m_tol <= 0.0) {
+    // Return the memory block back to `m_val_buf`.
+    m_val_buf = m_encoder.release_data();
   }
-  for (size_t i = 0; i < total_vals; i++) {
-    if (std::abs(m_diffv[i]) > new_tol)
-      LOS.emplace_back(i, m_diffv[i]);
-  }
-
-  // Step 6: actually encode located outliers
-  if (!LOS.empty()) {
-    m_num_outlier = LOS.size();
-    m_sperr.set_tolerance(new_tol);
-    m_sperr.set_length(total_vals);
-    m_sperr.take_outlier_list(std::move(LOS));
-    rtn = m_sperr.encode();
+  else {
+    // Step 4: perform a decompression pass
+    rtn = m_encoder.decode();
     if (rtn != RTNType::Good)
       return rtn;
-    m_sperr_stream = m_sperr.get_encoded_bitstream();
-    if (m_sperr_stream.empty())
-      return RTNType::Error;
-  }
+    m_cdf.take_data(m_encoder.release_data(), m_dims);
+    m_cdf.idwt2d();
+    m_val_buf = m_cdf.release_data();
+    m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
+
+    // Step 5: find all the outliers!
+    // Note: the cumbersome calculations below prevents the situation where deviations
+    // are below the threshold in double precision, but above in single precision!
+    auto new_tol = m_tol;
+    m_diffv.resize(total_vals);
+    std::transform(m_val_buf.cbegin(), m_val_buf.cend(), m_val_buf2.cbegin(), m_diffv.begin(),
+                   [](auto v, auto v2) { return v2 - v; });
+    for (size_t i = 0; i < total_vals; i++) {
+      auto f = std::abs(float(m_val_buf2[i]) - float(m_val_buf[i]));
+      if (double(f) > m_tol && std::abs(m_diffv[i]) <= m_tol)
+        new_tol = std::min(new_tol, std::abs(m_diffv[i]));
+    }
+    for (size_t i = 0; i < total_vals; i++) {
+      if (std::abs(m_diffv[i]) > new_tol)
+        m_LOS.emplace_back(i, m_diffv[i]);
+    }
+
+    // Step 6: actually encode located outliers
+    if (!m_LOS.empty()) {
+      m_sperr.set_tolerance(new_tol);
+      m_sperr.set_length(total_vals);
+      m_sperr.copy_outlier_list(m_LOS);
+      rtn = m_sperr.encode();
+      if (rtn != RTNType::Good)
+        return rtn;
+      m_sperr_stream = m_sperr.get_encoded_bitstream();
+      if (m_sperr_stream.empty())
+        return RTNType::Error;
+    }
+  }  // Finish error correction.
 #endif
 
   rtn = m_assemble_encoded_bitstream();

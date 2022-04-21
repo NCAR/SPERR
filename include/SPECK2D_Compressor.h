@@ -32,7 +32,7 @@ class SPECK2D_Compressor {
 
 #ifdef QZ_TERM
   void set_qz_level(int32_t);
-  auto set_tolerance(double) -> RTNType;
+  void set_tolerance(double);
   // Return 1) the number of outliers, and 2) the number of bytes to encode them.
   auto get_outlier_stats() const -> std::pair<size_t, size_t>;
 #else
@@ -52,11 +52,11 @@ class SPECK2D_Compressor {
 #ifdef QZ_TERM
   sperr::vec8_type m_sperr_stream;
   sperr::SPERR m_sperr;
-  sperr::vecd_type m_val_buf2;  // A copy of `m_val_buf` for outlier locating.
-  sperr::vecd_type m_diffv;     // Store differences to locate outliers.
+  sperr::vecd_type m_val_buf2;        // A copy of `m_val_buf` for outlier locating.
+  sperr::vecd_type m_diffv;           // Store differences to locate outliers.
+  std::vector<sperr::Outlier> m_LOS;  // List of OutlierS
   int32_t m_qz_lev = 0;
   double m_tol = 0.0;
-  size_t m_num_outlier = 0;
 #else
   double m_bpp = 0.0;
 #endif

@@ -137,8 +137,8 @@ auto SPECK3D_Compressor::compress() -> RTNType
     //
     auto new_tol = m_tol;
     m_diffv.resize(total_vals);
-    for (size_t i = 0; i < total_vals; i++)
-      m_diffv[i] = m_val_buf2[i] - m_val_buf[i];
+    std::transform(m_val_buf.cbegin(), m_val_buf.cend(), m_val_buf2.cbegin(), m_diffv.begin(),
+                   [](auto v, auto v2) { return v2 - v; });
     for (size_t i = 0; i < total_vals; i++) {
       auto f = std::abs(float(m_val_buf2[i]) - float(m_val_buf[i]));
       if (double(f) > m_tol && std::abs(m_diffv[i]) <= m_tol)
@@ -161,7 +161,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
       if (m_sperr_stream.empty())
         return RTNType::Error;
     }
-  } // Finish outlier detection and correction
+  }  // Finish outlier detection and correction
 
   rtn = m_assemble_encoded_bitstream();
 
