@@ -318,11 +318,10 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
   // http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/VELDHUIZEN/node18.html
   // Also refer to https://www.mathworks.com/help/vision/ref/psnr.html
   //
-  const auto msr = std::accumulate(sum_vec.begin(), sum_vec.end(), T{0.0}) / T(arr_len);
-  rmse = std::sqrt(msr);
-  auto range_sq = *minmax.first - *minmax.second;
-  range_sq *= range_sq;
-  psnr = std::log10(range_sq / msr) * T{10.0};
+  const auto mse = std::accumulate(sum_vec.begin(), sum_vec.end(), T{0.0}) / T(arr_len);
+  rmse = std::sqrt(mse);
+  const auto range_sq = (arr1max - arr1min) * (arr1max - arr1min);
+  psnr = std::log10(range_sq / mse) * T{10.0};
 
   return {rmse, linfty, psnr, arr1min, arr1max};
 }
