@@ -165,17 +165,16 @@ auto SPECK2D_Compressor::compress() -> RTNType
     // Note: the cumbersome calculations below prevents the situation where deviations
     // are below the threshold in double precision, but above in single precision!
     auto new_tol = m_tol;
-    m_diffv.resize(total_vals);
-    std::transform(m_val_buf.cbegin(), m_val_buf.cend(), m_val_buf2.cbegin(), m_diffv.begin(),
-                   [](auto v, auto v2) { return v2 - v; });
     for (size_t i = 0; i < total_vals; i++) {
-      auto f = std::abs(float(m_val_buf2[i]) - float(m_val_buf[i]));
-      if (double(f) > m_tol && std::abs(m_diffv[i]) <= m_tol)
-        new_tol = std::min(new_tol, std::abs(m_diffv[i]));
+      const auto d = std::abs(m_val_buf2[i] - m_val_buf[i]);
+      const float f = std::abs(float(m_val_buf2[i]) - float(m_val_buf[i]));
+      if (double(f) > m_tol && d <= m_tol)
+        new_tol = std::min(new_tol, d);
     }
     for (size_t i = 0; i < total_vals; i++) {
-      if (std::abs(m_diffv[i]) > new_tol)
-        m_LOS.emplace_back(i, m_diffv[i]);
+      const auto diff = m_val_buf2[i] - m_val_buf[i];
+      if (std::abs(diff) > new_tol)
+        m_LOS.emplace_back(i, diff);
     }
 
     // Step 6: actually encode located outliers
