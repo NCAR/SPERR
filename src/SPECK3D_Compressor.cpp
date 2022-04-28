@@ -90,17 +90,12 @@ auto SPECK3D_Compressor::compress() -> RTNType
     return rtn;
   // Figure out which dwt3d strategy to use.
   // Note: this strategy needs to be consistent with SPECK3D_Decompressor.
-  auto data_energy = m_cdf.calc_energy();
   auto xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
   auto xforms_z = sperr::num_of_xforms(m_dims[2]);
   if (xforms_xy == xforms_z)
     m_cdf.dwt3d_dyadic();
   else
     m_cdf.dwt3d_wavelet_packet();
-  auto coeff_energy = m_cdf.calc_energy();
-  auto diff = std::abs(data_energy - coeff_energy);
-  std::printf("--> data energy = %.2e, coeff energy = %.2e, diff = %.2e, pct = %.2f\n",
-              data_energy, coeff_energy, diff, diff / data_energy * 100.0);
 
   // Step 3: SPECK encoding
   rtn = m_encoder.take_data(m_cdf.release_data(), m_dims);
