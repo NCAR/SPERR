@@ -202,7 +202,7 @@ int main(int argc, char* argv[])
   }
 
   printf(
-      "Initial analysis: input data min = %.4e, max = %.4e,\n"
+      "Initial analysis: input data min = %.4e, max = %.4e\n"
       "absolute error tolerance = %.2e, quantization level = %d ...  \n\n",
       min_orig, max_orig, tolerance, qz_level);
 
