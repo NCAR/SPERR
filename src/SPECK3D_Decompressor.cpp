@@ -136,7 +136,7 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
   // (Here we ask `m_cdf` to make a copy of coefficients from `m_decoder` instead of
   //  transfer the ownership, because `m_decoder` will reuse that memory when
   //  processing the next chunk. For the same reason, `m_cdf` keeps its memory.)
-  const auto decoder_out = m_decoder.view_data();
+  const auto& decoder_out = m_decoder.view_data();
   m_cdf.copy_data(decoder_out.data(), decoder_out.size(), m_dims);
   // Figure out which dwt3d strategy to use.
   // Note: this strategy needs to be consistent with SPECK3D_Compressor.
@@ -148,7 +148,7 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
     m_cdf.idwt3d_wavelet_packet();
 
   // Step 3: Inverse Conditioning
-  auto cdf_out = m_cdf.view_data();
+  const auto& cdf_out = m_cdf.view_data();
   m_val_buf.resize(cdf_out.size());
   std::copy(cdf_out.begin(), cdf_out.end(), m_val_buf.begin());
   m_conditioner.inverse_condition(m_val_buf, m_condi_stream);

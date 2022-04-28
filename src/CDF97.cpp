@@ -508,12 +508,12 @@ void sperr::CDF97::m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xy
   // 4) put the Z column back to their locations as a Z column.
 
 #if __cplusplus >= 202002L
-  if (len_xyz[2] % 2 == 0) [[likely]]  // Even length
+  if (len_xyz[2] % 2 == 0) [[likely]]
 #else
-  if (len_xyz[2] % 2 == 0)  // Even length
+  if (len_xyz[2] % 2 == 0)
 #endif
   {
-    for (size_t y = 0; y < len_xyz[2]; y++) {
+    for (size_t y = 0; y < len_xyz[1]; y++) {
       for (size_t x = 0; x < len_xyz[0]; x++) {
         const size_t xy_offset = y * m_dims[0] + x;
         // Step 1
@@ -531,7 +531,7 @@ void sperr::CDF97::m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xy
   }
   else  // Odd length
   {
-    for (size_t y = 0; y < len_xyz[2]; y++) {
+    for (size_t y = 0; y < len_xyz[1]; y++) {
       for (size_t x = 0; x < len_xyz[0]; x++) {
         const size_t xy_offset = y * m_dims[0] + x;
         // Step 1
