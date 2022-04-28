@@ -42,12 +42,6 @@ class SPECK_Storage {
   auto get_speck_stream_size(const void*) const -> uint64_t;
   auto get_speck_stream_dims(const void*) const -> std::array<size_t, 3>;
 
-  // Methods for research use only.
-  //
-  // Calculate the "energy" of data held by `m_coeff_buf`.
-  // It could be energy of the input data, or the transformed wavelet coefficients.
-  auto calc_energy() const -> double;
-
  protected:
   //
   // Member variables

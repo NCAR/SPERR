@@ -615,6 +615,27 @@ void sperr::CDF97::m_scatter_odd(citd_type begin, citd_type end, itd_type dest) 
   }
 }
 
+auto sperr::CDF97::calc_energy() const -> double
+{
+  if (m_data_buf.empty())
+    return 0.0;
+
+  const size_t stride_size = 4096;
+  const size_t num_strides = m_data_buf.size() / stride_size;
+  const size_t remainder_size = m_data_buf.size() - stride_size * num_strides;
+  auto sum_vec = std::vector<double>(num_strides + 1, 0.0);
+  auto sq_sum = [](double dest, double val) { return val * val + dest; };
+
+  for (size_t i = 0; i < num_strides; i++) {
+    auto beg = m_data_buf.cbegin() + i * stride_size;
+    auto end = beg + stride_size;
+    sum_vec[i] = std::accumulate(beg, end, 0.0, sq_sum);
+  }
+  sum_vec[num_strides] = std::accumulate(m_data_buf.cbegin() + num_strides * stride_size,
+                                         m_data_buf.cend(), 0.0, sq_sum);
+  return std::accumulate(sum_vec.cbegin(), sum_vec.cend(), 0.0);
+}
+
 //
 // Methods from QccPack
 //

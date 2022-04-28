@@ -21,9 +21,9 @@ class CDF97 {
   //
   // Output
   //
-  [[nodiscard]] auto view_data() const -> const std::vector<double>&;
+  auto view_data() const -> const std::vector<double>&;
   auto release_data() -> std::vector<double>&&;
-  [[nodiscard]] auto get_dims() const -> std::array<size_t, 3>;  // In 2D case, the 3rd value equals 1.
+  auto get_dims() const -> std::array<size_t, 3>;  // In 2D case, the 3rd value equals 1.
 
   // Action items
   void dwt1d();
@@ -36,6 +36,12 @@ class CDF97 {
   void idwt3d_wavelet_packet();
   void dwt3d_dyadic();
   void idwt3d_dyadic();
+
+  // Methods for research use only.
+  //
+  // Calculate the "energy" of data held by `m_coeff_buf`.
+  // It could be energy of the input data, or the transformed wavelet coefficients.
+  auto calc_energy() const -> double;
 
  private:
   using itd_type = vecd_type::iterator;

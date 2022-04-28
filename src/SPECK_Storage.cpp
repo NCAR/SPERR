@@ -163,24 +163,3 @@ auto sperr::SPECK_Storage::get_speck_stream_dims(const void* buf) const -> std::
 
   return {size_t(dims[0]), size_t(dims[1]), size_t(dims[2])};
 }
-
-auto sperr::SPECK_Storage::calc_energy() const -> double
-{
-  if (m_coeff_buf.empty())
-    return 0.0;
-
-  const size_t stride_size = 4096;
-  const size_t num_strides = m_coeff_buf.size() / stride_size;
-  const size_t remainder_size = m_coeff_buf.size() - stride_size * num_strides;
-  auto sum_vec = std::vector<double>(num_strides + 1, 0.0);
-  auto sq_sum = [](double dest, double val) { return val * val + dest; };
-
-  for (size_t i = 0; i < num_strides; i++) {
-    auto beg = m_coeff_buf.cbegin() + i * stride_size;
-    auto end = beg + stride_size;
-    sum_vec[i] = std::accumulate(beg, end, 0.0, sq_sum);
-  }
-  sum_vec[num_strides] = std::accumulate(m_coeff_buf.cbegin() + num_strides * stride_size,
-                                            m_coeff_buf.cend(), 0.0, sq_sum);
-  return std::accumulate(sum_vec.cbegin(), sum_vec.cend(), 0.0);
-}
