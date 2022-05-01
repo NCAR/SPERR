@@ -25,6 +25,13 @@ if( USE_ZSTD )
     target_link_libraries( SPERR PUBLIC zstd )
 endif()
 
+#
+# Link to QccPack
+# ccmake -DCMAKE_PREFIX_PATH=/home/shaomeng/Git/QccPack-0.63-1/install/lib .
+#
+find_library(QCC_LIB QccPack)
+target_link_libraries( SPERR PUBLIC ${QCC_LIB})
+
 set_target_properties( SPERR PROPERTIES VERSION ${SPERR_VERSION} )
 
 #
