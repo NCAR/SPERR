@@ -89,9 +89,10 @@ auto SPECK3D_Compressor::compress() -> RTNType
   m_condi_stream = condi_meta;
 
   //
-  // Debug steps: use Qcc DWT to test energy
+  // Energy Research steps: use Qcc DWT to test energy
   //
-  // Debug Step 1: create Subband Pyramid
+#if 0
+  // Energy Research Step 1: create Subband Pyramid
   QccWAVSubbandPyramid3D    coeff3d;
   QccWAVSubbandPyramid3DInitialize( &coeff3d );
   coeff3d.num_cols = m_dims[0];
@@ -104,7 +105,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
       for (size_t x = 0; x < m_dims[0]; x++)
         coeff3d.volume[z][y][x] = m_val_buf[counter++];
 
-  // Debug Step 2: create a wavelet
+  // Energy Research Step 2: create a wavelet
   QccString       WaveletFilename = "CohenDaubechiesFeauveau.5-3.fbk";
   QccString       Boundary = "symmetric";
   QccWAVWavelet   cdf97;
@@ -117,12 +118,12 @@ auto SPECK3D_Compressor::compress() -> RTNType
     QccErrorExit();
   }
 
-  // Debug Step 3: forward and inverse transforms
+  // Energy Research Step 3: forward and inverse transforms
   QccWAVSubbandPyramid3DDWT( &coeff3d, QCCWAVSUBBANDPYRAMID3D_DYADIC,
                              5, 5, &cdf97 );
   //QccWAVSubbandPyramid3DInverseDWT( &coeff3d, &cdf97 );
 
-  // Debug Step 4: copy back the transformed coefficients
+  // Energy Research Step 4: copy back the transformed coefficients
   auto qcc_vec = std::vector<double>(m_dims[0] * m_dims[1] * m_dims[2]);
   counter = 0;
   for (size_t z = 0; z < m_dims[2]; z++)
@@ -130,15 +131,16 @@ auto SPECK3D_Compressor::compress() -> RTNType
       for (size_t x = 0; x < m_dims[0]; x++)
         qcc_vec[counter++] = coeff3d.volume[z][y][x];
 
-  // Debug Step 5: calculate energy of transformed coefficients
+  // Energy Research Step 5: calculate energy of transformed coefficients
   rtn = m_cdf.take_data(std::move(qcc_vec), m_dims);
   if (rtn != RTNType::Good)
     return rtn;
   auto qcc_energy = m_cdf.calc_energy();
 
   //
-  // Finish Debug steps
+  // Finish Energy Research steps
   //
+#endif
 
   // Step 2: wavelet transform
   rtn = m_cdf.take_data(std::move(m_val_buf), m_dims);
@@ -153,13 +155,13 @@ auto SPECK3D_Compressor::compress() -> RTNType
     m_cdf.dwt3d_dyadic();
   else
     m_cdf.dwt3d_wavelet_packet();
-  auto coeff_energy = m_cdf.calc_energy();
-  auto diff = std::abs(data_energy - coeff_energy);
+  //auto coeff_energy = m_cdf.calc_energy();
+  //auto diff = std::abs(data_energy - coeff_energy);
   //std::printf("--> data energy = %.2e, coeff energy = %.2e, diff = %.2e, pct = %.2f\n",
   //            data_energy, coeff_energy, diff, diff / data_energy * 100.0);
-  auto qcc_diff = std::abs(qcc_energy - data_energy);
-  std::printf("                            qcc   energy = %.2e, diff = %.2e, pct = %.2f\n",
-              qcc_energy, qcc_diff, qcc_diff / data_energy * 100.0);
+  //auto qcc_diff = std::abs(qcc_energy - data_energy);
+  //std::printf("                            qcc   energy = %.2e, diff = %.2e, pct = %.2f\n",
+  //            qcc_energy, qcc_diff, qcc_diff / data_energy * 100.0);
 
   // Step 3: SPECK encoding
   rtn = m_encoder.take_data(m_cdf.release_data(), m_dims);
