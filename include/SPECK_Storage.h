@@ -48,7 +48,7 @@ class SPECK_Storage {
   //
 #ifdef QZ_TERM
   const size_t m_header_size = 24;  // See header definition in SPECK_Storage.cpp.
-  int32_t m_qz_term_lev = 0;        // At which quantization level does encoding terminate?
+  int32_t m_qz_lev = 0;             // At which quantization level does encoding terminate?
                                     // Necessary in preparing bitstream headers.
 #else
   const size_t m_header_size = 22;  // See header definition in SPECK_Storage.cpp.

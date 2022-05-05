@@ -31,8 +31,8 @@ class SPECKSet3D {
   //
   // Member functions
   //
-  [[nodiscard]] auto is_pixel() const -> bool;
-  [[nodiscard]] auto is_empty() const -> bool;
+  auto is_pixel() const -> bool;
+  auto is_empty() const -> bool;
 };
 
 //
@@ -46,7 +46,7 @@ class SPECK3D : public SPECK_Storage {
   // It changes the behavior of the coding process, so encoding terminates at a
   // particular quantization level (2^lev).
   //
-  void set_quantization_term_level(int32_t lev);
+  void set_quantization_level(int32_t lev);
 #else
   // How many bits does speck process (for encoding and decoding).
   // If set to zero during decoding, then all bits in the bitstream will be processed.
@@ -58,8 +58,8 @@ class SPECK3D : public SPECK_Storage {
   auto decode() -> RTNType;
 
  private:
-  [[nodiscard]] auto m_ready_to_encode() const -> bool;
-  [[nodiscard]] auto m_ready_to_decode() const -> bool;
+  auto m_ready_to_encode() const -> bool;
+  auto m_ready_to_decode() const -> bool;
   void m_clean_LIS();  // Clean garbage sets from m_LIS if too much garbage exists.
   void m_initialize_sets_lists();
   auto m_sorting_pass_encode() -> RTNType;
@@ -79,17 +79,17 @@ class SPECK3D : public SPECK_Storage {
   auto m_process_P_decode(size_t idx, size_t& counter, bool) -> RTNType;
 
   // Divide a SPECKSet3D into 8, 4, or 2 smaller subsets.
-  [[nodiscard]] auto m_partition_S_XYZ(const SPECKSet3D&) const -> std::array<SPECKSet3D, 8>;
-  [[nodiscard]] auto m_partition_S_XY(const SPECKSet3D&) const -> std::array<SPECKSet3D, 4>;
-  [[nodiscard]] auto m_partition_S_Z(const SPECKSet3D&) const -> std::array<SPECKSet3D, 2>;
+  auto m_partition_S_XYZ(const SPECKSet3D&) const -> std::array<SPECKSet3D, 8>;
+  auto m_partition_S_XY(const SPECKSet3D&) const -> std::array<SPECKSet3D, 4>;
+  auto m_partition_S_Z(const SPECKSet3D&) const -> std::array<SPECKSet3D, 2>;
 
   // Decide if a set is significant or not.
   // If it is significant, also identify the pixel that makes it significant.
-  [[nodiscard]] auto m_decide_significance(const SPECKSet3D&) const
+  auto m_decide_significance(const SPECKSet3D&) const
       -> std::pair<SigType, std::array<uint32_t, 3>>;
 
 #ifdef QZ_TERM
-  // Quantize a pixel to the specified `m_qz_term_lev` (defined in SPECK_Storage).
+  // Quantize a pixel to the specified `m_qz_lev` (defined in SPECK_Storage).
   void m_quantize_P_encode(size_t idx);
   void m_quantize_P_decode(size_t idx);
 #else
@@ -115,8 +115,8 @@ class SPECK3D : public SPECK_Storage {
   size_t m_budget = 0;
 #endif
 
-  size_t m_threshold_idx = 0;
   std::array<double, 64> m_threshold_arr;
+  size_t m_threshold_idx = 0;
 };
 
 };  // namespace sperr
