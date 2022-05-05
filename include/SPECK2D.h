@@ -27,8 +27,8 @@ class SPECKSet2D {
   //
   // Member functions
   //
-  [[nodiscard]] auto is_pixel() const -> bool;
-  [[nodiscard]] auto is_empty() const -> bool;
+  auto is_pixel() const -> bool;
+  auto is_empty() const -> bool;
 };
 
 //
@@ -41,7 +41,7 @@ class SPECK2D : public SPECK_Storage {
 
   // trivial input
 #ifdef QZ_TERM
-  void set_quantization_term_level(int32_t lev);
+  void set_quantization_level(int32_t lev);
 #else
   void set_bit_budget(size_t);
 #endif
@@ -66,10 +66,10 @@ class SPECK2D : public SPECK_Storage {
   auto m_decide_set_S_significance(const SPECKSet2D& set) -> SigType;
   auto m_decide_set_I_significance(const SPECKSet2D& set) -> SigType;
   void m_clean_LIS();
-  [[nodiscard]] auto m_produce_root() const -> SPECKSet2D;
-  [[nodiscard]] auto m_partition_S(const SPECKSet2D&) const -> std::array<SPECKSet2D, 4>;
-  [[nodiscard]] auto m_ready_to_encode() const -> bool;
-  [[nodiscard]] auto m_ready_to_decode() const -> bool;
+  auto m_produce_root() const -> SPECKSet2D;
+  auto m_partition_S(const SPECKSet2D&) const -> std::array<SPECKSet2D, 4>;
+  auto m_ready_to_encode() const -> bool;
+  auto m_ready_to_decode() const -> bool;
 
 #ifdef QZ_TERM
   void m_quantize_P_encode(size_t idx);
@@ -101,7 +101,7 @@ class SPECK2D : public SPECK_Storage {
   std::vector<size_t> m_LSP_old;  // List of significant pixels, previously identified
   size_t m_budget = 0;            // What's the budget for num of bits in fixed-rate mode?
 #endif
-  
+
 };
 
 };  // namespace sperr
