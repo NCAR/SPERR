@@ -51,8 +51,8 @@ auto sperr::SPECK_Storage::get_dims() const -> std::array<size_t, 3>
 auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
 {
   // Header definition: 24 bytes in QZ_TERM mode
-  // dim_x,     dim_y,     dim_z,     max_coeff_bits, qz_term_lev,  stream_len (in byte)
-  // uint32_t,  uint32_t,  uint32_t,  int16_t,        int16_t,      uint64_t
+  // dim_x,     dim_y,     dim_z,     max_coeff_bits, qz_lev,   stream_len (in byte)
+  // uint32_t,  uint32_t,  uint32_t,  int16_t,        int16_t,  uint64_t
   //
   // Header definition: 22 bytes in size-bounded mode
   // dim_x,     dim_y,     dim_z,     max_coeff_bits, stream_len (in byte)
@@ -69,14 +69,14 @@ auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
   size_t pos = 0;
   std::memcpy(ptr, dims, sizeof(dims));
   pos += sizeof(dims);
-  int16_t max_bits = int16_t(m_max_coeff_bits);  // int16_t is big enough
+  int16_t max_bits = static_cast<int16_t>(m_max_coeff_bits);  // int16_t is big enough
   std::memcpy(ptr + pos, &max_bits, sizeof(max_bits));
   pos += sizeof(max_bits);
 
 #ifdef QZ_TERM
-  int16_t qz_term = int16_t(m_qz_term_lev);  // int16_t is big enough
-  std::memcpy(ptr + pos, &qz_term, sizeof(qz_term));
-  pos += sizeof(qz_term);
+  int16_t qz_lev = static_cast<int16_t>(m_qz_lev);  // int16_t is big enough
+  std::memcpy(ptr + pos, &qz_lev, sizeof(qz_lev));
+  pos += sizeof(qz_lev);
 #endif
 
   std::memcpy(ptr + pos, &bit_in_byte, sizeof(bit_in_byte));
@@ -108,10 +108,10 @@ auto sperr::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t 
   m_max_coeff_bits = max_bits;
 
 #ifdef QZ_TERM
-  int16_t qz_term;
-  std::memcpy(&qz_term, ptr + pos, sizeof(qz_term));
-  pos += sizeof(qz_term);
-  m_qz_term_lev = qz_term;
+  int16_t qz_lev;
+  std::memcpy(&qz_lev, ptr + pos, sizeof(qz_lev));
+  pos += sizeof(qz_lev);
+  m_qz_lev = qz_lev;
 #endif
 
   uint64_t bit_in_byte;

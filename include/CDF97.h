@@ -39,7 +39,7 @@ class CDF97 {
 
   // Methods for research use only.
   //
-  // Calculate the "energy" of data held by `m_coeff_buf`.
+  // It calculate the "energy" of data held by `m_coeff_buf`.
   // It could be energy of the input data, or the transformed wavelet coefficients.
   auto calc_energy() const -> double;
 
