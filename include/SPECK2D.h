@@ -101,6 +101,7 @@ class SPECK2D : public SPECK_Storage {
   std::vector<size_t> m_LSP_old;  // List of significant pixels, previously identified
   size_t m_budget = 0;            // What's the budget for num of bits in fixed-rate mode?
 #endif
+
 };
 
 };  // namespace sperr

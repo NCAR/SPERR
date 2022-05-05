@@ -164,7 +164,7 @@ auto sperr::SPECK3D::decode() -> RTNType
       return RTNType::Error;
     // This is the actual termination condition in QZ_TERM mode.
     assert(m_max_coeff_bits >= m_qz_lev);
-    if (m_threshold_idx >= size_t(m_max_coeff_bits - m_qz_lev))
+    if (m_threshold_idx >= static_cast<size_t>(m_max_coeff_bits - m_qz_lev))
       break;
 #else
     if (rtn == RTNType::BitBudgetMet)
