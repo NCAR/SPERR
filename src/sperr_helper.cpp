@@ -246,7 +246,7 @@ template <typename T>
 auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_nthreads)
     -> std::array<T, 5>
 {
-  const size_t stride_size = 4096;
+  const size_t stride_size = 8192;
   const size_t num_of_strides = arr_len / stride_size;
   const size_t remainder_size = arr_len - stride_size * num_of_strides;
 
@@ -464,3 +464,25 @@ template void sperr::scatter_chunk(std::vector<double>&,
                                    dims_type,
                                    const std::vector<double>&,
                                    const std::array<size_t, 6>&);
+
+auto sperr::calc_diff_sqr(const vecd_type& v1, const vecd_type& v2) -> double
+{
+  assert(v1.size() == v2.size());
+  const size_t stride_size = 8192;
+  const size_t num_strides = v1.size() / stride_size;
+  const size_t remainder_size = v1.size() - stride_size * num_strides;
+  auto sum_vec = std::vector<double>(num_strides + 1, 0.0);
+
+  for (size_t i = 0; i < num_strides; i++) {
+    auto beg1 = v1.cbegin() + i * stride_size;
+    auto end1 = beg1 + stride_size;
+    auto beg2 = v2.cbegin() + i * stride_size;
+    sum_vec[i] = std::inner_product(beg1, end1, beg2, 0.0, std::plus<>(),
+                  [](auto a, auto b){ return (a - b) * (a - b); });
+  }
+  sum_vec[num_strides] = std::inner_product(v1.cbegin() + num_strides * stride_size, v1.cend(),
+                          v2.cbegin() + num_strides * stride_size, 0.0, std::plus<>(),
+                          [](auto a, auto b){ return (a - b) * (a - b); });
+
+  return std::accumulate(sum_vec.cbegin(), sum_vec.cend(), 0.0);
+}

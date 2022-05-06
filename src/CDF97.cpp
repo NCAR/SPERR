@@ -620,7 +620,7 @@ auto sperr::CDF97::calc_energy() const -> double
   if (m_data_buf.empty())
     return 0.0;
 
-  const size_t stride_size = 4096;
+  const size_t stride_size = 8192;
   const size_t num_strides = m_data_buf.size() / stride_size;
   const size_t remainder_size = m_data_buf.size() - stride_size * num_strides;
   auto sum_vec = std::vector<double>(num_strides + 1, 0.0);
