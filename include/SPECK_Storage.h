@@ -1,10 +1,10 @@
 #ifndef SPECK_STORAGE_H
 #define SPECK_STORAGE_H
 
-/*
- * This class implements mechanisms and interfaces to help 2D and 3D SPECK
- * classes manage storage of coefficients and bitstreams.
- */
+//
+// This class implements mechanisms and interfaces to help 2D and 3D SPECK
+// classes manage storage of coefficients and bitstreams.
+//
 
 #include <string>
 #include <utility>  // std::pair<>
