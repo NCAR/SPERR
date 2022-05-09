@@ -465,7 +465,7 @@ template void sperr::scatter_chunk(std::vector<double>&,
                                    const std::vector<double>&,
                                    const std::array<size_t, 6>&);
 
-auto sperr::calc_diff_sqr(const vecd_type& v1, const vecd_type& v2) -> double
+auto sperr::calc_diff_energy(const vecd_type& v1, const vecd_type& v2) -> double
 {
   assert(v1.size() == v2.size());
   const size_t stride_size = 8192;
