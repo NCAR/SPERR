@@ -75,7 +75,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
   // quantization level.
 
   if (m_tol > 0.0) {
-    m_val_buf2.resize(m_val_buf.size());
+    m_val_buf2.resize(total_vals);
     std::copy(m_val_buf.begin(), m_val_buf.end(), m_val_buf2.begin());
   }
   else
@@ -87,60 +87,6 @@ auto SPECK3D_Compressor::compress() -> RTNType
   if (rtn != RTNType::Good)
     return rtn;
   m_condi_stream = condi_meta;
-
-  //
-  // Energy Research steps: use Qcc DWT to test energy
-  //
-#if 0
-  // Energy Research Step 1: create Subband Pyramid
-  QccWAVSubbandPyramid3D    coeff3d;
-  QccWAVSubbandPyramid3DInitialize( &coeff3d );
-  coeff3d.num_cols = m_dims[0];
-  coeff3d.num_rows = m_dims[1];
-  coeff3d.num_frames = m_dims[2];
-  QccWAVSubbandPyramid3DAlloc( &coeff3d );
-  size_t counter = 0;
-  for (size_t z = 0; z < m_dims[2]; z++)
-    for (size_t y = 0; y < m_dims[1]; y++)
-      for (size_t x = 0; x < m_dims[0]; x++)
-        coeff3d.volume[z][y][x] = m_val_buf[counter++];
-
-  // Energy Research Step 2: create a wavelet
-  QccString       WaveletFilename = "CohenDaubechiesFeauveau.5-3.fbk";
-  QccString       Boundary = "symmetric";
-  QccWAVWavelet   cdf97;
-  if( QccWAVWaveletInitialize( &cdf97 ) ) {
-    QccErrorAddMessage(" Error calling QccWAVWaveletInitialize()" );
-    QccErrorExit();
-  }
-  if (QccWAVWaveletCreate( &cdf97, WaveletFilename, Boundary )) {
-    QccErrorAddMessage(" Error calling QccWAVWaveletCreate()");
-    QccErrorExit();
-  }
-
-  // Energy Research Step 3: forward and inverse transforms
-  QccWAVSubbandPyramid3DDWT( &coeff3d, QCCWAVSUBBANDPYRAMID3D_DYADIC,
-                             5, 5, &cdf97 );
-  //QccWAVSubbandPyramid3DInverseDWT( &coeff3d, &cdf97 );
-
-  // Energy Research Step 4: copy back the transformed coefficients
-  auto qcc_vec = std::vector<double>(m_dims[0] * m_dims[1] * m_dims[2]);
-  counter = 0;
-  for (size_t z = 0; z < m_dims[2]; z++)
-    for (size_t y = 0; y < m_dims[1]; y++)
-      for (size_t x = 0; x < m_dims[0]; x++)
-        qcc_vec[counter++] = coeff3d.volume[z][y][x];
-
-  // Energy Research Step 5: calculate energy of transformed coefficients
-  rtn = m_cdf.take_data(std::move(qcc_vec), m_dims);
-  if (rtn != RTNType::Good)
-    return rtn;
-  auto qcc_energy = m_cdf.calc_energy();
-
-  //
-  // Finish Energy Research steps
-  //
-#endif
 
   // Step 2: wavelet transform
   rtn = m_cdf.take_data(std::move(m_val_buf), m_dims);
@@ -155,13 +101,9 @@ auto SPECK3D_Compressor::compress() -> RTNType
     m_cdf.dwt3d_dyadic();
   else
     m_cdf.dwt3d_wavelet_packet();
-  //auto coeff_energy = m_cdf.calc_energy();
-  //auto diff = std::abs(data_energy - coeff_energy);
-  //std::printf("--> data energy = %.2e, coeff energy = %.2e, diff = %.2e, pct = %.2f\n",
-  //            data_energy, coeff_energy, diff, diff / data_energy * 100.0);
-  //auto qcc_diff = std::abs(qcc_energy - data_energy);
-  //std::printf("                            qcc   energy = %.2e, diff = %.2e, pct = %.2f\n",
-  //            qcc_energy, qcc_diff, qcc_diff / data_energy * 100.0);
+
+// Energy Research: make a copy of the original coefficients
+const auto coeff_orig = m_cdf.view_data();
 
   // Step 3: SPECK encoding
   rtn = m_encoder.take_data(m_cdf.release_data(), m_dims);
@@ -186,6 +128,12 @@ auto SPECK3D_Compressor::compress() -> RTNType
     rtn = m_encoder.decode();
     if (rtn != RTNType::Good)
       return rtn;
+
+// Energy Research: make a copy of the quantized coefficients
+const auto& coeff_qz = m_encoder.view_data();
+// Energy Reserach: calculate the energy of quantization error
+const auto energy_err = sperr::calc_diff_energy(coeff_orig, coeff_qz);
+
     m_cdf.take_data(m_encoder.release_data(), m_dims);
     if (xforms_xy == xforms_z)
       m_cdf.idwt3d_dyadic();
@@ -193,6 +141,24 @@ auto SPECK3D_Compressor::compress() -> RTNType
       m_cdf.idwt3d_wavelet_packet();
     m_val_buf = m_cdf.release_data();
     m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
+
+// Energy Research: estimate PSNR based on quantization error
+const auto [min, max] = std::minmax_element(m_val_buf2.cbegin(), m_val_buf2.cend());
+const auto range_sq = (*max - *min) * (*max - *min);
+const auto mse = energy_err / static_cast<double>(total_vals);
+const auto psnr_est = std::log10(range_sq / mse) * 10.0;
+const auto comp_stats = sperr::calc_stats(m_val_buf2.data(), m_val_buf.data(), total_vals, 5);
+const auto psnr_real = comp_stats[2];
+std::printf("Est. PSNR = %.2f, Real PSNR = %.2f, diff = %.2f\n", psnr_est, psnr_real, 
+            (psnr_est - psnr_real));
+
+
+// Energy Research: calculate overall compression error
+//const auto energy_physical = sperr::calc_diff_energy(m_val_buf, m_val_buf2);
+//std::printf("qz error = %.2e, comp error = %.2e, pct of diff = %.2f, log10 diff = %.2f\n",
+//            energy_err, energy_physical,
+//            (energy_physical - energy_err) / energy_physical * 100.0,
+//            std::log10(energy_physical) - std::log10(energy_err));
 
     // Step 5: we find all the outliers!
     //
@@ -203,9 +169,9 @@ auto SPECK3D_Compressor::compress() -> RTNType
     //
     auto new_tol = m_tol;
     for (size_t i = 0; i < total_vals; i++) {
-      const auto d = std::abs(m_val_buf2[i] - m_val_buf[i]);
-      const float f = std::abs(float(m_val_buf2[i]) - float(m_val_buf[i]));
-      if (double(f) > m_tol && d <= m_tol)
+      const double d = std::abs(m_val_buf2[i] - m_val_buf[i]);
+      const float f = std::abs(static_cast<float>(m_val_buf2[i]) - static_cast<float>(m_val_buf[i]));
+      if (static_cast<double>(f) > m_tol && d <= m_tol)
         new_tol = std::min(new_tol, d);
     }
     for (size_t i = 0; i < total_vals; i++) {
