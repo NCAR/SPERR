@@ -15,7 +15,6 @@ class Analyzer {
 
  private:
   std::array<double, 2> m_range = {0.0, 0.0}; // range used for PSNR calculation
-  int32_t m_max_coeff_bit = 0;
 
 }; // class Analyzer
 

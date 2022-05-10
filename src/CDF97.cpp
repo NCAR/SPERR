@@ -633,7 +633,8 @@ auto sperr::CDF97::calc_energy() const -> double
   }
   sum_vec[num_strides] = std::accumulate(m_data_buf.cbegin() + num_strides * stride_size,
                                          m_data_buf.cend(), 0.0, sq_sum);
-  return std::accumulate(sum_vec.cbegin(), sum_vec.cend(), 0.0);
+  // Accumulate from back to front, because values towards the end of `sum_vec` tend to be smaller.
+  return std::accumulate(sum_vec.crbegin(), sum_vec.crend(), 0.0);
 }
 
 //

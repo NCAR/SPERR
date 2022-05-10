@@ -288,7 +288,7 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
       maxerr = std::max(maxerr, diff);
       buf[i] = diff * diff;
     }
-    sum_vec[stride_i] = std::accumulate(buf.begin(), buf.end(), T{0.0});
+    sum_vec[stride_i] = std::accumulate(buf.cbegin(), buf.cend(), T{0.0});
     linfty_vec[stride_i] = maxerr;
   }
 
@@ -304,7 +304,7 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
     last_buf[i] = diff * diff;
   }
   sum_vec[num_of_strides] =
-      std::accumulate(last_buf.begin(), last_buf.begin() + remainder_size, T{0.0});
+      std::accumulate(last_buf.cbegin(), last_buf.cbegin() + remainder_size, T{0.0});
   linfty_vec[num_of_strides] = last_linfty;
 
   //
@@ -318,7 +318,7 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
   // http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/VELDHUIZEN/node18.html
   // Also refer to https://www.mathworks.com/help/vision/ref/psnr.html
   //
-  const auto mse = std::accumulate(sum_vec.begin(), sum_vec.end(), T{0.0}) / T(arr_len);
+  const auto mse = std::accumulate(sum_vec.cbegin(), sum_vec.cend(), T{0.0}) / T(arr_len);
   rmse = std::sqrt(mse);
   const auto range_sq = (arr1max - arr1min) * (arr1max - arr1min);
   psnr = std::log10(range_sq / mse) * T{10.0};
