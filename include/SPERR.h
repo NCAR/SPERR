@@ -99,7 +99,7 @@ class SPERR {
   //
   uint64_t m_total_len = 0;         // 1D array length
   double m_tolerance = 0.0;         // Error tolerance.
-  int32_t m_max_coeff_bits = 0;     // = log2(max_coefficient)
+  int32_t m_max_coeff_bit = 0;      // = log2(max_coefficient)
   const size_t m_header_size = 20;  // in bytes
 
   size_t m_outlier_cnt = 0;   // How many data points are still exceeding the tolerance?

@@ -69,9 +69,9 @@ auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
   size_t pos = 0;
   std::memcpy(ptr, dims, sizeof(dims));
   pos += sizeof(dims);
-  int16_t max_bits = static_cast<int16_t>(m_max_coeff_bits);  // int16_t is big enough
-  std::memcpy(ptr + pos, &max_bits, sizeof(max_bits));
-  pos += sizeof(max_bits);
+  int16_t max_bit = static_cast<int16_t>(m_max_coeff_bit);  // int16_t is big enough
+  std::memcpy(ptr + pos, &max_bit, sizeof(max_bit));
+  pos += sizeof(max_bit);
 
 #ifdef QZ_TERM
   int16_t qz_lev = static_cast<int16_t>(m_qz_lev);  // int16_t is big enough
@@ -102,10 +102,10 @@ auto sperr::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t 
   size_t pos = 0;
   std::memcpy(dims.data(), ptr, sizeof(dims));
   pos += sizeof(dims);
-  int16_t max_bits;
-  std::memcpy(&max_bits, ptr + pos, sizeof(max_bits));
-  pos += sizeof(max_bits);
-  m_max_coeff_bits = max_bits;
+  int16_t max_bit;
+  std::memcpy(&max_bit, ptr + pos, sizeof(max_bit));
+  pos += sizeof(max_bit);
+  m_max_coeff_bit = max_bit;
 
 #ifdef QZ_TERM
   int16_t qz_lev;

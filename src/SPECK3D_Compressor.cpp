@@ -103,7 +103,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     m_cdf.dwt3d_wavelet_packet();
 
 // Energy Research: make a copy of the original coefficients
-const auto coeff_orig = m_cdf.view_data();
+//const auto coeff_orig = m_cdf.view_data();
 
   // Step 3: SPECK encoding
   rtn = m_encoder.take_data(m_cdf.release_data(), m_dims);
@@ -130,9 +130,9 @@ const auto coeff_orig = m_cdf.view_data();
       return rtn;
 
 // Energy Research: make a copy of the quantized coefficients
-const auto& coeff_qz = m_encoder.view_data();
+//const auto& coeff_qz = m_encoder.view_data();
 // Energy Reserach: calculate the energy of quantization error
-const auto energy_err = sperr::calc_diff_energy(coeff_orig, coeff_qz);
+//const auto energy_err = sperr::calc_diff_energy(coeff_orig, coeff_qz);
 
     m_cdf.take_data(m_encoder.release_data(), m_dims);
     if (xforms_xy == xforms_z)
@@ -143,14 +143,14 @@ const auto energy_err = sperr::calc_diff_energy(coeff_orig, coeff_qz);
     m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
 
 // Energy Research: estimate PSNR based on quantization error
-const auto [min, max] = std::minmax_element(m_val_buf2.cbegin(), m_val_buf2.cend());
-const auto range_sq = (*max - *min) * (*max - *min);
-const auto mse = energy_err / static_cast<double>(total_vals);
-const auto psnr_est = std::log10(range_sq / mse) * 10.0;
-const auto comp_stats = sperr::calc_stats(m_val_buf2.data(), m_val_buf.data(), total_vals, 5);
-const auto psnr_real = comp_stats[2];
-std::printf("Est. PSNR = %.2f, Real PSNR = %.2f, diff = %.2f\n", psnr_est, psnr_real, 
-            (psnr_est - psnr_real));
+//const auto [min, max] = std::minmax_element(m_val_buf2.cbegin(), m_val_buf2.cend());
+//const auto range_sq = (*max - *min) * (*max - *min);
+//const auto mse = energy_err / static_cast<double>(total_vals);
+//const auto psnr_est = std::log10(range_sq / mse) * 10.0;
+//const auto comp_stats = sperr::calc_stats(m_val_buf2.data(), m_val_buf.data(), total_vals, 5);
+//const auto psnr_real = comp_stats[2];
+//std::printf("Est. PSNR = %.2f, Real PSNR = %.2f, diff = %.2f\n", psnr_est, psnr_real, 
+//            (psnr_est - psnr_real));
 
 
 // Energy Research: calculate overall compression error

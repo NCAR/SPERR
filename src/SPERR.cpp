@@ -159,11 +159,11 @@ auto sperr::SPERR::encode() -> RTNType
   m_LSP_old.clear();
   m_LSP_old.reserve(m_LOS.size());
 
-  // Find the maximum q, and decide m_max_coeff_bits
+  // Find the maximum q, and decide m_max_coeff_bit
   auto max_q = *(std::max_element(m_q.cbegin(), m_q.cend()));
   auto max_bits = std::floor(std::log2(max_q));
-  m_max_coeff_bits = int32_t(max_bits);
-  m_threshold = std::pow(2.0, double(m_max_coeff_bits));
+  m_max_coeff_bit = int32_t(max_bits);
+  m_threshold = std::pow(2.0, double(m_max_coeff_bit));
 
   // Start the iterations!
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
@@ -199,9 +199,9 @@ auto sperr::SPERR::decode() -> RTNType
   m_bit_idx = 0;
   m_LOS_size = 0;
 
-  // Since we already have m_max_coeff_bits from the bit stream when decoding
+  // Since we already have m_max_coeff_bit from the bit stream when decoding
   // header, we can go straight into quantization!
-  m_threshold = std::pow(2.0, double(m_max_coeff_bits));
+  m_threshold = std::pow(2.0, double(m_max_coeff_bit));
 
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     if (m_sorting_pass())
@@ -464,7 +464,7 @@ auto sperr::SPERR::num_of_bits() const -> size_t
 
 auto sperr::SPERR::max_coeff_bits() const -> int32_t
 {
-  return m_max_coeff_bits;
+  return m_max_coeff_bit;
 }
 
 auto sperr::SPERR::get_encoded_bitstream() const -> std::vector<uint8_t>
@@ -493,8 +493,8 @@ auto sperr::SPERR::get_encoded_bitstream() const -> std::vector<uint8_t>
   std::memcpy(&buf[0], &m_total_len, sizeof(m_total_len));
   pos += sizeof(m_total_len);
 
-  std::memcpy(&buf[pos], &m_max_coeff_bits, sizeof(m_max_coeff_bits));
-  pos += sizeof(m_max_coeff_bits);
+  std::memcpy(&buf[pos], &m_max_coeff_bit, sizeof(m_max_coeff_bit));
+  pos += sizeof(m_max_coeff_bit);
 
   std::memcpy(&buf[pos], &num_bits, sizeof(num_bits));
   pos += sizeof(num_bits);
@@ -523,8 +523,8 @@ auto sperr::SPERR::parse_encoded_bitstream(const void* buf, size_t len) -> RTNTy
   std::memcpy(&m_total_len, ptr, sizeof(m_total_len));
   pos += sizeof(m_total_len);
 
-  std::memcpy(&m_max_coeff_bits, ptr + pos, sizeof(m_max_coeff_bits));
-  pos += sizeof(m_max_coeff_bits);
+  std::memcpy(&m_max_coeff_bit, ptr + pos, sizeof(m_max_coeff_bit));
+  pos += sizeof(m_max_coeff_bit);
 
   std::memcpy(&num_bits, ptr + pos, sizeof(num_bits));
   pos += sizeof(num_bits);

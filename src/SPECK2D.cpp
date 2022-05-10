@@ -75,18 +75,18 @@ auto sperr::SPECK2D::encode() -> RTNType
 
   // Find the threshold to start the algorithm
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
-  m_max_coeff_bits = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
+  m_max_coeff_bit = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
 
 #ifdef QZ_TERM
-  m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
+  m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
   std::generate(m_threshold_arr.begin(), m_threshold_arr.end(),
                 [v = m_threshold_arr[0]]() mutable { return std::exchange(v, v * 0.5); });
 
   // If the requested termination level is already above max_coeff_bits, return right away.
-  if (m_qz_lev > m_max_coeff_bits)
+  if (m_qz_lev > m_max_coeff_bit)
     return RTNType::QzLevelTooBig;
 
-  const auto num_qz_levs = m_max_coeff_bits - m_qz_lev + 1;
+  const auto num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
   for (m_threshold_idx = 0; m_threshold_idx < num_qz_levs; m_threshold_idx++) {
     m_sorting_pass_encode();
     m_clean_LIS();
@@ -98,7 +98,7 @@ auto sperr::SPECK2D::encode() -> RTNType
 
 #else
 
-  m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
+  m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     auto rtn = m_sorting_pass_encode();
     if (rtn == RTNType::BitBudgetMet)
@@ -141,7 +141,7 @@ auto sperr::SPECK2D::decode() -> RTNType
   m_bit_idx = 0;
 
 #ifdef QZ_TERM
-  m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
+  m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
   std::generate(m_threshold_arr.begin(), m_threshold_arr.end(),
                 [v = m_threshold_arr[0]]() mutable { return std::exchange(v, v * 0.5); });
 
@@ -151,8 +151,8 @@ auto sperr::SPECK2D::decode() -> RTNType
     if (m_bit_idx > m_bit_buffer.size())
       return RTNType::Error;
     // This is the actual termination condition in QZ_TERM mode.
-    assert(m_max_coeff_bits >= m_qz_lev);
-    if (m_threshold_idx >= static_cast<size_t>(m_max_coeff_bits - m_qz_lev))
+    assert(m_max_coeff_bit >= m_qz_lev);
+    if (m_threshold_idx >= static_cast<size_t>(m_max_coeff_bit - m_qz_lev))
       break;
     m_clean_LIS();
   }
@@ -163,7 +163,7 @@ auto sperr::SPECK2D::decode() -> RTNType
 
 #else
 
-  m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
+  m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     auto rtn = m_sorting_pass_decode();
     if (rtn == RTNType::BitBudgetMet)
@@ -310,8 +310,8 @@ void sperr::SPECK2D::m_quantize_P_encode(size_t idx)
 {
   auto coeff = m_coeff_buf[idx] - m_threshold_arr[m_threshold_idx];
   const auto tmpb = b2_type{false, true};
-  assert(m_max_coeff_bits >= m_qz_lev);
-  const size_t num_qz_levs = m_max_coeff_bits - m_qz_lev + 1;
+  assert(m_max_coeff_bit >= m_qz_lev);
+  const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
   auto tmpd = d2_type{0.0, 0.0};
   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
     tmpd[1] = m_threshold_arr[i];
@@ -325,8 +325,8 @@ void sperr::SPECK2D::m_quantize_P_encode(size_t idx)
 void sperr::SPECK2D::m_quantize_P_decode(size_t idx)
 {
   auto coeff = m_threshold_arr[m_threshold_idx] * 1.5;
-  assert(m_max_coeff_bits >= m_qz_lev);
-  const size_t num_qz_levs = m_max_coeff_bits - m_qz_lev + 1;
+  assert(m_max_coeff_bit >= m_qz_lev);
+  const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
     const auto tmp = d2_type{-m_threshold_arr[i + 1], m_threshold_arr[i + 1]};
     coeff += tmp[m_bit_buffer[m_bit_idx++]];
