@@ -1,6 +1,7 @@
 add_library( SPERR
              sperr_helper.cpp
              Conditioner.cpp
+             Analyzer.cpp
              CDF97.cpp
              SPECK_Storage.cpp
              SPECK2D.cpp
@@ -25,13 +26,6 @@ if( USE_ZSTD )
     target_link_libraries( SPERR PUBLIC zstd )
 endif()
 
-#
-# Link to QccPack
-# ccmake -DCMAKE_PREFIX_PATH=/home/shaomeng/Git/QccPack-0.63-1/install/lib .
-#
-find_library(QCC_LIB QccPack)
-target_link_libraries( SPERR PUBLIC ${QCC_LIB})
-
 set_target_properties( SPERR PROPERTIES VERSION ${SPERR_VERSION} )
 
 #
@@ -46,6 +40,7 @@ include/SPECK3D_OMP_D.h;\
 include/SPECK2D_Compressor.h;\
 include/SPECK2D_Decompressor.h;\
 include/Conditioner.h;\
+include/Analyzer.h;\
 include/CDF97.h;\
 include/SPECK_Storage.h;\
 include/SPECK2D.h;\

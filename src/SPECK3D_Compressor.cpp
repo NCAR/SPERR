@@ -1,11 +1,8 @@
 #include "SPECK3D_Compressor.h"
+#include "Analyzer.h"
 
 #include <cassert>
 #include <cstring>
-
-extern "C" {
-  #include "libQccPack.h"
-}
 
 template <typename T>
 auto SPECK3D_Compressor::copy_data(const T* p, size_t len, sperr::dims_type dims) -> RTNType
@@ -96,14 +93,15 @@ auto SPECK3D_Compressor::compress() -> RTNType
   // Note: this strategy needs to be consistent with SPECK3D_Decompressor.
   auto xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
   auto xforms_z = sperr::num_of_xforms(m_dims[2]);
-//auto data_energy = m_cdf.calc_energy();
   if (xforms_xy == xforms_z)
     m_cdf.dwt3d_dyadic();
   else
     m_cdf.dwt3d_wavelet_packet();
 
-// Energy Research: make a copy of the original coefficients
+// Energy Research
 //const auto coeff_orig = m_cdf.view_data();
+sperr::Analyzer analyzer;
+analyzer.est_q_psnr(m_cdf.view_data());
 
   // Step 3: SPECK encoding
   rtn = m_encoder.take_data(m_cdf.release_data(), m_dims);
@@ -128,6 +126,12 @@ auto SPECK3D_Compressor::compress() -> RTNType
     rtn = m_encoder.decode();
     if (rtn != RTNType::Good)
       return rtn;
+
+// Energy Research:
+const auto& er_coeffs = m_encoder.view_data();
+for (size_t i = 0; i < 10; i++)
+  std::printf("Old: m_quant_buf[%ld] = %f\n", i, er_coeffs[i]);
+  
 
 // Energy Research: make a copy of the quantized coefficients
 //const auto& coeff_qz = m_encoder.view_data();

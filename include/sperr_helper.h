@@ -190,7 +190,7 @@ void scatter_chunk(std::vector<TBIG>& big_vol,
 // calculate the sum of squared difference of two vectors.
 auto calc_diff_sq_sum(const vecd_type& v1, const vecd_type& v2) -> double;
 // calculate the sum of squares of one vector.
-auto calc_sq_sum(const vecd_type& v) -> double;
+auto calc_sq_sum(const vecd_type&) -> double;
 
 };  // namespace sperr
 
