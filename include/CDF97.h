@@ -37,12 +37,6 @@ class CDF97 {
   void dwt3d_dyadic();
   void idwt3d_dyadic();
 
-  // Methods for research use only.
-  //
-  // It calculate the "energy" of data held by `m_coeff_buf`.
-  // It could be energy of the input data, or the transformed wavelet coefficients.
-  auto calc_energy() const -> double;
-
  private:
   using itd_type = vecd_type::iterator;
   using citd_type = vecd_type::iterator;

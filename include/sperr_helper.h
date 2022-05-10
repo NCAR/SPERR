@@ -186,8 +186,11 @@ void scatter_chunk(std::vector<TBIG>& big_vol,
                    const std::vector<TSML>& small_vol,
                    const std::array<size_t, 6>& chunk);
 
-// For research use only: calculate the sum of squared difference of two vectors.
-auto calc_diff_energy(const vecd_type& v1, const vecd_type& v2) -> double;
+// For research use only:
+// calculate the sum of squared difference of two vectors.
+auto calc_diff_sq_sum(const vecd_type& v1, const vecd_type& v2) -> double;
+// calculate the sum of squares of one vector.
+auto calc_sq_sum(const vecd_type& v) -> double;
 
 };  // namespace sperr
 

@@ -276,7 +276,7 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
   auto linfty_vec = std::vector<T>(num_of_strides + 1);
 
 //
-// Calculate summation and l-infty of each stride
+// Calculate diff summation and l-infty of each stride
 //
 #pragma omp parallel for num_threads(omp_nthreads)
   for (size_t stride_i = 0; stride_i < num_of_strides; stride_i++) {
@@ -293,7 +293,7 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
   }
 
   //
-  // Calculate summation and l-infty of the remaining elements
+  // Calculate diff summation and l-infty of the remaining elements
   //
   T last_linfty = 0.0;
   auto last_buf = std::array<T, stride_size>{};  // must be enough for `remainder_size` elements.
@@ -465,9 +465,12 @@ template void sperr::scatter_chunk(std::vector<double>&,
                                    const std::vector<double>&,
                                    const std::array<size_t, 6>&);
 
-auto sperr::calc_diff_energy(const vecd_type& v1, const vecd_type& v2) -> double
+auto sperr::calc_diff_sq_sum(const vecd_type& v1, const vecd_type& v2) -> double
 {
   assert(v1.size() == v2.size());
+  if (v1.empty())
+    return 0.0;
+
   const size_t stride_size = 4096;
   const size_t num_strides = v1.size() / stride_size;
   const size_t remainder_size = v1.size() - stride_size * num_strides;
@@ -485,4 +488,27 @@ auto sperr::calc_diff_energy(const vecd_type& v1, const vecd_type& v2) -> double
                           [](auto a, auto b){ return (a - b) * (a - b); });
 
   return std::accumulate(sum_vec.cbegin(), sum_vec.cend(), 0.0);
+}
+
+auto sperr::calc_sq_sum(const vecd_type& vec) -> double
+{
+  if (vec.empty())
+    return 0.0;
+
+  const size_t stride_size = 4096;
+  const size_t num_strides = vec.size() / stride_size;
+  const size_t remainder_size = vec.size() - stride_size * num_strides;
+  auto sum_vec = std::vector<double>(num_strides + 1, 0.0);
+  auto sq_sum = [](double dest, double val) { return val * val + dest; };
+
+  for (size_t i = 0; i < num_strides; i++) {
+    auto beg = vec.cbegin() + i * stride_size;
+    auto end = beg + stride_size;
+    sum_vec[i] = std::accumulate(beg, end, 0.0, sq_sum);
+  }
+  sum_vec[num_strides] = std::accumulate(vec.cbegin() + num_strides * stride_size,
+                                         vec.cend(), 0.0, sq_sum);
+
+  // Accumulate from back to front, because values towards the end might be smaller.
+  return std::accumulate(sum_vec.crbegin(), sum_vec.crend(), 0.0);
 }

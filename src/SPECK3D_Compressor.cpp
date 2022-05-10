@@ -96,7 +96,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
   // Note: this strategy needs to be consistent with SPECK3D_Decompressor.
   auto xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
   auto xforms_z = sperr::num_of_xforms(m_dims[2]);
-  auto data_energy = m_cdf.calc_energy();
+//auto data_energy = m_cdf.calc_energy();
   if (xforms_xy == xforms_z)
     m_cdf.dwt3d_dyadic();
   else
