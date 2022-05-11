@@ -12,18 +12,28 @@ namespace sperr {
 
 class Analyzer {
  public:
-  // Calculate the mean square error (MSE) of an array given a quantization level q.
-  void est_q_psnr(const vecd_type& coeffs);
+  // Estimate q-psnr curve until a target PSNR.
+  // A valid data range must have already been set by set_range().
+  void est_q_psnr(const vecd_type& coeffs, double target);
+
+  // Calculate PSNR with all elements in `a` are used with their absolute values.
+  auto calc_psnr(const vecd_type& a, const vecd_type& b) -> double;
+
+  void set_range(double);
+  void extract_range(const vecd_type&);
+  
 
  private:
-  std::array<double, 2> m_range = {0.0, 0.0}; // range used for PSNR calculation
   std::array<double, 64> m_psnr_arr;
+  std::array<int32_t, 64> m_q_arr;
   std::vector<double> m_coeff_buf;  // buffer storing coefficients to help with quantization
   std::vector<double> m_quant_buf;  // buffer storing quantized values
   std::vector<bool>   m_sig_map;
 
-  int32_t m_max_coeff_bit = 0;
+  std::vector<double> m_tmp_buf; // temporary use only
+
   size_t m_current_q_idx = 0;
+  double m_range = 0.0; // data range used for PSNR calculation
   
 
 

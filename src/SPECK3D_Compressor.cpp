@@ -85,6 +85,10 @@ auto SPECK3D_Compressor::compress() -> RTNType
     return rtn;
   m_condi_stream = condi_meta;
 
+// Energy Research
+sperr::Analyzer analyzer;
+analyzer.extract_range(m_val_buf);
+
   // Step 2: wavelet transform
   rtn = m_cdf.take_data(std::move(m_val_buf), m_dims);
   if (rtn != RTNType::Good)
@@ -99,9 +103,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     m_cdf.dwt3d_wavelet_packet();
 
 // Energy Research
-//const auto coeff_orig = m_cdf.view_data();
-sperr::Analyzer analyzer;
-analyzer.est_q_psnr(m_cdf.view_data());
+analyzer.est_q_psnr(m_cdf.view_data(), 40.0);
 
   // Step 3: SPECK encoding
   rtn = m_encoder.take_data(m_cdf.release_data(), m_dims);
@@ -126,12 +128,6 @@ analyzer.est_q_psnr(m_cdf.view_data());
     rtn = m_encoder.decode();
     if (rtn != RTNType::Good)
       return rtn;
-
-// Energy Research:
-const auto& er_coeffs = m_encoder.view_data();
-for (size_t i = 0; i < 10; i++)
-  std::printf("Old: m_quant_buf[%ld] = %f\n", i, er_coeffs[i]);
-  
 
 // Energy Research: make a copy of the quantized coefficients
 //const auto& coeff_qz = m_encoder.view_data();
