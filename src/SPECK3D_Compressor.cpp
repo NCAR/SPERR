@@ -103,7 +103,7 @@ analyzer.extract_range(m_val_buf);
     m_cdf.dwt3d_wavelet_packet();
 
 // Energy Research
-analyzer.est_q_psnr(m_cdf.view_data(), 40.0);
+//analyzer.est_q_psnr(m_cdf.view_data(), 120.0);
 
   // Step 3: SPECK encoding
   rtn = m_encoder.take_data(m_cdf.release_data(), m_dims);
