@@ -27,12 +27,11 @@ class Analyzer {
   std::array<double, 64> m_psnr_arr;
   std::array<int32_t, 64> m_q_arr;
   std::vector<double> m_coeff_buf;  // buffer storing coefficients to help with quantization
-  std::vector<double> m_quant_buf;  // buffer storing quantized values
+  std::vector<double> m_quant_buf;  // buffer storing quantized reconstructions
   std::vector<bool>   m_sig_map;
 
   std::vector<double> m_tmp_buf; // temporary use only
 
-  size_t m_current_q_idx = 0;
   double m_range = 0.0; // data range used for PSNR calculation
   
 
