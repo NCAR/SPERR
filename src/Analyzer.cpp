@@ -55,7 +55,6 @@ void sperr::Analyzer::est_q_psnr(const vecd_type& coeffs, double target_psnr)
     }
 
     recent_psnr = calc_psnr(coeffs, m_quant_buf);
-std::printf("%d, %f\n", m_q_arr[current_q_idx], recent_psnr);
     m_psnr_arr[current_q_idx] = recent_psnr;
 
     ++current_q_idx;
