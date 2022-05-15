@@ -1,10 +1,10 @@
 #ifndef SPECK_STORAGE_H
 #define SPECK_STORAGE_H
 
-/*
- * This class implements mechanisms and interfaces to help 2D and 3D SPECK
- * classes manage storage of coefficients and bitstreams.
- */
+//
+// This class implements mechanisms and interfaces to help 2D and 3D SPECK
+// classes manage storage of coefficients and bitstreams.
+//
 
 #include <string>
 #include <utility>  // std::pair<>
@@ -54,7 +54,7 @@ class SPECK_Storage {
   const size_t m_header_size = 22;  // See header definition in SPECK_Storage.cpp.
 #endif
 
-  int32_t m_max_coeff_bits = 0;  // Necessary in preparing bitstream headers.
+  int32_t m_max_coeff_bit = 0;  // Necessary in preparing bitstream headers.
   dims_type m_dims = {0, 0, 0};
 
   std::vector<double> m_coeff_buf;

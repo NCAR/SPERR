@@ -71,7 +71,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
   // quantization level.
 
   if (m_tol > 0.0) {
-    m_val_buf2.resize(m_val_buf.size());
+    m_val_buf2.resize(total_vals);
     std::copy(m_val_buf.begin(), m_val_buf.end(), m_val_buf2.begin());
   }
   else
@@ -120,6 +120,7 @@ auto SPECK3D_Compressor::compress() -> RTNType
     rtn = m_encoder.decode();
     if (rtn != RTNType::Good)
       return rtn;
+
     m_cdf.take_data(m_encoder.release_data(), m_dims);
     if (xforms_xy == xforms_z)
       m_cdf.idwt3d_dyadic();
@@ -137,9 +138,10 @@ auto SPECK3D_Compressor::compress() -> RTNType
     //
     auto new_tol = m_tol;
     for (size_t i = 0; i < total_vals; i++) {
-      const auto d = std::abs(m_val_buf2[i] - m_val_buf[i]);
-      const float f = std::abs(float(m_val_buf2[i]) - float(m_val_buf[i]));
-      if (double(f) > m_tol && d <= m_tol)
+      const double d = std::abs(m_val_buf2[i] - m_val_buf[i]);
+      const float f =
+          std::abs(static_cast<float>(m_val_buf2[i]) - static_cast<float>(m_val_buf[i]));
+      if (static_cast<double>(f) > m_tol && d <= m_tol)
         new_tol = std::min(new_tol, d);
     }
     for (size_t i = 0; i < total_vals; i++) {

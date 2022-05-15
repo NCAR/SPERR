@@ -53,8 +53,7 @@ enum class RTNType {
 };
 
 //
-// Iterator class that enables STL algorithms to operate on raw arrays.  Adapted
-// from:
+// Iterator class that enables STL algorithms to operate on raw arrays.  Adapted from:
 // https://stackoverflow.com/questions/8054273/how-to-implement-an-stl-style-iterator-and-avoid-common-pitfalls
 //
 template <typename T>
@@ -74,14 +73,14 @@ class ptr_iterator : public std::iterator<std::bidirectional_iterator_tag, T> {
   ~ptr_iterator() = default;
 
   // Requirements for a bidirectional iterator
-  iterator operator++(int) /* postfix */ { return ptr_iterator<T>(m_pos++); }
-  iterator& operator++() /* prefix  */
+  iterator operator++(int) { return ptr_iterator<T>(m_pos++); } /* postfix */
+  iterator& operator++()                                        /* prefix  */
   {
     ++m_pos;
     return *this;
   }
-  iterator operator--(int) /* postfix */ { return ptr_iterator<T>(m_pos--); }
-  iterator& operator--() /* prefix  */
+  iterator operator--(int) { return ptr_iterator<T>(m_pos--); } /* postfix */
+  iterator& operator--()                                        /* prefix  */
   {
     --m_pos;
     return *this;
@@ -186,6 +185,10 @@ void scatter_chunk(std::vector<TBIG>& big_vol,
                    dims_type vol_dim,
                    const std::vector<TSML>& small_vol,
                    const std::array<size_t, 6>& chunk);
+
+// For research use only:
+// calculate the sum of squares of one vector.
+auto calc_sq_sum(const vecd_type&) -> double;
 
 };  // namespace sperr
 

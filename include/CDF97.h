@@ -37,12 +37,6 @@ class CDF97 {
   void dwt3d_dyadic();
   void idwt3d_dyadic();
 
-  // Methods for research use only.
-  //
-  // It calculate the "energy" of data held by `m_coeff_buf`.
-  // It could be energy of the input data, or the transformed wavelet coefficients.
-  auto calc_energy() const -> double;
-
  private:
   using itd_type = vecd_type::iterator;
   using citd_type = vecd_type::iterator;
@@ -123,7 +117,8 @@ class CDF97 {
    */
 
   // Paper coefficients
-  const double h[5]{.602949018236, .266864118443, -.078223266529, -.016864118443, .026748757411};
+  const std::array<double, 5> h = {.602949018236, .266864118443, -.078223266529, -.016864118443,
+                                   .026748757411};
   const double r0 = h[0] - 2.0 * h[4] * h[1] / h[3];
   const double r1 = h[2] - h[4] - h[4] * h[1] / h[3];
   const double s0 = h[1] - h[3] - h[3] * r0 / r1;
@@ -136,13 +131,13 @@ class CDF97 {
   const double INV_EPSILON = 1.0 / (std::sqrt(2.0) * t0);
 
   // QccPack coefficients
-  /*
-   * const double ALPHA   = -1.58615986717275;
-   * const double BETA    = -0.05297864003258;
-   * const double GAMMA   =  0.88293362717904;
-   * const double DELTA   =  0.44350482244527;
-   * const double EPSILON =  1.14960430535816;
-   */
+  //
+  // const double ALPHA   = -1.58615986717275;
+  // const double BETA    = -0.05297864003258;
+  // const double GAMMA   =  0.88293362717904;
+  // const double DELTA   =  0.44350482244527;
+  // const double EPSILON =  1.14960430535816;
+  //
 };
 
 };  // namespace sperr

@@ -276,7 +276,7 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
   auto linfty_vec = std::vector<T>(num_of_strides + 1);
 
 //
-// Calculate summation and l-infty of each stride
+// Calculate diff summation and l-infty of each stride
 //
 #pragma omp parallel for num_threads(omp_nthreads)
   for (size_t stride_i = 0; stride_i < num_of_strides; stride_i++) {
@@ -288,12 +288,12 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
       maxerr = std::max(maxerr, diff);
       buf[i] = diff * diff;
     }
-    sum_vec[stride_i] = std::accumulate(buf.begin(), buf.end(), T{0.0});
+    sum_vec[stride_i] = std::accumulate(buf.cbegin(), buf.cend(), T{0.0});
     linfty_vec[stride_i] = maxerr;
   }
 
   //
-  // Calculate summation and l-infty of the remaining elements
+  // Calculate diff summation and l-infty of the remaining elements
   //
   T last_linfty = 0.0;
   auto last_buf = std::array<T, stride_size>{};  // must be enough for `remainder_size` elements.
@@ -304,7 +304,7 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
     last_buf[i] = diff * diff;
   }
   sum_vec[num_of_strides] =
-      std::accumulate(last_buf.begin(), last_buf.begin() + remainder_size, T{0.0});
+      std::accumulate(last_buf.cbegin(), last_buf.cbegin() + remainder_size, T{0.0});
   linfty_vec[num_of_strides] = last_linfty;
 
   //
@@ -318,7 +318,7 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
   // http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/VELDHUIZEN/node18.html
   // Also refer to https://www.mathworks.com/help/vision/ref/psnr.html
   //
-  const auto mse = std::accumulate(sum_vec.begin(), sum_vec.end(), T{0.0}) / T(arr_len);
+  const auto mse = std::accumulate(sum_vec.cbegin(), sum_vec.cend(), T{0.0}) / T(arr_len);
   rmse = std::sqrt(mse);
   const auto range_sq = (arr1max - arr1min) * (arr1max - arr1min);
   psnr = std::log10(range_sq / mse) * T{10.0};
@@ -464,3 +464,26 @@ template void sperr::scatter_chunk(std::vector<double>&,
                                    dims_type,
                                    const std::vector<double>&,
                                    const std::array<size_t, 6>&);
+
+auto sperr::calc_sq_sum(const vecd_type& vec) -> double
+{
+  if (vec.empty())
+    return 0.0;
+
+  const size_t stride_size = 4096;
+  const size_t num_strides = vec.size() / stride_size;
+  const size_t remainder_size = vec.size() - stride_size * num_strides;
+  auto sum_vec = std::vector<double>(num_strides + 1, 0.0);
+  auto sq_sum = [](double dest, double val) { return val * val + dest; };
+
+  for (size_t i = 0; i < num_strides; i++) {
+    auto beg = vec.cbegin() + i * stride_size;
+    auto end = beg + stride_size;
+    sum_vec[i] = std::accumulate(beg, end, 0.0, sq_sum);
+  }
+  sum_vec[num_strides] =
+      std::accumulate(vec.cbegin() + num_strides * stride_size, vec.cend(), 0.0, sq_sum);
+
+  // Accumulate from back to front, because values towards the end might be smaller.
+  return std::accumulate(sum_vec.crbegin(), sum_vec.crend(), 0.0);
+}

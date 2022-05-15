@@ -88,17 +88,17 @@ auto sperr::SPECK3D::encode() -> RTNType
   // have a pretty big magnitude, so we use int32_t here.
   //
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
-  m_max_coeff_bits = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
-  m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
+  m_max_coeff_bit = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
+  m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
   std::generate(m_threshold_arr.begin(), m_threshold_arr.end(),
                 [v = m_threshold_arr[0]]() mutable { return std::exchange(v, v * 0.5); });
 
 #ifdef QZ_TERM
   // If the requested termination level is already above max_coeff_bits, return right away.
-  if (m_qz_lev > m_max_coeff_bits)
+  if (m_qz_lev > m_max_coeff_bit)
     return RTNType::QzLevelTooBig;
 
-  const size_t num_qz_levs = m_max_coeff_bits - m_qz_lev + 1;
+  const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
   for (m_threshold_idx = 0; m_threshold_idx < num_qz_levs; m_threshold_idx++) {
     m_sorting_pass_encode();
     m_clean_LIS();
@@ -151,7 +151,7 @@ auto sperr::SPECK3D::decode() -> RTNType
   m_initialize_sets_lists();
 
   m_bit_idx = 0;
-  m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bits));
+  m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
   std::generate(m_threshold_arr.begin(), m_threshold_arr.end(),
                 [v = m_threshold_arr[0]]() mutable { return std::exchange(v, v * 0.5); });
 
@@ -163,8 +163,8 @@ auto sperr::SPECK3D::decode() -> RTNType
     if (m_bit_idx > m_bit_buffer.size())
       return RTNType::Error;
     // This is the actual termination condition in QZ_TERM mode.
-    assert(m_max_coeff_bits >= m_qz_lev);
-    if (m_threshold_idx >= static_cast<size_t>(m_max_coeff_bits - m_qz_lev))
+    assert(m_max_coeff_bit >= m_qz_lev);
+    if (m_threshold_idx >= static_cast<size_t>(m_max_coeff_bit - m_qz_lev))
       break;
 #else
     if (rtn == RTNType::BitBudgetMet)
@@ -391,8 +391,8 @@ void sperr::SPECK3D::m_quantize_P_encode(size_t idx)
   auto coeff = m_coeff_buf[idx] - m_threshold_arr[m_threshold_idx];
 
   const auto tmpb = b2_type{false, true};
-  assert(m_max_coeff_bits >= m_qz_lev);
-  const size_t num_qz_levs = m_max_coeff_bits - m_qz_lev + 1;
+  assert(m_max_coeff_bit >= m_qz_lev);
+  const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
     const auto tmpd = d2_type{0.0, m_threshold_arr[i]};
     const size_t o1 = coeff >= m_threshold_arr[i];  // C++ guarantees this conversion
@@ -408,8 +408,8 @@ void sperr::SPECK3D::m_quantize_P_decode(size_t idx)
   // subject to a QZ operation based on the current threshold.
   auto coeff = m_threshold_arr[m_threshold_idx] * 1.5;
 
-  assert(m_max_coeff_bits >= m_qz_lev);
-  const size_t num_qz_levs = m_max_coeff_bits - m_qz_lev + 1;
+  assert(m_max_coeff_bit >= m_qz_lev);
+  const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
     // C++ standard guarantees the conversion between bool and int.
     const auto tmp = d2_type{-m_threshold_arr[i + 1], m_threshold_arr[i + 1]};
