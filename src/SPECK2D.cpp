@@ -399,7 +399,6 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
   bool is_sig = true;
 
   if (need_decide_sig) {
-
 #ifdef QZ_TERM
     const auto thrd = m_threshold_arr[m_threshold_idx];
 #else

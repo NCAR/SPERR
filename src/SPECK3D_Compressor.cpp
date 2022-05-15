@@ -85,10 +85,6 @@ auto SPECK3D_Compressor::compress() -> RTNType
     return rtn;
   m_condi_stream = condi_meta;
 
-// Energy Research
-sperr::Analyzer analyzer;
-analyzer.extract_range(m_val_buf);
-
   // Step 2: wavelet transform
   rtn = m_cdf.take_data(std::move(m_val_buf), m_dims);
   if (rtn != RTNType::Good)
@@ -101,9 +97,6 @@ analyzer.extract_range(m_val_buf);
     m_cdf.dwt3d_dyadic();
   else
     m_cdf.dwt3d_wavelet_packet();
-
-// Energy Research
-analyzer.est_q_psnr(m_cdf.view_data(), 120.0);
 
   // Step 3: SPECK encoding
   rtn = m_encoder.take_data(m_cdf.release_data(), m_dims);
@@ -129,11 +122,6 @@ analyzer.est_q_psnr(m_cdf.view_data(), 120.0);
     if (rtn != RTNType::Good)
       return rtn;
 
-// Energy Research: make a copy of the quantized coefficients
-//const auto& coeff_qz = m_encoder.view_data();
-// Energy Reserach: calculate the energy of quantization error
-//const auto energy_err = sperr::calc_diff_energy(coeff_orig, coeff_qz);
-
     m_cdf.take_data(m_encoder.release_data(), m_dims);
     if (xforms_xy == xforms_z)
       m_cdf.idwt3d_dyadic();
@@ -141,24 +129,6 @@ analyzer.est_q_psnr(m_cdf.view_data(), 120.0);
       m_cdf.idwt3d_wavelet_packet();
     m_val_buf = m_cdf.release_data();
     m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
-
-// Energy Research: estimate PSNR based on quantization error
-//const auto [min, max] = std::minmax_element(m_val_buf2.cbegin(), m_val_buf2.cend());
-//const auto range_sq = (*max - *min) * (*max - *min);
-//const auto mse = energy_err / static_cast<double>(total_vals);
-//const auto psnr_est = std::log10(range_sq / mse) * 10.0;
-//const auto comp_stats = sperr::calc_stats(m_val_buf2.data(), m_val_buf.data(), total_vals, 5);
-//const auto psnr_real = comp_stats[2];
-//std::printf("Est. PSNR = %.2f, Real PSNR = %.2f, diff = %.2f\n", psnr_est, psnr_real, 
-//            (psnr_est - psnr_real));
-
-
-// Energy Research: calculate overall compression error
-//const auto energy_physical = sperr::calc_diff_energy(m_val_buf, m_val_buf2);
-//std::printf("qz error = %.2e, comp error = %.2e, pct of diff = %.2f, log10 diff = %.2f\n",
-//            energy_err, energy_physical,
-//            (energy_physical - energy_err) / energy_physical * 100.0,
-//            std::log10(energy_physical) - std::log10(energy_err));
 
     // Step 5: we find all the outliers!
     //
@@ -170,7 +140,8 @@ analyzer.est_q_psnr(m_cdf.view_data(), 120.0);
     auto new_tol = m_tol;
     for (size_t i = 0; i < total_vals; i++) {
       const double d = std::abs(m_val_buf2[i] - m_val_buf[i]);
-      const float f = std::abs(static_cast<float>(m_val_buf2[i]) - static_cast<float>(m_val_buf[i]));
+      const float f =
+          std::abs(static_cast<float>(m_val_buf2[i]) - static_cast<float>(m_val_buf[i]));
       if (static_cast<double>(f) > m_tol && d <= m_tol)
         new_tol = std::min(new_tol, d);
     }

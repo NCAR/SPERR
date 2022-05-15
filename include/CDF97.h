@@ -117,7 +117,8 @@ class CDF97 {
    */
 
   // Paper coefficients
-  const std::array<double, 5> h = {.602949018236, .266864118443, -.078223266529, -.016864118443, .026748757411};
+  const std::array<double, 5> h = {.602949018236, .266864118443, -.078223266529, -.016864118443,
+                                   .026748757411};
   const double r0 = h[0] - 2.0 * h[4] * h[1] / h[3];
   const double r1 = h[2] - h[4] - h[4] * h[1] / h[3];
   const double s0 = h[1] - h[3] - h[3] * r0 / r1;

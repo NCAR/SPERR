@@ -21,23 +21,20 @@ class Analyzer {
 
   void set_range(double);
   void extract_range(const vecd_type&);
-  
 
  private:
   std::array<double, 64> m_psnr_arr;
   std::array<int32_t, 64> m_q_arr;
   std::vector<double> m_coeff_buf;  // buffer storing coefficients to help with quantization
   std::vector<double> m_quant_buf;  // buffer storing quantized reconstructions
-  std::vector<bool>   m_sig_map;
+  std::vector<bool> m_sig_map;
 
-  std::vector<double> m_tmp_buf; // temporary use only
+  std::vector<double> m_tmp_buf;  // temporary use only
 
-  double m_range = 0.0; // data range used for PSNR calculation
-  
+  double m_range = 0.0;  // data range used for PSNR calculation
 
+};  // class Analyzer
 
-}; // class Analyzer
-
-}; // namespace sperr
+};  // namespace sperr
 
 #endif

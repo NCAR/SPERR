@@ -481,8 +481,8 @@ auto sperr::calc_sq_sum(const vecd_type& vec) -> double
     auto end = beg + stride_size;
     sum_vec[i] = std::accumulate(beg, end, 0.0, sq_sum);
   }
-  sum_vec[num_strides] = std::accumulate(vec.cbegin() + num_strides * stride_size,
-                                         vec.cend(), 0.0, sq_sum);
+  sum_vec[num_strides] =
+      std::accumulate(vec.cbegin() + num_strides * stride_size, vec.cend(), 0.0, sq_sum);
 
   // Accumulate from back to front, because values towards the end might be smaller.
   return std::accumulate(sum_vec.crbegin(), sum_vec.crend(), 0.0);

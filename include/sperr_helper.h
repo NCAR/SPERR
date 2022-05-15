@@ -74,13 +74,13 @@ class ptr_iterator : public std::iterator<std::bidirectional_iterator_tag, T> {
 
   // Requirements for a bidirectional iterator
   iterator operator++(int) { return ptr_iterator<T>(m_pos++); } /* postfix */
-  iterator& operator++() /* prefix  */
+  iterator& operator++()                                        /* prefix  */
   {
     ++m_pos;
     return *this;
   }
   iterator operator--(int) { return ptr_iterator<T>(m_pos--); } /* postfix */
-  iterator& operator--() /* prefix  */
+  iterator& operator--()                                        /* prefix  */
   {
     --m_pos;
     return *this;
