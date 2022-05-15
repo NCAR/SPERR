@@ -1,5 +1,4 @@
 #include "SPECK3D_Compressor.h"
-#include "Analyzer.h"
 
 #include <cassert>
 #include <cstring>
