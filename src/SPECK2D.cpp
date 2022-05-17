@@ -218,8 +218,9 @@ void sperr::SPECK2D::m_initialize_sets_lists()
   // clear lists and reserve space.
   m_LSP_new.clear();
   m_LSP_new.reserve(m_coeff_buf.size() / 8);
-  m_LSP_old.clear();
-  m_LSP_old.reserve(m_coeff_buf.size() / 2);
+  //m_LSP_old.clear();
+  //m_LSP_old.reserve(m_coeff_buf.size() / 2);
+  m_LSP_mask.reserve(m_coeff_buf.size());
   m_bit_buffer.reserve(m_budget);
 #endif
 }
