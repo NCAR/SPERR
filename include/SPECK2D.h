@@ -98,8 +98,8 @@ class SPECK2D : public SPECK_Storage {
 #else
   double m_threshold = 0.0;       // Threshold that's used for an iteration.
   std::vector<size_t> m_LSP_new;  // List of significant pixels, just identified
-  //std::vector<size_t> m_LSP_old;  // List of significant pixels, previously identified
-  std::vector<bool> m_LSP_mask;
+  std::vector<bool> m_LSP_mask;   // Old significant pixels
+  size_t m_LSP_count = 0;         // TODO: the number of old significant pixels.
   size_t m_budget = 0;            // What's the budget for num of bits in fixed-rate mode?
 #endif
 
