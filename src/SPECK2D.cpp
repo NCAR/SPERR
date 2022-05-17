@@ -359,7 +359,7 @@ auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
     if (m_LSP_mask[i]) { // A significant pixel at this location
       const size_t o1 = m_coeff_buf[i] >= m_threshold;
       m_coeff_buf[i] += tmpd[o1];
-      m_bit_buffer.push_back(tmpb[i]);
+      m_bit_buffer.push_back(tmpb[o1]);
       
       if (m_bit_buffer.size() >= m_budget)
         return RTNType::BitBudgetMet;
@@ -396,7 +396,7 @@ auto sperr::SPECK2D::m_refinement_pass_decode() -> RTNType
 
   for (size_t i = 0; i < m_LSP_mask.size(); i++) {
     if (m_LSP_mask[i]) {
-      m_coeff_buf[i] += tmp[m_bit_idx++];
+      m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
 
       if (m_bit_idx >= m_budget)
         return RTNType::BitBudgetMet;
