@@ -64,7 +64,6 @@ auto sperr::SPECK2D::encode() -> RTNType
   m_encoded_stream.clear();
   m_bit_buffer.clear();
   m_LSP_mask.assign(m_coeff_buf.size(), false);
-  m_LSP_count = 0;
 
   // Keep signs of all coefficients
   m_sign_array.resize(m_coeff_buf.size());
@@ -333,40 +332,24 @@ void sperr::SPECK2D::m_quantize_P_decode(size_t idx)
 
 auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
 {
-  // First, process `m_LSP_old`
+  // First, process significant pixels previously found.
   //
   const auto tmpb = b2_type{false, true};
   const auto tmpd = d2_type{0.0, -m_threshold};
 
-  //const auto n_to_process = std::min(m_LSP_old.size(), m_budget - m_bit_buffer.size());
-  //for (size_t i = 0; i < n_to_process; i++) {
-  //  auto loc = m_LSP_old[i];
-  //  const size_t o1 = m_coeff_buf[loc] >= m_threshold;
-  //  m_coeff_buf[loc] += tmpd[o1];
-  //  m_bit_buffer.push_back(tmpb[o1]);
-  //}
-  //if (m_bit_buffer.size() >= m_budget)
-  //  return RTNType::BitBudgetMet;
-
   for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-    if (m_LSP_mask[i]) { // A significant pixel at this location
+    if (m_LSP_mask[i]) {  // A significant pixel at this location
       const size_t o1 = m_coeff_buf[i] >= m_threshold;
       m_coeff_buf[i] += tmpd[o1];
       m_bit_buffer.push_back(tmpb[o1]);
-      
+
       if (m_bit_buffer.size() >= m_budget)
         return RTNType::BitBudgetMet;
     }
   }
 
-  // Second, process `m_LSP_new`
+  // Second, mark newly found significant pixels in `m_LSP_mask`.
   //
-  //for (auto idx : m_LSP_new)
-  //  m_coeff_buf[idx] -= m_threshold;
-
-  // Third, attach `m_LSP_new` to the end of `m_LSP_old`, and clear `m_LSP_new`.
-  //
-  //m_LSP_old.insert(m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend());
   for (auto i : m_LSP_new)
     m_LSP_mask[i] = true;
   m_LSP_new.clear();
@@ -376,16 +359,9 @@ auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
 
 auto sperr::SPECK2D::m_refinement_pass_decode() -> RTNType
 {
-  // First, process `m_LSP_old`
+  // First, process significant pixels previously found.
   //
   const auto tmp = d2_type{m_threshold * -0.5, m_threshold * 0.5};
-
-  //const auto n_to_process = std::min(m_LSP_old.size(), m_budget - m_bit_idx);
-  //for (size_t i = 0; i < n_to_process; i++)
-  //  m_coeff_buf[m_LSP_old[i]] += tmp[m_bit_buffer[m_bit_idx + i]];
-  //m_bit_idx += n_to_process;
-  //if (m_bit_idx >= m_budget)
-  //  return RTNType::BitBudgetMet;
 
   for (size_t i = 0; i < m_LSP_mask.size(); i++) {
     if (m_LSP_mask[i]) {
@@ -396,14 +372,8 @@ auto sperr::SPECK2D::m_refinement_pass_decode() -> RTNType
     }
   }
 
-  // Second, process `m_LSP_new`
+  // Second, mark newly found significant pixels in `m_LSP_mark`
   //
-  //for (auto idx : m_LSP_new)
-  //  m_coeff_buf[idx] = m_threshold * 1.5;
-
-  // Third, attach `m_LSP_new` to the end of `m_LSP_old`, and clear `m_LSP_new`.
-  //
-  //m_LSP_old.insert(m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend());
   for (auto i : m_LSP_new)
     m_LSP_mask[i] = true;
   m_LSP_new.clear();
