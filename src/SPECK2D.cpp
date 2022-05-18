@@ -63,7 +63,10 @@ auto sperr::SPECK2D::encode() -> RTNType
 
   m_encoded_stream.clear();
   m_bit_buffer.clear();
+
+#ifndef QZ_TERM
   m_LSP_mask.assign(m_coeff_buf.size(), false);
+#endif
 
   // Keep signs of all coefficients
   m_sign_array.resize(m_coeff_buf.size());
@@ -135,8 +138,11 @@ auto sperr::SPECK2D::decode() -> RTNType
 
   // Initialize coefficients to be zero and insignificant, and signs to be all positive.
   m_coeff_buf.assign(m_coeff_buf.size(), 0.0);
-  m_LSP_mask.assign(m_coeff_buf.size(), false);
   m_sign_array.assign(m_coeff_buf.size(), true);
+
+#ifndef QZ_TERM
+  m_LSP_mask.assign(m_coeff_buf.size(), false);
+#endif
 
   m_initialize_sets_lists();
   m_bit_idx = 0;
