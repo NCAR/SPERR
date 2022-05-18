@@ -178,13 +178,6 @@ auto sperr::SPECK2D::decode() -> RTNType
     m_threshold *= 0.5;
     m_clean_LIS();
   }
-
-  // If decoding finished before all newly-identified significant pixels are initialized in
-  // `m_refinement_pass_decode()`, we have them initialized here.
-  // TODO: Do I still need this?
-  for (auto idx : m_LSP_new)
-    m_coeff_buf[idx] = m_threshold * 1.5;
-  m_LSP_new.clear();
 #endif
 
   // Restore coefficient signs
