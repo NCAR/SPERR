@@ -137,7 +137,7 @@ auto sperr::SPECK2D::decode() -> RTNType
     m_budget = m_bit_buffer.size();
 #endif
 
-  // Initialize coefficients to be zero and insignificant, and signs to be all positive.
+  // Initialize coefficients to be zero, and signs to be all positive.
   const auto coeff_len = m_dims[0] * m_dims[1];
   m_coeff_buf.assign(coeff_len, 0.0);
   m_sign_array.assign(coeff_len, true);
