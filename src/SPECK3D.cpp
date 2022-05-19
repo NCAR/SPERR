@@ -166,7 +166,6 @@ auto sperr::SPECK3D::decode() -> RTNType
                 [v = m_threshold_arr[0]]() mutable { return std::exchange(v, v * 0.5); });
 
   for (m_threshold_idx = 0; m_threshold_idx < m_threshold_arr.size(); m_threshold_idx++) {
-
 #ifdef QZ_TERM
     m_sorting_pass_decode();
     if (m_bit_idx > m_bit_buffer.size())
@@ -227,9 +226,12 @@ void sperr::SPECK3D::m_initialize_sets_lists()
   // Starting from a set representing the whole volume, identify the smaller
   // sets and put them in LIS accordingly.
   SPECKSet3D big;
-  big.length_x = uint32_t(m_dims[0]);  // Truncate 64-bit int to 32-bit, but should be OK.
-  big.length_y = uint32_t(m_dims[1]);  // Truncate 64-bit int to 32-bit, but should be OK.
-  big.length_z = uint32_t(m_dims[2]);  // Truncate 64-bit int to 32-bit, but should be OK.
+  big.length_x =
+      static_cast<uint32_t>(m_dims[0]);  // Truncate 64-bit int to 32-bit, but should be OK.
+  big.length_y =
+      static_cast<uint32_t>(m_dims[1]);  // Truncate 64-bit int to 32-bit, but should be OK.
+  big.length_z =
+      static_cast<uint32_t>(m_dims[2]);  // Truncate 64-bit int to 32-bit, but should be OK.
 
   const auto num_of_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
   const auto num_of_xforms_z = sperr::num_of_xforms(m_dims[2]);
@@ -432,16 +434,6 @@ auto sperr::SPECK3D::m_refinement_pass_encode() -> RTNType
   const auto tmpb = b2_type{false, true};
   const auto tmpd = d2_type{0.0, -m_threshold_arr[m_threshold_idx]};
 
-  //const size_t n_to_process = std::min(m_LSP_old.size(), m_budget - m_bit_buffer.size());
-  //for (size_t i = 0; i < n_to_process; i++) {
-  //  const size_t loc = m_LSP_old[i];
-  //  const size_t o1 = m_coeff_buf[loc] >= m_threshold_arr[m_threshold_idx];
-  //  m_coeff_buf[loc] += tmpd[o1];
-  //  m_bit_buffer.push_back(tmpb[o1]);
-  //}
-  //if (m_bit_buffer.size() >= m_budget)
-  //  return RTNType::BitBudgetMet;
-
   for (size_t i = 0; i < m_LSP_mask.size(); i++) {
     if (m_LSP_mask[i]) {
       const size_t o1 = m_coeff_buf[i] >= m_threshold_arr[m_threshold_idx];
@@ -466,17 +458,8 @@ auto sperr::SPECK3D::m_refinement_pass_decode() -> RTNType
 {
   // First, process significant pixels previously found.
   //
-  //const size_t num_bits = std::min(m_budget - m_bit_idx, m_LSP_old.size());
-  //const double one_half_T = m_threshold_arr[m_threshold_idx] * 1.5;
-  const double half_T = m_threshold_arr[m_threshold_idx] * 0.5;
-  const double neg_half_T = m_threshold_arr[m_threshold_idx] * -0.5;
-  const auto tmp = d2_type{neg_half_T, half_T};
-
-  //for (size_t i = 0; i < num_bits; i++)
-  //  m_coeff_buf[m_LSP_old[i]] += tmp[m_bit_buffer[m_bit_idx + i]];
-  //m_bit_idx += num_bits;
-  //if (m_bit_idx >= m_budget)
-  //  return RTNType::BitBudgetMet;
+  const auto tmp =
+      d2_type{m_threshold_arr[m_threshold_idx] * -0.5, m_threshold_arr[m_threshold_idx] * 0.5};
 
   for (size_t i = 0; i < m_LSP_mask.size(); i++) {
     if (m_LSP_mask[i]) {

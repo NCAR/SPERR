@@ -40,7 +40,6 @@ class SPECKSet3D {
 //
 class SPECK3D : public SPECK_Storage {
  public:
-
 #ifdef QZ_TERM
   //
   // Notes for QZ_TERM mode:
