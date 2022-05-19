@@ -64,10 +64,6 @@ auto sperr::SPECK2D::encode() -> RTNType
   m_encoded_stream.clear();
   m_bit_buffer.clear();
 
-#ifndef QZ_TERM
-  m_LSP_mask.assign(m_coeff_buf.size(), false);
-#endif
-
   // Keep signs of all coefficients
   m_sign_array.resize(m_coeff_buf.size());
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_sign_array.begin(),
@@ -76,6 +72,11 @@ auto sperr::SPECK2D::encode() -> RTNType
   // Make every coefficient positive
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
                  [](auto v) { return std::abs(v); });
+
+#ifndef QZ_TERM
+  // Mark every coefficient as insignificant
+  m_LSP_mask.assign(m_coeff_buf.size(), false);
+#endif
 
   // Find the threshold to start the algorithm
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
@@ -141,6 +142,7 @@ auto sperr::SPECK2D::decode() -> RTNType
   m_sign_array.assign(m_coeff_buf.size(), true);
 
 #ifndef QZ_TERM
+  // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
 #endif
 
@@ -183,6 +185,12 @@ auto sperr::SPECK2D::decode() -> RTNType
     m_threshold *= 0.5;
     m_clean_LIS();
   }
+#endif
+
+#ifdef QZ_TERM
+  // We should not have more than 7 unprocessed bits left in the bit buffer!
+  if (m_bit_idx > m_bit_buffer.size() || m_bit_buffer.size() - m_bit_idx >= 8)
+    return RTNType::BitstreamWrongLen;
 #endif
 
   // Restore coefficient signs

@@ -21,9 +21,9 @@ class speck_tester {
     m_dims = dims;
   }
 
-  [[nodiscard]] float get_psnr() const { return m_psnr; }
+  float get_psnr() const { return m_psnr; }
 
-  [[nodiscard]] float get_lmax() const { return m_lmax; }
+  float get_lmax() const { return m_lmax; }
 
   //
   // Execute the compression/decompression pipeline. Return 0 on success
@@ -365,8 +365,8 @@ TEST(speck3d_bit_rate, small)
   tester.execute(1.0);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 35.0252);
-  EXPECT_LT(psnr, 35.0253);
+  EXPECT_GT(psnr, 35.0593);
+  EXPECT_LT(psnr, 35.0594);
   EXPECT_LT(lmax, 12.0156);
 }
 
@@ -424,8 +424,8 @@ TEST(speck3d_bit_rate, narrow_data_range)
   tester.execute(1.0);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 49.7755);
-  EXPECT_LT(psnr, 49.7756);
+  EXPECT_GT(psnr, 49.7494);
+  EXPECT_LT(psnr, 49.7495);
   EXPECT_LT(lmax, 1.0023e-05);
 
   tester.execute(0.5);
@@ -450,15 +450,15 @@ TEST(speck3d_bit_rate_omp, narrow_data_range)
   tester.execute(4.0);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 67.8170);
-  EXPECT_LT(psnr, 67.8171);
-  EXPECT_LT(lmax, 1.108655e-06);
+  EXPECT_GT(psnr, 67.8000);
+  EXPECT_LT(psnr, 67.80005);
+  EXPECT_LT(lmax, 1.175035e-06);
 
   tester.execute(1.0);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 48.9054);
-  EXPECT_LT(psnr, 48.9055);
+  EXPECT_GT(psnr, 48.9001);
+  EXPECT_LT(psnr, 48.9002);
   EXPECT_LT(lmax, 1.396333e-05);
 }
 
@@ -469,8 +469,8 @@ TEST(speck3d_bit_rate_omp, big)
   tester.execute(2.0);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 53.8087);
-  EXPECT_LT(psnr, 53.8088);
+  EXPECT_GT(psnr, 53.8137);
+  EXPECT_LT(psnr, 53.8138);
   EXPECT_LT(lmax, 7.6953269e+00);
 
   tester.execute(1.0);
