@@ -138,8 +138,9 @@ auto sperr::SPECK2D::decode() -> RTNType
 #endif
 
   // Initialize coefficients to be zero and insignificant, and signs to be all positive.
-  m_coeff_buf.assign(m_coeff_buf.size(), 0.0);
-  m_sign_array.assign(m_coeff_buf.size(), true);
+  const auto coeff_len = m_dims[0] * m_dims[1];
+  m_coeff_buf.assign(coeff_len, 0.0);
+  m_sign_array.assign(coeff_len, true);
 
 #ifndef QZ_TERM
   // Mark every coefficient as insignificant
