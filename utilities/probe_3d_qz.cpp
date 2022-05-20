@@ -25,7 +25,7 @@ auto test_configuration_omp(const T* in_buf,
                             double tolerance,
                             sperr::Conditioner::settings_type condi_settings,
                             size_t omp_num_threads,
-                            std::vector<T>& output_buf) -> int
+                            std::vector<T>& output_buf) -> sperr::RTNType
 {
   // Setup
   const size_t total_vals = dims[0] * dims[1] * dims[2];
@@ -34,7 +34,7 @@ auto test_configuration_omp(const T* in_buf,
   compressor.set_num_threads(omp_num_threads);
   auto rtn = compressor.copy_data(in_buf, total_vals, dims, chunks);
   if (rtn != RTNType::Good)
-    return 1;
+    return rtn;
 
   compressor.set_qz_level(qz_level);
   compressor.set_tolerance(tolerance);
@@ -43,7 +43,7 @@ auto test_configuration_omp(const T* in_buf,
   auto start_time = std::chrono::steady_clock::now();
   rtn = compressor.compress();
   if (rtn != RTNType::Good)
-    return 1;
+    return rtn;
   auto end_time = std::chrono::steady_clock::now();
   auto diff_time =
       std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
@@ -51,7 +51,7 @@ auto test_configuration_omp(const T* in_buf,
 
   auto encoded_stream = compressor.get_encoded_bitstream();
   if (encoded_stream.empty())
-    return 1;
+    return RTNType::Error;
   else
     printf("    Total compressed size in bytes = %ld, average bpp = %.2f\n", encoded_stream.size(),
            T(encoded_stream.size() * 8) / T(total_vals));
@@ -74,19 +74,19 @@ auto test_configuration_omp(const T* in_buf,
   decompressor.set_num_threads(omp_num_threads);
   rtn = decompressor.use_bitstream(encoded_stream.data(), encoded_stream.size());
   if (rtn != RTNType::Good)
-    return 1;
+    return rtn;
 
   start_time = std::chrono::steady_clock::now();
   rtn = decompressor.decompress(encoded_stream.data());
   if (rtn != RTNType::Good)
-    return 1;
+    return rtn;
   end_time = std::chrono::steady_clock::now();
   diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
   std::cout << " -> Decompression takes time: " << diff_time << "ms\n";
 
   output_buf = decompressor.get_data<T>();
   if (output_buf.size() != total_vals)
-    return 1;
+    return RTNType::Error;
 
   // Collect statistics
   auto ret = sperr::calc_stats(in_buf, output_buf.data(), total_vals, omp_num_threads);
@@ -94,7 +94,7 @@ auto test_configuration_omp(const T* in_buf,
   printf("    Reconstructed data RMSE = %.2e, L-Infty = %.2e, PSNR = %.2fdB\n", ret[0], ret[1],
          ret[2]);
 
-  return 0;
+  return RTNType::Good;
 }
 
 int main(int argc, char* argv[])
@@ -206,7 +206,7 @@ int main(int argc, char* argv[])
       "absolute error tolerance = %.2e, quantization level = %d ...  \n\n",
       min_orig, max_orig, tolerance, qz_level);
 
-  int rtn = 0;
+  auto rtn = sperr::RTNType::Good;
   if (use_double) {
     rtn = test_configuration_omp(reinterpret_cast<const double*>(input_buf.data()), dims,
                                  {chunks_v[0], chunks_v[1], chunks_v[2]}, qz_level, tolerance,
@@ -217,8 +217,16 @@ int main(int argc, char* argv[])
                                  {chunks_v[0], chunks_v[1], chunks_v[2]}, qz_level, tolerance,
                                  condi_settings, omp_num_threads, output_buf_f);
   }
-  if (rtn != 0)
-    return rtn;
+  switch (rtn) {
+    case sperr::RTNType::QzLevelTooBig:
+      std::cerr << "Compression failed because `q` is set too big!" << std::endl;
+      return 1;
+    case sperr::RTNType::Good:
+      break;
+    default:
+      std::cerr << "Compression failed!" << std::endl;
+      return 1;
+  }
 
   //
   // Now it enters the interactive session
@@ -252,8 +260,16 @@ int main(int argc, char* argv[])
                                        {chunks_v[0], chunks_v[1], chunks_v[2]}, qz_level, tolerance,
                                        condi_settings, omp_num_threads, output_buf_f);
         }
-        if (rtn != 0)
-          return rtn;
+        switch (rtn) {
+          case sperr::RTNType::QzLevelTooBig:
+            std::cerr << "Compression failed because `q` is set too big!" << std::endl;
+            return 1;
+          case sperr::RTNType::Good:
+            break;
+          default:
+            std::cerr << "Compression failed!" << std::endl;
+            return 1;
+        }
 
         break;
 
