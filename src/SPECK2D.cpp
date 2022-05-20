@@ -240,7 +240,7 @@ auto sperr::SPECK2D::m_sorting_pass_encode() -> RTNType
 {
   // First, process all insignificant pixels
   //
-  size_t dummy = 0;
+  auto dummy = size_t{0};
   for (size_t idx = 0; idx < m_LIP.size(); idx++) {
     auto rtn = m_process_P_encode(idx, dummy, true);
 #ifndef QZ_TERM

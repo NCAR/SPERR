@@ -353,10 +353,11 @@ auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
 
   // Decide the significance of this pixel
   assert(sig != SigType::NewlySig);
-  bool is_sig = (sig == SigType::Sig);
-  if (sig == SigType::Dunno) {
+  bool is_sig = false;
+  if (sig == SigType::Dunno)
     is_sig = (m_coeff_buf[pixel_idx] >= m_threshold_arr[m_threshold_idx]);
-  }
+  else
+    is_sig = (sig == SigType::Sig);
 
   if (output) {
     // Output significance bit
