@@ -111,7 +111,7 @@ class SPECK3D : public SPECK_Storage {
 
 #ifndef QZ_TERM
   std::vector<size_t> m_LSP_new;
-  std::vector<size_t> m_LSP_old;
+  std::vector<bool> m_LSP_mask;
   size_t m_budget = 0;
 #endif
 

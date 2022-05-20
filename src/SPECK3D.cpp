@@ -80,6 +80,11 @@ auto sperr::SPECK3D::encode() -> RTNType
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
                  [](auto v) { return std::abs(v); });
 
+#ifndef QZ_TERM
+  // Mark every coefficient as insignificant
+  m_LSP_mask.assign(m_coeff_buf.size(), false);
+#endif
+
   // Find the maximum coefficient bit and fill the threshold array.
   // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
   // negative value. std::floor() will always find the smaller integer value,
@@ -143,12 +148,17 @@ auto sperr::SPECK3D::decode() -> RTNType
     m_budget = m_bit_buffer.size();
 #endif
 
+  m_initialize_sets_lists();
+
   // initialize coefficients to be zero, and sign array to be all positive
   const auto coeff_len = m_dims[0] * m_dims[1] * m_dims[2];
   m_coeff_buf.assign(coeff_len, 0.0);
   m_sign_array.assign(coeff_len, true);
 
-  m_initialize_sets_lists();
+#ifndef QZ_TERM
+  // Mark every coefficient as insignificant
+  m_LSP_mask.assign(m_coeff_buf.size(), false);
+#endif
 
   m_bit_idx = 0;
   m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
@@ -156,10 +166,8 @@ auto sperr::SPECK3D::decode() -> RTNType
                 [v = m_threshold_arr[0]]() mutable { return std::exchange(v, v * 0.5); });
 
   for (m_threshold_idx = 0; m_threshold_idx < m_threshold_arr.size(); m_threshold_idx++) {
-    auto rtn = m_sorting_pass_decode();
-
 #ifdef QZ_TERM
-    assert(rtn == RTNType::Good);
+    m_sorting_pass_decode();
     if (m_bit_idx > m_bit_buffer.size())
       return RTNType::Error;
     // This is the actual termination condition in QZ_TERM mode.
@@ -167,6 +175,7 @@ auto sperr::SPECK3D::decode() -> RTNType
     if (m_threshold_idx >= static_cast<size_t>(m_max_coeff_bit - m_qz_lev))
       break;
 #else
+    auto rtn = m_sorting_pass_decode();
     if (rtn == RTNType::BitBudgetMet)
       break;
     assert(rtn == RTNType::Good);
@@ -183,11 +192,6 @@ auto sperr::SPECK3D::decode() -> RTNType
   // We should not have more than 7 unprocessed bits left in the bit buffer!
   if (m_bit_idx > m_bit_buffer.size() || m_bit_buffer.size() - m_bit_idx >= 8)
     return RTNType::BitstreamWrongLen;
-#else
-  // If decoding finished before all newly-sig pixels are initialized, we finish them here!
-  for (auto idx : m_LSP_new)
-    m_coeff_buf[idx] = m_threshold_arr[m_threshold_idx] * 1.5;
-  m_LSP_new.clear();
 #endif
 
   // Restore coefficient signs by setting some of them negative
@@ -222,9 +226,12 @@ void sperr::SPECK3D::m_initialize_sets_lists()
   // Starting from a set representing the whole volume, identify the smaller
   // sets and put them in LIS accordingly.
   SPECKSet3D big;
-  big.length_x = uint32_t(m_dims[0]);  // Truncate 64-bit int to 32-bit, but should be OK.
-  big.length_y = uint32_t(m_dims[1]);  // Truncate 64-bit int to 32-bit, but should be OK.
-  big.length_z = uint32_t(m_dims[2]);  // Truncate 64-bit int to 32-bit, but should be OK.
+  big.length_x =
+      static_cast<uint32_t>(m_dims[0]);  // Truncate 64-bit int to 32-bit, but should be OK.
+  big.length_y =
+      static_cast<uint32_t>(m_dims[1]);  // Truncate 64-bit int to 32-bit, but should be OK.
+  big.length_z =
+      static_cast<uint32_t>(m_dims[2]);  // Truncate 64-bit int to 32-bit, but should be OK.
 
   const auto num_of_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
   const auto num_of_xforms_z = sperr::num_of_xforms(m_dims[2]);
@@ -270,8 +277,7 @@ void sperr::SPECK3D::m_initialize_sets_lists()
 #ifndef QZ_TERM
   m_LSP_new.clear();
   m_LSP_new.reserve(m_coeff_buf.size() / 8);
-  m_LSP_old.clear();
-  m_LSP_old.reserve(m_coeff_buf.size() / 2);
+  m_LSP_mask.reserve(m_coeff_buf.size());
   m_bit_buffer.reserve(m_budget);
 #endif
 }
@@ -347,10 +353,11 @@ auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
 
   // Decide the significance of this pixel
   assert(sig != SigType::NewlySig);
-  bool is_sig = (sig == SigType::Sig);
-  if (sig == SigType::Dunno) {
+  bool is_sig = false;
+  if (sig == SigType::Dunno)
     is_sig = (m_coeff_buf[pixel_idx] >= m_threshold_arr[m_threshold_idx]);
-  }
+  else
+    is_sig = (sig == SigType::Sig);
 
   if (output) {
     // Output significance bit
@@ -374,6 +381,7 @@ auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
 #ifdef QZ_TERM
     m_quantize_P_encode(pixel_idx);
 #else
+    m_coeff_buf[pixel_idx] -= m_threshold_arr[m_threshold_idx];
     m_LSP_new.push_back(pixel_idx);
 #endif
 
@@ -422,32 +430,26 @@ void sperr::SPECK3D::m_quantize_P_decode(size_t idx)
 
 auto sperr::SPECK3D::m_refinement_pass_encode() -> RTNType
 {
-  // First, process `m_LSP_old`.
-  //
-  // In fixed-size mode, we either process all elements in `m_LSP_old`,
-  // or process a portion of them that meets the total bit budget.
+  // First, process significant pixels previously found.
   //
   const auto tmpb = b2_type{false, true};
   const auto tmpd = d2_type{0.0, -m_threshold_arr[m_threshold_idx]};
-  const size_t n_to_process = std::min(m_LSP_old.size(), m_budget - m_bit_buffer.size());
-  for (size_t i = 0; i < n_to_process; i++) {
-    const size_t loc = m_LSP_old[i];
-    const size_t o1 = m_coeff_buf[loc] >= m_threshold_arr[m_threshold_idx];
-    m_coeff_buf[loc] += tmpd[o1];
-    m_bit_buffer.push_back(tmpb[o1]);
-  }
-  if (m_bit_buffer.size() >= m_budget)
-    return RTNType::BitBudgetMet;
 
-  // Second, process `m_LSP_new`
+  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+    if (m_LSP_mask[i]) {
+      const size_t o1 = m_coeff_buf[i] >= m_threshold_arr[m_threshold_idx];
+      m_coeff_buf[i] += tmpd[o1];
+      m_bit_buffer.push_back(tmpb[o1]);
+
+      if (m_bit_buffer.size() >= m_budget)
+        return RTNType::BitBudgetMet;
+    }
+  }
+
+  // Second, mark newly found significant pixels in `m_LSP_mask`.
   //
   for (auto idx : m_LSP_new)
-    m_coeff_buf[idx] -= m_threshold_arr[m_threshold_idx];
-
-  // Third, attached `m_LSP_new` to the end of `m_LSP_old`, and then clear it.
-  // (`m_LSP_old` has reserved the full coeff length capacity in advance.)
-  //
-  m_LSP_old.insert(m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend());
+    m_LSP_mask[idx] = true;
   m_LSP_new.clear();
 
   return RTNType::Good;
@@ -455,32 +457,24 @@ auto sperr::SPECK3D::m_refinement_pass_encode() -> RTNType
 
 auto sperr::SPECK3D::m_refinement_pass_decode() -> RTNType
 {
-  // First, process `m_LSP_old`
+  // First, process significant pixels previously found.
   //
-  const size_t num_bits = std::min(m_budget - m_bit_idx, m_LSP_old.size());
-  const double half_T = m_threshold_arr[m_threshold_idx] * 0.5;
-  const double neg_half_T = m_threshold_arr[m_threshold_idx] * -0.5;
-  const double one_half_T = m_threshold_arr[m_threshold_idx] * 1.5;
-  const auto tmp = d2_type{neg_half_T, half_T};
+  const auto tmp =
+      d2_type{m_threshold_arr[m_threshold_idx] * -0.5, m_threshold_arr[m_threshold_idx] * 0.5};
 
-  for (size_t i = 0; i < num_bits; i++)
-    m_coeff_buf[m_LSP_old[i]] += tmp[m_bit_buffer[m_bit_idx + i]];
-  m_bit_idx += num_bits;
-  if (m_bit_idx >= m_budget)
-    return RTNType::BitBudgetMet;
+  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+    if (m_LSP_mask[i]) {
+      m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
 
-  // Second, process `m_LSP_new`
+      if (m_bit_idx >= m_budget)
+        return RTNType::BitBudgetMet;
+    }
+  }
+
+  // Second, mark newly found significant pixels in `m_LSP_mark`
   //
   for (auto idx : m_LSP_new)
-    m_coeff_buf[idx] = one_half_T;
-
-  // Third, attached `m_LSP_new` to the end of `m_LSP_old`.
-  // (`m_LSP_old` has reserved the full coeff length capacity in advance.)
-  //
-  m_LSP_old.insert(m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend());
-
-  // Fourth, clear `m_LSP_new`.
-  //
+    m_LSP_mask[idx] = true;
   m_LSP_new.clear();
 
   return RTNType::Good;
@@ -612,6 +606,7 @@ auto sperr::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) 
 #ifdef QZ_TERM
     m_quantize_P_decode(pixel_idx);
 #else
+    m_coeff_buf[pixel_idx] = m_threshold_arr[m_threshold_idx] * 1.5;
     m_LSP_new.push_back(pixel_idx);
 #endif
 

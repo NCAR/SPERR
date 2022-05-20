@@ -73,6 +73,11 @@ auto sperr::SPECK2D::encode() -> RTNType
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
                  [](auto v) { return std::abs(v); });
 
+#ifndef QZ_TERM
+  // Mark every coefficient as insignificant
+  m_LSP_mask.assign(m_coeff_buf.size(), false);
+#endif
+
   // Find the threshold to start the algorithm
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
   m_max_coeff_bit = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
@@ -132,10 +137,15 @@ auto sperr::SPECK2D::decode() -> RTNType
     m_budget = m_bit_buffer.size();
 #endif
 
-  // initialize coefficients to be zero, and signs to be all positive
+  // Initialize coefficients to be zero, and signs to be all positive.
   const auto coeff_len = m_dims[0] * m_dims[1];
   m_coeff_buf.assign(coeff_len, 0.0);
   m_sign_array.assign(coeff_len, true);
+
+#ifndef QZ_TERM
+  // Mark every coefficient as insignificant
+  m_LSP_mask.assign(m_coeff_buf.size(), false);
+#endif
 
   m_initialize_sets_lists();
   m_bit_idx = 0;
@@ -176,12 +186,12 @@ auto sperr::SPECK2D::decode() -> RTNType
     m_threshold *= 0.5;
     m_clean_LIS();
   }
+#endif
 
-  // If decoding finished before all newly-identified significant pixels are initialized in
-  // `m_refinement_pass_decode()`, we have them initialized here.
-  for (auto idx : m_LSP_new)
-    m_coeff_buf[idx] = m_threshold * 1.5;
-  m_LSP_new.clear();
+#ifdef QZ_TERM
+  // We should not have more than 7 unprocessed bits left in the bit buffer!
+  if (m_bit_idx > m_bit_buffer.size() || m_bit_buffer.size() - m_bit_idx >= 8)
+    return RTNType::BitstreamWrongLen;
 #endif
 
   // Restore coefficient signs
@@ -218,8 +228,7 @@ void sperr::SPECK2D::m_initialize_sets_lists()
   // clear lists and reserve space.
   m_LSP_new.clear();
   m_LSP_new.reserve(m_coeff_buf.size() / 8);
-  m_LSP_old.clear();
-  m_LSP_old.reserve(m_coeff_buf.size() / 2);
+  m_LSP_mask.reserve(m_coeff_buf.size());
   m_bit_buffer.reserve(m_budget);
 #endif
 }
@@ -231,7 +240,7 @@ auto sperr::SPECK2D::m_sorting_pass_encode() -> RTNType
 {
   // First, process all insignificant pixels
   //
-  size_t dummy = 0;
+  auto dummy = size_t{0};
   for (size_t idx = 0; idx < m_LIP.size(); idx++) {
     auto rtn = m_process_P_encode(idx, dummy, true);
 #ifndef QZ_TERM
@@ -338,28 +347,26 @@ void sperr::SPECK2D::m_quantize_P_decode(size_t idx)
 
 auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
 {
-  // First, process `m_LSP_old`
+  // First, process significant pixels previously found.
   //
   const auto tmpb = b2_type{false, true};
   const auto tmpd = d2_type{0.0, -m_threshold};
-  const auto n_to_process = std::min(m_LSP_old.size(), m_budget - m_bit_buffer.size());
-  for (size_t i = 0; i < n_to_process; i++) {
-    auto loc = m_LSP_old[i];
-    const size_t o1 = m_coeff_buf[loc] >= m_threshold;
-    m_coeff_buf[loc] += tmpd[o1];
-    m_bit_buffer.push_back(tmpb[o1]);
+
+  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+    if (m_LSP_mask[i]) {  // A significant pixel at this location
+      const size_t o1 = m_coeff_buf[i] >= m_threshold;
+      m_coeff_buf[i] += tmpd[o1];
+      m_bit_buffer.push_back(tmpb[o1]);
+
+      if (m_bit_buffer.size() >= m_budget)
+        return RTNType::BitBudgetMet;
+    }
   }
-  if (m_bit_buffer.size() >= m_budget)
-    return RTNType::BitBudgetMet;
 
-  // Second, process `m_LSP_new`
+  // Second, mark newly found significant pixels in `m_LSP_mask`.
   //
-  for (auto idx : m_LSP_new)
-    m_coeff_buf[idx] -= m_threshold;
-
-  // Third, attach `m_LSP_new` to the end of `m_LSP_old`, and clear `m_LSP_new`.
-  //
-  m_LSP_old.insert(m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend());
+  for (auto i : m_LSP_new)
+    m_LSP_mask[i] = true;
   m_LSP_new.clear();
 
   return RTNType::Good;
@@ -367,25 +374,23 @@ auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
 
 auto sperr::SPECK2D::m_refinement_pass_decode() -> RTNType
 {
-  // First, process `m_LSP_old`
+  // First, process significant pixels previously found.
   //
   const auto tmp = d2_type{m_threshold * -0.5, m_threshold * 0.5};
-  const auto n_to_process = std::min(m_LSP_old.size(), m_budget - m_bit_idx);
 
-  for (size_t i = 0; i < n_to_process; i++)
-    m_coeff_buf[m_LSP_old[i]] += tmp[m_bit_buffer[m_bit_idx + i]];
-  m_bit_idx += n_to_process;
-  if (m_bit_idx >= m_budget)
-    return RTNType::BitBudgetMet;
+  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+    if (m_LSP_mask[i]) {
+      m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
 
-  // Second, process `m_LSP_new`
+      if (m_bit_idx >= m_budget)
+        return RTNType::BitBudgetMet;
+    }
+  }
+
+  // Second, mark newly found significant pixels in `m_LSP_mark`
   //
-  for (auto idx : m_LSP_new)
-    m_coeff_buf[idx] = m_threshold * 1.5;
-
-  // Third, attach `m_LSP_new` to the end of `m_LSP_old`, and clear `m_LSP_new`.
-  //
-  m_LSP_old.insert(m_LSP_old.end(), m_LSP_new.cbegin(), m_LSP_new.cend());
+  for (auto i : m_LSP_new)
+    m_LSP_mask[i] = true;
   m_LSP_new.clear();
 
   return RTNType::Good;
@@ -426,6 +431,7 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
 #ifdef QZ_TERM
     m_quantize_P_encode(pixel_idx);
 #else
+    m_coeff_buf[pixel_idx] -= m_threshold;
     m_LSP_new.push_back(pixel_idx);
 #endif
 
@@ -460,6 +466,7 @@ auto sperr::SPECK2D::m_process_P_decode(size_t loc, size_t& counter, bool need_d
 #ifdef QZ_TERM
     m_quantize_P_decode(pixel_idx);
 #else
+    m_coeff_buf[pixel_idx] = m_threshold * 1.5;
     m_LSP_new.push_back(pixel_idx);
 #endif
 
