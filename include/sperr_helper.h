@@ -186,6 +186,27 @@ void scatter_chunk(std::vector<TBIG>& big_vol,
                    const std::vector<TSML>& small_vol,
                    const std::array<size_t, 6>& chunk);
 
+// Structure that holds information extracted from SPERR headers.
+// This structure is returned by helper function `parse_header()`.
+struct Header_Info {
+  uint8_t version_major = 0;
+  uint8_t version_minor = 0;
+  bool zstd_applied = false;
+  bool is_3d = false;
+
+  // True <--> the bitstream is in fixed-error mode.
+  // False <--> the bitstream is in fixed-size mode.
+  bool is_qz_term = false;
+
+  // This is the dimension of a 3D volume (NX, NY, NZ) or a 2D slice (NX, NY, 1).
+  dims_type vol_dims = {0, 0, 0};
+
+  // If the bitstream represents a 3D volume, this field holds the dimension of chunks.
+  // For 2D slices, this field holds undefined values.
+  dims_type chunk_dims = {0, 0, 0};
+};
+auto parse_header(const void*) -> Header_Info;
+
 // For research use only:
 // calculate the sum of squares of one vector.
 auto calc_sq_sum(const vecd_type&) -> double;

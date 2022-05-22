@@ -465,6 +465,51 @@ template void sperr::scatter_chunk(std::vector<double>&,
                                    const std::vector<double>&,
                                    const std::array<size_t, 6>&);
 
+auto sperr::parse_header(const void* ptr) -> Header_Info
+{
+  const uint8_t* const u8p = static_cast<const uint8_t*>(ptr);
+  size_t loc = 0;
+  auto header = Header_Info();
+
+  // Parse version numbers
+  header.version_major = *u8p / uint8_t(10);
+  header.version_minor = *u8p % uint8_t(10);
+  loc++;
+
+  // Parse 8 booleans
+  auto b8 = sperr::unpack_8_booleans(u8p[loc]);
+  loc++;
+
+  header.zstd_applied = b8[0];
+  header.is_3d = b8[1];
+  header.is_qz_term = b8[2];
+
+  // Parse the dimension info.
+  if (header.is_3d) {
+    uint32_t vcdim[6];
+    std::memcpy(vcdim, u8p + loc, sizeof(vcdim));
+    loc += sizeof(vcdim);
+
+    header.vol_dims[0] = vcdim[0];
+    header.vol_dims[1] = vcdim[1];
+    header.vol_dims[2] = vcdim[2];
+    header.chunk_dims[0] = vcdim[3];
+    header.chunk_dims[1] = vcdim[4];
+    header.chunk_dims[2] = vcdim[5];
+  }
+  else {
+    uint32_t dims[2];
+    std::memcpy(dims, u8p + loc, sizeof(dims));
+    loc += sizeof(dims);
+
+    header.vol_dims[0] = dims[0];
+    header.vol_dims[1] = dims[1];
+    header.vol_dims[2] = 1;
+  }
+
+  return header;
+}
+
 auto sperr::calc_sq_sum(const vecd_type& vec) -> double
 {
   if (vec.empty())
