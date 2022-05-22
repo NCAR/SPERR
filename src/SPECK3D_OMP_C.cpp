@@ -202,9 +202,10 @@ auto SPECK3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   loc += 1;
 
   // Volume and chunk dimensions
-  uint32_t vcdim[6] = {uint32_t(m_dims[0]),       uint32_t(m_dims[1]),
-                       uint32_t(m_dims[2]),       uint32_t(m_chunk_dims[0]),
-                       uint32_t(m_chunk_dims[1]), uint32_t(m_chunk_dims[2])};
+  uint32_t vcdim[6] = {
+      static_cast<uint32_t>(m_dims[0]),       static_cast<uint32_t>(m_dims[1]),
+      static_cast<uint32_t>(m_dims[2]),       static_cast<uint32_t>(m_chunk_dims[0]),
+      static_cast<uint32_t>(m_chunk_dims[1]), static_cast<uint32_t>(m_chunk_dims[2])};
   std::memcpy(&header[loc], vcdim, sizeof(vcdim));
   loc += sizeof(vcdim);
 

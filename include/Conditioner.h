@@ -33,8 +33,8 @@ class Conditioner {
   // is returned as boolean and a properly packed meta data if true.
   // Similarly, `parse_constant` takes in a meta data block and returns if it
   // represents a constant field. If true, it also returns the constant value.
-  [[nodiscard]] auto test_constant(const vecd_type&) const -> std::pair<bool, meta_type>;
-  [[nodiscard]] auto parse_constant(const meta_type&) const -> std::tuple<bool, double, uint64_t>;
+  auto test_constant(const vecd_type&) const -> std::pair<bool, meta_type>;
+  auto parse_constant(const meta_type&) const -> std::tuple<bool, double, uint64_t>;
 
  private:
   //
@@ -55,11 +55,10 @@ class Conditioner {
   std::vector<double> m_stride_buf;
 
   // Action items
-  // Buffers passed in here are guaranteed to have correct lengths and
-  // conditions.
+  // Buffers passed in here are guaranteed to have correct lengths and conditions.
   auto m_calc_mean(const vecd_type& buf) -> double;
   auto m_calc_rms(const vecd_type& buf) -> double;
-  // adjust the value of `m_num_strides` so it'll be a divisor of `len`
+  // Adjust the value of `m_num_strides` so it'll be a divisor of `len`.
   void m_adjust_strides(size_t len);
 };
 

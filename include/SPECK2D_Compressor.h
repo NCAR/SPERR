@@ -47,7 +47,7 @@ class SPECK2D_Compressor {
  private:
   sperr::dims_type m_dims = {0, 0, 0};
   sperr::vecd_type m_val_buf;
-  const size_t m_meta_size = 2;
+  const size_t m_meta_size = 10; // Need to be the same as in SPECK2D_Decompressor.h
 
 #ifdef QZ_TERM
   sperr::vec8_type m_sperr_stream;

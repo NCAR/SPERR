@@ -12,9 +12,9 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   // This method parses the metadata of a bitstream and performs the following tasks:
   // 1) Verify if the major version number is consistant.
   // 2) Make sure that the bitstream is for 2D encoding, and consistent in QZ_TERM.
-  // 3) Verify that the application of ZSTD is consistant, and apply ZSTD if needed.
-  // 4) disassemble conditioner, SPECK, and possibly SPERR streams.
-  // 5) Extract dimensions from the SPECK stream.
+  // 3) Extract dimensions.
+  // 4) Verify that the application of ZSTD is consistant, and apply ZSTD if needed.
+  // 5) disassemble conditioner, SPECK, and possibly SPERR streams.
 
   m_condi_stream.fill(0);
   m_speck_stream.clear();
@@ -25,16 +25,14 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
 
   const uint8_t* u8p = static_cast<const uint8_t*>(p);
 
-  auto meta = std::array<uint8_t, 2>{0, 0};
-  assert(meta.size() == m_meta_size);
-  std::copy(u8p, u8p + m_meta_size, meta.begin());
-  auto metabool = sperr::unpack_8_booleans(meta[1]);
-
   // Task 1)
-  if (meta[0] != uint8_t(SPERR_VERSION_MAJOR))
+  if (*u8p != static_cast<uint8_t>(SPERR_VERSION_MAJOR))
     return RTNType::VersionMismatch;
+  u8p += 1;
 
   // Task 2)
+  auto metabool = sperr::unpack_8_booleans(*u8p);
+  u8p += 1;
   if (metabool[1] == true)  // true means it's 3D
     return RTNType::SliceVolumeMismatch;
 
@@ -47,14 +45,24 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
     return RTNType::QzModeMismatch;
 #endif
 
-  u8p += m_meta_size;
+  // Task 3)
+  uint32_t dims[2] = {0, 0};
+  std::memcpy(dims, u8p, sizeof(dims));
+  u8p += sizeof(dims);
+  m_dims[0] = dims[0];
+  m_dims[1] = dims[1];
+  m_dims[2] = 1;
+
+  // Sanity check
+  assert(static_cast<const uint8_t*>(p) + m_meta_size == u8p);
+
   size_t plen = 0;
   if (len >= m_meta_size)
     plen = len - m_meta_size;
   else
     return RTNType::BitstreamWrongLen;
 
-    // Task 3)
+    // Task 4)
 #ifdef USE_ZSTD
   if (metabool[0] == false)
     return RTNType::ZSTDMismatch;
@@ -76,7 +84,7 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
     return RTNType::ZSTDMismatch;
 #endif
 
-  // Task 4)
+  // Task 5)
   const auto condi_size = m_condi_stream.size();
   if (condi_size > plen)
     return RTNType::BitstreamWrongLen;
@@ -120,11 +128,6 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
     std::copy(u8p, u8p + sperr_size, m_sperr_stream.begin());
   }
 #endif
-
-  // Task 5)
-  m_dims = m_decoder.get_speck_stream_dims(m_speck_stream.data());
-  if (m_dims[2] != 1)
-    return RTNType::SliceVolumeMismatch;
 
   return RTNType::Good;
 }

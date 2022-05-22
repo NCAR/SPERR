@@ -205,8 +205,9 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   // 3) potentially apply ZSTD on the entire memory block except the meta data.
 
   // Meta data definition:
-  // the 1st byte records the current major version of SPECK, and
-  // the 2nd byte records 8 booleans, with their meanings documented below:
+  // the 1st byte records the current major version of SPECK,
+  // the 2nd byte records 8 booleans, with their meanings documented below, and
+  // the next 8 bytes record X and Y dimension, 4 bytes each (in uint32_t type).
   //
   // bool_byte[0]  : if the rest of the stream is zstd compressed.
   // bool_byte[1]  : if this bitstream is for 3D (true) or 2D (false) data.
@@ -214,8 +215,8 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   // bool_byte[3]  : if bool_byte[2]==true, the SPERR stream is empty (true) or not (false).
   // bool_byte[4-7]: unused
   //
-  auto meta = std::array<uint8_t, 2>{uint8_t(SPERR_VERSION_MAJOR), 0};
-  assert(sizeof(meta) == m_meta_size);
+  auto meta = std::vector<uint8_t>(m_meta_size, 0);
+  meta[0] = static_cast<uint8_t>(SPERR_VERSION_MAJOR);
   auto metabool = std::array<bool, 8>{false, false, false, false, false, false, false, false};
 
 #ifdef USE_ZSTD
@@ -228,6 +229,10 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 #endif
 
   meta[1] = sperr::pack_8_booleans(metabool);
+
+  // Copy X and Y dimensions to `meta`.
+  const uint32_t dims[2] = {static_cast<uint32_t>(m_dims[0]), static_cast<uint32_t>(m_dims[1])};
+  std::memcpy(&meta[2], dims, sizeof(dims));
 
 #ifdef QZ_TERM
   const auto total_size =
