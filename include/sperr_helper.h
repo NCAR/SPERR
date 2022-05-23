@@ -139,9 +139,12 @@ auto unpack_8_booleans(uint8_t) -> std::array<bool, 8>;
 // Read from and write to a file
 // Note: not using references for `filename` to allow a c-style string literal to be passed in.
 auto write_n_bytes(std::string filename, size_t n_bytes, const void* buffer) -> RTNType;
-auto read_n_bytes(std::string filename, size_t n_bytes, void* buffer) -> RTNType;
 template <typename T>
 auto read_whole_file(std::string filename) -> std::vector<T>;
+
+// Upon success, it returns a vector of size `n_bytes`.
+// Otherwise, it returns an empty vector.
+auto read_n_bytes(std::string filename, size_t n_bytes) -> std::vector<uint8_t>;
 
 // Calculate a suite of statistics.
 // Note that arr1 is considered as the ground truth array, so it's the range of

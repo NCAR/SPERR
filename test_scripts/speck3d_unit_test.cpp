@@ -45,7 +45,7 @@ class speck_tester {
     //
     // Use a compressor
     //
-    auto in_buf = sperr::read_whole_file<float>(m_input_name.c_str());
+    auto in_buf = sperr::read_whole_file<float>(m_input_name);
     if (in_buf.size() != total_vals)
       return 1;
     SPECK3D_Compressor compressor;
@@ -132,7 +132,7 @@ class speck_tester_omp {
     //
     // Use a compressor
     //
-    auto in_buf = sperr::read_whole_file<float>(m_input_name.c_str());
+    auto in_buf = sperr::read_whole_file<float>(m_input_name);
     if (in_buf.size() != total_vals)
       return 1;
 
@@ -172,11 +172,9 @@ class speck_tester_omp {
     // Compare results
     //
     const size_t nbytes = sizeof(float) * total_vals;
-    auto orig = std::make_unique<float[]>(total_vals);
-    if (sperr::read_n_bytes(m_input_name.c_str(), nbytes, orig.get()) != sperr::RTNType::Good)
-      return 1;
+    auto orig = sperr::read_whole_file<float>(m_input_name);
 
-    auto ret = sperr::calc_stats(orig.get(), vol.data(), total_vals, 8);
+    auto ret = sperr::calc_stats(orig.data(), vol.data(), total_vals, 8);
     m_psnr = ret[2];
     m_lmax = ret[1];
 

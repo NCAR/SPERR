@@ -184,23 +184,26 @@ auto sperr::unpack_8_booleans(uint8_t src) -> std::array<bool, 8>
   ;
 }
 
-auto sperr::read_n_bytes(std::string filename, size_t n_bytes, void* buffer) -> RTNType
+auto sperr::read_n_bytes(std::string filename, size_t n_bytes) -> std::vector<uint8_t>
 {
+  auto empty = std::vector<uint8_t>();
+
   std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename.data(), "rb"),
                                                         &std::fclose);
 
   if (!fp)
-    return RTNType::IOError;
+    return empty;
 
   std::fseek(fp.get(), 0, SEEK_END);
   if (std::ftell(fp.get()) < n_bytes)
-    return RTNType::InvalidParam;
+    return empty;
 
   std::fseek(fp.get(), 0, SEEK_SET);
-  if (std::fread(buffer, 1, n_bytes, fp.get()) != n_bytes)
-    return RTNType::IOError;
+  auto buf = std::vector<uint8_t>(n_bytes);
+  if (std::fread(buf.data(), 1, n_bytes, fp.get()) != n_bytes)
+    return empty;
 
-  return RTNType::Good;
+  return buf;
 }
 
 template <typename T>
