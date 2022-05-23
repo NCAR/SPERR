@@ -470,13 +470,12 @@ template void sperr::scatter_chunk(std::vector<double>&,
 
 auto sperr::parse_header(const void* ptr) -> Header_Info
 {
-  const uint8_t* const u8p = static_cast<const uint8_t*>(ptr);
+  const uint8_t* u8p = static_cast<const uint8_t*>(ptr);
   size_t loc = 0;
   auto header = Header_Info();
 
   // Parse version numbers
-  header.version_major = *u8p / uint8_t(10);
-  header.version_minor = *u8p % uint8_t(10);
+  header.version_major = *u8p;
   loc++;
 
   // Parse 8 booleans

@@ -193,7 +193,6 @@ void scatter_chunk(std::vector<TBIG>& big_vol,
 // This structure is returned by helper function `parse_header()`.
 struct Header_Info {
   uint8_t version_major = 0;
-  uint8_t version_minor = 0;
   bool zstd_applied = false;
   bool is_3d = false;
 

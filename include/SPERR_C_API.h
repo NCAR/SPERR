@@ -144,7 +144,6 @@ int sperr_qzdecomp_3d(
 void sperr_parse_header(
     const void* ptr,         /* Input: the bitstream to parse */
     int32_t* version_major,  /* Output: major version number */
-    int32_t* verision_minor, /* Output: minor version number */ 
     int32_t* zstd_applied,   /* Output: if ZSTD applied (0 == no ZSTD; 1 == ZSTD applied) */
     int32_t* is_qz_term,     /* Output: compression mode (0 == fixed-size; 1 == fixed-error) */ 
     int32_t* is_3d,          /* Output: 3D volume or 2D slice (0 == 2D, 1 == 3D) */

@@ -172,12 +172,12 @@ auto SPECK3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
   const auto num_chunks = chunks.size();
   if (num_chunks != m_encoded_streams.size())
-    return std::vector<uint8_t>(0);
+    return std::vector<uint8_t>();
   const auto header_size = m_header_magic + num_chunks * 4;
   auto header = std::vector<uint8_t>(header_size);
 
   // Version number
-  header[0] = uint8_t(10) * uint8_t(SPERR_VERSION_MAJOR) + uint8_t(SPERR_VERSION_MINOR);
+  header[0] = static_cast<uint8_t>(SPERR_VERSION_MAJOR);
   size_t loc = 1;
 
   // 8 booleans:
