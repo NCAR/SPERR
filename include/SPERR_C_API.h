@@ -130,6 +130,29 @@ int sperr_qzdecomp_3d(
 
 #endif
 
+/*
+ * Functions in both fixed-error and fixed-size mode.
+ */
+
+/* 
+ * Given a SPERR bitstream, parse the header and retrieve various types of information.
+ *
+ * Return value meanings:
+ * 0: success
+ * 1: parsing error occured
+ */
+void sperr_parse_header(
+    const void* ptr,         /* Input: the bitstream to parse */
+    int32_t* version_major,  /* Output: major version number */
+    int32_t* verision_minor, /* Output: minor version number */ 
+    int32_t* zstd_applied,   /* Output: if ZSTD applied (0 == no ZSTD; 1 == ZSTD applied) */
+    int32_t* is_qz_term,     /* Output: compression mode (0 == fixed-size; 1 == fixed-error) */ 
+    int32_t* is_3d,          /* Output: 3D volume or 2D slice (0 == 2D, 1 == 3D) */
+    uint32_t* dim_x,         /* Output: X dimension */
+    uint32_t* dim_y,         /* Output: Y dimension */
+    uint32_t* dim_z);        /* Output: Z dimension */
+ 
+
 #ifdef __cplusplus
 } /* end of extern "C" */
 } /* end of namespace C_API */

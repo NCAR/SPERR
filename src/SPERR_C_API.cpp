@@ -219,6 +219,28 @@ int C_API::sperr_qzdecomp_3d(const void* src,
   return 0;
 }
 
+void C_API::sperr_parse_header(const void* ptr,
+                               int32_t* version_major,
+                               int32_t* verision_minor,
+                               int32_t* zstd_applied,
+                               int32_t* is_qz_term,
+                               int32_t* is_3d,
+                               uint32_t* dim_x,
+                               uint32_t* dim_y,
+                               uint32_t* dim_z)
+{
+  auto header = sperr::parse_header(ptr);
+
+  *version_major = header.version_major;
+  *version_minor = header.version_minor;
+  *zstd_applied = header.zstd_applied;
+  *is_qz_term = header.is_qz_term;
+  *is_3d = header.is_3d;
+  *dim_x = header.vol_dims[0];
+  *dim_y = header.vol_dims[1];
+  *dim_z = header.vol_dims[2];
+}
+
 #else
 
 #endif
