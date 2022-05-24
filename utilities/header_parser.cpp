@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
 
   auto info = sperr::parse_header(header.data());
   std::cout << "Bitstream meta data:\n";
-  std::printf("  Produced by software major version: %hhu\n", info.version_major);
+  std::cout << "  Produced by software major version: " << +(info.version_major) << std::endl;
 
   std::cout << "  Compression mode: ";
   if (info.is_qz_term)
