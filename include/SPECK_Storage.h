@@ -23,7 +23,6 @@ class SPECK_Storage {
   auto take_data(vecd_type&&, dims_type dims) -> RTNType;
   auto release_data() -> vecd_type&&;          // Release ownership
   auto view_data() const -> const vecd_type&;  // Keep ownership
-  auto get_dims() const -> std::array<size_t, 3>;
 
   // Get the encoded bitstream.
   auto view_encoded_bitstream() const -> const vec8_type&;

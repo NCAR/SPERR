@@ -39,13 +39,10 @@ auto sperr::SPECK_Storage::release_data() -> vecd_type&&
   m_dims = {0, 0, 0};
   return std::move(m_coeff_buf);
 }
+
 auto sperr::SPECK_Storage::view_data() const -> const vecd_type&
 {
   return m_coeff_buf;
-}
-auto sperr::SPECK_Storage::get_dims() const -> std::array<size_t, 3>
-{
-  return m_dims;
 }
 
 auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
