@@ -29,17 +29,14 @@ class SPECK_Storage {
   auto release_encoded_bitstream() -> vec8_type&&;
 
   // Prepare internal states for a decompression operation from an encoded bitstream
-  //
   // Note: it takes a raw pointer because it accesses memory provided by others,
   //       and others most likely provide a raw pointer.
   auto parse_encoded_bitstream(const void*, size_t) -> RTNType;
 
-  // Given a SPECK stream, tell how long the speck stream (including header) is
-  // in bytes, and what the volume/slice dimension is in num. of elements.
+  // Given a SPECK stream, tell how long the speck stream (including header) is.
   // Note: don't need to provide the buffer size because this function
   //       goes to a fixed location to retrieve the stream size.
   auto get_speck_stream_size(const void*) const -> uint64_t;
-  auto get_speck_stream_dims(const void*) const -> std::array<size_t, 3>;
 
  protected:
   //
@@ -50,7 +47,7 @@ class SPECK_Storage {
   int32_t m_qz_lev = 0;             // At which quantization level does encoding terminate?
                                     // Necessary in preparing bitstream headers.
 #else
-  const size_t m_header_size = 22;  // See header definition in SPECK_Storage.cpp.
+  const size_t m_header_size = 10;  // See header definition in SPECK_Storage.cpp.
 #endif
 
   int32_t m_max_coeff_bit = 0;  // Necessary in preparing bitstream headers.
