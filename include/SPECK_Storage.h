@@ -38,6 +38,8 @@ class SPECK_Storage {
   //       goes to a fixed location to retrieve the stream size.
   auto get_speck_stream_size(const void*) const -> uint64_t;
 
+  void set_dimensions(dims_type);
+
  protected:
   //
   // Member variables

@@ -187,6 +187,7 @@ auto SPECK2D_Decompressor::decompress() -> RTNType
   auto rtn = m_decoder.parse_encoded_bitstream(m_speck_stream.data(), m_speck_stream.size());
   if (rtn != RTNType::Good)
     return rtn;
+  m_decoder.set_dimensions(m_dims);
 #ifndef QZ_TERM
   m_decoder.set_bit_budget(size_t(m_bpp * double(total_vals)));
 #endif
