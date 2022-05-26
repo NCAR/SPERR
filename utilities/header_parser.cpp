@@ -43,8 +43,8 @@ int main(int argc, char* argv[])
     std::cout << "NO\n";
 
   if (info.is_3d) {
-    std::printf("  It contains a 3D volume of size (%lu x %lu x %lu)",
-      info.vol_dims[0], info.vol_dims[1], info.vol_dims[2]);
+    std::printf("  It contains a 3D volume of size (%lu x %lu x %lu)", info.vol_dims[0],
+                info.vol_dims[1], info.vol_dims[2]);
   }
   else {
     std::printf("  It contains a 2D slice of size (%lu x %lu)", info.vol_dims[0], info.vol_dims[1]);
