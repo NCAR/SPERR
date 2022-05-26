@@ -18,8 +18,8 @@ auto sperr::SPECK3D_Compressor::copy_data(const T* p, size_t len, sperr::dims_ty
 
   return RTNType::Good;
 }
-template auto sperr::SPECK3D_Compressor::copy_data(const double*, size_t, sperr::dims_type) -> RTNType;
-template auto sperr::SPECK3D_Compressor::copy_data(const float*, size_t, sperr::dims_type) -> RTNType;
+template auto sperr::SPECK3D_Compressor::copy_data(const double*, size_t, dims_type) -> RTNType;
+template auto sperr::SPECK3D_Compressor::copy_data(const float*, size_t, dims_type) -> RTNType;
 
 auto sperr::SPECK3D_Compressor::take_data(sperr::vecd_type&& buf, sperr::dims_type dims) -> RTNType
 {

@@ -7,7 +7,7 @@
 #include <numeric>
 
 #ifdef USE_OMP
-  #include <omp.h>
+#include <omp.h>
 #endif
 
 #ifndef QZ_TERM
@@ -136,7 +136,6 @@ auto SPECK3D_OMP_D::decompress(const void* p) -> RTNType
 //
 #pragma omp parallel for num_threads(m_num_threads)
   for (size_t i = 0; i < num_chunks; i++) {
-
 #ifdef USE_OMP
     auto& decompressor = decompressors[omp_get_thread_num()];
 #else

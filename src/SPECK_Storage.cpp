@@ -144,7 +144,6 @@ auto sperr::SPECK_Storage::get_speck_stream_size(const void* buf) const -> uint6
   return (m_header_size + size_t(bit_in_byte));
 }
 
-
 void sperr::SPECK_Storage::set_dimensions(dims_type dims)
 {
   m_dims = dims;
