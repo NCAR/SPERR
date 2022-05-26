@@ -15,8 +15,12 @@ add_library( SPERR
              SPECK2D_Decompressor.cpp
              SPERR_C_API.cpp)
 target_include_directories( SPERR PUBLIC ${CMAKE_SOURCE_DIR}/include )
-target_compile_options(     SPERR PUBLIC ${OpenMP_CXX_FLAGS} )
-target_link_libraries(      SPERR PUBLIC OpenMP::OpenMP_CXX )
+
+if(USE_OMP)
+  target_compile_options(   SPERR PUBLIC ${OpenMP_CXX_FLAGS} )
+  target_link_libraries(    SPERR PUBLIC OpenMP::OpenMP_CXX )
+endif()
+
 #
 # Also link zstd
 #
