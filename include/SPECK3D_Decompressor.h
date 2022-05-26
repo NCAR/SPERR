@@ -26,6 +26,8 @@ class SPECK3D_Decompressor {
   // Accept incoming data.
   auto use_bitstream(const void* p, size_t len) -> RTNType;
 
+  void set_dims(sperr::dims_type);
+
 #ifndef QZ_TERM
   auto set_bpp(double) -> RTNType;
 #endif
@@ -37,7 +39,6 @@ class SPECK3D_Decompressor {
   auto get_data() const -> std::vector<T>;
   auto view_data() const -> const std::vector<double>&;
   auto release_data() -> std::vector<double>&&;
-  auto get_dims() const -> std::array<size_t, 3>;
 
  private:
   sperr::dims_type m_dims = {0, 0, 0};

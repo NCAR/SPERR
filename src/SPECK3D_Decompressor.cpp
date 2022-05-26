@@ -72,11 +72,8 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   std::copy(speck_p, speck_p + speck_size, m_speck_stream.begin());
   pos += speck_size;
 
-  // Step 3: keep the volume dimension from the header
-  m_dims = m_decoder.get_speck_stream_dims(m_speck_stream.data());
-
 #ifdef QZ_TERM
-  // Step 4: extract SPERR stream from it
+  // Step 3: extract SPERR stream from it
   if (pos < ptr_len) {
     const uint8_t* const sperr_p = ptr + pos;
     const auto sperr_size = m_sperr.get_sperr_stream_size(sperr_p);
@@ -91,6 +88,11 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
 #endif
 
   return RTNType::Good;
+}
+
+void SPECK3D_Decompressor::set_dims(sperr::dims_type dims)
+{
+  m_dims = dims;
 }
 
 #ifndef QZ_TERM
@@ -124,6 +126,7 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
   auto rtn = m_decoder.parse_encoded_bitstream(m_speck_stream.data(), m_speck_stream.size());
   if (rtn != RTNType::Good)
     return rtn;
+  m_decoder.set_dimensions(m_dims);
 #ifndef QZ_TERM
   m_decoder.set_bit_budget(size_t(m_bpp * double(m_dims[0] * m_dims[1] * m_dims[2])));
 #endif
@@ -195,7 +198,3 @@ auto SPECK3D_Decompressor::release_data() -> std::vector<double>&&
   return std::move(m_val_buf);
 }
 
-auto SPECK3D_Decompressor::get_dims() const -> std::array<size_t, 3>
-{
-  return m_dims;
-}
