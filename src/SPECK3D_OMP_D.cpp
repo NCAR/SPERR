@@ -129,7 +129,7 @@ auto SPECK3D_OMP_D::decompress(const void* p) -> RTNType
   m_vol_buf.resize(total_vals);
 
   // Create number of decompressor instances equal to the number of threads
-  auto decompressors = std::vector<SPECK3D_Decompressor>(m_num_threads);
+  auto decompressors = std::vector<sperr::SPECK3D_Decompressor>(m_num_threads);
   auto chunk_rtn = std::vector<RTNType>(num_chunks * 3, RTNType::Good);
 
 // Each compressor instance takes on a chunk

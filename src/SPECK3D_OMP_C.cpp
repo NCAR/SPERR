@@ -107,7 +107,7 @@ auto SPECK3D_OMP_C::compress() -> RTNType
     return RTNType::Error;
 
   // Let's prepare some data structures for compression!
-  auto compressors = std::vector<SPECK3D_Compressor>(m_num_threads);
+  auto compressors = std::vector<sperr::SPECK3D_Compressor>(m_num_threads);
   auto chunk_rtn = std::vector<RTNType>(num_chunks, RTNType::Good);
   m_encoded_streams.resize(num_chunks);
   std::for_each(m_encoded_streams.begin(), m_encoded_streams.end(), [](auto& v) { v.clear(); });

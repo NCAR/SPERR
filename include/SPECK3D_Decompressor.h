@@ -19,14 +19,14 @@
 #include "zstd.h"
 #endif
 
-using sperr::RTNType;
+namespace sperr {
 
 class SPECK3D_Decompressor {
  public:
   // Accept incoming data.
   auto use_bitstream(const void* p, size_t len) -> RTNType;
 
-  void set_dims(sperr::dims_type);
+  void set_dims(dims_type);
 
 #ifndef QZ_TERM
   auto set_bpp(double) -> RTNType;
@@ -41,18 +41,18 @@ class SPECK3D_Decompressor {
   auto release_data() -> std::vector<double>&&;
 
  private:
-  sperr::dims_type m_dims = {0, 0, 0};
-  sperr::Conditioner::meta_type m_condi_stream;
-  sperr::vec8_type m_speck_stream;
-  sperr::vecd_type m_val_buf;
+  dims_type m_dims = {0, 0, 0};
+  Conditioner::meta_type m_condi_stream;
+  vec8_type m_speck_stream;
+  vecd_type m_val_buf;
 
-  sperr::Conditioner m_conditioner;
-  sperr::CDF97 m_cdf;
-  sperr::SPECK3D m_decoder;
+  Conditioner m_conditioner;
+  CDF97 m_cdf;
+  SPECK3D m_decoder;
 
 #ifdef QZ_TERM
-  sperr::SPERR m_sperr;
-  sperr::vec8_type m_sperr_stream;
+  SPERR m_sperr;
+  vec8_type m_sperr_stream;
 #else
   double m_bpp = 0.0;
 #endif
@@ -62,6 +62,8 @@ class SPECK3D_Decompressor {
   size_t m_zstd_buf_len = 0;
   std::unique_ptr<ZSTD_DCtx, decltype(&ZSTD_freeDCtx)> m_dctx = {nullptr, &ZSTD_freeDCtx};
 #endif
+};
+
 };
 
 #endif
