@@ -96,6 +96,7 @@ int sperr_qzcomp_3d(
     size_t dimz,      /* Input: Z (slowest-varying) dimension */
     int32_t qlev,     /* Input: q (quantization) level */
     double tol,       /* Input: absolute error tolerance */
+    int32_t nthreads, /* Input: number of OMP threads to use */
     void** dst,       /* Output: buffer for the output bitstream, allocated by this function */
     size_t* dst_len); /* Output: length of `dst` in byte */
 
@@ -119,6 +120,7 @@ int sperr_qzdecomp_3d(
     const void* src,      /* Input: buffer that contains a compressed bitstream */
     size_t src_len,       /* Input: length of the input bitstream in byte */
     int32_t output_float, /* Input: output data type: 1 == float, 0 == double */
+    int32_t nthreads, /* Input: number of OMP threads to use */
     size_t* dimx,         /* Output: X (fast-varying) dimension */
     size_t* dimy,         /* Output: Y dimension */
     size_t* dimz,         /* Output: Z (slowest-varying) dimension */

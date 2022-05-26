@@ -3,8 +3,8 @@
 #include "SPECK2D_Compressor.h"
 #include "SPECK2D_Decompressor.h"
 
-#include "SPECK3D_Compressor.h"
-#include "SPECK3D_Decompressor.h"
+#include "SPECK3D_OMP_C.h"
+#include "SPECK3D_OMP_D.h"
 
 #ifdef QZ_TERM
 
@@ -119,6 +119,7 @@ int C_API::sperr_qzcomp_3d(const void* src,
                            size_t dimz,
                            int32_t qlev,
                            double tol,
+                           int32_t nthreads,
                            void** dst,
                            size_t* dst_len)
 {
@@ -126,16 +127,25 @@ int C_API::sperr_qzcomp_3d(const void* src,
   if (*dst != NULL)
     return 1;
 
+  if (nthreads <= 0)
+    return -1;
+
+  // Hard code the preferred chunk size as 128^3. Can change in the future.
+  auto chunk_dims = sperr::dims_type{128, 128, 128};
+
   // Setup the compressor
   const auto total_vals = dimx * dimy * dimz;
-  auto compressor = SPECK3D_Compressor();
+  auto compressor = SPECK3D_OMP_C();
+  compressor.set_num_threads(nthreads);
   auto rtn = sperr::RTNType::Good;
   switch (is_float) {
     case 0:  // double
-      rtn = compressor.copy_data(static_cast<const double*>(src), total_vals, {dimx, dimy, dimz});
+      rtn = compressor.copy_data(static_cast<const double*>(src), total_vals, {dimx, dimy, dimz},
+                                 chunk_dims);
       break;
     case 1:  // float
-      rtn = compressor.copy_data(static_cast<const float*>(src), total_vals, {dimx, dimy, dimz});
+      rtn = compressor.copy_data(static_cast<const float*>(src), total_vals, {dimx, dimy, dimz},
+                                 chunk_dims);
       break;
     default:
       return 3;
@@ -157,7 +167,7 @@ int C_API::sperr_qzcomp_3d(const void* src,
   }
 
   // Output the compressed bitstream
-  const auto& stream = compressor.view_encoded_bitstream();
+  const auto stream = compressor.get_encoded_bitstream();
   if (stream.empty())
     return -1;
   *dst_len = stream.size();
@@ -171,6 +181,7 @@ int C_API::sperr_qzcomp_3d(const void* src,
 int C_API::sperr_qzdecomp_3d(const void* src,
                              size_t src_len,
                              int32_t output_float,
+                             int32_t nthreads,
                              size_t* dimx,
                              size_t* dimy,
                              size_t* dimz,
@@ -180,12 +191,16 @@ int C_API::sperr_qzdecomp_3d(const void* src,
   if (*dst != NULL)
     return 1;
 
+  if (nthreads <= 0)
+    return -1;
+
   // Use a decompressor to decompress this bitstream
-  auto decompressor = SPECK3D_Decompressor();
+  auto decompressor = SPECK3D_OMP_D();
+  decompressor.set_num_threads(nthreads);
   auto rtn = decompressor.use_bitstream(src, src_len);
   if (rtn != RTNType::Good)
     return -1;
-  rtn = decompressor.decompress();
+  rtn = decompressor.decompress(src);
   if (rtn != RTNType::Good)
     return -1;
 
