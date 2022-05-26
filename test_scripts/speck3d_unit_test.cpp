@@ -52,7 +52,7 @@ class speck_tester_omp {
     if (in_buf.size() != total_vals)
       return 1;
 
-    SPECK3D_OMP_C compressor;
+    auto compressor = SPECK3D_OMP_C();
     compressor.set_num_threads(m_num_t);
 
     if (compressor.copy_data(in_buf.data(), total_vals, m_dims, m_chunk_dims) != RTNType::Good)
@@ -74,7 +74,7 @@ class speck_tester_omp {
     //
     // Use a decompressor
     //
-    SPECK3D_OMP_D decompressor;
+    auto decompressor = SPECK3D_OMP_D();
     decompressor.set_num_threads(m_num_t);
     if (decompressor.use_bitstream(stream.data(), stream.size()) != RTNType::Good)
       return 1;
@@ -146,74 +146,7 @@ TEST(speck3d_constant, omp_chunks)
 //
 // Error bound mode
 //
-TEST(speck3d_qz_term, large_tolerance)
-{
-  const float tol = 1.0;
-  speck_tester tester("../test_data/wmag128.float", {128, 128, 128});
-  auto rtn = tester.execute(2, tol);
-  EXPECT_EQ(rtn, 0);
-  float psnr = tester.get_psnr();
-  float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 5.76309120e+01);
-  EXPECT_LT(psnr, 5.76309166e+01);
-  EXPECT_LE(lmax, tol);
-
-  rtn = tester.execute(-1, tol);
-  EXPECT_EQ(rtn, 0);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 6.5578315e+01);
-  EXPECT_LT(psnr, 6.5578317e+01);
-  EXPECT_LT(lmax, tol);
-
-  rtn = tester.execute(-2, tol);
-  EXPECT_EQ(rtn, 0);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 7.2108818e+01);
-  EXPECT_LT(psnr, 7.2108826e+01);
-  EXPECT_LT(lmax, 5.623770e-01);
-}
-TEST(speck3d_qz_term, small_tolerance)
-{
-  const double tol = 0.07;
-  speck_tester tester("../test_data/wmag128.float", {128, 128, 128});
-  auto rtn = tester.execute(-3, tol);
-  EXPECT_EQ(rtn, 0);
-  float psnr = tester.get_psnr();
-  float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 8.1451713e+01);
-  EXPECT_LT(psnr, 8.1451722e+01);
-  EXPECT_LT(lmax, 6.9999696e-02);
-
-  rtn = tester.execute(-5, tol);
-  EXPECT_EQ(rtn, 0);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 9.1753349e+01);
-  EXPECT_LT(psnr, 9.1753350e+01);
-  EXPECT_LE(lmax, 5.3462983e-02);
-}
 TEST(speck3d_qz_term, narrow_data_range)
-{
-  speck_tester tester("../test_data/vorticity.128_128_41", {128, 128, 41});
-  auto rtn = tester.execute(-16, 3e-5);
-  EXPECT_EQ(rtn, 0);
-  float psnr = tester.get_psnr();
-  float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 42.293655);
-  EXPECT_LT(psnr, 42.293656);
-  EXPECT_LT(lmax, 2.983993e-05);
-
-  rtn = tester.execute(-18, 7e-6);
-  EXPECT_EQ(rtn, 0);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 5.05222282e+01);
-  EXPECT_LT(psnr, 5.05222283e+01);
-  EXPECT_LT(lmax, 6.997870e-06);
-}
-TEST(speck3d_qz_term_omp, narrow_data_range)
 {
   // We specify to use 1 thread to make sure that object re-use has no side effects.
   // The next set of tests will use multiple threads.
@@ -234,9 +167,9 @@ TEST(speck3d_qz_term_omp, narrow_data_range)
   EXPECT_LT(psnr, 50.486733);
   EXPECT_LT(lmax, 6.991625e-06);
 }
-TEST(speck3d_qz_term_omp, small_tolerance)
+TEST(speck3d_qz_term, small_tolerance)
 {
-  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 7);
+  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 5);
   auto rtn = tester.execute(-3, 0.07);
   EXPECT_EQ(rtn, 0);
   float psnr = tester.get_psnr();

@@ -48,8 +48,8 @@ auto sperr::SPECK_Storage::view_data() const -> const vecd_type&
 auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
 {
   // Header definition: 24 bytes in QZ_TERM mode
-  // dim_x,     dim_y,     dim_z,     max_coeff_bits, qz_lev,   stream_len (in byte)
-  // uint32_t,  uint32_t,  uint32_t,  int16_t,        int16_t,  uint64_t
+  // max_coeff_bits, qz_lev,   stream_len (in byte)
+  // int16_t,        int16_t,  uint64_t
   //
   // Header definition: 10 bytes in size-bounded mode
   // max_coeff_bits, stream_len (in byte)
