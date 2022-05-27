@@ -3,7 +3,7 @@
 #include <cassert>
 #include <cstring>
 
-auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
+auto sperr::SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
 {
   // It'd be bad to have some buffers updated, and some others not.
   // So let's clean up everything at the very beginning of this routine
@@ -72,11 +72,8 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   std::copy(speck_p, speck_p + speck_size, m_speck_stream.begin());
   pos += speck_size;
 
-  // Step 3: keep the volume dimension from the header
-  m_dims = m_decoder.get_speck_stream_dims(m_speck_stream.data());
-
 #ifdef QZ_TERM
-  // Step 4: extract SPERR stream from it
+  // Step 3: extract SPERR stream from it
   if (pos < ptr_len) {
     const uint8_t* const sperr_p = ptr + pos;
     const auto sperr_size = m_sperr.get_sperr_stream_size(sperr_p);
@@ -93,8 +90,13 @@ auto SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   return RTNType::Good;
 }
 
+void sperr::SPECK3D_Decompressor::set_dims(dims_type dims)
+{
+  m_dims = dims;
+}
+
 #ifndef QZ_TERM
-auto SPECK3D_Decompressor::set_bpp(double bpp) -> RTNType
+auto sperr::SPECK3D_Decompressor::set_bpp(double bpp) -> RTNType
 {
   if (bpp < 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
@@ -105,7 +107,7 @@ auto SPECK3D_Decompressor::set_bpp(double bpp) -> RTNType
 }
 #endif
 
-auto SPECK3D_Decompressor::decompress() -> RTNType
+auto sperr::SPECK3D_Decompressor::decompress() -> RTNType
 {
   // `m_condi_stream` might be indicating a constant field, so let's see if that's
   // the case, and if it is, we don't need to go through dwt and speck stuff anymore.
@@ -124,6 +126,7 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
   auto rtn = m_decoder.parse_encoded_bitstream(m_speck_stream.data(), m_speck_stream.size());
   if (rtn != RTNType::Good)
     return rtn;
+  m_decoder.set_dimensions(m_dims);
 #ifndef QZ_TERM
   m_decoder.set_bit_budget(size_t(m_bpp * double(m_dims[0] * m_dims[1] * m_dims[2])));
 #endif
@@ -174,28 +177,23 @@ auto SPECK3D_Decompressor::decompress() -> RTNType
 }
 
 template <typename T>
-auto SPECK3D_Decompressor::get_data() const -> std::vector<T>
+auto sperr::SPECK3D_Decompressor::get_data() const -> std::vector<T>
 {
   auto out_buf = std::vector<T>(m_val_buf.size());
   std::copy(m_val_buf.begin(), m_val_buf.end(), out_buf.begin());
 
   return out_buf;
 }
-template auto SPECK3D_Decompressor::get_data() const -> std::vector<double>;
-template auto SPECK3D_Decompressor::get_data() const -> std::vector<float>;
+template auto sperr::SPECK3D_Decompressor::get_data() const -> std::vector<double>;
+template auto sperr::SPECK3D_Decompressor::get_data() const -> std::vector<float>;
 
-auto SPECK3D_Decompressor::view_data() const -> const std::vector<double>&
+auto sperr::SPECK3D_Decompressor::view_data() const -> const std::vector<double>&
 {
   return m_val_buf;
 }
 
-auto SPECK3D_Decompressor::release_data() -> std::vector<double>&&
+auto sperr::SPECK3D_Decompressor::release_data() -> std::vector<double>&&
 {
   m_dims = {0, 0, 0};
   return std::move(m_val_buf);
-}
-
-auto SPECK3D_Decompressor::get_dims() const -> std::array<size_t, 3>
-{
-  return m_dims;
 }

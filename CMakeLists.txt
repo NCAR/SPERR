@@ -32,14 +32,17 @@ endif()
 option( BUILD_UNIT_TESTS "Build unit tests using GoogleTest" ON )
 option( BUILD_CLI_UTILITIES "Build a set of command line utilities" ON )
 option( USE_ZSTD "Incorporate ZSTD to achieve further 5% reduction" OFF )
+option( USE_OMP "Use OpenMP parallelization on 3D volumes" ON )
 option( QZ_TERM  "Coding terminates by quantization level" ON )
 option( BUILD_SHARED_LIBS "Build shared SPERR library" ON )
 
-find_package(OpenMP REQUIRED)
-if( OpenMP_CXX_FOUND AND OpenMP_CXX_FLAGS )
-    message(STATUS "OpenMP found! (${OpenMP_CXX_LIB_NAMES} ${OpenMP_CXX_VERSION}: ${OpenMP_CXX_FLAGS})")
-else()
-    message(FATAL_ERROR "OpenMP NOT found, which is required by SPERR!")
+if(USE_OMP)
+  find_package(OpenMP REQUIRED)
+  if( OpenMP_CXX_FOUND AND OpenMP_CXX_FLAGS )
+      message(STATUS "OpenMP found! (${OpenMP_CXX_LIB_NAMES} ${OpenMP_CXX_VERSION}: ${OpenMP_CXX_FLAGS})")
+  else()
+      message(FATAL_ERROR "OpenMP NOT found! Try turning it off!")
+  endif()
 endif()
 
 #
@@ -206,7 +209,7 @@ endif()
 #
 if( BUILD_CLI_UTILITIES )
   install( TARGETS show_version compressor_3d decompressor_3d probe_3d 
-           compressor_2d decompressor_2d
+           compressor_2d decompressor_2d header_parser
            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
 endif()
 

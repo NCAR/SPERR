@@ -1,10 +1,13 @@
 #include "SPECK3D_OMP_C.h"
 
-#include <omp.h>
 #include <algorithm>  // std::all_of()
 #include <cassert>
 #include <cstring>
 #include <numeric>  // std::accumulate()
+
+#ifdef USE_OMP
+#include <omp.h>
+#endif
 
 void SPECK3D_OMP_C::set_num_threads(size_t n)
 {
@@ -38,10 +41,23 @@ auto SPECK3D_OMP_C::get_outlier_stats() const -> std::pair<size_t, size_t>
 #else
 auto SPECK3D_OMP_C::set_bpp(double bpp) -> RTNType
 {
+  auto eq0 = [](auto v) { return v == 0; };
+
   if (bpp < 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
+  // If the volume and chunk dimension hasn't been set, return error.
+  else if (std::any_of(m_dims.begin(), m_dims.end(), eq0) ||
+           std::any_of(m_chunk_dims.begin(), m_chunk_dims.end(), eq0))
+    return RTNType::SetBPPBeforeDims;
   else {
-    m_bpp = bpp;
+    // Need to account in the size of the header.
+    const auto total_vals_f = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
+    double total_bits = bpp * total_vals_f;
+    const auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
+    const auto header_bits = (m_header_magic + chunks.size() * 4) * 8;
+    total_bits -= header_bits;
+    m_bpp = total_bits / total_vals_f;
+
     return RTNType::Good;
   }
 }
@@ -63,7 +79,7 @@ auto SPECK3D_OMP_C::copy_data(const T* vol,
     m_chunk_dims[i] = std::min(std::max(size_t{1}, chunk_dims[i]), vol_dims[i]);
 
   // Block the volume into smaller chunks
-  auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
+  const auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
   const auto num_chunks = chunks.size();
   m_chunk_buffers.resize(num_chunks);
 
@@ -91,7 +107,7 @@ auto SPECK3D_OMP_C::compress() -> RTNType
     return RTNType::Error;
 
   // Let's prepare some data structures for compression!
-  auto compressors = std::vector<SPECK3D_Compressor>(m_num_threads);
+  auto compressors = std::vector<sperr::SPECK3D_Compressor>(m_num_threads);
   auto chunk_rtn = std::vector<RTNType>(num_chunks, RTNType::Good);
   m_encoded_streams.resize(num_chunks);
   std::for_each(m_encoded_streams.begin(), m_encoded_streams.end(), [](auto& v) { v.clear(); });
@@ -104,7 +120,11 @@ auto SPECK3D_OMP_C::compress() -> RTNType
 //
 #pragma omp parallel for num_threads(m_num_threads)
   for (size_t i = 0; i < num_chunks; i++) {
+#ifdef USE_OMP
     auto& compressor = compressors[omp_get_thread_num()];
+#else
+    auto& compressor = compressors[0];
+#endif
 
     // The following few operations have no chance to fail.
     compressor.take_data(std::move(m_chunk_buffers[i]), {chunks[i][1], chunks[i][3], chunks[i][5]});
@@ -172,12 +192,12 @@ auto SPECK3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
   const auto num_chunks = chunks.size();
   if (num_chunks != m_encoded_streams.size())
-    return std::vector<uint8_t>(0);
+    return std::vector<uint8_t>();
   const auto header_size = m_header_magic + num_chunks * 4;
   auto header = std::vector<uint8_t>(header_size);
 
   // Version number
-  header[0] = uint8_t(10) * uint8_t(SPERR_VERSION_MAJOR) + uint8_t(SPERR_VERSION_MINOR);
+  header[0] = static_cast<uint8_t>(SPERR_VERSION_MAJOR);
   size_t loc = 1;
 
   // 8 booleans:
@@ -202,9 +222,10 @@ auto SPECK3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   loc += 1;
 
   // Volume and chunk dimensions
-  uint32_t vcdim[6] = {uint32_t(m_dims[0]),       uint32_t(m_dims[1]),
-                       uint32_t(m_dims[2]),       uint32_t(m_chunk_dims[0]),
-                       uint32_t(m_chunk_dims[1]), uint32_t(m_chunk_dims[2])};
+  uint32_t vcdim[6] = {
+      static_cast<uint32_t>(m_dims[0]),       static_cast<uint32_t>(m_dims[1]),
+      static_cast<uint32_t>(m_dims[2]),       static_cast<uint32_t>(m_chunk_dims[0]),
+      static_cast<uint32_t>(m_chunk_dims[1]), static_cast<uint32_t>(m_chunk_dims[2])};
   std::memcpy(&header[loc], vcdim, sizeof(vcdim));
   loc += sizeof(vcdim);
 

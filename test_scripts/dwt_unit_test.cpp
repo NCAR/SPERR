@@ -12,13 +12,14 @@ TEST(dwt1d, big_image_even)
   const size_t total_vals = dim_x;
 
   // Let read in binaries as 4-byte floats
-  auto in_buf = std::make_unique<float[]>(total_vals);
-  if (sperr::read_n_bytes(input, sizeof(float) * total_vals, in_buf.get()) != sperr::RTNType::Good)
+  auto in_buf = sperr::read_n_bytes(input, sizeof(float) * total_vals);
+  if (in_buf.size() != sizeof(float) * total_vals)
     std::cerr << "Input read error!" << std::endl;
+  const float* fptr = reinterpret_cast<const float*>(in_buf.data());
 
   // Make a copy and then use a conditioner
   auto in_copy = std::vector<double>(total_vals);
-  std::copy(in_buf.get(), in_buf.get() + total_vals, in_copy.begin());
+  std::copy(fptr, fptr + total_vals, in_copy.begin());
   auto condi = sperr::Conditioner();
   auto [rtn, meta] = condi.condition(in_copy);
 
@@ -36,7 +37,7 @@ TEST(dwt1d, big_image_even)
   rtn = condi.inverse_condition(result, meta);
 
   for (size_t i = 0; i < total_vals; i++) {
-    EXPECT_EQ(in_buf[i], float(result[i]));
+    EXPECT_EQ(fptr[i], float(result[i]));
   }
 }
 
@@ -47,13 +48,14 @@ TEST(dwt1d, big_image_odd)
   const size_t total_vals = dim_x;
 
   // Let read in binaries as 4-byte floats
-  auto in_buf = std::make_unique<float[]>(total_vals);
-  if (sperr::read_n_bytes(input, sizeof(float) * total_vals, in_buf.get()) != sperr::RTNType::Good)
+  auto in_buf = sperr::read_n_bytes(input, sizeof(float) * total_vals);
+  if (in_buf.size() != sizeof(float) * total_vals)
     std::cerr << "Input read error!" << std::endl;
+  const float* fptr = reinterpret_cast<const float*>(in_buf.data());
 
   // Make a copy and use a conditioner
   auto in_copy = std::vector<double>(total_vals);
-  std::copy(in_buf.get(), in_buf.get() + total_vals, in_copy.begin());
+  std::copy(fptr, fptr + total_vals, in_copy.begin());
   auto condi = sperr::Conditioner();
   auto [rtn, meta] = condi.condition(in_copy);
 
@@ -71,7 +73,7 @@ TEST(dwt1d, big_image_odd)
   rtn = condi.inverse_condition(result, meta);
 
   for (size_t i = 0; i < total_vals; i++) {
-    EXPECT_EQ(in_buf[i], float(result[i]));
+    EXPECT_EQ(fptr[i], float(result[i]));
   }
 }
 

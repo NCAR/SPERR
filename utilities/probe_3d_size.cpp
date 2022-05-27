@@ -28,13 +28,14 @@ auto test_configuration_omp(const T* in_buf,
 {
   // Setup
   const size_t total_vals = dims[0] * dims[1] * dims[2];
-  SPECK3D_OMP_C compressor;
-  compressor.set_bpp(bpp);
-  compressor.toggle_conditioning(condi_settings);
-  compressor.set_num_threads(omp_num_threads);
+  auto compressor = SPECK3D_OMP_C();
   auto rtn = compressor.copy_data(in_buf, total_vals, dims, chunks);
   if (rtn != RTNType::Good)
     return 1;
+
+  compressor.set_bpp(bpp);
+  compressor.toggle_conditioning(condi_settings);
+  compressor.set_num_threads(omp_num_threads);
 
   // Perform actual compression work
   auto start_time = std::chrono::steady_clock::now();

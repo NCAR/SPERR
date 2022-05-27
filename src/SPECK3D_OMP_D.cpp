@@ -1,11 +1,14 @@
 
 #include "SPECK3D_OMP_D.h"
 
-#include <omp.h>
 #include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <numeric>
+
+#ifdef USE_OMP
+#include <omp.h>
+#endif
 
 #ifndef QZ_TERM
 auto SPECK3D_OMP_D::set_bpp(double bpp) -> RTNType
@@ -37,7 +40,7 @@ auto SPECK3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
 
   // Parse Step 1: Major version number need to match
   uint8_t ver = *u8p;
-  if (ver / uint8_t(10) != uint8_t(SPERR_VERSION_MAJOR))
+  if (ver != static_cast<uint8_t>(SPERR_VERSION_MAJOR))
     return RTNType::VersionMismatch;
   size_t loc = 1;
 
@@ -126,14 +129,20 @@ auto SPECK3D_OMP_D::decompress(const void* p) -> RTNType
   m_vol_buf.resize(total_vals);
 
   // Create number of decompressor instances equal to the number of threads
-  auto decompressors = std::vector<SPECK3D_Decompressor>(m_num_threads);
+  auto decompressors = std::vector<sperr::SPECK3D_Decompressor>(m_num_threads);
   auto chunk_rtn = std::vector<RTNType>(num_chunks * 3, RTNType::Good);
 
 // Each compressor instance takes on a chunk
 //
 #pragma omp parallel for num_threads(m_num_threads)
   for (size_t i = 0; i < num_chunks; i++) {
+#ifdef USE_OMP
     auto& decompressor = decompressors[omp_get_thread_num()];
+#else
+    auto& decompressor = decompressors[0];
+#endif
+
+    decompressor.set_dims({chunks[i][1], chunks[i][3], chunks[i][5]});
 
 #ifndef QZ_TERM
     decompressor.set_bpp(m_bpp);
@@ -143,7 +152,7 @@ auto SPECK3D_OMP_D::decompress(const void* p) -> RTNType
         decompressor.use_bitstream(m_bitstream_ptr + m_offsets[i], m_offsets[i + 1] - m_offsets[i]);
 
     chunk_rtn[i * 3 + 1] = decompressor.decompress();
-    const auto small_vol = decompressor.view_data();
+    const auto& small_vol = decompressor.view_data();
     if (small_vol.empty())
       chunk_rtn[i * 3 + 2] = RTNType::Error;
     else {

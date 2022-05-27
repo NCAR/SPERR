@@ -13,6 +13,9 @@ target_link_libraries( compressor_2d PUBLIC SPERR )
 add_executable( decompressor_2d decompressor_2d.cpp )
 target_link_libraries( decompressor_2d PUBLIC SPERR )
 
+add_executable( header_parser header_parser.cpp )
+target_link_libraries( header_parser PUBLIC SPERR )
+
 if( QZ_TERM )
   add_executable( probe_3d probe_3d_qz.cpp )
 else()

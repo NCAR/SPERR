@@ -75,13 +75,6 @@ int main(int argc, char* argv[])
   SPECK3D_OMP_C compressor;
   compressor.set_num_threads(omp_num_threads);
 
-#ifdef QZ_TERM
-  compressor.set_qz_level(qz_level);
-  compressor.set_tolerance(tolerance);
-#else
-  compressor.set_bpp(bpp);
-#endif
-
   auto orig = sperr::read_whole_file<uint8_t>(input_file);
   if ((use_double && orig.size() != total_vals * sizeof(double)) ||
       (!use_double && orig.size() != total_vals * sizeof(float))) {
@@ -101,6 +94,16 @@ int main(int argc, char* argv[])
     std::cerr << "Copy data failed!" << std::endl;
     return 1;
   }
+
+#ifdef QZ_TERM
+  compressor.set_qz_level(qz_level);
+  compressor.set_tolerance(tolerance);
+#else
+  rtn = compressor.set_bpp(bpp);
+  if (rtn != sperr::RTNType::Good) {
+    std::cerr << "Set bpp failed!" << std::endl;
+  }
+#endif
 
   // Free memory taken by `orig` since the volume has been put into chunks.
   orig.clear();

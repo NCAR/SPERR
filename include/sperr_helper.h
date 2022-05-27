@@ -49,6 +49,7 @@ enum class RTNType {
   ZSTDError,
   SliceVolumeMismatch,
   QzModeMismatch,
+  SetBPPBeforeDims,
   Error
 };
 
@@ -139,9 +140,12 @@ auto unpack_8_booleans(uint8_t) -> std::array<bool, 8>;
 // Read from and write to a file
 // Note: not using references for `filename` to allow a c-style string literal to be passed in.
 auto write_n_bytes(std::string filename, size_t n_bytes, const void* buffer) -> RTNType;
-auto read_n_bytes(std::string filename, size_t n_bytes, void* buffer) -> RTNType;
 template <typename T>
 auto read_whole_file(std::string filename) -> std::vector<T>;
+
+// Upon success, it returns a vector of size `n_bytes`.
+// Otherwise, it returns an empty vector.
+auto read_n_bytes(std::string filename, size_t n_bytes) -> std::vector<uint8_t>;
 
 // Calculate a suite of statistics.
 // Note that arr1 is considered as the ground truth array, so it's the range of
@@ -185,6 +189,26 @@ void scatter_chunk(std::vector<TBIG>& big_vol,
                    dims_type vol_dim,
                    const std::vector<TSML>& small_vol,
                    const std::array<size_t, 6>& chunk);
+
+// Structure that holds information extracted from SPERR headers.
+// This structure is returned by helper function `parse_header()`.
+struct Header_Info {
+  uint8_t version_major = 0;
+  bool zstd_applied = false;
+  bool is_3d = false;
+
+  // True <--> the bitstream is in fixed-error mode.
+  // False <--> the bitstream is in fixed-size mode.
+  bool is_qz_term = false;
+
+  // This is the dimension of a 3D volume (NX, NY, NZ) or a 2D slice (NX, NY, 1).
+  dims_type vol_dims = {0, 0, 0};
+
+  // If the bitstream represents a 3D volume, this field holds the dimension of chunks.
+  // For 2D slices, this field holds undefined values.
+  dims_type chunk_dims = {0, 0, 0};
+};
+auto parse_header(const void*) -> Header_Info;
 
 // For research use only:
 // calculate the sum of squares of one vector.

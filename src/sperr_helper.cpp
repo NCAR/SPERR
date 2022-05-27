@@ -184,23 +184,26 @@ auto sperr::unpack_8_booleans(uint8_t src) -> std::array<bool, 8>
   ;
 }
 
-auto sperr::read_n_bytes(std::string filename, size_t n_bytes, void* buffer) -> RTNType
+auto sperr::read_n_bytes(std::string filename, size_t n_bytes) -> std::vector<uint8_t>
 {
+  auto buf = std::vector<uint8_t>();
+
   std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename.data(), "rb"),
                                                         &std::fclose);
 
   if (!fp)
-    return RTNType::IOError;
+    return buf;
 
   std::fseek(fp.get(), 0, SEEK_END);
   if (std::ftell(fp.get()) < n_bytes)
-    return RTNType::InvalidParam;
+    return buf;
 
   std::fseek(fp.get(), 0, SEEK_SET);
-  if (std::fread(buffer, 1, n_bytes, fp.get()) != n_bytes)
-    return RTNType::IOError;
+  buf.resize(n_bytes);
+  if (std::fread(buf.data(), 1, n_bytes, fp.get()) != n_bytes)
+    buf.clear();
 
-  return RTNType::Good;
+  return buf;
 }
 
 template <typename T>
@@ -464,6 +467,50 @@ template void sperr::scatter_chunk(std::vector<double>&,
                                    dims_type,
                                    const std::vector<double>&,
                                    const std::array<size_t, 6>&);
+
+auto sperr::parse_header(const void* ptr) -> Header_Info
+{
+  const uint8_t* u8p = static_cast<const uint8_t*>(ptr);
+  size_t loc = 0;
+  auto header = Header_Info();
+
+  // Parse version numbers
+  header.version_major = *u8p;
+  loc++;
+
+  // Parse 8 booleans
+  auto b8 = sperr::unpack_8_booleans(u8p[loc]);
+  loc++;
+
+  header.zstd_applied = b8[0];
+  header.is_3d = b8[1];
+  header.is_qz_term = b8[2];
+
+  // Parse the dimension info.
+  if (header.is_3d) {
+    uint32_t vcdim[6];
+    std::memcpy(vcdim, u8p + loc, sizeof(vcdim));
+    loc += sizeof(vcdim);
+
+    header.vol_dims[0] = vcdim[0];
+    header.vol_dims[1] = vcdim[1];
+    header.vol_dims[2] = vcdim[2];
+    header.chunk_dims[0] = vcdim[3];
+    header.chunk_dims[1] = vcdim[4];
+    header.chunk_dims[2] = vcdim[5];
+  }
+  else {
+    uint32_t dims[2];
+    std::memcpy(dims, u8p + loc, sizeof(dims));
+    loc += sizeof(dims);
+
+    header.vol_dims[0] = dims[0];
+    header.vol_dims[1] = dims[1];
+    header.vol_dims[2] = 1;
+  }
+
+  return header;
+}
 
 auto sperr::calc_sq_sum(const vecd_type& vec) -> double
 {
