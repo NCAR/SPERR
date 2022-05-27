@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
                                {dims[0], dims[1], dims[2]}, {chunks[0], chunks[1], chunks[2]});
   }
   if (rtn != sperr::RTNType::Good) {
-    std::cerr << "copy data failed!" << std::endl;
+    std::cerr << "Copy data failed!" << std::endl;
     return 1;
   }
 

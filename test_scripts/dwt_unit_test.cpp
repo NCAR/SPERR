@@ -15,11 +15,11 @@ TEST(dwt1d, big_image_even)
   auto in_buf = sperr::read_n_bytes(input, sizeof(float) * total_vals);
   if (in_buf.size() != sizeof(float) * total_vals)
     std::cerr << "Input read error!" << std::endl;
-  const float* fpt = reinterpret_cast<const float*>(in_buf.data());
+  const float* fptr = reinterpret_cast<const float*>(in_buf.data());
 
   // Make a copy and then use a conditioner
   auto in_copy = std::vector<double>(total_vals);
-  std::copy(fpt, fpt + total_vals, in_copy.begin());
+  std::copy(fptr, fptr + total_vals, in_copy.begin());
   auto condi = sperr::Conditioner();
   auto [rtn, meta] = condi.condition(in_copy);
 
@@ -37,7 +37,7 @@ TEST(dwt1d, big_image_even)
   rtn = condi.inverse_condition(result, meta);
 
   for (size_t i = 0; i < total_vals; i++) {
-    EXPECT_EQ(fpt[i], float(result[i]));
+    EXPECT_EQ(fptr[i], float(result[i]));
   }
 }
 
@@ -51,11 +51,11 @@ TEST(dwt1d, big_image_odd)
   auto in_buf = sperr::read_n_bytes(input, sizeof(float) * total_vals);
   if (in_buf.size() != sizeof(float) * total_vals)
     std::cerr << "Input read error!" << std::endl;
-  const float* fpt = reinterpret_cast<const float*>(in_buf.data());
+  const float* fptr = reinterpret_cast<const float*>(in_buf.data());
 
   // Make a copy and use a conditioner
   auto in_copy = std::vector<double>(total_vals);
-  std::copy(fpt, fpt + total_vals, in_copy.begin());
+  std::copy(fptr, fptr + total_vals, in_copy.begin());
   auto condi = sperr::Conditioner();
   auto [rtn, meta] = condi.condition(in_copy);
 
@@ -73,7 +73,7 @@ TEST(dwt1d, big_image_odd)
   rtn = condi.inverse_condition(result, meta);
 
   for (size_t i = 0; i < total_vals; i++) {
-    EXPECT_EQ(fpt[i], float(result[i]));
+    EXPECT_EQ(fptr[i], float(result[i]));
   }
 }
 

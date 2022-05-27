@@ -48,7 +48,7 @@ auto SPECK3D_OMP_C::set_bpp(double bpp) -> RTNType
   // If the volume and chunk dimension hasn't been set, return error.
   else if (std::any_of(m_dims.begin(), m_dims.end(), eq0) ||
            std::any_of(m_chunk_dims.begin(), m_chunk_dims.end(), eq0))
-    return RTNType::Error;
+    return RTNType::SetBPPBeforeDims;
   else {
     // Need to account in the size of the header.
     const auto total_vals_f = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);

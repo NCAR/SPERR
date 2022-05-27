@@ -55,7 +55,7 @@ int main(int argc, char** argv)
     return 1;
 
   /* Let's use 4 OpenMP threads. */
-  const uint32_t nthreads = 4;
+  const int32_t nthreads = 4;
 
   /* Compress `inbuf` and put the compressed bitstream in `bitstream` */
   void* bitstream = NULL; /* Will be free'd later */

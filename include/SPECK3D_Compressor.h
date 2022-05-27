@@ -19,8 +19,8 @@ class SPECK3D_Compressor {
  public:
   // Accept incoming data: copy from a raw memory block
   template <typename T>
-  auto copy_data(const T* p,             // Input: pointer to the memory block
-                 size_t len,             // Input: number of values
+  auto copy_data(const T* p,      // Input: pointer to the memory block
+                 size_t len,      // Input: number of values
                  dims_type dims)  // Input: dimension of the 3D volume
       -> RTNType;
 
