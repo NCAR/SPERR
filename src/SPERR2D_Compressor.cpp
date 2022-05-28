@@ -1,4 +1,4 @@
-#include "SPECK2D_Compressor.h"
+#include "SPERR2D_Compressor.h"
 
 #include <cassert>
 #include <cstring>
@@ -8,7 +8,7 @@
 #endif
 
 template <typename T>
-auto SPECK2D_Compressor::copy_data(const T* p, size_t len, sperr::dims_type dims) -> RTNType
+auto SPERR2D_Compressor::copy_data(const T* p, size_t len, sperr::dims_type dims) -> RTNType
 {
   static_assert(std::is_floating_point<T>::value, "!! Only floating point values are supported !!");
 
@@ -21,10 +21,10 @@ auto SPECK2D_Compressor::copy_data(const T* p, size_t len, sperr::dims_type dims
 
   return RTNType::Good;
 }
-template auto SPECK2D_Compressor::copy_data(const double*, size_t, sperr::dims_type) -> RTNType;
-template auto SPECK2D_Compressor::copy_data(const float*, size_t, sperr::dims_type) -> RTNType;
+template auto SPERR2D_Compressor::copy_data(const double*, size_t, sperr::dims_type) -> RTNType;
+template auto SPERR2D_Compressor::copy_data(const float*, size_t, sperr::dims_type) -> RTNType;
 
-auto SPECK2D_Compressor::take_data(std::vector<double>&& buf, sperr::dims_type dims) -> RTNType
+auto SPERR2D_Compressor::take_data(std::vector<double>&& buf, sperr::dims_type dims) -> RTNType
 {
   if (buf.size() != dims[0] * dims[1] || dims[2] != 1)
     return RTNType::WrongDims;
@@ -36,20 +36,20 @@ auto SPECK2D_Compressor::take_data(std::vector<double>&& buf, sperr::dims_type d
 }
 
 #ifdef QZ_TERM
-void SPECK2D_Compressor::set_qz_level(int32_t q)
+void SPERR2D_Compressor::set_qz_level(int32_t q)
 {
   m_qz_lev = q;
 }
-void SPECK2D_Compressor::set_tolerance(double tol)
+void SPERR2D_Compressor::set_tolerance(double tol)
 {
   m_tol = tol;
 }
-auto SPECK2D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
+auto SPERR2D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
 {
   return {m_LOS.size(), m_sperr_stream.size()};
 }
 #else
-auto SPECK2D_Compressor::set_bpp(double bpp) -> RTNType
+auto SPERR2D_Compressor::set_bpp(double bpp) -> RTNType
 {
   const auto total_vals = m_dims[0] * m_dims[1];
   if (bpp <= 0.0 || bpp > 64.0)
@@ -63,22 +63,22 @@ auto SPECK2D_Compressor::set_bpp(double bpp) -> RTNType
 }
 #endif
 
-void SPECK2D_Compressor::toggle_conditioning(sperr::Conditioner::settings_type settings)
+void SPERR2D_Compressor::toggle_conditioning(sperr::Conditioner::settings_type settings)
 {
   m_conditioning_settings = settings;
 }
 
-auto SPECK2D_Compressor::view_encoded_bitstream() const -> const std::vector<uint8_t>&
+auto SPERR2D_Compressor::view_encoded_bitstream() const -> const std::vector<uint8_t>&
 {
   return m_encoded_stream;
 }
 
-auto SPECK2D_Compressor::release_encoded_bitstream() -> std::vector<uint8_t>&&
+auto SPERR2D_Compressor::release_encoded_bitstream() -> std::vector<uint8_t>&&
 {
   return std::move(m_encoded_stream);
 }
 
-auto SPECK2D_Compressor::compress() -> RTNType
+auto SPERR2D_Compressor::compress() -> RTNType
 {
   const auto total_vals = m_dims[0] * m_dims[1];
   if (m_val_buf.empty() || m_val_buf.size() != total_vals)
@@ -197,7 +197,7 @@ auto SPECK2D_Compressor::compress() -> RTNType
   return rtn;
 }
 
-auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
+auto SPERR2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 {
   // This method does 3 things:
   // 1) prepend a proper header containing meta data.
@@ -205,7 +205,7 @@ auto SPECK2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   // 3) potentially apply ZSTD on the entire memory block except the meta data.
 
   // Meta data definition:
-  // the 1st byte records the current major version of SPECK,
+  // the 1st byte records the current major version of SPERR,
   // the 2nd byte records 8 booleans, with their meanings documented below, and
   // the next 8 bytes record X and Y dimension, 4 bytes each (in uint32_t type).
   //

@@ -1,4 +1,4 @@
-#include "SPECK2D_Decompressor.h"
+#include "SPERR2D_Decompressor.h"
 
 #include <cassert>
 #include <cstring>
@@ -7,7 +7,7 @@
 #include "zstd.h"
 #endif
 
-auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
+auto SPERR2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
 {
   // This method parses the metadata of a bitstream and performs the following tasks:
   // 1) Verify if the major version number is consistant.
@@ -133,7 +133,7 @@ auto SPECK2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
 }
 
 #ifndef QZ_TERM
-auto SPECK2D_Decompressor::set_bpp(double bpp) -> RTNType
+auto SPERR2D_Decompressor::set_bpp(double bpp) -> RTNType
 {
   if (bpp < 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
@@ -145,33 +145,33 @@ auto SPECK2D_Decompressor::set_bpp(double bpp) -> RTNType
 #endif
 
 template <typename T>
-auto SPECK2D_Decompressor::get_data() const -> std::vector<T>
+auto SPERR2D_Decompressor::get_data() const -> std::vector<T>
 {
   auto out_buf = std::vector<T>(m_val_buf.size());
   std::copy(m_val_buf.begin(), m_val_buf.end(), out_buf.begin());
 
   return out_buf;
 }
-template auto SPECK2D_Decompressor::get_data() const -> std::vector<double>;
-template auto SPECK2D_Decompressor::get_data() const -> std::vector<float>;
+template auto SPERR2D_Decompressor::get_data() const -> std::vector<double>;
+template auto SPERR2D_Decompressor::get_data() const -> std::vector<float>;
 
-auto SPECK2D_Decompressor::view_data() const -> const std::vector<double>&
+auto SPERR2D_Decompressor::view_data() const -> const std::vector<double>&
 {
   return m_val_buf;
 }
 
-auto SPECK2D_Decompressor::release_data() -> std::vector<double>&&
+auto SPERR2D_Decompressor::release_data() -> std::vector<double>&&
 {
   m_dims = {0, 0, 0};
   return std::move(m_val_buf);
 }
 
-auto SPECK2D_Decompressor::get_dims() const -> std::array<size_t, 3>
+auto SPERR2D_Decompressor::get_dims() const -> std::array<size_t, 3>
 {
   return m_dims;
 }
 
-auto SPECK2D_Decompressor::decompress() -> RTNType
+auto SPERR2D_Decompressor::decompress() -> RTNType
 {
   // `m_condi_stream` might be indicating a constant field, so let's test and handle that case.
   auto [constant, const_val, nconst_vals] = m_conditioner.parse_constant(m_condi_stream);

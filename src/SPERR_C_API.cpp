@@ -1,7 +1,7 @@
 #include "SPERR_C_API.h"
 
-#include "SPECK2D_Compressor.h"
-#include "SPECK2D_Decompressor.h"
+#include "SPERR2D_Compressor.h"
+#include "SPERR2D_Decompressor.h"
 
 #include "SPECK3D_OMP_C.h"
 #include "SPECK3D_OMP_D.h"
@@ -23,7 +23,7 @@ int C_API::sperr_qzcomp_2d(const void* src,
 
   // Setup the compressor
   const auto total_vals = dimx * dimy;
-  auto compressor = SPECK2D_Compressor();
+  auto compressor = SPERR2D_Compressor();
   auto rtn = sperr::RTNType::Good;
   switch (is_float) {
     case 0:  // double
@@ -75,7 +75,7 @@ int C_API::sperr_qzdecomp_2d(const void* src,
     return 1;
 
   // Use a decompressor to decompress this bitstream
-  auto decompressor = SPECK2D_Decompressor();
+  auto decompressor = SPERR2D_Decompressor();
   auto rtn = decompressor.use_bitstream(src, src_len);
   if (rtn != RTNType::Good)
     return -1;

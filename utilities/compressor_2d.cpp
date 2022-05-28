@@ -1,5 +1,5 @@
-#include "SPECK2D_Compressor.h"
-#include "SPECK2D_Decompressor.h"
+#include "SPERR2D_Compressor.h"
+#include "SPERR2D_Decompressor.h"
 
 #include "CLI11.hpp"
 
@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
   }
 
   auto rtn = sperr::RTNType::Good;
-  auto compressor = SPECK2D_Compressor();
+  auto compressor = SPERR2D_Compressor();
 
   // Pass data to the compressor
   if (use_double) {
@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
     std::cout << "Average bpp = " << stream.size() * 8.0 / total_vals;
 
     // Use a decompressor to decompress and collect error statistics
-    SPECK2D_Decompressor decompressor;
+    SPERR2D_Decompressor decompressor;
     rtn = decompressor.use_bitstream(stream.data(), stream.size());
     if (rtn != RTNType::Good)
       return 1;

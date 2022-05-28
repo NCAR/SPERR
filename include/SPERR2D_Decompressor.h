@@ -4,8 +4,8 @@
 // Functionality wise, it does not bring anything new though.
 //
 
-#ifndef SPECK2D_DECOMPRESSOR_H
-#define SPECK2D_DECOMPRESSOR_H
+#ifndef SPERR2D_DECOMPRESSOR_H
+#define SPERR2D_DECOMPRESSOR_H
 
 #include "CDF97.h"
 #include "Conditioner.h"
@@ -17,7 +17,7 @@
 
 using sperr::RTNType;
 
-class SPECK2D_Decompressor {
+class SPERR2D_Decompressor {
  public:
   // Accept incoming data.
   auto use_bitstream(const void* p, size_t len) -> RTNType;
@@ -40,7 +40,7 @@ class SPECK2D_Decompressor {
   sperr::Conditioner::meta_type m_condi_stream;
   sperr::vec8_type m_speck_stream;
   sperr::vecd_type m_val_buf;
-  const size_t m_meta_size = 10; // Need to be the same as in SPECK2D_Compressor.h
+  const size_t m_meta_size = 10; // Need to be the same as in SPERR2D_Compressor.h
 
 #ifdef QZ_TERM
   sperr::SPERR m_sperr;

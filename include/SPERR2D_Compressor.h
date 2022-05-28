@@ -3,8 +3,8 @@
 // it provides easy-to-use APIs.
 //
 
-#ifndef SPECK2D_COMPRESSOR_H
-#define SPECK2D_COMPRESSOR_H
+#ifndef SPERR2D_COMPRESSOR_H
+#define SPERR2D_COMPRESSOR_H
 
 #include "CDF97.h"
 #include "Conditioner.h"
@@ -16,7 +16,7 @@
 
 using sperr::RTNType;
 
-class SPECK2D_Compressor {
+class SPERR2D_Compressor {
  public:
   // Accept incoming data: copy from a raw memory block
   template <typename T>
@@ -47,7 +47,7 @@ class SPECK2D_Compressor {
  private:
   sperr::dims_type m_dims = {0, 0, 0};
   sperr::vecd_type m_val_buf;
-  const size_t m_meta_size = 10; // Need to be the same as in SPECK2D_Decompressor.h
+  const size_t m_meta_size = 10; // Need to be the same as in SPERR2D_Decompressor.h
 
 #ifdef QZ_TERM
   sperr::vec8_type m_sperr_stream;

@@ -1,6 +1,6 @@
 #include <cstdlib>
-#include "SPECK2D_Compressor.h"
-#include "SPECK2D_Decompressor.h"
+#include "SPERR2D_Compressor.h"
+#include "SPERR2D_Decompressor.h"
 #include "gtest/gtest.h"
 
 using sperr::RTNType;
@@ -44,7 +44,7 @@ class speck_tester {
     //
     // Use a compressor
     //
-    SPECK2D_Compressor compressor;
+    SPERR2D_Compressor compressor;
     if (compressor.copy_data(in_buf.data(), total_vals, m_dims) != RTNType::Good)
       return 1;
 
@@ -63,7 +63,7 @@ class speck_tester {
     //
     // Then use a decompressor
     //
-    SPECK2D_Decompressor decompressor;
+    SPERR2D_Decompressor decompressor;
     if (decompressor.use_bitstream(bitstream.data(), bitstream.size()) != RTNType::Good)
       return 1;
     if (decompressor.decompress() != RTNType::Good)

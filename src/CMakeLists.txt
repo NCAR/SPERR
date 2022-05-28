@@ -11,8 +11,8 @@ add_library( SPERR
              SPECK3D_Decompressor.cpp
              SPECK3D_OMP_C.cpp
              SPECK3D_OMP_D.cpp
-             SPECK2D_Compressor.cpp
-             SPECK2D_Decompressor.cpp
+             SPERR2D_Compressor.cpp
+             SPERR2D_Decompressor.cpp
              SPERR_C_API.cpp)
 target_include_directories( SPERR PUBLIC ${CMAKE_SOURCE_DIR}/include )
 
@@ -41,8 +41,8 @@ include/SPECK3D_Compressor.h;\
 include/SPECK3D_Decompressor.h;\
 include/SPECK3D_OMP_C.h;\
 include/SPECK3D_OMP_D.h;\
-include/SPECK2D_Compressor.h;\
-include/SPECK2D_Decompressor.h;\
+include/SPERR2D_Compressor.h;\
+include/SPERR2D_Decompressor.h;\
 include/Conditioner.h;\
 include/Analyzer.h;\
 include/CDF97.h;\
