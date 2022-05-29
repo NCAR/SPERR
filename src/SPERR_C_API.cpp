@@ -3,8 +3,8 @@
 #include "SPERR2D_Compressor.h"
 #include "SPERR2D_Decompressor.h"
 
-#include "SPECK3D_OMP_C.h"
-#include "SPECK3D_OMP_D.h"
+#include "SPERR3D_OMP_C.h"
+#include "SPERR3D_OMP_D.h"
 
 #ifdef QZ_TERM
 
@@ -135,7 +135,7 @@ int C_API::sperr_qzcomp_3d(const void* src,
 
   // Setup the compressor
   const auto total_vals = dimx * dimy * dimz;
-  auto compressor = SPECK3D_OMP_C();
+  auto compressor = SPERR3D_OMP_C();
   compressor.set_num_threads(nthreads);
   auto rtn = sperr::RTNType::Good;
   switch (is_float) {
@@ -195,7 +195,7 @@ int C_API::sperr_qzdecomp_3d(const void* src,
     return -1;
 
   // Use a decompressor to decompress this bitstream
-  auto decompressor = SPECK3D_OMP_D();
+  auto decompressor = SPERR3D_OMP_D();
   decompressor.set_num_threads(nthreads);
   auto rtn = decompressor.use_bitstream(src, src_len);
   if (rtn != RTNType::Good)

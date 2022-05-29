@@ -1,9 +1,9 @@
-#include "SPECK3D_Decompressor.h"
+#include "SPERR3D_Decompressor.h"
 
 #include <cassert>
 #include <cstring>
 
-auto sperr::SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
+auto sperr::SPERR3D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
 {
   // It'd be bad to have some buffers updated, and some others not.
   // So let's clean up everything at the very beginning of this routine
@@ -90,13 +90,13 @@ auto sperr::SPECK3D_Decompressor::use_bitstream(const void* p, size_t len) -> RT
   return RTNType::Good;
 }
 
-void sperr::SPECK3D_Decompressor::set_dims(dims_type dims)
+void sperr::SPERR3D_Decompressor::set_dims(dims_type dims)
 {
   m_dims = dims;
 }
 
 #ifndef QZ_TERM
-auto sperr::SPECK3D_Decompressor::set_bpp(double bpp) -> RTNType
+auto sperr::SPERR3D_Decompressor::set_bpp(double bpp) -> RTNType
 {
   if (bpp < 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
@@ -107,7 +107,7 @@ auto sperr::SPECK3D_Decompressor::set_bpp(double bpp) -> RTNType
 }
 #endif
 
-auto sperr::SPECK3D_Decompressor::decompress() -> RTNType
+auto sperr::SPERR3D_Decompressor::decompress() -> RTNType
 {
   // `m_condi_stream` might be indicating a constant field, so let's see if that's
   // the case, and if it is, we don't need to go through dwt and speck stuff anymore.
@@ -142,7 +142,7 @@ auto sperr::SPECK3D_Decompressor::decompress() -> RTNType
   const auto& decoder_out = m_decoder.view_data();
   m_cdf.copy_data(decoder_out.data(), decoder_out.size(), m_dims);
   // Figure out which dwt3d strategy to use.
-  // Note: this strategy needs to be consistent with SPECK3D_Compressor.
+  // Note: this strategy needs to be consistent with SPERR3D_Compressor.
   auto xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
   auto xforms_z = sperr::num_of_xforms(m_dims[2]);
   if (xforms_xy == xforms_z)
@@ -177,22 +177,22 @@ auto sperr::SPECK3D_Decompressor::decompress() -> RTNType
 }
 
 template <typename T>
-auto sperr::SPECK3D_Decompressor::get_data() const -> std::vector<T>
+auto sperr::SPERR3D_Decompressor::get_data() const -> std::vector<T>
 {
   auto out_buf = std::vector<T>(m_val_buf.size());
   std::copy(m_val_buf.begin(), m_val_buf.end(), out_buf.begin());
 
   return out_buf;
 }
-template auto sperr::SPECK3D_Decompressor::get_data() const -> std::vector<double>;
-template auto sperr::SPECK3D_Decompressor::get_data() const -> std::vector<float>;
+template auto sperr::SPERR3D_Decompressor::get_data() const -> std::vector<double>;
+template auto sperr::SPERR3D_Decompressor::get_data() const -> std::vector<float>;
 
-auto sperr::SPECK3D_Decompressor::view_data() const -> const std::vector<double>&
+auto sperr::SPERR3D_Decompressor::view_data() const -> const std::vector<double>&
 {
   return m_val_buf;
 }
 
-auto sperr::SPECK3D_Decompressor::release_data() -> std::vector<double>&&
+auto sperr::SPERR3D_Decompressor::release_data() -> std::vector<double>&&
 {
   m_dims = {0, 0, 0};
   return std::move(m_val_buf);

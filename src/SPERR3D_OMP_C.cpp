@@ -1,4 +1,4 @@
-#include "SPECK3D_OMP_C.h"
+#include "SPERR3D_OMP_C.h"
 
 #include <algorithm>  // std::all_of()
 #include <cassert>
@@ -9,27 +9,27 @@
 #include <omp.h>
 #endif
 
-void SPECK3D_OMP_C::set_num_threads(size_t n)
+void SPERR3D_OMP_C::set_num_threads(size_t n)
 {
   if (n > 0)
     m_num_threads = n;
 }
 
-void SPECK3D_OMP_C::toggle_conditioning(sperr::Conditioner::settings_type b4)
+void SPERR3D_OMP_C::toggle_conditioning(sperr::Conditioner::settings_type b4)
 {
   m_conditioning_settings = b4;
 }
 
 #ifdef QZ_TERM
-void SPECK3D_OMP_C::set_qz_level(int32_t q)
+void SPERR3D_OMP_C::set_qz_level(int32_t q)
 {
   m_qz_lev = q;
 }
-void SPECK3D_OMP_C::set_tolerance(double t)
+void SPERR3D_OMP_C::set_tolerance(double t)
 {
   m_tol = t;
 }
-auto SPECK3D_OMP_C::get_outlier_stats() const -> std::pair<size_t, size_t>
+auto SPERR3D_OMP_C::get_outlier_stats() const -> std::pair<size_t, size_t>
 {
   using pair = std::pair<size_t, size_t>;
   pair sum{0, 0};
@@ -39,7 +39,7 @@ auto SPECK3D_OMP_C::get_outlier_stats() const -> std::pair<size_t, size_t>
   return std::accumulate(m_outlier_stats.begin(), m_outlier_stats.end(), sum, op);
 }
 #else
-auto SPECK3D_OMP_C::set_bpp(double bpp) -> RTNType
+auto SPERR3D_OMP_C::set_bpp(double bpp) -> RTNType
 {
   auto eq0 = [](auto v) { return v == 0; };
 
@@ -64,7 +64,7 @@ auto SPECK3D_OMP_C::set_bpp(double bpp) -> RTNType
 #endif
 
 template <typename T>
-auto SPECK3D_OMP_C::copy_data(const T* vol,
+auto SPERR3D_OMP_C::copy_data(const T* vol,
                               size_t len,
                               sperr::dims_type vol_dims,
                               sperr::dims_type chunk_dims) -> RTNType
@@ -90,12 +90,12 @@ auto SPECK3D_OMP_C::copy_data(const T* vol,
 
   return RTNType::Good;
 }
-template auto SPECK3D_OMP_C::copy_data(const float*, size_t, sperr::dims_type, sperr::dims_type)
+template auto SPERR3D_OMP_C::copy_data(const float*, size_t, sperr::dims_type, sperr::dims_type)
     -> RTNType;
-template auto SPECK3D_OMP_C::copy_data(const double*, size_t, sperr::dims_type, sperr::dims_type)
+template auto SPERR3D_OMP_C::copy_data(const double*, size_t, sperr::dims_type, sperr::dims_type)
     -> RTNType;
 
-auto SPECK3D_OMP_C::compress() -> RTNType
+auto SPERR3D_OMP_C::compress() -> RTNType
 {
   // Need to make sure that the chunks are ready!
   auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
@@ -107,7 +107,7 @@ auto SPECK3D_OMP_C::compress() -> RTNType
     return RTNType::Error;
 
   // Let's prepare some data structures for compression!
-  auto compressors = std::vector<sperr::SPECK3D_Compressor>(m_num_threads);
+  auto compressors = std::vector<sperr::SPERR3D_Compressor>(m_num_threads);
   auto chunk_rtn = std::vector<RTNType>(num_chunks, RTNType::Good);
   m_encoded_streams.resize(num_chunks);
   std::for_each(m_encoded_streams.begin(), m_encoded_streams.end(), [](auto& v) { v.clear(); });
@@ -159,7 +159,7 @@ auto SPECK3D_OMP_C::compress() -> RTNType
   return RTNType::Good;
 }
 
-auto SPECK3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
+auto SPERR3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
 {
   auto buf = std::vector<uint8_t>();
   auto header = m_generate_header();
@@ -181,7 +181,7 @@ auto SPECK3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
   return buf;
 }
 
-auto SPECK3D_OMP_C::m_generate_header() const -> sperr::vec8_type
+auto SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
 {
   // The header would contain the following information
   //  -- a version number                     (1 byte)

@@ -1,4 +1,4 @@
-#include "SPECK3D_OMP_C.h"
+#include "SPERR3D_OMP_C.h"
 
 #include "CLI11.hpp"
 
@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
   // Let's do the actual work
   //
   const size_t total_vals = dims[0] * dims[1] * dims[2];
-  SPECK3D_OMP_C compressor;
+  SPERR3D_OMP_C compressor;
   compressor.set_num_threads(omp_num_threads);
 
   auto orig = sperr::read_whole_file<uint8_t>(input_file);

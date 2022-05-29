@@ -1,18 +1,18 @@
 //
-// This is a class that performs SPECK3D decompression, and also utilizes OpenMP
+// This is a class that performs SPERR3D decompression, and also utilizes OpenMP
 // to achieve parallelization: input to this class is supposed to be smaller
 // chunks of a bigger volume, and each chunk is decompressed individually before
 // returning back the big volume.
 //
 
-#ifndef SPECK3D_OMP_D_H
-#define SPECK3D_OMP_D_H
+#ifndef SPERR3D_OMP_D_H
+#define SPERR3D_OMP_D_H
 
-#include "SPECK3D_Decompressor.h"
+#include "SPERR3D_Decompressor.h"
 
 using sperr::RTNType;
 
-class SPECK3D_OMP_D {
+class SPERR3D_OMP_D {
  public:
   // Parse the header of this stream, and stores the pointer.
   auto use_bitstream(const void*, size_t) -> RTNType;

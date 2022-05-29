@@ -4,8 +4,8 @@
 // Functionality wise, it does not bring anything new though.
 //
 
-#ifndef SPECK3D_DECOMPRESSOR_H
-#define SPECK3D_DECOMPRESSOR_H
+#ifndef SPERR3D_DECOMPRESSOR_H
+#define SPERR3D_DECOMPRESSOR_H
 
 #include "CDF97.h"
 #include "Conditioner.h"
@@ -21,7 +21,7 @@
 
 namespace sperr {
 
-class SPECK3D_Decompressor {
+class SPERR3D_Decompressor {
  public:
   // Accept incoming data.
   auto use_bitstream(const void* p, size_t len) -> RTNType;

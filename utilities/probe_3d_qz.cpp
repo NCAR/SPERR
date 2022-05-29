@@ -1,8 +1,8 @@
-#include "SPECK3D_Compressor.h"
-#include "SPECK3D_Decompressor.h"
+#include "SPERR3D_Compressor.h"
+#include "SPERR3D_Decompressor.h"
 
-#include "SPECK3D_OMP_C.h"
-#include "SPECK3D_OMP_D.h"
+#include "SPERR3D_OMP_C.h"
+#include "SPERR3D_OMP_D.h"
 
 #include "CLI11.hpp"
 
@@ -29,7 +29,7 @@ auto test_configuration_omp(const T* in_buf,
 {
   // Setup
   const size_t total_vals = dims[0] * dims[1] * dims[2];
-  SPECK3D_OMP_C compressor;
+  SPERR3D_OMP_C compressor;
   compressor.toggle_conditioning(condi_settings);
   compressor.set_num_threads(omp_num_threads);
   auto rtn = compressor.copy_data(in_buf, total_vals, dims, chunks);
@@ -70,7 +70,7 @@ auto test_configuration_omp(const T* in_buf,
   }
 
   // Perform decompression
-  SPECK3D_OMP_D decompressor;
+  SPERR3D_OMP_D decompressor;
   decompressor.set_num_threads(omp_num_threads);
   rtn = decompressor.use_bitstream(encoded_stream.data(), encoded_stream.size());
   if (rtn != RTNType::Good)

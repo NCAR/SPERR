@@ -1,5 +1,5 @@
-#ifndef SPECK3D_COMPRESSOR_H
-#define SPECK3D_COMPRESSOR_H
+#ifndef SPERR3D_COMPRESSOR_H
+#define SPERR3D_COMPRESSOR_H
 
 #include "CDF97.h"
 #include "Conditioner.h"
@@ -15,7 +15,7 @@
 
 namespace sperr {
 
-class SPECK3D_Compressor {
+class SPERR3D_Compressor {
  public:
   // Accept incoming data: copy from a raw memory block
   template <typename T>

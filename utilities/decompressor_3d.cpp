@@ -1,4 +1,4 @@
-#include "SPECK3D_OMP_D.h"
+#include "SPERR3D_OMP_D.h"
 
 #include "CLI11.hpp"
 
@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
     std::cerr << "Read input stream error: " << input_file << std::endl;
     return 1;
   }
-  SPECK3D_OMP_D decompressor;
+  SPERR3D_OMP_D decompressor;
   decompressor.set_num_threads(omp_num_threads);
   if (decompressor.use_bitstream(in_stream.data(), in_stream.size()) != sperr::RTNType::Good) {
     std::cerr << "Read compressed file error: " << input_file << std::endl;
