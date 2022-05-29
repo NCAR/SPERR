@@ -12,9 +12,9 @@ else
   SPERR_LIBDIR=/home/shaomeng/Git/SPERR/install/lib
 endif
 
-FLAGS = -O3 -march=native
+FLAGS = -O3
 
-all: 2d_qz.out 3d_qz.out
+qz: 2d_qz.out 3d_qz.out
 
 2d_qz.out: 2d_qz.c
 	${CC} ${FLAGS} -o $@ $^ -I${SPERR_INCDIR} -L${SPERR_LIBDIR} -Wl,-rpath,${SPERR_LIBDIR} -lSPERR

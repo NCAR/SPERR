@@ -73,7 +73,7 @@ int main(int argc, char** argv)
   }
 
   /* Write the decompressed buffer to disk */
-  FILE* f = fopen("./out.buf", "w");
+  FILE* f = fopen("./output.capi", "w");
   assert(f != NULL);
   if (is_float)
     fwrite(outbuf, sizeof(float), out_dimx * out_dimy, f);
