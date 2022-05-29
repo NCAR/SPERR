@@ -63,8 +63,7 @@ jobs:
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
 
-    - run: |
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DUSE_ZSTD=OFF
+    - run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DUSE_ZSTD=OFF
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
