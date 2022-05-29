@@ -1,5 +1,5 @@
 
-#include "SPECK3D_OMP_D.h"
+#include "SPERR3D_OMP_D.h"
 
 #include <algorithm>
 #include <cassert>
@@ -11,7 +11,7 @@
 #endif
 
 #ifndef QZ_TERM
-auto SPECK3D_OMP_D::set_bpp(double bpp) -> RTNType
+auto SPERR3D_OMP_D::set_bpp(double bpp) -> RTNType
 {
   if (bpp < 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
@@ -22,13 +22,13 @@ auto SPECK3D_OMP_D::set_bpp(double bpp) -> RTNType
 }
 #endif
 
-void SPECK3D_OMP_D::set_num_threads(size_t n)
+void SPERR3D_OMP_D::set_num_threads(size_t n)
 {
   if (n > 0)
     m_num_threads = n;
 }
 
-auto SPECK3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
+auto SPERR3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
 {
   // This method parses the header of a bitstream and puts volume dimension and
   // chunk size information in respective member variables.
@@ -107,7 +107,7 @@ auto SPECK3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
   return RTNType::Good;
 }
 
-auto SPECK3D_OMP_D::decompress(const void* p) -> RTNType
+auto SPERR3D_OMP_D::decompress(const void* p) -> RTNType
 {
   auto eq0 = [](auto v) { return v == 0; };
   if (std::any_of(m_dims.begin(), m_dims.end(), eq0) ||
@@ -129,7 +129,7 @@ auto SPECK3D_OMP_D::decompress(const void* p) -> RTNType
   m_vol_buf.resize(total_vals);
 
   // Create number of decompressor instances equal to the number of threads
-  auto decompressors = std::vector<sperr::SPECK3D_Decompressor>(m_num_threads);
+  auto decompressors = std::vector<sperr::SPERR3D_Decompressor>(m_num_threads);
   auto chunk_rtn = std::vector<RTNType>(num_chunks * 3, RTNType::Good);
 
 // Each compressor instance takes on a chunk
@@ -169,28 +169,28 @@ auto SPECK3D_OMP_D::decompress(const void* p) -> RTNType
     return RTNType::Good;
 }
 
-auto SPECK3D_OMP_D::release_data() -> sperr::vecd_type&&
+auto SPERR3D_OMP_D::release_data() -> sperr::vecd_type&&
 {
   m_dims = {0, 0, 0};
   return std::move(m_vol_buf);
 }
 
-auto SPECK3D_OMP_D::view_data() const -> const std::vector<double>&
+auto SPERR3D_OMP_D::view_data() const -> const std::vector<double>&
 {
   return m_vol_buf;
 }
 
-auto SPECK3D_OMP_D::get_dims() const -> std::array<size_t, 3>
+auto SPERR3D_OMP_D::get_dims() const -> std::array<size_t, 3>
 {
   return m_dims;
 }
 
 template <typename T>
-auto SPECK3D_OMP_D::get_data() const -> std::vector<T>
+auto SPERR3D_OMP_D::get_data() const -> std::vector<T>
 {
   auto rtn_buf = std::vector<T>(m_vol_buf.size());
   std::copy(m_vol_buf.begin(), m_vol_buf.end(), rtn_buf.begin());
   return rtn_buf;
 }
-template auto SPECK3D_OMP_D::get_data() const -> std::vector<float>;
-template auto SPECK3D_OMP_D::get_data() const -> std::vector<double>;
+template auto SPERR3D_OMP_D::get_data() const -> std::vector<float>;
+template auto SPERR3D_OMP_D::get_data() const -> std::vector<double>;

@@ -1,5 +1,5 @@
 #include <cassert>
-#include "SPECK2D_Decompressor.h"
+#include "SPERR2D_Decompressor.h"
 
 #include "CLI11.hpp"
 
@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
   }
 
   // Use a decompressor
-  SPECK2D_Decompressor decompressor;
+  SPERR2D_Decompressor decompressor;
   auto rtn = decompressor.use_bitstream(in_stream.data(), in_stream.size());
   if (rtn != RTNType::Good) {
     std::cerr << "Use input stream error!" << std::endl;

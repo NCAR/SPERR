@@ -1,10 +1,10 @@
-#include "SPECK3D_Compressor.h"
+#include "SPERR3D_Compressor.h"
 
 #include <cassert>
 #include <cstring>
 
 template <typename T>
-auto sperr::SPECK3D_Compressor::copy_data(const T* p, size_t len, sperr::dims_type dims) -> RTNType
+auto sperr::SPERR3D_Compressor::copy_data(const T* p, size_t len, sperr::dims_type dims) -> RTNType
 {
   static_assert(std::is_floating_point<T>::value, "!! Only floating point values are supported !!");
 
@@ -18,10 +18,10 @@ auto sperr::SPECK3D_Compressor::copy_data(const T* p, size_t len, sperr::dims_ty
 
   return RTNType::Good;
 }
-template auto sperr::SPECK3D_Compressor::copy_data(const double*, size_t, dims_type) -> RTNType;
-template auto sperr::SPECK3D_Compressor::copy_data(const float*, size_t, dims_type) -> RTNType;
+template auto sperr::SPERR3D_Compressor::copy_data(const double*, size_t, dims_type) -> RTNType;
+template auto sperr::SPERR3D_Compressor::copy_data(const float*, size_t, dims_type) -> RTNType;
 
-auto sperr::SPECK3D_Compressor::take_data(sperr::vecd_type&& buf, sperr::dims_type dims) -> RTNType
+auto sperr::SPERR3D_Compressor::take_data(sperr::vecd_type&& buf, sperr::dims_type dims) -> RTNType
 {
   if (buf.size() != dims[0] * dims[1] * dims[2])
     return RTNType::WrongDims;
@@ -32,18 +32,18 @@ auto sperr::SPECK3D_Compressor::take_data(sperr::vecd_type&& buf, sperr::dims_ty
   return RTNType::Good;
 }
 
-auto sperr::SPECK3D_Compressor::view_encoded_bitstream() const -> const std::vector<uint8_t>&
+auto sperr::SPERR3D_Compressor::view_encoded_bitstream() const -> const std::vector<uint8_t>&
 {
   return m_encoded_stream;
 }
 
-auto sperr::SPECK3D_Compressor::release_encoded_bitstream() -> std::vector<uint8_t>&&
+auto sperr::SPERR3D_Compressor::release_encoded_bitstream() -> std::vector<uint8_t>&&
 {
   return std::move(m_encoded_stream);
 }
 
 #ifdef QZ_TERM
-auto sperr::SPECK3D_Compressor::compress() -> RTNType
+auto sperr::SPERR3D_Compressor::compress() -> RTNType
 {
   const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
   if (m_val_buf.empty() || m_val_buf.size() != total_vals)
@@ -89,7 +89,7 @@ auto sperr::SPECK3D_Compressor::compress() -> RTNType
   if (rtn != RTNType::Good)
     return rtn;
   // Figure out which dwt3d strategy to use.
-  // Note: this strategy needs to be consistent with SPECK3D_Decompressor.
+  // Note: this strategy needs to be consistent with SPERR3D_Decompressor.
   auto xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
   auto xforms_z = sperr::num_of_xforms(m_dims[2]);
   if (xforms_xy == xforms_z)
@@ -175,7 +175,7 @@ auto sperr::SPECK3D_Compressor::compress() -> RTNType
 //
 // Start fixed-size mode
 //
-auto sperr::SPECK3D_Compressor::compress() -> RTNType
+auto sperr::SPERR3D_Compressor::compress() -> RTNType
 {
   const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
   if (m_val_buf.empty() || m_val_buf.size() != total_vals)
@@ -204,7 +204,7 @@ auto sperr::SPECK3D_Compressor::compress() -> RTNType
   if (rtn != RTNType::Good)
     return rtn;
   // Figure out which dwt3d strategy to use.
-  // Note: this strategy needs to be consistent with SPECK3D_Decompressor.
+  // Note: this strategy needs to be consistent with SPERR3D_Decompressor.
   auto xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
   auto xforms_z = sperr::num_of_xforms(m_dims[2]);
   if (xforms_xy == xforms_z)
@@ -232,7 +232,7 @@ auto sperr::SPECK3D_Compressor::compress() -> RTNType
 #endif
 
 #ifdef USE_ZSTD
-auto sperr::SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
+auto sperr::SPERR3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 {
 #ifdef QZ_TERM
   const size_t total_size = m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
@@ -281,7 +281,7 @@ auto sperr::SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 //
 // Start the no-ZSTD case
 //
-auto sperr::SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
+auto sperr::SPERR3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 {
 #ifdef QZ_TERM
   const size_t total_size = m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
@@ -305,20 +305,20 @@ auto sperr::SPECK3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 #endif
 
 #ifdef QZ_TERM
-void sperr::SPECK3D_Compressor::set_qz_level(int32_t q)
+void sperr::SPERR3D_Compressor::set_qz_level(int32_t q)
 {
   m_qz_lev = q;
 }
-void sperr::SPECK3D_Compressor::set_tolerance(double tol)
+void sperr::SPERR3D_Compressor::set_tolerance(double tol)
 {
   m_tol = tol;
 }
-auto sperr::SPECK3D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
+auto sperr::SPERR3D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
 {
   return {m_LOS.size(), m_sperr_stream.size()};
 }
 #else
-auto sperr::SPECK3D_Compressor::set_bpp(double bpp) -> RTNType
+auto sperr::SPERR3D_Compressor::set_bpp(double bpp) -> RTNType
 {
   const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
   if (bpp < 0.0 || bpp > 64.0)
@@ -332,7 +332,7 @@ auto sperr::SPECK3D_Compressor::set_bpp(double bpp) -> RTNType
 }
 #endif
 
-void sperr::SPECK3D_Compressor::toggle_conditioning(sperr::Conditioner::settings_type b4)
+void sperr::SPERR3D_Compressor::toggle_conditioning(sperr::Conditioner::settings_type b4)
 {
   m_conditioning_settings = b4;
 }

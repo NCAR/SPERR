@@ -22,4 +22,4 @@ jobs:
         builddir: 'build'
         excludedirs: ''
         extensions: 'c,h,C,H,cpp,hpp,cc,hh,c++,h++,cxx,hxx'
-        cmakeoptions: '-DBUILD_UNIT_TESTS=OFF -DQZ_TERM=OFF'
+        cmakeoptions: '-DBUILD_UNIT_TESTS=OFF -DQZ_TERM=OFF -DUSE_ZSTD=OFF'

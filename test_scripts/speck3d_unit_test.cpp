@@ -1,8 +1,5 @@
-#include "SPECK3D_Compressor.h"
-#include "SPECK3D_Decompressor.h"
-
-#include "SPECK3D_OMP_C.h"
-#include "SPECK3D_OMP_D.h"
+#include "SPERR3D_OMP_C.h"
+#include "SPERR3D_OMP_D.h"
 
 #include <cstring>
 #include "gtest/gtest.h"
@@ -11,8 +8,7 @@ namespace {
 
 using sperr::RTNType;
 
-// Create a class that executes the entire pipeline, and calculates the error metrics
-// This class tests objects SPECK3D_OMP_C and SPECK3D_OMP_D
+// Create a class that executes the entire pipeline, and calculates the error metrics.
 class speck_tester_omp {
  public:
   speck_tester_omp(const char* in, sperr::dims_type dims, size_t num_t)
@@ -52,7 +48,7 @@ class speck_tester_omp {
     if (in_buf.size() != total_vals)
       return 1;
 
-    auto compressor = SPECK3D_OMP_C();
+    auto compressor = SPERR3D_OMP_C();
     compressor.set_num_threads(m_num_t);
 
     if (compressor.copy_data(in_buf.data(), total_vals, m_dims, m_chunk_dims) != RTNType::Good)
@@ -74,7 +70,7 @@ class speck_tester_omp {
     //
     // Use a decompressor
     //
-    auto decompressor = SPECK3D_OMP_D();
+    auto decompressor = SPERR3D_OMP_D();
     decompressor.set_num_threads(m_num_t);
     if (decompressor.use_bitstream(stream.data(), stream.size()) != RTNType::Good)
       return 1;

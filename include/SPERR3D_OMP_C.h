@@ -1,17 +1,17 @@
 //
-// This is a class that performs SPECK3D compression, and also utilizes OpenMP
+// This is a class that performs SPERR3D compression, and also utilizes OpenMP
 // to achieve parallelization: the input volume is divided into smaller chunks
 // and then they're processed individually.
 //
 
-#ifndef SPECK3D_OMP_C_H
-#define SPECK3D_OMP_C_H
+#ifndef SPERR3D_OMP_C_H
+#define SPERR3D_OMP_C_H
 
-#include "SPECK3D_Compressor.h"
+#include "SPERR3D_Compressor.h"
 
 using sperr::RTNType;
 
-class SPECK3D_OMP_C {
+class SPERR3D_OMP_C {
  public:
   void set_num_threads(size_t);
 

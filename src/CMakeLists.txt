@@ -7,12 +7,12 @@ add_library( SPERR
              SPECK2D.cpp
              SPECK3D.cpp
              SPERR.cpp
-             SPECK3D_Compressor.cpp
-             SPECK3D_Decompressor.cpp
-             SPECK3D_OMP_C.cpp
-             SPECK3D_OMP_D.cpp
-             SPECK2D_Compressor.cpp
-             SPECK2D_Decompressor.cpp
+             SPERR3D_Compressor.cpp
+             SPERR3D_Decompressor.cpp
+             SPERR3D_OMP_C.cpp
+             SPERR3D_OMP_D.cpp
+             SPERR2D_Compressor.cpp
+             SPERR2D_Decompressor.cpp
              SPERR_C_API.cpp)
 target_include_directories( SPERR PUBLIC ${CMAKE_SOURCE_DIR}/include )
 
@@ -37,12 +37,12 @@ set_target_properties( SPERR PROPERTIES VERSION ${SPERR_VERSION} )
 #
 set( public_h_list 
 "include/sperr_helper.h;\
-include/SPECK3D_Compressor.h;\
-include/SPECK3D_Decompressor.h;\
-include/SPECK3D_OMP_C.h;\
-include/SPECK3D_OMP_D.h;\
-include/SPECK2D_Compressor.h;\
-include/SPECK2D_Decompressor.h;\
+include/SPERR3D_Compressor.h;\
+include/SPERR3D_Decompressor.h;\
+include/SPERR3D_OMP_C.h;\
+include/SPERR3D_OMP_D.h;\
+include/SPERR2D_Compressor.h;\
+include/SPERR2D_Decompressor.h;\
 include/Conditioner.h;\
 include/Analyzer.h;\
 include/CDF97.h;\
