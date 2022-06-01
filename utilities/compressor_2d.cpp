@@ -95,7 +95,11 @@ int main(int argc, char* argv[])
   compressor.set_qz_level(qz_level);
   compressor.set_tolerance(tolerance);
 #else
-  compressor.set_bpp(bpp);
+  rtn = compressor.set_bpp(bpp);
+  if (rtn != RTNType::Good) {
+    std::cerr << "Set bit-per-pixel failed!" << std::endl;
+    return 1;
+  }
 #endif
 
   // Perform the actual compression

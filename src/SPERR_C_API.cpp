@@ -33,7 +33,7 @@ int C_API::sperr_qzcomp_2d(const void* src,
       rtn = compressor.copy_data(static_cast<const float*>(src), total_vals, {dimx, dimy, 1});
       break;
     default:
-      return 3;
+      rtn = RTNType::Error;
   }
   if (rtn != RTNType::Good)
     return -1;
@@ -63,55 +63,6 @@ int C_API::sperr_qzcomp_2d(const void* src,
   return 0;
 }
 
-int C_API::sperr_qzdecomp_2d(const void* src,
-                             size_t src_len,
-                             int32_t output_float,
-                             size_t* dimx,
-                             size_t* dimy,
-                             void** dst)
-{
-  // Examine if `dst` is pointing to a NULL pointer
-  if (*dst != NULL)
-    return 1;
-
-  // Use a decompressor to decompress this bitstream
-  auto decompressor = SPERR2D_Decompressor();
-  auto rtn = decompressor.use_bitstream(src, src_len);
-  if (rtn != RTNType::Good)
-    return -1;
-  rtn = decompressor.decompress();
-  if (rtn != RTNType::Good)
-    return -1;
-
-  // Double check that the slice dimension is correct
-  const auto& slice = decompressor.view_data();
-  const auto dims = decompressor.get_dims();
-  if (slice.size() != dims[0] * dims[1])
-    return -1;
-  *dimx = dims[0];
-  *dimy = dims[1];
-
-  // write out the 2D slice in double or float format
-  switch (output_float) {
-    case 0: {  // double
-      double* buf = (double*)std::malloc(slice.size() * sizeof(double));
-      std::copy(slice.cbegin(), slice.cend(), buf);
-      *dst = buf;
-      break;
-    }
-    case 1: {  // float
-      float* buf = (float*)std::malloc(slice.size() * sizeof(float));
-      std::copy(slice.cbegin(), slice.cend(), buf);
-      *dst = buf;
-      break;
-    }
-    default:
-      return 2;
-  }
-
-  return 0;
-}
-
 int C_API::sperr_qzcomp_3d(const void* src,
                            int32_t is_float,
                            size_t dimx,
@@ -130,8 +81,8 @@ int C_API::sperr_qzcomp_3d(const void* src,
   if (nthreads <= 0)
     return -1;
 
-  // Hard code the preferred chunk size as 128^3. Can change in the future.
-  auto chunk_dims = sperr::dims_type{128, 128, 128};
+  // Hard code the preferred chunk size as 256^3. Can change in the future.
+  auto chunk_dims = sperr::dims_type{256, 256, 256};
 
   // Setup the compressor
   const auto total_vals = dimx * dimy * dimz;
@@ -148,7 +99,7 @@ int C_API::sperr_qzcomp_3d(const void* src,
                                  chunk_dims);
       break;
     default:
-      return 3;
+      rtn = RTNType::Error;
   }
   if (rtn != RTNType::Good)
     return -1;
@@ -234,6 +185,112 @@ int C_API::sperr_qzdecomp_3d(const void* src,
   return 0;
 }
 
+#else
+
+int C_API::sperr_sizecomp_2d(const void* src,
+                             int32_t is_float,
+                             size_t dimx,    
+                             size_t dimy,   
+                             double bpp,   
+                             void** dst,  
+                             size_t* dst_len)
+{
+  // Examine if `dst` is pointing to a NULL pointer
+  if (*dst != NULL)
+    return 1;
+
+  // Set up a compressor
+  const auto total_vals = dimx * dimy;
+  auto compressor = SPERR2D_Compressor();
+  auto rtn = sperr::RTNType::Good;
+
+  // Compressor copies over input data
+  switch (is_float) {
+    case 0:  // double
+      rtn = compressor.copy_data(static_cast<const double*>(src), total_vals, {dimx, dimy, 1});
+      break;
+    case 1:  // float
+      rtn = compressor.copy_data(static_cast<const float*>(src), total_vals, {dimx, dimy, 1});
+      break;
+    default:
+      rtn = RTNType::Error;
+  }
+  if (rtn != RTNType::Good)
+    return -1;
+
+  // Set bit-per-pixel target
+  rtn = compressor.set_bpp(bpp);
+  if (rtn != RTNType::Good)
+    return 2;
+
+  // Perform the actual compression
+  rtn = compressor.compress();
+  if (rtn != RTNType::Good)
+    return -1;
+
+  // Output the compressed bitstream
+  const auto& stream = compressor.view_encoded_bitstream();
+  if (stream.empty())
+    return -1;
+  *dst_len = stream.size();
+  uint8_t* buf = (uint8_t*)std::malloc(stream.size());
+  std::copy(stream.cbegin(), stream.cend(), buf);
+  *dst = buf;
+
+  return 0;
+}
+
+#endif
+
+int C_API::sperr_decomp_2d(const void* src,
+                           size_t src_len,
+                           int32_t output_float,
+                           size_t* dimx,
+                           size_t* dimy,
+                           void** dst)
+{
+  // Examine if `dst` is pointing to a NULL pointer
+  if (*dst != NULL)
+    return 1;
+
+  // Use a decompressor to decompress this bitstream
+  auto decompressor = SPERR2D_Decompressor();
+  auto rtn = decompressor.use_bitstream(src, src_len);
+  if (rtn != RTNType::Good)
+    return -1;
+  rtn = decompressor.decompress();
+  if (rtn != RTNType::Good)
+    return -1;
+
+  // Double check that the slice dimension is correct
+  const auto& slice = decompressor.view_data();
+  const auto dims = decompressor.get_dims();
+  if (slice.size() != dims[0] * dims[1])
+    return -1;
+  *dimx = dims[0];
+  *dimy = dims[1];
+
+  // write out the 2D slice in double or float format
+  switch (output_float) {
+    case 0: {  // double
+      double* buf = (double*)std::malloc(slice.size() * sizeof(double));
+      std::copy(slice.cbegin(), slice.cend(), buf);
+      *dst = buf;
+      break;
+    }
+    case 1: {  // float
+      float* buf = (float*)std::malloc(slice.size() * sizeof(float));
+      std::copy(slice.cbegin(), slice.cend(), buf);
+      *dst = buf;
+      break;
+    }
+    default:
+      return 2;
+  }
+
+  return 0;
+}
+
 void C_API::sperr_parse_header(const void* ptr,
                                int32_t* version_major,
                                int32_t* zstd_applied,
@@ -253,7 +310,3 @@ void C_API::sperr_parse_header(const void* ptr,
   *dim_y = header.vol_dims[1];
   *dim_z = header.vol_dims[2];
 }
-
-#else
-
-#endif

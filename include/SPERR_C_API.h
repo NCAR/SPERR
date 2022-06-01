@@ -1,8 +1,6 @@
 /*
  * This header provides C API for SPERR.
- * This API is supposed to be used in C and Fortran projects.
- *
- * As of 4/13/2022, this API is only implemented for the fixed-error mode of SPERR.
+ * This API is supposed to be used in non-C++ (e.g., C, Fortran, Python) projects.
  */
 
 #ifndef SPERR_C_API_H
@@ -18,17 +16,22 @@ namespace C_API {
 extern "C" {
 #endif
 
+/*
+ * The memory management is a little tricy. The following requirement applies to the output
+ * buffer `dst` of all the C API functions.
+ *
+ * The output is stored in `dst`, which is a pointer pointing to another pointer
+ * held by the caller.  The other pointer should be NULL; otherwise this function will fail!
+ * Upon success, `dst` will contain a buffer of length `dst_len` in case of compression,
+ * and (dimx x dimy x dimz) of floats (or doubles) in case of decompression.
+ * The caller of this function is responsible of free'ing `dst` using free().
+ *
+ */
+
 #ifdef QZ_TERM
 
 /*
  * Compress a buffer that contains a 2D slice in fixed-error mode.
- *
- * The memory management is a little tricy; please read carefully!
- *
- * The output bitstream is stored in `dst`, which is a pointer pointing to another pointer
- * held by the caller.  The other pointer should be NULL; otherwise this function will fail!
- * Upon success, `dst` will contain a bitstream of length `dst_len`.
- * The caller of this function is responsible of free'ing `dst` using free().
  *
  * Return value meanings:
  * 0: success
@@ -48,38 +51,7 @@ int sperr_qzcomp_2d(
     size_t* dst_len); /* Output: length of `dst` in byte */
 
 /*
- * Decompress a 2D SPERR-compressed buffer in fixed-error mode.
- *
- * The memory management is a little tricy; please read carefully!
- *
- * The output 2D slice is stored in `dst`, which is a pointer pointing to another pointer
- * held by the caller.  The other pointer should be NULL; otherwise this function will fail!
- * Upon success, `dst` will contain (dimx x dimy) doubles or floats as requested.
- * The caller of this function is responsible of free'ing `dst` using free().
- *
- * Return value meanings:
- * 0: success
- * 1: `dst` not pointing to a NULL pointer!
- * 2: `output_float` value not supported
- * -1: other errors
- */
-int sperr_qzdecomp_2d(
-    const void* src,      /* Input: buffer that contains a compressed bitstream */
-    size_t src_len,       /* Input: length of the input bitstream in byte */
-    int32_t output_float, /* Input: output data type: 1 == float, 0 == double */
-    size_t* dimx,         /* Output: X (fast-varying) dimension */
-    size_t* dimy,         /* Output: Y (slowest-varying) dimension */
-    void** dst);          /* Output: buffer for the output 2D slice, allocated by this function */
-
-/*
  * Compress a buffer that contains a 3D volume in fixed-error mode.
- *
- * The memory management is a little tricy; please read carefully!
- *
- * The output bitstream is stored in `dst`, which is a pointer pointing to another pointer
- * held by the caller.  The other pointer should be NULL; otherwise this function will fail!
- * Upon success, `dst` will contain a bitstream of length `dst_len`.
- * The caller of this function is responsible of free'ing `dst` using free().
  *
  * Return value meanings:
  * 0: success
@@ -103,13 +75,6 @@ int sperr_qzcomp_3d(
 /*
  * Decompress a 3D SPERR-compressed buffer in fixed-error mode.
  *
- * The memory management is a little tricy; please read carefully!
- *
- * The output 3D volume is stored in `dst`, which is a pointer pointing to another pointer
- * held by the caller.  The other pointer should be NULL; otherwise this function will fail!
- * Upon success, `dst` will contain (dimx x dimy x dimz) doubles or floats as requested.
- * The caller of this function is responsible of free'ing `dst` using free().
- *
  * Return value meanings:
  * 0: success
  * 1: `dst` not pointing to a NULL pointer!
@@ -130,11 +95,45 @@ int sperr_qzdecomp_3d(
 
 /* fixed-size mode functions */
 
+/*
+ * Compress a buffer that contains a 2D slice in fixed-size mode.
+ *
+ * Return value meanings:
+ * 0: success
+ * 1: `dst` is not pointing to a NULL pointer!
+ * 2: `bpp` is not valid (i.e., too small)
+ * 3: `is_float` value not supported
+ * -1: other errors
+ */
+int sperr_sizecomp_2d(
+    const void* src,  /* Input: buffer that contains a 2D slice */
+    int32_t is_float, /* Input: input buffer type: 1 == float, 0 == double */
+    size_t dimx,      /* Input: X (fastest-varying) dimension */
+    size_t dimy,      /* Input: Y (slowest-varying) dimension */
+    double bpp,       /* Input: target bit-per-pixel */
+    void** dst,       /* Output: buffer for the output bitstream, allocated by this function */
+    size_t* dst_len); /* Output: length of `dst` in byte */
+
 #endif
 
+/* Functions in both fixed-error and fixed-size mode. */
+
 /*
- * Functions in both fixed-error and fixed-size mode.
+ * Decompress a 2D SPERR-compressed buffer in either fixed-error or fixed-size mode.
+ *
+ * Return value meanings:
+ * 0: success
+ * 1: `dst` not pointing to a NULL pointer!
+ * 2: `output_float` value not supported
+ * -1: other errors
  */
+int sperr_decomp_2d(
+    const void* src,      /* Input: buffer that contains a compressed bitstream */
+    size_t src_len,       /* Input: length of the input bitstream in byte */
+    int32_t output_float, /* Input: output data type: 1 == float, 0 == double */
+    size_t* dimx,         /* Output: X (fast-varying) dimension */
+    size_t* dimy,         /* Output: Y (slowest-varying) dimension */
+    void** dst);          /* Output: buffer for the output 2D slice, allocated by this function */
 
 /* 
  * Given a SPERR bitstream, parse the header and retrieve various types of information.

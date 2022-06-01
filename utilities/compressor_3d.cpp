@@ -101,7 +101,8 @@ int main(int argc, char* argv[])
 #else
   rtn = compressor.set_bpp(bpp);
   if (rtn != sperr::RTNType::Good) {
-    std::cerr << "Set bpp failed!" << std::endl;
+    std::cerr << "Set bit-per-pixel failed!" << std::endl;
+    return 1;
   }
 #endif
 

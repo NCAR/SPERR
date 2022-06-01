@@ -66,7 +66,7 @@ int main(int argc, char** argv)
   void* outbuf = NULL; /* Will be free'd later */
   size_t out_dimx = 0;
   size_t out_dimy = 0;
-  rtn = sperr_qzdecomp_2d(bitstream, stream_len, is_float, &out_dimx, &out_dimy, &outbuf);
+  rtn = sperr_decomp_2d(bitstream, stream_len, is_float, &out_dimx, &out_dimy, &outbuf);
   if (rtn != 0) {
     printf("Decompression error with code %d\n", rtn);
     return 1;
