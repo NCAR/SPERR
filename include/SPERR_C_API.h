@@ -106,7 +106,7 @@ int sperr_sizecomp_2d(
  * -1: other errors
  */
 int sperr_sizecomp_3d(
-    const void* src,  /* Input: buffer that contains a 2D slice */
+    const void* src,  /* Input: buffer that contains a 3D volume */
     int32_t is_float, /* Input: input buffer type: 1 == float, 0 == double */
     size_t dimx,      /* Input: X (fastest-varying) dimension */
     size_t dimy,      /* Input: Y dimension */
