@@ -15,6 +15,7 @@ jobs:
     strategy:
       matrix:
         path:
+          - check: 'include'
           - check: 'src'
           - check: 'utilities'
             exclude: '(old_files|qccpack)'  # Exclude file paths containing "old_files" or "qcc_pack"

@@ -150,13 +150,13 @@ int sperr_decomp_3d(
     const void* src,      /* Input: buffer that contains a compressed bitstream */
     size_t src_len,       /* Input: length of the input bitstream in byte */
     int32_t output_float, /* Input: output data type: 1 == float, 0 == double */
-    int32_t nthreads, /* Input: number of OMP threads to use */
+    int32_t nthreads,     /* Input: number of OMP threads to use */
     size_t* dimx,         /* Output: X (fast-varying) dimension */
     size_t* dimy,         /* Output: Y dimension */
     size_t* dimz,         /* Output: Z (slowest-varying) dimension */
     void** dst);          /* Output: buffer for the output 3D slice, allocated by this function */
 
-/* 
+/*
  * Given a SPERR bitstream, parse the header and retrieve various types of information.
  *
  * Return value meanings:
@@ -164,15 +164,14 @@ int sperr_decomp_3d(
  * 1: parsing error occured
  */
 void sperr_parse_header(
-    const void* ptr,         /* Input: the bitstream to parse */
-    int32_t* version_major,  /* Output: major version number */
-    int32_t* zstd_applied,   /* Output: if ZSTD applied (0 == no ZSTD; 1 == ZSTD applied) */
-    int32_t* is_qz_term,     /* Output: compression mode (0 == fixed-size; 1 == fixed-error) */ 
-    int32_t* is_3d,          /* Output: 3D volume or 2D slice (0 == 2D, 1 == 3D) */
-    uint32_t* dim_x,         /* Output: X dimension */
-    uint32_t* dim_y,         /* Output: Y dimension */
-    uint32_t* dim_z);        /* Output: Z dimension */
- 
+    const void* ptr,        /* Input: the bitstream to parse */
+    int32_t* version_major, /* Output: major version number */
+    int32_t* zstd_applied,  /* Output: if ZSTD applied (0 == no ZSTD; 1 == ZSTD applied) */
+    int32_t* is_qz_term,    /* Output: compression mode (0 == fixed-size; 1 == fixed-error) */
+    int32_t* is_3d,         /* Output: 3D volume or 2D slice (0 == 2D, 1 == 3D) */
+    uint32_t* dim_x,        /* Output: X dimension */
+    uint32_t* dim_y,        /* Output: Y dimension */
+    uint32_t* dim_z);       /* Output: Z dimension */
 
 #ifdef __cplusplus
 } /* end of extern "C" */

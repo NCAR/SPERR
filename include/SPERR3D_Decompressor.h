@@ -64,6 +64,6 @@ class SPERR3D_Decompressor {
 #endif
 };
 
-};
+};  // namespace sperr
 
 #endif
