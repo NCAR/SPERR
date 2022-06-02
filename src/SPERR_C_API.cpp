@@ -133,10 +133,10 @@ int C_API::sperr_qzcomp_3d(const void* src,
 
 int C_API::sperr_sizecomp_2d(const void* src,
                              int32_t is_float,
-                             size_t dimx,    
-                             size_t dimy,   
-                             double bpp,   
-                             void** dst,  
+                             size_t dimx,
+                             size_t dimy,
+                             double bpp,
+                             void** dst,
                              size_t* dst_len)
 {
   // Examine if `dst` is pointing to a NULL pointer
@@ -186,12 +186,12 @@ int C_API::sperr_sizecomp_2d(const void* src,
 
 int C_API::sperr_sizecomp_3d(const void* src,
                              int32_t is_float,
-                             size_t dimx,    
-                             size_t dimy,   
-                             size_t dimz,   
-                             double bpp,   
-                             int32_t nthreads,   
-                             void** dst,  
+                             size_t dimx,
+                             size_t dimy,
+                             size_t dimz,
+                             double bpp,
+                             int32_t nthreads,
+                             void** dst,
                              size_t* dst_len)
 {
   // Examine if `dst` is pointing to a NULL pointer
