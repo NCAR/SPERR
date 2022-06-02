@@ -171,7 +171,7 @@ void sperr_parse_header(
     int32_t* is_3d,         /* Output: 3D volume or 2D slice (0 == 2D, 1 == 3D) */
     uint32_t* dim_x,        /* Output: X dimension */
     uint32_t* dim_y,        /* Output: Y dimension */
-    uint32_t* dim_z);       /* Output: Z dimension */
+    uint32_t* dim_z);       /* Output: Z dimension (undefined value for 2D slices) */
 
 #ifdef __cplusplus
 } /* end of extern "C" */
