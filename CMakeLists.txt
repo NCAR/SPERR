@@ -31,10 +31,15 @@ endif()
 
 option( BUILD_UNIT_TESTS "Build unit tests using GoogleTest" ON )
 option( BUILD_CLI_UTILITIES "Build a set of command line utilities" ON )
-option( USE_ZSTD "Incorporate ZSTD to achieve further reduction (~5%) in fixed-error mode" ON )
 option( USE_OMP "Use OpenMP parallelization on 3D volumes" ON )
 option( QZ_TERM  "Coding terminates by quantization level" ON )
 option( BUILD_SHARED_LIBS "Build shared SPERR library" ON )
+
+if(QZ_TERM)
+  option( USE_ZSTD "Incorporate ZSTD to achieve further reduction (~5%)" ON )
+else()
+  option( USE_ZSTD "Incorporate ZSTD to achieve further reduction (~5%)" OFF )
+endif()
 
 if(USE_OMP)
   find_package(OpenMP REQUIRED)
