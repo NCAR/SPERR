@@ -72,25 +72,6 @@ int sperr_qzcomp_3d(
     void** dst,       /* Output: buffer for the output bitstream, allocated by this function */
     size_t* dst_len); /* Output: length of `dst` in byte */
 
-/*
- * Decompress a 3D SPERR-compressed buffer in fixed-error mode.
- *
- * Return value meanings:
- * 0: success
- * 1: `dst` not pointing to a NULL pointer!
- * 2: `output_float` value not supported
- * -1: other errors
- */
-int sperr_qzdecomp_3d(
-    const void* src,      /* Input: buffer that contains a compressed bitstream */
-    size_t src_len,       /* Input: length of the input bitstream in byte */
-    int32_t output_float, /* Input: output data type: 1 == float, 0 == double */
-    int32_t nthreads, /* Input: number of OMP threads to use */
-    size_t* dimx,         /* Output: X (fast-varying) dimension */
-    size_t* dimy,         /* Output: Y dimension */
-    size_t* dimz,         /* Output: Z (slowest-varying) dimension */
-    void** dst);          /* Output: buffer for the output 3D slice, allocated by this function */
-
 #else
 
 /* fixed-size mode functions */
@@ -101,7 +82,7 @@ int sperr_qzdecomp_3d(
  * Return value meanings:
  * 0: success
  * 1: `dst` is not pointing to a NULL pointer!
- * 2: `bpp` is not valid (i.e., too small)
+ * 2: `bpp` is not valid (e.g., too small)
  * 3: `is_float` value not supported
  * -1: other errors
  */
@@ -111,6 +92,27 @@ int sperr_sizecomp_2d(
     size_t dimx,      /* Input: X (fastest-varying) dimension */
     size_t dimy,      /* Input: Y (slowest-varying) dimension */
     double bpp,       /* Input: target bit-per-pixel */
+    void** dst,       /* Output: buffer for the output bitstream, allocated by this function */
+    size_t* dst_len); /* Output: length of `dst` in byte */
+
+/*
+ * Compress a buffer that contains a 3D volume in fixed-size mode.
+ *
+ * Return value meanings:
+ * 0: success
+ * 1: `dst` is not pointing to a NULL pointer!
+ * 2: `bpp` is not valid (e.g., too small)
+ * 3: `is_float` value not supported
+ * -1: other errors
+ */
+int sperr_sizecomp_3d(
+    const void* src,  /* Input: buffer that contains a 2D slice */
+    int32_t is_float, /* Input: input buffer type: 1 == float, 0 == double */
+    size_t dimx,      /* Input: X (fastest-varying) dimension */
+    size_t dimy,      /* Input: Y dimension */
+    size_t dimz,      /* Input: Z (slowest-varying) dimension */
+    double bpp,       /* Input: target bit-per-pixel */
+    int32_t nthreads, /* Input: number of OMP threads to use */
     void** dst,       /* Output: buffer for the output bitstream, allocated by this function */
     size_t* dst_len); /* Output: length of `dst` in byte */
 
@@ -134,6 +136,25 @@ int sperr_decomp_2d(
     size_t* dimx,         /* Output: X (fast-varying) dimension */
     size_t* dimy,         /* Output: Y (slowest-varying) dimension */
     void** dst);          /* Output: buffer for the output 2D slice, allocated by this function */
+
+/*
+ * Decompress a 3D SPERR-compressed buffer in fixed-error and fixed-size mode.
+ *
+ * Return value meanings:
+ * 0: success
+ * 1: `dst` not pointing to a NULL pointer!
+ * 2: `output_float` value not supported
+ * -1: other errors
+ */
+int sperr_decomp_3d(
+    const void* src,      /* Input: buffer that contains a compressed bitstream */
+    size_t src_len,       /* Input: length of the input bitstream in byte */
+    int32_t output_float, /* Input: output data type: 1 == float, 0 == double */
+    int32_t nthreads, /* Input: number of OMP threads to use */
+    size_t* dimx,         /* Output: X (fast-varying) dimension */
+    size_t* dimy,         /* Output: Y dimension */
+    size_t* dimz,         /* Output: Z (slowest-varying) dimension */
+    void** dst);          /* Output: buffer for the output 3D slice, allocated by this function */
 
 /* 
  * Given a SPERR bitstream, parse the header and retrieve various types of information.

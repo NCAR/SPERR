@@ -28,8 +28,8 @@ size_t read_file(const char* filename, void** dst)
 
 int main(int argc, char** argv)
 {
-  if (argc < 6) {
-    printf("Usage: ./a.out filename dimx, dimy, qz_lev, tolerance [-d]\n");
+  if (argc < 5) {
+    printf("Usage: ./a.out filename dimx, dimy, bpp, [-d]\n");
     printf("  Note: -d is optional to indicate that the input is in double format\n");
     return 1;
   }
@@ -37,10 +37,9 @@ int main(int argc, char** argv)
   const char* filename = argv[1];
   const size_t dimx = (size_t)atol(argv[2]);
   const size_t dimy = (size_t)atol(argv[3]);
-  const int32_t q = (int32_t)atoi(argv[4]);
-  const double tol = atof(argv[5]);
+  const double bpp = atof(argv[4]);
   int is_float = 1;
-  if (argc == 7)
+  if (argc == 6)
     is_float = 0;
 
   /* Read in a file and put its content in `inbuf` */
@@ -60,7 +59,7 @@ int main(int argc, char** argv)
   /* Compress `inbuf` and put the compressed bitstream in `bitstream` */
   void* bitstream = NULL; /* Will be free'd later */
   size_t stream_len = 0;
-  int rtn = sperr_qzcomp_2d(inbuf, is_float, dimx, dimy, q, tol, &bitstream, &stream_len);
+  int rtn = sperr_sizecomp_2d(inbuf, is_float, dimx, dimy, bpp, &bitstream, &stream_len);
   if (rtn != 0) {
     printf("Compression error with code %d\n", rtn);
     return rtn;
@@ -73,7 +72,7 @@ int main(int argc, char** argv)
   rtn = sperr_decomp_2d(bitstream, stream_len, is_float, &out_dimx, &out_dimy, &outbuf);
   if (rtn != 0) {
     printf("Decompression error with code %d\n", rtn);
-    return rtn;
+    return 1;
   }
   if (out_dimx != dimx || out_dimy != dimy) {
     printf("Decompression dimensions wrong!\n");

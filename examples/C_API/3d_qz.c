@@ -49,10 +49,14 @@ int main(int argc, char** argv)
   size_t inlen = read_file(filename, &inbuf);
   if (inlen == 0)
     return 1;
-  if (is_float && inlen != sizeof(float) * dimx * dimy * dimz)
+  if (is_float && inlen != sizeof(float) * dimx * dimy * dimz) {
+    free(inbuf);
     return 1;
-  if (!is_float && inlen != sizeof(double) * dimx * dimy * dimz)
+  }
+  if (!is_float && inlen != sizeof(double) * dimx * dimy * dimz) {
+    free(inbuf);
     return 1;
+  }
 
   /* Let's use 4 OpenMP threads. */
   const int32_t nthreads = 4;
@@ -64,7 +68,7 @@ int main(int argc, char** argv)
       sperr_qzcomp_3d(inbuf, is_float, dimx, dimy, dimz, q, tol, nthreads, &bitstream, &stream_len);
   if (rtn != 0) {
     printf("Compression error with code %d\n", rtn);
-    return 1;
+    return rtn;
   }
 
   /* Decompress `bitstream` and put the decompressed volume in `outbuf` */
@@ -72,10 +76,14 @@ int main(int argc, char** argv)
   size_t out_dimx = 0;
   size_t out_dimy = 0;
   size_t out_dimz = 0;
-  rtn = sperr_qzdecomp_3d(bitstream, stream_len, is_float, nthreads, &out_dimx, &out_dimy,
-                          &out_dimz, &outbuf);
+  rtn = sperr_decomp_3d(bitstream, stream_len, is_float, nthreads, &out_dimx, &out_dimy,
+                        &out_dimz, &outbuf);
   if (rtn != 0) {
     printf("Decompression error with code %d\n", rtn);
+    return rtn;
+  }
+  if (out_dimx != dimx || out_dimy != dimy || out_dimz != dimz) {
+    printf("Decompression dimensions wrong!\n");
     return 1;
   }
 

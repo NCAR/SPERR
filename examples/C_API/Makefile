@@ -15,6 +15,7 @@ endif
 FLAGS = -O3
 
 qz: 2d_qz.out 3d_qz.out
+size: 2d_size.out 3d_size.out
 
 2d_qz.out: 2d_qz.c
 	${CC} ${FLAGS} -o $@ $^ -I${SPERR_INCDIR} -L${SPERR_LIBDIR} -Wl,-rpath,${SPERR_LIBDIR} -lSPERR
@@ -22,5 +23,12 @@ qz: 2d_qz.out 3d_qz.out
 3d_qz.out: 3d_qz.c
 	${CC} ${FLAGS} -o $@ $^ -I${SPERR_INCDIR} -L${SPERR_LIBDIR} -Wl,-rpath,${SPERR_LIBDIR} -lSPERR
 
+2d_size.out: 2d_size.c
+	${CC} ${FLAGS} -o $@ $^ -I${SPERR_INCDIR} -L${SPERR_LIBDIR} -Wl,-rpath,${SPERR_LIBDIR} -lSPERR
+
+3d_size.out: 3d_size.c
+	${CC} ${FLAGS} -o $@ $^ -I${SPERR_INCDIR} -L${SPERR_LIBDIR} -Wl,-rpath,${SPERR_LIBDIR} -lSPERR
+
+
 clean:
-	rm -f 2d_qz.out 3d_qz.out
+	rm -f 2d_qz.out 3d_qz.out 2d_size.out

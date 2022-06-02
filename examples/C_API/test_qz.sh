@@ -3,14 +3,14 @@
 # create a few symbolic links
 FILE=bin
 if test -e "$FILE"; then
-  echo "C++ bin dir exists"
+  echo "--> C++ bin dir exists"
 else
   ln -s ../../install/bin .
 fi
 
 FILE=test_data
 if test -e "$FILE"; then
-  echo "test data dir exists"
+  echo "--> test data dir exists"
 else
   ln -s ../../test_data .
 fi
@@ -30,9 +30,9 @@ FILE=./test_data/lena512.float
 ./bin/decompressor_2d -o $CPPAPI output.stream
 
 if diff $CAPI $CPPAPI; then
-  echo "C and C++ utilities produce the same result on test data $FILE"
+  echo "--> C and C++ utilities produce the same result on test data $FILE"
 else
-  echo "C and C++ utilities produce different results on test data $FILE"
+  echo "--> C and C++ utilities produce different results on test data $FILE"
 fi
 rm -f $CAPI $CPPAPI
 
@@ -45,9 +45,9 @@ FILE=./test_data/999x999.float
 ./bin/decompressor_2d -o $CPPAPI output.stream
 
 if diff $CAPI $CPPAPI; then
-  echo "C and C++ utilities produce the same result on test data $FILE"
+  echo "--> C and C++ utilities produce the same result on test data $FILE"
 else
-  echo "C and C++ utilities produce different results on test data $FILE"
+  echo "--> C and C++ utilities produce different results on test data $FILE"
 fi
 rm -f $CAPI $CPPAPI
 
@@ -60,9 +60,9 @@ FILE=./test_data/wmag128.float
 ./bin/decompressor_3d -o $CPPAPI output.stream
 
 if diff $CAPI $CPPAPI; then
-  echo "C and C++ utilities produce the same result on test data $FILE"
+  echo "--> C and C++ utilities produce the same result on test data $FILE"
 else
-  echo "C and C++ utilities produce different results on test data $FILE"
+  echo "--> C and C++ utilities produce different results on test data $FILE"
 fi
 rm -f $CAPI $CPPAPI
 
@@ -75,8 +75,8 @@ FILE=./test_data/vorticity.128_128_41
 ./bin/decompressor_3d -o $CPPAPI output.stream
 
 if diff $CAPI $CPPAPI; then
-  echo "C and C++ utilities produce the same result on test data $FILE"
+  echo "--> C and C++ utilities produce the same result on test data $FILE"
 else
-  echo "C and C++ utilities produce different results on test data $FILE"
+  echo "--> C and C++ utilities produce different results on test data $FILE"
 fi
 rm -f $CAPI $CPPAPI
