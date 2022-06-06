@@ -33,7 +33,7 @@ class SPERR2D_Decompressor {
   auto get_data() const -> std::vector<T>;
   auto release_data() -> std::vector<double>&&;
   auto view_data() const -> const std::vector<double>&;
-  auto get_dims() const -> std::array<size_t, 3>;
+  auto get_dims() const -> sperr::dims_type;
 
  private:
   sperr::dims_type m_dims = {0, 0, 0};
