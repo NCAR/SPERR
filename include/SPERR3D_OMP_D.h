@@ -27,10 +27,10 @@ class SPERR3D_OMP_D {
   auto decompress(const void*) -> RTNType;
 
   auto release_data() -> std::vector<double>&&;
-  [[nodiscard]] auto view_data() const -> const std::vector<double>&;
+  auto view_data() const -> const std::vector<double>&;
   template <typename T>
   auto get_data() const -> std::vector<T>;
-  [[nodiscard]] auto get_dims() const -> std::array<size_t, 3>;
+  auto get_dims() const -> sperr::dims_type;
 
  private:
   sperr::dims_type m_dims = {0, 0, 0};        // Dimension of the entire volume
