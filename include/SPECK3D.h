@@ -87,15 +87,15 @@ class SPECK3D : public SPECK_Storage {
   // If it is significant, also identify the pixel that makes it significant.
   auto m_decide_significance(const SPECKSet3D&) const
       -> std::pair<SigType, std::array<uint32_t, 3>>;
-
-#ifdef QZ_TERM
-  // Quantize a pixel to the specified `m_qz_lev` (defined in SPECK_Storage).
-  void m_quantize_P_encode(size_t idx);
-  void m_quantize_P_decode(size_t idx);
-#else
+//
+//#ifdef QZ_TERM
+//  // Quantize a pixel to the specified `m_qz_lev` (defined in SPECK_Storage).
+//  void m_quantize_P_encode(size_t idx);
+//  void m_quantize_P_decode(size_t idx);
+//#else
   auto m_refinement_pass_encode() -> RTNType;
   auto m_refinement_pass_decode() -> RTNType;
-#endif
+//#endif
 
   //
   // Private data members
@@ -109,14 +109,15 @@ class SPECK3D : public SPECK_Storage {
   std::vector<std::vector<SPECKSet3D>> m_LIS;
   std::vector<size_t> m_LIP;
 
-#ifndef QZ_TERM
   std::vector<size_t> m_LSP_new;
   std::vector<bool> m_LSP_mask;
+#ifndef QZ_TERM
   size_t m_budget = 0;
 #endif
 
-  std::array<double, 64> m_threshold_arr;
-  size_t m_threshold_idx = 0;
+  //std::array<double, 64> m_threshold_arr;
+  //size_t m_threshold_idx = 0;
+  double m_threshold = 0.0;
 };
 
 };  // namespace sperr
