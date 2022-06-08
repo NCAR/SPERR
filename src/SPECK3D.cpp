@@ -64,7 +64,6 @@ auto sperr::SPECK3D::encode() -> RTNType
 {
   if (m_ready_to_encode() == false)
     return RTNType::Error;
-  m_encode_mode = true;
 
   m_initialize_sets_lists();
 
@@ -80,11 +79,10 @@ auto sperr::SPECK3D::encode() -> RTNType
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
                  [](auto v) { return std::abs(v); });
 
-#ifndef QZ_TERM
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
-#endif
 
+  //
   // Find the maximum coefficient bit and fill the threshold array.
   // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
   // negative value. std::floor() will always find the smaller integer value,
@@ -94,9 +92,7 @@ auto sperr::SPECK3D::encode() -> RTNType
   //
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
   m_max_coeff_bit = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
-  m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
-  std::generate(m_threshold_arr.begin(), m_threshold_arr.end(),
-                [v = m_threshold_arr[0]]() mutable { return std::exchange(v, v * 0.5); });
+  m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
 
 #ifdef QZ_TERM
   // If the requested termination level is already above max_coeff_bits, return right away.
@@ -104,8 +100,10 @@ auto sperr::SPECK3D::encode() -> RTNType
     return RTNType::QzLevelTooBig;
 
   const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
-  for (m_threshold_idx = 0; m_threshold_idx < num_qz_levs; m_threshold_idx++) {
+  for (size_t lev = 0; lev < num_qz_levs; lev++) {
     m_sorting_pass_encode();
+    m_refinement_pass_encode();
+    m_threshold *= 0.5;
     m_clean_LIS();
   }
 
@@ -116,16 +114,18 @@ auto sperr::SPECK3D::encode() -> RTNType
 
 #else
 
-  for (m_threshold_idx = 0; m_threshold_idx < m_threshold_arr.size(); m_threshold_idx++) {
-    // The following two functions only return `BitBudgetMet` or `Good`.
+  for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     auto rtn = m_sorting_pass_encode();
     if (rtn == RTNType::BitBudgetMet)
       break;
+    assert(rtn == RTNType::Good);
 
     rtn = m_refinement_pass_encode();
     if (rtn == RTNType::BitBudgetMet)
       break;
+    assert(rtn == RTNType::Good);
 
+    m_threshold *= 0.5;
     m_clean_LIS();
   }
 #endif
@@ -140,7 +140,6 @@ auto sperr::SPECK3D::decode() -> RTNType
 {
   if (m_ready_to_decode() == false)
     return RTNType::Error;
-  m_encode_mode = false;
 
 #ifndef QZ_TERM
   // By default, decode all the available bits
@@ -155,42 +154,49 @@ auto sperr::SPECK3D::decode() -> RTNType
   m_coeff_buf.assign(coeff_len, 0.0);
   m_sign_array.assign(coeff_len, true);
 
-#ifndef QZ_TERM
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
-#endif
-
   m_bit_idx = 0;
-  m_threshold_arr[0] = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
-  std::generate(m_threshold_arr.begin(), m_threshold_arr.end(),
-                [v = m_threshold_arr[0]]() mutable { return std::exchange(v, v * 0.5); });
+  m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
 
-  for (m_threshold_idx = 0; m_threshold_idx < m_threshold_arr.size(); m_threshold_idx++) {
+  for (size_t bitplane = 0; bitplane < 64; bitplane++) {
+    auto rtn = m_sorting_pass_decode();
+
 #ifdef QZ_TERM
-    m_sorting_pass_decode();
     if (m_bit_idx > m_bit_buffer.size())
       return RTNType::Error;
-    // This is the actual termination condition in QZ_TERM mode.
-    assert(m_max_coeff_bit >= m_qz_lev);
-    if (m_threshold_idx >= static_cast<size_t>(m_max_coeff_bit - m_qz_lev))
-      break;
 #else
-    auto rtn = m_sorting_pass_decode();
     if (rtn == RTNType::BitBudgetMet)
       break;
-    assert(rtn == RTNType::Good);
-    rtn = m_refinement_pass_decode();
-    if (rtn == RTNType::BitBudgetMet)
-      break;
-    assert(rtn == RTNType::Good);
 #endif
 
+    assert(rtn == RTNType::Good);
+    rtn = m_refinement_pass_decode();
+
+#ifdef QZ_TERM
+    if (m_bit_idx > m_bit_buffer.size())
+      return RTNType::Error;
+#else
+    if (rtn == RTNType::BitBudgetMet)
+      break;
+#endif
+
+    assert(rtn == RTNType::Good);
+
+#ifdef QZ_TERM
+    // This is the actual termination condition in QZ_TERM mode.
+    assert(m_max_coeff_bit >= m_qz_lev);
+    if (bitplane >= static_cast<size_t>(m_max_coeff_bit - m_qz_lev))
+      break;
+#endif
+
+    m_threshold *= 0.5;
     m_clean_LIS();
   }
 
 #ifdef QZ_TERM
   // We should not have more than 7 unprocessed bits left in the bit buffer!
-  if (m_bit_idx > m_bit_buffer.size() || m_bit_buffer.size() - m_bit_idx >= 8)
+  if (m_bit_buffer.size() - m_bit_idx >= 8)
     return RTNType::BitstreamWrongLen;
 #endif
 
@@ -274,10 +280,13 @@ void sperr::SPECK3D::m_initialize_sets_lists()
   m_LIP.clear();
   m_LIP.reserve(m_coeff_buf.size() / 2);
 
-#ifndef QZ_TERM
   m_LSP_new.clear();
   m_LSP_new.reserve(m_coeff_buf.size() / 8);
   m_LSP_mask.reserve(m_coeff_buf.size());
+
+#ifdef QZ_TERM
+  m_bit_buffer.reserve(m_coeff_buf.size());
+#else
   m_bit_buffer.reserve(m_budget);
 #endif
 }
@@ -355,7 +364,7 @@ auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
   assert(sig != SigType::NewlySig);
   bool is_sig = false;
   if (sig == SigType::Dunno)
-    is_sig = (m_coeff_buf[pixel_idx] >= m_threshold_arr[m_threshold_idx]);
+    is_sig = (m_coeff_buf[pixel_idx] >= m_threshold);
   else
     is_sig = (sig == SigType::Sig);
 
@@ -378,12 +387,8 @@ auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
       return RTNType::BitBudgetMet;
 #endif
 
-#ifdef QZ_TERM
-    m_quantize_P_encode(pixel_idx);
-#else
-    m_coeff_buf[pixel_idx] -= m_threshold_arr[m_threshold_idx];
+    m_coeff_buf[pixel_idx] -= m_threshold;
     m_LSP_new.push_back(pixel_idx);
-#endif
 
     m_LIP[loc] = m_u64_garbage_val;
   }
@@ -391,58 +396,22 @@ auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
   return RTNType::Good;
 }
 
-#ifdef QZ_TERM
-void sperr::SPECK3D::m_quantize_P_encode(size_t idx)
-{
-  // Since only identified significant pixels come here, it's immediately
-  // subject to a QZ operation based on the current threshold.
-  auto coeff = m_coeff_buf[idx] - m_threshold_arr[m_threshold_idx];
-
-  const auto tmpb = b2_type{false, true};
-  assert(m_max_coeff_bit >= m_qz_lev);
-  const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
-  for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
-    const auto tmpd = d2_type{0.0, m_threshold_arr[i]};
-    const size_t o1 = coeff >= m_threshold_arr[i];  // C++ guarantees this conversion
-    coeff -= tmpd[o1];
-    m_bit_buffer.push_back(tmpb[o1]);
-  }
-  m_coeff_buf[idx] = coeff;
-}
-
-void sperr::SPECK3D::m_quantize_P_decode(size_t idx)
-{
-  // Since only identified significant pixels come here, it's immediately
-  // subject to a QZ operation based on the current threshold.
-  auto coeff = m_threshold_arr[m_threshold_idx] * 1.5;
-
-  assert(m_max_coeff_bit >= m_qz_lev);
-  const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
-  for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
-    // C++ standard guarantees the conversion between bool and int.
-    const auto tmp = d2_type{-m_threshold_arr[i + 1], m_threshold_arr[i + 1]};
-    coeff += tmp[m_bit_buffer[m_bit_idx++]];
-  }
-  m_coeff_buf[idx] = coeff;
-}
-
-#else
-
 auto sperr::SPECK3D::m_refinement_pass_encode() -> RTNType
 {
   // First, process significant pixels previously found.
   //
   const auto tmpb = b2_type{false, true};
-  const auto tmpd = d2_type{0.0, -m_threshold_arr[m_threshold_idx]};
+  const auto tmpd = d2_type{0.0, -m_threshold};
 
   for (size_t i = 0; i < m_LSP_mask.size(); i++) {
     if (m_LSP_mask[i]) {
-      const size_t o1 = m_coeff_buf[i] >= m_threshold_arr[m_threshold_idx];
+      const size_t o1 = m_coeff_buf[i] >= m_threshold;
       m_coeff_buf[i] += tmpd[o1];
       m_bit_buffer.push_back(tmpb[o1]);
-
+#ifndef QZ_TERM
       if (m_bit_buffer.size() >= m_budget)
         return RTNType::BitBudgetMet;
+#endif
     }
   }
 
@@ -459,15 +428,15 @@ auto sperr::SPECK3D::m_refinement_pass_decode() -> RTNType
 {
   // First, process significant pixels previously found.
   //
-  const auto tmp =
-      d2_type{m_threshold_arr[m_threshold_idx] * -0.5, m_threshold_arr[m_threshold_idx] * 0.5};
+  const auto tmp = d2_type{m_threshold * -0.5, m_threshold * 0.5};
 
   for (size_t i = 0; i < m_LSP_mask.size(); i++) {
     if (m_LSP_mask[i]) {
       m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
-
+#ifndef QZ_TERM
       if (m_bit_idx >= m_budget)
         return RTNType::BitBudgetMet;
+#endif
     }
   }
 
@@ -479,7 +448,6 @@ auto sperr::SPECK3D::m_refinement_pass_decode() -> RTNType
 
   return RTNType::Good;
 }
-#endif
 
 auto sperr::SPECK3D::m_decide_significance(const SPECKSet3D& set) const
     -> std::pair<SigType, std::array<uint32_t, 3>>
@@ -488,7 +456,7 @@ auto sperr::SPECK3D::m_decide_significance(const SPECKSet3D& set) const
 
   const size_t slice_size = m_dims[0] * m_dims[1];
 
-  const auto gtr = [thld = m_threshold_arr[m_threshold_idx]](auto v) { return v >= thld; };
+  const auto gtr = [thld = m_threshold](auto v) { return v >= thld; };
 
   for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
     const size_t slice_offset = z * slice_size;
@@ -603,12 +571,8 @@ auto sperr::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) 
 #endif
     m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];
 
-#ifdef QZ_TERM
-    m_quantize_P_decode(pixel_idx);
-#else
-    m_coeff_buf[pixel_idx] = m_threshold_arr[m_threshold_idx] * 1.5;
+    m_coeff_buf[pixel_idx] = m_threshold * 1.5;
     m_LSP_new.push_back(pixel_idx);
-#endif
 
     m_LIP[loc] = m_u64_garbage_val;
   }

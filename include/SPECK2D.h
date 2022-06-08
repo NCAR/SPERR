@@ -70,14 +70,8 @@ class SPECK2D : public SPECK_Storage {
   auto m_partition_S(const SPECKSet2D&) const -> std::array<SPECKSet2D, 4>;
   auto m_ready_to_encode() const -> bool;
   auto m_ready_to_decode() const -> bool;
-
-#ifdef QZ_TERM
-  void m_quantize_P_encode(size_t idx);
-  void m_quantize_P_decode(size_t idx);
-#else
   auto m_refinement_pass_encode() -> RTNType;
   auto m_refinement_pass_decode() -> RTNType;
-#endif
 
   //
   // Private data members
@@ -92,14 +86,12 @@ class SPECK2D : public SPECK_Storage {
   const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
   std::vector<bool> m_sign_array;
 
-#ifdef QZ_TERM
-  std::array<double, 64> m_threshold_arr;
-  size_t m_threshold_idx = 0;
-#else
   double m_threshold = 0.0;       // Threshold that's used for an iteration.
   std::vector<size_t> m_LSP_new;  // List of newly found significant pixels
   std::vector<bool> m_LSP_mask;   // Significant pixels previously found
-  size_t m_budget = 0;            // What's the budget for num of bits in fixed-rate mode?
+
+#ifndef QZ_TERM
+  size_t m_budget = 0;  // What's the budget for num of bits in fixed-rate mode?
 #endif
 };
 
