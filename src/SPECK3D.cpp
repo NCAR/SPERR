@@ -64,7 +64,6 @@ auto sperr::SPECK3D::encode() -> RTNType
 {
   if (m_ready_to_encode() == false)
     return RTNType::Error;
-  m_encode_mode = true;
 
   m_initialize_sets_lists();
 
@@ -141,7 +140,6 @@ auto sperr::SPECK3D::decode() -> RTNType
 {
   if (m_ready_to_decode() == false)
     return RTNType::Error;
-  m_encode_mode = false;
 
 #ifndef QZ_TERM
   // By default, decode all the available bits

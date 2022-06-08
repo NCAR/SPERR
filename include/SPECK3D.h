@@ -88,8 +88,7 @@ class SPECK3D : public SPECK_Storage {
   //
   // Private data members
   //
-  size_t m_bit_idx = 0;       // Used for decode. Which bit we're at?
-  bool m_encode_mode = true;  // Encode (true) or Decode (false) mode?
+  size_t m_bit_idx = 0;  // Used for decode. Which bit we're at?
 
   const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
   std::vector<bool> m_sign_array;
