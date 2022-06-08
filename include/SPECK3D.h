@@ -41,11 +41,6 @@ class SPECKSet3D {
 class SPECK3D : public SPECK_Storage {
  public:
 #ifdef QZ_TERM
-  //
-  // Notes for QZ_TERM mode:
-  // It changes the behavior of the coding process, so encoding terminates at a
-  // particular quantization level (2^lev).
-  //
   void set_quantization_level(int32_t lev);
 #else
   // How many bits does speck process (for encoding and decoding).
@@ -87,15 +82,8 @@ class SPECK3D : public SPECK_Storage {
   // If it is significant, also identify the pixel that makes it significant.
   auto m_decide_significance(const SPECKSet3D&) const
       -> std::pair<SigType, std::array<uint32_t, 3>>;
-//
-//#ifdef QZ_TERM
-//  // Quantize a pixel to the specified `m_qz_lev` (defined in SPECK_Storage).
-//  void m_quantize_P_encode(size_t idx);
-//  void m_quantize_P_decode(size_t idx);
-//#else
   auto m_refinement_pass_encode() -> RTNType;
   auto m_refinement_pass_decode() -> RTNType;
-//#endif
 
   //
   // Private data members
@@ -111,13 +99,11 @@ class SPECK3D : public SPECK_Storage {
 
   std::vector<size_t> m_LSP_new;
   std::vector<bool> m_LSP_mask;
+  double m_threshold = 0.0;
+
 #ifndef QZ_TERM
   size_t m_budget = 0;
 #endif
-
-  //std::array<double, 64> m_threshold_arr;
-  //size_t m_threshold_idx = 0;
-  double m_threshold = 0.0;
 };
 
 };  // namespace sperr

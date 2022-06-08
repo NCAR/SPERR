@@ -83,6 +83,7 @@ auto sperr::SPECK3D::encode() -> RTNType
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
 
+  //
   // Find the maximum coefficient bit and fill the threshold array.
   // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
   // negative value. std::floor() will always find the smaller integer value,
@@ -115,7 +116,6 @@ auto sperr::SPECK3D::encode() -> RTNType
 #else
 
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
-    // The following two functions only return `BitBudgetMet` or `Good`.
     auto rtn = m_sorting_pass_encode();
     if (rtn == RTNType::BitBudgetMet)
       break;
@@ -285,7 +285,10 @@ void sperr::SPECK3D::m_initialize_sets_lists()
   m_LSP_new.clear();
   m_LSP_new.reserve(m_coeff_buf.size() / 8);
   m_LSP_mask.reserve(m_coeff_buf.size());
-#ifndef QZ_TERM
+
+#ifdef QZ_TERM
+  m_bit_buffer.reserve(m_coeff_buf.size());
+#else
   m_bit_buffer.reserve(m_budget);
 #endif
 }
@@ -386,55 +389,14 @@ auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
       return RTNType::BitBudgetMet;
 #endif
 
-//#ifdef QZ_TERM
-//    m_quantize_P_encode(pixel_idx);
-//#else
     m_coeff_buf[pixel_idx] -= m_threshold;
     m_LSP_new.push_back(pixel_idx);
-//#endif
 
     m_LIP[loc] = m_u64_garbage_val;
   }
 
   return RTNType::Good;
 }
-
-// #ifdef QZ_TERM
-// void sperr::SPECK3D::m_quantize_P_encode(size_t idx)
-// {
-//   // Since only identified significant pixels come here, it's immediately
-//   // subject to a QZ operation based on the current threshold.
-//   auto coeff = m_coeff_buf[idx] - m_threshold_arr[m_threshold_idx];
-// 
-//   const auto tmpb = b2_type{false, true};
-//   assert(m_max_coeff_bit >= m_qz_lev);
-//   const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
-//   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
-//     const auto tmpd = d2_type{0.0, m_threshold_arr[i]};
-//     const size_t o1 = coeff >= m_threshold_arr[i];  // C++ guarantees this conversion
-//     coeff -= tmpd[o1];
-//     m_bit_buffer.push_back(tmpb[o1]);
-//   }
-//   m_coeff_buf[idx] = coeff;
-// }
-// 
-// void sperr::SPECK3D::m_quantize_P_decode(size_t idx)
-// {
-//   // Since only identified significant pixels come here, it's immediately
-//   // subject to a QZ operation based on the current threshold.
-//   auto coeff = m_threshold_arr[m_threshold_idx] * 1.5;
-// 
-//   assert(m_max_coeff_bit >= m_qz_lev);
-//   const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
-//   for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
-//     // C++ standard guarantees the conversion between bool and int.
-//     const auto tmp = d2_type{-m_threshold_arr[i + 1], m_threshold_arr[i + 1]};
-//     coeff += tmp[m_bit_buffer[m_bit_idx++]];
-//   }
-//   m_coeff_buf[idx] = coeff;
-// }
-// 
-// #else
 
 auto sperr::SPECK3D::m_refinement_pass_encode() -> RTNType
 {
@@ -448,7 +410,6 @@ auto sperr::SPECK3D::m_refinement_pass_encode() -> RTNType
       const size_t o1 = m_coeff_buf[i] >= m_threshold;
       m_coeff_buf[i] += tmpd[o1];
       m_bit_buffer.push_back(tmpb[o1]);
-
 #ifndef QZ_TERM
       if (m_bit_buffer.size() >= m_budget)
         return RTNType::BitBudgetMet;
@@ -474,7 +435,6 @@ auto sperr::SPECK3D::m_refinement_pass_decode() -> RTNType
   for (size_t i = 0; i < m_LSP_mask.size(); i++) {
     if (m_LSP_mask[i]) {
       m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
-
 #ifndef QZ_TERM
       if (m_bit_idx >= m_budget)
         return RTNType::BitBudgetMet;
@@ -490,7 +450,6 @@ auto sperr::SPECK3D::m_refinement_pass_decode() -> RTNType
 
   return RTNType::Good;
 }
-//#endif
 
 auto sperr::SPECK3D::m_decide_significance(const SPECKSet3D& set) const
     -> std::pair<SigType, std::array<uint32_t, 3>>
@@ -614,12 +573,8 @@ auto sperr::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) 
 #endif
     m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];
 
-//#ifdef QZ_TERM
-//    m_quantize_P_decode(pixel_idx);
-//#else
     m_coeff_buf[pixel_idx] = m_threshold * 1.5;
     m_LSP_new.push_back(pixel_idx);
-//#endif
 
     m_LIP[loc] = m_u64_garbage_val;
   }

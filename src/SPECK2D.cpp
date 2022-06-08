@@ -221,11 +221,13 @@ void sperr::SPECK2D::m_initialize_sets_lists()
   m_LSP_new.clear();
   m_LSP_new.reserve(m_coeff_buf.size() / 8);
   m_LSP_mask.reserve(m_coeff_buf.size());
-#ifndef QZ_TERM
+
+#ifdef QZ_TERM
+  m_bit_buffer.reserve(m_coeff_buf.size());
+#else
   m_bit_buffer.reserve(m_budget);
 #endif
 }
-
 
 //
 // Private methods
@@ -308,37 +310,6 @@ auto sperr::SPECK2D::m_sorting_pass_decode() -> RTNType
   return RTNType::Good;
 }
 
-//#ifdef QZ_TERM
-//void sperr::SPECK2D::m_quantize_P_encode(size_t idx)
-//{
-//  auto coeff = m_coeff_buf[idx] - m_threshold_arr[m_threshold_idx];
-//  const auto tmpb = b2_type{false, true};
-//  assert(m_max_coeff_bit >= m_qz_lev);
-//  const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
-//  auto tmpd = d2_type{0.0, 0.0};
-//  for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
-//    tmpd[1] = m_threshold_arr[i];
-//    const size_t o1 = coeff >= m_threshold_arr[i];
-//    coeff -= tmpd[o1];
-//    m_bit_buffer.push_back(tmpb[o1]);
-//  }
-//  m_coeff_buf[idx] = coeff;
-//}
-//
-//void sperr::SPECK2D::m_quantize_P_decode(size_t idx)
-//{
-//  auto coeff = m_threshold_arr[m_threshold_idx] * 1.5;
-//  assert(m_max_coeff_bit >= m_qz_lev);
-//  const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
-//  for (auto i = m_threshold_idx + 1; i < num_qz_levs; i++) {
-//    const auto tmp = d2_type{-m_threshold_arr[i + 1], m_threshold_arr[i + 1]};
-//    coeff += tmp[m_bit_buffer[m_bit_idx++]];
-//  }
-//  m_coeff_buf[idx] = coeff;
-//}
-//
-//#else
-
 auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
 {
   // First, process significant pixels previously found.
@@ -351,7 +322,6 @@ auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
       const size_t o1 = m_coeff_buf[i] >= m_threshold;
       m_coeff_buf[i] += tmpd[o1];
       m_bit_buffer.push_back(tmpb[o1]);
-
 #ifndef QZ_TERM
       if (m_bit_buffer.size() >= m_budget)
         return RTNType::BitBudgetMet;
@@ -377,7 +347,6 @@ auto sperr::SPECK2D::m_refinement_pass_decode() -> RTNType
   for (size_t i = 0; i < m_LSP_mask.size(); i++) {
     if (m_LSP_mask[i]) {
       m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
-
 #ifndef QZ_TERM
       if (m_bit_idx >= m_budget)
         return RTNType::BitBudgetMet;
@@ -393,7 +362,6 @@ auto sperr::SPECK2D::m_refinement_pass_decode() -> RTNType
 
   return RTNType::Good;
 }
-// #endif
 
 auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_decide_sig)
     -> RTNType
@@ -420,12 +388,8 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
       return RTNType::BitBudgetMet;
 #endif
 
-//#ifdef QZ_TERM
-//    m_quantize_P_encode(pixel_idx);
-//#else
     m_coeff_buf[pixel_idx] -= m_threshold;
     m_LSP_new.push_back(pixel_idx);
-//#endif
 
     m_LIP[loc] = m_u64_garbage_val;
   }
@@ -455,12 +419,8 @@ auto sperr::SPECK2D::m_process_P_decode(size_t loc, size_t& counter, bool need_d
 #endif
     m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];
 
-//#ifdef QZ_TERM
-//    m_quantize_P_decode(pixel_idx);
-//#else
     m_coeff_buf[pixel_idx] = m_threshold * 1.5;
     m_LSP_new.push_back(pixel_idx);
-//#endif
 
     m_LIP[loc] = m_u64_garbage_val;
   }
