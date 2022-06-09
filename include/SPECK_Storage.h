@@ -47,18 +47,32 @@ class SPECK_Storage {
 #ifdef QZ_TERM
   const size_t m_header_size = 12;  // See header definition in SPECK_Storage.cpp.
   int32_t m_qz_lev = 0;             // At which quantization level does encoding terminate?
-                                    // Necessary in preparing bitstream headers.
+                                    // (Necessary in preparing bitstream headers.)
 #else
   const size_t m_header_size = 10;  // See header definition in SPECK_Storage.cpp.
+  size_t m_budget = 0;              // What's the budget for num of bits in fixed-rate mode?
 #endif
 
-  int32_t m_max_coeff_bit = 0;  // Necessary in preparing bitstream headers.
-  dims_type m_dims = {0, 0, 0};
-
-  std::vector<double> m_coeff_buf;
-  std::vector<bool> m_bit_buffer;
+  //
+  // A few data structures shared by both 2D and 3D SPECK algorithm
+  //
+  std::vector<double> m_coeff_buf;  // Wavelet coefficients
+  std::vector<bool> m_bit_buffer;   // Bitstream produced by the algorithm
+  std::vector<size_t> m_LIP;        // List of insignificant pixels
+  std::vector<size_t> m_LSP_new;    // List of newly found significant pixels
+  std::vector<bool> m_LSP_mask;     // Significant pixels previously found
+  std::vector<bool> m_sign_array;   // Keep the signs of every coefficient
   vec8_type m_encoded_stream;
 
+  double m_threshold = 0.0;      // Threshold that's used for an iteration.
+  size_t m_bit_idx = 0;          // Used for decode. Which bit we're at?
+  int32_t m_max_coeff_bit = 0;   // (Necessary in preparing bitstream headers.)
+  dims_type m_dims = {0, 0, 0};  // Dimension of the 2D/3D volume
+  const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
+
+  //
+  // Member methods
+  //
   auto m_prepare_encoded_bitstream() -> RTNType;
 };
 

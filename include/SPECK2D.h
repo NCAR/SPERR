@@ -76,23 +76,10 @@ class SPECK2D : public SPECK_Storage {
   //
   // Private data members
   //
-  size_t m_bit_idx = 0;       // Used for decode. Which bit we're at?
   bool m_encode_mode = true;  // Encode (true) or Decode (false) mode?
 
   std::vector<std::vector<SPECKSet2D>> m_LIS;  // List of insignificant sets
-  std::vector<size_t> m_LIP;                   // List of insignificant pixels
   SPECKSet2D m_I;
-
-  const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
-  std::vector<bool> m_sign_array;
-
-  double m_threshold = 0.0;       // Threshold that's used for an iteration.
-  std::vector<size_t> m_LSP_new;  // List of newly found significant pixels
-  std::vector<bool> m_LSP_mask;   // Significant pixels previously found
-
-#ifndef QZ_TERM
-  size_t m_budget = 0;  // What's the budget for num of bits in fixed-rate mode?
-#endif
 };
 
 };  // namespace sperr
