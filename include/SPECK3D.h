@@ -88,21 +88,7 @@ class SPECK3D : public SPECK_Storage {
   //
   // Private data members
   //
-  size_t m_bit_idx = 0;  // Used for decode. Which bit we're at?
-
-  const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
-  std::vector<bool> m_sign_array;
-
   std::vector<std::vector<SPECKSet3D>> m_LIS;
-  std::vector<size_t> m_LIP;
-
-  std::vector<size_t> m_LSP_new;
-  std::vector<bool> m_LSP_mask;
-  double m_threshold = 0.0;
-
-#ifndef QZ_TERM
-  size_t m_budget = 0;
-#endif
 };
 
 };  // namespace sperr
