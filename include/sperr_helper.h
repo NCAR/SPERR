@@ -210,9 +210,10 @@ struct Header_Info {
 };
 auto parse_header(const void*) -> Header_Info;
 
-// For research use only:
-// calculate the sum of squares of one vector.
-auto calc_sq_sum(const vecd_type&) -> double;
+// calculate the mean square error (MSE) of two vectors.
+// In case of empty vectors or vectors of different sizes, it will return
+// std::numeric_limits<double>::max().
+auto calc_mse(const vecd_type&, const vecd_type&) -> double;
 
 };  // namespace sperr
 
