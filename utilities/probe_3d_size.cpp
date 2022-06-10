@@ -104,9 +104,9 @@ int main(int argc, char* argv[])
                "Data is treated as float by default.")
       ->group("Input Specifications");
 
-  auto chunks_v = std::vector<size_t>{128, 128, 128};
+  auto chunks_v = std::vector<size_t>{256, 256, 256};
   app.add_option("--chunks", chunks_v,
-                 "Dimensions of the preferred chunk size. Default: 128 128 128\n"
+                 "Dimensions of the preferred chunk size. Default: 256 256 256\n"
                  "E.g., `--chunks 64 64 64`")
       ->expected(3)
       ->group("Compression Parameters");

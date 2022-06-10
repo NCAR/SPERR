@@ -54,51 +54,6 @@ enum class RTNType {
 };
 
 //
-// Iterator class that enables STL algorithms to operate on raw arrays.  Adapted from:
-// https://stackoverflow.com/questions/8054273/how-to-implement-an-stl-style-iterator-and-avoid-common-pitfalls
-//
-template <typename T>
-class ptr_iterator : public std::iterator<std::bidirectional_iterator_tag, T> {
- private:
-  using iterator = ptr_iterator<T>;
-  T* m_pos = nullptr;
-
- public:
-  // explicit keyword prevents any other pointer types being converted to T*
-  explicit ptr_iterator(T* p) : m_pos(p) {}
-  ptr_iterator() = default;
-  ptr_iterator(const ptr_iterator<T>&) = default;
-  ptr_iterator(ptr_iterator<T>&&) noexcept = default;
-  ptr_iterator& operator=(const ptr_iterator<T>&) = default;
-  ptr_iterator& operator=(ptr_iterator<T>&&) noexcept = default;
-  ~ptr_iterator() = default;
-
-  // Requirements for a bidirectional iterator
-  iterator operator++(int) { return ptr_iterator<T>(m_pos++); } /* postfix */
-  iterator& operator++()                                        /* prefix  */
-  {
-    ++m_pos;
-    return *this;
-  }
-  iterator operator--(int) { return ptr_iterator<T>(m_pos--); } /* postfix */
-  iterator& operator--()                                        /* prefix  */
-  {
-    --m_pos;
-    return *this;
-  }
-  T& operator*() const { return *m_pos; }
-  T* operator->() const { return m_pos; }
-  bool operator==(const iterator& rhs) const { return m_pos == rhs.m_pos; }
-  bool operator!=(const iterator& rhs) const { return m_pos != rhs.m_pos; }
-  iterator operator+(std::ptrdiff_t n) const { return ptr_iterator<T>(m_pos + n); }
-
-  // The last operation is a random access iterator requirement.
-  // To make it a complete random access iterator, more operations need to be
-  // added. A good example is available here:
-  // https://github.com/shaomeng/cppcon2019_class/blob/master/labs/01-vector_walkthrough/code/trnx_vector_impl.h
-};
-
-//
 // Helper functions
 //
 // Given a certain length, how many transforms to be performed?

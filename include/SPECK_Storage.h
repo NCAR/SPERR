@@ -9,6 +9,7 @@
 #include <string>
 #include <utility>  // std::pair<>
 #include <vector>
+#include <limits>
 #include "sperr_helper.h"
 
 namespace sperr {
