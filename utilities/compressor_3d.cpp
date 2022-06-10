@@ -32,9 +32,9 @@ int main(int argc, char* argv[])
   auto output_file = std::string();
   app.add_option("-o", output_file, "Output filename")->required()->group("Output Specifications");
 
-  auto chunks = std::vector<size_t>{128, 128, 128};
+  auto chunks = std::vector<size_t>{256, 256, 256};
   app.add_option("--chunks", chunks,
-                 "Dimensions of the preferred chunk size. Default: 128 128 128\n"
+                 "Dimensions of the preferred chunk size. Default: 256 256 256\n"
                  "E.g., `--chunks 64 64 64`")
       ->expected(3)
       ->group("Compression Parameters");
