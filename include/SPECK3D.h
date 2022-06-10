@@ -3,8 +3,6 @@
 
 #include "SPECK_Storage.h"
 
-#include <limits>
-
 namespace sperr {
 
 //
