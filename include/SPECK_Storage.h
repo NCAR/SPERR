@@ -65,7 +65,7 @@ class SPECK_Storage {
   std::vector<bool> m_sign_array;   // Keep the signs of every coefficient
   vec8_type m_encoded_stream;
 
-  size_t m_LSP_mask_num = 0;     // Number of TRUE values in `m_LSP_mask`.
+  size_t m_LSP_mask_sum = 0;     // Number of TRUE values in `m_LSP_mask`.
   size_t m_bit_idx = 0;          // Used for decode. Which bit we're at?
   double m_threshold = 0.0;      // Threshold that's used for an iteration.
   int32_t m_max_coeff_bit = 0;   // (Necessary in preparing bitstream headers.)

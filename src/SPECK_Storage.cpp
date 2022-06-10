@@ -170,7 +170,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
   }
 #else
   assert(m_budget >= m_bit_buffer.size());
-  if (m_budget - m_bit_buffer.size() > m_LSP_mask_num) { // No need to check BitBudgetMet
+  if (m_budget - m_bit_buffer.size() > m_LSP_mask_sum) {  // No need to check BitBudgetMet
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask[i]) {
         const size_t o1 = m_coeff_buf[i] >= m_threshold;
@@ -179,7 +179,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
       }
     }
   }
-  else { // Need to check BitBudgetMet
+  else {  // Need to check BitBudgetMet
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask[i]) {
         const size_t o1 = m_coeff_buf[i] >= m_threshold;
@@ -196,7 +196,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
   //
   for (auto idx : m_LSP_new)
     m_LSP_mask[idx] = true;
-  m_LSP_mask_num += m_LSP_new.size();
+  m_LSP_mask_sum += m_LSP_new.size();
   m_LSP_new.clear();
 
   return RTNType::Good;
@@ -215,13 +215,13 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
   }
 #else
   assert(m_budget >= m_bit_idx);
-  if (m_budget - m_bit_idx > m_LSP_mask_num) { // No need to check BitBudgetMet
+  if (m_budget - m_bit_idx > m_LSP_mask_sum) {  // No need to check BitBudgetMet
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask[i])
         m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
     }
   }
-  else { // Need to check BitBudgetMet
+  else {  // Need to check BitBudgetMet
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask[i]) {
         m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
@@ -236,7 +236,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
   //
   for (auto idx : m_LSP_new)
     m_LSP_mask[idx] = true;
-  m_LSP_mask_num += m_LSP_new.size();
+  m_LSP_mask_sum += m_LSP_new.size();
   m_LSP_new.clear();
 
   return RTNType::Good;

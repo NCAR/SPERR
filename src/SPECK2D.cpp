@@ -76,7 +76,7 @@ auto sperr::SPECK2D::encode() -> RTNType
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
-  m_LSP_mask_num = 0;
+  m_LSP_mask_sum = 0;
 
   // Find the threshold to start the algorithm
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
@@ -142,7 +142,7 @@ auto sperr::SPECK2D::decode() -> RTNType
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
-  m_LSP_mask_num = 0;
+  m_LSP_mask_sum = 0;
 
   m_initialize_sets_lists();
   m_bit_idx = 0;

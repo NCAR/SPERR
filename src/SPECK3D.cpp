@@ -81,7 +81,7 @@ auto sperr::SPECK3D::encode() -> RTNType
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
-  m_LSP_mask_num = 0;
+  m_LSP_mask_sum = 0;
 
   //
   // Find the maximum coefficient bit and fill the threshold array.
@@ -157,7 +157,7 @@ auto sperr::SPECK3D::decode() -> RTNType
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
-  m_LSP_mask_num = 0;
+  m_LSP_mask_sum = 0;
   m_bit_idx = 0;
   m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
 
