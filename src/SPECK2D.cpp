@@ -8,6 +8,7 @@
 
 using d2_type = std::array<double, 2>;
 using b2_type = std::array<bool, 2>;
+using u2_type = std::array<uint32_t, 2>;
 
 //
 // Class SPECKSet2D
@@ -75,6 +76,7 @@ auto sperr::SPECK2D::encode() -> RTNType
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
+  m_LSP_mask_sum = 0;
 
   // Find the threshold to start the algorithm
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
@@ -140,6 +142,7 @@ auto sperr::SPECK2D::decode() -> RTNType
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
+  m_LSP_mask_sum = 0;
 
   m_initialize_sets_lists();
   m_bit_idx = 0;
@@ -306,59 +309,6 @@ auto sperr::SPECK2D::m_sorting_pass_decode() -> RTNType
     return rtn;
 #endif
   assert(rtn == RTNType::Good);
-
-  return RTNType::Good;
-}
-
-auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
-{
-  // First, process significant pixels previously found.
-  //
-  const auto tmpb = b2_type{false, true};
-  const auto tmpd = d2_type{0.0, -m_threshold};
-
-  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-    if (m_LSP_mask[i]) {  // A significant pixel at this location
-      const size_t o1 = m_coeff_buf[i] >= m_threshold;
-      m_coeff_buf[i] += tmpd[o1];
-      m_bit_buffer.push_back(tmpb[o1]);
-#ifndef QZ_TERM
-      if (m_bit_buffer.size() >= m_budget)
-        return RTNType::BitBudgetMet;
-#endif
-    }
-  }
-
-  // Second, mark newly found significant pixels in `m_LSP_mask`.
-  //
-  for (auto i : m_LSP_new)
-    m_LSP_mask[i] = true;
-  m_LSP_new.clear();
-
-  return RTNType::Good;
-}
-
-auto sperr::SPECK2D::m_refinement_pass_decode() -> RTNType
-{
-  // First, process significant pixels previously found.
-  //
-  const auto tmp = d2_type{m_threshold * -0.5, m_threshold * 0.5};
-
-  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-    if (m_LSP_mask[i]) {
-      m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
-#ifndef QZ_TERM
-      if (m_bit_idx >= m_budget)
-        return RTNType::BitBudgetMet;
-#endif
-    }
-  }
-
-  // Second, mark newly found significant pixels in `m_LSP_mark`
-  //
-  for (auto i : m_LSP_new)
-    m_LSP_mask[i] = true;
-  m_LSP_new.clear();
 
   return RTNType::Good;
 }

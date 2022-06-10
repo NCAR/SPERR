@@ -81,6 +81,7 @@ auto sperr::SPECK3D::encode() -> RTNType
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
+  m_LSP_mask_sum = 0;
 
   //
   // Find the maximum coefficient bit and fill the threshold array.
@@ -156,6 +157,7 @@ auto sperr::SPECK3D::decode() -> RTNType
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
+  m_LSP_mask_sum = 0;
   m_bit_idx = 0;
   m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
 
@@ -392,59 +394,6 @@ auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
 
     m_LIP[loc] = m_u64_garbage_val;
   }
-
-  return RTNType::Good;
-}
-
-auto sperr::SPECK3D::m_refinement_pass_encode() -> RTNType
-{
-  // First, process significant pixels previously found.
-  //
-  const auto tmpb = b2_type{false, true};
-  const auto tmpd = d2_type{0.0, -m_threshold};
-
-  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-    if (m_LSP_mask[i]) {
-      const size_t o1 = m_coeff_buf[i] >= m_threshold;
-      m_coeff_buf[i] += tmpd[o1];
-      m_bit_buffer.push_back(tmpb[o1]);
-#ifndef QZ_TERM
-      if (m_bit_buffer.size() >= m_budget)
-        return RTNType::BitBudgetMet;
-#endif
-    }
-  }
-
-  // Second, mark newly found significant pixels in `m_LSP_mask`.
-  //
-  for (auto idx : m_LSP_new)
-    m_LSP_mask[idx] = true;
-  m_LSP_new.clear();
-
-  return RTNType::Good;
-}
-
-auto sperr::SPECK3D::m_refinement_pass_decode() -> RTNType
-{
-  // First, process significant pixels previously found.
-  //
-  const auto tmp = d2_type{m_threshold * -0.5, m_threshold * 0.5};
-
-  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-    if (m_LSP_mask[i]) {
-      m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
-#ifndef QZ_TERM
-      if (m_bit_idx >= m_budget)
-        return RTNType::BitBudgetMet;
-#endif
-    }
-  }
-
-  // Second, mark newly found significant pixels in `m_LSP_mark`
-  //
-  for (auto idx : m_LSP_new)
-    m_LSP_mask[idx] = true;
-  m_LSP_new.clear();
 
   return RTNType::Good;
 }

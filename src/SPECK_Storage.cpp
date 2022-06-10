@@ -4,6 +4,10 @@
 #include <cstring>
 #include <numeric>
 
+using d2_type = std::array<double, 2>;
+using b2_type = std::array<bool, 2>;
+using u2_type = std::array<uint32_t, 2>;
+
 template <typename T>
 auto sperr::SPECK_Storage::copy_data(const T* p, size_t len, dims_type dims) -> RTNType
 {
@@ -147,4 +151,93 @@ auto sperr::SPECK_Storage::get_speck_stream_size(const void* buf) const -> uint6
 void sperr::SPECK_Storage::set_dimensions(dims_type dims)
 {
   m_dims = dims;
+}
+
+auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
+{
+  // First, process significant pixels previously found.
+  //
+  const auto tmpb = b2_type{false, true};
+  const auto tmpd = d2_type{0.0, -m_threshold};
+
+#ifdef QZ_TERM
+  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+    if (m_LSP_mask[i]) {
+      const size_t o1 = m_coeff_buf[i] >= m_threshold;
+      m_coeff_buf[i] += tmpd[o1];
+      m_bit_buffer.push_back(tmpb[o1]);
+    }
+  }
+#else
+  assert(m_budget >= m_bit_buffer.size());
+  if (m_budget - m_bit_buffer.size() > m_LSP_mask_sum) {  // No need to check BitBudgetMet
+    for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+      if (m_LSP_mask[i]) {
+        const size_t o1 = m_coeff_buf[i] >= m_threshold;
+        m_coeff_buf[i] += tmpd[o1];
+        m_bit_buffer.push_back(tmpb[o1]);
+      }
+    }
+  }
+  else {  // Need to check BitBudgetMet
+    for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+      if (m_LSP_mask[i]) {
+        const size_t o1 = m_coeff_buf[i] >= m_threshold;
+        m_coeff_buf[i] += tmpd[o1];
+        m_bit_buffer.push_back(tmpb[o1]);
+        if (m_bit_buffer.size() >= m_budget)
+          return RTNType::BitBudgetMet;
+      }
+    }
+  }
+#endif
+
+  // Second, mark newly found significant pixels in `m_LSP_mask`.
+  //
+  for (auto idx : m_LSP_new)
+    m_LSP_mask[idx] = true;
+  m_LSP_mask_sum += m_LSP_new.size();
+  m_LSP_new.clear();
+
+  return RTNType::Good;
+}
+
+auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
+{
+  // First, process significant pixels previously found.
+  //
+  const auto tmp = d2_type{m_threshold * -0.5, m_threshold * 0.5};
+
+#ifdef QZ_TERM
+  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+    if (m_LSP_mask[i])
+      m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
+  }
+#else
+  assert(m_budget >= m_bit_idx);
+  if (m_budget - m_bit_idx > m_LSP_mask_sum) {  // No need to check BitBudgetMet
+    for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+      if (m_LSP_mask[i])
+        m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
+    }
+  }
+  else {  // Need to check BitBudgetMet
+    for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+      if (m_LSP_mask[i]) {
+        m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
+        if (m_bit_idx >= m_budget)
+          return RTNType::BitBudgetMet;
+      }
+    }
+  }
+#endif
+
+  // Second, mark newly found significant pixels in `m_LSP_mark`
+  //
+  for (auto idx : m_LSP_new)
+    m_LSP_mask[idx] = true;
+  m_LSP_mask_sum += m_LSP_new.size();
+  m_LSP_new.clear();
+
+  return RTNType::Good;
 }
