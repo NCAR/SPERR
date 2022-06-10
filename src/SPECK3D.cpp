@@ -81,6 +81,7 @@ auto sperr::SPECK3D::encode() -> RTNType
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
+  m_LSP_mask_num = 0;
 
   //
   // Find the maximum coefficient bit and fill the threshold array.
@@ -156,6 +157,7 @@ auto sperr::SPECK3D::decode() -> RTNType
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
+  m_LSP_mask_num = 0;
   m_bit_idx = 0;
   m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
 
@@ -403,22 +405,43 @@ auto sperr::SPECK3D::m_refinement_pass_encode() -> RTNType
   const auto tmpb = b2_type{false, true};
   const auto tmpd = d2_type{0.0, -m_threshold};
 
+#ifdef QZ_TERM
   for (size_t i = 0; i < m_LSP_mask.size(); i++) {
     if (m_LSP_mask[i]) {
       const size_t o1 = m_coeff_buf[i] >= m_threshold;
       m_coeff_buf[i] += tmpd[o1];
       m_bit_buffer.push_back(tmpb[o1]);
-#ifndef QZ_TERM
-      if (m_bit_buffer.size() >= m_budget)
-        return RTNType::BitBudgetMet;
-#endif
     }
   }
+#else
+  assert(m_budget >= m_bit_buffer.size());
+  if (m_budget - m_bit_buffer.size() > m_LSP_mask_num) { // No need to check BitBudgetMet
+    for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+      if (m_LSP_mask[i]) {
+        const size_t o1 = m_coeff_buf[i] >= m_threshold;
+        m_coeff_buf[i] += tmpd[o1];
+        m_bit_buffer.push_back(tmpb[o1]);
+      }
+    }
+  }
+  else { // Need to check BitBudgetMet
+    for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+      if (m_LSP_mask[i]) {
+        const size_t o1 = m_coeff_buf[i] >= m_threshold;
+        m_coeff_buf[i] += tmpd[o1];
+        m_bit_buffer.push_back(tmpb[o1]);
+        if (m_bit_buffer.size() >= m_budget)
+          return RTNType::BitBudgetMet;
+      }
+    }
+  }
+#endif
 
   // Second, mark newly found significant pixels in `m_LSP_mask`.
   //
   for (auto idx : m_LSP_new)
     m_LSP_mask[idx] = true;
+  m_LSP_mask_num += m_LSP_new.size();
   m_LSP_new.clear();
 
   return RTNType::Good;
@@ -430,20 +453,35 @@ auto sperr::SPECK3D::m_refinement_pass_decode() -> RTNType
   //
   const auto tmp = d2_type{m_threshold * -0.5, m_threshold * 0.5};
 
+#ifdef QZ_TERM
   for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-    if (m_LSP_mask[i]) {
+    if (m_LSP_mask[i])
       m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
-#ifndef QZ_TERM
-      if (m_bit_idx >= m_budget)
-        return RTNType::BitBudgetMet;
-#endif
+  }
+#else
+  assert(m_budget >= m_bit_idx);
+  if (m_budget - m_bit_idx > m_LSP_mask_num) { // No need to check BitBudgetMet
+    for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+      if (m_LSP_mask[i])
+        m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
     }
   }
+  else { // Need to check BitBudgetMet
+    for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+      if (m_LSP_mask[i]) {
+        m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
+        if (m_bit_idx >= m_budget)
+          return RTNType::BitBudgetMet;
+      }
+    }
+  }
+#endif
 
   // Second, mark newly found significant pixels in `m_LSP_mark`
   //
   for (auto idx : m_LSP_new)
     m_LSP_mask[idx] = true;
+  m_LSP_mask_num += m_LSP_new.size();
   m_LSP_new.clear();
 
   return RTNType::Good;
