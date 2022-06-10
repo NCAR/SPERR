@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <limits>
 #include <numeric>
 
 auto sperr::num_of_xforms(size_t len) -> size_t
@@ -512,25 +513,33 @@ auto sperr::parse_header(const void* ptr) -> Header_Info
   return header;
 }
 
-auto sperr::calc_sq_sum(const vecd_type& vec) -> double
+auto sperr::calc_mse(const vecd_type& v1, const vecd_type& v2) -> double
 {
-  if (vec.empty())
-    return 0.0;
+  const auto limit = std::numeric_limits<double>::max();
+  if (v1.empty() || v2.empty() || v1.size() != v2.size())
+    return limit;
+
+  const auto len = v1.size();
 
   const size_t stride_size = 4096;
-  const size_t num_strides = vec.size() / stride_size;
-  const size_t remainder_size = vec.size() - stride_size * num_strides;
-  auto sum_vec = std::vector<double>(num_strides + 1, 0.0);
-  auto sq_sum = [](double dest, double val) { return val * val + dest; };
+  const size_t num_strides = len / stride_size;
+  const size_t remainder_size = len - stride_size * num_strides;
+  auto tmp_buf = vecd_type(num_strides + 1);
 
   for (size_t i = 0; i < num_strides; i++) {
-    auto beg = vec.cbegin() + i * stride_size;
-    auto end = beg + stride_size;
-    sum_vec[i] = std::accumulate(beg, end, 0.0, sq_sum);
+    auto beg1 = v1.cbegin() + i * stride_size;
+    auto end1 = beg1 + stride_size;
+    auto beg2 = v2.cbegin() + i * stride_size;
+    tmp_buf[i] = std::inner_product(beg1, end1, beg2, 0.0, std::plus<>(),
+                                    [](auto a, auto b) { return (a - b) * (a - b); });
   }
-  sum_vec[num_strides] =
-      std::accumulate(vec.cbegin() + num_strides * stride_size, vec.cend(), 0.0, sq_sum);
+  tmp_buf[num_strides] = 0.0;
+  tmp_buf[num_strides] = std::inner_product(
+      v1.cbegin() + num_strides * stride_size, v1.cend(), v2.cbegin() + num_strides * stride_size,
+      0.0, std::plus<>(), [](auto a, auto b) { return (a - b) * (a - b); });
 
-  // Accumulate from back to front, because values towards the end might be smaller.
-  return std::accumulate(sum_vec.crbegin(), sum_vec.crend(), 0.0);
+  const auto total_sum = std::accumulate(tmp_buf.cbegin(), tmp_buf.cend(), 0.0);
+  const auto mse = total_sum / static_cast<double>(len);
+
+  return mse;
 }
