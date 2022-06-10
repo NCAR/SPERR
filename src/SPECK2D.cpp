@@ -73,6 +73,13 @@ auto sperr::SPECK2D::encode() -> RTNType
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
                  [](auto v) { return std::abs(v); });
 
+#ifdef QZ_TERM
+  // Initialize `m_original_coeffs` and `m_qz_coeffs` for error estimation.
+  m_original_coeffs.resize(m_coeff_buf.size());
+  std::copy(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_original_coeffs.begin());
+  m_qz_coeffs.assign(m_coeff_buf.size(), 0.0);
+#endif
+
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
 
@@ -204,7 +211,7 @@ void sperr::SPECK2D::m_initialize_sets_lists()
   for (auto& list : m_LIS)
     list.clear();
   m_LIP.clear();
-  m_LIP.reserve(m_coeff_buf.size() / 2);
+  m_LIP.reserve(m_coeff_buf.size() / 4);
 
   // prepare the root, S
   auto S = m_produce_root();
@@ -317,12 +324,19 @@ auto sperr::SPECK2D::m_refinement_pass_encode() -> RTNType
   const auto tmpb = b2_type{false, true};
   const auto tmpd = d2_type{0.0, -m_threshold};
 
+#ifdef QZ_TERM
+  const auto tmpd_q = d2_type{m_threshold * -0.5, m_threshold * 0.5};
+#endif
+
   for (size_t i = 0; i < m_LSP_mask.size(); i++) {
     if (m_LSP_mask[i]) {  // A significant pixel at this location
       const size_t o1 = m_coeff_buf[i] >= m_threshold;
       m_coeff_buf[i] += tmpd[o1];
       m_bit_buffer.push_back(tmpb[o1]);
-#ifndef QZ_TERM
+
+#ifdef QZ_TERM
+      m_qz_coeffs[i] += tmpd_q[o1]; // reconstructed quantized version of this coefficient 
+#else
       if (m_bit_buffer.size() >= m_budget)
         return RTNType::BitBudgetMet;
 #endif
@@ -390,6 +404,9 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
 
     m_coeff_buf[pixel_idx] -= m_threshold;
     m_LSP_new.push_back(pixel_idx);
+#ifdef QZ_TERM
+    m_qz_coeffs[pixel_idx] = m_threshold * 1.5; // reconstructed quantized version of this coeff
+#endif
 
     m_LIP[loc] = m_u64_garbage_val;
   }
