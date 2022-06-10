@@ -80,8 +80,6 @@ class SPECK3D : public SPECK_Storage {
   // If it is significant, also identify the pixel that makes it significant.
   auto m_decide_significance(const SPECKSet3D&) const
       -> std::pair<SigType, std::array<uint32_t, 3>>;
-  auto m_refinement_pass_encode() -> RTNType;
-  auto m_refinement_pass_decode() -> RTNType;
 
   //
   // Private data members

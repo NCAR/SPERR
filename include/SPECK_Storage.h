@@ -76,6 +76,8 @@ class SPECK_Storage {
   // Member methods
   //
   auto m_prepare_encoded_bitstream() -> RTNType;
+  auto m_refinement_pass_encode() -> RTNType;
+  auto m_refinement_pass_decode() -> RTNType;
 };
 
 };  // namespace sperr

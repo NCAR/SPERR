@@ -68,8 +68,6 @@ class SPECK2D : public SPECK_Storage {
   auto m_partition_S(const SPECKSet2D&) const -> std::array<SPECKSet2D, 4>;
   auto m_ready_to_encode() const -> bool;
   auto m_ready_to_decode() const -> bool;
-  auto m_refinement_pass_encode() -> RTNType;
-  auto m_refinement_pass_decode() -> RTNType;
 
   //
   // Private data members
