@@ -70,12 +70,6 @@ class SPECK_Storage {
   dims_type m_dims = {0, 0, 0};  // Dimension of the 2D/3D volume
   const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
 
-#ifdef QZ_TERM
-  // A few more data structures to enable estimate of error.
-  vecd_type m_original_coeffs;  // Original wavelet coefficients in their absolute values.
-  vecd_type m_qz_coeffs;        // Quantized versions of wavelet coefficients
-#endif
-
   //
   // Member methods
   //
