@@ -670,11 +670,6 @@ auto sperr::SPECK2D::m_ready_to_encode() const -> bool
   if (m_coeff_buf.size() != m_dims[0] * m_dims[1])
     return false;
 
-#ifndef QZ_TERM
-  if (m_budget == 0 || m_budget > m_dims[0] * m_dims[1] * 64)
-    return false;
-#endif
-
   return true;
 }
 
