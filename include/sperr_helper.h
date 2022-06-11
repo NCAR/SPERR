@@ -50,6 +50,7 @@ enum class RTNType {
   SliceVolumeMismatch,
   QzModeMismatch,
   SetBPPBeforeDims,
+  QzLevelReached, // Not an error, just a termination condition
   Error
 };
 

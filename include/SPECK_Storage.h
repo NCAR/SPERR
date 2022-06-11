@@ -41,23 +41,22 @@ class SPECK_Storage {
 
   void set_dimensions(dims_type);
 
-  void set_quantization_level(int32_t lev);
-
-  void set_bit_budget(size_t);
+  //
+  // Toggle different compression modes.
+  // These compression modes are mutually exclusive, meaning that setting value to one
+  // parameter will also set values of other parameters so that they won't have any effect.
+  //
+  void set_target_qz_level(int32_t lev);
+  auto set_target_bit_budget(size_t) -> RTNType;
 
 
  protected:
   //
   // Member variables
   //
-//#ifdef QZ_TERM
-//  const size_t m_header_size = 12;  // See header definition in SPECK_Storage.cpp.
-  int32_t m_qz_lev = 0;             // At which quantization level does encoding terminate?
-                                    // (Necessary in preparing bitstream headers.)
-//#else
   const size_t m_header_size = 10;  // See header definition in SPECK_Storage.cpp.
+  int32_t m_qz_lev = 0;             // At which quantization level does encoding terminate?
   size_t m_budget = 0;              // What's the budget for num of bits in fixed-rate mode?
-//#endif
 
   //
   // A few data structures shared by both 2D and 3D SPECK algorithm
@@ -83,6 +82,12 @@ class SPECK_Storage {
   auto m_prepare_encoded_bitstream() -> RTNType;
   auto m_refinement_pass_encode() -> RTNType;
   auto m_refinement_pass_decode() -> RTNType;
+
+  // Is there anything preventing the start of the iteration?
+  auto m_takeoff_check() const -> RTNType;
+
+  // Is there anything demanding the termination of iterations?
+  auto m_termination_check(size_t bitplane) const -> RTNType;
 };
 
 };  // namespace sperr

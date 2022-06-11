@@ -61,27 +61,28 @@ auto sperr::SPECK2D::encode() -> RTNType
   m_max_coeff_bit = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
   m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
 
-#ifdef QZ_TERM
-  // If the requested termination level is already above max_coeff_bits, return right away.
-  if (m_qz_lev > m_max_coeff_bit)
-    return RTNType::QzLevelTooBig;
+//#ifdef QZ_TERM
+  // If anything prevents the algorithm from launching, return right away.
+  auto rtn = m_takeoff_check();
+  if (rtn != RTNType::Good)
+    return rtn;
 
-  const auto num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
-  for (size_t lev = 0; lev < num_qz_levs; lev++) {
-    m_sorting_pass_encode();
-    m_refinement_pass_encode();
-    m_threshold *= 0.5;
-    m_clean_LIS();
-  }
+  //const auto num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
+  //for (size_t lev = 0; lev < num_qz_levs; lev++) {
+  //  m_sorting_pass_encode();
+  //  m_refinement_pass_encode();
+  //  m_threshold *= 0.5;
+  //  m_clean_LIS();
+  //}
 
   // Fill the bit buffer to multiplies of eight
-  while (m_bit_buffer.size() % 8 != 0)
-    m_bit_buffer.push_back(false);
+  //while (m_bit_buffer.size() % 8 != 0)
+  //  m_bit_buffer.push_back(false);
 
-#else
+//#else
 
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
-    auto rtn = m_sorting_pass_encode();
+    rtn = m_sorting_pass_encode();
     if (rtn == RTNType::BitBudgetMet)
       break;
     assert(rtn == RTNType::Good);
@@ -91,13 +92,22 @@ auto sperr::SPECK2D::encode() -> RTNType
       break;
     assert(rtn == RTNType::Good);
 
+    // Examine other terminating criteria
+    rtn = m_termination_check(bitplane);
+    if (rtn != RTNType::Good)
+      break;
+
     m_threshold *= 0.5;
     m_clean_LIS();
   }
-#endif
+//#endif
+
+  // Fill the bit buffer to multiplies of eight
+  while (m_bit_buffer.size() % 8 != 0)
+    m_bit_buffer.push_back(false);
 
   // Finally we prepare the bitstream
-  auto rtn = m_prepare_encoded_bitstream();
+  rtn = m_prepare_encoded_bitstream();
   return rtn;
 }
 
@@ -107,11 +117,9 @@ auto sperr::SPECK2D::decode() -> RTNType
     return RTNType::Error;
   m_encode_mode = false;
 
-#ifndef QZ_TERM
   // By default, decode all the available bits
   if (m_budget == 0 || m_budget > m_bit_buffer.size())
     m_budget = m_bit_buffer.size();
-#endif
 
   // Initialize coefficients to be zero, and signs to be all positive.
   const auto coeff_len = m_dims[0] * m_dims[1];
@@ -129,44 +137,31 @@ auto sperr::SPECK2D::decode() -> RTNType
 
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     auto rtn = m_sorting_pass_decode();
-
-#ifdef QZ_TERM
-    if (m_bit_idx > m_bit_buffer.size())
-      return RTNType::Error;
-#else
     if (rtn == RTNType::BitBudgetMet)
       break;
-#endif
-
     assert(rtn == RTNType::Good);
+
     rtn = m_refinement_pass_decode();
-
-#ifdef QZ_TERM
-    if (m_bit_idx > m_bit_buffer.size())
-      return RTNType::Error;
-#else
     if (rtn == RTNType::BitBudgetMet)
       break;
-#endif
-
     assert(rtn == RTNType::Good);
 
-#ifdef QZ_TERM
-    // This is the actual termination condition in QZ_TERM mode.
-    assert(m_max_coeff_bit >= m_qz_lev);
-    if (bitplane >= static_cast<size_t>(m_max_coeff_bit - m_qz_lev))
-      break;
-#endif
+//#ifdef QZ_TERM
+//    // This is the actual termination condition in QZ_TERM mode.
+//    assert(m_max_coeff_bit >= m_qz_lev);
+//    if (bitplane >= static_cast<size_t>(m_max_coeff_bit - m_qz_lev))
+//      break;
+//#endif
 
     m_threshold *= 0.5;
     m_clean_LIS();
   }
 
-#ifdef QZ_TERM
-  // We should not have more than 7 unprocessed bits left in the bit buffer!
-  if (m_bit_buffer.size() - m_bit_idx >= 8)
-    return RTNType::BitstreamWrongLen;
-#endif
+//#ifdef QZ_TERM
+//  // We should not have more than 7 unprocessed bits left in the bit buffer!
+//  if (m_bit_buffer.size() - m_bit_idx >= 8)
+//    return RTNType::BitstreamWrongLen;
+//#endif
 
   // Restore coefficient signs
   const auto tmp = d2_type{-1.0, 1.0};

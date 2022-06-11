@@ -150,15 +150,18 @@ void sperr::SPECK_Storage::set_dimensions(dims_type dims)
   m_dims = dims;
 }
 
-void sperr::SPECK_Storage::set_quantization_level(int32_t lev)
+void sperr::SPECK_Storage::set_target_qz_level(int32_t lev)
 {
   m_qz_lev = lev;
+
+  // Also set other parameters
+  m_budget = std::numeric_limits<size_t>::max();
 }
-void sperr::SPECK_Storage::set_bit_budget(size_t budget)
+auto sperr::SPECK_Storage::set_target_bit_budget(size_t budget) -> RTNType
 {
   if (budget <= m_header_size * 8) {
     m_budget = 0;
-    return;
+    return RTNType::Error;
   }
   budget -= m_header_size * 8;
 
@@ -167,6 +170,11 @@ void sperr::SPECK_Storage::set_bit_budget(size_t budget)
     m_budget = budget;
   else  // we can fill up that last byte!
     m_budget = budget + 8 - mod;
+
+  // Also set other parameters
+  m_qz_lev = std::numeric_limits<int32_t>::lowest();
+
+  return RTNType::Good;
 }
 
 auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
@@ -254,6 +262,24 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
     m_LSP_mask[idx] = true;
   m_LSP_mask_sum += m_LSP_new.size();
   m_LSP_new.clear();
+
+  return RTNType::Good;
+}
+
+auto sperr::SPECK_Storage::m_takeoff_check() const -> RTNType
+{
+  if (m_qz_lev > m_max_coeff_bit)
+    return RTNType::QzLevelTooBig;
+
+  return RTNType::Good;
+}
+
+auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
+{
+  assert(m_max_coeff_bit >= m_qz_lev);
+  const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
+  if (bitplane >= num_qz_levs)
+    return RTNType::QzLevelReached;
 
   return RTNType::Good;
 }

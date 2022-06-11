@@ -128,7 +128,7 @@ auto sperr::SPERR3D_Decompressor::decompress() -> RTNType
     return rtn;
   m_decoder.set_dimensions(m_dims);
 #ifndef QZ_TERM
-  m_decoder.set_bit_budget(size_t(m_bpp * double(m_dims[0] * m_dims[1] * m_dims[2])));
+  m_decoder.set_target_bit_budget(size_t(m_bpp * double(m_dims[0] * m_dims[1] * m_dims[2])));
 #endif
   rtn = m_decoder.decode();
   if (rtn != RTNType::Good)

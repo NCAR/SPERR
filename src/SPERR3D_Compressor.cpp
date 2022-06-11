@@ -217,7 +217,7 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
   rtn = m_encoder.take_data(std::move(cdf_out), m_dims);
   if (rtn != RTNType::Good)
     return rtn;
-  m_encoder.set_bit_budget(size_t(m_bpp * total_vals) - m_condi_stream.size() * 8);
+  m_encoder.set_target_bit_budget(size_t(m_bpp * total_vals) - m_condi_stream.size() * 8);
   rtn = m_encoder.encode();
   if (rtn != RTNType::Good)
     return rtn;
