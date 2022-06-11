@@ -37,13 +37,6 @@ class SPECK2D : public SPECK_Storage {
   // Constructor
   SPECK2D();
 
-  // trivial input
-#ifdef QZ_TERM
-  void set_quantization_level(int32_t lev);
-#else
-  void set_bit_budget(size_t);
-#endif
-
   // core operations
   auto encode() -> RTNType;
   auto decode() -> RTNType;

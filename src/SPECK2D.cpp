@@ -32,28 +32,6 @@ sperr::SPECK2D::SPECK2D()
   m_dims[2] = 1;
 }
 
-#ifdef QZ_TERM
-void sperr::SPECK2D::set_quantization_level(int32_t lev)
-{
-  m_qz_lev = lev;
-}
-#else
-void sperr::SPECK2D::set_bit_budget(size_t budget)
-{
-  if (budget <= m_header_size * 8) {
-    m_budget = 0;
-    return;
-  }
-  budget -= m_header_size * 8;
-
-  size_t mod = budget % 8;
-  if (mod == 0)
-    m_budget = budget;
-  else  // we can fill up that last byte!
-    m_budget = budget + 8 - mod;
-}
-#endif
-
 auto sperr::SPECK2D::encode() -> RTNType
 {
   if (!m_ready_to_encode())
@@ -224,12 +202,7 @@ void sperr::SPECK2D::m_initialize_sets_lists()
   m_LSP_new.clear();
   m_LSP_new.reserve(m_coeff_buf.size() / 8);
   m_LSP_mask.reserve(m_coeff_buf.size());
-
-#ifdef QZ_TERM
   m_bit_buffer.reserve(m_coeff_buf.size());
-#else
-  m_bit_buffer.reserve(m_budget);
-#endif
 }
 
 //
@@ -242,10 +215,8 @@ auto sperr::SPECK2D::m_sorting_pass_encode() -> RTNType
   auto dummy = size_t{0};
   for (size_t idx = 0; idx < m_LIP.size(); idx++) {
     auto rtn = m_process_P_encode(idx, dummy, true);
-#ifndef QZ_TERM
     if (rtn == RTNType::BitBudgetMet)
       return rtn;
-#endif
     assert(rtn == RTNType::Good);
   }
 
@@ -256,19 +227,15 @@ auto sperr::SPECK2D::m_sorting_pass_encode() -> RTNType
     size_t idx1 = m_LIS.size() - 1 - tmp;
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
       auto rtn = m_process_S_encode(idx1, idx2, dummy, true);
-#ifndef QZ_TERM
       if (rtn == RTNType::BitBudgetMet)
         return rtn;
-#endif
       assert(rtn == RTNType::Good);
     }
   }
 
   auto rtn = m_process_I(true);
-#ifndef QZ_TERM
   if (rtn == RTNType::BitBudgetMet)
     return rtn;
-#endif
   assert(rtn == RTNType::Good);
 
   return RTNType::Good;
@@ -281,10 +248,8 @@ auto sperr::SPECK2D::m_sorting_pass_decode() -> RTNType
   size_t dummy = 0;
   for (size_t idx = 0; idx < m_LIP.size(); idx++) {
     auto rtn = m_process_P_decode(idx, dummy, true);
-#ifndef QZ_TERM
     if (rtn == RTNType::BitBudgetMet)
       return rtn;
-#endif
     assert(rtn == RTNType::Good);
   }
 
@@ -295,19 +260,15 @@ auto sperr::SPECK2D::m_sorting_pass_decode() -> RTNType
     size_t idx1 = m_LIS.size() - 1 - tmp;
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
       auto rtn = m_process_S_decode(idx1, idx2, dummy, true);
-#ifndef QZ_TERM
       if (rtn == RTNType::BitBudgetMet)
         return rtn;
-#endif
       assert(rtn == RTNType::Good);
     }
   }
 
   auto rtn = m_process_I(true);
-#ifndef QZ_TERM
   if (rtn == RTNType::BitBudgetMet)
     return rtn;
-#endif
   assert(rtn == RTNType::Good);
 
   return RTNType::Good;
@@ -324,19 +285,15 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
     const auto tmpb = b2_type{false, true};
     is_sig = tmpb[o1];
     m_bit_buffer.push_back(is_sig);
-#ifndef QZ_TERM
     if (m_bit_buffer.size() >= m_budget)
       return RTNType::BitBudgetMet;
-#endif
   }
 
   if (is_sig) {
     counter++;
     m_bit_buffer.push_back(m_sign_array[pixel_idx]);
-#ifndef QZ_TERM
     if (m_bit_buffer.size() >= m_budget)
       return RTNType::BitBudgetMet;
-#endif
 
     m_coeff_buf[pixel_idx] -= m_threshold;
     m_LSP_new.push_back(pixel_idx);
@@ -354,19 +311,15 @@ auto sperr::SPECK2D::m_process_P_decode(size_t loc, size_t& counter, bool need_d
   bool is_sig = true;
 
   if (need_decide_sig) {
-#ifndef QZ_TERM
     if (m_bit_idx >= m_budget)
       return RTNType::BitBudgetMet;
-#endif
     is_sig = m_bit_buffer[m_bit_idx++];
   }
 
   if (is_sig) {
     counter++;
-#ifndef QZ_TERM
     if (m_bit_idx >= m_budget)
       return RTNType::BitBudgetMet;
-#endif
     m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];
 
     m_coeff_buf[pixel_idx] = m_threshold * 1.5;
@@ -390,19 +343,15 @@ auto sperr::SPECK2D::m_process_S_encode(size_t idx1,
   if (need_decide_sig) {
     set.signif = m_decide_set_S_significance(set);
     m_bit_buffer.push_back(set.signif == SigType::Sig);
-#ifndef QZ_TERM
     if (m_bit_buffer.size() >= m_budget)
       return RTNType::BitBudgetMet;
-#endif
   }
 
   if (set.signif == SigType::Sig) {
     counter++;  // increment the significant counter first!
     auto rtn = m_code_S_encode(idx1, idx2);
-#ifndef QZ_TERM
     if (rtn == RTNType::BitBudgetMet)
       return rtn;
-#endif
     assert(rtn == RTNType::Good);
     set.type = SetType::Garbage;  // This particular set will be discarded.
   }
@@ -421,20 +370,16 @@ auto sperr::SPECK2D::m_process_S_decode(size_t idx1,
 
   if (need_decide_sig) {
     const auto tmps = std::array<SigType, 2>{SigType::Insig, SigType::Sig};
-#ifndef QZ_TERM
     if (m_bit_idx >= m_budget)
       return RTNType::BitBudgetMet;
-#endif
     set.signif = tmps[m_bit_buffer[m_bit_idx++]];
   }
 
   if (set.signif == SigType::Sig) {
     counter++;  // increment the significant counter first!
     auto rtn = m_code_S_decode(idx1, idx2);
-#ifndef QZ_TERM
     if (rtn == RTNType::BitBudgetMet)
       return rtn;
-#endif
     assert(rtn == RTNType::Good);
     set.type = SetType::Garbage;  // This particular object will be discarded.
   }
@@ -468,10 +413,8 @@ auto sperr::SPECK2D::m_code_S_encode(size_t idx1, size_t idx2) -> RTNType
       size_t newidx2 = m_LIS[newidx1].size() - 1;
       rtn = m_process_S_encode(newidx1, newidx2, sig_counter, need_decide_sig);
     }
-#ifndef QZ_TERM
     if (rtn == RTNType::BitBudgetMet)
       return rtn;
-#endif
     assert(rtn == RTNType::Good);
   }
 
@@ -504,10 +447,8 @@ auto sperr::SPECK2D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
       size_t newidx2 = m_LIS[newidx1].size() - 1;
       rtn = m_process_S_decode(newidx1, newidx2, sig_counter, need_decide_sig);
     }
-#ifndef QZ_TERM
     if (rtn == RTNType::BitBudgetMet)
       return rtn;
-#endif
     assert(rtn == RTNType::Good);
   }
 
@@ -569,25 +510,19 @@ auto sperr::SPECK2D::m_process_I(bool need_decide_sig) -> RTNType
       m_I.signif = SigType::Sig;
 
     m_bit_buffer.push_back(m_I.signif == SigType::Sig);
-#ifndef QZ_TERM
     if (m_bit_buffer.size() >= m_budget)
       return RTNType::BitBudgetMet;
-#endif
   }
   else {
-#ifndef QZ_TERM
     if (m_bit_idx >= m_budget)
       return RTNType::BitBudgetMet;
-#endif
     m_I.signif = m_bit_buffer[m_bit_idx++] ? SigType::Sig : SigType::Insig;
   }
 
   if (m_I.signif == SigType::Sig) {
     auto rtn = m_code_I();
-#ifndef QZ_TERM
     if (rtn == RTNType::BitBudgetMet)
       return rtn;
-#endif
     assert(rtn == RTNType::Good);
   }
 
@@ -612,19 +547,15 @@ auto sperr::SPECK2D::m_code_I() -> RTNType
         rtn = m_process_S_encode(newidx1, newidx2, sig_counter, true);
       else
         rtn = m_process_S_decode(newidx1, newidx2, sig_counter, true);
-#ifndef QZ_TERM
       if (rtn == RTNType::BitBudgetMet)
         return rtn;
-#endif
       assert(rtn == RTNType::Good);
     }
   }
 
   auto rtn = m_process_I(sig_counter != 0);
-#ifndef QZ_TERM
   if (rtn == RTNType::BitBudgetMet)
     return rtn;
-#endif
   assert(rtn == RTNType::Good);
 
   return RTNType::Good;

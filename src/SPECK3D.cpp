@@ -25,28 +25,6 @@ auto sperr::SPECKSet3D::is_empty() const -> bool
 //
 // Class SPECK3D
 //
-#ifdef QZ_TERM
-void sperr::SPECK3D::set_quantization_level(int32_t lev)
-{
-  m_qz_lev = lev;
-}
-#else
-void sperr::SPECK3D::set_bit_budget(size_t budget)
-{
-  if (budget <= m_header_size * 8) {
-    m_budget = 0;
-    return;
-  }
-  budget -= m_header_size * 8;
-
-  size_t mod = budget % 8;
-  if (mod == 0)
-    m_budget = budget;
-  else  // we can fill up the last byte!
-    m_budget = budget + 8 - mod;
-}
-#endif
-
 void sperr::SPECK3D::m_clean_LIS()
 {
   for (auto& list : m_LIS) {
@@ -285,12 +263,7 @@ void sperr::SPECK3D::m_initialize_sets_lists()
   m_LSP_new.clear();
   m_LSP_new.reserve(m_coeff_buf.size() / 8);
   m_LSP_mask.reserve(m_coeff_buf.size());
-
-#ifdef QZ_TERM
   m_bit_buffer.reserve(m_coeff_buf.size());
-#else
-  m_bit_buffer.reserve(m_budget);
-#endif
 }
 
 auto sperr::SPECK3D::m_sorting_pass_encode() -> RTNType

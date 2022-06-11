@@ -41,18 +41,23 @@ class SPECK_Storage {
 
   void set_dimensions(dims_type);
 
+  void set_quantization_level(int32_t lev);
+
+  void set_bit_budget(size_t);
+
+
  protected:
   //
   // Member variables
   //
-#ifdef QZ_TERM
-  const size_t m_header_size = 12;  // See header definition in SPECK_Storage.cpp.
+//#ifdef QZ_TERM
+//  const size_t m_header_size = 12;  // See header definition in SPECK_Storage.cpp.
   int32_t m_qz_lev = 0;             // At which quantization level does encoding terminate?
                                     // (Necessary in preparing bitstream headers.)
-#else
+//#else
   const size_t m_header_size = 10;  // See header definition in SPECK_Storage.cpp.
   size_t m_budget = 0;              // What's the budget for num of bits in fixed-rate mode?
-#endif
+//#endif
 
   //
   // A few data structures shared by both 2D and 3D SPECK algorithm

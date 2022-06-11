@@ -51,13 +51,10 @@ auto sperr::SPECK_Storage::view_data() const -> const vecd_type&
 
 auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
 {
-  // Header definition: 12 bytes in QZ_TERM mode
-  // max_coeff_bits, qz_lev,   stream_len (in byte)
-  // int16_t,        int16_t,  uint64_t
-  //
   // Header definition: 10 bytes in size-bounded mode
   // max_coeff_bits, stream_len (in byte)
   // int16_t,        uint64_t
+  //
 
   assert(m_bit_buffer.size() % 8 == 0);
   const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
@@ -72,9 +69,9 @@ auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
   pos += sizeof(max_bit);
 
 #ifdef QZ_TERM
-  int16_t qz_lev = static_cast<int16_t>(m_qz_lev);  // int16_t is big enough
-  std::memcpy(ptr + pos, &qz_lev, sizeof(qz_lev));
-  pos += sizeof(qz_lev);
+//  int16_t qz_lev = static_cast<int16_t>(m_qz_lev);  // int16_t is big enough
+//  std::memcpy(ptr + pos, &qz_lev, sizeof(qz_lev));
+//  pos += sizeof(qz_lev);
 #endif
 
   std::memcpy(ptr + pos, &bit_in_byte, sizeof(bit_in_byte));
@@ -103,10 +100,10 @@ auto sperr::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t 
   m_max_coeff_bit = max_bit;
 
 #ifdef QZ_TERM
-  int16_t qz_lev;
-  std::memcpy(&qz_lev, ptr + pos, sizeof(qz_lev));
-  pos += sizeof(qz_lev);
-  m_qz_lev = qz_lev;
+//  int16_t qz_lev;
+//  std::memcpy(&qz_lev, ptr + pos, sizeof(qz_lev));
+//  pos += sizeof(qz_lev);
+//  m_qz_lev = qz_lev;
 #endif
 
   uint64_t bit_in_byte;
@@ -153,6 +150,25 @@ void sperr::SPECK_Storage::set_dimensions(dims_type dims)
   m_dims = dims;
 }
 
+void sperr::SPECK_Storage::set_quantization_level(int32_t lev)
+{
+  m_qz_lev = lev;
+}
+void sperr::SPECK_Storage::set_bit_budget(size_t budget)
+{
+  if (budget <= m_header_size * 8) {
+    m_budget = 0;
+    return;
+  }
+  budget -= m_header_size * 8;
+
+  size_t mod = budget % 8;
+  if (mod == 0)
+    m_budget = budget;
+  else  // we can fill up that last byte!
+    m_budget = budget + 8 - mod;
+}
+
 auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
 {
   // First, process significant pixels previously found.
@@ -160,15 +176,15 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
   const auto tmpb = b2_type{false, true};
   const auto tmpd = d2_type{0.0, -m_threshold};
 
-#ifdef QZ_TERM
-  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-    if (m_LSP_mask[i]) {
-      const size_t o1 = m_coeff_buf[i] >= m_threshold;
-      m_coeff_buf[i] += tmpd[o1];
-      m_bit_buffer.push_back(tmpb[o1]);
-    }
-  }
-#else
+//#ifdef QZ_TERM
+//  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+//    if (m_LSP_mask[i]) {
+//      const size_t o1 = m_coeff_buf[i] >= m_threshold;
+//      m_coeff_buf[i] += tmpd[o1];
+//      m_bit_buffer.push_back(tmpb[o1]);
+//    }
+//  }
+//#else
   assert(m_budget >= m_bit_buffer.size());
   if (m_budget - m_bit_buffer.size() > m_LSP_mask_sum) {  // No need to check BitBudgetMet
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
@@ -190,7 +206,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
       }
     }
   }
-#endif
+//#endif
 
   // Second, mark newly found significant pixels in `m_LSP_mask`.
   //
@@ -208,12 +224,12 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
   //
   const auto tmp = d2_type{m_threshold * -0.5, m_threshold * 0.5};
 
-#ifdef QZ_TERM
-  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-    if (m_LSP_mask[i])
-      m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
-  }
-#else
+//#ifdef QZ_TERM
+//  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+//    if (m_LSP_mask[i])
+//      m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
+//  }
+//#else
   assert(m_budget >= m_bit_idx);
   if (m_budget - m_bit_idx > m_LSP_mask_sum) {  // No need to check BitBudgetMet
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
@@ -230,7 +246,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
       }
     }
   }
-#endif
+//#endif
 
   // Second, mark newly found significant pixels in `m_LSP_mark`
   //
