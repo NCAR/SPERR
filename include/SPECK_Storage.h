@@ -41,14 +41,12 @@ class SPECK_Storage {
 
   void set_dimensions(dims_type);
 
-  //
   // Toggle different compression modes.
   // These compression modes are mutually exclusive, meaning that setting value to one
   // parameter will also set values of other parameters so that they won't have any effect.
   //
   void set_target_qz_level(int32_t lev);
   auto set_target_bit_budget(size_t) -> RTNType;
-
 
  protected:
   //

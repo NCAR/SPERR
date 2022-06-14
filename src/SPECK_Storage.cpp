@@ -120,6 +120,7 @@ auto sperr::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t 
   m_coeff_buf.resize(m_dims[0] * m_dims[1] * m_dims[2]);
 
   m_encoded_stream.clear();
+  m_budget = 0;
 
   return RTNType::Good;
 }
@@ -238,8 +239,8 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
 //      m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
 //  }
 //#else
-  assert(m_budget >= m_bit_idx);
-  if (m_budget - m_bit_idx > m_LSP_mask_sum) {  // No need to check BitBudgetMet
+  assert(m_bit_buffer.size() >= m_bit_idx);
+  if (m_bit_buffer.size() - m_bit_idx > m_LSP_mask_sum) {  // No need to check BitBudgetMet
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask[i])
         m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
@@ -249,7 +250,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask[i]) {
         m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
-        if (m_bit_idx >= m_budget)
+        if (m_bit_idx >= m_bit_buffer.size())
           return RTNType::BitBudgetMet;
       }
     }
@@ -277,7 +278,7 @@ auto sperr::SPECK_Storage::m_takeoff_check() const -> RTNType
 auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
 {
   assert(m_max_coeff_bit >= m_qz_lev);
-  const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
+  const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev;
   if (bitplane >= num_qz_levs)
     return RTNType::QzLevelReached;
 

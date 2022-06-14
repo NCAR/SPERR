@@ -64,6 +64,7 @@ class speck_tester_omp {
     if (compressor.compress() != RTNType::Good)
       return 1;
     auto stream = compressor.get_encoded_bitstream();
+    std::cout << "stream len = " << stream.size() << std::endl;
     if (stream.empty())
       return 1;
 

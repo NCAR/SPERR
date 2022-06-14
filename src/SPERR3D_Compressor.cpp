@@ -101,7 +101,7 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
   rtn = m_encoder.take_data(m_cdf.release_data(), m_dims);
   if (rtn != RTNType::Good)
     return rtn;
-  m_encoder.set_quantization_level(m_qz_lev);
+  m_encoder.set_target_qz_level(m_qz_lev);
   rtn = m_encoder.encode();
   if (rtn != RTNType::Good)
     return rtn;

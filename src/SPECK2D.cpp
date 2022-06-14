@@ -117,10 +117,6 @@ auto sperr::SPECK2D::decode() -> RTNType
     return RTNType::Error;
   m_encode_mode = false;
 
-  // By default, decode all the available bits
-  if (m_budget == 0 || m_budget > m_bit_buffer.size())
-    m_budget = m_bit_buffer.size();
-
   // Initialize coefficients to be zero, and signs to be all positive.
   const auto coeff_len = m_dims[0] * m_dims[1];
   m_coeff_buf.assign(coeff_len, 0.0);
@@ -306,14 +302,14 @@ auto sperr::SPECK2D::m_process_P_decode(size_t loc, size_t& counter, bool need_d
   bool is_sig = true;
 
   if (need_decide_sig) {
-    if (m_bit_idx >= m_budget)
+    if (m_bit_idx >= m_bit_buffer.size())
       return RTNType::BitBudgetMet;
     is_sig = m_bit_buffer[m_bit_idx++];
   }
 
   if (is_sig) {
     counter++;
-    if (m_bit_idx >= m_budget)
+    if (m_bit_idx >= m_bit_buffer.size())
       return RTNType::BitBudgetMet;
     m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];
 
@@ -365,7 +361,7 @@ auto sperr::SPECK2D::m_process_S_decode(size_t idx1,
 
   if (need_decide_sig) {
     const auto tmps = std::array<SigType, 2>{SigType::Insig, SigType::Sig};
-    if (m_bit_idx >= m_budget)
+    if (m_bit_idx >= m_bit_buffer.size())
       return RTNType::BitBudgetMet;
     set.signif = tmps[m_bit_buffer[m_bit_idx++]];
   }
@@ -509,7 +505,7 @@ auto sperr::SPECK2D::m_process_I(bool need_decide_sig) -> RTNType
       return RTNType::BitBudgetMet;
   }
   else {
-    if (m_bit_idx >= m_budget)
+    if (m_bit_idx >= m_bit_buffer.size())
       return RTNType::BitBudgetMet;
     m_I.signif = m_bit_buffer[m_bit_idx++] ? SigType::Sig : SigType::Insig;
   }
