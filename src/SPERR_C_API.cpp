@@ -37,8 +37,8 @@ int C_API::sperr_qzcomp_2d(const void* src,
   }
   if (rtn != RTNType::Good)
     return -1;
-  compressor.set_qz_level(qlev);
-  compressor.set_tolerance(tol);
+  //compressor.set_qz_level(qlev); // TODO: need to revisit.
+  //compressor.set_tolerance(tol); // TODO: need to revisit.
 
   // Do the actual compression work!
   rtn = compressor.compress();

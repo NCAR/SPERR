@@ -173,7 +173,7 @@ auto sperr::SPECK_Storage::set_target_bit_budget(size_t budget) -> RTNType
     m_budget = budget + 8 - mod;
 
   // Also set other parameters
-  m_qz_lev = std::numeric_limits<int32_t>::lowest();
+  m_qz_lev = std::numeric_limits<int32_t>::lowest(); // -2147483648
 
   return RTNType::Good;
 }

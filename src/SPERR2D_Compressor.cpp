@@ -35,33 +35,36 @@ auto SPERR2D_Compressor::take_data(std::vector<double>&& buf, sperr::dims_type d
   return RTNType::Good;
 }
 
-#ifdef QZ_TERM
-void SPERR2D_Compressor::set_qz_level(int32_t q)
+void SPERR2D_Compressor::set_target_qz_level(int32_t q)
 {
   m_qz_lev = q;
+  
+  // Also set other termination criteria to be "never terminate."
+  m_bpp = std::numeric_limits<double>::max();
 }
-void SPERR2D_Compressor::set_tolerance(double tol)
-{
-  m_tol = tol;
-}
-auto SPERR2D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
-{
-  return {m_LOS.size(), m_sperr_stream.size()};
-}
-#else
-auto SPERR2D_Compressor::set_bpp(double bpp) -> RTNType
+//void SPERR2D_Compressor::set_tolerance(double tol)
+//{
+//  m_tol = tol;
+//}
+//auto SPERR2D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
+//{
+//  return {m_LOS.size(), m_sperr_stream.size()};
+//}
+auto SPERR2D_Compressor::set_target_bpp(double bpp) -> RTNType
 {
   const auto total_vals = m_dims[0] * m_dims[1];
   if (bpp <= 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
   else if (size_t(bpp * total_vals) <= (m_meta_size + m_condi_stream.size()) * 8)
     return RTNType::InvalidParam;
-  else {
+  else
     m_bpp = bpp;
-    return RTNType::Good;
-  }
+
+  // Also set other termination criteria to be "never terminate."
+  m_qz_lev = std::numeric_limits<int32_t>::lowest(); // -2147483648
+
+  return RTNType::Good;
 }
-#endif
 
 void SPERR2D_Compressor::toggle_conditioning(sperr::Conditioner::settings_type settings)
 {
@@ -88,10 +91,10 @@ auto SPERR2D_Compressor::compress() -> RTNType
   m_speck_stream.clear();
   m_encoded_stream.clear();
 
-#ifdef QZ_TERM
-  m_sperr_stream.clear();
-  m_LOS.clear();
-#endif
+//#ifdef QZ_TERM
+//  m_sperr_stream.clear();
+//  m_LOS.clear();
+//#endif
 
   // Believe it or not, there are constant fields passed in for compression!
   // Let's detect that case and skip the rest of the compression routine if it occurs.
@@ -102,15 +105,15 @@ auto SPERR2D_Compressor::compress() -> RTNType
     return tmp;
   }
 
-#ifdef QZ_TERM
-  // If outlier correction is required, we make a copy of the original buffer
-  if (m_tol > 0.0) {
-    m_val_buf2.resize(total_vals);
-    std::copy(m_val_buf.begin(), m_val_buf.end(), m_val_buf2.begin());
-  }
-  else
-    m_val_buf2.clear();
-#endif
+//#ifdef QZ_TERM
+//  // If outlier correction is required, we make a copy of the original buffer
+//  if (m_tol > 0.0) {
+//    m_val_buf2.resize(total_vals);
+//    std::copy(m_val_buf.begin(), m_val_buf.end(), m_val_buf2.begin());
+//  }
+//  else
+//    m_val_buf2.clear();
+//#endif
 
   // Step 1: data goes through the conditioner
   m_conditioner.toggle_all_settings(m_conditioning_settings);
@@ -130,15 +133,27 @@ auto SPERR2D_Compressor::compress() -> RTNType
   if (rtn != RTNType::Good)
     return rtn;
 
-#ifdef QZ_TERM
-  m_encoder.set_target_qz_level(m_qz_lev);
-#else
-  m_encoder.set_target_bit_budget(size_t(m_bpp * total_vals) - (m_meta_size + m_condi_stream.size()) * 8);
-#endif
+  const auto maxd = std::numeric_limits<double>::max();
+  const auto mode = sperr::compression_mode(m_bpp, m_qz_lev, maxd, 0.0);
+  switch (mode) {
+    case sperr::CompMode::FixedSize : {
+      const auto budget = static_cast<size_t>
+                          (m_bpp * total_vals - (m_meta_size + m_condi_stream.size()) * 8);
+      m_encoder.set_target_bit_budget(budget);
+      break;
+    }
+    case sperr::CompMode::FixedQz : {
+      m_encoder.set_target_qz_level(m_qz_lev);
+      break;
+    }
+    default:
+      return RTNType::CompModeUnknown;
+  }
 
   rtn = m_encoder.encode();
   if (rtn != RTNType::Good)
     return rtn;
+
   // Copy SPECK bitstream to `m_speck_stream` so `m_encoder` can keep its internal storage.
   // The decision to copy rather than release is because that this stream is small so cheaper
   // to copy, and alos it's grown gradually inside of `m_encoder`.
@@ -146,51 +161,51 @@ auto SPERR2D_Compressor::compress() -> RTNType
   if (m_speck_stream.empty())
     return RTNType::Error;
 
-#ifdef QZ_TERM
-  if (m_tol <= 0.0) {
-    // Return the memory block back to `m_val_buf`.
-    m_val_buf = m_encoder.release_data();
-  }
-  else {
-    // Step 4: perform a decompression pass
-    rtn = m_encoder.decode();
-    if (rtn != RTNType::Good)
-      return rtn;
-    m_cdf.take_data(m_encoder.release_data(), m_dims);
-    m_cdf.idwt2d();
-    m_val_buf = m_cdf.release_data();
-    m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
-
-    // Step 5: find all the outliers!
-    // Note: the cumbersome calculations below prevents the situation where deviations
-    // are below the threshold in double precision, but above in single precision!
-    auto new_tol = m_tol;
-    for (size_t i = 0; i < total_vals; i++) {
-      const auto d = std::abs(m_val_buf2[i] - m_val_buf[i]);
-      const float f = std::abs(float(m_val_buf2[i]) - float(m_val_buf[i]));
-      if (double(f) > m_tol && d <= m_tol)
-        new_tol = std::min(new_tol, d);
-    }
-    for (size_t i = 0; i < total_vals; i++) {
-      const auto diff = m_val_buf2[i] - m_val_buf[i];
-      if (std::abs(diff) > new_tol)
-        m_LOS.emplace_back(i, diff);
-    }
-
-    // Step 6: actually encode located outliers
-    if (!m_LOS.empty()) {
-      m_sperr.set_tolerance(new_tol);
-      m_sperr.set_length(total_vals);
-      m_sperr.copy_outlier_list(m_LOS);
-      rtn = m_sperr.encode();
-      if (rtn != RTNType::Good)
-        return rtn;
-      m_sperr_stream = m_sperr.get_encoded_bitstream();
-      if (m_sperr_stream.empty())
-        return RTNType::Error;
-    }
-  }  // Finish error correction.
-#endif
+//#ifdef QZ_TERM
+//  if (m_tol <= 0.0) {
+//    // Return the memory block back to `m_val_buf`.
+//    m_val_buf = m_encoder.release_data();
+//  }
+//  else {
+//    // Step 4: perform a decompression pass
+//    rtn = m_encoder.decode();
+//    if (rtn != RTNType::Good)
+//      return rtn;
+//    m_cdf.take_data(m_encoder.release_data(), m_dims);
+//    m_cdf.idwt2d();
+//    m_val_buf = m_cdf.release_data();
+//    m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
+//
+//    // Step 5: find all the outliers!
+//    // Note: the cumbersome calculations below prevents the situation where deviations
+//    // are below the threshold in double precision, but above in single precision!
+//    auto new_tol = m_tol;
+//    for (size_t i = 0; i < total_vals; i++) {
+//      const auto d = std::abs(m_val_buf2[i] - m_val_buf[i]);
+//      const float f = std::abs(float(m_val_buf2[i]) - float(m_val_buf[i]));
+//      if (double(f) > m_tol && d <= m_tol)
+//        new_tol = std::min(new_tol, d);
+//    }
+//    for (size_t i = 0; i < total_vals; i++) {
+//      const auto diff = m_val_buf2[i] - m_val_buf[i];
+//      if (std::abs(diff) > new_tol)
+//        m_LOS.emplace_back(i, diff);
+//    }
+//
+//    // Step 6: actually encode located outliers
+//    if (!m_LOS.empty()) {
+//      m_sperr.set_tolerance(new_tol);
+//      m_sperr.set_length(total_vals);
+//      m_sperr.copy_outlier_list(m_LOS);
+//      rtn = m_sperr.encode();
+//      if (rtn != RTNType::Good)
+//        return rtn;
+//      m_sperr_stream = m_sperr.get_encoded_bitstream();
+//      if (m_sperr_stream.empty())
+//        return RTNType::Error;
+//    }
+//  }  // Finish error correction.
+//#endif
 
   rtn = m_assemble_encoded_bitstream();
 
@@ -211,9 +226,8 @@ auto SPERR2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   //
   // bool_byte[0]  : if the rest of the stream is zstd compressed.
   // bool_byte[1]  : if this bitstream is for 3D (true) or 2D (false) data.
-  // bool_byte[2]  : if this bitstream is in QZ_TERM mode (true) or fixed-size mode (false).
-  // bool_byte[3]  : if bool_byte[2]==true, the SPERR stream is empty (true) or not (false).
-  // bool_byte[4-7]: unused
+  // bool_byte[2]  : if there is SPERR stream (true) or not (false).
+  // bool_byte[3-7]: unused
   //
   auto meta = std::vector<uint8_t>(m_meta_size, 0);
   meta[0] = static_cast<uint8_t>(SPERR_VERSION_MAJOR);
@@ -223,10 +237,9 @@ auto SPERR2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   metabool[0] = true;
 #endif
 
-#ifdef QZ_TERM
-  metabool[2] = true;
-  metabool[3] = m_sperr_stream.empty();
-#endif
+//#ifdef QZ_TERM
+//  metabool[2] = m_sperr_stream.empty();
+//#endif
 
   meta[1] = sperr::pack_8_booleans(metabool);
 
@@ -234,12 +247,12 @@ auto SPERR2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   const uint32_t dims[2] = {static_cast<uint32_t>(m_dims[0]), static_cast<uint32_t>(m_dims[1])};
   std::memcpy(&meta[2], dims, sizeof(dims));
 
-#ifdef QZ_TERM
-  const auto total_size =
-      m_meta_size + m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
-#else
+//#ifdef QZ_TERM
+//  const auto total_size =
+//      m_meta_size + m_condi_stream.size() + m_speck_stream.size() + m_sperr_stream.size();
+//#else
   const auto total_size = m_meta_size + m_condi_stream.size() + m_speck_stream.size();
-#endif
+//#endif
 
   // Task 2: assemble pieces of info together.
   m_encoded_stream.resize(total_size);
@@ -250,10 +263,10 @@ auto SPERR2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   itr += m_condi_stream.size();
   std::copy(m_speck_stream.begin(), m_speck_stream.end(), itr);
   itr += m_speck_stream.size();
-#ifdef QZ_TERM
-  std::copy(m_sperr_stream.begin(), m_sperr_stream.end(), itr);
-  itr += m_sperr_stream.size();
-#endif
+//#ifdef QZ_TERM
+//  std::copy(m_sperr_stream.begin(), m_sperr_stream.end(), itr);
+//  itr += m_sperr_stream.size();
+//#endif
   assert(itr == m_encoded_stream.end());
 
 #ifdef USE_ZSTD

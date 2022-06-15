@@ -45,7 +45,7 @@ class SPECK_Storage {
   // These compression modes are mutually exclusive, meaning that setting value to one
   // parameter will also set values of other parameters so that they won't have any effect.
   //
-  void set_target_qz_level(int32_t lev);
+  void set_target_qz_level(int32_t lev); // TODO: will not need this setting with auto selection.
   auto set_target_bit_budget(size_t) -> RTNType;
 
  protected:

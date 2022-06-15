@@ -51,7 +51,17 @@ enum class RTNType {
   QzModeMismatch,
   SetBPPBeforeDims,
   QzLevelReached, // Not an error, just a termination condition
+  CompModeUnknown,
   Error
+};
+
+// Compression Mode
+enum class CompMode {
+  FixedSize,
+  FixedQz,
+  FixedPSNR,
+  FixedPWE,
+  Unknown
 };
 
 //
@@ -148,7 +158,7 @@ void scatter_chunk(std::vector<TBIG>& big_vol,
 
 // Structure that holds information extracted from SPERR headers.
 // This structure is returned by helper function `parse_header()`.
-struct Header_Info {
+struct HeaderInfo {
   uint8_t version_major = 0;
   bool zstd_applied = false;
   bool is_3d = false;
@@ -164,12 +174,15 @@ struct Header_Info {
   // For 2D slices, this field holds undefined values.
   dims_type chunk_dims = {0, 0, 0};
 };
-auto parse_header(const void*) -> Header_Info;
+auto parse_header(const void*) -> HeaderInfo;
 
 // calculate the mean square error (MSE) of two vectors.
 // In case of empty vectors or vectors of different sizes, it will return
 // std::numeric_limits<double>::max().
 auto calc_mse(const vecd_type&, const vecd_type&) -> double;
+
+// Decide compression mode based on a collection of parameters.
+auto compression_mode(double bpp, int32_t qz, double psnr, double pwe) -> CompMode;
 
 };  // namespace sperr
 

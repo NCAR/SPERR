@@ -469,11 +469,11 @@ template void sperr::scatter_chunk(std::vector<double>&,
                                    const std::vector<double>&,
                                    const std::array<size_t, 6>&);
 
-auto sperr::parse_header(const void* ptr) -> Header_Info
+auto sperr::parse_header(const void* ptr) -> HeaderInfo
 {
   const uint8_t* u8p = static_cast<const uint8_t*>(ptr);
   size_t loc = 0;
-  auto header = Header_Info();
+  auto header = HeaderInfo();
 
   // Parse version numbers
   header.version_major = *u8p;
@@ -542,4 +542,31 @@ auto sperr::calc_mse(const vecd_type& v1, const vecd_type& v2) -> double
   const auto mse = total_sum / static_cast<double>(len);
 
   return mse;
+}
+
+auto sperr::compression_mode(double bpp, int32_t qz, double psnr, double pwe) -> CompMode
+{
+  if (bpp > 0.0 && bpp < std::numeric_limits<double>::max() &&
+      qz == std::numeric_limits<int32_t>::lowest() && 
+      psnr == std::numeric_limits<double>::max() && pwe == 0.0 ) {
+    return CompMode::FixedSize;
+  }
+  else if (bpp == std::numeric_limits<double>::max() &&
+          qz > std::numeric_limits<int32_t>::lowest() && 
+          psnr == std::numeric_limits<double>::max() && pwe == 0.0 ) {
+    return CompMode::FixedQz;
+  }
+  else if (bpp > 0.0 && bpp < std::numeric_limits<double>::max() &&
+          qz == std::numeric_limits<int32_t>::lowest() && 
+          psnr < std::numeric_limits<double>::max() && pwe == 0.0 ) {
+    return CompMode::FixedPSNR;
+  }
+  else if (bpp > 0.0 && bpp < std::numeric_limits<double>::max() &&
+          qz == std::numeric_limits<int32_t>::lowest() && 
+          psnr == std::numeric_limits<double>::max() && pwe > 0.0 ) {
+    return CompMode::FixedPWE;
+  }
+  else {
+    return CompMode::Unknown;
+  }
 }

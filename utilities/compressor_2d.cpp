@@ -34,28 +34,24 @@ int main(int argc, char* argv[])
   auto output_file = std::string();
   app.add_option("-o", output_file, "Output filename")->required()->group("Output Specifications");
 
-#ifdef QZ_TERM
-  auto qz_level = int32_t{0};
+  auto qz_level = std::numeric_limits<int32_t>::lowest();
   app.add_option("-q", qz_level,
                  "Quantization level to reach when encoding\n"
                  "Note 1: smaller quantization levels yield less compression error.\n"
                  "Note 2: quantization levels could be negative integers as well.")
-      ->group("Compression Parameters")
-      ->required();
-
-  auto tolerance = double{0.0};
-  app.add_option("-t", tolerance,
-                 "Maximum point-wise error tolerance. E.g., `-t 1e-2`\n"
-                 "If not specified or a negative number is given, \n"
-                 "then the program will not perform any outlier correction.")
       ->group("Compression Parameters");
-#else
-  auto bpp = double{0.0};
+
+  //auto tolerance = double{0.0};
+  //app.add_option("-t", tolerance,
+  //               "Maximum point-wise error tolerance. E.g., `-t 1e-2`\n"
+  //               "If not specified or a negative number is given, \n"
+  //               "then the program will not perform any outlier correction.")
+  //    ->group("Compression Parameters");
+
+  auto bpp =  std::numeric_limits<double>::max();
   app.add_option("--bpp", bpp, "Target bit-per-pixel. E.g., `--bpp 4.5`")
       ->check(CLI::Range(0.0, 64.0))
-      ->group("Compression Parameters")
-      ->required();
-#endif
+      ->group("Compression Parameters") ;
 
   auto show_stats = bool{false};
   app.add_flag("--stats", show_stats,
@@ -91,16 +87,25 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-#ifdef QZ_TERM
-  compressor.set_qz_level(qz_level);
-  compressor.set_tolerance(tolerance);
-#else
-  rtn = compressor.set_bpp(bpp);
+  const auto maxd = std::numeric_limits<double>::max();
+  const auto mode = sperr::compression_mode(bpp, qz_level, maxd, 0.0);
+
+  switch (mode) {
+    case sperr::CompMode::FixedSize :
+      rtn = compressor.set_target_bpp(bpp);
+      break;
+    case sperr::CompMode::FixedQz :
+      compressor.set_target_qz_level(qz_level);
+      break;
+    default :
+      std::cerr << "Compression mode unclear!" << std::endl;
+      return 1;
+  }
+
   if (rtn != RTNType::Good) {
     std::cerr << "Set bit-per-pixel failed!" << std::endl;
     return 1;
   }
-#endif
 
   // Perform the actual compression
   rtn = compressor.compress();
@@ -153,21 +158,21 @@ int main(int argc, char* argv[])
       std::printf(", Data range = (%.2e, %.2e).\n", stats[3], stats[4]);
     }
 
-#ifdef QZ_TERM
-    // Also collect outlier statistics
-    const auto out_stats = compressor.get_outlier_stats();
-    if (out_stats.first == 0) {
-      printf("There were no outliers corrected!\n");
-    }
-    else {
-      printf(
-          "There were %ld outliers, percentage of total data points = %.2f%%.\n"
-          "Correcting them takes bpp = %.2f, percentage of total storage = %.2f%%\n",
-          out_stats.first, double(out_stats.first * 100) / double(total_vals),
-          double(out_stats.second * 8) / double(out_stats.first),
-          double(out_stats.second * 100) / double(stream.size()));
-    }
-#endif
+//#ifdef QZ_TERM
+//    // Also collect outlier statistics
+//    const auto out_stats = compressor.get_outlier_stats();
+//    if (out_stats.first == 0) {
+//      printf("There were no outliers corrected!\n");
+//    }
+//    else {
+//      printf(
+//          "There were %ld outliers, percentage of total data points = %.2f%%.\n"
+//          "Correcting them takes bpp = %.2f, percentage of total storage = %.2f%%\n",
+//          out_stats.first, double(out_stats.first * 100) / double(total_vals),
+//          double(out_stats.second * 8) / double(out_stats.first),
+//          double(out_stats.second * 100) / double(stream.size()));
+//    }
+//#endif
   }
 
   rtn = sperr::write_n_bytes(output_file, stream.size(), stream.data());
