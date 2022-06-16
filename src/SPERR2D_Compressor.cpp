@@ -42,6 +42,7 @@ void SPERR2D_Compressor::set_target_qz_level(int32_t q)
   // Also set other termination criteria to be "never terminate."
   m_bpp = std::numeric_limits<double>::max();
 }
+
 //void SPERR2D_Compressor::set_tolerance(double tol)
 //{
 //  m_tol = tol;
@@ -50,6 +51,7 @@ void SPERR2D_Compressor::set_target_qz_level(int32_t q)
 //{
 //  return {m_LOS.size(), m_sperr_stream.size()};
 //}
+
 auto SPERR2D_Compressor::set_target_bpp(double bpp) -> RTNType
 {
   const auto total_vals = m_dims[0] * m_dims[1];
@@ -57,8 +59,8 @@ auto SPERR2D_Compressor::set_target_bpp(double bpp) -> RTNType
     return RTNType::InvalidParam;
   else if (size_t(bpp * total_vals) <= (m_meta_size + m_condi_stream.size()) * 8)
     return RTNType::InvalidParam;
-  else
-    m_bpp = bpp;
+
+  m_bpp = bpp;
 
   // Also set other termination criteria to be "never terminate."
   m_qz_lev = std::numeric_limits<int32_t>::lowest(); // -2147483648
@@ -133,6 +135,7 @@ auto SPERR2D_Compressor::compress() -> RTNType
   if (rtn != RTNType::Good)
     return rtn;
 
+  // Specify compression mode based on provided parameters.
   const auto maxd = std::numeric_limits<double>::max();
   const auto mode = sperr::compression_mode(m_bpp, m_qz_lev, maxd, 0.0);
   switch (mode) {

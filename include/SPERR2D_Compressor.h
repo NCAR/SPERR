@@ -28,6 +28,7 @@ class SPERR2D_Compressor {
   void toggle_conditioning(sperr::Conditioner::settings_type);
 
   void set_target_qz_level(int32_t); // TODO: will not need this setting with auto-selection.
+  //void set_tolerance(double);
   // Return 1) the number of outliers, and 2) the number of bytes to encode them.
   //auto get_outlier_stats() const -> std::pair<size_t, size_t>;
   auto set_target_bpp(double) -> RTNType;
