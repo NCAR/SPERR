@@ -4,10 +4,7 @@
 #include "CDF97.h"
 #include "Conditioner.h"
 #include "SPECK3D.h"
-
-#ifdef QZ_TERM
 #include "SPERR.h"
-#endif
 
 #ifdef USE_ZSTD
 #include "zstd.h"
@@ -29,14 +26,11 @@ class SPERR3D_Compressor {
 
   void toggle_conditioning(Conditioner::settings_type);
 
-#ifdef QZ_TERM
-  void set_qz_level(int32_t);
-  void set_tolerance(double);
+  void set_target_qz_level(int32_t);
+  //void set_tolerance(double);
   // Return 1) the number of outliers, and 2) the number of bytes to encode them.
-  auto get_outlier_stats() const -> std::pair<size_t, size_t>;
-#else
-  auto set_bpp(double) -> RTNType;
-#endif
+  //auto get_outlier_stats() const -> std::pair<size_t, size_t>;
+  auto set_target_bit_budget(size_t) -> RTNType;
 
   auto compress() -> RTNType;
 
@@ -53,22 +47,23 @@ class SPERR3D_Compressor {
 
   Conditioner::settings_type m_conditioning_settings = {true, false, false, false};
 
-  // Store bitstreams from the conditioner and SPECK encoding, and the overall
-  // bitstream.
+  // Store bitstreams from the conditioner and SPECK encoding, and the overall bitstream.
   Conditioner::meta_type m_condi_stream;
-  vec8_type m_speck_stream;
+  //vec8_type m_speck_stream;
   vec8_type m_encoded_stream;
 
-#ifdef QZ_TERM
-  vec8_type m_sperr_stream;
-  SPERR m_sperr;
+  // Data members for fixed-size compression
+  size_t m_bit_budget = 0;
+
+  // Data members for fixed-q compression
   int32_t m_qz_lev = 0;
-  double m_tol = 0.0;          // tolerance used in error correction
-  std::vector<Outlier> m_LOS;  // List of OutlierS
-  vecd_type m_val_buf2;        // Copy of `m_val_buf` that goes through encoding.
-#else
-  double m_bpp = 0.0;
-#endif
+
+//#ifdef QZ_TERM
+//  vec8_type m_sperr_stream;
+//  SPERR m_sperr;
+//  double m_tol = 0.0;          // tolerance used in error correction
+//  std::vector<Outlier> m_LOS;  // List of OutlierS
+//  vecd_type m_val_buf2;        // Copy of `m_val_buf` that goes through encoding.
 
 #ifdef USE_ZSTD
   vec8_type m_zstd_buf;

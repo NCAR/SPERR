@@ -10,22 +10,21 @@
 #include <omp.h>
 #endif
 
-#ifndef QZ_TERM
-auto SPERR3D_OMP_D::set_bpp(double bpp) -> RTNType
-{
-  if (bpp < 0.0 || bpp > 64.0)
-    return RTNType::InvalidParam;
-  else {
-    m_bpp = bpp;
-    return RTNType::Good;
-  }
-}
-#endif
+//#ifndef QZ_TERM
+//auto SPERR3D_OMP_D::set_bpp(double bpp) -> RTNType
+//{
+//  if (bpp < 0.0 || bpp > 64.0)
+//    return RTNType::InvalidParam;
+//  else {
+//    m_bpp = bpp;
+//    return RTNType::Good;
+//  }
+//}
+//#endif
 
 void SPERR3D_OMP_D::set_num_threads(size_t n)
 {
-  if (n > 0)
-    m_num_threads = n;
+  m_num_threads = std::max(n, 1ul);
 }
 
 auto SPERR3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
@@ -59,13 +58,13 @@ auto SPERR3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
   if (b8[1] == false)
     return RTNType::SliceVolumeMismatch;
 
-#ifdef QZ_TERM
-  if (b8[2] == false)
-    return RTNType::QzModeMismatch;
-#else
-  if (b8[2] == true)
-    return RTNType::QzModeMismatch;
-#endif
+//#ifdef QZ_TERM
+//  if (b8[2] == false)
+//    return RTNType::QzModeMismatch;
+//#else
+//  if (b8[2] == true)
+//    return RTNType::QzModeMismatch;
+//#endif
 
   // Parse Step 3: Extract volume and chunk dimensions
   uint32_t vcdim[6];
@@ -144,9 +143,9 @@ auto SPERR3D_OMP_D::decompress(const void* p) -> RTNType
 
     decompressor.set_dims({chunks[i][1], chunks[i][3], chunks[i][5]});
 
-#ifndef QZ_TERM
-    decompressor.set_bpp(m_bpp);
-#endif
+//#ifndef QZ_TERM
+//    decompressor.set_bpp(m_bpp);
+//#endif
 
     chunk_rtn[i * 3] =
         decompressor.use_bitstream(m_bitstream_ptr + m_offsets[i], m_offsets[i + 1] - m_offsets[i]);

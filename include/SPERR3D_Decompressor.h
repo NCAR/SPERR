@@ -10,10 +10,7 @@
 #include "CDF97.h"
 #include "Conditioner.h"
 #include "SPECK3D.h"
-
-#ifdef QZ_TERM
 #include "SPERR.h"
-#endif
 
 #ifdef USE_ZSTD
 #include "zstd.h"
@@ -27,10 +24,6 @@ class SPERR3D_Decompressor {
   auto use_bitstream(const void* p, size_t len) -> RTNType;
 
   void set_dims(dims_type);
-
-#ifndef QZ_TERM
-  auto set_bpp(double) -> RTNType;
-#endif
 
   auto decompress() -> RTNType;
 
@@ -50,16 +43,15 @@ class SPERR3D_Decompressor {
   CDF97 m_cdf;
   SPECK3D m_decoder;
 
-#ifdef QZ_TERM
-  SPERR m_sperr;
-  vec8_type m_sperr_stream;
-#else
-  double m_bpp = 0.0;
-#endif
+//#ifdef QZ_TERM
+//  SPERR m_sperr;
+//  vec8_type m_sperr_stream;
+//#else
+//  double m_bpp = 0.0;
+//#endif
 
 #ifdef USE_ZSTD
-  std::unique_ptr<uint8_t[]> m_zstd_buf = nullptr;
-  size_t m_zstd_buf_len = 0;
+  vec8_type m_zstd_buf;
   std::unique_ptr<ZSTD_DCtx, decltype(&ZSTD_freeDCtx)> m_dctx = {nullptr, &ZSTD_freeDCtx};
 #endif
 };
