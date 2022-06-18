@@ -5,6 +5,8 @@
 #include <cstring>
 #include <numeric>  // std::accumulate()
 
+#include <iostream>
+
 #ifdef USE_OMP
 #include <omp.h>
 #endif
@@ -25,7 +27,7 @@ void SPERR3D_OMP_C::set_target_qz_level(int32_t q)
   m_qz_lev = q;
 
   // Also configure other parameters
-  m_bit_budget = std::numeric_limits<size_t>::max();
+  m_bit_budget = sperr::max_size;
 }
 //void SPERR3D_OMP_C::set_tolerance(double t)
 //{
@@ -52,12 +54,8 @@ auto SPERR3D_OMP_C::set_target_bpp(double bpp) -> RTNType
       std::any_of(m_chunk_dims.begin(), m_chunk_dims.end(), eq0))
     return RTNType::SetBPPBeforeDims;
 
-  // Need to account for the size of the header when calculating bit budget.
-  const auto total_vals_d = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
-  double total_bits = bpp * total_vals_d;
-  const auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
-  const auto header_bits = (m_header_magic + chunks.size() * 4) * 8;
-  m_bit_budget = total_bits - header_bits;
+  const auto total_vals= static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
+  m_bit_budget = static_cast<size_t>(bpp * total_vals);
 
   // Also configure other parameters
   m_qz_lev = std::numeric_limits<int32_t>::lowest(); // -2147483648
@@ -109,10 +107,23 @@ auto SPERR3D_OMP_C::compress() -> RTNType
                   [](auto& v) { return v.empty(); }))
     return RTNType::Error;
 
-  // Make sure that each chunk has a bit budget that's a multiply of 8.
-  auto chunk_bit_budget = static_cast<size_t>((double)m_bit_budget / (double)num_chunks);
-  while (chunk_bit_budget % 8 != 0)
-    --chunk_bit_budget;
+  // Note! when `m_bit_budget` is at the numerical limit, type casting isn't reliable anymore...
+  //
+  auto chunk_bit_budget = size_t{0};
+  if (m_bit_budget == sperr::max_size)
+    chunk_bit_budget = sperr::max_size;
+  else {
+    const auto header_bits = (m_header_magic + chunks.size() * 4) * 8;
+    chunk_bit_budget = static_cast<size_t>(double(m_bit_budget - header_bits) / 
+                                           double(num_chunks));
+    while (chunk_bit_budget % 8 != 0)
+      chunk_bit_budget--;
+  }
+
+  // What compression mode to use?
+  const auto maxd = std::numeric_limits<double>::max();
+  const auto mode = sperr::compression_mode(chunk_bit_budget, m_qz_lev, maxd, 0.0);
+  assert(mode != sperr::CompMode::Unknown);
 
   // Let's prepare some data structures for compression!
   assert(m_num_threads > 0);

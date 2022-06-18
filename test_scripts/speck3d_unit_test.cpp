@@ -48,8 +48,14 @@ class speck_tester_omp {
     if (compressor.copy_data(in_buf.data(), total_vals, m_dims, m_chunk_dims) != RTNType::Good)
       return 1;
 
+    size_t total_bits = 0;
+    if (bpp > 64.0)
+      total_bits = sperr::max_size;
+    else
+      total_bits = static_cast<size_t>(bpp * total_vals);
+
     auto rtn = sperr::RTNType::Good;
-    const auto mode = sperr::compression_mode(bpp, qz, psnr, pwe);
+    const auto mode = sperr::compression_mode(total_bits, qz, psnr, pwe);
     switch (mode) {
       case sperr::CompMode::FixedSize :
         rtn = compressor.set_target_bpp(bpp);
@@ -61,17 +67,10 @@ class speck_tester_omp {
         return 1;
     }
 
-//#ifdef QZ_TERM
-//    compressor.set_qz_level(qz_level);
-//    compressor.set_tolerance(tol);
-//#else
-//    compressor.set_bpp(bpp);
-//#endif
-
-    if (compressor.compress() != RTNType::Good)
+    if (compressor.compress() != RTNType::Good) {
       return 1;
+    }
     auto stream = compressor.get_encoded_bitstream();
-    std::cout << "stream len = " << stream.size() << std::endl;
     if (stream.empty())
       return 1;
 
@@ -146,6 +145,55 @@ TEST(speck3d_constant, omp_chunks)
   auto infty = std::numeric_limits<float>::infinity();
   EXPECT_EQ(psnr, infty);
   EXPECT_EQ(lmax, 0.0f);
+}
+
+//
+// Test target qz-level mode
+//
+TEST(speck3d_fixed_q, small)
+{
+  speck_tester_omp tester("../test_data/wmag17.float", {17, 17, 17}, 1);
+
+  const auto tar_psnr = std::numeric_limits<double>::max();
+  const auto bpp = tar_psnr;
+  const auto pwe = 0.0;
+
+  tester.execute(bpp, -2, tar_psnr, pwe);
+  float psnr = tester.get_psnr();
+  float lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 64.2301);
+  EXPECT_LT(psnr, 64.2302);
+  EXPECT_LT(lmax, 3.0716e-1);
+
+  tester.execute(bpp, -5, tar_psnr, pwe);
+  psnr = tester.get_psnr();
+  lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 83.5173);
+  EXPECT_LT(psnr, 83.5174);
+  EXPECT_LT(lmax, 4.25e-2);
+}
+
+TEST(speck3d_fixed_q, narrow_data_range)
+{
+  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 2);
+
+  const auto tar_psnr = std::numeric_limits<double>::max();
+  const auto bpp = tar_psnr;
+  const auto pwe = 0.0;
+
+  tester.execute(bpp, -20, tar_psnr, pwe);
+  float psnr = tester.get_psnr();
+  float lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 61.2742);
+  EXPECT_LT(psnr, 61.2743);
+  EXPECT_LT(lmax, 2.37671e-06);
+
+  tester.execute(bpp, -22, tar_psnr, pwe);
+  psnr = tester.get_psnr();
+  lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 73.7561);
+  EXPECT_LT(psnr, 73.7562);
+  EXPECT_LT(lmax, 5.00702e-07);
 }
 
 ////

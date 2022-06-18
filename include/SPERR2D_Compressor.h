@@ -44,7 +44,7 @@ class SPERR2D_Compressor {
   const size_t m_meta_size = 10;  // Need to be the same as in SPERR2D_Decompressor.h
 
   // Data members for fixed-size compression
-  double m_bpp = 0.0;
+  size_t m_bit_budget = 0; // Total bit budget, including headers.
 
   // Data members for fixed-q compression
   int32_t m_qz_lev = 0;

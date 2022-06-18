@@ -40,7 +40,7 @@ void SPERR2D_Compressor::set_target_qz_level(int32_t q)
   m_qz_lev = q;
   
   // Also set other termination criteria to be "never terminate."
-  m_bpp = std::numeric_limits<double>::max();
+  m_bit_budget = sperr::max_size;
 }
 
 //void SPERR2D_Compressor::set_tolerance(double tol)
@@ -60,7 +60,9 @@ auto SPERR2D_Compressor::set_target_bpp(double bpp) -> RTNType
   else if (size_t(bpp * total_vals) <= (m_meta_size + m_condi_stream.size()) * 8)
     return RTNType::InvalidParam;
 
-  m_bpp = bpp;
+  m_bit_budget = static_cast<size_t>(bpp * double(total_vals));
+  while (m_bit_budget % 8 != 0)
+    --m_bit_budget;
 
   // Also set other termination criteria to be "never terminate."
   m_qz_lev = std::numeric_limits<int32_t>::lowest(); // -2147483648
@@ -135,23 +137,11 @@ auto SPERR2D_Compressor::compress() -> RTNType
   if (rtn != RTNType::Good)
     return rtn;
 
-  // Specify compression mode based on provided parameters.
   const auto maxd = std::numeric_limits<double>::max();
-  const auto mode = sperr::compression_mode(m_bpp, m_qz_lev, maxd, 0.0);
-  switch (mode) {
-    case sperr::CompMode::FixedSize : {
-      const auto budget = static_cast<size_t>
-                          (m_bpp * total_vals - (m_meta_size + m_condi_stream.size()) * 8);
-      m_encoder.set_target_bit_budget(budget);
-      break;
-    }
-    case sperr::CompMode::FixedQz : {
-      m_encoder.set_target_qz_level(m_qz_lev);
-      break;
-    }
-    default:
-      return RTNType::CompModeUnknown;
-  }
+  const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, maxd, 0.0);
+  assert(mode != sperr::CompMode::Unknown);
+  m_encoder.set_target_bit_budget(m_bit_budget - (m_meta_size + m_condi_stream.size()) * 8);
+  m_encoder.set_target_qz_level(m_qz_lev);
 
   rtn = m_encoder.encode();
   if (rtn != RTNType::Good)

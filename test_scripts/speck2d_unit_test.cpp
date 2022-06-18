@@ -42,16 +42,13 @@ class speck_tester {
     if (compressor.copy_data(in_buf.data(), total_vals, m_dims) != RTNType::Good)
       return 1;
 
-//#ifdef QZ_TERM
-//    compressor.set_qz_level(q);
-//    compressor.set_tolerance(tol);
-//#else
-//    if (compressor.set_bpp(bpp) != RTNType::Good)
-//      return 1;
-//#endif
-
     auto rtn = sperr::RTNType::Good;
-    const auto mode = sperr::compression_mode(bpp, qz, psnr, pwe);
+    size_t total_bits = 0;
+    if (bpp > 64.0)
+      total_bits = sperr::max_size;
+    else
+      total_bits = static_cast<size_t>(bpp * total_vals);
+    const auto mode = sperr::compression_mode(total_bits, qz, psnr, pwe);
     switch (mode) {
       case sperr::CompMode::FixedSize :
         rtn = compressor.set_target_bpp(bpp);

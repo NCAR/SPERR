@@ -20,6 +20,9 @@ namespace sperr {
 
 using std::size_t;  // Seems most appropriate
 
+// The biggest value of size_t type that's also a multiply of eight.
+constexpr auto max_size = std::numeric_limits<size_t>::max() - 7;
+
 //
 // A few shortcuts
 //
@@ -182,7 +185,7 @@ auto parse_header(const void*) -> HeaderInfo;
 auto calc_mse(const vecd_type&, const vecd_type&) -> double;
 
 // Decide compression mode based on a collection of parameters.
-auto compression_mode(double bpp, int32_t qz, double psnr, double pwe) -> CompMode;
+auto compression_mode(size_t bit_budget, int32_t qz, double psnr, double pwe) -> CompMode;
 
 };  // namespace sperr
 

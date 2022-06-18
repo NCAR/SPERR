@@ -53,7 +53,7 @@ class SPERR3D_Compressor {
   vec8_type m_encoded_stream;
 
   // Data members for fixed-size compression
-  size_t m_bit_budget = 0;
+  size_t m_bit_budget = 0; // Total bit budget, including headers etc.
 
   // Data members for fixed-q compression
   int32_t m_qz_lev = 0;

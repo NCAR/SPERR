@@ -55,7 +55,7 @@ class SPERR3D_OMP_C {
   // Outlier stats include 1) the number of outliers, and 2) the num of bytes used to encode them.
 //  std::vector<std::pair<size_t, size_t>> m_outlier_stats;
 //#else
-  size_t m_bit_budget = 0;
+  size_t m_bit_budget = 0; // Total bit budget, including headers etc.
 //#endif
 
   //

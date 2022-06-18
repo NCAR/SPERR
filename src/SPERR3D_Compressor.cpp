@@ -217,14 +217,17 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
   if (rtn != RTNType::Good)
     return rtn;
 
-  // Specify compression mode based on provided parameters.
+  // Verify that we have a valid compression mode.
   const auto maxd = std::numeric_limits<double>::max();
-  const auto mode = sperr::compression_mode( static_cast<double>(m_bit_budget) / 
-                    static_cast<double>(total_vals), m_qz_lev, maxd, 0.0);
+  const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, maxd, 0.0);
   if (mode == CompMode::Unknown)
     return RTNType::CompModeUnknown;
-
-  m_encoder.set_target_bit_budget(m_bit_budget - m_condi_stream.size() * 8);
+  auto encoder_budget = size_t{0};
+  if (m_bit_budget == sperr::max_size)
+    encoder_budget = sperr::max_size;
+  else
+    encoder_budget = m_bit_budget - m_condi_stream.size() * 8;
+  m_encoder.set_target_bit_budget(encoder_budget);
   m_encoder.set_target_qz_level(m_qz_lev);
 
   rtn = m_encoder.encode();

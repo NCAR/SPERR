@@ -515,9 +515,9 @@ auto sperr::parse_header(const void* ptr) -> HeaderInfo
 
 auto sperr::calc_mse(const vecd_type& v1, const vecd_type& v2) -> double
 {
-  const auto limit = std::numeric_limits<double>::max();
+  const auto infy = std::numeric_limits<double>::infinity();
   if (v1.empty() || v2.empty() || v1.size() != v2.size())
-    return limit;
+    return infy;
 
   const auto len = v1.size();
 
@@ -544,24 +544,24 @@ auto sperr::calc_mse(const vecd_type& v1, const vecd_type& v2) -> double
   return mse;
 }
 
-auto sperr::compression_mode(double bpp, int32_t qz, double psnr, double pwe) -> CompMode
+auto sperr::compression_mode(size_t bit_budget, int32_t qz, double psnr, double pwe) -> CompMode
 {
-  if (bpp > 0.0 && bpp < std::numeric_limits<double>::max() &&
+  if (bit_budget < sperr::max_size &&
       qz == std::numeric_limits<int32_t>::lowest() && 
       psnr == std::numeric_limits<double>::max() && pwe == 0.0 ) {
     return CompMode::FixedSize;
   }
-  else if (bpp == std::numeric_limits<double>::max() &&
+  else if (bit_budget == sperr::max_size &&
           qz > std::numeric_limits<int32_t>::lowest() && 
           psnr == std::numeric_limits<double>::max() && pwe == 0.0 ) {
     return CompMode::FixedQz;
   }
-  else if (bpp > 0.0 && bpp < std::numeric_limits<double>::max() &&
+  else if (bit_budget == sperr::max_size &&
           qz == std::numeric_limits<int32_t>::lowest() && 
           psnr < std::numeric_limits<double>::max() && pwe == 0.0 ) {
     return CompMode::FixedPSNR;
   }
-  else if (bpp > 0.0 && bpp < std::numeric_limits<double>::max() &&
+  else if (bit_budget == sperr::max_size &&
           qz == std::numeric_limits<int32_t>::lowest() && 
           psnr == std::numeric_limits<double>::max() && pwe > 0.0 ) {
     return CompMode::FixedPWE;
