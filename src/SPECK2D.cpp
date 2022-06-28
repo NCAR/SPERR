@@ -276,14 +276,14 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
     const auto tmpb = b2_type{false, true};
     is_sig = tmpb[o1];
     m_bit_buffer.push_back(is_sig);
-    if (m_bit_buffer.size() >= m_budget)
+    if (m_bit_buffer.size() >= m_encode_budget)
       return RTNType::BitBudgetMet;
   }
 
   if (is_sig) {
     counter++;
     m_bit_buffer.push_back(m_sign_array[pixel_idx]);
-    if (m_bit_buffer.size() >= m_budget)
+    if (m_bit_buffer.size() >= m_encode_budget)
       return RTNType::BitBudgetMet;
 
     m_coeff_buf[pixel_idx] -= m_threshold;
@@ -334,7 +334,7 @@ auto sperr::SPECK2D::m_process_S_encode(size_t idx1,
   if (need_decide_sig) {
     set.signif = m_decide_set_S_significance(set);
     m_bit_buffer.push_back(set.signif == SigType::Sig);
-    if (m_bit_buffer.size() >= m_budget)
+    if (m_bit_buffer.size() >= m_encode_budget)
       return RTNType::BitBudgetMet;
   }
 
@@ -501,7 +501,7 @@ auto sperr::SPECK2D::m_process_I(bool need_decide_sig) -> RTNType
       m_I.signif = SigType::Sig;
 
     m_bit_buffer.push_back(m_I.signif == SigType::Sig);
-    if (m_bit_buffer.size() >= m_budget)
+    if (m_bit_buffer.size() >= m_encode_budget)
       return RTNType::BitBudgetMet;
   }
   else {

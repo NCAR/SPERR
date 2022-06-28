@@ -324,7 +324,7 @@ auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
   if (output) {
     // Output significance bit
     m_bit_buffer.push_back(is_sig);
-    if (m_bit_buffer.size() >= m_budget)
+    if (m_bit_buffer.size() >= m_encode_budget)
       return RTNType::BitBudgetMet;
   }
 
@@ -333,7 +333,7 @@ auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
     counter++;
     // Output pixel sign
     m_bit_buffer.push_back(m_sign_array[pixel_idx]);
-    if (m_bit_buffer.size() >= m_budget)
+    if (m_bit_buffer.size() >= m_encode_budget)
       return RTNType::BitBudgetMet;
 
     m_coeff_buf[pixel_idx] -= m_threshold;
@@ -424,7 +424,7 @@ auto sperr::SPECK3D::m_process_S_encode(size_t idx1,
   bool is_sig = (set.signif == SigType::Sig);
   if (output) {
     m_bit_buffer.push_back(is_sig);
-    if (m_bit_buffer.size() >= m_budget)
+    if (m_bit_buffer.size() >= m_encode_budget)
       return RTNType::BitBudgetMet;
   }
 

@@ -163,7 +163,7 @@ int C_API::sperr_sizecomp_2d(const void* src,
     return -1;
 
   // Set bit-per-pixel target
-  rtn = compressor.set_bpp(bpp);
+  rtn = compressor.set_target_bpp(bpp);
   if (rtn != RTNType::Good)
     return 2;
 
@@ -224,7 +224,7 @@ int C_API::sperr_sizecomp_3d(const void* src,
     return -1;
 
   // Set bit-per-pixel target
-  rtn = compressor.set_bpp(bpp);
+  rtn = compressor.set_target_bpp(bpp);
   if (rtn != RTNType::Good)
     return 2;
 

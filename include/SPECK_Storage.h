@@ -22,10 +22,8 @@ class SPECK_Storage {
   template <typename T>
   auto copy_data(const T*, size_t len, dims_type dims) -> RTNType;
   auto take_data(vecd_type&&, dims_type dims) -> RTNType;
-  auto release_data() -> vecd_type&&;          // Release ownership
-  auto view_data() const -> const vecd_type&;  // Keep ownership
-
-  // Get the encoded bitstream.
+  auto release_data() -> vecd_type&&;
+  auto view_data() const -> const vecd_type&;
   auto view_encoded_bitstream() const -> const vec8_type&;
   auto release_encoded_bitstream() -> vec8_type&&;
 
@@ -53,8 +51,9 @@ class SPECK_Storage {
   // Member variables
   //
   const size_t m_header_size = 10;  // See header definition in SPECK_Storage.cpp.
-  int32_t m_qz_lev = 0;             // At which quantization level does encoding terminate?
-  size_t m_budget = 0;              // What's the budget for num of bits in fixed-rate mode?
+  int32_t m_qz_lev = 0;
+  size_t m_encode_budget = 0;
+  size_t m_decode_budget = 0;
 
   //
   // A few data structures shared by both 2D and 3D SPECK algorithm
@@ -70,7 +69,7 @@ class SPECK_Storage {
   size_t m_LSP_mask_sum = 0;     // Number of TRUE values in `m_LSP_mask`.
   size_t m_bit_idx = 0;          // Used for decode. Which bit we're at?
   double m_threshold = 0.0;      // Threshold that's used for an iteration.
-  int32_t m_max_coeff_bit = 0;   // (Necessary in preparing bitstream headers.)
+  int32_t m_max_coeff_bit = 0;   // Maximum bitplane.
   dims_type m_dims = {0, 0, 0};  // Dimension of the 2D/3D volume
   const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
 
