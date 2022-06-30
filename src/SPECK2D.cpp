@@ -61,25 +61,10 @@ auto sperr::SPECK2D::encode() -> RTNType
   m_max_coeff_bit = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
   m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
 
-//#ifdef QZ_TERM
   // If anything prevents the algorithm from launching, return right away.
   auto rtn = m_takeoff_check();
   if (rtn != RTNType::Good)
     return rtn;
-
-  //const auto num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
-  //for (size_t lev = 0; lev < num_qz_levs; lev++) {
-  //  m_sorting_pass_encode();
-  //  m_refinement_pass_encode();
-  //  m_threshold *= 0.5;
-  //  m_clean_LIS();
-  //}
-
-  // Fill the bit buffer to multiplies of eight
-  //while (m_bit_buffer.size() % 8 != 0)
-  //  m_bit_buffer.push_back(false);
-
-//#else
 
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     rtn = m_sorting_pass_encode();
@@ -100,7 +85,6 @@ auto sperr::SPECK2D::encode() -> RTNType
     m_threshold *= 0.5;
     m_clean_LIS();
   }
-//#endif
 
   // Fill the bit buffer to multiplies of eight
   while (m_bit_buffer.size() % 8 != 0)
@@ -142,22 +126,9 @@ auto sperr::SPECK2D::decode() -> RTNType
       break;
     assert(rtn == RTNType::Good);
 
-//#ifdef QZ_TERM
-//    // This is the actual termination condition in QZ_TERM mode.
-//    assert(m_max_coeff_bit >= m_qz_lev);
-//    if (bitplane >= static_cast<size_t>(m_max_coeff_bit - m_qz_lev))
-//      break;
-//#endif
-
     m_threshold *= 0.5;
     m_clean_LIS();
   }
-
-//#ifdef QZ_TERM
-//  // We should not have more than 7 unprocessed bits left in the bit buffer!
-//  if (m_bit_buffer.size() - m_bit_idx >= 8)
-//    return RTNType::BitstreamWrongLen;
-//#endif
 
   // Restore coefficient signs
   const auto tmp = d2_type{-1.0, 1.0};
@@ -196,9 +167,6 @@ void sperr::SPECK2D::m_initialize_sets_lists()
   m_bit_buffer.reserve(m_coeff_buf.size());
 }
 
-//
-// Private methods
-//
 auto sperr::SPECK2D::m_sorting_pass_encode() -> RTNType
 {
   // First, process all insignificant pixels
