@@ -140,7 +140,10 @@ auto SPERR2D_Compressor::compress() -> RTNType
   const auto maxd = std::numeric_limits<double>::max();
   const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, maxd, 0.0);
   assert(mode != sperr::CompMode::Unknown);
-  m_encoder.set_target_bit_budget(m_bit_budget - (m_meta_size + m_condi_stream.size()) * 8);
+  if (m_bit_budget == sperr::max_size)
+    m_encoder.set_target_bit_budget(m_bit_budget);
+  else
+    m_encoder.set_target_bit_budget(m_bit_budget - (m_meta_size + m_condi_stream.size()) * 8);
   m_encoder.set_target_qz_level(m_qz_lev);
 
   rtn = m_encoder.encode();

@@ -138,6 +138,11 @@ void sperr::SPECK_Storage::set_target_qz_level(int32_t lev)
 }
 auto sperr::SPECK_Storage::set_target_bit_budget(size_t budget) -> RTNType
 {
+  if (budget == sperr::max_size) {
+    m_encode_budget = budget;
+    return RTNType::Good;
+  }
+  
   if (budget <= m_header_size * 8) {
     m_encode_budget = 0;
     return RTNType::Error;

@@ -222,12 +222,10 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
   const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, maxd, 0.0);
   if (mode == CompMode::Unknown)
     return RTNType::CompModeUnknown;
-  auto encoder_budget = size_t{0};
   if (m_bit_budget == sperr::max_size)
-    encoder_budget = sperr::max_size;
+    m_encoder.set_target_bit_budget(m_bit_budget);
   else
-    encoder_budget = m_bit_budget - m_condi_stream.size() * 8;
-  m_encoder.set_target_bit_budget(encoder_budget);
+    m_encoder.set_target_bit_budget(m_bit_budget - m_condi_stream.size() * 8);
   m_encoder.set_target_qz_level(m_qz_lev);
 
   rtn = m_encoder.encode();

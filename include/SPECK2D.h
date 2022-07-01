@@ -67,7 +67,7 @@ class SPECK2D : public SPECK_Storage {
   //
   bool m_encode_mode = true;  // Encode (true) or Decode (false) mode?
 
-  std::vector<std::vector<SPECKSet2D>> m_LIS;  // List of insignificant sets
+  std::vector<std::vector<SPECKSet2D>> m_LIS;
   SPECKSet2D m_I;
 };
 
