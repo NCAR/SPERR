@@ -132,14 +132,17 @@ void sperr::SPECK_Storage::set_dimensions(dims_type dims)
   m_dims = dims;
 }
 
-void sperr::SPECK_Storage::set_target_qz_level(int32_t lev)
+auto sperr::SPECK_Storage::set_comp_params(size_t budget, int32_t qlev, double psnr, double pwe)
+            -> RTNType
 {
-  m_qz_lev = lev;
-}
-auto sperr::SPECK_Storage::set_target_bit_budget(size_t budget) -> RTNType
-{
+  // First set those ones that only need a plain copy
+  m_qz_lev = qlev;
+  m_target_psnr = psnr;
+  m_target_pwe = pwe;
+
+  // Second set bit budget, which would require a little manipulation.
   if (budget == sperr::max_size) {
-    m_encode_budget = budget;
+    m_encode_budget = sperr::max_size;
     return RTNType::Good;
   }
   
@@ -149,11 +152,8 @@ auto sperr::SPECK_Storage::set_target_bit_budget(size_t budget) -> RTNType
   }
   budget -= m_header_size * 8;
 
-  size_t mod = budget % 8;
-  if (mod == 0)
-    m_encode_budget = budget;
-  else  // we can fill up that last byte!
-    m_encode_budget = budget + 8 - mod;
+  assert(budget % 8 == 0);
+  m_encode_budget = budget;
 
   return RTNType::Good;
 }

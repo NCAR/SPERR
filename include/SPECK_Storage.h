@@ -39,21 +39,19 @@ class SPECK_Storage {
 
   void set_dimensions(dims_type);
 
-  // Toggle different compression modes.
-  // These compression modes are mutually exclusive, meaning that setting value to one
-  // parameter will also set values of other parameters so that they won't have any effect.
-  //
-  void set_target_qz_level(int32_t lev); // TODO: will not need this setting with auto selection.
-  auto set_target_bit_budget(size_t) -> RTNType;
+  // Set all compression parameters together. Notice their order!
+  auto set_comp_params(size_t bit_budget, int32_t qlev, double psnr, double pwe) -> RTNType;
 
  protected:
   //
   // Member variables
   //
   const size_t m_header_size = 10;  // See header definition in SPECK_Storage.cpp.
-  int32_t m_qz_lev = 0;
   size_t m_encode_budget = 0;
   size_t m_decode_budget = 0;
+  int32_t m_qz_lev = sperr::lowest_int32;
+  double m_target_psnr = sperr::max_d;
+  double m_target_pwe = 0.0;
 
   //
   // A few data structures shared by both 2D and 3D SPECK algorithm
@@ -72,6 +70,12 @@ class SPECK_Storage {
   int32_t m_max_coeff_bit = 0;   // Maximum bitplane.
   dims_type m_dims = {0, 0, 0};  // Dimension of the 2D/3D volume
   const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
+
+  //
+  // A few data members for error estimation
+  //
+  std::vector<double> m_orig_coeff;
+  std::vector<double> m_qz_coeff;
 
   //
   // Member methods

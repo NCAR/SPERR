@@ -179,7 +179,6 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
   if (m_val_buf.empty() || m_val_buf.size() != total_vals)
     return RTNType::Error;
   m_condi_stream.fill(0);
-  //m_speck_stream.clear();
   m_encoded_stream.clear();
 
   // Believe it or not, there are constant fields passed in for compression!
@@ -218,15 +217,17 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
     return rtn;
 
   // Verify that we have a valid compression mode.
-  const auto maxd = std::numeric_limits<double>::max();
-  const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, maxd, 0.0);
-  if (mode == CompMode::Unknown)
-    return RTNType::CompModeUnknown;
+  const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, m_target_psnr, m_target_pwe);
+  assert(mode != CompMode::Unknown);
+
+  auto speck_budget = size_t{0};
   if (m_bit_budget == sperr::max_size)
-    m_encoder.set_target_bit_budget(m_bit_budget);
+    speck_budget = sperr::max_size;
   else
-    m_encoder.set_target_bit_budget(m_bit_budget - m_condi_stream.size() * 8);
-  m_encoder.set_target_qz_level(m_qz_lev);
+    speck_budget = m_bit_budget - m_condi_stream.size() * 8;
+  rtn = m_encoder.set_comp_params(speck_budget, m_qz_lev, m_target_psnr, m_target_pwe);
+  if (rtn != RTNType::Good)
+    return rtn;
 
   rtn = m_encoder.encode();
   if (rtn != RTNType::Good)
@@ -353,27 +354,31 @@ auto sperr::SPERR3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 //}
 //#endif
 
-void sperr::SPERR3D_Compressor::set_target_qz_level(int32_t q)
-{
-  m_qz_lev = q;
-}
-//void sperr::SPERR3D_Compressor::set_tolerance(double tol)
-//{
-//  m_tol = tol;
-//}
 //auto sperr::SPERR3D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
 //{
 //  return {m_LOS.size(), m_sperr_stream.size()};
 //}
 
-auto sperr::SPERR3D_Compressor::set_target_bit_budget(size_t budget) -> RTNType
+auto sperr::SPERR3D_Compressor::set_comp_params(size_t budget, int32_t qlev, double psnr, double pwe)
+            -> RTNType
 {
+  // First set those ones that only need a plain copy
+  m_qz_lev = qlev;
+  m_target_psnr = psnr;
+  m_target_pwe = pwe;
+
+  // Second set bit budget, which would require a little manipulation.
+  if (budget == sperr::max_size) {
+    m_bit_budget = sperr::max_size;
+    return RTNType::Good;
+  }
+
   if (budget < m_condi_stream.size() * 8)
     return RTNType::InvalidParam;
-
-  m_bit_budget = budget;
-
-  return RTNType::Good;
+  else {
+    m_bit_budget = budget;
+    return RTNType::Good;
+  }
 }
 
 void sperr::SPERR3D_Compressor::toggle_conditioning(sperr::Conditioner::settings_type b4)

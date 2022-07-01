@@ -26,11 +26,10 @@ class SPERR3D_Compressor {
 
   void toggle_conditioning(Conditioner::settings_type);
 
-  void set_target_qz_level(int32_t);
-  //void set_tolerance(double);
+  auto set_comp_params(size_t bit_budget, int32_t qlev, double psnr, double pwe) -> RTNType;
+
   // Return 1) the number of outliers, and 2) the number of bytes to encode them.
   //auto get_outlier_stats() const -> std::pair<size_t, size_t>;
-  auto set_target_bit_budget(size_t) -> RTNType;
 
   auto compress() -> RTNType;
 
@@ -49,16 +48,13 @@ class SPERR3D_Compressor {
 
   // Store bitstreams from the conditioner and SPECK encoding, and the overall bitstream.
   Conditioner::meta_type m_condi_stream;
-  //vec8_type m_speck_stream;
   vec8_type m_encoded_stream;
 
-  // Data members for fixed-size compression
   size_t m_bit_budget = 0; // Total bit budget, including headers etc.
+  int32_t m_qz_lev = sperr::lowest_int32;
+  double m_target_psnr = sperr::max_d;
+  double m_target_pwe = 0.0;
 
-  // Data members for fixed-q compression
-  int32_t m_qz_lev = 0;
-
-//#ifdef QZ_TERM
 //  vec8_type m_sperr_stream;
 //  SPERR m_sperr;
 //  double m_tol = 0.0;          // tolerance used in error correction

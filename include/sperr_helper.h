@@ -20,8 +20,10 @@ namespace sperr {
 
 using std::size_t;  // Seems most appropriate
 
-// The biggest value of size_t type that's also a multiply of eight.
-constexpr auto max_size = std::numeric_limits<size_t>::max() - 7;
+// Shortcut for the maximum values
+constexpr auto max_size = std::numeric_limits<size_t>::max();
+constexpr auto max_d = std::numeric_limits<double>::max();
+constexpr auto lowest_int32 = std::numeric_limits<int32_t>::lowest(); // -2147483648
 
 //
 // A few shortcuts

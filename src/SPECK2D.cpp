@@ -52,6 +52,16 @@ auto sperr::SPECK2D::encode() -> RTNType
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
                  [](auto v) { return std::abs(v); });
 
+  // In case that we need to estimate error, initialize these data structures.
+  const auto maxd = std::numeric_limits<double>::max();
+  const auto mode = sperr::compression_mode(m_encode_budget, m_qz_lev, maxd, 0.0);
+  assert(mode != sperr::CompMode::Unknown);
+  if (mode == CompMode::FixedPSNR || mode == CompMode::FixedPWE) {
+    m_orig_coeff.resize(m_coeff_buf.size());
+    std::copy(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_orig_coeff.begin());
+    m_qz_coeff.assign(m_coeff_buf.size(), 0.0);
+  }
+
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
   m_LSP_mask_sum = 0;

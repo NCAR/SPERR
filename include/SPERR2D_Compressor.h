@@ -27,11 +27,12 @@ class SPERR2D_Compressor {
 
   void toggle_conditioning(sperr::Conditioner::settings_type);
 
-  void set_target_qz_level(int32_t); // TODO: will not need this setting with auto-selection.
+  auto set_target_bpp(double) -> RTNType;
+  void set_target_qz_level(int32_t);
   //void set_tolerance(double);
+
   // Return 1) the number of outliers, and 2) the number of bytes to encode them.
   //auto get_outlier_stats() const -> std::pair<size_t, size_t>;
-  auto set_target_bpp(double) -> RTNType;
 
   auto compress() -> RTNType;
 
@@ -45,9 +46,9 @@ class SPERR2D_Compressor {
 
   // Data members for fixed-size compression
   size_t m_bit_budget = 0; // Total bit budget, including headers.
-
-  // Data members for fixed-q compression
-  int32_t m_qz_lev = 0;
+  int32_t m_qz_lev = sperr::lowest_int32;
+  double m_target_psnr = sperr::max_d;
+  double m_target_pwe = 0.0;
 
   //sperr::vec8_type m_sperr_stream;
   //sperr::SPERR m_sperr;

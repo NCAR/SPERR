@@ -21,18 +21,16 @@ void SPERR3D_OMP_C::toggle_conditioning(sperr::Conditioner::settings_type b4)
   m_conditioning_settings = b4;
 }
 
-//#ifdef QZ_TERM
 void SPERR3D_OMP_C::set_target_qz_level(int32_t q)
 {
   m_qz_lev = q;
 
   // Also configure other parameters
   m_bit_budget = sperr::max_size;
+  m_target_psnr = sperr::max_d;
+  m_target_pwe = 0.0;
 }
-//void SPERR3D_OMP_C::set_tolerance(double t)
-//{
-//  m_tol = t;
-//}
+
 //auto SPERR3D_OMP_C::get_outlier_stats() const -> std::pair<size_t, size_t>
 //{
 //  using pair = std::pair<size_t, size_t>;
@@ -42,7 +40,7 @@ void SPERR3D_OMP_C::set_target_qz_level(int32_t q)
 //  };
 //  return std::accumulate(m_outlier_stats.begin(), m_outlier_stats.end(), sum, op);
 //}
-//#else
+
 auto SPERR3D_OMP_C::set_target_bpp(double bpp) -> RTNType
 {
   if (bpp <= 0.0 || bpp > 64.0)
@@ -54,15 +52,16 @@ auto SPERR3D_OMP_C::set_target_bpp(double bpp) -> RTNType
       std::any_of(m_chunk_dims.begin(), m_chunk_dims.end(), eq0))
     return RTNType::SetBPPBeforeDims;
 
-  const auto total_vals= static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
+  const auto total_vals = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
   m_bit_budget = static_cast<size_t>(bpp * total_vals);
 
-  // Also configure other parameters
-  m_qz_lev = std::numeric_limits<int32_t>::lowest(); // -2147483648
+  // Also set other termination criteria to be "never terminate."
+  m_qz_lev = sperr::lowest_int32;
+  m_target_psnr = sperr::max_d;
+  m_target_pwe = 0.0;
 
   return RTNType::Good;
 }
-//#endif
 
 template <typename T>
 auto SPERR3D_OMP_C::copy_data(const T* vol,
@@ -107,22 +106,19 @@ auto SPERR3D_OMP_C::compress() -> RTNType
                   [](auto& v) { return v.empty(); }))
     return RTNType::Error;
 
-  // Note! when `m_bit_budget` is at the numerical limit, type casting isn't reliable anymore...
-  //
-  auto chunk_bit_budget = size_t{0};
-  if (m_bit_budget == sperr::max_size)
-    chunk_bit_budget = sperr::max_size;
-  else {
-    const auto header_bits = (m_header_magic + chunks.size() * 4) * 8;
-    chunk_bit_budget = static_cast<size_t>(double(m_bit_budget - header_bits) / 
-                                           double(num_chunks));
-    while (chunk_bit_budget % 8 != 0)
-      chunk_bit_budget--;
-  }
+  //auto chunk_bit_budget = size_t{0};
+  //if (m_bit_budget == sperr::max_size)
+  //  chunk_bit_budget = sperr::max_size;
+  //else {
+  //  const auto header_bits = (m_header_magic + chunks.size() * 4) * 8;
+  //  chunk_bit_budget = static_cast<size_t>(double(m_bit_budget - header_bits) / 
+  //                                         double(num_chunks));
+  //  while (chunk_bit_budget % 8 != 0)
+  //    chunk_bit_budget--;
+  //}
 
-  // What compression mode to use?
-  const auto maxd = std::numeric_limits<double>::max();
-  const auto mode = sperr::compression_mode(chunk_bit_budget, m_qz_lev, maxd, 0.0);
+  // Sanity check: what compression mode to use?
+  const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, m_target_psnr, m_target_pwe);
   assert(mode != sperr::CompMode::Unknown);
 
   // Let's prepare some data structures for compression!
@@ -136,6 +132,7 @@ auto SPERR3D_OMP_C::compress() -> RTNType
 //  m_outlier_stats.assign(num_chunks, {0, 0});
 //#endif
 
+
 // Each thread uses a compressor instance to work on a chunk.
 //
 #pragma omp parallel for num_threads(m_num_threads)
@@ -146,22 +143,29 @@ auto SPERR3D_OMP_C::compress() -> RTNType
     auto& compressor = compressors[0];
 #endif
 
-    // The following few operations have no chance to fail.
+    // Prepare for compression
     compressor.take_data(std::move(m_chunk_buffers[i]), {chunks[i][1], chunks[i][3], chunks[i][5]});
     compressor.toggle_conditioning(m_conditioning_settings);
 
-//#ifdef QZ_TERM
-//    compressor.set_qz_level(m_qz_lev);
-//    compressor.set_tolerance(m_tol);
-//#else
-//    compressor.set_bpp(m_bpp);
-//#endif
+    // Figure out the bit budget for each chunk
+    auto my_budget = size_t{0};
+    if (m_bit_budget == sperr::max_size)
+      my_budget = sperr::max_size;
+    else {
+      const auto total_vals = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
+      const auto chunk_vals = static_cast<double>(chunks[i][1] * chunks[i][3] * chunks[i][5]);
+      const auto avail_bits = static_cast<double>(m_bit_budget - (m_header_magic + chunks.size() * 4) * 8);
+      my_budget = static_cast<size_t>(chunk_vals / total_vals * avail_bits);
+      while (my_budget % 8 != 0)
+        my_budget--;
+    }
 
-    compressor.set_target_qz_level(m_qz_lev);
-    compressor.set_target_bit_budget(chunk_bit_budget);
+    chunk_rtn[i] = compressor.set_comp_params(my_budget, m_qz_lev, m_target_psnr, m_target_pwe);
 
-    // Action items
-    chunk_rtn[i] = compressor.compress();
+    if (chunk_rtn[i] == RTNType::Good) {
+      chunk_rtn[i] = compressor.compress();
+    }
+
     m_encoded_streams[i] = compressor.release_encoded_bitstream();
 
 //#ifdef QZ_TERM
