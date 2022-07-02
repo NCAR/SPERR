@@ -55,6 +55,7 @@ enum class RTNType {
   SliceVolumeMismatch,
   QzModeMismatch,
   SetBPPBeforeDims,
+  DataRangeNotSet,
   QzLevelReached, // Not an error, just a termination condition
   CompModeUnknown,
   Error

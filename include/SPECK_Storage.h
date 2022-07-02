@@ -52,6 +52,10 @@ class SPECK_Storage {
   int32_t m_qz_lev = sperr::lowest_int32;
   double m_target_psnr = sperr::max_d;
   double m_target_pwe = 0.0;
+  double m_data_range = sperr::max_d; // range of data before DWT.
+
+  // Use a cache variable to store the current compression mode
+  CompMode m_mode_cache = CompMode::Unknown;
 
   //
   // A few data structures shared by both 2D and 3D SPECK algorithm

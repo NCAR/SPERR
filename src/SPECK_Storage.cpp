@@ -163,6 +163,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
   // First, process significant pixels previously found.
   //
   const auto tmpd = d2_type{0.0, -m_threshold};
+  const auto tmpdq = d2_type{m_threshold * -0.5, m_threshold * 0.5};
 
   assert(m_encode_budget >= m_bit_buffer.size());
   if (m_encode_budget - m_bit_buffer.size() > m_LSP_mask_sum) {  // No need to check BitBudgetMet
@@ -171,6 +172,9 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
         const bool o1 = m_coeff_buf[i] >= m_threshold;
         m_coeff_buf[i] += tmpd[o1];
         m_bit_buffer.push_back(o1);
+
+        if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE)
+          m_qz_coeff[i] += tmpdq[o1];
       }
     }
   }
@@ -180,6 +184,10 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
         const bool o1 = m_coeff_buf[i] >= m_threshold;
         m_coeff_buf[i] += tmpd[o1];
         m_bit_buffer.push_back(o1);
+
+        if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE)
+          m_qz_coeff[i] += tmpdq[o1];
+
         if (m_bit_buffer.size() >= m_encode_budget)
           return RTNType::BitBudgetMet;
       }
@@ -200,19 +208,19 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
 {
   // First, process significant pixels previously found.
   //
-  const auto tmp = d2_type{m_threshold * -0.5, m_threshold * 0.5};
+  const auto tmpd = d2_type{m_threshold * -0.5, m_threshold * 0.5};
 
   assert(m_bit_buffer.size() >= m_bit_idx);
   if (m_bit_buffer.size() - m_bit_idx > m_LSP_mask_sum) {  // No need to check BitBudgetMet
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask[i])
-        m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
+        m_coeff_buf[i] += tmpd[m_bit_buffer[m_bit_idx++]];
     }
   }
   else {  // Need to check BitBudgetMet
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask[i]) {
-        m_coeff_buf[i] += tmp[m_bit_buffer[m_bit_idx++]];
+        m_coeff_buf[i] += tmpd[m_bit_buffer[m_bit_idx++]];
         if (m_bit_idx >= m_bit_buffer.size())
           return RTNType::BitBudgetMet;
       }

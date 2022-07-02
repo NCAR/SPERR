@@ -223,7 +223,7 @@ void sperr::SPECK3D::m_initialize_sets_lists()
   const auto parts = big.part_level;
   m_LIS[parts].insert(m_LIS[parts].begin(), big);
   m_LIP.clear();
-  m_LIP.reserve(m_coeff_buf.size() / 2);
+  m_LIP.reserve(m_coeff_buf.size() / 4);
 
   m_LSP_new.clear();
   m_LSP_new.reserve(m_coeff_buf.size() / 8);

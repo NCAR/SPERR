@@ -38,6 +38,17 @@ auto sperr::SPECK2D::encode() -> RTNType
     return RTNType::Error;
   m_encode_mode = true;
 
+  m_mode_cache = sperr::compression_mode(m_encode_budget, m_qz_lev, m_target_psnr, m_target_pwe);
+  if (m_mode_cache == sperr::CompMode::Unknown)
+    return RTNType::CompModeUnknown;
+
+  if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE) {
+    if (m_data_range == sperr::max_d)
+      return RTNType::DataRangeNotSet;
+  }
+  else
+    m_data_range = sperr::max_d;
+
   m_initialize_sets_lists();
 
   m_encoded_stream.clear();
@@ -52,14 +63,14 @@ auto sperr::SPECK2D::encode() -> RTNType
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
                  [](auto v) { return std::abs(v); });
 
-  // In case that we need to estimate error, initialize these data structures.
-  const auto maxd = std::numeric_limits<double>::max();
-  const auto mode = sperr::compression_mode(m_encode_budget, m_qz_lev, maxd, 0.0);
-  assert(mode != sperr::CompMode::Unknown);
-  if (mode == CompMode::FixedPSNR || mode == CompMode::FixedPWE) {
+  if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE) {
     m_orig_coeff.resize(m_coeff_buf.size());
     std::copy(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_orig_coeff.begin());
     m_qz_coeff.assign(m_coeff_buf.size(), 0.0);
+  }
+  else {
+    m_orig_coeff.clear();
+    m_qz_coeff.clear();
   }
 
   // Mark every coefficient as insignificant
@@ -153,11 +164,12 @@ void sperr::SPECK2D::m_initialize_sets_lists()
   // prepare m_LIS
   const auto num_of_parts =
       std::max(sperr::num_of_partitions(m_dims[0]), sperr::num_of_partitions(m_dims[1]));
-  m_LIS.resize(num_of_parts + 1);
+  if (m_LIS.size() < num_of_parts + 1)
+    m_LIS.resize(num_of_parts + 1);
   for (auto& list : m_LIS)
     list.clear();
   m_LIP.clear();
-  m_LIP.reserve(m_coeff_buf.size() / 2);
+  m_LIP.reserve(m_coeff_buf.size() / 4);
 
   // prepare the root, S
   auto S = m_produce_root();
@@ -250,9 +262,7 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
   bool is_sig = true;
 
   if (need_decide_sig) {
-    const size_t o1 = (m_coeff_buf[pixel_idx] >= m_threshold);
-    const auto tmpb = b2_type{false, true};
-    is_sig = tmpb[o1];
+    is_sig = (m_coeff_buf[pixel_idx] >= m_threshold);
     m_bit_buffer.push_back(is_sig);
     if (m_bit_buffer.size() >= m_encode_budget)
       return RTNType::BitBudgetMet;
@@ -266,8 +276,10 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
 
     m_coeff_buf[pixel_idx] -= m_threshold;
     m_LSP_new.push_back(pixel_idx);
-
     m_LIP[loc] = m_u64_garbage_val;
+
+    if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE)
+      m_qz_coeff[pixel_idx] = m_threshold * 1.5;
   }
 
   return RTNType::Good;
