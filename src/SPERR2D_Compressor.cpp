@@ -70,6 +70,19 @@ auto SPERR2D_Compressor::set_target_bpp(double bpp) -> RTNType
   return RTNType::Good;
 }
 
+auto SPERR2D_Compressor::set_target_psnr(double psnr) -> RTNType
+{
+  if (psnr <= 0.0)
+    return RTNType::InvalidParam;
+
+  m_target_psnr = psnr;
+  m_bit_budget = sperr::max_size;
+  m_qz_lev = sperr::lowest_int32;
+  m_target_pwe = 0.0;
+
+  return RTNType::Good;
+}
+
 void SPERR2D_Compressor::toggle_conditioning(sperr::Conditioner::settings_type settings)
 {
   m_conditioning_settings = settings;
@@ -119,6 +132,17 @@ auto SPERR2D_Compressor::compress() -> RTNType
 //    m_val_buf2.clear();
 //#endif
 
+  // Sanity check
+  const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, m_target_psnr, m_target_pwe);
+  assert(mode != sperr::CompMode::Unknown);
+
+  // Calculate the original data range and pass it to the encoder.
+  if (mode == sperr::CompMode::FixedPSNR || mode == sperr::CompMode::FixedPWE) {
+    auto [min, max] = std::minmax_element(m_val_buf.cbegin(), m_val_buf.cend());
+    auto range = *max - *min;
+    m_encoder.set_data_range(range);
+  }
+
   // Step 1: data goes through the conditioner
   m_conditioner.toggle_all_settings(m_conditioning_settings);
   auto [rtn, condi_meta] = m_conditioner.condition(m_val_buf);
@@ -136,10 +160,6 @@ auto SPERR2D_Compressor::compress() -> RTNType
   rtn = m_encoder.take_data(m_cdf.release_data(), m_dims);
   if (rtn != RTNType::Good)
     return rtn;
-
-  // Sanity check
-  const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, m_target_psnr, m_target_pwe);
-  assert(mode != sperr::CompMode::Unknown);
 
   auto speck_bit_budget = m_bit_budget - (m_meta_size + m_condi_stream.size()) * 8;
   if (m_bit_budget == sperr::max_size)

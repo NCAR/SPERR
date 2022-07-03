@@ -57,6 +57,7 @@ enum class RTNType {
   SetBPPBeforeDims,
   DataRangeNotSet,
   QzLevelReached, // Not an error, just a termination condition
+  PSNRReached, // Not an error, just a termination condition
   CompModeUnknown,
   Error
 };

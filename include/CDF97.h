@@ -12,8 +12,7 @@ class CDF97 {
   //
   // Input
   //
-  // Note that copy_data() and take_data() effectively resets internal states
-  // of this class.
+  // Note that copy_data() and take_data() effectively resets internal states of this class.
   template <typename T>
   auto copy_data(const T* buf, size_t len, dims_type dims) -> RTNType;
   auto take_data(std::vector<double>&& buf, dims_type dims) -> RTNType;

@@ -56,6 +56,9 @@ class speck_tester {
       case sperr::CompMode::FixedQz :
         compressor.set_target_qz_level(qz);
         break;
+      case sperr::CompMode::FixedPSNR :
+        compressor.set_target_psnr(psnr);
+        break;
       default :
         return 1;
     }
@@ -95,6 +98,66 @@ class speck_tester {
   std::string m_output_name = "output.tmp";
   float m_psnr, m_lmax;
 };
+
+
+//
+// Test target PSNR mode
+//
+TEST(speck2d, PSNR_odd_dim_image)
+{
+  speck_tester tester("../test_data/90x90.float", 90, 90);
+
+  const auto bpp = sperr::max_d;
+  const auto q = sperr::lowest_int32;
+  const auto pwe = 0.0;
+
+  double target_psnr = 70.0;
+  tester.execute(bpp, q, target_psnr, pwe);
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
+  EXPECT_GT(psnr, target_psnr);
+
+  target_psnr = 90.0;
+  tester.execute(bpp, q, target_psnr, pwe);
+  psnr = tester.get_psnr();
+  lmax = tester.get_lmax();
+  EXPECT_GT(psnr, target_psnr);
+
+  target_psnr = 110.0;
+  tester.execute(bpp, q, target_psnr, pwe);
+  psnr = tester.get_psnr();
+  lmax = tester.get_lmax();
+  EXPECT_GT(psnr, target_psnr);
+}
+
+TEST(speck2d, PSNR_small_data_range)
+{
+  speck_tester tester("../test_data/vorticity.512_512", 512, 512);
+
+  const auto bpp = std::numeric_limits<double>::max();
+  const auto q = sperr::lowest_int32;
+  const auto pwe = 0.0;
+
+  double target_psnr = 80.0;
+  tester.execute(bpp, q, target_psnr, pwe);
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
+  EXPECT_GT(psnr, target_psnr);
+
+  target_psnr = 100.0;
+  tester.execute(bpp, q, target_psnr, pwe);
+  psnr = tester.get_psnr();
+  lmax = tester.get_lmax();
+  EXPECT_GT(psnr, target_psnr);
+
+  target_psnr = 120.0;
+  tester.execute(bpp, q, target_psnr, pwe);
+  psnr = tester.get_psnr();
+  lmax = tester.get_lmax();
+  EXPECT_GT(psnr, target_psnr);
+}
+
+
 
 //
 // Test target quantization level mode
@@ -144,7 +207,6 @@ TEST(speck2d, QZ_small_data_range)
   EXPECT_LT(psnr, 84.3169);
   EXPECT_LT(lmax, 4.59038e-07);
 }
-
 
 //
 // Test fixed-error mode

@@ -1,6 +1,7 @@
 #include "SPECK_Storage.h"
 
 #include <cassert>
+#include <cmath>
 #include <cstring>
 #include <numeric>
 
@@ -45,6 +46,11 @@ auto sperr::SPECK_Storage::release_data() -> vecd_type&&
 auto sperr::SPECK_Storage::view_data() const -> const vecd_type&
 {
   return m_coeff_buf;
+}
+
+void sperr::SPECK_Storage::set_data_range(double range)
+{
+  m_data_range = range;
 }
 
 auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
@@ -247,10 +253,32 @@ auto sperr::SPECK_Storage::m_takeoff_check() const -> RTNType
 
 auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
 {
-  assert(m_max_coeff_bit >= m_qz_lev);
-  const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev;
-  if (bitplane >= num_qz_levs)
-    return RTNType::QzLevelReached;
+  assert(m_mode_cache != CompMode::Unknown);
+
+  switch (m_mode_cache) {
+    case CompMode::FixedQz : {
+      assert(m_max_coeff_bit >= m_qz_lev);
+      const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev;
+      if (bitplane >= num_qz_levs)
+        return RTNType::QzLevelReached;
+      else
+        break;
+    }
+    case CompMode::FixedPSNR : {
+      assert(m_orig_coeff.size() == m_qz_coeff.size());
+      assert(!m_orig_coeff.empty());
+      assert(m_data_range != sperr::max_d);
+      const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff);
+      const auto psnr = std::log10(m_data_range * m_data_range / mse) * 10.0;
+      std::printf("psnr = %f\n", psnr);
+      if (psnr >= m_target_psnr + 1.0) {
+        return RTNType::PSNRReached;
+      }
+      else
+        break;
+    }
+  }
 
   return RTNType::Good;
 }
+

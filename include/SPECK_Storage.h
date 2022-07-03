@@ -10,6 +10,7 @@
 #include <string>
 #include <utility>  // std::pair<>
 #include <vector>
+
 #include "sperr_helper.h"
 
 namespace sperr {
@@ -38,9 +39,11 @@ class SPECK_Storage {
   auto get_speck_stream_size(const void*) const -> uint64_t;
 
   void set_dimensions(dims_type);
+  void set_data_range(double);
 
   // Set all compression parameters together. Notice their order!
   auto set_comp_params(size_t bit_budget, int32_t qlev, double psnr, double pwe) -> RTNType;
+
 
  protected:
   //
@@ -54,7 +57,10 @@ class SPECK_Storage {
   double m_target_pwe = 0.0;
   double m_data_range = sperr::max_d; // range of data before DWT.
 
-  // Use a cache variable to store the current compression mode
+  // Use a cache variable to store the current compression mode.
+  // The compression mode, however, is NOT set or determined by `m_mode_cache`. It is determined
+  // by the combination of `m_encode_budget`, `m_qz_lev`, `m_target_psnr`, and `m_target_pwe`,
+  // and can be retrieved by calling function sperr::compression_mode().
   CompMode m_mode_cache = CompMode::Unknown;
 
   //
