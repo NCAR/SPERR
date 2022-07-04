@@ -190,6 +190,16 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
     return tmp;
   }
 
+  // Verify that we have a valid compression mode.
+  const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, m_target_psnr, m_target_pwe);
+  assert(mode != CompMode::Unknown);
+  // Calculate the original data range and pass it to the encoder.
+  if (mode == sperr::CompMode::FixedPSNR || mode == sperr::CompMode::FixedPWE) {
+    auto [min, max] = std::minmax_element(m_val_buf.cbegin(), m_val_buf.cend());
+    auto range = *max - *min;
+    m_encoder.set_data_range(range);
+  }
+
   // Step 1: data goes through the conditioner
   m_conditioner.toggle_all_settings(m_conditioning_settings);
   auto [rtn, condi_meta] = m_conditioner.condition(m_val_buf);
@@ -215,10 +225,6 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
   rtn = m_encoder.take_data(std::move(cdf_out), m_dims);
   if (rtn != RTNType::Good)
     return rtn;
-
-  // Verify that we have a valid compression mode.
-  const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, m_target_psnr, m_target_pwe);
-  assert(mode != CompMode::Unknown);
 
   auto speck_budget = size_t{0};
   if (m_bit_budget == sperr::max_size)

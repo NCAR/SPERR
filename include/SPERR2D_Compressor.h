@@ -29,8 +29,7 @@ class SPERR2D_Compressor {
 
   auto set_target_bpp(double) -> RTNType;
   void set_target_qz_level(int32_t);
-  auto set_target_psnr(double) -> RTNType;
-  //void set_tolerance(double);
+  void set_target_psnr(double);
 
   // Return 1) the number of outliers, and 2) the number of bytes to encode them.
   //auto get_outlier_stats() const -> std::pair<size_t, size_t>;

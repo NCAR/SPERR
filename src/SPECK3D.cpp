@@ -43,6 +43,19 @@ auto sperr::SPECK3D::encode() -> RTNType
   if (m_ready_to_encode() == false)
     return RTNType::Error;
 
+  // Cache the current compression mode
+  m_mode_cache = sperr::compression_mode(m_encode_budget, m_qz_lev, m_target_psnr, m_target_pwe);
+  if (m_mode_cache == sperr::CompMode::Unknown)
+    return RTNType::CompModeUnknown;
+
+  // Sanity check
+  if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE) {
+    if (m_data_range == sperr::max_d)
+      return RTNType::DataRangeNotSet;
+  }
+  else
+    m_data_range = sperr::max_d;
+
   m_initialize_sets_lists();
 
   m_encoded_stream.clear();
@@ -56,6 +69,18 @@ auto sperr::SPECK3D::encode() -> RTNType
   // Make every coefficient positive
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
                  [](auto v) { return std::abs(v); });
+
+  // Initialize these data structures for error estimation
+  if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE) {
+    m_orig_coeff.resize(m_coeff_buf.size());
+    std::copy(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_orig_coeff.begin());
+    m_qz_coeff.assign(m_coeff_buf.size(), 0.0);
+  }
+  else {
+    m_orig_coeff.clear();
+    m_qz_coeff.clear();
+  }
+  m_num_qz_coeff = 0;
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
@@ -314,8 +339,12 @@ auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
 
     m_coeff_buf[pixel_idx] -= m_threshold;
     m_LSP_new.push_back(pixel_idx);
-
     m_LIP[loc] = m_u64_garbage_val;
+
+    if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE) {
+      m_qz_coeff[pixel_idx] = m_threshold * 1.5;
+      m_num_qz_coeff++;
+    }
   }
 
   return RTNType::Good;

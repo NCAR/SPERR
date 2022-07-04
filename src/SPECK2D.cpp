@@ -38,10 +38,12 @@ auto sperr::SPECK2D::encode() -> RTNType
     return RTNType::Error;
   m_encode_mode = true;
 
+  // Cache the current compression mode
   m_mode_cache = sperr::compression_mode(m_encode_budget, m_qz_lev, m_target_psnr, m_target_pwe);
   if (m_mode_cache == sperr::CompMode::Unknown)
     return RTNType::CompModeUnknown;
 
+  // Sanity check
   if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE) {
     if (m_data_range == sperr::max_d)
       return RTNType::DataRangeNotSet;
@@ -63,6 +65,7 @@ auto sperr::SPECK2D::encode() -> RTNType
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
                  [](auto v) { return std::abs(v); });
 
+  // Initialize these data structures for error estimation
   if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE) {
     m_orig_coeff.resize(m_coeff_buf.size());
     std::copy(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_orig_coeff.begin());
@@ -353,9 +356,9 @@ auto sperr::SPECK2D::m_process_S_decode(size_t idx1,
   set.signif = SigType::Sig;
 
   if (need_decide_sig) {
-    const auto tmps = std::array<SigType, 2>{SigType::Insig, SigType::Sig};
     if (m_bit_idx >= m_bit_buffer.size())
       return RTNType::BitBudgetMet;
+    const auto tmps = std::array<SigType, 2>{SigType::Insig, SigType::Sig};
     set.signif = tmps[m_bit_buffer[m_bit_idx++]];
   }
 

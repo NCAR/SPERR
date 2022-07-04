@@ -28,6 +28,7 @@ class SPERR3D_OMP_C {
 
   auto set_target_bpp(double) -> RTNType;
   void set_target_qz_level(int32_t);
+  void set_target_psnr(double);
 
   auto compress() -> RTNType;
 
@@ -45,7 +46,6 @@ class SPERR3D_OMP_C {
   sperr::vec8_type m_total_stream;
 
   const size_t m_header_magic = 26;  // header size would be this number + num_chunks * 4
-
 
   size_t m_bit_budget = 0; // Total bit budget, including headers etc.
   int32_t m_qz_lev = sperr::lowest_int32;

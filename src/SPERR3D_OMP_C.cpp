@@ -63,6 +63,14 @@ auto SPERR3D_OMP_C::set_target_bpp(double bpp) -> RTNType
   return RTNType::Good;
 }
 
+void SPERR3D_OMP_C::set_target_psnr(double psnr)
+{
+  m_target_psnr = std::max(psnr, 0.0);
+  m_bit_budget = sperr::max_size;
+  m_qz_lev = sperr::lowest_int32;
+  m_target_pwe = 0.0;
+}
+
 template <typename T>
 auto SPERR3D_OMP_C::copy_data(const T* vol,
                               size_t len,
@@ -106,17 +114,6 @@ auto SPERR3D_OMP_C::compress() -> RTNType
                   [](auto& v) { return v.empty(); }))
     return RTNType::Error;
 
-  //auto chunk_bit_budget = size_t{0};
-  //if (m_bit_budget == sperr::max_size)
-  //  chunk_bit_budget = sperr::max_size;
-  //else {
-  //  const auto header_bits = (m_header_magic + chunks.size() * 4) * 8;
-  //  chunk_bit_budget = static_cast<size_t>(double(m_bit_budget - header_bits) / 
-  //                                         double(num_chunks));
-  //  while (chunk_bit_budget % 8 != 0)
-  //    chunk_bit_budget--;
-  //}
-
   // Sanity check: what compression mode to use?
   const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, m_target_psnr, m_target_pwe);
   assert(mode != sperr::CompMode::Unknown);
@@ -131,7 +128,6 @@ auto SPERR3D_OMP_C::compress() -> RTNType
 //#ifdef QZ_TERM
 //  m_outlier_stats.assign(num_chunks, {0, 0});
 //#endif
-
 
 // Each thread uses a compressor instance to work on a chunk.
 //
