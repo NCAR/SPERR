@@ -72,6 +72,7 @@ auto sperr::SPECK2D::encode() -> RTNType
     m_orig_coeff.clear();
     m_qz_coeff.clear();
   }
+  m_num_qz_coeff = 0;
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
@@ -278,8 +279,10 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
     m_LSP_new.push_back(pixel_idx);
     m_LIP[loc] = m_u64_garbage_val;
 
-    if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE)
+    if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE) {
       m_qz_coeff[pixel_idx] = m_threshold * 1.5;
+      m_num_qz_coeff++;
+    }
   }
 
   return RTNType::Good;

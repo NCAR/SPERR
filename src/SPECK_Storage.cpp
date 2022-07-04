@@ -268,9 +268,19 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
       assert(m_orig_coeff.size() == m_qz_coeff.size());
       assert(!m_orig_coeff.empty());
       assert(m_data_range != sperr::max_d);
+
+      // If there's less than 10% of coefficients being non-zero, we decide
+      // that continue encoding without checking PSNR.
+      if (static_cast<double>(m_num_qz_coeff) / static_cast<double>(m_qz_coeff.size()) < 0.1)
+        break;
+
       const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff);
       const auto psnr = std::log10(m_data_range * m_data_range / mse) * 10.0;
-      std::printf("psnr = %f\n", psnr);
+      std::printf("psnr = %f, non-zero coeff pct = %f\n", psnr, 
+                  double(m_num_qz_coeff) / double(m_qz_coeff.size()) * 100.0);
+
+      // Given that PSNR estimate here tends to be a little small, we target
+      // PSNR that's 1dB bigger.
       if (psnr >= m_target_psnr + 1.0) {
         return RTNType::PSNRReached;
       }
