@@ -194,7 +194,7 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
   const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, m_target_psnr, m_target_pwe);
   assert(mode != CompMode::Unknown);
   // Calculate the original data range and pass it to the encoder.
-  if (mode == sperr::CompMode::FixedPSNR || mode == sperr::CompMode::FixedPWE) {
+  if (mode == sperr::CompMode::FixedPSNR) {
     auto [min, max] = std::minmax_element(m_val_buf.cbegin(), m_val_buf.cend());
     auto range = *max - *min;
     m_encoder.set_data_range(range);

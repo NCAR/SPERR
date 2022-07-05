@@ -49,7 +49,7 @@ auto sperr::SPECK3D::encode() -> RTNType
     return RTNType::CompModeUnknown;
 
   // Sanity check
-  if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE) {
+  if (m_mode_cache == CompMode::FixedPSNR) {
     if (m_data_range == sperr::max_d)
       return RTNType::DataRangeNotSet;
   }

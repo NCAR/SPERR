@@ -58,6 +58,7 @@ enum class RTNType {
   DataRangeNotSet,
   QzLevelReached, // Not an error, just a termination condition
   PSNRReached, // Not an error, just a termination condition
+  PWEAlmostReached, // Not an error, just a termination condition
   CompModeUnknown,
   Error
 };

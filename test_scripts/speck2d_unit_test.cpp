@@ -59,6 +59,9 @@ class speck_tester {
       case sperr::CompMode::FixedPSNR :
         compressor.set_target_psnr(psnr);
         break;
+      case sperr::CompMode::FixedPWE :
+        compressor.set_target_pwe(pwe);
+        break;
       default :
         return 1;
     }
@@ -82,12 +85,27 @@ class speck_tester {
     if (slice.size() != total_vals)
       return 1;
 
+    // DEBUG
+    // Find out what percentage of points are outliers
+    if (mode == sperr::CompMode::FixedPWE) {
+      size_t num_out = 0;
+      for (size_t i = 0; i < slice.size(); i++) {
+        if (std::abs(slice[i] - in_buf[i]) > pwe)
+          num_out++;
+      }
+      std::printf("num of outliers = %lu\n", num_out);
+      std::printf("pct of outliers = %f\n", double(num_out) / double(total_vals));
+    }
+
     //
     // Compare results
     //
     auto ret = sperr::calc_stats(in_buf.data(), slice.data(), total_vals, 8);
     m_psnr = ret[2];
     m_lmax = ret[1];
+    if (mode == sperr::CompMode::FixedPWE) {
+      std::printf("target rmse = %f, real rmse = %f, lmax = %f\n", pwe, ret[0], m_lmax);
+    }
 
     return 0;
   }
@@ -98,6 +116,64 @@ class speck_tester {
   std::string m_output_name = "output.tmp";
   float m_psnr, m_lmax;
 };
+
+
+//
+// Test target PWE mode
+//
+TEST(speck2d, PWE_odd_dim_image)
+{
+  speck_tester tester("../test_data/90x90.float", 90, 90);
+
+  const auto bpp = sperr::max_d;
+  const auto q = sperr::lowest_int32;
+  const auto target_psnr = sperr::max_d;
+
+  double target_pwe = 1.0;
+  tester.execute(bpp, q, target_psnr, target_pwe);
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 10.0);
+
+  target_pwe = 0.5;
+  tester.execute(bpp, q, target_psnr, target_pwe);
+  psnr = tester.get_psnr();
+  lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 10.0);
+
+  target_pwe = 0.1;
+  tester.execute(bpp, q, target_psnr, target_pwe);
+  psnr = tester.get_psnr();
+  lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 10.0);
+}
+
+TEST(speck2d, PWE_lena_image)
+{
+  speck_tester tester("../test_data/lena512.float", 512, 512);
+
+  const auto bpp = sperr::max_d;
+  const auto q = sperr::lowest_int32;
+  const auto target_psnr = sperr::max_d;
+
+  double target_pwe = 10.0;
+  tester.execute(bpp, q, target_psnr, target_pwe);
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 10.0);
+
+  target_pwe = 5.0;
+  tester.execute(bpp, q, target_psnr, target_pwe);
+  psnr = tester.get_psnr();
+  lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 10.0);
+
+  target_pwe = 1.0;
+  tester.execute(bpp, q, target_psnr, target_pwe);
+  psnr = tester.get_psnr();
+  lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 10.0);
+}
 
 
 //

@@ -285,6 +285,25 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
       else
         break;
     }
+    case CompMode::FixedPWE : {
+      assert(m_orig_coeff.size() == m_qz_coeff.size());
+      assert(!m_orig_coeff.empty());
+      assert(m_target_pwe > 0.0);
+
+      // If there's less than 20% of coefficients being non-zero, we decide
+      // that continue encoding without checking PWE.
+      if (static_cast<double>(m_num_qz_coeff) / static_cast<double>(m_qz_coeff.size()) < 0.2)
+        break;
+
+      const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff);
+      const auto rmse = std::sqrt(mse);
+
+      // We decide that terminate when rmse is 1/8 of the PWE.
+      if (rmse < m_target_pwe)
+        return RTNType::PWEAlmostReached;
+      else
+        break;
+    }
   }
 
   return RTNType::Good;
