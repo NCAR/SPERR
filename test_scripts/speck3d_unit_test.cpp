@@ -66,6 +66,9 @@ class speck_tester_omp {
       case sperr::CompMode::FixedPSNR :
         compressor.set_target_psnr(psnr);
         break;
+      case sperr::CompMode::FixedPWE :
+        compressor.set_target_pwe(pwe);
+        break;
       default :
         return 1;
     }
@@ -99,6 +102,22 @@ class speck_tester_omp {
     auto ret = sperr::calc_stats(orig.data(), vol.data(), total_vals, 8);
     m_psnr = ret[2];
     m_lmax = ret[1];
+
+    // DEBUG
+    // Find out what percentage of points are outliers
+    if (mode == sperr::CompMode::FixedPWE) {
+      std::printf("target rmse = %e, real rmse = %e, lmax = %e\n", pwe, ret[0], m_lmax);
+    }
+
+    if (mode == sperr::CompMode::FixedPWE) {
+      size_t num_out = 0;
+      for (size_t i = 0; i < vol.size(); i++) {
+        if (std::abs(vol[i] - orig[i]) > pwe)
+          num_out++;
+      }
+      std::printf("num of outliers = %lu, pct = %f\n", num_out, 
+                   double(num_out) / double(total_vals));
+    }
 
     return 0;
   }
@@ -151,6 +170,73 @@ TEST(speck3d_constant, omp_chunks)
 }
 
 //
+// Test target PWE
+//
+TEST(speck3d_target_pwe, small)
+{
+  speck_tester_omp tester("../test_data/wmag17.float", {17, 17, 17}, 1);
+
+  const auto bpp = sperr::max_d;
+  const auto q = sperr::lowest_int32;
+  const auto target_psnr = sperr::max_d;
+
+  auto pwe = double{1.0};
+  tester.execute(bpp, q, target_psnr, pwe);
+  float psnr = tester.get_psnr();
+  float lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 10.0);
+
+  pwe = 0.5;
+  tester.execute(bpp, q, target_psnr, pwe);
+  psnr = tester.get_psnr();
+  lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 10.0);
+}
+
+TEST(speck3d_target_pwe, small_data_range)
+{
+  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 1);
+
+  const auto bpp = sperr::max_d;
+  const auto q = sperr::lowest_int32;
+  const auto target_psnr = sperr::max_d;
+
+  auto pwe = double{1e-8};
+  tester.execute(bpp, q, target_psnr, pwe);
+  float psnr = tester.get_psnr();
+  float lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 10.0);
+
+  pwe = 1e-10;
+  tester.execute(bpp, q, target_psnr, pwe);
+  psnr = tester.get_psnr();
+  lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 10.0);
+}
+
+TEST(speck3d_target_pwe, big)
+{
+  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 1);
+
+  const auto bpp = sperr::max_d;
+  const auto q = sperr::lowest_int32;
+  const auto target_psnr = sperr::max_d;
+
+  double pwe = 0.1;
+  tester.execute(bpp, q, target_psnr, pwe);
+  float psnr = tester.get_psnr();
+  float lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 10.0);
+
+  pwe = 0.5;
+  tester.execute(bpp, q, target_psnr, pwe);
+  psnr = tester.get_psnr();
+  lmax = tester.get_lmax();
+  EXPECT_GT(psnr, 10.0);
+}
+
+
+//
 // Test target PSNR
 //
 TEST(speck3d_target_psnr, small)
@@ -165,14 +251,12 @@ TEST(speck3d_target_psnr, small)
   tester.execute(bpp, q, target_psnr, pwe);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  std::printf("target PSNR = %f, real PSNR = %f\n\n", target_psnr, psnr);
   EXPECT_GT(psnr, target_psnr);
 
   target_psnr = 120.0;
   tester.execute(bpp, q, target_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  std::printf("target PSNR = %f, real PSNR = %f\n\n", target_psnr, psnr);
   EXPECT_GT(psnr, target_psnr);
 }
 
@@ -188,14 +272,12 @@ TEST(speck3d_target_psnr, big)
   tester.execute(bpp, q, target_psnr, pwe);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  std::printf("target PSNR = %f, real PSNR = %f\n\n", target_psnr, psnr);
   EXPECT_GT(psnr, target_psnr);
 
   target_psnr = 100.0;
   tester.execute(bpp, q, target_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  std::printf("target PSNR = %f, real PSNR = %f\n\n", target_psnr, psnr);
   EXPECT_GT(psnr, target_psnr);
 }
 
@@ -211,14 +293,12 @@ TEST(speck3d_target_psnr, small_data_range)
   tester.execute(bpp, q, target_psnr, pwe);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  std::printf("target PSNR = %f, real PSNR = %f\n\n", target_psnr, psnr);
   EXPECT_GT(psnr, target_psnr);
 
   target_psnr = 109.0;
   tester.execute(bpp, q, target_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  std::printf("target PSNR = %f, real PSNR = %f\n\n", target_psnr, psnr);
   EXPECT_GT(psnr, target_psnr);
 }
 

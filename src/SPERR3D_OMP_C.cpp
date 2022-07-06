@@ -71,6 +71,14 @@ void SPERR3D_OMP_C::set_target_psnr(double psnr)
   m_target_pwe = 0.0;
 }
 
+void SPERR3D_OMP_C::set_target_pwe(double pwe)
+{
+  m_target_pwe = std::max(pwe, 0.0);
+  m_bit_budget = sperr::max_size;
+  m_qz_lev = sperr::lowest_int32;
+  m_target_psnr = sperr::max_d;
+}
+
 template <typename T>
 auto SPERR3D_OMP_C::copy_data(const T* vol,
                               size_t len,

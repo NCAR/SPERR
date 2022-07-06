@@ -298,9 +298,10 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
       const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff);
       const auto rmse = std::sqrt(mse);
 
-      // We decide that terminate when rmse is 1/8 of the PWE.
-      if (rmse < m_target_pwe)
+      if (rmse < m_target_pwe * 10.0) {
+        std::printf("target rmse = %e, est. rmse = %e\n", m_target_pwe, rmse);
         return RTNType::PWEAlmostReached;
+      }
       else
         break;
     }

@@ -29,6 +29,7 @@ class SPERR3D_OMP_C {
   auto set_target_bpp(double) -> RTNType;
   void set_target_qz_level(int32_t);
   void set_target_psnr(double);
+  void set_target_pwe(double);
 
   auto compress() -> RTNType;
 
