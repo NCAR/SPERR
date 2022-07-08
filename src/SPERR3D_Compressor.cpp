@@ -275,7 +275,7 @@ auto sperr::SPERR3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   const size_t comp_size = ZSTD_compressCCtx(m_cctx.get(), m_zstd_buf.data(), comp_upper_size,
                            m_encoded_stream.data(), m_encoded_stream.size(), 
                            ZSTD_CLEVEL_DEFAULT + 6);
-  if (ZSTD_isError(comp_size)
+  if (ZSTD_isError(comp_size))
     return RTNType::ZSTDError;
   else {
     assert(comp_size < m_encoded_stream.size());

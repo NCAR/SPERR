@@ -33,7 +33,7 @@ class SPERR2D_Compressor {
   void set_target_pwe(double);
 
   // Return 1) the number of outliers, and 2) the number of bytes to encode them.
-  //auto get_outlier_stats() const -> std::pair<size_t, size_t>;
+  auto get_outlier_stats() const -> std::pair<size_t, size_t>;
 
   auto compress() -> RTNType;
 
@@ -51,11 +51,11 @@ class SPERR2D_Compressor {
   double m_target_psnr = sperr::max_d;
   double m_target_pwe = 0.0;
 
-  //sperr::vec8_type m_sperr_stream;
-  //sperr::SPERR m_sperr;
-  //sperr::vecd_type m_val_buf2;        // A copy of `m_val_buf` for outlier locating.
-  //std::vector<sperr::Outlier> m_LOS;  // List of OutlierS
-  //double m_tol = 0.0;
+  // A few data members for outlier correction
+  sperr::SPERR m_sperr;
+  sperr::vec8_type m_sperr_stream;
+  sperr::vecd_type m_val_buf2;        // A copy of `m_val_buf` for outlier locating.
+  std::vector<sperr::Outlier> m_LOS;  // List of OutlierS
 
   sperr::Conditioner m_conditioner;
   sperr::CDF97 m_cdf;

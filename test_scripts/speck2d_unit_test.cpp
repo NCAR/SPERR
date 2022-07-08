@@ -86,16 +86,14 @@ class speck_tester {
       return 1;
 
     // DEBUG
-    // Find out what percentage of points are outliers
-    if (mode == sperr::CompMode::FixedPWE) {
-      size_t num_out = 0;
-      for (size_t i = 0; i < slice.size(); i++) {
-        if (std::abs(slice[i] - in_buf[i]) > pwe)
-          num_out++;
-      }
-      std::printf("num of outliers = %lu\n", num_out);
-      std::printf("pct of outliers = %f\n", double(num_out) / double(total_vals));
-    }
+    // Find out what percentage of points are outliers, and how much it costs to encode them.
+    //if (mode == sperr::CompMode::FixedPWE) {
+    //  auto [num_o, num_byte] = compressor.get_outlier_stats();
+    //  std::printf("Outlier pct = %f, bpp = %f, outlier storage pct = %f\n", 
+    //              double(num_o) / double(total_vals) * 100.0,
+    //              double(num_byte) * 8.0 / double(num_o),
+    //              double(num_byte) / double(bitstream.size()) * 100.0);
+    //}
 
     //
     // Compare results
@@ -103,9 +101,6 @@ class speck_tester {
     auto ret = sperr::calc_stats(in_buf.data(), slice.data(), total_vals, 8);
     m_psnr = ret[2];
     m_lmax = ret[1];
-    if (mode == sperr::CompMode::FixedPWE) {
-      std::printf("target rmse = %f, real rmse = %f, lmax = %f\n", pwe, ret[0], m_lmax);
-    }
 
     return 0;
   }
@@ -131,21 +126,18 @@ TEST(speck2d, PWE_odd_dim_image)
 
   double target_pwe = 1.0;
   tester.execute(bpp, q, target_psnr, target_pwe);
-  auto psnr = tester.get_psnr();
   auto lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 10.0);
+  EXPECT_LE(lmax, target_pwe);
 
   target_pwe = 0.5;
   tester.execute(bpp, q, target_psnr, target_pwe);
-  psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 10.0);
+  EXPECT_LE(lmax, target_pwe);
 
   target_pwe = 0.1;
   tester.execute(bpp, q, target_psnr, target_pwe);
-  psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 10.0);
+  EXPECT_LE(lmax, target_pwe);
 }
 
 TEST(speck2d, PWE_lena_image)
@@ -156,23 +148,44 @@ TEST(speck2d, PWE_lena_image)
   const auto q = sperr::lowest_int32;
   const auto target_psnr = sperr::max_d;
 
-  double target_pwe = 10.0;
+  double target_pwe = 0.7;
   tester.execute(bpp, q, target_psnr, target_pwe);
-  auto psnr = tester.get_psnr();
   auto lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 10.0);
+  EXPECT_LE(lmax, target_pwe);
 
-  target_pwe = 5.0;
+  target_pwe = 0.3;
   tester.execute(bpp, q, target_psnr, target_pwe);
-  psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 10.0);
+  EXPECT_LE(lmax, target_pwe);
 
-  target_pwe = 1.0;
+  target_pwe = 0.1;
   tester.execute(bpp, q, target_psnr, target_pwe);
-  psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 10.0);
+  EXPECT_LE(lmax, target_pwe);
+}
+
+TEST(speck2d, PWE_small_data_range)
+{
+  speck_tester tester("../test_data/vorticity.512_512", 512, 512);
+
+  const auto bpp = sperr::max_d;
+  const auto q = sperr::lowest_int32;
+  const auto target_psnr = sperr::max_d;
+
+  double target_pwe = 3.2e-6;
+  tester.execute(bpp, q, target_psnr, target_pwe);
+  auto lmax = tester.get_lmax();
+  EXPECT_LE(lmax, target_pwe);
+
+  target_pwe = 1e-6;
+  tester.execute(bpp, q, target_psnr, target_pwe);
+  lmax = tester.get_lmax();
+  EXPECT_LE(lmax, target_pwe);
+
+  target_pwe = 5.5e-7;
+  tester.execute(bpp, q, target_psnr, target_pwe);
+  lmax = tester.get_lmax();
+  EXPECT_LE(lmax, target_pwe);
 }
 
 

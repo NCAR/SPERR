@@ -19,9 +19,7 @@ auto SPERR2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   m_condi_stream.fill(0);
   m_speck_stream.clear();
   m_val_buf.clear();
-//#ifdef QZ_TERM
-//  m_sperr_stream.clear();
-//#endif
+  m_sperr_stream.clear();
 
   const uint8_t* u8p = static_cast<const uint8_t*>(p);
 
@@ -37,15 +35,6 @@ auto SPERR2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
     return RTNType::SliceVolumeMismatch;
   const auto has_sperr = metabool[2];
 
-//#ifdef QZ_TERM
-//  if (metabool[2] == false)  // false means it's in fixed-size mode
-//    return RTNType::QzModeMismatch;
-//  const auto sperr_empty = metabool[3];
-//#else
-//  if (metabool[2] == true)  // true means it's in fixed-error mode
-//    return RTNType::QzModeMismatch;
-//#endif
-
   // Task 3)
   uint32_t dims[2] = {0, 0};
   std::memcpy(dims, u8p, sizeof(dims));
@@ -53,8 +42,6 @@ auto SPERR2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   m_dims[0] = dims[0];
   m_dims[1] = dims[1];
   m_dims[2] = 1;
-
-  // Sanity check
   assert(static_cast<const uint8_t*>(p) + m_meta_size == u8p);
 
   size_t plen = 0;
@@ -107,44 +94,29 @@ auto SPERR2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   const auto speck_size = m_decoder.get_speck_stream_size(u8p);
   if (speck_size > plen)
     return RTNType::BitstreamWrongLen;
-
-  if (!has_sperr && speck_size != plen)
-    return RTNType::BitstreamWrongLen;
-
   m_speck_stream.resize(speck_size);
   std::copy(u8p, u8p + speck_size, m_speck_stream.begin());
   u8p += speck_size;
   plen -= speck_size;
 
-//#ifdef QZ_TERM
-//  if (sperr_empty) {
-//    if (plen != 0)
-//      return RTNType::BitstreamWrongLen;
-//  }
-//  else {
-//    const auto sperr_size = m_sperr.get_sperr_stream_size(u8p);
-//    if (sperr_size != plen)
-//      return RTNType::BitstreamWrongLen;
-//    m_sperr_stream.resize(sperr_size);
-//    std::copy(u8p, u8p + sperr_size, m_sperr_stream.begin());
-//  }
-//#endif
+  if (has_sperr) {
+    if (plen == 0)
+      return RTNType::BitstreamWrongLen;
+
+    const auto sperr_size = m_sperr.get_sperr_stream_size(u8p);
+    if (sperr_size != plen)
+      return RTNType::BitstreamWrongLen;
+    m_sperr_stream.resize(sperr_size);
+    std::copy(u8p, u8p + sperr_size, m_sperr_stream.begin());
+  }
+  else {
+    if (plen != 0)
+      return RTNType::BitstreamWrongLen;
+  }
 
   return RTNType::Good;
 }
 
-
-//#ifndef QZ_TERM
-//auto SPERR2D_Decompressor::set_bpp(double bpp) -> RTNType
-//{
-//  if (bpp < 0.0 || bpp > 64.0)
-//    return RTNType::InvalidParam;
-//  else {
-//    m_bpp = bpp;
-//    return RTNType::Good;
-//  }
-//}
-//#endif
 
 template <typename T>
 auto SPERR2D_Decompressor::get_data() const -> std::vector<T>
@@ -190,9 +162,6 @@ auto SPERR2D_Decompressor::decompress() -> RTNType
   if (rtn != RTNType::Good)
     return rtn;
   m_decoder.set_dimensions(m_dims);
-//#ifndef QZ_TERM
-//  m_decoder.set_target_bit_budget(size_t(m_bpp * double(total_vals)));
-//#endif
   rtn = m_decoder.decode();
   if (rtn != RTNType::Good)
     return rtn;
@@ -205,26 +174,22 @@ auto SPERR2D_Decompressor::decompress() -> RTNType
   m_cdf.idwt2d();
 
   // Step 3: Inverse Conditioning
-  auto cdf_out = m_cdf.release_data();
-  m_conditioner.inverse_condition(cdf_out, m_condi_stream);
+  m_val_buf = m_cdf.release_data();
+  m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
 
-//#ifdef QZ_TERM
-//  // Step 4: if there's SPERR stream, then do outlier correction.
-//  if (!m_sperr_stream.empty()) {
-//    rtn = m_sperr.parse_encoded_bitstream(m_sperr_stream.data(), m_sperr_stream.size());
-//    if (rtn != RTNType::Good)
-//      return rtn;
-//    rtn = m_sperr.decode();
-//    if (rtn != RTNType::Good)
-//      return rtn;
-//
-//    const auto& los = m_sperr.view_outliers();
-//    for (const auto& out : los)
-//      cdf_out[out.location] += out.error;
-//  }
-//#endif
+  // Step 4: if there's SPERR stream, then do outlier correction.
+  if (!m_sperr_stream.empty()) {
+    rtn = m_sperr.parse_encoded_bitstream(m_sperr_stream.data(), m_sperr_stream.size());
+    if (rtn != RTNType::Good)
+      return rtn;
+    rtn = m_sperr.decode();
+    if (rtn != RTNType::Good)
+      return rtn;
 
-  m_val_buf = std::move(cdf_out);
+    const auto& los = m_sperr.view_outliers();
+    for (const auto& out : los)
+      m_val_buf[out.location] += out.error;
+  }
 
   return RTNType::Good;
 }

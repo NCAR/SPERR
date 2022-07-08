@@ -27,6 +27,7 @@ class SPECK_Storage {
   auto view_data() const -> const vecd_type&;
   auto view_encoded_bitstream() const -> const vec8_type&;
   auto release_encoded_bitstream() -> vec8_type&&;
+  auto get_quantized_coeff() const -> vecd_type;
 
   // Prepare internal states for a decompression operation from an encoded bitstream
   // Note: it takes a raw pointer because it accesses memory provided by others,

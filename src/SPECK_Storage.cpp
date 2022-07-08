@@ -48,6 +48,21 @@ auto sperr::SPECK_Storage::view_data() const -> const vecd_type&
   return m_coeff_buf;
 }
 
+auto sperr::SPECK_Storage::get_quantized_coeff() const -> vecd_type
+{
+  auto coeff = vecd_type(m_qz_coeff.size());
+
+  if (!m_qz_coeff.empty()) {
+    assert(m_qz_coeff.size() == m_sign_array.size());
+    const auto tmp = d2_type{-1.0, 1.0};
+    std::transform(m_qz_coeff.cbegin(), m_qz_coeff.cend(), 
+                   m_sign_array.cbegin(), coeff.begin(),
+                   [tmp](auto v, auto b){ return v * tmp[b]; } );
+  }
+  
+  return coeff;
+}
+
 void sperr::SPECK_Storage::set_data_range(double range)
 {
   m_data_range = range;
@@ -55,10 +70,9 @@ void sperr::SPECK_Storage::set_data_range(double range)
 
 auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
 {
-  // Header definition: 10 bytes in size-bounded mode
-  // max_coeff_bits, stream_len (in byte)
+  // Header definition: 10 bytes in total:
+  // max_coeff_bits, stream_len
   // int16_t,        uint64_t
-  //
 
   assert(m_bit_buffer.size() % 8 == 0);
   const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
@@ -269,9 +283,9 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
       assert(!m_orig_coeff.empty());
       assert(m_data_range != sperr::max_d);
 
-      // If there's less than 20% of coefficients being non-zero, we decide
+      // If there's less than 10% of coefficients being non-zero, we decide
       // that continue encoding without checking PSNR.
-      if (static_cast<double>(m_num_qz_coeff) / static_cast<double>(m_qz_coeff.size()) < 0.2)
+      if (static_cast<double>(m_num_qz_coeff) / static_cast<double>(m_qz_coeff.size()) < 0.1)
         break;
 
       const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff);
@@ -290,16 +304,15 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
       assert(!m_orig_coeff.empty());
       assert(m_target_pwe > 0.0);
 
-      // If there's less than 20% of coefficients being non-zero, we decide
+      // If there's less than 10% of coefficients being non-zero, we decide
       // that continue encoding without checking PWE.
-      if (static_cast<double>(m_num_qz_coeff) / static_cast<double>(m_qz_coeff.size()) < 0.2)
+      if (static_cast<double>(m_num_qz_coeff) / static_cast<double>(m_qz_coeff.size()) < 0.1)
         break;
 
       const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff);
       const auto rmse = std::sqrt(mse);
 
-      if (rmse < m_target_pwe * 10.0) {
-        std::printf("target rmse = %e, est. rmse = %e\n", m_target_pwe, rmse);
+      if (rmse < m_target_pwe * 0.5) {
         return RTNType::PWEAlmostReached;
       }
       else

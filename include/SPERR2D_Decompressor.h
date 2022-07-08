@@ -35,12 +35,8 @@ class SPERR2D_Decompressor {
   sperr::vecd_type m_val_buf;
   const size_t m_meta_size = 10;  // Need to be the same as in SPERR2D_Compressor.h
 
-//#ifdef QZ_TERM
-//  sperr::SPERR m_sperr;
-//  sperr::vec8_type m_sperr_stream;
-//#else
-//  double m_bpp = 0.0;
-//#endif
+  sperr::SPERR m_sperr;
+  sperr::vec8_type m_sperr_stream;
 
   sperr::Conditioner m_conditioner;
   sperr::CDF97 m_cdf;
