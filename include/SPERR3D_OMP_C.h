@@ -24,7 +24,7 @@ class SPERR3D_OMP_C {
   void toggle_conditioning(sperr::Conditioner::settings_type);
 
   // Return 1) the number of outliers, and 2) the num of bytes to encode them.
-  //auto get_outlier_stats() const -> std::pair<size_t, size_t>;
+  auto get_outlier_stats() const -> std::pair<size_t, size_t>;
 
   auto set_target_bpp(double) -> RTNType;
   void set_target_qz_level(int32_t);
@@ -53,9 +53,8 @@ class SPERR3D_OMP_C {
   double m_target_psnr = sperr::max_d;
   double m_target_pwe = 0.0;
 
-//  double m_tol = 0.0;
   // Outlier stats include 1) the number of outliers, and 2) the num of bytes used to encode them.
-//  std::vector<std::pair<size_t, size_t>> m_outlier_stats;
+  std::vector<std::pair<size_t, size_t>> m_outlier_stats;
 
 
   //

@@ -21,25 +21,15 @@ void SPERR3D_OMP_C::toggle_conditioning(sperr::Conditioner::settings_type b4)
   m_conditioning_settings = b4;
 }
 
-void SPERR3D_OMP_C::set_target_qz_level(int32_t q)
+auto SPERR3D_OMP_C::get_outlier_stats() const -> std::pair<size_t, size_t>
 {
-  m_qz_lev = q;
-
-  // Also configure other parameters
-  m_bit_budget = sperr::max_size;
-  m_target_psnr = sperr::max_d;
-  m_target_pwe = 0.0;
+  using pair = std::pair<size_t, size_t>;
+  pair sum{0, 0};
+  auto op = [](const pair& a, const pair& b) -> pair {
+    return {a.first + b.first, a.second + b.second};
+  };
+  return std::accumulate(m_outlier_stats.begin(), m_outlier_stats.end(), sum, op);
 }
-
-//auto SPERR3D_OMP_C::get_outlier_stats() const -> std::pair<size_t, size_t>
-//{
-//  using pair = std::pair<size_t, size_t>;
-//  pair sum{0, 0};
-//  auto op = [](const pair& a, const pair& b) -> pair {
-//    return {a.first + b.first, a.second + b.second};
-//  };
-//  return std::accumulate(m_outlier_stats.begin(), m_outlier_stats.end(), sum, op);
-//}
 
 auto SPERR3D_OMP_C::set_target_bpp(double bpp) -> RTNType
 {
@@ -61,6 +51,16 @@ auto SPERR3D_OMP_C::set_target_bpp(double bpp) -> RTNType
   m_target_pwe = 0.0;
 
   return RTNType::Good;
+}
+
+void SPERR3D_OMP_C::set_target_qz_level(int32_t q)
+{
+  m_qz_lev = q;
+
+  // Also configure other parameters
+  m_bit_budget = sperr::max_size;
+  m_target_psnr = sperr::max_d;
+  m_target_pwe = 0.0;
 }
 
 void SPERR3D_OMP_C::set_target_psnr(double psnr)
@@ -132,13 +132,8 @@ auto SPERR3D_OMP_C::compress() -> RTNType
   auto chunk_rtn = std::vector<RTNType>(num_chunks, RTNType::Good);
   m_encoded_streams.resize(num_chunks);
   std::for_each(m_encoded_streams.begin(), m_encoded_streams.end(), [](auto& v) { v.clear(); });
+  m_outlier_stats.assign(num_chunks, {0, 0});
 
-//#ifdef QZ_TERM
-//  m_outlier_stats.assign(num_chunks, {0, 0});
-//#endif
-
-// Each thread uses a compressor instance to work on a chunk.
-//
 #pragma omp parallel for num_threads(m_num_threads)
   for (size_t i = 0; i < num_chunks; i++) {
 #ifdef USE_OMP
@@ -151,7 +146,7 @@ auto SPERR3D_OMP_C::compress() -> RTNType
     compressor.take_data(std::move(m_chunk_buffers[i]), {chunks[i][1], chunks[i][3], chunks[i][5]});
     compressor.toggle_conditioning(m_conditioning_settings);
 
-    // Figure out the bit budget for each chunk
+    // Figure out the bit budget for this chunk
     auto my_budget = size_t{0};
     if (m_bit_budget == sperr::max_size)
       my_budget = sperr::max_size;
@@ -170,11 +165,9 @@ auto SPERR3D_OMP_C::compress() -> RTNType
       chunk_rtn[i] = compressor.compress();
     }
 
-    m_encoded_streams[i] = compressor.release_encoded_bitstream();
+    m_encoded_streams[i] = compressor.view_encoded_bitstream();
 
-//#ifdef QZ_TERM
-//    m_outlier_stats[i] = compressor.get_outlier_stats();
-//#endif
+    m_outlier_stats[i] = compressor.get_outlier_stats();
   }
 
   auto fail =

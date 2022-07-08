@@ -193,7 +193,6 @@ auto SPERR2D_Compressor::compress() -> RTNType
       if (static_cast<double>(f) > m_target_pwe && d <= m_target_pwe)
         new_pwe = std::min(new_pwe, d);
     }
-    m_LOS.clear();
     for (size_t i = 0; i < total_vals; i++) {
       const auto diff = m_val_buf2[i] - m_val_buf[i];
       if (std::abs(diff) >= new_pwe)
@@ -282,6 +281,8 @@ auto SPERR2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
     return RTNType::ZSTDError;
   }
   else {
+    // Note: when the encoded stream is only a few kilobytes or smaller, the ZSTD compressed
+    //       output can be larger.
     comp_buf.resize(m_meta_size + comp_size);
     m_encoded_stream = std::move(comp_buf);
   }

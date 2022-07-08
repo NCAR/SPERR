@@ -29,7 +29,7 @@ class SPERR3D_Compressor {
   auto set_comp_params(size_t bit_budget, int32_t qlev, double psnr, double pwe) -> RTNType;
 
   // Return 1) the number of outliers, and 2) the number of bytes to encode them.
-  //auto get_outlier_stats() const -> std::pair<size_t, size_t>;
+  auto get_outlier_stats() const -> std::pair<size_t, size_t>;
 
   auto compress() -> RTNType;
 
@@ -55,11 +55,10 @@ class SPERR3D_Compressor {
   double m_target_psnr = sperr::max_d;
   double m_target_pwe = 0.0;
 
-//  vec8_type m_sperr_stream;
-//  SPERR m_sperr;
-//  double m_tol = 0.0;          // tolerance used in error correction
-//  std::vector<Outlier> m_LOS;  // List of OutlierS
-//  vecd_type m_val_buf2;        // Copy of `m_val_buf` that goes through encoding.
+  SPERR m_sperr;
+  vec8_type m_sperr_stream;
+  vecd_type m_val_buf2;        // Copy of `m_val_buf` that's used for outlier coding.
+  std::vector<Outlier> m_LOS;  // List of OutlierS
 
 #ifdef USE_ZSTD
   vec8_type m_zstd_buf;

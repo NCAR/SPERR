@@ -10,9 +10,7 @@ auto sperr::SPERR3D_Decompressor::use_bitstream(const void* p, size_t len) -> RT
   m_condi_stream.fill(0);
   m_speck_stream.clear();
   m_val_buf.clear();
-//#ifdef QZ_TERM
-//  m_sperr_stream.clear();
-//#endif
+  m_sperr_stream.clear();
 
 #ifdef USE_ZSTD
   // Make sure that we have a ZSTD Decompression Context first
@@ -64,24 +62,19 @@ auto sperr::SPERR3D_Decompressor::use_bitstream(const void* p, size_t len) -> RT
   const auto speck_size = m_decoder.get_speck_stream_size(speck_p);
   if (pos + speck_size > ptr_len)
     return RTNType::BitstreamWrongLen;
-  m_speck_stream.resize(speck_size, 0);
+  m_speck_stream.resize(speck_size);
   std::copy(speck_p, speck_p + speck_size, m_speck_stream.begin());
   pos += speck_size;
 
-//#ifdef QZ_TERM
-//  // Step 3: extract SPERR stream from it
-//  if (pos < ptr_len) {
-//    const uint8_t* const sperr_p = ptr + pos;
-//    const auto sperr_size = m_sperr.get_sperr_stream_size(sperr_p);
-//    if (pos + sperr_size != ptr_len)
-//      return RTNType::BitstreamWrongLen;
-//    m_sperr_stream.resize(sperr_size, 0);
-//    std::copy(sperr_p, sperr_p + sperr_size, m_sperr_stream.begin());
-//  }
-//#else
-//  if (pos != ptr_len)
-//    return RTNType::BitstreamWrongLen;
-//#endif
+  // Step 3: extract SPERR stream 
+  if (pos < ptr_len) {
+    const uint8_t* const sperr_p = ptr + pos;
+    const auto sperr_size = m_sperr.get_sperr_stream_size(sperr_p);
+    if (pos + sperr_size != ptr_len)
+      return RTNType::BitstreamWrongLen;
+    m_sperr_stream.resize(sperr_size);
+    std::copy(sperr_p, sperr_p + sperr_size, m_sperr_stream.begin());
+  }
 
   return RTNType::Good;
 }
@@ -111,9 +104,6 @@ auto sperr::SPERR3D_Decompressor::decompress() -> RTNType
   if (rtn != RTNType::Good)
     return rtn;
   m_decoder.set_dimensions(m_dims);
-//#ifndef QZ_TERM
-//  m_decoder.set_target_bit_budget(size_t(m_bpp * double(m_dims[0] * m_dims[1] * m_dims[2])));
-//#endif
   rtn = m_decoder.decode();
   if (rtn != RTNType::Good)
     return rtn;
@@ -141,22 +131,19 @@ auto sperr::SPERR3D_Decompressor::decompress() -> RTNType
   std::copy(cdf_out.begin(), cdf_out.end(), m_val_buf.begin());
   m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
 
-//#ifdef QZ_TERM
-//  // Step 4: If there's SPERR data, then do the correction.
-//  // This condition occurs only in QZ_TERM mode.
-//  if (!m_sperr_stream.empty()) {
-//    rtn = m_sperr.parse_encoded_bitstream(m_sperr_stream.data(), m_sperr_stream.size());
-//    if (rtn != RTNType::Good)
-//      return rtn;
-//    rtn = m_sperr.decode();
-//    if (rtn != RTNType::Good)
-//      return rtn;
-//
-//    const auto& los = m_sperr.view_outliers();
-//    for (const auto& outlier : los)
-//      m_val_buf[outlier.location] += outlier.error;
-//  }
-//#endif
+  // Step 4: If there's SPERR data, then do the correction.
+  if (!m_sperr_stream.empty()) {
+    rtn = m_sperr.parse_encoded_bitstream(m_sperr_stream.data(), m_sperr_stream.size());
+    if (rtn != RTNType::Good)
+      return rtn;
+    rtn = m_sperr.decode();
+    if (rtn != RTNType::Good)
+      return rtn;
+
+    const auto& los = m_sperr.view_outliers();
+    for (const auto& outlier : los)
+      m_val_buf[outlier.location] += outlier.error;
+  }
 
   return RTNType::Good;
 }

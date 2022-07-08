@@ -297,65 +297,6 @@ TEST(speck2d, QZ_small_data_range)
   EXPECT_LT(lmax, 4.59038e-07);
 }
 
-//
-// Test fixed-error mode
-//
-//TEST(speck2d, lena)
-//{
-//  speck_tester tester("../test_data/lena512.float", 512, 512);
-//
-//  tester.execute(0, 10.0);
-//  auto psnr = tester.get_psnr();
-//  auto lmax = tester.get_lmax();
-//  EXPECT_GT(psnr, 55.0896);
-//  EXPECT_LT(psnr, 55.0897);
-//  EXPECT_LT(lmax, 1.77392);
-//
-//  tester.execute(0, 1.0);
-//  psnr = tester.get_psnr();
-//  lmax = tester.get_lmax();
-//  EXPECT_GT(psnr, 55.4833);
-//  EXPECT_LT(psnr, 55.4834);
-//  EXPECT_LT(lmax, 1.0);
-//}
-//
-//TEST(speck2d, odd_dim_image)
-//{
-//  speck_tester tester("../test_data/90x90.float", 90, 90);
-//
-//  tester.execute(-2, 100.0);
-//  auto psnr = tester.get_psnr();
-//  auto lmax = tester.get_lmax();
-//  EXPECT_GT(psnr, 63.6754);
-//  EXPECT_LT(psnr, 63.6755);
-//  EXPECT_LT(lmax, 0.382059);
-//
-//  tester.execute(-2, 0.3);
-//  psnr = tester.get_psnr();
-//  lmax = tester.get_lmax();
-//  EXPECT_GT(psnr, 63.8074);
-//  EXPECT_LT(psnr, 63.8075);
-//  EXPECT_LT(lmax, 0.3);
-//}
-//
-//TEST(speck2d, small_data_range)
-//{
-//  speck_tester tester("../test_data/vorticity.512_512", 512, 512);
-//
-//  tester.execute(-20, 1.0);
-//  auto psnr = tester.get_psnr();
-//  auto lmax = tester.get_lmax();
-//  EXPECT_GT(psnr, 71.2005);
-//  EXPECT_LT(psnr, 71.2006);
-//  EXPECT_LT(lmax, 1.80363e-06);
-//
-//  tester.execute(-20, 1.7e-6);
-//  psnr = tester.get_psnr();
-//  lmax = tester.get_lmax();
-//  EXPECT_GT(psnr, 71.2033);
-//  EXPECT_LT(psnr, 71.2034);
-//  EXPECT_LT(lmax, 1.7e-6);
-//}
 
 //
 // Test fixed-size mode

@@ -103,21 +103,13 @@ class speck_tester_omp {
     m_psnr = ret[2];
     m_lmax = ret[1];
 
-    // DEBUG
-    // Find out what percentage of points are outliers
-    if (mode == sperr::CompMode::FixedPWE) {
-      std::printf("target rmse = %e, real rmse = %e, lmax = %e\n", pwe, ret[0], m_lmax);
-    }
-
-    if (mode == sperr::CompMode::FixedPWE) {
-      size_t num_out = 0;
-      for (size_t i = 0; i < vol.size(); i++) {
-        if (std::abs(vol[i] - orig[i]) > pwe)
-          num_out++;
-      }
-      std::printf("num of outliers = %lu, pct = %f\n", num_out, 
-                   double(num_out) / double(total_vals));
-    }
+    //if (mode == sperr::CompMode::FixedPWE) {
+    //  auto [num_o, num_byte] = compressor.get_outlier_stats();
+    //  std::printf("Outlier pct = %f, bpp = %f, outlier storage pct = %f\n", 
+    //              double(num_o) / double(total_vals) * 100.0,
+    //              double(num_byte) * 8.0 / double(num_o),
+    //              double(num_byte) / double(stream.size()) * 100.0);
+    //}
 
     return 0;
   }
@@ -182,57 +174,56 @@ TEST(speck3d_target_pwe, small)
 
   auto pwe = double{1.0};
   tester.execute(bpp, q, target_psnr, pwe);
-  float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 10.0);
+  EXPECT_LE(lmax, pwe);
 
-  pwe = 0.5;
+  pwe = 0.17;
   tester.execute(bpp, q, target_psnr, pwe);
-  psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 10.0);
+  EXPECT_LE(lmax, pwe);
 }
 
 TEST(speck3d_target_pwe, small_data_range)
 {
-  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 1);
+  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 2);
 
   const auto bpp = sperr::max_d;
   const auto q = sperr::lowest_int32;
   const auto target_psnr = sperr::max_d;
 
-  auto pwe = double{1e-8};
+  auto pwe = double{1.4e-7};
   tester.execute(bpp, q, target_psnr, pwe);
-  float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 10.0);
+  EXPECT_LE(lmax, pwe);
 
-  pwe = 1e-10;
+  pwe = 7.7e-9;
   tester.execute(bpp, q, target_psnr, pwe);
-  psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 10.0);
+  EXPECT_LE(lmax, pwe);
 }
 
 TEST(speck3d_target_pwe, big)
 {
-  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 1);
+  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 3);
 
   const auto bpp = sperr::max_d;
   const auto q = sperr::lowest_int32;
   const auto target_psnr = sperr::max_d;
 
-  double pwe = 0.1;
+  double pwe = 0.93;
   tester.execute(bpp, q, target_psnr, pwe);
-  float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 10.0);
+  EXPECT_LE(lmax, pwe);
 
-  pwe = 0.5;
+  pwe = 0.45;
   tester.execute(bpp, q, target_psnr, pwe);
-  psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 10.0);
+  EXPECT_LE(lmax, pwe);
+
+  pwe = 0.08;
+  tester.execute(bpp, q, target_psnr, pwe);
+  lmax = tester.get_lmax();
+  EXPECT_LE(lmax, pwe);
 }
 
 
@@ -351,49 +342,6 @@ TEST(speck3d_fixed_q, narrow_data_range)
   EXPECT_LT(lmax, 5.00702e-07);
 }
 
-////
-//// Error bound mode
-////
-//TEST(speck3d_qz_term, narrow_data_range)
-//{
-//  // We specify to use 1 thread to make sure that object re-use has no side effects.
-//  // The next set of tests will use multiple threads.
-//  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 1);
-//  auto rtn = tester.execute(-16, 3e-5);
-//  EXPECT_EQ(rtn, 0);
-//  float psnr = tester.get_psnr();
-//  float lmax = tester.get_lmax();
-//  EXPECT_GT(psnr, 4.22075080e+01);
-//  EXPECT_LT(psnr, 4.22075081e+01);
-//  EXPECT_LT(lmax, 2.987783e-05);
-//
-//  rtn = tester.execute(-18, 7e-6);
-//  EXPECT_EQ(rtn, 0);
-//  psnr = tester.get_psnr();
-//  lmax = tester.get_lmax();
-//  EXPECT_GT(psnr, 50.486732);
-//  EXPECT_LT(psnr, 50.486733);
-//  EXPECT_LT(lmax, 6.991625e-06);
-//}
-//TEST(speck3d_qz_term, small_tolerance)
-//{
-//  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 5);
-//  auto rtn = tester.execute(-3, 0.07);
-//  EXPECT_EQ(rtn, 0);
-//  float psnr = tester.get_psnr();
-//  float lmax = tester.get_lmax();
-//  EXPECT_GT(psnr, 8.1441611e+01);
-//  EXPECT_LT(psnr, 8.1441613e+01);
-//  EXPECT_LT(lmax, 6.9999696e-02);
-//
-//  rtn = tester.execute(-5, 0.05);
-//  EXPECT_EQ(rtn, 0);
-//  psnr = tester.get_psnr();
-//  lmax = tester.get_lmax();
-//  EXPECT_GT(psnr, 9.1716300e+01);
-//  EXPECT_LT(psnr, 9.1716302e+01);
-//  EXPECT_LT(lmax, 4.9962998e-02);
-//}
 
 //
 // Test fixed-size mode

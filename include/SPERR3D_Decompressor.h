@@ -43,12 +43,8 @@ class SPERR3D_Decompressor {
   CDF97 m_cdf;
   SPECK3D m_decoder;
 
-//#ifdef QZ_TERM
-//  SPERR m_sperr;
-//  vec8_type m_sperr_stream;
-//#else
-//  double m_bpp = 0.0;
-//#endif
+  SPERR m_sperr;
+  vec8_type m_sperr_stream;
 
 #ifdef USE_ZSTD
   vec8_type m_zstd_buf;

@@ -10,18 +10,6 @@
 #include <omp.h>
 #endif
 
-//#ifndef QZ_TERM
-//auto SPERR3D_OMP_D::set_bpp(double bpp) -> RTNType
-//{
-//  if (bpp < 0.0 || bpp > 64.0)
-//    return RTNType::InvalidParam;
-//  else {
-//    m_bpp = bpp;
-//    return RTNType::Good;
-//  }
-//}
-//#endif
-
 void SPERR3D_OMP_D::set_num_threads(size_t n)
 {
   m_num_threads = std::max(n, 1ul);
@@ -57,14 +45,6 @@ auto SPERR3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
 
   if (b8[1] == false)
     return RTNType::SliceVolumeMismatch;
-
-//#ifdef QZ_TERM
-//  if (b8[2] == false)
-//    return RTNType::QzModeMismatch;
-//#else
-//  if (b8[2] == true)
-//    return RTNType::QzModeMismatch;
-//#endif
 
   // Parse Step 3: Extract volume and chunk dimensions
   uint32_t vcdim[6];
@@ -131,8 +111,6 @@ auto SPERR3D_OMP_D::decompress(const void* p) -> RTNType
   auto decompressors = std::vector<sperr::SPERR3D_Decompressor>(m_num_threads);
   auto chunk_rtn = std::vector<RTNType>(num_chunks * 3, RTNType::Good);
 
-// Each compressor instance takes on a chunk
-//
 #pragma omp parallel for num_threads(m_num_threads)
   for (size_t i = 0; i < num_chunks; i++) {
 #ifdef USE_OMP
@@ -142,10 +120,6 @@ auto SPERR3D_OMP_D::decompress(const void* p) -> RTNType
 #endif
 
     decompressor.set_dims({chunks[i][1], chunks[i][3], chunks[i][5]});
-
-//#ifndef QZ_TERM
-//    decompressor.set_bpp(m_bpp);
-//#endif
 
     chunk_rtn[i * 3] =
         decompressor.use_bitstream(m_bitstream_ptr + m_offsets[i], m_offsets[i + 1] - m_offsets[i]);
