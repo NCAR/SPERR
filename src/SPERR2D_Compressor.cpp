@@ -135,7 +135,7 @@ auto SPERR2D_Compressor::compress() -> RTNType
     m_encoder.set_data_range(range);
   }
   else if (mode == sperr::CompMode::FixedPWE) {
-    // Make a copy of the original data for outlier detection use.
+    // Make a copy of the original data for outlier correction use.
     m_val_buf2.resize(total_vals);
     std::copy(m_val_buf.begin(), m_val_buf.end(), m_val_buf2.begin());
   }
@@ -145,7 +145,7 @@ auto SPERR2D_Compressor::compress() -> RTNType
   auto [rtn, condi_meta] = m_conditioner.condition(m_val_buf);
   if (rtn != RTNType::Good)
     return rtn;
-  m_condi_stream = condi_meta;  // Copy conditioner meta data to `m_condi_stream`
+  m_condi_stream = condi_meta;
 
   // Step 2: wavelet transform
   rtn = m_cdf.take_data(std::move(m_val_buf), m_dims);
@@ -169,14 +169,13 @@ auto SPERR2D_Compressor::compress() -> RTNType
   if (rtn != RTNType::Good)
     return rtn;
 
-  // Copy SPECK bitstream to `m_speck_stream` so `m_encoder` can keep its internal storage.
   m_speck_stream = m_encoder.view_encoded_bitstream();
   if (m_speck_stream.empty())
     return RTNType::Error;
 
   // Step 4: Outlier correction if in FixedPWE mode.
   if (mode == sperr::CompMode::FixedPWE) {
-    // Step 4.1: IDWT quantized coefficients to have a reconstruction.
+    // Step 4.1: IDWT using quantized coefficients to have a reconstruction.
     auto qz_coeff = m_encoder.get_quantized_coeff();
     assert(!qz_coeff.empty());
     m_cdf.take_data(std::move(qz_coeff), m_dims);
@@ -190,8 +189,8 @@ auto SPERR2D_Compressor::compress() -> RTNType
     auto new_pwe = m_target_pwe;
     for (size_t i = 0; i < total_vals; i++) {
       const auto d = std::abs(m_val_buf2[i] - m_val_buf[i]);
-      const auto f = std::abs(float(m_val_buf2[i]) - float(m_val_buf[i]));
-      if (double(f) > m_target_pwe && d <= m_target_pwe)
+      const auto f = std::abs(static_cast<float>(m_val_buf2[i]) - static_cast<float>(m_val_buf[i]));
+      if (static_cast<double>(f) > m_target_pwe && d <= m_target_pwe)
         new_pwe = std::min(new_pwe, d);
     }
     m_LOS.clear();
@@ -200,7 +199,8 @@ auto SPERR2D_Compressor::compress() -> RTNType
       if (std::abs(diff) >= new_pwe)
         m_LOS.emplace_back(i, diff);
     }
-    // Step 4.3: encode located outliers
+
+    // Step 4.3: Code located outliers
     if (!m_LOS.empty()) {
       m_sperr.set_tolerance(new_pwe);
       m_sperr.set_length(total_vals);

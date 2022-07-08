@@ -54,7 +54,7 @@ class SPERR2D_Compressor {
   // A few data members for outlier correction
   sperr::SPERR m_sperr;
   sperr::vec8_type m_sperr_stream;
-  sperr::vecd_type m_val_buf2;        // A copy of `m_val_buf` for outlier locating.
+  sperr::vecd_type m_val_buf2;        // A copy of `m_val_buf` used for outlier coding
   std::vector<sperr::Outlier> m_LOS;  // List of OutlierS
 
   sperr::Conditioner m_conditioner;
