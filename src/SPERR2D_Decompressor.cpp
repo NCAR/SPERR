@@ -11,7 +11,7 @@ auto SPERR2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
 {
   // This method parses the metadata of a bitstream and performs the following tasks:
   // 1) Verify if the major version number is consistant.
-  // 2) Make sure that the bitstream is for 2D encoding, and consistent in QZ_TERM.
+  // 2) Make sure that the bitstream is for 2D encoding.
   // 3) Extract dimensions.
   // 4) Verify that the application of ZSTD is consistant, and apply ZSTD if needed.
   // 5) disassemble conditioner, SPECK, and possibly SPERR streams.
