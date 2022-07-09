@@ -53,6 +53,9 @@ void SPERR2D_Compressor::set_target_qz_level(int32_t q)
 auto SPERR2D_Compressor::set_target_bpp(double bpp) -> RTNType
 {
   const auto total_vals = m_dims[0] * m_dims[1];
+  if (total_vals == 0)
+    return RTNType::SetBPPBeforeDims;
+
   if (bpp <= 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
   else if (size_t(bpp * total_vals) <= (m_meta_size + m_condi_stream.size()) * 8)
