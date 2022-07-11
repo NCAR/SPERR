@@ -204,7 +204,7 @@ TEST(speck3d_target_pwe, small_data_range)
 
 TEST(speck3d_target_pwe, big)
 {
-  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 3);
+  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 0);
 
   const auto bpp = sperr::max_d;
   const auto q = sperr::lowest_int32;
@@ -274,7 +274,7 @@ TEST(speck3d_target_psnr, big)
 
 TEST(speck3d_target_psnr, small_data_range)
 {
-  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 2);
+  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 0);
 
   const auto bpp = sperr::max_d;
   const auto q = sperr::lowest_int32;
@@ -378,7 +378,7 @@ TEST(speck3d_bit_rate, small)
 
 TEST(speck3d_bit_rate, big)
 {
-  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 3);
+  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 0);
 
   const auto q = std::numeric_limits<int32_t>::lowest();
   const auto tar_psnr = std::numeric_limits<double>::max();

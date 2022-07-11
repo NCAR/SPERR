@@ -8,6 +8,10 @@
 #include <limits>
 #include <numeric>
 
+#ifdef USE_OMP
+#include <omp.h>
+#endif
+
 auto sperr::num_of_xforms(size_t len) -> size_t
 {
   assert(len > 0);
@@ -253,6 +257,12 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
   const size_t stride_size = 4096;
   const size_t num_of_strides = arr_len / stride_size;
   const size_t remainder_size = arr_len - stride_size * num_of_strides;
+
+  // Use the maximum possible threads if 0 is passed in.
+#ifdef USE_OMP
+  if (omp_nthreads == 0)
+    omp_nthreads = omp_get_max_threads();
+#endif
 
   auto rmse = T{0.0};
   auto linfty = T{0.0};

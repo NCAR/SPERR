@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
   app.add_option("-o", output_file, "Output filename")->group("Output Specifications");
 
   auto show_stats = bool{false};
-  app.add_flag("--stats", show_stats,
+  app.add_flag("--show_stats", show_stats,
                "Show statistics measuring the compression quality.\n"
                "They are not calculated by default.")
       ->group("Output Specifications");
@@ -121,6 +121,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
+  // Tell the compressor which compression mode to use.
   switch (mode) {
     case sperr::CompMode::FixedSize :
       rtn = compressor.set_target_bpp(bpp);
@@ -135,7 +136,6 @@ int main(int argc, char* argv[])
       compressor.set_target_pwe(pwe);
       break;
   }
-
   if (rtn != RTNType::Good) {
     std::cerr << "Set bit-per-pixel failed!" << std::endl;
     return 1;
@@ -145,7 +145,7 @@ int main(int argc, char* argv[])
   rtn = compressor.compress();
   switch (rtn) {
     case sperr::RTNType::QzLevelTooBig:
-      std::cerr << "Compression failed because `q` is set too big!" << std::endl;
+      std::cerr << "Compression failed because `qz` is set too big!" << std::endl;
       return 1;
     case sperr::RTNType::Good:
       break;
@@ -154,7 +154,7 @@ int main(int argc, char* argv[])
       return 1;
   }
 
-  // Take a hold of the encoded bitstream
+  // Get a hold of the encoded bitstream.
   const auto& stream = compressor.view_encoded_bitstream();
   if (stream.empty()) {
     std::cerr << "Compression bitstream empty!" << std::endl;
@@ -179,7 +179,7 @@ int main(int argc, char* argv[])
       const auto recover = decompressor.get_data<double>();
       assert(recover.size() * sizeof(double) == orig.size());
       auto stats = sperr::calc_stats(reinterpret_cast<const double*>(orig.data()), recover.data(),
-                                     recover.size(), 4);
+                                     recover.size(), 0);
       std::cout << ", PSNR = " << stats[2] << "dB,  L-Infty = " << stats[1];
       std::printf(", Data range = (%.2e, %.2e).\n", stats[3], stats[4]);
     }
@@ -187,7 +187,7 @@ int main(int argc, char* argv[])
       const auto recover = decompressor.get_data<float>();
       assert(recover.size() * sizeof(float) == orig.size());
       auto stats = sperr::calc_stats(reinterpret_cast<const float*>(orig.data()), recover.data(),
-                                     recover.size(), 4);
+                                     recover.size(), 0);
       std::cout << ", PSNR = " << stats[2] << "dB,  L-Infty = " << stats[1];
       std::printf(", Data range = (%.2e, %.2e).\n", stats[3], stats[4]);
     }
@@ -209,6 +209,7 @@ int main(int argc, char* argv[])
     }
   }
 
+  // Write out the encoded bitstream
   if (!output_file.empty()) {
     rtn = sperr::write_n_bytes(output_file, stream.size(), stream.data());
     if (rtn != sperr::RTNType::Good) {

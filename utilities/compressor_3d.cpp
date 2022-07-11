@@ -1,7 +1,9 @@
 #include "SPERR3D_OMP_C.h"
+#include "SPERR3D_OMP_D.h"
 
 #include "CLI11.hpp"
 
+#include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -11,6 +13,7 @@ int main(int argc, char* argv[])
   // Parse command line options
   CLI::App app("Compress a 3D volume and output a SPERR bitstream\n");
 
+  // Input specifications
   auto input_file = std::string();
   app.add_option("filename", input_file, "Input data file to the compressor")
       ->required()
@@ -29,58 +32,93 @@ int main(int argc, char* argv[])
                "Data is treated as float by default.")
       ->group("Input Specifications");
 
+  // Output specifications
   auto output_file = std::string();
-  app.add_option("-o", output_file, "Output filename")->required()->group("Output Specifications");
+  app.add_option("-o", output_file, "Output filename")->group("Output Specifications");
 
+  auto show_stats = bool{false};
+  app.add_flag("--show_stats", show_stats,
+               "Show statistics measuring the compression quality.")
+      ->group("Output Specifications");
+
+  // Execution specifications
   auto chunks = std::vector<size_t>{256, 256, 256};
   app.add_option("--chunks", chunks,
-                 "Dimensions of the preferred chunk size. Default: 256 256 256\n"
-                 "E.g., `--chunks 64 64 64`")
+                 "Dimensions of the preferred chunk size. Default: 256 256 256")
       ->expected(3)
-      ->group("Compression Parameters");
+      ->group("Execution Specifications");
 
-#ifdef QZ_TERM
-  auto qz_level = int32_t{0};
-  app.add_option("-q", qz_level,
+  auto omp_num_threads = size_t{0}; // meaning to use the maximum number of threads.
+#ifdef USE_OMP
+  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use.")
+      ->group("Execution Specifications");
+#endif
+
+  // Compression specifications
+  auto qz_level = sperr::lowest_int32;
+  app.add_option("--qz", qz_level,
                  "Quantization level to reach when encoding\n"
                  "Note 1: smaller quantization levels yield less compression error.\n"
                  "Note 2: quantization levels could be negative integers as well.")
-      ->group("Compression Parameters")
-      ->required();
+      ->group("Compression Specifications (must choose one and only one)");
 
-  auto tolerance = double{0.0};
-  app.add_option("-t", tolerance,
-                 "Maximum point-wise error tolerance. E.g., `-t 1e-2`\n"
-                 "If not specified or a negative number is given, \n"
-                 "then the program will not perform any outlier correction.")
-      ->group("Compression Parameters");
-#else
-  auto bpp = double{0.0};
-  app.add_option("--bpp", bpp, "Target bit-per-pixel. E.g., `--bpp 2.3`")
-      ->check(CLI::Range(0.0, 64.0))
-      ->group("Compression Parameters")
-      ->required();
-#endif
+  auto bpp = sperr::max_d;
+  app.add_option("--bpp", bpp, "Target bit-per-pixel to achieve.")
+      ->group("Compression Specifications (must choose one and only one)");
 
-  auto omp_num_threads = size_t{4};
-  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4")
-      ->group("Compression Parameters");
+  auto pwe = double{0.0};
+  app.add_option("--pwe", pwe, "Maximum point-wise error tolerance.") 
+      ->group("Compression Specifications (must choose one and only one)");
+
+  auto psnr = sperr::max_d;
+  app.add_option("--psnr", psnr, "Target PSNR to achieve.")
+      ->group("Compression Specifications (must choose one and only one)");
 
   CLI11_PARSE(app, argc, argv);
 
-  //
-  // Let's do the actual work
-  //
-  const size_t total_vals = dims[0] * dims[1] * dims[2];
-  SPERR3D_OMP_C compressor;
-  compressor.set_num_threads(omp_num_threads);
+  // Make sure that we have a valid compression mode
+  auto bit_budget = sperr::max_size;
+  if (bpp != sperr::max_d)
+    bit_budget -= 100;  // Just need to be different from the max size value.
+  const auto mode = sperr::compression_mode(bit_budget, qz_level, psnr, pwe);
+  if (mode == sperr::CompMode::Unknown) {
+    std::cout << "Compression mode is unclear. Did you give one and only one "
+                 "compression specification?" << std::endl;
+    return 1;
+  }
 
+  // Do some sanity check on compression parameters
+  if (mode == sperr::CompMode::FixedSize) {
+    if (bpp <= 0.0 || bpp >= 64.0) {
+      std::cout << "Bit-per-pixel value must be between 0.0 and 64.0!" << std::endl;
+      return 1;
+    }
+  }
+  else if (mode == sperr::CompMode::FixedPSNR) {
+    if (psnr <= 0.0) {
+      std::cout << "Target PSNR must be positive!" << std::endl;
+      return 1;
+    }
+  }
+  else if (mode == sperr::CompMode::FixedPWE) {
+    if (pwe <= 0.0) {
+      std::cout << "Target PWE must be positive!" << std::endl;
+      return 1;
+    }
+  }
+
+  // Read the input file
+  const size_t total_vals = dims[0] * dims[1] * dims[2];
   auto orig = sperr::read_whole_file<uint8_t>(input_file);
   if ((use_double && orig.size() != total_vals * sizeof(double)) ||
       (!use_double && orig.size() != total_vals * sizeof(float))) {
     std::cerr << "Read input file error: " << input_file << std::endl;
     return 1;
   }
+
+  // Use a compressor and take the input data
+  SPERR3D_OMP_C compressor;
+  compressor.set_num_threads(omp_num_threads);
   auto rtn = sperr::RTNType::Good;
   if (use_double) {
     rtn = compressor.copy_data(reinterpret_cast<const double*>(orig.data()), total_vals,
@@ -95,25 +133,34 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-#ifdef QZ_TERM
-  compressor.set_qz_level(qz_level);
-  compressor.set_tolerance(tolerance);
-#else
-  rtn = compressor.set_bpp(bpp);
+  // Tell the compressor which compression mode to use.
+  switch (mode) {
+    case sperr::CompMode::FixedSize :
+      rtn = compressor.set_target_bpp(bpp);
+      break;
+    case sperr::CompMode::FixedQz :
+      compressor.set_target_qz_level(qz_level);
+      break;
+    case sperr::CompMode::FixedPSNR :
+      compressor.set_target_psnr(psnr);
+      break;
+    default :
+      compressor.set_target_pwe(pwe);
+      break;
+  }
   if (rtn != sperr::RTNType::Good) {
     std::cerr << "Set bit-per-pixel failed!" << std::endl;
     return 1;
   }
-#endif
 
-  // Free memory taken by `orig` since the volume has been put into chunks.
-  orig.clear();
-  orig.shrink_to_fit();
+  //orig.clear();
+  //orig.shrink_to_fit();
 
+  // Perform the actual compression
   rtn = compressor.compress();
   switch (rtn) {
     case sperr::RTNType::QzLevelTooBig:
-      std::cerr << "Compression failed because `q` is set too big!" << std::endl;
+      std::cerr << "Compression failed because `qz` is set too big!" << std::endl;
       return 1;
     case sperr::RTNType::Good:
       break;
@@ -122,16 +169,68 @@ int main(int argc, char* argv[])
       return 1;
   }
 
+  // Get a hold of the encoded bitstream.
   auto stream = compressor.get_encoded_bitstream();
   if (stream.empty()) {
     std::cerr << "Compression bitstream empty!" << std::endl;
     return 1;
   }
 
-  rtn = sperr::write_n_bytes(output_file, stream.size(), stream.data());
-  if (rtn != sperr::RTNType::Good) {
-    std::cerr << "Write compressed file failed!" << std::endl;
-    return 1;
+  // Write out the encoded bitstream.
+  if (!output_file.empty()) {
+    rtn = sperr::write_n_bytes(output_file, stream.size(), stream.data());
+    if (rtn != sperr::RTNType::Good) {
+      std::cerr << "Write compressed file failed!" << std::endl;
+      return 1;
+    }
+  }
+
+  // Calculate and print statistics
+  if (show_stats) {
+    std::cout << "Average bpp = " << stream.size() * 8.0 / total_vals;
+
+    // Use a decompressor to decompress and collect error statistics
+    SPERR3D_OMP_D decompressor;
+    rtn = decompressor.use_bitstream(stream.data(), stream.size());
+    if (rtn != RTNType::Good)
+      return 1;
+
+    rtn = decompressor.decompress(stream.data());
+    if (rtn != RTNType::Good)
+      return 1;
+
+    if (use_double) {
+      const auto recover = decompressor.get_data<double>();
+      assert(recover.size() * sizeof(double) == orig.size());
+      auto stats = sperr::calc_stats(reinterpret_cast<const double*>(orig.data()), recover.data(),
+                                     recover.size(), omp_num_threads);
+      std::cout << ", PSNR = " << stats[2] << "dB,  L-Infty = " << stats[1];
+      std::printf(", Data range = (%.2e, %.2e).\n", stats[3], stats[4]);
+    }
+    else {
+      const auto recover = decompressor.get_data<float>();
+      assert(recover.size() * sizeof(float) == orig.size());
+      auto stats = sperr::calc_stats(reinterpret_cast<const float*>(orig.data()), recover.data(),
+                                     recover.size(), omp_num_threads);
+      std::cout << ", PSNR = " << stats[2] << "dB,  L-Infty = " << stats[1];
+      std::printf(", Data range = (%.2e, %.2e).\n", stats[3], stats[4]);
+    }
+
+    if (mode == sperr::CompMode::FixedPWE) {
+      // Also collect outlier statistics
+      const auto out_stats = compressor.get_outlier_stats();
+      if (out_stats.first == 0) {
+        std::cout << "There were no outliers corrected!\n";
+      }
+      else {
+        std::printf(
+            "There were %ld outliers, percentage of total data points = %.2f%%.\n"
+            "Correcting them takes bpp = %.2f, percentage of total storage = %.2f%%.\n",
+            out_stats.first, double(out_stats.first * 100) / double(total_vals),
+            double(out_stats.second * 8) / double(out_stats.first),
+            double(out_stats.second * 100) / double(stream.size()));
+      }
+    }
   }
 
   return 0;

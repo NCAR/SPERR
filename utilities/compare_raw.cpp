@@ -151,6 +151,6 @@ int main(int argc, char* argv[])
 
   FLOAT rmse, lmax, psnr, arr1min, arr1max;
   calc_stats(buf1.get(), buf2.get(), n_vals, rmse, lmax, psnr, arr1min, arr1max);
-  printf("rmse = %e, lmax = %e, psnr = %f dB, orig_min = %f, orig_max = %f\n", rmse, lmax, psnr,
+  printf("rmse = %e, lmax = %e, psnr = %fdB, orig_min = %f, orig_max = %f\n", rmse, lmax, psnr,
          arr1min, arr1max);
 }

@@ -123,7 +123,8 @@ auto read_n_bytes(std::string filename, size_t n_bytes) -> std::vector<uint8_t>;
 
 // Calculate a suite of statistics.
 // Note that arr1 is considered as the ground truth array, so it's the range of
-// arr1 that is used internally for psnr calculations.
+//   arr1 that is used internally for psnr calculations.
+// If `omp_nthreads` is zero, then it will use the maximum numbers of threads. 
 // The return array contains statistics in the following order:
 // ret[0] : RMSE
 // ret[1] : L-Infinity

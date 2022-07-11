@@ -212,8 +212,8 @@ endif()
 
 # Install utilities
 #
-if( BUILD_CLI_UTILITIES )
-  install( TARGETS show_version compressor_3d decompressor_3d probe_3d 
+# if( BUILD_CLI_UTILITIES )
+  install( TARGETS show_version compressor_3d decompressor_3d
            compressor_2d decompressor_2d header_parser
            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
 endif()

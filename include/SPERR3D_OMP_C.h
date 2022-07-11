@@ -13,6 +13,7 @@ using sperr::RTNType;
 
 class SPERR3D_OMP_C {
  public:
+  // If 0 is passed in, the maximal number of threads will be used.
   void set_num_threads(size_t);
 
   // Upon receiving incoming data, a chunking scheme is decided, and the volume

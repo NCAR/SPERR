@@ -13,7 +13,14 @@
 
 void SPERR3D_OMP_C::set_num_threads(size_t n)
 {
-  m_num_threads = std::max(n, 1ul);
+#ifdef USE_OMP
+  if (n == 0)
+    m_num_threads = omp_get_max_threads();
+  else
+    m_num_threads = n;
+#else
+  m_num_threads = 1;
+#endif
 }
 
 void SPERR3D_OMP_C::toggle_conditioning(sperr::Conditioner::settings_type b4)
