@@ -28,7 +28,8 @@ auto sperr::SPERR3D_Decompressor::use_bitstream(const void* p, size_t len) -> RT
 
   m_zstd_buf.resize(content_size);
 
-  auto decomp_size = ZSTD_decompressDCtx(m_dctx.get(), m_zstd_buf.data(), m_zstd_buf.size(), p, len);
+  auto decomp_size =
+      ZSTD_decompressDCtx(m_dctx.get(), m_zstd_buf.data(), m_zstd_buf.size(), p, len);
   if (ZSTD_isError(decomp_size) || decomp_size != content_size)
     return RTNType::ZSTDError;
   const uint8_t* const ptr = m_zstd_buf.data();
@@ -66,7 +67,7 @@ auto sperr::SPERR3D_Decompressor::use_bitstream(const void* p, size_t len) -> RT
   std::copy(speck_p, speck_p + speck_size, m_speck_stream.begin());
   pos += speck_size;
 
-  // Step 3: extract SPERR stream 
+  // Step 3: extract SPERR stream
   if (pos < ptr_len) {
     const uint8_t* const sperr_p = ptr + pos;
     const auto sperr_size = m_sperr.get_sperr_stream_size(sperr_p);

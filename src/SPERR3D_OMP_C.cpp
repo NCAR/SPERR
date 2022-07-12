@@ -160,7 +160,8 @@ auto SPERR3D_OMP_C::compress() -> RTNType
     else {
       const auto total_vals = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
       const auto chunk_vals = static_cast<double>(chunks[i][1] * chunks[i][3] * chunks[i][5]);
-      const auto avail_bits = static_cast<double>(m_bit_budget - (m_header_magic + chunks.size() * 4) * 8);
+      const auto avail_bits =
+          static_cast<double>(m_bit_budget - (m_header_magic + chunks.size() * 4) * 8);
       my_budget = static_cast<size_t>(chunk_vals / total_vals * avail_bits);
       while (my_budget % 8 != 0)
         my_budget--;

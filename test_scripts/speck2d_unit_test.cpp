@@ -50,19 +50,19 @@ class speck_tester {
       total_bits = static_cast<size_t>(bpp * total_vals);
     const auto mode = sperr::compression_mode(total_bits, qz, psnr, pwe);
     switch (mode) {
-      case sperr::CompMode::FixedSize :
+      case sperr::CompMode::FixedSize:
         rtn = compressor.set_target_bpp(bpp);
         break;
-      case sperr::CompMode::FixedQz :
+      case sperr::CompMode::FixedQz:
         compressor.set_target_qz_level(qz);
         break;
-      case sperr::CompMode::FixedPSNR :
+      case sperr::CompMode::FixedPSNR:
         compressor.set_target_psnr(psnr);
         break;
-      case sperr::CompMode::FixedPWE :
+      case sperr::CompMode::FixedPWE:
         compressor.set_target_pwe(pwe);
         break;
-      default :
+      default:
         return 1;
     }
 
@@ -87,9 +87,9 @@ class speck_tester {
 
     // DEBUG
     // Find out what percentage of points are outliers, and how much it costs to encode them.
-    //if (mode == sperr::CompMode::FixedPWE) {
+    // if (mode == sperr::CompMode::FixedPWE) {
     //  auto [num_o, num_byte] = compressor.get_outlier_stats();
-    //  std::printf("Outlier pct = %f, bpp = %f, outlier storage pct = %f\n", 
+    //  std::printf("Outlier pct = %f, bpp = %f, outlier storage pct = %f\n",
     //              double(num_o) / double(total_vals) * 100.0,
     //              double(num_byte) * 8.0 / double(num_o),
     //              double(num_byte) / double(bitstream.size()) * 100.0);
@@ -111,7 +111,6 @@ class speck_tester {
   std::string m_output_name = "output.tmp";
   float m_psnr, m_lmax;
 };
-
 
 //
 // Test target PWE mode
@@ -188,7 +187,6 @@ TEST(speck2d, PWE_small_data_range)
   EXPECT_LE(lmax, target_pwe);
 }
 
-
 //
 // Test target PSNR mode
 //
@@ -246,8 +244,6 @@ TEST(speck2d, PSNR_small_data_range)
   EXPECT_GT(psnr, target_psnr);
 }
 
-
-
 //
 // Test target quantization level mode
 //
@@ -296,7 +292,6 @@ TEST(speck2d, QZ_small_data_range)
   EXPECT_LT(psnr, 84.3169);
   EXPECT_LT(lmax, 4.59038e-07);
 }
-
 
 //
 // Test fixed-size mode

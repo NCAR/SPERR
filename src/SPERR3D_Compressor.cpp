@@ -63,7 +63,7 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
     return tmp;
   }
 
-  // Find out the compression mode, and initially data members accordingly.
+  // Find out the compression mode, and initialize data members accordingly.
   const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, m_target_psnr, m_target_pwe);
   assert(mode != CompMode::Unknown);
   if (mode == sperr::CompMode::FixedPSNR) {
@@ -122,7 +122,7 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
     return RTNType::Error;
   const size_t condi_speck_len = m_condi_stream.size() + speck_stream.size();
   m_encoded_stream.resize(condi_speck_len);
-  std::copy(speck_stream.cbegin(), speck_stream.cend(), 
+  std::copy(speck_stream.cbegin(), speck_stream.cend(),
             m_encoded_stream.begin() + m_condi_stream.size());
 
   // Step 4: Outlier correction if in FixedPWE mode.
@@ -184,7 +184,7 @@ auto sperr::SPERR3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
     const auto condi_speck_len = m_encoded_stream.size();
     assert(condi_speck_len > m_condi_stream.size());
     m_encoded_stream.resize(condi_speck_len + m_sperr_stream.size());
-    std::copy(m_sperr_stream.cbegin(), m_sperr_stream.cend(), 
+    std::copy(m_sperr_stream.cbegin(), m_sperr_stream.cend(),
               m_encoded_stream.begin() + condi_speck_len);
   }
 
@@ -199,9 +199,9 @@ auto sperr::SPERR3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 
   const size_t comp_upper_size = ZSTD_compressBound(m_encoded_stream.size());
   m_zstd_buf.resize(comp_upper_size);
-  const size_t comp_size = ZSTD_compressCCtx(m_cctx.get(), m_zstd_buf.data(), comp_upper_size,
-                           m_encoded_stream.data(), m_encoded_stream.size(), 
-                           ZSTD_CLEVEL_DEFAULT + 6);
+  const size_t comp_size =
+      ZSTD_compressCCtx(m_cctx.get(), m_zstd_buf.data(), comp_upper_size, m_encoded_stream.data(),
+                        m_encoded_stream.size(), ZSTD_CLEVEL_DEFAULT + 6);
   if (ZSTD_isError(comp_size))
     return RTNType::ZSTDError;
   else {
@@ -220,8 +220,10 @@ auto sperr::SPERR3D_Compressor::get_outlier_stats() const -> std::pair<size_t, s
   return {m_LOS.size(), m_sperr_stream.size()};
 }
 
-auto sperr::SPERR3D_Compressor::set_comp_params(size_t budget, int32_t qlev, double psnr, double pwe)
-            -> RTNType
+auto sperr::SPERR3D_Compressor::set_comp_params(size_t budget,
+                                                int32_t qlev,
+                                                double psnr,
+                                                double pwe) -> RTNType
 {
   // First set those ones that only need a plain copy
   m_qz_lev = qlev;

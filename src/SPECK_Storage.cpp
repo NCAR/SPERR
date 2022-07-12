@@ -55,11 +55,10 @@ auto sperr::SPECK_Storage::get_quantized_coeff() const -> vecd_type
   if (!m_qz_coeff.empty()) {
     assert(m_qz_coeff.size() == m_sign_array.size());
     const auto tmp = d2_type{-1.0, 1.0};
-    std::transform(m_qz_coeff.cbegin(), m_qz_coeff.cend(), 
-                   m_sign_array.cbegin(), coeff.begin(),
-                   [tmp](auto v, auto b){ return v * tmp[b]; } );
+    std::transform(m_qz_coeff.cbegin(), m_qz_coeff.cend(), m_sign_array.cbegin(), coeff.begin(),
+                   [tmp](auto v, auto b) { return v * tmp[b]; });
   }
-  
+
   return coeff;
 }
 
@@ -153,7 +152,7 @@ void sperr::SPECK_Storage::set_dimensions(dims_type dims)
 }
 
 auto sperr::SPECK_Storage::set_comp_params(size_t budget, int32_t qlev, double psnr, double pwe)
-            -> RTNType
+    -> RTNType
 {
   // First set those ones that only need a plain copy
   m_qz_lev = qlev;
@@ -165,7 +164,7 @@ auto sperr::SPECK_Storage::set_comp_params(size_t budget, int32_t qlev, double p
     m_encode_budget = sperr::max_size;
     return RTNType::Good;
   }
-  
+
   if (budget <= m_header_size * 8) {
     m_encode_budget = 0;
     return RTNType::Error;
@@ -270,7 +269,7 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
   assert(m_mode_cache != CompMode::Unknown);
 
   switch (m_mode_cache) {
-    case CompMode::FixedQz : {
+    case CompMode::FixedQz: {
       assert(m_max_coeff_bit >= m_qz_lev);
       const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev;
       if (bitplane >= num_qz_levs)
@@ -278,7 +277,7 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
       else
         break;
     }
-    case CompMode::FixedPSNR : {
+    case CompMode::FixedPSNR: {
       assert(m_orig_coeff.size() == m_qz_coeff.size());
       assert(!m_orig_coeff.empty());
       assert(m_data_range != sperr::max_d);
@@ -299,7 +298,7 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
       else
         break;
     }
-    case CompMode::FixedPWE : {
+    case CompMode::FixedPWE: {
       assert(m_orig_coeff.size() == m_qz_coeff.size());
       assert(!m_orig_coeff.empty());
       assert(m_target_pwe > 0.0);
@@ -322,4 +321,3 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
 
   return RTNType::Good;
 }
-

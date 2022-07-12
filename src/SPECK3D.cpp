@@ -332,7 +332,7 @@ auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
   }
 
   if (is_sig) {
-    counter++; // Let's increment the counter first!
+    counter++;  // Let's increment the counter first!
     m_bit_buffer.push_back(m_sign_array[pixel_idx]);
     if (m_bit_buffer.size() >= m_encode_budget)
       return RTNType::BitBudgetMet;
@@ -434,7 +434,7 @@ auto sperr::SPECK3D::m_process_S_encode(size_t idx1,
   }
 
   if (is_sig) {
-    counter++; // Let's increment the counter first!
+    counter++;  // Let's increment the counter first!
     auto rtn = m_code_S_encode(idx1, idx2, subset_sigs);
     if (rtn == RTNType::BitBudgetMet)
       return rtn;
@@ -457,7 +457,7 @@ auto sperr::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) 
   }
 
   if (is_sig) {
-    counter++; // Let's increment the counter first!
+    counter++;  // Let's increment the counter first!
     if (m_bit_idx >= m_bit_buffer.size())
       return RTNType::BitBudgetMet;
     m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];
@@ -486,7 +486,7 @@ auto sperr::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2, size_t& counte
   }
 
   if (set.signif == SigType::Sig) {
-    counter++; // Let's increment the counter first!
+    counter++;  // Let's increment the counter first!
     auto rtn = m_code_S_decode(idx1, idx2);
     if (rtn == RTNType::BitBudgetMet)
       return rtn;

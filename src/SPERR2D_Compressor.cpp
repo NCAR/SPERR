@@ -127,7 +127,7 @@ auto SPERR2D_Compressor::compress() -> RTNType
     return tmp;
   }
 
-  // Find out the compression mode, and initially data members accordingly. 
+  // Find out the compression mode, and initialize data members accordingly.
   const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, m_target_psnr, m_target_pwe);
   assert(mode != sperr::CompMode::Unknown);
 

@@ -6,15 +6,14 @@
 #include "SPERR3D_OMP_C.h"
 #include "SPERR3D_OMP_D.h"
 
-
 int C_API::sperr_comp_2d(const void* src,
-                        int32_t is_float,
-                        size_t dimx,
-                        size_t dimy,
-                        int32_t mode,
-                        double quality,
-                        void** dst,
-                        size_t* dst_len)
+                         int32_t is_float,
+                         size_t dimx,
+                         size_t dimy,
+                         int32_t mode,
+                         double quality,
+                         void** dst,
+                         size_t* dst_len)
 {
   // Examine if `dst` is pointing to a NULL pointer
   if (*dst != NULL)
@@ -23,7 +22,7 @@ int C_API::sperr_comp_2d(const void* src,
   // Examine if `mode` and `quality` are valid
   if (mode < 1 || mode > 3 || quality <= 0.0)
     return 2;
-    
+
   // Setup the compressor
   const auto total_vals = dimx * dimy;
   auto compressor = SPERR2D_Compressor();
@@ -72,7 +71,6 @@ int C_API::sperr_comp_2d(const void* src,
 
   return 0;
 }
-
 
 int C_API::sperr_comp_3d(const void* src,
                          int32_t is_float,
@@ -147,7 +145,6 @@ int C_API::sperr_comp_3d(const void* src,
 
   return 0;
 }
-
 
 int C_API::sperr_decomp_2d(const void* src,
                            size_t src_len,

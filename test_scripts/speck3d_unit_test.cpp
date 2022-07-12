@@ -57,19 +57,19 @@ class speck_tester_omp {
     auto rtn = sperr::RTNType::Good;
     const auto mode = sperr::compression_mode(total_bits, qz, psnr, pwe);
     switch (mode) {
-      case sperr::CompMode::FixedSize :
+      case sperr::CompMode::FixedSize:
         rtn = compressor.set_target_bpp(bpp);
         break;
-      case sperr::CompMode::FixedQz :
+      case sperr::CompMode::FixedQz:
         compressor.set_target_qz_level(qz);
         break;
-      case sperr::CompMode::FixedPSNR :
+      case sperr::CompMode::FixedPSNR:
         compressor.set_target_psnr(psnr);
         break;
-      case sperr::CompMode::FixedPWE :
+      case sperr::CompMode::FixedPWE:
         compressor.set_target_pwe(pwe);
         break;
-      default :
+      default:
         return 1;
     }
 
@@ -103,13 +103,13 @@ class speck_tester_omp {
     m_psnr = ret[2];
     m_lmax = ret[1];
 
-    //if (mode == sperr::CompMode::FixedPWE) {
-    //  auto [num_o, num_byte] = compressor.get_outlier_stats();
-    //  std::printf("Outlier pct = %f, bpp = %f, outlier storage pct = %f\n", 
-    //              double(num_o) / double(total_vals) * 100.0,
-    //              double(num_byte) * 8.0 / double(num_o),
-    //              double(num_byte) / double(stream.size()) * 100.0);
-    //}
+    // if (mode == sperr::CompMode::FixedPWE) {
+    //   auto [num_o, num_byte] = compressor.get_outlier_stats();
+    //   std::printf("Outlier pct = %f, bpp = %f, outlier storage pct = %f\n",
+    //               double(num_o) / double(total_vals) * 100.0,
+    //               double(num_byte) * 8.0 / double(num_o),
+    //               double(num_byte) / double(stream.size()) * 100.0);
+    // }
 
     return 0;
   }
@@ -226,7 +226,6 @@ TEST(speck3d_target_pwe, big)
   EXPECT_LE(lmax, pwe);
 }
 
-
 //
 // Test target PSNR
 //
@@ -341,7 +340,6 @@ TEST(speck3d_fixed_q, narrow_data_range)
   EXPECT_LT(psnr, 73.7562);
   EXPECT_LT(lmax, 5.00702e-07);
 }
-
 
 //
 // Test fixed-size mode

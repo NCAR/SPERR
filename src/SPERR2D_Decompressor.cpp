@@ -117,7 +117,6 @@ auto SPERR2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   return RTNType::Good;
 }
 
-
 template <typename T>
 auto SPERR2D_Decompressor::get_data() const -> std::vector<T>
 {
