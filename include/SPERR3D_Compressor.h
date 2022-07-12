@@ -50,7 +50,7 @@ class SPERR3D_Compressor {
   Conditioner::meta_type m_condi_stream;
   vec8_type m_encoded_stream;
 
-  size_t m_bit_budget = 0; // Total bit budget, including headers etc.
+  size_t m_bit_budget = 0;  // Total bit budget, including headers etc.
   int32_t m_qz_lev = sperr::lowest_int32;
   double m_target_psnr = sperr::max_d;
   double m_target_pwe = 0.0;

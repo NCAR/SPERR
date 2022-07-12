@@ -28,7 +28,6 @@ extern "C" {
  *
  */
 
-
 /*
  * Compress a a 2D slice targetting different quality controls (modes):
  *   mode == 1 --> fixed bit-per-pixel (BPP)
@@ -51,7 +50,6 @@ int sperr_comp_2d(
     double quality,   /* Input: target quality */
     void** dst,       /* Output: buffer for the output bitstream, allocated by this function */
     size_t* dst_len); /* Output: length of `dst` in byte */
-
 
 /*
  * Compress a a 3D volume targetting different quality controls (modes):
@@ -78,7 +76,6 @@ int sperr_comp_3d(
     void** dst,       /* Output: buffer for the output bitstream, allocated by this function */
     size_t* dst_len); /* Output: length of `dst` in byte */
 
-
 /*
  * Decompress a 2D SPERR-compressed buffer in either fixed-error or fixed-size mode.
  *
@@ -96,7 +93,6 @@ int sperr_decomp_2d(
     size_t* dimy,         /* Output: Y (slowest-varying) dimension */
     void** dst);          /* Output: buffer for the output 2D slice, allocated by this function */
 
-
 /*
  * Decompress a 3D SPERR-compressed buffer in fixed-error and fixed-size mode.
  *
@@ -110,7 +106,7 @@ int sperr_decomp_3d(
     const void* src,      /* Input: buffer that contains a compressed bitstream */
     size_t src_len,       /* Input: length of the input bitstream in byte */
     int32_t output_float, /* Input: output data type: 1 == float, 0 == double */
-    size_t  nthreads,     /* Input: number of OMP threads to use. 0 means using all threads. */
+    size_t nthreads,      /* Input: number of OMP threads to use. 0 means using all threads. */
     size_t* dimx,         /* Output: X (fast-varying) dimension */
     size_t* dimy,         /* Output: Y dimension */
     size_t* dimz,         /* Output: Z (slowest-varying) dimension */

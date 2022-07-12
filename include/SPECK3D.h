@@ -38,7 +38,6 @@ class SPECKSet3D {
 //
 class SPECK3D : public SPECK_Storage {
  public:
-
   // core operations
   auto encode() -> RTNType;
   auto decode() -> RTNType;

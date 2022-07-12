@@ -45,7 +45,6 @@ class SPECK_Storage {
   // Set all compression parameters together. Notice their order!
   auto set_comp_params(size_t bit_budget, int32_t qlev, double psnr, double pwe) -> RTNType;
 
-
  protected:
   //
   // Member variables
@@ -56,7 +55,7 @@ class SPECK_Storage {
   int32_t m_qz_lev = sperr::lowest_int32;
   double m_target_psnr = sperr::max_d;
   double m_target_pwe = 0.0;
-  double m_data_range = sperr::max_d; // range of data before DWT.
+  double m_data_range = sperr::max_d;  // range of data before DWT.
 
   // Use a cache variable to store the current compression mode.
   // The compression mode, however, is NOT set or determined by `m_mode_cache`. It is determined
@@ -87,7 +86,7 @@ class SPECK_Storage {
   //
   std::vector<double> m_orig_coeff;
   std::vector<double> m_qz_coeff;
-  size_t m_num_qz_coeff = 0; // number of quantized (non-zero) coefficients
+  size_t m_num_qz_coeff = 0;  // number of quantized (non-zero) coefficients
 
   //
   // Member methods

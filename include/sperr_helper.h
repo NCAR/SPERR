@@ -23,7 +23,7 @@ using std::size_t;  // Seems most appropriate
 // Shortcut for the maximum values
 constexpr auto max_size = std::numeric_limits<size_t>::max();
 constexpr auto max_d = std::numeric_limits<double>::max();
-constexpr auto lowest_int32 = std::numeric_limits<int32_t>::lowest(); // -2147483648
+constexpr auto lowest_int32 = std::numeric_limits<int32_t>::lowest();  // -2147483648
 
 //
 // A few shortcuts
@@ -56,21 +56,15 @@ enum class RTNType {
   QzModeMismatch,
   SetBPPBeforeDims,
   DataRangeNotSet,
-  QzLevelReached, // Not an error, just a termination condition
-  PSNRReached, // Not an error, just a termination condition
-  PWEAlmostReached, // Not an error, just a termination condition
+  QzLevelReached,    // Not an error, just a termination condition
+  PSNRReached,       // Not an error, just a termination condition
+  PWEAlmostReached,  // Not an error, just a termination condition
   CompModeUnknown,
   Error
 };
 
 // Compression Mode
-enum class CompMode {
-  FixedSize,
-  FixedQz,
-  FixedPSNR,
-  FixedPWE,
-  Unknown
-};
+enum class CompMode { FixedSize, FixedQz, FixedPSNR, FixedPWE, Unknown };
 
 //
 // Helper functions
@@ -124,7 +118,7 @@ auto read_n_bytes(std::string filename, size_t n_bytes) -> std::vector<uint8_t>;
 // Calculate a suite of statistics.
 // Note that arr1 is considered as the ground truth array, so it's the range of
 //   arr1 that is used internally for psnr calculations.
-// If `omp_nthreads` is zero, then it will use the maximum numbers of threads. 
+// If `omp_nthreads` is zero, then it will use the maximum number of threads.
 // The return array contains statistics in the following order:
 // ret[0] : RMSE
 // ret[1] : L-Infinity

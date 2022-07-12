@@ -39,7 +39,7 @@ int main(int argc, char** argv)
   const size_t dimy = (size_t)atol(argv[3]);
   const size_t dimz = (size_t)atol(argv[4]);
   const int32_t mode = (int32_t)atoi(argv[5]);
-  const double quality= atof(argv[6]);
+  const double quality = atof(argv[6]);
   int is_float = 1;
   if (argc == 8)
     is_float = 0;
@@ -64,8 +64,8 @@ int main(int argc, char** argv)
   /* Compress `inbuf` and put the compressed bitstream in `bitstream` */
   void* bitstream = NULL; /* Will be free'd later */
   size_t stream_len = 0;
-  int rtn =
-      sperr_comp_3d(inbuf, is_float, dimx, dimy, dimz, mode, quality, nthreads, &bitstream, &stream_len);
+  int rtn = sperr_comp_3d(inbuf, is_float, dimx, dimy, dimz, mode, quality, nthreads, &bitstream,
+                          &stream_len);
   if (rtn != 0) {
     printf("Compression error with code %d\n", rtn);
     return rtn;
@@ -76,8 +76,8 @@ int main(int argc, char** argv)
   size_t out_dimx = 0;
   size_t out_dimy = 0;
   size_t out_dimz = 0;
-  rtn = sperr_decomp_3d(bitstream, stream_len, is_float, nthreads, &out_dimx, &out_dimy,
-                        &out_dimz, &outbuf);
+  rtn = sperr_decomp_3d(bitstream, stream_len, is_float, nthreads, &out_dimx, &out_dimy, &out_dimz,
+                        &outbuf);
   if (rtn != 0) {
     printf("Decompression error with code %d\n", rtn);
     return rtn;
