@@ -28,97 +28,56 @@ extern "C" {
  *
  */
 
-#ifdef QZ_TERM
 
 /*
- * Compress a buffer that contains a 2D slice in fixed-error mode.
+ * Compress a a 2D slice targetting different quality controls (modes):
+ *   mode == 1 --> fixed bit-per-pixel (BPP)
+ *   mode == 2 --> fixed peak signal-to-noise ratio (PSNR)
+ *   mode == 3 --> fixed point-wise error (PWE)
  *
  * Return value meanings:
  * 0: success
  * 1: `dst` is not pointing to a NULL pointer!
- * 2: `qlev` too big for this input
+ * 2: `mode` or `quality` isn't valid
  * 3: `is_float` value not supported
  * -1: other errors
  */
-int sperr_qzcomp_2d(
+int sperr_comp_2d(
     const void* src,  /* Input: buffer that contains a 2D slice */
     int32_t is_float, /* Input: input buffer type: 1 == float, 0 == double */
     size_t dimx,      /* Input: X (fastest-varying) dimension */
     size_t dimy,      /* Input: Y (slowest-varying) dimension */
-    int32_t qlev,     /* Input: q (quantization) level */
-    double tol,       /* Input: absolute error tolerance */
+    int32_t mode,     /* Input: compression mode to use */
+    double quality,   /* Input: target quality */
     void** dst,       /* Output: buffer for the output bitstream, allocated by this function */
     size_t* dst_len); /* Output: length of `dst` in byte */
 
+
 /*
- * Compress a buffer that contains a 3D volume in fixed-error mode.
+ * Compress a a 3D volume targetting different quality controls (modes):
+ *   mode == 1 --> fixed bit-per-pixel (BPP)
+ *   mode == 2 --> fixed peak signal-to-noise ratio (PSNR)
+ *   mode == 3 --> fixed point-wise error (PWE)
  *
  * Return value meanings:
  * 0: success
  * 1: `dst` is not pointing to a NULL pointer!
- * 2: `qlev` too big for this input
+ * 2: `mode` or `quality` isn't valid
  * 3: `is_float` value not supported
  * -1: other errors
  */
-int sperr_qzcomp_3d(
+int sperr_comp_3d(
     const void* src,  /* Input: buffer that contains a 3D volume */
     int32_t is_float, /* Input: input buffer type: 1 == float, 0 = double */
     size_t dimx,      /* Input: X (fastest-varying) dimension */
     size_t dimy,      /* Input: Y dimension */
     size_t dimz,      /* Input: Z (slowest-varying) dimension */
-    int32_t qlev,     /* Input: q (quantization) level */
-    double tol,       /* Input: absolute error tolerance */
-    int32_t nthreads, /* Input: number of OMP threads to use */
+    int32_t mode,     /* Input: compression mode to use */
+    double quality,   /* Input: target quality */
+    size_t nthreads,  /* Input: number of OMP threads to use. 0 means using all threads. */
     void** dst,       /* Output: buffer for the output bitstream, allocated by this function */
     size_t* dst_len); /* Output: length of `dst` in byte */
 
-#else
-
-/* fixed-size mode functions */
-
-/*
- * Compress a buffer that contains a 2D slice in fixed-size mode.
- *
- * Return value meanings:
- * 0: success
- * 1: `dst` is not pointing to a NULL pointer!
- * 2: `bpp` is not valid (e.g., too small)
- * 3: `is_float` value not supported
- * -1: other errors
- */
-int sperr_sizecomp_2d(
-    const void* src,  /* Input: buffer that contains a 2D slice */
-    int32_t is_float, /* Input: input buffer type: 1 == float, 0 == double */
-    size_t dimx,      /* Input: X (fastest-varying) dimension */
-    size_t dimy,      /* Input: Y (slowest-varying) dimension */
-    double bpp,       /* Input: target bit-per-pixel */
-    void** dst,       /* Output: buffer for the output bitstream, allocated by this function */
-    size_t* dst_len); /* Output: length of `dst` in byte */
-
-/*
- * Compress a buffer that contains a 3D volume in fixed-size mode.
- *
- * Return value meanings:
- * 0: success
- * 1: `dst` is not pointing to a NULL pointer!
- * 2: `bpp` is not valid (e.g., too small)
- * 3: `is_float` value not supported
- * -1: other errors
- */
-int sperr_sizecomp_3d(
-    const void* src,  /* Input: buffer that contains a 3D volume */
-    int32_t is_float, /* Input: input buffer type: 1 == float, 0 == double */
-    size_t dimx,      /* Input: X (fastest-varying) dimension */
-    size_t dimy,      /* Input: Y dimension */
-    size_t dimz,      /* Input: Z (slowest-varying) dimension */
-    double bpp,       /* Input: target bit-per-pixel */
-    int32_t nthreads, /* Input: number of OMP threads to use */
-    void** dst,       /* Output: buffer for the output bitstream, allocated by this function */
-    size_t* dst_len); /* Output: length of `dst` in byte */
-
-#endif
-
-/* Functions in both fixed-error and fixed-size mode. */
 
 /*
  * Decompress a 2D SPERR-compressed buffer in either fixed-error or fixed-size mode.
@@ -136,6 +95,7 @@ int sperr_decomp_2d(
     size_t* dimx,         /* Output: X (fast-varying) dimension */
     size_t* dimy,         /* Output: Y (slowest-varying) dimension */
     void** dst);          /* Output: buffer for the output 2D slice, allocated by this function */
+
 
 /*
  * Decompress a 3D SPERR-compressed buffer in fixed-error and fixed-size mode.
