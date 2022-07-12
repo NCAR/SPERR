@@ -29,17 +29,11 @@ else()
  message(STATUS "Little endian machine, good!")
 endif()
 
+option( BUILD_SHARED_LIBS "Build shared SPERR library" ON )
 option( BUILD_UNIT_TESTS "Build unit tests using GoogleTest" ON )
 option( BUILD_CLI_UTILITIES "Build a set of command line utilities" ON )
 option( USE_OMP "Use OpenMP parallelization on 3D volumes" ON )
-option( QZ_TERM  "Coding terminates by quantization level" ON )
-option( BUILD_SHARED_LIBS "Build shared SPERR library" ON )
-
-if(QZ_TERM)
-  option( USE_ZSTD "Incorporate ZSTD to achieve further reduction (~5%)" ON )
-else()
-  option( USE_ZSTD "Incorporate ZSTD to achieve further reduction (~5%)" OFF )
-endif()
+option( USE_ZSTD "Incorporate ZSTD to achieve further reduction (~5%)" OFF )
 
 if(USE_OMP)
   find_package(OpenMP REQUIRED)
@@ -76,12 +70,6 @@ message(STATUS "Repository Git Branch: ${GIT_BRANCH}, SHA1: ${GIT_SHA1}")
 #
 configure_file("${CMAKE_SOURCE_DIR}/SperrConfig.h.in" SperrConfig.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-if( QZ_TERM )
-    message(STATUS "Compiling in point-wise-error-bounded mode")
-else()
-    message(STATUS "Compiling in size-bounded mode")
-endif()
 
 if( USE_ZSTD )
     message(STATUS "ZSTD add-on enabled!")
