@@ -29,7 +29,7 @@ size_t read_file(const char* filename, void** dst)
 int main(int argc, char** argv)
 {
   if (argc < 6) {
-    printf("Usage: ./a.out filename dimx, dimy, dimz, bit-per-pixel [-d]\n");
+    printf("Usage: ./a.out filename dimx dimy mode quality [-d]\n");
     printf("  Note: -d is optional to indicate that the input is in double format\n");
     return 1;
   }
@@ -37,8 +37,8 @@ int main(int argc, char** argv)
   const char* filename = argv[1];
   const size_t dimx = (size_t)atol(argv[2]);
   const size_t dimy = (size_t)atol(argv[3]);
-  const size_t dimz = (size_t)atol(argv[4]);
-  const double bpp = atof(argv[5]);
+  const int32_t mode = (int32_t)atoi(argv[4]);
+  const double quality = atof(argv[5]);
   int is_float = 1;
   if (argc == 7)
     is_float = 0;
@@ -48,40 +48,34 @@ int main(int argc, char** argv)
   size_t inlen = read_file(filename, &inbuf);
   if (inlen == 0)
     return 1;
-  if (is_float && inlen != sizeof(float) * dimx * dimy * dimz) {
+  if (is_float && inlen != sizeof(float) * dimx * dimy) {
     free(inbuf);
     return 1;
   }
-  if (!is_float && inlen != sizeof(double) * dimx * dimy * dimz) {
+  if (!is_float && inlen != sizeof(double) * dimx * dimy) {
     free(inbuf);
     return 1;
   }
-
-  /* Let's use 4 OpenMP threads. */
-  const int32_t nthreads = 4;
 
   /* Compress `inbuf` and put the compressed bitstream in `bitstream` */
   void* bitstream = NULL; /* Will be free'd later */
   size_t stream_len = 0;
-  int rtn =
-      sperr_sizecomp_3d(inbuf, is_float, dimx, dimy, dimz, bpp, nthreads, &bitstream, &stream_len);
+  int rtn = sperr_comp_2d(inbuf, is_float, dimx, dimy, mode, quality, &bitstream, &stream_len);
   if (rtn != 0) {
     printf("Compression error with code %d\n", rtn);
     return rtn;
   }
 
-  /* Decompress `bitstream` and put the decompressed volume in `outbuf` */
+  /* Decompress `bitstream` and put the decompressed slice in `outbuf` */
   void* outbuf = NULL; /* Will be free'd later */
   size_t out_dimx = 0;
   size_t out_dimy = 0;
-  size_t out_dimz = 0;
-  rtn = sperr_decomp_3d(bitstream, stream_len, is_float, nthreads, &out_dimx, &out_dimy,
-                        &out_dimz, &outbuf);
+  rtn = sperr_decomp_2d(bitstream, stream_len, is_float, &out_dimx, &out_dimy, &outbuf);
   if (rtn != 0) {
     printf("Decompression error with code %d\n", rtn);
-    return rtn;
+    return 1;
   }
-  if (out_dimx != dimx || out_dimy != dimy || out_dimz != dimz) {
+  if (out_dimx != dimx || out_dimy != dimy) {
     printf("Decompression dimensions wrong!\n");
     return 1;
   }
@@ -90,9 +84,9 @@ int main(int argc, char** argv)
   FILE* f = fopen("./output.capi", "w");
   assert(f != NULL);
   if (is_float)
-    fwrite(outbuf, sizeof(float), out_dimx * out_dimy * out_dimz, f);
+    fwrite(outbuf, sizeof(float), out_dimx * out_dimy, f);
   else
-    fwrite(outbuf, sizeof(double), out_dimx * out_dimy * out_dimz, f);
+    fwrite(outbuf, sizeof(double), out_dimx * out_dimy, f);
   fclose(f);
 
   /* Clean up */

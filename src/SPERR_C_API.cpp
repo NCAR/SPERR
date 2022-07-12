@@ -201,7 +201,7 @@ int C_API::sperr_decomp_2d(const void* src,
 int C_API::sperr_decomp_3d(const void* src,
                            size_t src_len,
                            int32_t output_float,
-                           int32_t nthreads,
+                           size_t nthreads,
                            size_t* dimx,
                            size_t* dimy,
                            size_t* dimz,
@@ -210,9 +210,6 @@ int C_API::sperr_decomp_3d(const void* src,
   // Examine if `dst` is pointing to a NULL pointer
   if (*dst != NULL)
     return 1;
-
-  if (nthreads <= 0)
-    return -1;
 
   // Use a decompressor to decompress this bitstream
   auto decompressor = SPERR3D_OMP_D();

@@ -40,7 +40,7 @@ extern "C" {
  * 1: `dst` is not pointing to a NULL pointer!
  * 2: `mode` or `quality` isn't valid
  * 3: `is_float` value not supported
- * -1: other errors
+ *-1: other errors
  */
 int sperr_comp_2d(
     const void* src,  /* Input: buffer that contains a 2D slice */
@@ -64,7 +64,7 @@ int sperr_comp_2d(
  * 1: `dst` is not pointing to a NULL pointer!
  * 2: `mode` or `quality` isn't valid
  * 3: `is_float` value not supported
- * -1: other errors
+ *-1: other errors
  */
 int sperr_comp_3d(
     const void* src,  /* Input: buffer that contains a 3D volume */
@@ -110,7 +110,7 @@ int sperr_decomp_3d(
     const void* src,      /* Input: buffer that contains a compressed bitstream */
     size_t src_len,       /* Input: length of the input bitstream in byte */
     int32_t output_float, /* Input: output data type: 1 == float, 0 == double */
-    int32_t nthreads,     /* Input: number of OMP threads to use */
+    size_t  nthreads,     /* Input: number of OMP threads to use. 0 means using all threads. */
     size_t* dimx,         /* Output: X (fast-varying) dimension */
     size_t* dimy,         /* Output: Y dimension */
     size_t* dimz,         /* Output: Z (slowest-varying) dimension */
