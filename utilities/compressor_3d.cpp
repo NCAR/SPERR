@@ -37,18 +37,16 @@ int main(int argc, char* argv[])
   app.add_option("-o", output_file, "Output filename")->group("Output Specifications");
 
   auto show_stats = bool{false};
-  app.add_flag("--show_stats", show_stats,
-               "Show statistics measuring the compression quality.")
+  app.add_flag("--show_stats", show_stats, "Show statistics measuring the compression quality.")
       ->group("Output Specifications");
 
   // Execution specifications
   auto chunks = std::vector<size_t>{256, 256, 256};
-  app.add_option("--chunks", chunks,
-                 "Dimensions of the preferred chunk size. Default: 256 256 256")
+  app.add_option("--chunks", chunks, "Dimensions of the preferred chunk size. Default: 256 256 256")
       ->expected(3)
       ->group("Execution Specifications");
 
-  auto omp_num_threads = size_t{0}; // meaning to use the maximum number of threads.
+  auto omp_num_threads = size_t{0};  // meaning to use the maximum number of threads.
 #ifdef USE_OMP
   app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use.")
       ->group("Execution Specifications");
@@ -67,7 +65,7 @@ int main(int argc, char* argv[])
       ->group("Compression Specifications (must choose one and only one)");
 
   auto pwe = double{0.0};
-  app.add_option("--pwe", pwe, "Maximum point-wise error tolerance.") 
+  app.add_option("--pwe", pwe, "Maximum point-wise error tolerance.")
       ->group("Compression Specifications (must choose one and only one)");
 
   auto psnr = sperr::max_d;
@@ -83,7 +81,8 @@ int main(int argc, char* argv[])
   const auto mode = sperr::compression_mode(bit_budget, qz_level, psnr, pwe);
   if (mode == sperr::CompMode::Unknown) {
     std::cout << "Compression mode is unclear. Did you give one and only one "
-                 "compression specification?" << std::endl;
+                 "compression specification?"
+              << std::endl;
     return 1;
   }
 
@@ -135,16 +134,16 @@ int main(int argc, char* argv[])
 
   // Tell the compressor which compression mode to use.
   switch (mode) {
-    case sperr::CompMode::FixedSize :
+    case sperr::CompMode::FixedSize:
       rtn = compressor.set_target_bpp(bpp);
       break;
-    case sperr::CompMode::FixedQz :
+    case sperr::CompMode::FixedQz:
       compressor.set_target_qz_level(qz_level);
       break;
-    case sperr::CompMode::FixedPSNR :
+    case sperr::CompMode::FixedPSNR:
       compressor.set_target_psnr(psnr);
       break;
-    default :
+    default:
       compressor.set_target_pwe(pwe);
       break;
   }

@@ -71,7 +71,8 @@ int main(int argc, char* argv[])
   const auto mode = sperr::compression_mode(bit_budget, qz_level, psnr, pwe);
   if (mode == sperr::CompMode::Unknown) {
     std::cout << "Compression mode is unclear. Did you give one and only one "
-                 "compression specification?" << std::endl;
+                 "compression specification?"
+              << std::endl;
     return 1;
   }
 
@@ -123,16 +124,16 @@ int main(int argc, char* argv[])
 
   // Tell the compressor which compression mode to use.
   switch (mode) {
-    case sperr::CompMode::FixedSize :
+    case sperr::CompMode::FixedSize:
       rtn = compressor.set_target_bpp(bpp);
       break;
-    case sperr::CompMode::FixedQz :
+    case sperr::CompMode::FixedQz:
       compressor.set_target_qz_level(qz_level);
       break;
-    case sperr::CompMode::FixedPSNR :
+    case sperr::CompMode::FixedPSNR:
       compressor.set_target_psnr(psnr);
       break;
-    default :
+    default:
       compressor.set_target_pwe(pwe);
       break;
   }

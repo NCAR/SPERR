@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
                "Data is output as float by default.")
       ->group("Output Specifications");
 
-  auto omp_num_threads = size_t{0}; // meaning to use the maximum number of threads.
+  auto omp_num_threads = size_t{0};  // meaning to use the maximum number of threads.
 #ifdef USE_OMP
   app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4")
       ->group("Decompression Options");

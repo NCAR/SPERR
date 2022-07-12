@@ -27,13 +27,6 @@ int main(int argc, char* argv[])
                "Data is output as float by default.")
       ->group("Output Specifications");
 
-  //auto decomp_bpp = double{0.0};
-  //app.add_option("--bpp", decomp_bpp,
-  //               "Partially decode the bitstream up to a certain bit rate.\n"
-  //               "If not specified, the entire bitstream will be decoded.")
-  //    ->check(CLI::Range(0.0, 64.0))
-  //    ->group("Decompression Options");
-
   CLI11_PARSE(app, argc, argv);
 
   // Read in the input stream
