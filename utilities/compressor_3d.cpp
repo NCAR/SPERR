@@ -153,8 +153,11 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  //orig.clear();
-  //orig.shrink_to_fit();
+  // Free up memory if we don't need to compute stats
+  if (!show_stats) {
+    orig.clear();
+    orig.shrink_to_fit();
+  }
 
   // Perform the actual compression
   rtn = compressor.compress();
@@ -191,6 +194,7 @@ int main(int argc, char* argv[])
 
     // Use a decompressor to decompress and collect error statistics
     SPERR3D_OMP_D decompressor;
+    decompressor.set_num_threads(omp_num_threads);
     rtn = decompressor.use_bitstream(stream.data(), stream.size());
     if (rtn != RTNType::Good)
       return 1;

@@ -17,6 +17,7 @@ class SPERR3D_OMP_D {
   // Parse the header of this stream, and stores the pointer.
   auto use_bitstream(const void*, size_t) -> RTNType;
 
+  // If 0 is passed in here, the maximum number of threads will be used.
   void set_num_threads(size_t);
 
   // The pointer passed in here MUST be the same as the one passed to `use_bitstream()`.

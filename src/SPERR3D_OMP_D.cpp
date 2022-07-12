@@ -12,7 +12,14 @@
 
 void SPERR3D_OMP_D::set_num_threads(size_t n)
 {
-  m_num_threads = std::max(n, 1ul);
+#ifdef USE_OMP
+  if (n == 0)
+    m_num_threads = omp_get_max_threads();
+  else
+    m_num_threads = n;
+#else
+  m_num_threads = 1;
+#endif
 }
 
 auto SPERR3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
