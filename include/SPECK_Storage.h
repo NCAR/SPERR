@@ -85,8 +85,8 @@ class SPECK_Storage {
   //
   std::vector<double> m_orig_coeff;
   std::vector<double> m_qz_coeff;
-  std::vector<double> m_calc_mse_buf; // temporary buffer facilitating MSE calculation
-  size_t m_num_qz_coeff = 0;          // number of quantized (non-zero) coefficients
+  std::vector<double> m_calc_mse_buf;  // temporary buffer facilitating MSE calculation
+  size_t m_num_qz_coeff = 0;           // number of quantized (non-zero) coefficients
 
   //
   // Member methods
