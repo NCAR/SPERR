@@ -175,10 +175,12 @@ struct HeaderInfo {
 };
 auto parse_header(const void*) -> HeaderInfo;
 
-// calculate the mean square error (MSE) of two vectors.
+// Calculate the mean square error (MSE) of two vectors.
 // In case of empty vectors or vectors of different sizes, it will return
-// std::numeric_limits<double>::max().
-auto calc_mse(const vecd_type&, const vecd_type&) -> double;
+//   std::numeric_limits<double>::max().
+// The last parameter is a temporary buffer space for this function to use. If this function is
+//   called repeatedly, it helps performance to pass in the same buffer every time.
+auto calc_mse(const vecd_type&, const vecd_type&, vecd_type&) -> double;
 
 // Decide compression mode based on a collection of parameters.
 auto compression_mode(size_t bit_budget, int32_t qz, double psnr, double pwe) -> CompMode;

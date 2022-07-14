@@ -85,7 +85,8 @@ class SPECK_Storage {
   //
   std::vector<double> m_orig_coeff;
   std::vector<double> m_qz_coeff;
-  size_t m_num_qz_coeff = 0;  // number of quantized (non-zero) coefficients
+  std::vector<double> m_calc_mse_buf; // temporary buffer facilitating MSE calculation
+  size_t m_num_qz_coeff = 0;          // number of quantized (non-zero) coefficients
 
   //
   // Member methods
@@ -95,7 +96,7 @@ class SPECK_Storage {
   auto m_refinement_pass_decode() -> RTNType;
 
   // Is there anything demanding the termination of iterations?
-  auto m_termination_check(size_t bitplane) const -> RTNType;
+  auto m_termination_check(size_t bitplane) -> RTNType;
 };
 
 };  // namespace sperr

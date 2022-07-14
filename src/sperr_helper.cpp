@@ -522,7 +522,7 @@ auto sperr::parse_header(const void* ptr) -> HeaderInfo
   return header;
 }
 
-auto sperr::calc_mse(const vecd_type& v1, const vecd_type& v2) -> double
+auto sperr::calc_mse(const vecd_type& v1, const vecd_type& v2, vecd_type& tmp_buf) -> double
 {
   const auto infy = std::numeric_limits<double>::infinity();
   if (v1.empty() || v2.empty() || v1.size() != v2.size())
@@ -533,7 +533,7 @@ auto sperr::calc_mse(const vecd_type& v1, const vecd_type& v2) -> double
   const size_t stride_size = 4096;
   const size_t num_strides = len / stride_size;
   const size_t remainder_size = len - stride_size * num_strides;
-  auto tmp_buf = vecd_type(num_strides + 1);
+  tmp_buf.resize(num_strides + 1);
 
   for (size_t i = 0; i < num_strides; i++) {
     auto beg1 = v1.cbegin() + i * stride_size;

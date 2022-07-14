@@ -254,7 +254,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
   return RTNType::Good;
 }
 
-auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
+auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) -> RTNType
 {
   assert(m_mode_cache != CompMode::Unknown);
 
@@ -277,7 +277,7 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
       if (static_cast<double>(m_num_qz_coeff) / static_cast<double>(m_qz_coeff.size()) < 0.1)
         return RTNType::Good;
 
-      const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff);
+      const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff, m_calc_mse_buf);
       const auto psnr = std::log10(m_data_range * m_data_range / mse) * 10.0;
 
       // Given that PSNR estimate here tends to be a little small, we target
@@ -298,7 +298,7 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
       if (static_cast<double>(m_num_qz_coeff) / static_cast<double>(m_qz_coeff.size()) < 0.1)
         return RTNType::Good;
 
-      const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff);
+      const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff, m_calc_mse_buf);
       const auto rmse = std::sqrt(mse);
 
       if (rmse < m_target_pwe * 0.5) {
