@@ -103,14 +103,6 @@ class speck_tester_omp {
     m_psnr = ret[2];
     m_lmax = ret[1];
 
-    // if (mode == sperr::CompMode::FixedPWE) {
-    //   auto [num_o, num_byte] = compressor.get_outlier_stats();
-    //   std::printf("Outlier pct = %f, bpp = %f, outlier storage pct = %f\n",
-    //               double(num_o) / double(total_vals) * 100.0,
-    //               double(num_byte) * 8.0 / double(num_o),
-    //               double(num_byte) / double(stream.size()) * 100.0);
-    // }
-
     return 0;
   }
 
@@ -172,12 +164,22 @@ TEST(speck3d_target_pwe, small)
   const auto q = sperr::lowest_int32;
   const auto target_psnr = sperr::max_d;
 
-  auto pwe = double{1.0};
+  auto pwe = double{0.741};
   tester.execute(bpp, q, target_psnr, pwe);
   float lmax = tester.get_lmax();
   EXPECT_LE(lmax, pwe);
 
-  pwe = 0.17;
+  pwe = 0.37;
+  tester.execute(bpp, q, target_psnr, pwe);
+  lmax = tester.get_lmax();
+  EXPECT_LE(lmax, pwe);
+
+  pwe = 0.07;
+  tester.execute(bpp, q, target_psnr, pwe);
+  lmax = tester.get_lmax();
+  EXPECT_LE(lmax, pwe);
+
+  pwe = 0.01;
   tester.execute(bpp, q, target_psnr, pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, pwe);
@@ -196,7 +198,17 @@ TEST(speck3d_target_pwe, small_data_range)
   float lmax = tester.get_lmax();
   EXPECT_LE(lmax, pwe);
 
-  pwe = 7.7e-9;
+  pwe = 6.7e-8;
+  tester.execute(bpp, q, target_psnr, pwe);
+  lmax = tester.get_lmax();
+  EXPECT_LE(lmax, pwe);
+
+  pwe = 1.1e-8;
+  tester.execute(bpp, q, target_psnr, pwe);
+  lmax = tester.get_lmax();
+  EXPECT_LE(lmax, pwe);
+
+  pwe = 8.1e-9;
   tester.execute(bpp, q, target_psnr, pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, pwe);
@@ -221,6 +233,11 @@ TEST(speck3d_target_pwe, big)
   EXPECT_LE(lmax, pwe);
 
   pwe = 0.08;
+  tester.execute(bpp, q, target_psnr, pwe);
+  lmax = tester.get_lmax();
+  EXPECT_LE(lmax, pwe);
+
+  pwe = 0.02;
   tester.execute(bpp, q, target_psnr, pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, pwe);

@@ -85,16 +85,6 @@ class speck_tester {
     if (slice.size() != total_vals)
       return 1;
 
-    // DEBUG
-    // Find out what percentage of points are outliers, and how much it costs to encode them.
-    // if (mode == sperr::CompMode::FixedPWE) {
-    //  auto [num_o, num_byte] = compressor.get_outlier_stats();
-    //  std::printf("Outlier pct = %f, bpp = %f, outlier storage pct = %f\n",
-    //              double(num_o) / double(total_vals) * 100.0,
-    //              double(num_byte) * 8.0 / double(num_o),
-    //              double(num_byte) / double(bitstream.size()) * 100.0);
-    //}
-
     //
     // Compare results
     //
@@ -137,6 +127,11 @@ TEST(speck2d, PWE_odd_dim_image)
   tester.execute(bpp, q, target_psnr, target_pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);
+
+  target_pwe = 0.06;
+  tester.execute(bpp, q, target_psnr, target_pwe);
+  lmax = tester.get_lmax();
+  EXPECT_LE(lmax, target_pwe);
 }
 
 TEST(speck2d, PWE_lena_image)
@@ -152,12 +147,17 @@ TEST(speck2d, PWE_lena_image)
   auto lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);
 
-  target_pwe = 0.3;
+  target_pwe = 0.35;
   tester.execute(bpp, q, target_psnr, target_pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);
 
   target_pwe = 0.1;
+  tester.execute(bpp, q, target_psnr, target_pwe);
+  lmax = tester.get_lmax();
+  EXPECT_LE(lmax, target_pwe);
+
+  target_pwe = 0.06;
   tester.execute(bpp, q, target_psnr, target_pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);
@@ -182,6 +182,11 @@ TEST(speck2d, PWE_small_data_range)
   EXPECT_LE(lmax, target_pwe);
 
   target_pwe = 5.5e-7;
+  tester.execute(bpp, q, target_psnr, target_pwe);
+  lmax = tester.get_lmax();
+  EXPECT_LE(lmax, target_pwe);
+
+  target_pwe = 2.5e-7;
   tester.execute(bpp, q, target_psnr, target_pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);

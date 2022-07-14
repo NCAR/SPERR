@@ -114,7 +114,7 @@ auto sperr::SPECK3D::encode() -> RTNType
       break;
     assert(rtn == RTNType::Good);
 
-    // Examine other terminating criteria
+    // Examine terminating criteria for fixed QZ, PSNR, PWE modes.
     rtn = m_termination_check(bitplane);
     if (rtn != RTNType::Good) {
       break;

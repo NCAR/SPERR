@@ -280,9 +280,7 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) -> RTNType
       const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff, m_calc_mse_buf);
       const auto psnr = std::log10(m_data_range * m_data_range / mse) * 10.0;
 
-      // Given that PSNR estimate here tends to be a little small, we target
-      // PSNR that's 1dB bigger.
-      if (psnr >= m_target_psnr + 1.0) {
+      if (psnr > m_target_psnr) {
         return RTNType::PSNRReached;
       }
       else
