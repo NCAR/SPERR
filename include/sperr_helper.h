@@ -166,10 +166,6 @@ struct HeaderInfo {
   bool zstd_applied = false;
   bool is_3d = false;
 
-  // True <--> the bitstream is in fixed-error mode.
-  // False <--> the bitstream is in fixed-size mode.
-  bool is_qz_term = false;
-
   // This is the dimension of a 3D volume (NX, NY, NZ) or a 2D slice (NX, NY, 1).
   dims_type vol_dims = {0, 0, 0};
 

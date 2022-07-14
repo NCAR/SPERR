@@ -48,18 +48,16 @@ auto sperr::SPECK_Storage::view_data() const -> const vecd_type&
   return m_coeff_buf;
 }
 
-auto sperr::SPECK_Storage::get_quantized_coeff() const -> vecd_type
+auto sperr::SPECK_Storage::release_quantized_coeff() -> vecd_type&&
 {
-  auto coeff = vecd_type(m_qz_coeff.size());
-
   if (!m_qz_coeff.empty()) {
     assert(m_qz_coeff.size() == m_sign_array.size());
     const auto tmp = d2_type{-1.0, 1.0};
-    std::transform(m_qz_coeff.cbegin(), m_qz_coeff.cend(), m_sign_array.cbegin(), coeff.begin(),
+    std::transform(m_qz_coeff.begin(), m_qz_coeff.end(), m_sign_array.cbegin(), m_qz_coeff.begin(),
                    [tmp](auto v, auto b) { return v * tmp[b]; });
   }
 
-  return coeff;
+  return std::move(m_qz_coeff);
 }
 
 void sperr::SPECK_Storage::set_data_range(double range)
@@ -256,14 +254,6 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
   return RTNType::Good;
 }
 
-auto sperr::SPECK_Storage::m_takeoff_check() const -> RTNType
-{
-  if (m_qz_lev > m_max_coeff_bit)
-    return RTNType::QzLevelTooBig;
-
-  return RTNType::Good;
-}
-
 auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
 {
   assert(m_mode_cache != CompMode::Unknown);
@@ -275,7 +265,7 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
       if (bitplane >= num_qz_levs)
         return RTNType::QzLevelReached;
       else
-        break;
+        return RTNType::Good;
     }
     case CompMode::FixedPSNR: {
       assert(m_orig_coeff.size() == m_qz_coeff.size());
@@ -285,7 +275,7 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
       // If there's less than 10% of coefficients being non-zero, we decide
       // that continue encoding without checking PSNR.
       if (static_cast<double>(m_num_qz_coeff) / static_cast<double>(m_qz_coeff.size()) < 0.1)
-        break;
+        return RTNType::Good;
 
       const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff);
       const auto psnr = std::log10(m_data_range * m_data_range / mse) * 10.0;
@@ -296,7 +286,7 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
         return RTNType::PSNRReached;
       }
       else
-        break;
+        return RTNType::Good;
     }
     case CompMode::FixedPWE: {
       assert(m_orig_coeff.size() == m_qz_coeff.size());
@@ -306,7 +296,7 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
       // If there's less than 10% of coefficients being non-zero, we decide
       // that continue encoding without checking PWE.
       if (static_cast<double>(m_num_qz_coeff) / static_cast<double>(m_qz_coeff.size()) < 0.1)
-        break;
+        return RTNType::Good;
 
       const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff);
       const auto rmse = std::sqrt(mse);
@@ -315,9 +305,9 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane) const -> RTNType
         return RTNType::PWEAlmostReached;
       }
       else
-        break;
+        return RTNType::Good;
     }
+    default:
+      return RTNType::Good;
   }
-
-  return RTNType::Good;
 }

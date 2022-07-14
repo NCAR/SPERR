@@ -5,8 +5,6 @@
 #include <cstring>
 #include <numeric>  // std::accumulate()
 
-#include <iostream>
-
 #ifdef USE_OMP
 #include <omp.h>
 #endif

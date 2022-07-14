@@ -128,7 +128,7 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
   // Step 4: Outlier correction if in FixedPWE mode.
   if (mode == sperr::CompMode::FixedPWE) {
     // Step 4.1: IDWT using quantized coefficients to have a reconstruction.
-    auto qz_coeff = m_encoder.get_quantized_coeff();
+    auto qz_coeff = m_encoder.release_quantized_coeff();
     assert(!qz_coeff.empty());
     m_cdf.take_data(std::move(qz_coeff), m_dims);
     if (xforms_xy == xforms_z)

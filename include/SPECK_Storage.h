@@ -27,7 +27,7 @@ class SPECK_Storage {
   auto view_data() const -> const vecd_type&;
   auto view_encoded_bitstream() const -> const vec8_type&;
   auto release_encoded_bitstream() -> vec8_type&&;
-  auto get_quantized_coeff() const -> vecd_type;
+  auto release_quantized_coeff() -> vecd_type&&;
 
   // Prepare internal states for a decompression operation from an encoded bitstream
   // Note: it takes a raw pointer because it accesses memory provided by others,
@@ -51,7 +51,6 @@ class SPECK_Storage {
   //
   const size_t m_header_size = 10;  // See header definition in SPECK_Storage.cpp.
   size_t m_encode_budget = 0;
-  size_t m_decode_budget = 0;
   int32_t m_qz_lev = sperr::lowest_int32;
   double m_target_psnr = sperr::max_d;
   double m_target_pwe = 0.0;
@@ -94,9 +93,6 @@ class SPECK_Storage {
   auto m_prepare_encoded_bitstream() -> RTNType;
   auto m_refinement_pass_encode() -> RTNType;
   auto m_refinement_pass_decode() -> RTNType;
-
-  // Is there anything preventing the start of the iteration?
-  auto m_takeoff_check() const -> RTNType;
 
   // Is there anything demanding the termination of iterations?
   auto m_termination_check(size_t bitplane) const -> RTNType;

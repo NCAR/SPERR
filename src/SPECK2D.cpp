@@ -4,7 +4,6 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
-#include <iostream>
 
 using d2_type = std::array<double, 2>;
 using b2_type = std::array<bool, 2>;
@@ -86,11 +85,11 @@ auto sperr::SPECK2D::encode() -> RTNType
   m_max_coeff_bit = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
   m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
 
-  // If anything prevents the algorithm from launching, return right away.
-  auto rtn = m_takeoff_check();
-  if (rtn != RTNType::Good)
-    return rtn;
+  // If requested quantization level is too big, return right away.
+  if (m_qz_lev > m_max_coeff_bit)
+    return RTNType::QzLevelTooBig;
 
+  auto rtn = RTNType::Good;
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     rtn = m_sorting_pass_encode();
     if (rtn == RTNType::BitBudgetMet)
