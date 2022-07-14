@@ -9,10 +9,7 @@
 #include "CDF97.h"
 #include "Conditioner.h"
 #include "SPECK2D.h"
-
-#ifdef QZ_TERM
 #include "SPERR.h"
-#endif
 
 using sperr::RTNType;
 
@@ -30,14 +27,13 @@ class SPERR2D_Compressor {
 
   void toggle_conditioning(sperr::Conditioner::settings_type);
 
-#ifdef QZ_TERM
-  void set_qz_level(int32_t);
-  void set_tolerance(double);
+  auto set_target_bpp(double) -> RTNType;
+  void set_target_qz_level(int32_t);
+  void set_target_psnr(double);
+  void set_target_pwe(double);
+
   // Return 1) the number of outliers, and 2) the number of bytes to encode them.
   auto get_outlier_stats() const -> std::pair<size_t, size_t>;
-#else
-  auto set_bpp(double) -> RTNType;
-#endif
 
   auto compress() -> RTNType;
 
@@ -49,16 +45,17 @@ class SPERR2D_Compressor {
   sperr::vecd_type m_val_buf;
   const size_t m_meta_size = 10;  // Need to be the same as in SPERR2D_Decompressor.h
 
-#ifdef QZ_TERM
-  sperr::vec8_type m_sperr_stream;
+  // Data members for fixed-size compression
+  size_t m_bit_budget = 0;  // Total bit budget, including headers.
+  int32_t m_qz_lev = sperr::lowest_int32;
+  double m_target_psnr = sperr::max_d;
+  double m_target_pwe = 0.0;
+
+  // A few data members for outlier correction
   sperr::SPERR m_sperr;
-  sperr::vecd_type m_val_buf2;        // A copy of `m_val_buf` for outlier locating.
+  sperr::vec8_type m_sperr_stream;
+  sperr::vecd_type m_val_buf2;        // A copy of `m_val_buf` used for outlier coding
   std::vector<sperr::Outlier> m_LOS;  // List of OutlierS
-  int32_t m_qz_lev = 0;
-  double m_tol = 0.0;
-#else
-  double m_bpp = 0.0;
-#endif
 
   sperr::Conditioner m_conditioner;
   sperr::CDF97 m_cdf;

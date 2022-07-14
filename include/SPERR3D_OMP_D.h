@@ -17,10 +17,7 @@ class SPERR3D_OMP_D {
   // Parse the header of this stream, and stores the pointer.
   auto use_bitstream(const void*, size_t) -> RTNType;
 
-#ifndef QZ_TERM
-  auto set_bpp(double) -> RTNType;
-#endif
-
+  // If 0 is passed in here, the maximum number of threads will be used.
   void set_num_threads(size_t);
 
   // The pointer passed in here MUST be the same as the one passed to `use_bitstream()`.
@@ -36,10 +33,6 @@ class SPERR3D_OMP_D {
   sperr::dims_type m_dims = {0, 0, 0};        // Dimension of the entire volume
   sperr::dims_type m_chunk_dims = {0, 0, 0};  // Preferred dimensions for a chunk
   size_t m_num_threads = 1;                   // number of theads to use in OpenMP sections
-
-#ifndef QZ_TERM
-  double m_bpp = 0.0;
-#endif
 
   const size_t m_header_magic = 26;  // header size would be this number + num_chunks * 4
 

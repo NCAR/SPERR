@@ -11,8 +11,14 @@
 
 void SPERR3D_OMP_C::set_num_threads(size_t n)
 {
-  if (n > 0)
+#ifdef USE_OMP
+  if (n == 0)
+    m_num_threads = omp_get_max_threads();
+  else
     m_num_threads = n;
+#else
+  m_num_threads = 1;
+#endif
 }
 
 void SPERR3D_OMP_C::toggle_conditioning(sperr::Conditioner::settings_type b4)
@@ -20,15 +26,6 @@ void SPERR3D_OMP_C::toggle_conditioning(sperr::Conditioner::settings_type b4)
   m_conditioning_settings = b4;
 }
 
-#ifdef QZ_TERM
-void SPERR3D_OMP_C::set_qz_level(int32_t q)
-{
-  m_qz_lev = q;
-}
-void SPERR3D_OMP_C::set_tolerance(double t)
-{
-  m_tol = t;
-}
 auto SPERR3D_OMP_C::get_outlier_stats() const -> std::pair<size_t, size_t>
 {
   using pair = std::pair<size_t, size_t>;
@@ -38,30 +35,54 @@ auto SPERR3D_OMP_C::get_outlier_stats() const -> std::pair<size_t, size_t>
   };
   return std::accumulate(m_outlier_stats.begin(), m_outlier_stats.end(), sum, op);
 }
-#else
-auto SPERR3D_OMP_C::set_bpp(double bpp) -> RTNType
+
+auto SPERR3D_OMP_C::set_target_bpp(double bpp) -> RTNType
 {
-  auto eq0 = [](auto v) { return v == 0; };
-
-  if (bpp < 0.0 || bpp > 64.0)
+  if (bpp <= 0.0 || bpp > 64.0)
     return RTNType::InvalidParam;
-  // If the volume and chunk dimension hasn't been set, return error.
-  else if (std::any_of(m_dims.begin(), m_dims.end(), eq0) ||
-           std::any_of(m_chunk_dims.begin(), m_chunk_dims.end(), eq0))
-    return RTNType::SetBPPBeforeDims;
-  else {
-    // Need to account in the size of the header.
-    const auto total_vals_f = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
-    double total_bits = bpp * total_vals_f;
-    const auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
-    const auto header_bits = (m_header_magic + chunks.size() * 4) * 8;
-    total_bits -= header_bits;
-    m_bpp = total_bits / total_vals_f;
 
-    return RTNType::Good;
-  }
+  // If the volume and chunk dimension hasn't been set, return error.
+  auto eq0 = [](auto v) { return v == 0; };
+  if (std::any_of(m_dims.begin(), m_dims.end(), eq0) ||
+      std::any_of(m_chunk_dims.begin(), m_chunk_dims.end(), eq0))
+    return RTNType::SetBPPBeforeDims;
+
+  const auto total_vals = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
+  m_bit_budget = static_cast<size_t>(bpp * total_vals);
+
+  // Also set other termination criteria to be "never terminate."
+  m_qz_lev = sperr::lowest_int32;
+  m_target_psnr = sperr::max_d;
+  m_target_pwe = 0.0;
+
+  return RTNType::Good;
 }
-#endif
+
+void SPERR3D_OMP_C::set_target_qz_level(int32_t q)
+{
+  m_qz_lev = q;
+
+  // Also configure other parameters
+  m_bit_budget = sperr::max_size;
+  m_target_psnr = sperr::max_d;
+  m_target_pwe = 0.0;
+}
+
+void SPERR3D_OMP_C::set_target_psnr(double psnr)
+{
+  m_target_psnr = std::max(psnr, 0.0);
+  m_bit_budget = sperr::max_size;
+  m_qz_lev = sperr::lowest_int32;
+  m_target_pwe = 0.0;
+}
+
+void SPERR3D_OMP_C::set_target_pwe(double pwe)
+{
+  m_target_pwe = std::max(pwe, 0.0);
+  m_bit_budget = sperr::max_size;
+  m_qz_lev = sperr::lowest_int32;
+  m_target_psnr = sperr::max_d;
+}
 
 template <typename T>
 auto SPERR3D_OMP_C::copy_data(const T* vol,
@@ -106,18 +127,18 @@ auto SPERR3D_OMP_C::compress() -> RTNType
                   [](auto& v) { return v.empty(); }))
     return RTNType::Error;
 
+  // Sanity check: what compression mode to use?
+  const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, m_target_psnr, m_target_pwe);
+  assert(mode != sperr::CompMode::Unknown);
+
   // Let's prepare some data structures for compression!
+  assert(m_num_threads > 0);
   auto compressors = std::vector<sperr::SPERR3D_Compressor>(m_num_threads);
   auto chunk_rtn = std::vector<RTNType>(num_chunks, RTNType::Good);
   m_encoded_streams.resize(num_chunks);
   std::for_each(m_encoded_streams.begin(), m_encoded_streams.end(), [](auto& v) { v.clear(); });
-
-#ifdef QZ_TERM
   m_outlier_stats.assign(num_chunks, {0, 0});
-#endif
 
-// Each thread uses a compressor instance to work on a chunk.
-//
 #pragma omp parallel for num_threads(m_num_threads)
   for (size_t i = 0; i < num_chunks; i++) {
 #ifdef USE_OMP
@@ -126,25 +147,33 @@ auto SPERR3D_OMP_C::compress() -> RTNType
     auto& compressor = compressors[0];
 #endif
 
-    // The following few operations have no chance to fail.
+    // Prepare for compression
     compressor.take_data(std::move(m_chunk_buffers[i]), {chunks[i][1], chunks[i][3], chunks[i][5]});
-
     compressor.toggle_conditioning(m_conditioning_settings);
 
-#ifdef QZ_TERM
-    compressor.set_qz_level(m_qz_lev);
-    compressor.set_tolerance(m_tol);
-#else
-    compressor.set_bpp(m_bpp);
-#endif
+    // Figure out the bit budget for this chunk
+    auto my_budget = size_t{0};
+    if (m_bit_budget == sperr::max_size)
+      my_budget = sperr::max_size;
+    else {
+      const auto total_vals = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
+      const auto chunk_vals = static_cast<double>(chunks[i][1] * chunks[i][3] * chunks[i][5]);
+      const auto avail_bits =
+          static_cast<double>(m_bit_budget - (m_header_magic + chunks.size() * 4) * 8);
+      my_budget = static_cast<size_t>(chunk_vals / total_vals * avail_bits);
+      while (my_budget % 8 != 0)
+        my_budget--;
+    }
 
-    // Action items
-    chunk_rtn[i] = compressor.compress();
-    m_encoded_streams[i] = compressor.release_encoded_bitstream();
+    chunk_rtn[i] = compressor.set_comp_params(my_budget, m_qz_lev, m_target_psnr, m_target_pwe);
 
-#ifdef QZ_TERM
+    if (chunk_rtn[i] == RTNType::Good) {
+      chunk_rtn[i] = compressor.compress();
+    }
+
+    m_encoded_streams[i] = compressor.view_encoded_bitstream();
+
     m_outlier_stats[i] = compressor.get_outlier_stats();
-#endif
   }
 
   auto fail =
@@ -203,19 +232,12 @@ auto SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   // 8 booleans:
   // bool[0]  : if ZSTD is used
   // bool[1]  : if this bitstream is for 3D (true) or 2D (false) data.
-  // bool[2]  : if this bitstream is in QZ_TERM mode (true) or fixed-size mode (false).
-  // bool[3-7]: undefined
+  // bool[2-7]: undefined
   //
-  auto b8 = std::array<bool, 8>{false, false, false, false, false, false, false, false};
+  auto b8 = std::array<bool, 8>{false, true, false, false, false, false, false, false};
 
 #ifdef USE_ZSTD
   b8[0] = true;
-#endif
-
-  b8[1] = true;
-
-#ifdef QZ_TERM
-  b8[2] = true;
 #endif
 
   header[loc] = sperr::pack_8_booleans(b8);

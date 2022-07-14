@@ -19,23 +19,13 @@ int main(int argc, char* argv[])
       ->required();
 
   auto output_file = std::string();
-  app.add_option("-o", output_file, "Output filename")->group("Output Specifications")->required();
+  app.add_option("-o", output_file, "Output filename")->group("Output Specifications");
 
   auto output_double = bool{false};
   app.add_flag("-d", output_double,
                "Specify to output data in double type.\n"
                "Data is output as float by default.")
       ->group("Output Specifications");
-
-#ifndef QZ_TERM
-  // Partial bitstream decompression is only applicable to fixed-size mode.
-  auto decomp_bpp = double{0.0};
-  app.add_option("--bpp", decomp_bpp,
-                 "Partially decode the bitstream up to a certain bit rate.\n"
-                 "If not specified, the entire bitstream will be decoded.")
-      ->check(CLI::Range(0.0, 64.0))
-      ->group("Decompression Options");
-#endif
 
   CLI11_PARSE(app, argc, argv);
 
@@ -53,10 +43,6 @@ int main(int argc, char* argv[])
     std::cerr << "Use input stream error!" << std::endl;
     return 1;
   }
-
-#ifndef QZ_TERM
-  decompressor.set_bpp(decomp_bpp);
-#endif
 
   rtn = decompressor.decompress();
   if (rtn != RTNType::Good) {

@@ -25,28 +25,6 @@ auto sperr::SPECKSet3D::is_empty() const -> bool
 //
 // Class SPECK3D
 //
-#ifdef QZ_TERM
-void sperr::SPECK3D::set_quantization_level(int32_t lev)
-{
-  m_qz_lev = lev;
-}
-#else
-void sperr::SPECK3D::set_bit_budget(size_t budget)
-{
-  if (budget <= m_header_size * 8) {
-    m_budget = 0;
-    return;
-  }
-  budget -= m_header_size * 8;
-
-  size_t mod = budget % 8;
-  if (mod == 0)
-    m_budget = budget;
-  else  // we can fill up the last byte!
-    m_budget = budget + 8 - mod;
-}
-#endif
-
 void sperr::SPECK3D::m_clean_LIS()
 {
   for (auto& list : m_LIS) {
@@ -65,6 +43,19 @@ auto sperr::SPECK3D::encode() -> RTNType
   if (m_ready_to_encode() == false)
     return RTNType::Error;
 
+  // Cache the current compression mode
+  m_mode_cache = sperr::compression_mode(m_encode_budget, m_qz_lev, m_target_psnr, m_target_pwe);
+  if (m_mode_cache == sperr::CompMode::Unknown)
+    return RTNType::CompModeUnknown;
+
+  // Sanity check
+  if (m_mode_cache == CompMode::FixedPSNR) {
+    if (m_data_range == sperr::max_d)
+      return RTNType::DataRangeNotSet;
+  }
+  else
+    m_data_range = sperr::max_d;
+
   m_initialize_sets_lists();
 
   m_encoded_stream.clear();
@@ -78,6 +69,18 @@ auto sperr::SPECK3D::encode() -> RTNType
   // Make every coefficient positive
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
                  [](auto v) { return std::abs(v); });
+
+  // Initialize these data structures for error estimation
+  if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE) {
+    m_orig_coeff.resize(m_coeff_buf.size());
+    std::copy(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_orig_coeff.begin());
+    m_qz_coeff.assign(m_coeff_buf.size(), 0.0);
+  }
+  else {
+    m_orig_coeff.clear();
+    m_qz_coeff.clear();
+  }
+  m_num_qz_coeff = 0;
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
@@ -95,26 +98,11 @@ auto sperr::SPECK3D::encode() -> RTNType
   m_max_coeff_bit = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
   m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
 
-#ifdef QZ_TERM
-  // If the requested termination level is already above max_coeff_bits, return right away.
+  // If requested quantization level is too big, return right away.
   if (m_qz_lev > m_max_coeff_bit)
     return RTNType::QzLevelTooBig;
 
-  const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev + 1;
-  for (size_t lev = 0; lev < num_qz_levs; lev++) {
-    m_sorting_pass_encode();
-    m_refinement_pass_encode();
-    m_threshold *= 0.5;
-    m_clean_LIS();
-  }
-
-  // If the bit buffer has the last byte half-empty, let's fill in zero's.
-  // The decoding process will not read them anyway.
-  while (m_bit_buffer.size() % 8 != 0)
-    m_bit_buffer.push_back(false);
-
-#else
-
+  auto rtn = RTNType::Good;
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     auto rtn = m_sorting_pass_encode();
     if (rtn == RTNType::BitBudgetMet)
@@ -126,13 +114,23 @@ auto sperr::SPECK3D::encode() -> RTNType
       break;
     assert(rtn == RTNType::Good);
 
+    // Examine terminating criteria for fixed QZ, PSNR, PWE modes.
+    rtn = m_termination_check(bitplane);
+    if (rtn != RTNType::Good) {
+      break;
+    }
+
     m_threshold *= 0.5;
     m_clean_LIS();
   }
-#endif
+
+  // If the bit buffer has the last byte half-empty, let's fill in zero's.
+  // The decoding process will not read them anyway.
+  while (m_bit_buffer.size() % 8 != 0)
+    m_bit_buffer.push_back(false);
 
   // Finally we prepare the bitstream
-  auto rtn = m_prepare_encoded_bitstream();
+  rtn = m_prepare_encoded_bitstream();
 
   return rtn;
 }
@@ -141,12 +139,6 @@ auto sperr::SPECK3D::decode() -> RTNType
 {
   if (m_ready_to_decode() == false)
     return RTNType::Error;
-
-#ifndef QZ_TERM
-  // By default, decode all the available bits
-  if (m_budget == 0 || m_budget > m_bit_buffer.size())
-    m_budget = m_bit_buffer.size();
-#endif
 
   m_initialize_sets_lists();
 
@@ -163,44 +155,20 @@ auto sperr::SPECK3D::decode() -> RTNType
 
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     auto rtn = m_sorting_pass_decode();
-
-#ifdef QZ_TERM
-    if (m_bit_idx > m_bit_buffer.size())
-      return RTNType::Error;
-#else
-    if (rtn == RTNType::BitBudgetMet)
+    if (rtn == RTNType::BitBudgetMet) {
       break;
-#endif
-
+    }
     assert(rtn == RTNType::Good);
+
     rtn = m_refinement_pass_decode();
-
-#ifdef QZ_TERM
-    if (m_bit_idx > m_bit_buffer.size())
-      return RTNType::Error;
-#else
-    if (rtn == RTNType::BitBudgetMet)
+    if (rtn == RTNType::BitBudgetMet) {
       break;
-#endif
-
+    }
     assert(rtn == RTNType::Good);
-
-#ifdef QZ_TERM
-    // This is the actual termination condition in QZ_TERM mode.
-    assert(m_max_coeff_bit >= m_qz_lev);
-    if (bitplane >= static_cast<size_t>(m_max_coeff_bit - m_qz_lev))
-      break;
-#endif
 
     m_threshold *= 0.5;
     m_clean_LIS();
   }
-
-#ifdef QZ_TERM
-  // We should not have more than 7 unprocessed bits left in the bit buffer!
-  if (m_bit_buffer.size() - m_bit_idx >= 8)
-    return RTNType::BitstreamWrongLen;
-#endif
 
   // Restore coefficient signs by setting some of them negative
   const auto tmp = d2_type{-1.0, 1.0};
@@ -280,17 +248,12 @@ void sperr::SPECK3D::m_initialize_sets_lists()
   const auto parts = big.part_level;
   m_LIS[parts].insert(m_LIS[parts].begin(), big);
   m_LIP.clear();
-  m_LIP.reserve(m_coeff_buf.size() / 2);
+  m_LIP.reserve(m_coeff_buf.size() / 4);
 
   m_LSP_new.clear();
   m_LSP_new.reserve(m_coeff_buf.size() / 8);
   m_LSP_mask.reserve(m_coeff_buf.size());
-
-#ifdef QZ_TERM
   m_bit_buffer.reserve(m_coeff_buf.size());
-#else
-  m_bit_buffer.reserve(m_budget);
-#endif
 }
 
 auto sperr::SPECK3D::m_sorting_pass_encode() -> RTNType
@@ -300,10 +263,8 @@ auto sperr::SPECK3D::m_sorting_pass_encode() -> RTNType
   size_t dummy = 0;
   for (size_t loc = 0; loc < m_LIP.size(); loc++) {
     auto rtn = m_process_P_encode(loc, SigType::Dunno, dummy, true);
-#ifndef QZ_TERM
     if (rtn == RTNType::BitBudgetMet)
       return RTNType::BitBudgetMet;
-#endif
     assert(rtn == RTNType::Good);
   }
 
@@ -314,10 +275,8 @@ auto sperr::SPECK3D::m_sorting_pass_encode() -> RTNType
     size_t idx1 = m_LIS.size() - tmp;
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
       auto rtn = m_process_S_encode(idx1, idx2, SigType::Dunno, dummy, true);
-#ifndef QZ_TERM
       if (rtn == RTNType::BitBudgetMet)
         return rtn;
-#endif
       assert(rtn == RTNType::Good);
     }
   }
@@ -332,10 +291,8 @@ auto sperr::SPECK3D::m_sorting_pass_decode() -> RTNType
   size_t dummy = 0;
   for (size_t loc = 0; loc < m_LIP.size(); loc++) {
     auto rtn = m_process_P_decode(loc, dummy, true);
-#ifndef QZ_TERM
     if (rtn == RTNType::BitBudgetMet)
       return RTNType::BitBudgetMet;
-#endif
     assert(rtn == RTNType::Good);
   }
 
@@ -346,10 +303,8 @@ auto sperr::SPECK3D::m_sorting_pass_decode() -> RTNType
     size_t idx1 = m_LIS.size() - tmp;
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
       auto rtn = m_process_S_decode(idx1, idx2, dummy, true);
-#ifndef QZ_TERM
       if (rtn == RTNType::BitBudgetMet)
         return rtn;
-#endif
       assert(rtn == RTNType::Good);
     }
   }
@@ -371,28 +326,25 @@ auto sperr::SPECK3D::m_process_P_encode(size_t loc, SigType sig, size_t& counter
     is_sig = (sig == SigType::Sig);
 
   if (output) {
-    // Output significance bit
     m_bit_buffer.push_back(is_sig);
-#ifndef QZ_TERM
-    if (m_bit_buffer.size() >= m_budget)  // Test bit budget
+    if (m_bit_buffer.size() >= m_encode_budget)
       return RTNType::BitBudgetMet;
-#endif
   }
 
   if (is_sig) {
-    // Let's increment the counter first!
-    counter++;
-    // Output pixel sign
+    counter++;  // Let's increment the counter first!
     m_bit_buffer.push_back(m_sign_array[pixel_idx]);
-#ifndef QZ_TERM
-    if (m_bit_buffer.size() >= m_budget)  // Test bit budget
+    if (m_bit_buffer.size() >= m_encode_budget)
       return RTNType::BitBudgetMet;
-#endif
 
     m_coeff_buf[pixel_idx] -= m_threshold;
     m_LSP_new.push_back(pixel_idx);
-
     m_LIP[loc] = m_u64_garbage_val;
+
+    if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE) {
+      m_qz_coeff[pixel_idx] = m_threshold * 1.5;
+      m_num_qz_coeff++;
+    }
   }
 
   return RTNType::Good;
@@ -477,20 +429,15 @@ auto sperr::SPECK3D::m_process_S_encode(size_t idx1,
   bool is_sig = (set.signif == SigType::Sig);
   if (output) {
     m_bit_buffer.push_back(is_sig);
-#ifndef QZ_TERM
-    if (m_bit_buffer.size() >= m_budget)
+    if (m_bit_buffer.size() >= m_encode_budget)
       return RTNType::BitBudgetMet;
-#endif
   }
 
   if (is_sig) {
-    // Let's increment the counter first!
-    counter++;
+    counter++;  // Let's increment the counter first!
     auto rtn = m_code_S_encode(idx1, idx2, subset_sigs);
-#ifndef QZ_TERM
     if (rtn == RTNType::BitBudgetMet)
       return rtn;
-#endif
     assert(rtn == RTNType::Good);
     set.type = SetType::Garbage;  // this current set is gonna be discarded.
   }
@@ -504,20 +451,15 @@ auto sperr::SPECK3D::m_process_P_decode(size_t loc, size_t& counter, bool read) 
   const auto pixel_idx = m_LIP[loc];
 
   if (read) {
-#ifndef QZ_TERM
-    if (m_bit_idx >= m_budget)  // Check bit budget
+    if (m_bit_idx >= m_bit_buffer.size())
       return RTNType::BitBudgetMet;
-#endif
     is_sig = m_bit_buffer[m_bit_idx++];
   }
 
   if (is_sig) {
-    // Let's increment the counter first!
-    counter++;
-#ifndef QZ_TERM
-    if (m_bit_idx >= m_budget)  // Check bit budget
+    counter++;  // Let's increment the counter first!
+    if (m_bit_idx >= m_bit_buffer.size())
       return RTNType::BitBudgetMet;
-#endif
     m_sign_array[pixel_idx] = m_bit_buffer[m_bit_idx++];
 
     m_coeff_buf[pixel_idx] = m_threshold * 1.5;
@@ -535,10 +477,8 @@ auto sperr::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2, size_t& counte
   auto& set = m_LIS[idx1][idx2];
 
   if (read) {
-#ifndef QZ_TERM
-    if (m_bit_idx >= m_budget)
+    if (m_bit_idx >= m_bit_buffer.size())
       return RTNType::BitBudgetMet;
-#endif
     set.signif = m_bit_buffer[m_bit_idx++] ? SigType::Sig : SigType::Insig;
   }
   else {
@@ -546,13 +486,10 @@ auto sperr::SPECK3D::m_process_S_decode(size_t idx1, size_t idx2, size_t& counte
   }
 
   if (set.signif == SigType::Sig) {
-    // Let's increment the counter first!
-    counter++;
+    counter++;  // Let's increment the counter first!
     auto rtn = m_code_S_decode(idx1, idx2);
-#ifndef QZ_TERM
     if (rtn == RTNType::BitBudgetMet)
       return rtn;
-#endif
     assert(rtn == RTNType::Good);
     set.type = SetType::Garbage;  // this current set is gonna be discarded.
   }
@@ -591,10 +528,8 @@ auto sperr::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2, std::array<SigTyp
     if (it->is_pixel()) {
       m_LIP.push_back(it->start_z * m_dims[0] * m_dims[1] + it->start_y * m_dims[0] + it->start_x);
       auto rtn = m_process_P_encode(m_LIP.size() - 1, *sig_it, sig_counter, output);
-#ifndef QZ_TERM
       if (rtn == RTNType::BitBudgetMet)
         return rtn;
-#endif
       assert(rtn == RTNType::Good);
     }
     else {
@@ -602,10 +537,8 @@ auto sperr::SPECK3D::m_code_S_encode(size_t idx1, size_t idx2, std::array<SigTyp
       m_LIS[newidx1].emplace_back(*it);
       const auto newidx2 = m_LIS[newidx1].size() - 1;
       auto rtn = m_process_S_encode(newidx1, newidx2, *sig_it, sig_counter, output);
-#ifndef QZ_TERM
       if (rtn == RTNType::BitBudgetMet)
         return rtn;
-#endif
       assert(rtn == RTNType::Good);
     }
     ++sig_it;
@@ -632,10 +565,8 @@ auto sperr::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
     if (it->is_pixel()) {
       m_LIP.push_back(it->start_z * m_dims[0] * m_dims[1] + it->start_y * m_dims[0] + it->start_x);
       auto rtn = m_process_P_decode(m_LIP.size() - 1, sig_counter, read);
-#ifndef QZ_TERM
       if (rtn == RTNType::BitBudgetMet)
         return rtn;
-#endif
       assert(rtn == RTNType::Good);
     }
     else {
@@ -643,10 +574,8 @@ auto sperr::SPECK3D::m_code_S_decode(size_t idx1, size_t idx2) -> RTNType
       m_LIS[newidx1].emplace_back(*it);
       const auto newidx2 = m_LIS[newidx1].size() - 1;
       auto rtn = m_process_S_decode(newidx1, newidx2, sig_counter, read);
-#ifndef QZ_TERM
       if (rtn == RTNType::BitBudgetMet)
         return rtn;
-#endif
       assert(rtn == RTNType::Good);
     }
   }
@@ -660,11 +589,6 @@ auto sperr::SPECK3D::m_ready_to_encode() const -> bool
     return false;
   if (m_coeff_buf.size() != m_dims[0] * m_dims[1] * m_dims[2])
     return false;
-
-#ifndef QZ_TERM
-  if (m_budget == 0 || m_budget > m_dims[0] * m_dims[1] * m_dims[2] * 64)
-    return false;
-#endif
 
   return true;
 }

@@ -13,6 +13,7 @@ using sperr::RTNType;
 
 class SPERR3D_OMP_C {
  public:
+  // If 0 is passed in, the maximal number of threads will be used.
   void set_num_threads(size_t);
 
   // Upon receiving incoming data, a chunking scheme is decided, and the volume
@@ -23,14 +24,13 @@ class SPERR3D_OMP_C {
 
   void toggle_conditioning(sperr::Conditioner::settings_type);
 
-#ifdef QZ_TERM
-  void set_qz_level(int32_t);
-  void set_tolerance(double);
   // Return 1) the number of outliers, and 2) the num of bytes to encode them.
   auto get_outlier_stats() const -> std::pair<size_t, size_t>;
-#else
-  auto set_bpp(double) -> RTNType;
-#endif
+
+  auto set_target_bpp(double) -> RTNType;
+  void set_target_qz_level(int32_t);
+  void set_target_psnr(double);
+  void set_target_pwe(double);
 
   auto compress() -> RTNType;
 
@@ -49,19 +49,18 @@ class SPERR3D_OMP_C {
 
   const size_t m_header_magic = 26;  // header size would be this number + num_chunks * 4
 
-#ifdef QZ_TERM
-  int32_t m_qz_lev = 0;
-  double m_tol = 0.0;
+  size_t m_bit_budget = 0;  // Total bit budget, including headers etc.
+  int32_t m_qz_lev = sperr::lowest_int32;
+  double m_target_psnr = sperr::max_d;
+  double m_target_pwe = 0.0;
+
   // Outlier stats include 1) the number of outliers, and 2) the num of bytes used to encode them.
   std::vector<std::pair<size_t, size_t>> m_outlier_stats;
-#else
-  double m_bpp = 0.0;
-#endif
 
   //
   // Private methods
   //
-  [[nodiscard]] auto m_generate_header() const -> sperr::vec8_type;
+  auto m_generate_header() const -> sperr::vec8_type;
 };
 
 #endif

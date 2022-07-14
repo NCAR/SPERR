@@ -20,6 +20,11 @@ namespace sperr {
 
 using std::size_t;  // Seems most appropriate
 
+// Shortcut for the maximum values
+constexpr auto max_size = std::numeric_limits<size_t>::max();
+constexpr auto max_d = std::numeric_limits<double>::max();
+constexpr auto lowest_int32 = std::numeric_limits<int32_t>::lowest();  // -2147483648
+
 //
 // A few shortcuts
 //
@@ -50,8 +55,16 @@ enum class RTNType {
   SliceVolumeMismatch,
   QzModeMismatch,
   SetBPPBeforeDims,
+  DataRangeNotSet,
+  QzLevelReached,    // Not an error, just a termination condition
+  PSNRReached,       // Not an error, just a termination condition
+  PWEAlmostReached,  // Not an error, just a termination condition
+  CompModeUnknown,
   Error
 };
+
+// Compression Mode
+enum class CompMode { FixedSize, FixedQz, FixedPSNR, FixedPWE, Unknown };
 
 //
 // Helper functions
@@ -104,7 +117,8 @@ auto read_n_bytes(std::string filename, size_t n_bytes) -> std::vector<uint8_t>;
 
 // Calculate a suite of statistics.
 // Note that arr1 is considered as the ground truth array, so it's the range of
-// arr1 that is used internally for psnr calculations.
+//   arr1 that is used internally for psnr calculations.
+// If `omp_nthreads` is zero, then it will use the maximum number of threads.
 // The return array contains statistics in the following order:
 // ret[0] : RMSE
 // ret[1] : L-Infinity
@@ -147,14 +161,10 @@ void scatter_chunk(std::vector<TBIG>& big_vol,
 
 // Structure that holds information extracted from SPERR headers.
 // This structure is returned by helper function `parse_header()`.
-struct Header_Info {
+struct HeaderInfo {
   uint8_t version_major = 0;
   bool zstd_applied = false;
   bool is_3d = false;
-
-  // True <--> the bitstream is in fixed-error mode.
-  // False <--> the bitstream is in fixed-size mode.
-  bool is_qz_term = false;
 
   // This is the dimension of a 3D volume (NX, NY, NZ) or a 2D slice (NX, NY, 1).
   dims_type vol_dims = {0, 0, 0};
@@ -163,12 +173,17 @@ struct Header_Info {
   // For 2D slices, this field holds undefined values.
   dims_type chunk_dims = {0, 0, 0};
 };
-auto parse_header(const void*) -> Header_Info;
+auto parse_header(const void*) -> HeaderInfo;
 
-// calculate the mean square error (MSE) of two vectors.
+// Calculate the mean square error (MSE) of two vectors.
 // In case of empty vectors or vectors of different sizes, it will return
-// std::numeric_limits<double>::max().
-auto calc_mse(const vecd_type&, const vecd_type&) -> double;
+//   std::numeric_limits<double>::max().
+// The last parameter is a temporary buffer space for this function to use. If this function is
+//   called repeatedly, it helps performance to pass in the same buffer every time.
+auto calc_mse(const vecd_type&, const vecd_type&, vecd_type&) -> double;
+
+// Decide compression mode based on a collection of parameters.
+auto compression_mode(size_t bit_budget, int32_t qz, double psnr, double pwe) -> CompMode;
 
 };  // namespace sperr
 

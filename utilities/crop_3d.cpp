@@ -4,7 +4,7 @@
 #include <iostream>
 #include <memory>
 
-#define FLOAT float
+#define FLOAT double
 
 //
 // Given a big volume with dimension `dims` and logical indices  `ijk`,

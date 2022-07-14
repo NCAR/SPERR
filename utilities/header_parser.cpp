@@ -30,12 +30,6 @@ int main(int argc, char* argv[])
   std::cout << "Bitstream meta data:\n";
   std::cout << "  Produced by software major version: " << +(info.version_major) << std::endl;
 
-  std::cout << "  Compression mode: ";
-  if (info.is_qz_term)
-    std::cout << "fixed-error\n";
-  else
-    std::cout << "fixed-size\n";
-
   std::cout << "  ZSTD applied: ";
   if (info.zstd_applied)
     std::cout << "YES\n";

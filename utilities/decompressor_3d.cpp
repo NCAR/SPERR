@@ -11,12 +11,14 @@ int main(int argc, char* argv[])
   // Parse command line options
   CLI::App app("Decompress a 3D SPERR bitstream and output a reconstructed volume\n");
 
+  // Input specifications
   auto input_file = std::string();
   app.add_option("input_filename", input_file, "Input bitstream to the decompressor")
       ->check(CLI::ExistingFile)
       ->group("Input Specifications")
       ->required();
 
+  // Output Specifications
   auto output_file = std::string();
   app.add_option("-o", output_file, "Output filename")->group("Output Specifications")->required();
 
@@ -26,19 +28,11 @@ int main(int argc, char* argv[])
                "Data is output as float by default.")
       ->group("Output Specifications");
 
-#ifndef QZ_TERM
-  // Partial bitstream decompression is only applicable to fixed-size mode.
-  auto decomp_bpp = double{0.0};
-  app.add_option("--partial_bpp", decomp_bpp,
-                 "Partially decode the bitstream up to a certain bit-per-pixel. \n"
-                 "If not specified, the entire bitstream will be decoded.")
-      ->check(CLI::Range(0.0, 64.0))
-      ->group("Decompression Options");
-#endif
-
-  auto omp_num_threads = size_t{4};
+  auto omp_num_threads = size_t{0};  // meaning to use the maximum number of threads.
+#ifdef USE_OMP
   app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4")
       ->group("Decompression Options");
+#endif
 
   CLI11_PARSE(app, argc, argv);
 
@@ -56,10 +50,6 @@ int main(int argc, char* argv[])
     std::cerr << "Read compressed file error: " << input_file << std::endl;
     return 1;
   }
-
-#ifndef QZ_TERM
-  decompressor.set_bpp(decomp_bpp);
-#endif
 
   if (decompressor.decompress(in_stream.data()) != sperr::RTNType::Good) {
     std::cerr << "Decompression failed!" << std::endl;

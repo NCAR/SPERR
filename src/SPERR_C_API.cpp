@@ -6,20 +6,22 @@
 #include "SPERR3D_OMP_C.h"
 #include "SPERR3D_OMP_D.h"
 
-#ifdef QZ_TERM
-
-int C_API::sperr_qzcomp_2d(const void* src,
-                           int32_t is_float,
-                           size_t dimx,
-                           size_t dimy,
-                           int32_t qlev,
-                           double tol,
-                           void** dst,
-                           size_t* dst_len)
+int C_API::sperr_comp_2d(const void* src,
+                         int32_t is_float,
+                         size_t dimx,
+                         size_t dimy,
+                         int32_t mode,
+                         double quality,
+                         void** dst,
+                         size_t* dst_len)
 {
   // Examine if `dst` is pointing to a NULL pointer
   if (*dst != NULL)
     return 1;
+
+  // Examine if `mode` and `quality` are valid
+  if (mode < 1 || mode > 3 || quality <= 0.0)
+    return 2;
 
   // Setup the compressor
   const auto total_vals = dimx * dimy;
@@ -37,19 +39,26 @@ int C_API::sperr_qzcomp_2d(const void* src,
   }
   if (rtn != RTNType::Good)
     return -1;
-  compressor.set_qz_level(qlev);
-  compressor.set_tolerance(tol);
+
+  // Specify a particular compression mode.
+  switch (mode) {
+    case 1:
+      compressor.set_target_bpp(quality);
+      break;
+    case 2:
+      compressor.set_target_psnr(quality);
+      break;
+    case 3:
+      compressor.set_target_pwe(quality);
+      break;
+    default:
+      return 2;
+  }
 
   // Do the actual compression work!
   rtn = compressor.compress();
-  switch (rtn) {
-    case RTNType::QzLevelTooBig:
-      return 2;
-    case RTNType::Good:
-      break;
-    default:
-      return -1;
-  }
+  if (rtn != RTNType::Good)
+    return -1;
 
   // Output the compressed bitstream
   const auto& stream = compressor.view_encoded_bitstream();
@@ -63,23 +72,24 @@ int C_API::sperr_qzcomp_2d(const void* src,
   return 0;
 }
 
-int C_API::sperr_qzcomp_3d(const void* src,
-                           int32_t is_float,
-                           size_t dimx,
-                           size_t dimy,
-                           size_t dimz,
-                           int32_t qlev,
-                           double tol,
-                           int32_t nthreads,
-                           void** dst,
-                           size_t* dst_len)
+int C_API::sperr_comp_3d(const void* src,
+                         int32_t is_float,
+                         size_t dimx,
+                         size_t dimy,
+                         size_t dimz,
+                         int32_t mode,
+                         double quality,
+                         size_t nthreads,
+                         void** dst,
+                         size_t* dst_len)
 {
   // Examine if `dst` is pointing to a NULL pointer
   if (*dst != NULL)
     return 1;
 
-  if (nthreads <= 0)
-    return -1;
+  // Examine if `mode` and `quality` are valid
+  if (mode < 1 || mode > 3 || quality <= 0.0)
+    return 2;
 
   // Hard code the preferred chunk size as 256^3. Can change in the future.
   auto chunk_dims = sperr::dims_type{256, 256, 256};
@@ -103,133 +113,24 @@ int C_API::sperr_qzcomp_3d(const void* src,
   }
   if (rtn != RTNType::Good)
     return -1;
-  compressor.set_qz_level(qlev);
-  compressor.set_tolerance(tol);
+
+  // Specify a particular compression mode.
+  switch (mode) {
+    case 1:
+      compressor.set_target_bpp(quality);
+      break;
+    case 2:
+      compressor.set_target_psnr(quality);
+      break;
+    case 3:
+      compressor.set_target_pwe(quality);
+      break;
+    default:
+      return 2;
+  }
 
   // Do the actual compression work
   rtn = compressor.compress();
-  switch (rtn) {
-    case RTNType::QzLevelTooBig:
-      return 2;
-    case RTNType::Good:
-      break;
-    default:
-      return -1;
-  }
-
-  // Output the compressed bitstream
-  const auto stream = compressor.get_encoded_bitstream();
-  if (stream.empty())
-    return -1;
-  *dst_len = stream.size();
-  uint8_t* buf = (uint8_t*)std::malloc(stream.size());
-  std::copy(stream.cbegin(), stream.cend(), buf);
-  *dst = buf;
-
-  return 0;
-}
-
-#else
-
-int C_API::sperr_sizecomp_2d(const void* src,
-                             int32_t is_float,
-                             size_t dimx,
-                             size_t dimy,
-                             double bpp,
-                             void** dst,
-                             size_t* dst_len)
-{
-  // Examine if `dst` is pointing to a NULL pointer
-  if (*dst != NULL)
-    return 1;
-
-  // Set up a compressor
-  const auto total_vals = dimx * dimy;
-  auto compressor = SPERR2D_Compressor();
-  auto rtn = sperr::RTNType::Good;
-
-  // Compressor copies over input data
-  switch (is_float) {
-    case 0:  // double
-      rtn = compressor.copy_data(static_cast<const double*>(src), total_vals, {dimx, dimy, 1});
-      break;
-    case 1:  // float
-      rtn = compressor.copy_data(static_cast<const float*>(src), total_vals, {dimx, dimy, 1});
-      break;
-    default:
-      rtn = RTNType::Error;
-  }
-  if (rtn != RTNType::Good)
-    return -1;
-
-  // Set bit-per-pixel target
-  rtn = compressor.set_bpp(bpp);
-  if (rtn != RTNType::Good)
-    return 2;
-
-  // Perform the actual compression
-  rtn = compressor.compress();
-  if (rtn != RTNType::Good)
-    return -1;
-
-  // Output the compressed bitstream
-  const auto& stream = compressor.view_encoded_bitstream();
-  if (stream.empty())
-    return -1;
-  *dst_len = stream.size();
-  uint8_t* buf = (uint8_t*)std::malloc(stream.size());
-  std::copy(stream.cbegin(), stream.cend(), buf);
-  *dst = buf;
-
-  return 0;
-}
-
-int C_API::sperr_sizecomp_3d(const void* src,
-                             int32_t is_float,
-                             size_t dimx,
-                             size_t dimy,
-                             size_t dimz,
-                             double bpp,
-                             int32_t nthreads,
-                             void** dst,
-                             size_t* dst_len)
-{
-  // Examine if `dst` is pointing to a NULL pointer
-  if (*dst != NULL)
-    return 1;
-
-  // Set up a compressor
-  const auto total_vals = dimx * dimy * dimz;
-  auto compressor = SPERR3D_OMP_C();
-  compressor.set_num_threads(nthreads);
-  auto rtn = sperr::RTNType::Good;
-
-  // Hard code the preferred chunk size as 256^3. Can change in the future.
-  auto chunk_dims = sperr::dims_type{256, 256, 256};
-
-  // Compressor copies over input data
-  switch (is_float) {
-    case 0:  // double
-      rtn = compressor.copy_data(static_cast<const double*>(src), total_vals, {dimx, dimy, dimz},
-                                 chunk_dims);
-      break;
-    case 1:  // float
-      rtn = compressor.copy_data(static_cast<const float*>(src), total_vals, {dimx, dimy, dimz},
-                                 chunk_dims);
-      break;
-    default:
-      rtn = RTNType::Error;
-  }
-  if (rtn != RTNType::Good)
-    return -1;
-
-  // Set bit-per-pixel target
-  rtn = compressor.set_bpp(bpp);
-  if (rtn != RTNType::Good)
-    return 2;
-
-  // Perform the actual compression
-  rtn = compressor.compress();
   if (rtn != RTNType::Good)
     return -1;
 
@@ -244,8 +145,6 @@ int C_API::sperr_sizecomp_3d(const void* src,
 
   return 0;
 }
-
-#endif
 
 int C_API::sperr_decomp_2d(const void* src,
                            size_t src_len,
@@ -299,7 +198,7 @@ int C_API::sperr_decomp_2d(const void* src,
 int C_API::sperr_decomp_3d(const void* src,
                            size_t src_len,
                            int32_t output_float,
-                           int32_t nthreads,
+                           size_t nthreads,
                            size_t* dimx,
                            size_t* dimy,
                            size_t* dimz,
@@ -308,9 +207,6 @@ int C_API::sperr_decomp_3d(const void* src,
   // Examine if `dst` is pointing to a NULL pointer
   if (*dst != NULL)
     return 1;
-
-  if (nthreads <= 0)
-    return -1;
 
   // Use a decompressor to decompress this bitstream
   auto decompressor = SPERR3D_OMP_D();
@@ -355,7 +251,6 @@ int C_API::sperr_decomp_3d(const void* src,
 void C_API::sperr_parse_header(const void* ptr,
                                int32_t* version_major,
                                int32_t* zstd_applied,
-                               int32_t* is_qz_term,
                                int32_t* is_3d,
                                uint32_t* dim_x,
                                uint32_t* dim_y,
@@ -365,7 +260,6 @@ void C_API::sperr_parse_header(const void* ptr,
 
   *version_major = header.version_major;
   *zstd_applied = header.zstd_applied;
-  *is_qz_term = header.is_qz_term;
   *is_3d = header.is_3d;
   *dim_x = header.vol_dims[0];
   *dim_y = header.vol_dims[1];

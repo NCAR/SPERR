@@ -8,6 +8,10 @@
 #include <limits>
 #include <numeric>
 
+#ifdef USE_OMP
+#include <omp.h>
+#endif
+
 auto sperr::num_of_xforms(size_t len) -> size_t
 {
   assert(len > 0);
@@ -254,6 +258,12 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
   const size_t num_of_strides = arr_len / stride_size;
   const size_t remainder_size = arr_len - stride_size * num_of_strides;
 
+  // Use the maximum possible threads if 0 is passed in.
+#ifdef USE_OMP
+  if (omp_nthreads == 0)
+    omp_nthreads = omp_get_max_threads();
+#endif
+
   auto rmse = T{0.0};
   auto linfty = T{0.0};
   auto psnr = T{0.0};
@@ -469,11 +479,11 @@ template void sperr::scatter_chunk(std::vector<double>&,
                                    const std::vector<double>&,
                                    const std::array<size_t, 6>&);
 
-auto sperr::parse_header(const void* ptr) -> Header_Info
+auto sperr::parse_header(const void* ptr) -> HeaderInfo
 {
   const uint8_t* u8p = static_cast<const uint8_t*>(ptr);
   size_t loc = 0;
-  auto header = Header_Info();
+  auto header = HeaderInfo();
 
   // Parse version numbers
   header.version_major = *u8p;
@@ -485,7 +495,6 @@ auto sperr::parse_header(const void* ptr) -> Header_Info
 
   header.zstd_applied = b8[0];
   header.is_3d = b8[1];
-  header.is_qz_term = b8[2];
 
   // Parse the dimension info.
   if (header.is_3d) {
@@ -513,18 +522,18 @@ auto sperr::parse_header(const void* ptr) -> Header_Info
   return header;
 }
 
-auto sperr::calc_mse(const vecd_type& v1, const vecd_type& v2) -> double
+auto sperr::calc_mse(const vecd_type& v1, const vecd_type& v2, vecd_type& tmp_buf) -> double
 {
-  const auto limit = std::numeric_limits<double>::max();
+  const auto infy = std::numeric_limits<double>::infinity();
   if (v1.empty() || v2.empty() || v1.size() != v2.size())
-    return limit;
+    return infy;
 
   const auto len = v1.size();
 
   const size_t stride_size = 4096;
   const size_t num_strides = len / stride_size;
   const size_t remainder_size = len - stride_size * num_strides;
-  auto tmp_buf = vecd_type(num_strides + 1);
+  tmp_buf.resize(num_strides + 1);
 
   for (size_t i = 0; i < num_strides; i++) {
     auto beg1 = v1.cbegin() + i * stride_size;
@@ -542,4 +551,27 @@ auto sperr::calc_mse(const vecd_type& v1, const vecd_type& v2) -> double
   const auto mse = total_sum / static_cast<double>(len);
 
   return mse;
+}
+
+auto sperr::compression_mode(size_t bit_budget, int32_t qz, double psnr, double pwe) -> CompMode
+{
+  if (bit_budget < sperr::max_size && qz == sperr::lowest_int32 && psnr == sperr::max_d &&
+      pwe == 0.0) {
+    return CompMode::FixedSize;
+  }
+  else if (bit_budget == sperr::max_size && qz > sperr::lowest_int32 && psnr == sperr::max_d &&
+           pwe == 0.0) {
+    return CompMode::FixedQz;
+  }
+  else if (bit_budget == sperr::max_size && qz == sperr::lowest_int32 && psnr < sperr::max_d &&
+           pwe == 0.0) {
+    return CompMode::FixedPSNR;
+  }
+  else if (bit_budget == sperr::max_size && qz == sperr::lowest_int32 && psnr == sperr::max_d &&
+           pwe > 0.0) {
+    return CompMode::FixedPWE;
+  }
+  else {
+    return CompMode::Unknown;
+  }
 }

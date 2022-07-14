@@ -38,14 +38,6 @@ class SPECKSet3D {
 //
 class SPECK3D : public SPECK_Storage {
  public:
-#ifdef QZ_TERM
-  void set_quantization_level(int32_t lev);
-#else
-  // How many bits does speck process (for encoding and decoding).
-  // If set to zero during decoding, then all bits in the bitstream will be processed.
-  void set_bit_budget(size_t);
-#endif
-
   // core operations
   auto encode() -> RTNType;
   auto decode() -> RTNType;
@@ -53,7 +45,7 @@ class SPECK3D : public SPECK_Storage {
  private:
   auto m_ready_to_encode() const -> bool;
   auto m_ready_to_decode() const -> bool;
-  void m_clean_LIS();  // Clean garbage sets from m_LIS if too much garbage exists.
+  void m_clean_LIS();
   void m_initialize_sets_lists();
   auto m_sorting_pass_encode() -> RTNType;
   auto m_sorting_pass_decode() -> RTNType;

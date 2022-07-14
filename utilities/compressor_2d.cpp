@@ -13,6 +13,7 @@ int main(int argc, char* argv[])
   // Parse command line options
   CLI::App app("Compress a 2D slice and output a SPERR bitstream\n");
 
+  // Input specifications
   auto input_file = std::string();
   app.add_option("filename", input_file, "Input file to the compressor")
       ->required()
@@ -31,39 +32,69 @@ int main(int argc, char* argv[])
                "Data is treated as float by default.")
       ->group("Input Specifications");
 
+  // Output specification
   auto output_file = std::string();
-  app.add_option("-o", output_file, "Output filename")->required()->group("Output Specifications");
-
-#ifdef QZ_TERM
-  auto qz_level = int32_t{0};
-  app.add_option("-q", qz_level,
-                 "Quantization level to reach when encoding\n"
-                 "Note 1: smaller quantization levels yield less compression error.\n"
-                 "Note 2: quantization levels could be negative integers as well.")
-      ->group("Compression Parameters")
-      ->required();
-
-  auto tolerance = double{0.0};
-  app.add_option("-t", tolerance,
-                 "Maximum point-wise error tolerance. E.g., `-t 1e-2`\n"
-                 "If not specified or a negative number is given, \n"
-                 "then the program will not perform any outlier correction.")
-      ->group("Compression Parameters");
-#else
-  auto bpp = double{0.0};
-  app.add_option("--bpp", bpp, "Target bit-per-pixel. E.g., `--bpp 4.5`")
-      ->check(CLI::Range(0.0, 64.0))
-      ->group("Compression Parameters")
-      ->required();
-#endif
+  app.add_option("-o", output_file, "Output filename")->group("Output Specifications");
 
   auto show_stats = bool{false};
-  app.add_flag("--stats", show_stats,
+  app.add_flag("--show_stats", show_stats,
                "Show statistics measuring the compression quality.\n"
                "They are not calculated by default.")
-      ->group("Compression Parameters");
+      ->group("Output Specifications");
+
+  // Compression specifications
+  auto qz_level = sperr::lowest_int32;
+  app.add_option("--qz", qz_level,
+                 "Quantization level to reach when encoding.\n"
+                 "Note 1: smaller quantization levels yield less compression error.\n"
+                 "Note 2: quantization levels could be negative integers as well.")
+      ->group("Compression Specifications (must choose one and only one)");
+
+  auto bpp = sperr::max_d;
+  app.add_option("--bpp", bpp, "Target bit-per-pixel to achieve.")
+      ->group("Compression Specifications (must choose one and only one)");
+
+  auto pwe = double{0.0};
+  app.add_option("--pwe", pwe, "Maximum point-wise error tolerance.")
+      ->group("Compression Specifications (must choose one and only one)");
+
+  auto psnr = sperr::max_d;
+  app.add_option("--psnr", psnr, "Target PSNR to achieve.")
+      ->group("Compression Specifications (must choose one and only one)");
 
   CLI11_PARSE(app, argc, argv);
+
+  // Make sure that we have a valid compression mode
+  auto bit_budget = sperr::max_size;
+  if (bpp != sperr::max_d)
+    bit_budget -= 100;  // Just need to be different from the max size value.
+  const auto mode = sperr::compression_mode(bit_budget, qz_level, psnr, pwe);
+  if (mode == sperr::CompMode::Unknown) {
+    std::cout << "Compression mode is unclear. Did you give one and only one "
+                 "compression specification?"
+              << std::endl;
+    return 1;
+  }
+
+  // Do some sanity check on compression parameters
+  if (mode == sperr::CompMode::FixedSize) {
+    if (bpp <= 0.0 || bpp >= 64.0) {
+      std::cout << "Bit-per-pixel value must be between 0.0 and 64.0!" << std::endl;
+      return 1;
+    }
+  }
+  else if (mode == sperr::CompMode::FixedPSNR) {
+    if (psnr <= 0.0) {
+      std::cout << "Target PSNR must be positive!" << std::endl;
+      return 1;
+    }
+  }
+  else if (mode == sperr::CompMode::FixedPWE) {
+    if (pwe <= 0.0) {
+      std::cout << "Target PWE must be positive!" << std::endl;
+      return 1;
+    }
+  }
 
   // Read in the input file
   const size_t total_vals = dims[0] * dims[1];
@@ -91,22 +122,31 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-#ifdef QZ_TERM
-  compressor.set_qz_level(qz_level);
-  compressor.set_tolerance(tolerance);
-#else
-  rtn = compressor.set_bpp(bpp);
+  // Tell the compressor which compression mode to use.
+  switch (mode) {
+    case sperr::CompMode::FixedSize:
+      rtn = compressor.set_target_bpp(bpp);
+      break;
+    case sperr::CompMode::FixedQz:
+      compressor.set_target_qz_level(qz_level);
+      break;
+    case sperr::CompMode::FixedPSNR:
+      compressor.set_target_psnr(psnr);
+      break;
+    default:
+      compressor.set_target_pwe(pwe);
+      break;
+  }
   if (rtn != RTNType::Good) {
     std::cerr << "Set bit-per-pixel failed!" << std::endl;
     return 1;
   }
-#endif
 
   // Perform the actual compression
   rtn = compressor.compress();
   switch (rtn) {
     case sperr::RTNType::QzLevelTooBig:
-      std::cerr << "Compression failed because `q` is set too big!" << std::endl;
+      std::cerr << "Compression failed because `qz` is set too big!" << std::endl;
       return 1;
     case sperr::RTNType::Good:
       break;
@@ -115,7 +155,7 @@ int main(int argc, char* argv[])
       return 1;
   }
 
-  // Output the encoded bitstream
+  // Get a hold of the encoded bitstream.
   const auto& stream = compressor.view_encoded_bitstream();
   if (stream.empty()) {
     std::cerr << "Compression bitstream empty!" << std::endl;
@@ -140,7 +180,7 @@ int main(int argc, char* argv[])
       const auto recover = decompressor.get_data<double>();
       assert(recover.size() * sizeof(double) == orig.size());
       auto stats = sperr::calc_stats(reinterpret_cast<const double*>(orig.data()), recover.data(),
-                                     recover.size(), 4);
+                                     recover.size(), 0);
       std::cout << ", PSNR = " << stats[2] << "dB,  L-Infty = " << stats[1];
       std::printf(", Data range = (%.2e, %.2e).\n", stats[3], stats[4]);
     }
@@ -148,32 +188,35 @@ int main(int argc, char* argv[])
       const auto recover = decompressor.get_data<float>();
       assert(recover.size() * sizeof(float) == orig.size());
       auto stats = sperr::calc_stats(reinterpret_cast<const float*>(orig.data()), recover.data(),
-                                     recover.size(), 4);
+                                     recover.size(), 0);
       std::cout << ", PSNR = " << stats[2] << "dB,  L-Infty = " << stats[1];
       std::printf(", Data range = (%.2e, %.2e).\n", stats[3], stats[4]);
     }
 
-#ifdef QZ_TERM
-    // Also collect outlier statistics
-    const auto out_stats = compressor.get_outlier_stats();
-    if (out_stats.first == 0) {
-      printf("There were no outliers corrected!\n");
+    if (mode == sperr::CompMode::FixedPWE) {
+      // Also collect outlier statistics
+      const auto out_stats = compressor.get_outlier_stats();
+      if (out_stats.first == 0) {
+        std::cout << "There were no outliers corrected!\n";
+      }
+      else {
+        std::printf(
+            "There were %ld outliers, percentage of total data points = %.2f%%.\n"
+            "Correcting them takes bpp = %.2f, percentage of total storage = %.2f%%.\n",
+            out_stats.first, double(out_stats.first * 100) / double(total_vals),
+            double(out_stats.second * 8) / double(out_stats.first),
+            double(out_stats.second * 100) / double(stream.size()));
+      }
     }
-    else {
-      printf(
-          "There were %ld outliers, percentage of total data points = %.2f%%.\n"
-          "Correcting them takes bpp = %.2f, percentage of total storage = %.2f%%\n",
-          out_stats.first, double(out_stats.first * 100) / double(total_vals),
-          double(out_stats.second * 8) / double(out_stats.first),
-          double(out_stats.second * 100) / double(stream.size()));
-    }
-#endif
   }
 
-  rtn = sperr::write_n_bytes(output_file, stream.size(), stream.data());
-  if (rtn != sperr::RTNType::Good) {
-    std::cerr << "Write compressed file failed: " << output_file << std::endl;
-    return 1;
+  // Write out the encoded bitstream
+  if (!output_file.empty()) {
+    rtn = sperr::write_n_bytes(output_file, stream.size(), stream.data());
+    if (rtn != sperr::RTNType::Good) {
+      std::cerr << "Write compressed file failed: " << output_file << std::endl;
+      return 1;
+    }
   }
 
   return 0;

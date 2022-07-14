@@ -4,7 +4,6 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
-#include <iostream>
 
 //
 // Class Outlier
@@ -105,16 +104,14 @@ auto sperr::SPERR::m_ready_to_encode() const -> bool
   if (m_LOS.empty())
     return false;
 
-  // Make sure each outlier to process has an error greater or equal to the
-  // tolerance.
+  // Make sure each outlier to process has an error greater or equal to the tolerance.
   if (!std::all_of(m_LOS.begin(), m_LOS.end(),
                    [tol = m_tolerance](auto& out) { return std::abs(out.error) >= tol; }))
     return false;
 
   // Make sure there are no duplicate locations in the outlier list,
   // and the largest location is still within range.
-  // Note that the list of outliers is already sorted at the beginning of
-  // encoding.
+  // Note that the list of outliers is already sorted at the beginning of encoding.
   if (m_LOS.back().location >= m_total_len)
     return false;
   auto adj = std::adjacent_find(m_LOS.begin(), m_LOS.end(),
