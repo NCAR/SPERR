@@ -111,6 +111,8 @@ auto sperr::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t 
   uint64_t bit_in_byte = 0;
   std::memcpy(&bit_in_byte, ptr + pos, sizeof(bit_in_byte));
   pos += sizeof(bit_in_byte);
+  if (bit_in_byte != comp_size - pos)
+    return RTNType::BitstreamWrongLen;
 
   // Unpack bits
   const auto num_of_bools = (comp_size - pos) * 8;
