@@ -21,7 +21,9 @@ int main(int argc, char* argv[])
       ->group("Input Specifications");
 
   auto dims = std::vector<size_t>();
-  app.add_option("--dims", dims, "Dimensions of the input volume. E.g., `--dims 128 128 128`")
+  app.add_option("--dims", dims,
+                 "Dimensions of the input volume. E.g., `--dims 128 128 128`\n"
+                 "(The fastest-varying dimension appears first.)")
       ->expected(3)
       ->required()
       ->group("Input Specifications");
@@ -42,7 +44,9 @@ int main(int argc, char* argv[])
 
   // Execution specifications
   auto chunks = std::vector<size_t>{256, 256, 256};
-  app.add_option("--chunks", chunks, "Dimensions of the preferred chunk size. Default: 256 256 256")
+  app.add_option("--chunks", chunks,
+                 "Dimensions of the preferred chunk size. Default: 256 256 256\n"
+                 "(Volume dims don't need to be divisible of these chunk dims.)")
       ->expected(3)
       ->group("Execution Specifications");
 
@@ -54,10 +58,7 @@ int main(int argc, char* argv[])
 
   // Compression specifications
   auto qz_level = sperr::lowest_int32;
-  app.add_option("--qz", qz_level,
-                 "Quantization level to reach when encoding\n"
-                 "Note 1: smaller quantization levels yield less compression error.\n"
-                 "Note 2: quantization levels could be negative integers as well.")
+  app.add_option("--qz", qz_level, "Quantization level (can be negative) to reach.")
       ->group("Compression Specifications (must choose one and only one)");
 
   auto bpp = sperr::max_d;
@@ -77,7 +78,7 @@ int main(int argc, char* argv[])
   // Make sure that we have a valid compression mode
   auto bit_budget = sperr::max_size;
   if (bpp != sperr::max_d)
-    bit_budget -= 100;  // Just need to be different from the max size value.
+    bit_budget -= 500;  // Just need to be different from the max size value.
   const auto mode = sperr::compression_mode(bit_budget, qz_level, psnr, pwe);
   if (mode == sperr::CompMode::Unknown) {
     std::cout << "Compression mode is unclear. Did you give one and only one "

@@ -9,7 +9,7 @@
 int main(int argc, char* argv[])
 {
   // Parse command line options
-  CLI::App app("Decompress a 3D SPERR bitstream and output a reconstructed volume\n");
+  CLI::App app("Decompress a SPERR bitstream and output a reconstructed 3D volume\n");
 
   // Input specifications
   auto input_file = std::string();
@@ -26,11 +26,11 @@ int main(int argc, char* argv[])
   app.add_flag("-d", output_double,
                "Specify to output data to be in double type.\n"
                "Data is output as float by default.")
-      ->group("Output Specifications");
+      ->group("Execution Specifications");
 
   auto omp_num_threads = size_t{0};  // meaning to use the maximum number of threads.
 #ifdef USE_OMP
-  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default: 4")
+  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use.")
       ->group("Decompression Options");
 #endif
 

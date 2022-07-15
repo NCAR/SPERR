@@ -21,7 +21,9 @@ int main(int argc, char* argv[])
       ->group("Input Specifications");
 
   auto dims = std::vector<size_t>();
-  app.add_option("--dims", dims, "Dimensions of the input 2D slice. E.g., `--dims 128 128`")
+  app.add_option("--dims", dims,
+                 "Dimensions of the input 2D slice. E.g., `--dims 128 128`\n"
+                 "(The fastest-varying dimension appears first.)")
       ->expected(2)
       ->required()
       ->group("Input Specifications");
@@ -37,17 +39,12 @@ int main(int argc, char* argv[])
   app.add_option("-o", output_file, "Output filename")->group("Output Specifications");
 
   auto show_stats = bool{false};
-  app.add_flag("--show_stats", show_stats,
-               "Show statistics measuring the compression quality.\n"
-               "They are not calculated by default.")
+  app.add_flag("--show_stats", show_stats, "Show statistics measuring the compression quality.")
       ->group("Output Specifications");
 
   // Compression specifications
   auto qz_level = sperr::lowest_int32;
-  app.add_option("--qz", qz_level,
-                 "Quantization level to reach when encoding.\n"
-                 "Note 1: smaller quantization levels yield less compression error.\n"
-                 "Note 2: quantization levels could be negative integers as well.")
+  app.add_option("--qz", qz_level, "Quantization level (can be negative) to reach.")
       ->group("Compression Specifications (must choose one and only one)");
 
   auto bpp = sperr::max_d;
