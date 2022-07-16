@@ -50,11 +50,16 @@ class SPECK_Storage {
   // Member variables
   //
   const size_t m_header_size = 10;  // See header definition in SPECK_Storage.cpp.
+  const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
   size_t m_encode_budget = 0;
+  size_t m_LSP_mask_sum = 0;    // Number of TRUE values in `m_LSP_mask`.
+  size_t m_bit_idx = 0;         // Used for decode. Which bit we're at?
+  int32_t m_max_coeff_bit = 0;  // Maximum bitplane.
   int32_t m_qz_lev = sperr::lowest_int32;
-  double m_target_psnr = sperr::max_d;
-  double m_target_pwe = 0.0;
   double m_data_range = sperr::max_d;  // range of data before DWT.
+  double m_target_psnr = sperr::max_d;
+  double m_target_pwe = 0.0;  // used in fixed-PWE mode
+  double m_threshold = 0.0;   // Threshold that's used for an iteration.
 
   // Use a cache variable to store the current compression mode.
   // The compression mode, however, is NOT set or determined by `m_mode_cache`. It is determined
@@ -62,8 +67,7 @@ class SPECK_Storage {
   // and can be retrieved by calling function sperr::compression_mode().
   CompMode m_mode_cache = CompMode::Unknown;
 
-  //
-  // A few data structures shared by both 2D and 3D SPECK algorithm
+  // Data storage shared by both 2D and 3D SPECK.
   //
   std::vector<double> m_coeff_buf;  // Wavelet coefficients
   std::vector<bool> m_bit_buffer;   // Bitstream produced by the algorithm
@@ -71,14 +75,8 @@ class SPECK_Storage {
   std::vector<size_t> m_LSP_new;    // List of newly found significant pixels
   std::vector<bool> m_LSP_mask;     // Significant pixels previously found
   std::vector<bool> m_sign_array;   // Keep the signs of every coefficient
-  vec8_type m_encoded_stream;
-
-  size_t m_LSP_mask_sum = 0;     // Number of TRUE values in `m_LSP_mask`.
-  size_t m_bit_idx = 0;          // Used for decode. Which bit we're at?
-  double m_threshold = 0.0;      // Threshold that's used for an iteration.
-  int32_t m_max_coeff_bit = 0;   // Maximum bitplane.
-  dims_type m_dims = {0, 0, 0};  // Dimension of the 2D/3D volume
-  const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
+  vec8_type m_encoded_stream;       // Stores the SPECK bitstream
+  dims_type m_dims = {0, 0, 0};     // Dimension of the 2D/3D volume
 
   //
   // A few data members for error estimation
@@ -86,7 +84,6 @@ class SPECK_Storage {
   std::vector<double> m_orig_coeff;
   std::vector<double> m_qz_coeff;
   std::vector<double> m_calc_mse_buf;  // temporary buffer facilitating MSE calculation
-  size_t m_num_qz_coeff = 0;           // number of quantized (non-zero) coefficients
 
   //
   // Member methods
@@ -96,7 +93,7 @@ class SPECK_Storage {
   auto m_refinement_pass_decode() -> RTNType;
 
   // Is there anything demanding the termination of iterations?
-  auto m_termination_check(size_t bitplane) -> RTNType;
+  auto m_termination_check(size_t bitplane_idx) -> RTNType;
 };
 
 };  // namespace sperr
