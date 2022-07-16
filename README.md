@@ -6,7 +6,7 @@
 ## Overview
 
 SPERR is a lossy compressor for scientific data (2D or 3D floating-point data, mostly produced by numerical simulations). 
-SPERR produces excellent (maybe the best) rate-distortion curves, meaning that it achieves the least amount of ***average error***
+SPERR produces excellent rate-distortion curves, meaning that it achieves the least amount of ***average error***
 given a certain storage budget.
 
 Under the hood, SPERR uses wavelet transforms, [SPECK](https://ieeexplore.ieee.org/document/1347192) coding, 
