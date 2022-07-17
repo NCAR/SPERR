@@ -210,12 +210,6 @@ int main(int argc, char* argv[])
                                      recover.size(), omp_num_threads);
       std::cout << ", PSNR = " << stats[2] << "dB,  L-Infty = " << stats[1];
       std::printf(", Data range = (%.2e, %.2e).\n", stats[3], stats[4]);
-
-      // DEBUG: write out the difference
-      //auto diff = std::vector<double>(recover.size());
-      //std::transform(recover.begin(), recover.end(), reinterpret_cast<const double*>(orig.data()),
-      //               diff.begin(), [](auto a, auto b){ return b - a; });
-      //sperr::write_n_bytes("./diff.d64", diff.size() * sizeof(double), diff.data());
     }
     else {
       const auto recover = decompressor.get_data<float>();
