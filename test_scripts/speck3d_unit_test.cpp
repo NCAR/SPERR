@@ -198,17 +198,12 @@ TEST(speck3d_target_pwe, small_data_range)
   float lmax = tester.get_lmax();
   EXPECT_LE(lmax, pwe);
 
+  pwe = 7.3e-7;
+  tester.execute(bpp, q, target_psnr, pwe);
+  lmax = tester.get_lmax();
+  EXPECT_LE(lmax, pwe);
+
   pwe = 6.7e-8;
-  tester.execute(bpp, q, target_psnr, pwe);
-  lmax = tester.get_lmax();
-  EXPECT_LE(lmax, pwe);
-
-  pwe = 1.1e-8;
-  tester.execute(bpp, q, target_psnr, pwe);
-  lmax = tester.get_lmax();
-  EXPECT_LE(lmax, pwe);
-
-  pwe = 8.1e-9;
   tester.execute(bpp, q, target_psnr, pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, pwe);
@@ -222,7 +217,7 @@ TEST(speck3d_target_pwe, big)
   const auto q = sperr::lowest_int32;
   const auto target_psnr = sperr::max_d;
 
-  double pwe = 0.93;
+  double pwe = 0.92;
   tester.execute(bpp, q, target_psnr, pwe);
   float lmax = tester.get_lmax();
   EXPECT_LE(lmax, pwe);
@@ -237,7 +232,7 @@ TEST(speck3d_target_pwe, big)
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, pwe);
 
-  pwe = 0.02;
+  pwe = 0.018;
   tester.execute(bpp, q, target_psnr, pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, pwe);

@@ -139,22 +139,15 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
     m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
 
     // Step 4.2: Find all outliers
-    auto new_pwe = m_target_pwe;
-    for (size_t i = 0; i < total_vals; i++) {
-      const auto d = std::abs(m_val_buf2[i] - m_val_buf[i]);
-      const auto f = std::abs(static_cast<float>(m_val_buf2[i]) - static_cast<float>(m_val_buf[i]));
-      if (static_cast<double>(f) > m_target_pwe && d <= m_target_pwe)
-        new_pwe = std::min(new_pwe, d);
-    }
     for (size_t i = 0; i < total_vals; i++) {
       const auto diff = m_val_buf2[i] - m_val_buf[i];
-      if (std::abs(diff) >= new_pwe)
+      if (std::abs(diff) >= m_target_pwe)
         m_LOS.emplace_back(i, diff);
     }
 
     // Step 4.3: Code located outliers
     if (!m_LOS.empty()) {
-      m_sperr.set_tolerance(new_pwe);
+      m_sperr.set_tolerance(m_target_pwe);
       m_sperr.set_length(total_vals);
       m_sperr.copy_outlier_list(m_LOS);
       rtn = m_sperr.encode();

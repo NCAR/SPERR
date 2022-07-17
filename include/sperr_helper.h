@@ -10,6 +10,7 @@
 #include <cstdint>  // fixed width integers
 #include <cstdlib>
 #include <iterator>
+#include <limits>
 #include <memory>
 #include <string>
 #include <utility>  // std::pair
