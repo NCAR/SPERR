@@ -133,6 +133,12 @@ int main(int argc, char* argv[])
     return 1;
   }
 
+  // Free up memory if we don't need to compute stats
+  if (!show_stats) {
+    orig.clear();
+    orig.shrink_to_fit();
+  }
+
   // Tell the compressor which compression mode to use.
   switch (mode) {
     case sperr::CompMode::FixedSize:
@@ -151,12 +157,6 @@ int main(int argc, char* argv[])
   if (rtn != sperr::RTNType::Good) {
     std::cerr << "Set bit-per-pixel failed!" << std::endl;
     return 1;
-  }
-
-  // Free up memory if we don't need to compute stats
-  if (!show_stats) {
-    orig.clear();
-    orig.shrink_to_fit();
   }
 
   // Perform the actual compression
@@ -204,7 +204,7 @@ int main(int argc, char* argv[])
       return 1;
 
     if (use_double) {
-      const auto recover = decompressor.get_data<double>();
+      const auto& recover = decompressor.view_data();
       assert(recover.size() * sizeof(double) == orig.size());
       auto stats = sperr::calc_stats(reinterpret_cast<const double*>(orig.data()), recover.data(),
                                      recover.size(), omp_num_threads);

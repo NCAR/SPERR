@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
 
   // Read in the input file
   const size_t total_vals = dims[0] * dims[1];
-  const auto orig = sperr::read_whole_file<uint8_t>(input_file);
+  auto orig = sperr::read_whole_file<uint8_t>(input_file);
   if ((use_double && orig.size() != total_vals * sizeof(double)) ||
       (!use_double && orig.size() != total_vals * sizeof(float))) {
     std::cerr << "Read input file error: " << input_file << std::endl;
@@ -117,6 +117,12 @@ int main(int argc, char* argv[])
   if (rtn != RTNType::Good) {
     std::cerr << "Copy data failed!" << std::endl;
     return 1;
+  }
+
+  // Free up memory if we don't need to compute stats
+  if (!show_stats) {
+    orig.clear();
+    orig.shrink_to_fit();
   }
 
   // Tell the compressor which compression mode to use.
@@ -174,7 +180,7 @@ int main(int argc, char* argv[])
       return 1;
 
     if (use_double) {
-      const auto recover = decompressor.get_data<double>();
+      const auto& recover = decompressor.view_data();
       assert(recover.size() * sizeof(double) == orig.size());
       auto stats = sperr::calc_stats(reinterpret_cast<const double*>(orig.data()), recover.data(),
                                      recover.size(), 0);
