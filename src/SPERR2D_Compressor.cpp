@@ -1,5 +1,6 @@
 #include "SPERR2D_Compressor.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstring>
 

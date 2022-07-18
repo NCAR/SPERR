@@ -1,5 +1,7 @@
 #include "SPECK_Storage.h"
 
+#include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstring>
