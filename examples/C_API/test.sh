@@ -33,6 +33,7 @@ if diff $CAPI $CPPAPI; then
   echo "--> C and C++ utilities produce the same result on test data $FILE"
 else
   echo "--> C and C++ utilities produce different results on test data $FILE"
+  exit 1
 fi
 rm -f $CAPI $CPPAPI
 
@@ -48,6 +49,7 @@ if diff $CAPI $CPPAPI; then
   echo "--> C and C++ utilities produce the same result on test data $FILE"
 else
   echo "--> C and C++ utilities produce different results on test data $FILE"
+  exit 1
 fi
 rm -f $CAPI $CPPAPI
 
@@ -63,6 +65,7 @@ if diff $CAPI $CPPAPI; then
   echo "--> C and C++ utilities produce the same result on test data $FILE"
 else
   echo "--> C and C++ utilities produce different results on test data $FILE"
+  exit 1
 fi
 rm -f $CAPI $CPPAPI
 
@@ -79,6 +82,7 @@ if diff $CAPI $CPPAPI; then
   echo "--> C and C++ utilities produce the same result on test data $FILE"
 else
   echo "--> C and C++ utilities produce different results on test data $FILE"
+  exit 1
 fi
 rm -f $CAPI $CPPAPI
 
@@ -94,6 +98,7 @@ if diff $CAPI $CPPAPI; then
   echo "--> C and C++ utilities produce the same result on test data $FILE"
 else
   echo "--> C and C++ utilities produce different results on test data $FILE"
+  exit 1
 fi
 rm -f $CAPI $CPPAPI
 
@@ -109,5 +114,6 @@ if diff $CAPI $CPPAPI; then
   echo "--> C and C++ utilities produce the same result on test data $FILE"
 else
   echo "--> C and C++ utilities produce different results on test data $FILE"
+  exit 1
 fi
 rm -f $CAPI $CPPAPI
