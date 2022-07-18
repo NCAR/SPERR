@@ -77,6 +77,9 @@ int C_API::sperr_comp_3d(const void* src,
                          size_t dimx,
                          size_t dimy,
                          size_t dimz,
+                         size_t chunk_x,
+                         size_t chunk_y,
+                         size_t chunk_z,
                          int32_t mode,
                          double quality,
                          size_t nthreads,
@@ -91,8 +94,8 @@ int C_API::sperr_comp_3d(const void* src,
   if (mode < 1 || mode > 3 || quality <= 0.0)
     return 2;
 
-  // Hard code the preferred chunk size as 256^3. Can change in the future.
-  auto chunk_dims = sperr::dims_type{256, 256, 256};
+  const auto vol_dims = sperr::dims_type{dimx, dimy, dimz};
+  const auto chunk_dims = sperr::dims_type{chunk_x, chunk_y, chunk_z};
 
   // Setup the compressor
   const auto total_vals = dimx * dimy * dimz;
@@ -101,12 +104,10 @@ int C_API::sperr_comp_3d(const void* src,
   auto rtn = sperr::RTNType::Good;
   switch (is_float) {
     case 0:  // double
-      rtn = compressor.copy_data(static_cast<const double*>(src), total_vals, {dimx, dimy, dimz},
-                                 chunk_dims);
+      rtn = compressor.copy_data(static_cast<const double*>(src), total_vals, vol_dims, chunk_dims);
       break;
     case 1:  // float
-      rtn = compressor.copy_data(static_cast<const float*>(src), total_vals, {dimx, dimy, dimz},
-                                 chunk_dims);
+      rtn = compressor.copy_data(static_cast<const float*>(src), total_vals, vol_dims, chunk_dims);
       break;
     default:
       rtn = RTNType::Error;

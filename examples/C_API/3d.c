@@ -44,6 +44,11 @@ int main(int argc, char** argv)
   if (argc == 8)
     is_float = 0;
 
+  /* Hard code the preferred chunk size in this example. */
+  const size_t chunk_x = 256;
+  const size_t chunk_y = 256;
+  const size_t chunk_z = 256;
+
   /* Read in a file and put its content in `inbuf` */
   void* inbuf = NULL; /* Will be free'd later */
   size_t inlen = read_file(filename, &inbuf);
@@ -64,8 +69,8 @@ int main(int argc, char** argv)
   /* Compress `inbuf` and put the compressed bitstream in `bitstream` */
   void* bitstream = NULL; /* Will be free'd later */
   size_t stream_len = 0;
-  int rtn = sperr_comp_3d(inbuf, is_float, dimx, dimy, dimz, mode, quality, nthreads, &bitstream,
-                          &stream_len);
+  int rtn = sperr_comp_3d(inbuf, is_float, dimx, dimy, dimz, chunk_x, chunk_y, chunk_z, mode,
+                          quality, nthreads, &bitstream, &stream_len);
   if (rtn != 0) {
     printf("Compression error with code %d\n", rtn);
     return rtn;

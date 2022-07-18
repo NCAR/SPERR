@@ -70,6 +70,9 @@ int sperr_comp_3d(
     size_t dimx,      /* Input: X (fastest-varying) dimension */
     size_t dimy,      /* Input: Y dimension */
     size_t dimz,      /* Input: Z (slowest-varying) dimension */
+    size_t chunk_x,   /* Input: preferred chunk dimension in X */
+    size_t chunk_y,   /* Input: preferred chunk dimension in Y */
+    size_t chunk_z,   /* Input: preferred chunk dimension in Z */
     int32_t mode,     /* Input: compression mode to use */
     double quality,   /* Input: target quality */
     size_t nthreads,  /* Input: number of OMP threads to use. 0 means using all threads. */
