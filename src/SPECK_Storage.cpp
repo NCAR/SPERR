@@ -1,11 +1,11 @@
 #include "SPECK_Storage.h"
 
+#include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstring>
 #include <numeric>
-#include <array>
-#include <algorithm>
 
 using d2_type = std::array<double, 2>;
 using b2_type = std::array<bool, 2>;

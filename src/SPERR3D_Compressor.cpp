@@ -1,8 +1,8 @@
 #include "SPERR3D_Compressor.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstring>
-#include <algorithm>
 
 template <typename T>
 auto sperr::SPERR3D_Compressor::copy_data(const T* p, size_t len, sperr::dims_type dims) -> RTNType

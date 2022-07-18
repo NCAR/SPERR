@@ -1,8 +1,8 @@
 #include "SPERR2D_Compressor.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstring>
-#include <algorithm>
 
 #ifdef USE_ZSTD
 #include "zstd.h"
