@@ -9,7 +9,6 @@
 //   void QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length);
 //
 
-
 #ifndef CDF97_H
 #define CDF97_H
 
@@ -124,7 +123,7 @@ class CDF97 {
   // The filter bank coefficients (h[] array) are from "Biorthogonal Bases of
   // Compactly Supported Wavelets," by Cohen et al., Page 551.
   // (https://services.math.duke.edu/~ingrid/publications/CPAM_1992_p485.pdf)
-  // 
+  //
 
   // Paper coefficients
   const std::array<double, 5> h = {.602949018236, .266864118443, -.078223266529, -.016864118443,
