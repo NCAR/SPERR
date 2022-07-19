@@ -90,6 +90,13 @@ auto SPERR3D_OMP_C::copy_data(const T* vol,
                               sperr::dims_type vol_dims,
                               sperr::dims_type chunk_dims) -> RTNType
 {
+  static_assert(std::is_floating_point<T>::value, "!! Only floating point values are supported !!");
+
+  if constexpr (std::is_same<T, float>::value)
+    m_orig_is_float = true;
+  else
+    m_orig_is_float = false;
+
   if (len != vol_dims[0] * vol_dims[1] * vol_dims[2])
     return RTNType::WrongDims;
   else
@@ -232,13 +239,16 @@ auto SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   // 8 booleans:
   // bool[0]  : if ZSTD is used
   // bool[1]  : if this bitstream is for 3D (true) or 2D (false) data.
-  // bool[2-7]: undefined
+  // bool[2]  : if the original data is float (true) or double (false).
+  // bool[3-7]: undefined
   //
   auto b8 = std::array<bool, 8>{false, true, false, false, false, false, false, false};
 
 #ifdef USE_ZSTD
   b8[0] = true;
 #endif
+
+  b8[2] = m_orig_is_float;
 
   header[loc] = sperr::pack_8_booleans(b8);
   loc += 1;

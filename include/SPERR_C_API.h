@@ -127,6 +127,7 @@ void sperr_parse_header(
     int32_t* version_major, /* Output: major version number */
     int32_t* zstd_applied,  /* Output: if ZSTD applied (0 == no ZSTD; 1 == ZSTD applied) */
     int32_t* is_3d,         /* Output: 3D volume or 2D slice (0 == 2D, 1 == 3D) */
+    int32_t* orig_is_float, /* Output: Precision of the original input (0 == double, 1 == float) */
     uint32_t* dim_x,        /* Output: X dimension */
     uint32_t* dim_y,        /* Output: Y dimension */
     uint32_t* dim_z);       /* Output: Z dimension (undefined value for 2D slices) */

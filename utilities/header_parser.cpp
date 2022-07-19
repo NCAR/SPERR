@@ -37,14 +37,20 @@ int main(int argc, char* argv[])
     std::cout << "NO\n";
 
   if (info.is_3d) {
-    std::printf("  It contains a 3D volume of size (%lu x %lu x %lu)", info.vol_dims[0],
+    std::printf("  It contains a 3D volume of size (%lu x %lu x %lu)\n", info.vol_dims[0],
                 info.vol_dims[1], info.vol_dims[2]);
   }
   else {
-    std::printf("  It contains a 2D slice of size (%lu x %lu)", info.vol_dims[0], info.vol_dims[1]);
+    std::printf("  It contains a 2D slice of size (%lu x %lu)\n", info.vol_dims[0],
+                info.vol_dims[1]);
   }
 
-  std::cout << std::endl;
+  if (info.orig_is_float) {
+    std::cout << "  The original input data was in single precision float" << std::endl;
+  }
+  else {
+    std::cout << "  The original input data was in double precision float" << std::endl;
+  }
 
   return 0;
 }

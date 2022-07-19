@@ -50,6 +50,7 @@ class SPERR2D_Compressor {
   int32_t m_qz_lev = sperr::lowest_int32;
   double m_target_psnr = sperr::max_d;
   double m_target_pwe = 0.0;
+  bool m_orig_is_float = true;  // Is the original input float (true) or double (false)?
 
   // A few data members for outlier correction
   sperr::SPERR m_sperr;

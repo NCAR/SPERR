@@ -166,6 +166,7 @@ struct HeaderInfo {
   uint8_t version_major = 0;
   bool zstd_applied = false;
   bool is_3d = false;
+  bool orig_is_float = false;
 
   // This is the dimension of a 3D volume (NX, NY, NZ) or a 2D slice (NX, NY, 1).
   dims_type vol_dims = {0, 0, 0};
