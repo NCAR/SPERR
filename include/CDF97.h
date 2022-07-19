@@ -1,9 +1,21 @@
+//
+// Four member functions and their implementation are from QccPack: link
+//   http://qccpack.sourceforge.net/index.shtml
+// Thanks to James Fowler for his excellent work!
+// These four functions are:
+//   void QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length);
+//   void QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length);
+//   void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length);
+//   void QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length);
+//
+
+
 #ifndef CDF97_H
 #define CDF97_H
 
-#include <cmath>
-
 #include "sperr_helper.h"
+
+#include <cmath>
 
 namespace sperr {
 
@@ -82,8 +94,7 @@ class CDF97 {
   void m_scatter_odd(citd_type begin, citd_type end, itd_type dest) const;
 
   //
-  // Methods from QccPack, so keep their original names, interface, and the use
-  // of raw pointers.
+  // Methods from QccPack, so keep their original names, interface, and the use of raw pointers.
   //
   void QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length);
   void QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length);
@@ -103,17 +114,17 @@ class CDF97 {
   vecd_type m_qcc_buf;
   vecd_type m_slice_buf;
 
-  /*
-   * Note on the coefficients and constants:
-   * The ones from QccPack are slightly different from what's described in the
-   * lifting scheme paper: Pg19 of "FACTORING WAVELET TRANSFORMS INTO LIFTING
-   * STEPS," DAUBECHIES and SWELDEN.
-   * (https://9p.io/who/wim/papers/factor/factor.pdf)
-   * JasPer, OpenJPEG, and FFMpeg use coefficients closer to the paper.
-   * The filter bank coefficients (h[] array) are from "Biorthogonal Bases of
-   * Compactly Supported Wavelets," by Cohen et al., Page 551.
-   * (https://services.math.duke.edu/~ingrid/publications/CPAM_1992_p485.pdf)
-   */
+  //
+  // Note on the coefficients and constants:
+  // The ones from QccPack are slightly different from what's described in the
+  // lifting scheme paper: Pg19 of "FACTORING WAVELET TRANSFORMS INTO LIFTING
+  // STEPS," DAUBECHIES and SWELDEN.
+  // (https://9p.io/who/wim/papers/factor/factor.pdf)
+  // JasPer, OpenJPEG, and FFMpeg use coefficients closer to the paper.
+  // The filter bank coefficients (h[] array) are from "Biorthogonal Bases of
+  // Compactly Supported Wavelets," by Cohen et al., Page 551.
+  // (https://services.math.duke.edu/~ingrid/publications/CPAM_1992_p485.pdf)
+  // 
 
   // Paper coefficients
   const std::array<double, 5> h = {.602949018236, .266864118443, -.078223266529, -.016864118443,
