@@ -253,6 +253,7 @@ void C_API::sperr_parse_header(const void* ptr,
                                int32_t* version_major,
                                int32_t* zstd_applied,
                                int32_t* is_3d,
+                               int32_t* orig_is_float,
                                uint32_t* dim_x,
                                uint32_t* dim_y,
                                uint32_t* dim_z)
@@ -262,6 +263,7 @@ void C_API::sperr_parse_header(const void* ptr,
   *version_major = header.version_major;
   *zstd_applied = header.zstd_applied;
   *is_3d = header.is_3d;
+  *orig_is_float = header.orig_is_float;
   *dim_x = header.vol_dims[0];
   *dim_y = header.vol_dims[1];
   *dim_z = header.vol_dims[2];

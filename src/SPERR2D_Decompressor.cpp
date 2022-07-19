@@ -33,7 +33,7 @@ auto SPERR2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   u8p += 1;
   if (metabool[1] == true)  // true means it's 3D
     return RTNType::SliceVolumeMismatch;
-  const auto has_sperr = metabool[2];
+  const auto has_sperr = metabool[3];
 
   // Task 3)
   uint32_t dims[2] = {0, 0};

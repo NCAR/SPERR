@@ -494,6 +494,7 @@ auto sperr::parse_header(const void* ptr) -> HeaderInfo
 
   header.zstd_applied = b8[0];
   header.is_3d = b8[1];
+  header.orig_is_float = b8[2];
 
   // Parse the dimension info.
   if (header.is_3d) {

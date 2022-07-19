@@ -13,6 +13,11 @@ auto SPERR2D_Compressor::copy_data(const T* p, size_t len, sperr::dims_type dims
 {
   static_assert(std::is_floating_point<T>::value, "!! Only floating point values are supported !!");
 
+  if constexpr (std::is_same<T, float>::value)
+    m_orig_is_float = true;
+  else
+    m_orig_is_float = false;
+
   if (len != dims[0] * dims[1] || dims[2] != 1)
     return RTNType::WrongDims;
 
@@ -32,6 +37,7 @@ auto SPERR2D_Compressor::take_data(std::vector<double>&& buf, sperr::dims_type d
 
   m_dims = dims;
   m_val_buf = std::move(buf);
+  m_orig_is_float = false;
 
   return RTNType::Good;
 }
@@ -227,7 +233,8 @@ auto SPERR2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   //
   // bool_byte[0]  : if the rest of the stream is zstd compressed.
   // bool_byte[1]  : if this bitstream is for 3D (true) or 2D (false) data.
-  // bool_byte[2]  : has SPERR stream (true) or not (false).
+  // bool_byte[2]  : if the original data is float (true) or double (false).
+  // bool_byte[3]  : has SPERR stream (true) or not (false).
   // bool_byte[3-7]: unused
   //
   auto meta = std::vector<uint8_t>(m_meta_size, 0);
@@ -238,7 +245,8 @@ auto SPERR2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   metabool[0] = true;
 #endif
 
-  metabool[2] = !m_sperr_stream.empty();
+  metabool[2] = m_orig_is_float;
+  metabool[3] = !m_sperr_stream.empty();
 
   meta[1] = sperr::pack_8_booleans(metabool);
 
