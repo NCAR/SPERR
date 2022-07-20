@@ -58,8 +58,7 @@ auto sperr::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& s
   assert(dest.size() >= offset + src.size() / 8);
 
   // How many bits to process at a time.
-  // Tests on multiple platforms suggest that 1024 provides the most speed up.
-  constexpr uint64_t bit_stride = 1024;
+  constexpr uint64_t bit_stride = 2048;
   constexpr uint64_t byte_stride = bit_stride / 8;
   constexpr uint64_t magic = 0x8040201008040201;
 
