@@ -116,9 +116,9 @@ int sperr_decomp_3d(
     void** dst);          /* Output: buffer for the output 3D slice, allocated by this function */
 
 /*
- * Decompress a 2D or 3D SPERR bitstream to a USER-PROVIDED memory buffer.
- * Note 1: that it's the responsibility of the caller to allocate enough memory at `dst`,
- *         otherwise seg faults may occur.
+ * Decompress a 2D or 3D SPERR bitstream to a USER-ALLOCATED memory buffer. If you don't know
+ * how much memory to allocate, use functions `sperr_decomp_2d()` or `sperr_decomp_3d()` instead.
+ * Note 1: If not enough memory was allocated at `dst`, segment faults may occur.
  * Note 2: `nthreads` won't have any effect in 2D decompression.
  *
  * Return value meanings:
