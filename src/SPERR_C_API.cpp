@@ -249,6 +249,59 @@ int C_API::sperr_decomp_3d(const void* src,
   return 0;
 }
 
+int C_API::sperr_decomp_user_mem(const void* src,
+                                 size_t src_len,
+                                 int32_t output_float,
+                                 size_t nthreads,
+                                 void* dst)
+{
+  auto header = sperr::parse_header(src);
+  if (output_float < 0 || output_float > 1)
+    return 1;
+
+  if (header.is_3d) {  // Decompress a 3D volume
+    auto decompressor = SPERR3D_OMP_D();
+    decompressor.set_num_threads(nthreads);
+    auto rtn = decompressor.use_bitstream(src, src_len);
+    if (rtn != RTNType::Good)
+      return -1;
+    rtn = decompressor.decompress(src);
+    if (rtn != RTNType::Good)
+      return -1;
+
+    const auto& vol = decompressor.view_data();
+    if (output_float == 0) {  // Output in double precision
+      double* const ptr = static_cast<double*>(dst);
+      std::copy(vol.cbegin(), vol.cend(), ptr);
+    }
+    else {  // Output in single precisioin
+      float* const ptr = static_cast<float*>(dst);
+      std::copy(vol.cbegin(), vol.cend(), ptr);
+    }
+  }
+  else {  // Decompress a 2D slice
+    auto decompressor = SPERR2D_Decompressor();
+    auto rtn = decompressor.use_bitstream(src, src_len);
+    if (rtn != RTNType::Good)
+      return -1;
+    rtn = decompressor.decompress();
+    if (rtn != RTNType::Good)
+      return -1;
+
+    const auto& slice = decompressor.view_data();
+    if (output_float == 0) {  // Output in double precision
+      double* const ptr = static_cast<double*>(dst);
+      std::copy(slice.cbegin(), slice.cend(), ptr);
+    }
+    else {  // Output in single precisioin
+      float* const ptr = static_cast<float*>(dst);
+      std::copy(slice.cbegin(), slice.cend(), ptr);
+    }
+  }
+
+  return 0;
+}
+
 void C_API::sperr_parse_header(const void* ptr,
                                int32_t* version_major,
                                int32_t* zstd_applied,
