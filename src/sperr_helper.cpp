@@ -184,7 +184,6 @@ auto sperr::unpack_8_booleans(uint8_t src) -> std::array<bool, 8>
   auto b8 = std::array<bool, 8>();
   std::copy(bytes.begin(), bytes.end(), b8.begin());
   return b8;
-  ;
 }
 
 auto sperr::read_n_bytes(std::string filename, size_t n_bytes) -> std::vector<uint8_t>
