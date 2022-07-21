@@ -39,7 +39,7 @@ extern "C" {
  * 1: `dst` is not pointing to a NULL pointer!
  * 2: `mode` or `quality` isn't valid
  * 3: `is_float` value not supported
- *-1: other errors
+ *-1: other error
  */
 int sperr_comp_2d(
     const void* src,  /* Input: buffer that contains a 2D slice */
@@ -62,7 +62,7 @@ int sperr_comp_2d(
  * 1: `dst` is not pointing to a NULL pointer!
  * 2: `mode` or `quality` isn't valid
  * 3: `is_float` value not supported
- *-1: other errors
+ *-1: other error
  */
 int sperr_comp_3d(
     const void* src,  /* Input: buffer that contains a 3D volume */
@@ -80,13 +80,13 @@ int sperr_comp_3d(
     size_t* dst_len); /* Output: length of `dst` in byte */
 
 /*
- * Decompress a 2D SPERR-compressed buffer in either fixed-error or fixed-size mode.
+ * Decompress a 2D SPERR-compressed buffer.
  *
  * Return value meanings:
  * 0: success
  * 1: `dst` not pointing to a NULL pointer!
  * 2: `output_float` value not supported
- * -1: other errors
+ * -1: other error
  */
 int sperr_decomp_2d(
     const void* src,      /* Input: buffer that contains a compressed bitstream */
@@ -97,13 +97,13 @@ int sperr_decomp_2d(
     void** dst);          /* Output: buffer for the output 2D slice, allocated by this function */
 
 /*
- * Decompress a 3D SPERR-compressed buffer in fixed-error and fixed-size mode.
+ * Decompress a 3D SPERR-compressed buffer.
  *
  * Return value meanings:
  * 0: success
  * 1: `dst` not pointing to a NULL pointer!
  * 2: `output_float` value not supported
- * -1: other errors
+ * -1: other error
  */
 int sperr_decomp_3d(
     const void* src,      /* Input: buffer that contains a compressed bitstream */
@@ -114,6 +114,24 @@ int sperr_decomp_3d(
     size_t* dimy,         /* Output: Y dimension */
     size_t* dimz,         /* Output: Z (slowest-varying) dimension */
     void** dst);          /* Output: buffer for the output 3D slice, allocated by this function */
+
+/*
+ * Decompress a 2D or 3D SPERR bitstream to a USER-PROVIDED memory buffer.
+ * Note 1: that it's the responsibility of the caller to allocate enough memory at `dst`,
+ *         otherwise seg faults may occur.
+ * Note 2: `nthreads` won't have any effect in 2D decompression.
+ *
+ * Return value meanings:
+ * 0: success
+ * 1: `output_float` value not supported
+ *-1: other error
+ */
+int sperr_decomp_user_mem(
+    const void* src,      /* Input: buffer that contains a compressed bitstream */
+    size_t src_len,       /* Input: length of the input bitstream in byte */
+    int32_t output_float, /* Input: output data type: 1 == float, 0 == double */
+    size_t nthreads,      /* Input: number of OMP threads to use. 0 means using all threads. */
+    void* dst);           /* Output: decompressed slice or volume in memory allocated by caller */
 
 /*
  * Given a SPERR bitstream, parse the header and retrieve various types of information.
