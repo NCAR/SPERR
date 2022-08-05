@@ -81,12 +81,12 @@ auto sperr::SPECK2D::encode() -> RTNType
 
   // Find the threshold to start the algorithm
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
-  m_max_coeff_bit = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
-  m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
+  //m_max_coeff_bit = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
+  //m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
 
   // If requested quantization level is too big, return right away.
-  if (m_qz_lev > m_max_coeff_bit)
-    return RTNType::QzLevelTooBig;
+  //if (m_qz_lev > m_max_coeff_bit)
+  //  return RTNType::QzLevelTooBig;
 
   auto rtn = RTNType::Good;
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {

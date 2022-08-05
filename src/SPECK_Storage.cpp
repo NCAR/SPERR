@@ -69,9 +69,9 @@ void sperr::SPECK_Storage::set_data_range(double range)
 
 auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
 {
-  // Header definition: 10 bytes in total:
-  // max_coeff_bits, stream_len
-  // int16_t,        uint64_t
+  // Header definition: 16 bytes in total:
+  // max_threshold, stream_len
+  // double,        uint64_t
 
   assert(m_bit_buffer.size() % 8 == 0);
   const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
@@ -81,9 +81,11 @@ auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
 
   // Fill header
   size_t pos = 0;
-  int16_t max_bit = static_cast<int16_t>(m_max_coeff_bit);  // int16_t is big enough
-  std::memcpy(ptr + pos, &max_bit, sizeof(max_bit));
-  pos += sizeof(max_bit);
+  //int16_t max_bit = static_cast<int16_t>(m_max_coeff_bit);  // int16_t is big enough
+  //std::memcpy(ptr + pos, &max_bit, sizeof(max_bit));
+  //pos += sizeof(max_bit);
+  std::memcpy(ptr + pos, &m_max_threshold, sizeof(m_max_threshold));
+  pos += sizeof(m_max_threshold);
 
   std::memcpy(ptr + pos, &bit_in_byte, sizeof(bit_in_byte));
   pos += sizeof(bit_in_byte);
@@ -105,10 +107,10 @@ auto sperr::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t 
 
   // Parse the header
   size_t pos = 0;
-  int16_t max_bit = 0;
-  std::memcpy(&max_bit, ptr + pos, sizeof(max_bit));
-  pos += sizeof(max_bit);
-  m_max_coeff_bit = max_bit;
+  //int16_t max_bit = 0;
+  std::memcpy(&m_max_threshold, ptr + pos, sizeof(m_max_threshold));
+  pos += sizeof(m_max_threshold);
+  //m_max_coeff_bit = max_bit;
 
   uint64_t bit_in_byte = 0;
   std::memcpy(&bit_in_byte, ptr + pos, sizeof(bit_in_byte));
@@ -263,14 +265,14 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) -> RTNType
   assert(m_mode_cache != CompMode::Unknown);
 
   switch (m_mode_cache) {
-    case CompMode::FixedQz: {
-      assert(m_max_coeff_bit >= m_qz_lev);
-      const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev;
-      if (bitplane_idx >= num_qz_levs)
-        return RTNType::QzLevelReached;
-      else
-        return RTNType::Good;
-    }
+    //case CompMode::FixedQz: {
+    //  assert(m_max_coeff_bit >= m_qz_lev);
+    //  const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev;
+    //  if (bitplane_idx >= num_qz_levs)
+    //    return RTNType::QzLevelReached;
+    //  else
+    //    return RTNType::Good;
+    //}
     case CompMode::FixedPSNR: {
       assert(m_orig_coeff.size() == m_qz_coeff.size());
       assert(!m_orig_coeff.empty());

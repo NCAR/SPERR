@@ -49,12 +49,13 @@ class SPECK_Storage {
   //
   // Member variables
   //
-  const size_t m_header_size = 10;  // See header definition in SPECK_Storage.cpp.
+  const size_t m_header_size = 16;  // See header definition in SPECK_Storage.cpp.
   const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
   size_t m_encode_budget = 0;
   size_t m_LSP_mask_sum = 0;    // Number of TRUE values in `m_LSP_mask`.
   size_t m_bit_idx = 0;         // Used for decode. Which bit we're at?
-  int32_t m_max_coeff_bit = 0;  // Maximum bitplane.
+  //int32_t m_max_coeff_bit = 0;  // Maximum bitplane.
+  double m_max_threshold = 0.0;
   int32_t m_qz_lev = sperr::lowest_int32;
   double m_data_range = sperr::max_d;  // range of data before DWT.
   double m_target_psnr = sperr::max_d;
