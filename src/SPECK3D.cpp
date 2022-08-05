@@ -150,7 +150,7 @@ auto sperr::SPECK3D::decode() -> RTNType
   m_LSP_mask.assign(m_coeff_buf.size(), false);
   m_LSP_mask_sum = 0;
   m_bit_idx = 0;
-  m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
+  //m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
 
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     auto rtn = m_sorting_pass_decode();
