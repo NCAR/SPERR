@@ -292,14 +292,19 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) -> RTNType
       assert(!m_orig_coeff.empty());
       assert(m_target_pwe > 0.0);
 
-      const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff, m_calc_mse_buf);
-      const auto rmse = std::sqrt(mse);
-
-      if (rmse < m_target_pwe * 0.5) {
+      const auto terminal_threshold = std::sqrt(3.0) * m_target_pwe;
+      if (m_threshold <= terminal_threshold)
         return RTNType::PWEAlmostReached;
-      }
       else
         return RTNType::Good;
+
+      //const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff, m_calc_mse_buf);
+      //const auto rmse = std::sqrt(mse);
+      //if (rmse < m_target_pwe * 0.5) {
+      //  return RTNType::PWEAlmostReached;
+      //}
+      //else
+      //  return RTNType::Good;
     }
     default:
       return RTNType::Good;
