@@ -6,7 +6,9 @@
 #ifndef SPERR_C_API_H
 #define SPERR_C_API_H
 
+#ifndef NO_SPERR_CONFIG
 #include "SperrConfig.h"
+#endif
 
 #include <stddef.h> /* for size_t */
 #include <stdint.h> /* for fixed-width integers */

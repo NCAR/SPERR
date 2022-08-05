@@ -116,7 +116,7 @@ class CDF97 {
   //
   // Note on the coefficients and constants:
   // The ones from QccPack are slightly different from what's described in the
-  // lifting scheme paper: Pg19 of "FACTORING WAVELET TRANSFORMS INTO LIFTING STEPS," 
+  // lifting scheme paper: Pg19 of "FACTORING WAVELET TRANSFORMS INTO LIFTING STEPS,"
   // DAUBECHIES and SWELDEN.  (https://9p.io/who/wim/papers/factor/factor.pdf)
   // JasPer, OpenJPEG, and FFMpeg use coefficients closer to the paper.
   // The filter bank coefficients (h[] array) are from "Biorthogonal Bases of
@@ -125,8 +125,8 @@ class CDF97 {
   //
 
   // Paper coefficients
-  const auto h = std::array<double, 5>{0.602949018236, 0.266864118443, -0.078223266529, 
-                                       -0.016864118443, 0.026748757411};
+  const std::array<double, 5> h = {0.602949018236, 0.266864118443, -0.078223266529, -0.016864118443,
+                                   0.026748757411};
   const double r0 = h[0] - 2.0 * h[4] * h[1] / h[3];
   const double r1 = h[2] - h[4] - h[4] * h[1] / h[3];
   const double s0 = h[1] - h[3] - h[3] * r0 / r1;

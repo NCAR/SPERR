@@ -9,6 +9,5 @@ static const char* SPERR_GIT_BRANCH = "@GIT_BRANCH@";
 
 #cmakedefine USE_ZSTD
 #cmakedefine USE_OMP
-#cmakedefine QZ_TERM
 
 #endif
