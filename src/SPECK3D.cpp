@@ -85,7 +85,16 @@ auto sperr::SPECK3D::encode() -> RTNType
   m_LSP_mask.assign(m_coeff_buf.size(), false);
   m_LSP_mask_sum = 0;
 
-  //
+  const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
+  if (m_mode_cache == CompMode::FixedPWE) {
+
+  }
+  else {
+    const auto max_coeff_bit = std::floor(std::log2(max_coeff));
+    m_max_threshold = std::pow(2.0, max_coeff_bit);
+  }
+
+
   // Find the maximum coefficient bit and fill the threshold array.
   // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
   // negative value. std::floor() will always find the smaller integer value,
@@ -93,7 +102,7 @@ auto sperr::SPECK3D::encode() -> RTNType
   // max_coeff. Also, when max_coeff is close to 0.0, std::log2(max_coeff) can
   // have a pretty big magnitude, so we use int32_t here.
   //
-  const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
+
   //m_max_coeff_bit = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
   //m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
 
