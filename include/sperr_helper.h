@@ -15,7 +15,10 @@
 #include <string>
 #include <utility>  // std::pair
 #include <vector>
+
+#ifndef NO_SPERR_CONFIG
 #include "SperrConfig.h"
+#endif
 
 namespace sperr {
 
