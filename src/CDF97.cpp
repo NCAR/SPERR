@@ -622,19 +622,17 @@ void sperr::CDF97::QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t s
 {
   for (size_t index = 1; index < signal_length - 2; index += 2)
     signal[index] += ALPHA * (signal[index - 1] + signal[index + 1]);
-
   signal[signal_length - 1] += 2.0 * ALPHA * signal[signal_length - 2];
-  signal[0] += 2.0 * BETA * signal[1];
 
+  signal[0] += 2.0 * BETA * signal[1];
   for (size_t index = 2; index < signal_length; index += 2)
     signal[index] += BETA * (signal[index + 1] + signal[index - 1]);
 
   for (size_t index = 1; index < signal_length - 2; index += 2)
     signal[index] += GAMMA * (signal[index - 1] + signal[index + 1]);
-
   signal[signal_length - 1] += 2.0 * GAMMA * signal[signal_length - 2];
-  signal[0] = EPSILON * (signal[0] + 2.0 * DELTA * signal[1]);
 
+  signal[0] = EPSILON * (signal[0] + 2.0 * DELTA * signal[1]);
   for (size_t index = 2; index < signal_length; index += 2)
     signal[index] = EPSILON * (signal[index] + DELTA * (signal[index + 1] + signal[index - 1]));
 
@@ -654,16 +652,14 @@ void sperr::CDF97::QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t 
 
   for (size_t index = 1; index < signal_length - 2; index += 2)
     signal[index] -= GAMMA * (signal[index - 1] + signal[index + 1]);
-
   signal[signal_length - 1] -= 2.0 * GAMMA * signal[signal_length - 2];
-  signal[0] -= 2.0 * BETA * signal[1];
 
+  signal[0] -= 2.0 * BETA * signal[1];
   for (size_t index = 2; index < signal_length; index += 2)
     signal[index] -= BETA * (signal[index + 1] + signal[index - 1]);
 
   for (size_t index = 1; index < signal_length - 2; index += 2)
     signal[index] -= ALPHA * (signal[index - 1] + signal[index + 1]);
-
   signal[signal_length - 1] -= 2.0 * ALPHA * signal[signal_length - 2];
 }
 
