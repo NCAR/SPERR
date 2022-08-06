@@ -16,7 +16,7 @@
 #include <utility>  // std::pair
 #include <vector>
 
-#ifndef NO_SPERR_CONFIG
+#ifndef USE_VANILLA_CONFIG
 #include "SperrConfig.h"
 #endif
 

@@ -6,7 +6,7 @@
 #ifndef SPERR_C_API_H
 #define SPERR_C_API_H
 
-#ifndef NO_SPERR_CONFIG
+#ifndef USE_VANILLA_CONFIG
 #include "SperrConfig.h"
 #endif
 
