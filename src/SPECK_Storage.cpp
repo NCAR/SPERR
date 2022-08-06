@@ -293,8 +293,9 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) -> RTNType
       assert(m_target_pwe > 0.0);
 
       const auto terminal_threshold = std::sqrt(3.0) * m_target_pwe;
-      if (m_threshold <= terminal_threshold)
+      if (m_threshold <= terminal_threshold) {
         return RTNType::PWEAlmostReached;
+      }
       else
         return RTNType::Good;
 

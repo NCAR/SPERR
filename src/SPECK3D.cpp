@@ -96,6 +96,7 @@ auto sperr::SPECK3D::encode() -> RTNType
     const auto max_coeff_bit = std::floor(std::log2(max_coeff));
     m_max_threshold = std::pow(2.0, max_coeff_bit);
   }
+  m_threshold = m_max_threshold;
 
 
   // Find the maximum coefficient bit and fill the threshold array.
@@ -163,6 +164,7 @@ auto sperr::SPECK3D::decode() -> RTNType
   m_LSP_mask_sum = 0;
   m_bit_idx = 0;
   //m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
+  m_threshold = m_max_threshold;
 
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     auto rtn = m_sorting_pass_decode();
