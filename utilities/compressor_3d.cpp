@@ -151,6 +151,7 @@ int main(int argc, char* argv[])
       compressor.set_target_psnr(psnr);
       break;
     default:
+      std::cout << "1/2 pwe = " << pwe / 2.0 << std::endl;
       compressor.set_target_pwe(pwe);
       break;
   }

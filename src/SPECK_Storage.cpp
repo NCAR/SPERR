@@ -294,6 +294,9 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) -> RTNType
 
       const auto terminal_threshold = std::sqrt(3.0) * m_target_pwe;
       if (m_threshold <= terminal_threshold) {
+        std::printf("terminal_threshold = %e, current threshold = %e\n", terminal_threshold, m_threshold);
+        const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff, m_calc_mse_buf);
+        std::printf("est. rmse = %e\n", std::sqrt(mse));
         return RTNType::PWEAlmostReached;
       }
       else
