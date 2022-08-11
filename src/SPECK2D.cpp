@@ -89,7 +89,7 @@ auto sperr::SPECK2D::encode() -> RTNType
   //  return RTNType::QzLevelTooBig;
 
   auto rtn = RTNType::Good;
-  for (size_t bitplane = 0; bitplane < 64; bitplane++) {
+  for (size_t bitplane = 0; bitplane < 128; bitplane++) {
     rtn = m_sorting_pass_encode();
     if (rtn == RTNType::BitBudgetMet)
       break;
@@ -102,7 +102,7 @@ auto sperr::SPECK2D::encode() -> RTNType
 
     // Examine terminating criteria for fixed QZ, PSNR, PWE modes.
     rtn = m_termination_check(bitplane);
-    if (rtn != RTNType::Good)
+    if (rtn != RTNType::DontTerminate)
       break;
 
     m_threshold *= 0.5;
