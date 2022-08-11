@@ -69,9 +69,9 @@ void sperr::SPECK_Storage::set_data_range(double range)
 
 auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
 {
-  // Header definition: 16 bytes in total:
-  // max_threshold, stream_len
-  // double,        uint64_t
+  // Header definition: 12 bytes in total:
+  // m_max_threshold_f, stream_len
+  // float,             uint64_t
 
   assert(m_bit_buffer.size() % 8 == 0);
   const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
@@ -81,11 +81,8 @@ auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
 
   // Fill header
   size_t pos = 0;
-  //int16_t max_bit = static_cast<int16_t>(m_max_coeff_bit);  // int16_t is big enough
-  //std::memcpy(ptr + pos, &max_bit, sizeof(max_bit));
-  //pos += sizeof(max_bit);
-  std::memcpy(ptr + pos, &m_max_threshold, sizeof(m_max_threshold));
-  pos += sizeof(m_max_threshold);
+  std::memcpy(ptr + pos, &m_max_threshold_f, sizeof(m_max_threshold_f));
+  pos += sizeof(m_max_threshold_f);
 
   std::memcpy(ptr + pos, &bit_in_byte, sizeof(bit_in_byte));
   pos += sizeof(bit_in_byte);
@@ -107,10 +104,8 @@ auto sperr::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t 
 
   // Parse the header
   size_t pos = 0;
-  //int16_t max_bit = 0;
-  std::memcpy(&m_max_threshold, ptr + pos, sizeof(m_max_threshold));
-  pos += sizeof(m_max_threshold);
-  //m_max_coeff_bit = max_bit;
+  std::memcpy(&m_max_threshold_f, ptr + pos, sizeof(m_max_threshold_f));
+  pos += sizeof(m_max_threshold_f);
 
   uint64_t bit_in_byte = 0;
   std::memcpy(&bit_in_byte, ptr + pos, sizeof(bit_in_byte));
@@ -285,32 +280,29 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) -> RTNType
         return RTNType::PSNRReached;
       }
       else
-        return RTNType::Good;
+        return RTNType::DontTerminate;
     }
     case CompMode::FixedPWE: {
       assert(m_orig_coeff.size() == m_qz_coeff.size());
       assert(!m_orig_coeff.empty());
       assert(m_target_pwe > 0.0);
 
-      const auto terminal_threshold = std::sqrt(3.0) * m_target_pwe;
-      if (m_threshold <= terminal_threshold) {
-        std::printf("terminal_threshold = %e, current threshold = %e\n", terminal_threshold, m_threshold);
+      // Encoding terminates when both conditions are met:
+      // 1) `m_threshold` reaches Peter's formula of terminal threshold, and
+      // 2) the estimated RMSE is less than half of `m_target_pwe`.
+      if (bitplane_idx + 1 >= m_num_bitplanes) {
         const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff, m_calc_mse_buf);
-        std::printf("est. rmse = %e\n", std::sqrt(mse));
-        return RTNType::PWEAlmostReached;
+        const auto rmse = std::sqrt(mse);
+        if (rmse < m_target_pwe * 0.5)
+          return RTNType::PWEAlmostReached;
+        else
+          return RTNType::DontTerminate;
       }
       else
-        return RTNType::Good;
-
-      //const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff, m_calc_mse_buf);
-      //const auto rmse = std::sqrt(mse);
-      //if (rmse < m_target_pwe * 0.5) {
-      //  return RTNType::PWEAlmostReached;
-      //}
-      //else
-      //  return RTNType::Good;
+        return RTNType::DontTerminate;
     }
     default:
-      return RTNType::Good;
+      // This is the fixed-size mode, which should always not terminate.
+      return RTNType::DontTerminate;
   }
 }

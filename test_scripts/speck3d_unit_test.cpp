@@ -307,51 +307,51 @@ TEST(speck3d_target_psnr, small_data_range)
 //
 // Test target qz-level mode
 //
-TEST(speck3d_fixed_q, small)
-{
-  speck_tester_omp tester("../test_data/wmag17.float", {17, 17, 17}, 1);
-
-  const auto tar_psnr = std::numeric_limits<double>::max();
-  const auto bpp = tar_psnr;
-  const auto pwe = 0.0;
-
-  tester.execute(bpp, -2, tar_psnr, pwe);
-  float psnr = tester.get_psnr();
-  float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 64.2301);
-  EXPECT_LT(psnr, 64.2302);
-  EXPECT_LT(lmax, 3.0716e-1);
-
-  tester.execute(bpp, -5, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 83.5173);
-  EXPECT_LT(psnr, 83.5174);
-  EXPECT_LT(lmax, 4.25e-2);
-}
-
-TEST(speck3d_fixed_q, narrow_data_range)
-{
-  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 2);
-
-  const auto tar_psnr = std::numeric_limits<double>::max();
-  const auto bpp = tar_psnr;
-  const auto pwe = 0.0;
-
-  tester.execute(bpp, -20, tar_psnr, pwe);
-  float psnr = tester.get_psnr();
-  float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 61.2742);
-  EXPECT_LT(psnr, 61.2743);
-  EXPECT_LT(lmax, 2.37671e-06);
-
-  tester.execute(bpp, -22, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 73.7561);
-  EXPECT_LT(psnr, 73.7562);
-  EXPECT_LT(lmax, 5.00702e-07);
-}
+//TEST(speck3d_fixed_q, small)
+//{
+//  speck_tester_omp tester("../test_data/wmag17.float", {17, 17, 17}, 1);
+//
+//  const auto tar_psnr = std::numeric_limits<double>::max();
+//  const auto bpp = tar_psnr;
+//  const auto pwe = 0.0;
+//
+//  tester.execute(bpp, -2, tar_psnr, pwe);
+//  float psnr = tester.get_psnr();
+//  float lmax = tester.get_lmax();
+//  EXPECT_GT(psnr, 64.2301);
+//  EXPECT_LT(psnr, 64.2302);
+//  EXPECT_LT(lmax, 3.0716e-1);
+//
+//  tester.execute(bpp, -5, tar_psnr, pwe);
+//  psnr = tester.get_psnr();
+//  lmax = tester.get_lmax();
+//  EXPECT_GT(psnr, 83.5173);
+//  EXPECT_LT(psnr, 83.5174);
+//  EXPECT_LT(lmax, 4.25e-2);
+//}
+//
+//TEST(speck3d_fixed_q, narrow_data_range)
+//{
+//  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 2);
+//
+//  const auto tar_psnr = std::numeric_limits<double>::max();
+//  const auto bpp = tar_psnr;
+//  const auto pwe = 0.0;
+//
+//  tester.execute(bpp, -20, tar_psnr, pwe);
+//  float psnr = tester.get_psnr();
+//  float lmax = tester.get_lmax();
+//  EXPECT_GT(psnr, 61.2742);
+//  EXPECT_LT(psnr, 61.2743);
+//  EXPECT_LT(lmax, 2.37671e-06);
+//
+//  tester.execute(bpp, -22, tar_psnr, pwe);
+//  psnr = tester.get_psnr();
+//  lmax = tester.get_lmax();
+//  EXPECT_GT(psnr, 73.7561);
+//  EXPECT_LT(psnr, 73.7562);
+//  EXPECT_LT(lmax, 5.00702e-07);
+//}
 
 //
 // Test fixed-size mode
@@ -367,22 +367,22 @@ TEST(speck3d_bit_rate, small)
   tester.execute(4.0, q, tar_psnr, pwe);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 52.8208);
-  EXPECT_LT(psnr, 52.8209);
+  EXPECT_GT(psnr, 52.808);
+  EXPECT_LT(psnr, 52.809);
   EXPECT_LT(lmax, 1.8526);
 
   tester.execute(2.0, q, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 41.2120);
-  EXPECT_LT(psnr, 41.2121);
+  EXPECT_GT(psnr, 41.1909);
+  EXPECT_LT(psnr, 41.1910);
   EXPECT_LT(lmax, 6.4132);
 
   tester.execute(1.0, q, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 34.5634);
-  EXPECT_LT(psnr, 34.5635);
+  EXPECT_GT(psnr, 34.5465);
+  EXPECT_LT(psnr, 34.5466);
   EXPECT_LT(lmax, 13.0171);
 }
 
@@ -397,29 +397,29 @@ TEST(speck3d_bit_rate, big)
   tester.execute(2.0, q, tar_psnr, pwe);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 53.8106);
-  EXPECT_LT(psnr, 53.8107);
+  EXPECT_GT(psnr, 53.8102);
+  EXPECT_LT(psnr, 53.8103);
   EXPECT_LT(lmax, 9.6954);
 
   tester.execute(1.0, q, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 47.2225);
-  EXPECT_LT(psnr, 47.2226);
+  EXPECT_GT(psnr, 47.2219);
+  EXPECT_LT(psnr, 47.2220);
   EXPECT_LT(lmax, 16.3006);
 
   tester.execute(0.5, q, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 42.6885);
-  EXPECT_LT(psnr, 42.6895);
+  EXPECT_GT(psnr, 42.6877);
+  EXPECT_LT(psnr, 42.6878);
   EXPECT_LT(lmax, 27.5579);
 
   tester.execute(0.25, q, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 39.2775);
-  EXPECT_LT(psnr, 39.2776);
+  EXPECT_GT(psnr, 39.2763);
+  EXPECT_LT(psnr, 39.2764);
   EXPECT_LT(lmax, 48.8490);
 }
 
@@ -434,29 +434,29 @@ TEST(speck3d_bit_rate, narrow_data_range)
   tester.execute(4.0, q, tar_psnr, pwe);
   float psnr = tester.get_psnr();
   float lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 67.7945);
-  EXPECT_LT(psnr, 67.7955);
-  EXPECT_LT(lmax, 1.17876e-06);
+  EXPECT_GT(psnr, 67.7939);
+  EXPECT_LT(psnr, 67.7940);
+  EXPECT_LT(lmax, 1.17879e-06);
 
   tester.execute(2.0, q, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 55.7835);
-  EXPECT_LT(psnr, 55.7836);
+  EXPECT_GT(psnr, 55.7831);
+  EXPECT_LT(psnr, 55.7832);
   EXPECT_LT(lmax, 4.71049e-06);
 
   tester.execute(0.8, q, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 47.2473);
-  EXPECT_LT(psnr, 47.2474);
-  EXPECT_LT(lmax, 1.744990e-05);
+  EXPECT_GT(psnr, 47.2464);
+  EXPECT_LT(psnr, 47.2465);
+  EXPECT_LT(lmax, 1.74502e-05);
 
   tester.execute(0.4, q, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 43.1753);
-  EXPECT_LT(psnr, 43.1754);
+  EXPECT_GT(psnr, 43.1739);
+  EXPECT_LT(psnr, 43.1740);
   EXPECT_LT(lmax, 3.34412e-05);
 }
 

@@ -146,10 +146,6 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
         m_LOS.emplace_back(i, diff);
     }
 
-    // DEBUG: output RMSE at this point
-    auto stats = sperr::calc_stats(m_val_buf2.data(), m_val_buf.data(), m_val_buf.size(), 0);
-    std::printf("real rmse = %e\n", stats[0]);
-
     // Step 4.3: Code located outliers
     if (!m_LOS.empty()) {
       m_sperr.set_tolerance(m_target_pwe);

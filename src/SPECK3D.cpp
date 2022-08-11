@@ -85,37 +85,36 @@ auto sperr::SPECK3D::encode() -> RTNType
   m_LSP_mask.assign(m_coeff_buf.size(), false);
   m_LSP_mask_sum = 0;
 
+  // Decide the starting threshold for quantization.
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
   if (m_mode_cache == CompMode::FixedPWE) {
     const auto terminal_threshold = std::sqrt(3.0) * m_target_pwe;
-    m_max_threshold = terminal_threshold;
-    while (m_max_threshold * 2.0 < max_coeff)
-      m_max_threshold *= 2.0;
+    auto max_t = terminal_threshold;
+    m_num_bitplanes = 1;
+    while (max_t * 2.0 < max_coeff) {
+      max_t *= 2.0;
+      m_num_bitplanes++;
+    }
+    m_max_threshold_f = static_cast<float>(max_t);
   }
   else {
+    // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
+    // negative value. std::floor() will always find the smaller integer value,
+    // which will always reconstruct to a bitplane value that is smaller than
+    // max_coeff. Also, when max_coeff is close to 0.0, std::log2(max_coeff) can
+    // have a pretty big magnitude, so we use int32_t here.
+    //
     const auto max_coeff_bit = std::floor(std::log2(max_coeff));
-    m_max_threshold = std::pow(2.0, max_coeff_bit);
+    m_max_threshold_f = static_cast<float>(std::pow(2.0, max_coeff_bit));
   }
-  m_threshold = m_max_threshold;
-
-
-  // Find the maximum coefficient bit and fill the threshold array.
-  // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
-  // negative value. std::floor() will always find the smaller integer value,
-  // which will always reconstruct to a bitplane value that is smaller than
-  // max_coeff. Also, when max_coeff is close to 0.0, std::log2(max_coeff) can
-  // have a pretty big magnitude, so we use int32_t here.
-  //
-
-  //m_max_coeff_bit = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
-  //m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
+  m_threshold = static_cast<double>(m_max_threshold_f);
 
   // If requested quantization level is too big, return right away.
-  //if (m_qz_lev > m_max_coeff_bit)
+  // if (m_qz_lev > m_max_coeff_bit)
   //  return RTNType::QzLevelTooBig;
 
   auto rtn = RTNType::Good;
-  for (size_t bitplane = 0; bitplane < 64; bitplane++) {
+  for (size_t bitplane = 0; bitplane < 128; bitplane++) {
     auto rtn = m_sorting_pass_encode();
     if (rtn == RTNType::BitBudgetMet)
       break;
@@ -128,7 +127,7 @@ auto sperr::SPECK3D::encode() -> RTNType
 
     // Examine terminating criteria for fixed QZ, PSNR, PWE modes.
     rtn = m_termination_check(bitplane);
-    if (rtn != RTNType::Good) {
+    if (rtn != RTNType::DontTerminate) {
       break;
     }
 
@@ -163,8 +162,7 @@ auto sperr::SPECK3D::decode() -> RTNType
   m_LSP_mask.assign(m_coeff_buf.size(), false);
   m_LSP_mask_sum = 0;
   m_bit_idx = 0;
-  //m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
-  m_threshold = m_max_threshold;
+  m_threshold = static_cast<double>(m_max_threshold_f);
 
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     auto rtn = m_sorting_pass_decode();
@@ -202,11 +200,11 @@ void sperr::SPECK3D::m_initialize_sets_lists()
     num_of_sizes += num_of_parts[i];
 
   // Initialize LIS
-  // Note that `m_LIS` is a two-dimensional array. We want to keep the memory
-  // allocated in the secondary array, so we don't clear `m_LIS` itself, but
-  // clear the every secondary arrays inside of it. Also note that we don't
-  // shrink the size of `m_LIS`. This is OK as long as the extra lists at the
-  // end are cleared.
+  // Note that `m_LIS` is a two-dimensional array. We want to keep the memory allocated in the
+  // secondary array, so we don't clear `m_LIS` itself, but clear the every secondary arrays
+  // inside of it. Also note that we don't shrink the size of `m_LIS`. This is OK as long as
+  // the extra lists at the end are cleared.
+  //
   if (m_LIS.size() < num_of_sizes)
     m_LIS.resize(num_of_sizes);
   for (auto& list : m_LIS)

@@ -49,18 +49,18 @@ class SPECK_Storage {
   //
   // Member variables
   //
-  const size_t m_header_size = 16;  // See header definition in SPECK_Storage.cpp.
+  const size_t m_header_size = 12;  // See header definition in SPECK_Storage.cpp.
   const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
   size_t m_encode_budget = 0;
-  size_t m_LSP_mask_sum = 0;    // Number of TRUE values in `m_LSP_mask`.
+  size_t m_LSP_mask_sum = 0;    // Number of TRUE values in `m_LSP_mask`
   size_t m_bit_idx = 0;         // Used for decode. Which bit we're at?
-  //int32_t m_max_coeff_bit = 0;  // Maximum bitplane.
-  double m_max_threshold = 0.0;
+  float m_max_threshold_f = 0.0; // float representation of max threshold
+  size_t m_num_bitplanes = 0;    // In PWE mode, the number of bitplanes to use in quantization
   int32_t m_qz_lev = sperr::lowest_int32;
-  double m_data_range = sperr::max_d;  // range of data before DWT.
+  double m_data_range = sperr::max_d;  // range of data before DWT
   double m_target_psnr = sperr::max_d;
   double m_target_pwe = 0.0;  // used in fixed-PWE mode
-  double m_threshold = 0.0;   // Threshold that's used for an iteration.
+  double m_threshold = 0.0;   // Threshold that's used for an iteration
 
   // Use a cache variable to store the current compression mode.
   // The compression mode, however, is NOT set or determined by `m_mode_cache`. It is determined
