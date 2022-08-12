@@ -93,8 +93,8 @@ class SPECK_Storage {
   auto m_refinement_pass_encode() -> RTNType;
   auto m_refinement_pass_decode() -> RTNType;
 
-  // Is there anything demanding the termination of iterations?
   auto m_termination_check(size_t bitplane_idx) -> RTNType;
+  auto m_estimate_mse() -> double;
 };
 
 };  // namespace sperr
