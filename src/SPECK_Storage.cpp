@@ -257,8 +257,6 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
 
 auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) -> RTNType
 {
-  assert(m_mode_cache != CompMode::Unknown);
-
   switch (m_mode_cache) {
     //case CompMode::FixedQz: {
     //  assert(m_max_coeff_bit >= m_qz_lev);
@@ -269,24 +267,21 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) -> RTNType
     //    return RTNType::Good;
     //}
     case CompMode::FixedPSNR: {
-      assert(m_orig_coeff.size() == m_qz_coeff.size());
-      assert(!m_orig_coeff.empty());
-      assert(m_data_range != sperr::max_d);
-
-      const auto mse = m_estimate_mse();
-      const auto psnr = std::log10(m_data_range * m_data_range / mse) * 10.0;
-
-      if (psnr > m_target_psnr) {
-        return RTNType::PSNRReached;
+      // Encoding terminates when both conditions are met:
+      // 1) `m_threshold` reaches Peter's formula of terminal threshold, and
+      // 2) the estimated PSNR is bigger than `m_target_psnr`.
+      if (bitplane_idx + 1 >= m_num_bitplanes) {
+        const auto mse = m_estimate_mse();
+        const auto psnr = std::log10(m_data_range * m_data_range / mse) * 10.0;
+        if (psnr > m_target_psnr)
+          return RTNType::PSNRReached;
+        else
+          return RTNType::DontTerminate;
       }
       else
         return RTNType::DontTerminate;
     }
     case CompMode::FixedPWE: {
-      assert(m_orig_coeff.size() == m_qz_coeff.size());
-      assert(!m_orig_coeff.empty());
-      assert(m_target_pwe > 0.0);
-
       // Encoding terminates when both conditions are met:
       // 1) `m_threshold` reaches Peter's formula of terminal threshold, and
       // 2) the estimated RMSE is less than half of `m_target_pwe`.

@@ -87,8 +87,15 @@ auto sperr::SPECK3D::encode() -> RTNType
 
   // Decide the starting threshold for quantization.
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
-  if (m_mode_cache == CompMode::FixedPWE) {
-    const auto terminal_threshold = std::sqrt(3.0) * m_target_pwe;
+  if (m_mode_cache == CompMode::FixedPWE || m_mode_cache == CompMode::FixedPSNR) {
+    auto terminal_threshold = 0.0;
+    if (m_mode_cache == CompMode::FixedPWE)
+      terminal_threshold = std::sqrt(3.0) * m_target_pwe;
+    else {  // FixedPSNR mode
+      const auto mse = (m_data_range * m_data_range) * std::pow(10.0, -m_target_psnr / 10.0);
+      terminal_threshold = 2.0 * std::sqrt(mse * 3.0);
+    }
+
     auto max_t = terminal_threshold;
     m_num_bitplanes = 1;
     while (max_t * 2.0 < max_coeff) {
@@ -97,7 +104,7 @@ auto sperr::SPECK3D::encode() -> RTNType
     }
     m_max_threshold_f = static_cast<float>(max_t);
   }
-  else {
+  else {  // FixedSize mode
     // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
     // negative value. std::floor() will always find the smaller integer value,
     // which will always reconstruct to a bitplane value that is smaller than
