@@ -306,8 +306,14 @@ auto sperr::SPECK_Storage::m_estimate_mse() const -> double
     tmp_buf[i] = 0.0;
     for (size_t j = i * stride_size; j < (i + 1) * stride_size; j++) {
       auto diff = m_coeff_buf[j];
+#if __cplusplus >= 202002L
+      if (m_LSP_mask[j]) [[likely]]
+#else
       if (m_LSP_mask[j])
-        diff = std::remainder(diff + half_t, m_threshold);
+#endif
+      {
+        diff = std::remainder(m_coeff_buf[j] + half_t, m_threshold);
+      }
       tmp_buf[i] += diff * diff;
     }
   }
@@ -315,8 +321,14 @@ auto sperr::SPECK_Storage::m_estimate_mse() const -> double
   tmp_buf[num_strides] = 0.0;
   for (size_t j = num_strides * stride_size; j < len; j++) {
     auto diff = m_coeff_buf[j];
+#if __cplusplus >= 202002L
+    if (m_LSP_mask[j]) [[likely]]
+#else
     if (m_LSP_mask[j])
-      diff = std::remainder(diff + half_t, m_threshold);
+#endif
+    {
+      diff = std::remainder(m_coeff_buf[j] + half_t, m_threshold);
+    }
     tmp_buf[num_strides] += diff * diff;
   }
 
