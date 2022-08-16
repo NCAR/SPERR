@@ -259,7 +259,7 @@ TEST(speck3d_target_psnr, small)
   tester.execute(bpp, q, target_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, target_psnr - 0.1);  // This is a case where the target PSNR wasn't satisfied.
+  EXPECT_GT(psnr, target_psnr);
 }
 
 TEST(speck3d_target_psnr, big)

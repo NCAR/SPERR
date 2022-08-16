@@ -268,7 +268,7 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) const -> RTN
     //}
     case CompMode::FixedPSNR: {
       // Encoding terminates when both conditions are met:
-      // 1) `m_threshold` reaches Peter's formula of terminal threshold, and
+      // 1) `m_threshold` reaches Sam's formula of terminal threshold, and
       // 2) the estimated PSNR is bigger than `m_target_psnr`.
       if (bitplane_idx + 1 >= m_num_bitplanes) {
         const auto mse = m_estimate_mse();

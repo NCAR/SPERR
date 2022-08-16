@@ -219,7 +219,7 @@ TEST(speck2d, PSNR_odd_dim_image)
   tester.execute(bpp, q, target_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, target_psnr - 0.12);  // This is a case where PSNR wasn't satisfied.
+  EXPECT_GT(psnr, target_psnr);
 }
 
 TEST(speck2d, PSNR_small_data_range)

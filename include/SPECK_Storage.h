@@ -55,7 +55,7 @@ class SPECK_Storage {
   size_t m_LSP_mask_sum = 0;    // Number of TRUE values in `m_LSP_mask`
   size_t m_bit_idx = 0;         // Used for decode. Which bit we're at?
   float m_max_threshold_f = 0.0; // float representation of max threshold
-  size_t m_num_bitplanes = 0;    // In PWE mode, the number of bitplanes to use in quantization
+  size_t m_num_bitplanes = 0;    // In PWE and PSNR mode, the estimate number of bitplanes
   int32_t m_qz_lev = sperr::lowest_int32;
   double m_data_range = sperr::max_d;  // range of data before DWT
   double m_target_psnr = sperr::max_d;

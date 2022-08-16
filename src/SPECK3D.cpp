@@ -88,7 +88,7 @@ auto sperr::SPECK3D::encode() -> RTNType
       terminal_threshold = std::sqrt(3.0) * m_target_pwe;
     else {  // FixedPSNR mode
       const auto mse = (m_data_range * m_data_range) * std::pow(10.0, -m_target_psnr / 10.0);
-      terminal_threshold = 2.0 * std::sqrt(mse * 3.0);
+      terminal_threshold = 1.5 * std::sqrt(mse * 3.0);
     }
 
     auto max_t = terminal_threshold;
