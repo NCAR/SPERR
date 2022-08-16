@@ -84,7 +84,6 @@ class SPECK_Storage {
   //
   std::vector<double> m_orig_coeff;
   std::vector<double> m_qz_coeff;
-  std::vector<double> m_calc_mse_buf;  // temporary buffer facilitating MSE calculation
 
   //
   // Member methods
@@ -93,8 +92,8 @@ class SPECK_Storage {
   auto m_refinement_pass_encode() -> RTNType;
   auto m_refinement_pass_decode() -> RTNType;
 
-  auto m_termination_check(size_t bitplane_idx) -> RTNType;
-  auto m_estimate_mse() -> double;
+  auto m_termination_check(size_t bitplane_idx) const -> RTNType;
+  auto m_estimate_mse() const -> double;
 };
 
 };  // namespace sperr

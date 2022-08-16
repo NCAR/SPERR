@@ -255,7 +255,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
   return RTNType::Good;
 }
 
-auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) -> RTNType
+auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) const -> RTNType
 {
   switch (m_mode_cache) {
     //case CompMode::FixedQz: {
@@ -303,34 +303,34 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) -> RTNType
   }
 }
 
-auto sperr::SPECK_Storage::m_estimate_mse() -> double
+auto sperr::SPECK_Storage::m_estimate_mse() const -> double
 {
   const auto half_t = m_threshold * 0.5;
   const auto len = m_coeff_buf.size();
   const size_t stride_size = 4096;
   const size_t num_strides = len / stride_size;
   const size_t remainder_size = len - stride_size * num_strides;
-  m_calc_mse_buf.resize(num_strides + 1);
+  auto tmp_buf = vecd_type(num_strides + 1);
 
   for (size_t i = 0; i < num_strides; i++) {
-    m_calc_mse_buf[i] = 0.0;
+    tmp_buf[i] = 0.0;
     for (size_t j = i * stride_size; j < (i + 1) * stride_size; j++) {
       auto diff = m_coeff_buf[j];
       if (m_LSP_mask[j])
         diff = std::remainder(diff + half_t, m_threshold);
-      m_calc_mse_buf[i] += diff * diff;
+      tmp_buf[i] += diff * diff;
     }
   }
 
-  m_calc_mse_buf[num_strides] = 0.0;
+  tmp_buf[num_strides] = 0.0;
   for (size_t j = num_strides * stride_size; j < len; j++) {
     auto diff = m_coeff_buf[j];
     if (m_LSP_mask[j])
       diff = std::remainder(diff + half_t, m_threshold);
-    m_calc_mse_buf[num_strides] += diff * diff;
+    tmp_buf[num_strides] += diff * diff;
   }
 
-  const auto total_sum = std::accumulate(m_calc_mse_buf.cbegin(), m_calc_mse_buf.cend(), 0.0);
+  const auto total_sum = std::accumulate(tmp_buf.cbegin(), tmp_buf.cend(), 0.0);
   const auto mse = total_sum / static_cast<double>(len);
 
   return mse;
