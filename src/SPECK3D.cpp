@@ -171,7 +171,7 @@ auto sperr::SPECK3D::decode() -> RTNType
   m_bit_idx = 0;
   m_threshold = static_cast<double>(m_max_threshold_f);
 
-  for (size_t bitplane = 0; bitplane < 64; bitplane++) {
+  for (size_t bitplane = 0; bitplane < 128; bitplane++) {
     auto rtn = m_sorting_pass_decode();
     if (rtn == RTNType::BitBudgetMet) {
       break;

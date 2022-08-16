@@ -79,10 +79,30 @@ auto sperr::SPECK2D::encode() -> RTNType
   m_LSP_mask.assign(m_coeff_buf.size(), false);
   m_LSP_mask_sum = 0;
 
-  // Find the threshold to start the algorithm
+  // Decide the starting threshold for quantization.
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
-  //m_max_coeff_bit = static_cast<int32_t>(std::floor(std::log2(max_coeff)));
-  //m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
+  if (m_mode_cache == CompMode::FixedPWE || m_mode_cache == CompMode::FixedPSNR) {
+    auto terminal_threshold = 0.0;
+    if (m_mode_cache == CompMode::FixedPWE)
+      terminal_threshold = std::sqrt(3.0) * m_target_pwe;
+    else {  // FixedPSNR mode
+      const auto mse = (m_data_range * m_data_range) * std::pow(10.0, -m_target_psnr / 10.0);
+      terminal_threshold = 2.0 * std::sqrt(mse * 3.0);
+    }
+
+    auto max_t = terminal_threshold;
+    m_num_bitplanes = 1;
+    while (max_t * 2.0 < max_coeff) {
+      max_t *= 2.0;
+      m_num_bitplanes++;
+    }
+    m_max_threshold_f = static_cast<float>(max_t);
+  }
+  else {  // FixedSize mode
+    const auto max_coeff_bit = std::floor(std::log2(max_coeff));
+    m_max_threshold_f = static_cast<float>(std::pow(2.0, max_coeff_bit));
+  }
+  m_threshold = static_cast<double>(m_max_threshold_f);
 
   // If requested quantization level is too big, return right away.
   //if (m_qz_lev > m_max_coeff_bit)
@@ -136,9 +156,9 @@ auto sperr::SPECK2D::decode() -> RTNType
   m_initialize_sets_lists();
   m_bit_idx = 0;
 
-  //m_threshold = std::pow(2.0, static_cast<double>(m_max_coeff_bit));
+  m_threshold = static_cast<double>(m_max_threshold_f);
 
-  for (size_t bitplane = 0; bitplane < 64; bitplane++) {
+  for (size_t bitplane = 0; bitplane < 128; bitplane++) {
     auto rtn = m_sorting_pass_decode();
     if (rtn == RTNType::BitBudgetMet)
       break;
