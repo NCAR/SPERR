@@ -51,28 +51,16 @@ auto SPERR3D_OMP_C::set_target_bpp(double bpp) -> RTNType
   m_bit_budget = static_cast<size_t>(bpp * total_vals);
 
   // Also set other termination criteria to be "never terminate."
-  m_qz_lev = sperr::lowest_int32;
   m_target_psnr = sperr::max_d;
   m_target_pwe = 0.0;
 
   return RTNType::Good;
 }
 
-void SPERR3D_OMP_C::set_target_qz_level(int32_t q)
-{
-  m_qz_lev = q;
-
-  // Also configure other parameters
-  m_bit_budget = sperr::max_size;
-  m_target_psnr = sperr::max_d;
-  m_target_pwe = 0.0;
-}
-
 void SPERR3D_OMP_C::set_target_psnr(double psnr)
 {
   m_target_psnr = std::max(psnr, 0.0);
   m_bit_budget = sperr::max_size;
-  m_qz_lev = sperr::lowest_int32;
   m_target_pwe = 0.0;
 }
 
@@ -80,7 +68,6 @@ void SPERR3D_OMP_C::set_target_pwe(double pwe)
 {
   m_target_pwe = std::max(pwe, 0.0);
   m_bit_budget = sperr::max_size;
-  m_qz_lev = sperr::lowest_int32;
   m_target_psnr = sperr::max_d;
 }
 
@@ -135,7 +122,7 @@ auto SPERR3D_OMP_C::compress() -> RTNType
     return RTNType::Error;
 
   // Sanity check: what compression mode to use?
-  const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, m_target_psnr, m_target_pwe);
+  const auto mode = sperr::compression_mode(m_bit_budget, m_target_psnr, m_target_pwe);
   assert(mode != sperr::CompMode::Unknown);
 
   // Let's prepare some data structures for compression!
@@ -172,7 +159,7 @@ auto SPERR3D_OMP_C::compress() -> RTNType
         my_budget--;
     }
 
-    chunk_rtn[i] = compressor.set_comp_params(my_budget, m_qz_lev, m_target_psnr, m_target_pwe);
+    chunk_rtn[i] = compressor.set_comp_params(my_budget, m_target_psnr, m_target_pwe);
 
     if (chunk_rtn[i] == RTNType::Good) {
       chunk_rtn[i] = compressor.compress();

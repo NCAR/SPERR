@@ -65,7 +65,7 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
   }
 
   // Find out the compression mode, and initialize data members accordingly.
-  const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, m_target_psnr, m_target_pwe);
+  const auto mode = sperr::compression_mode(m_bit_budget, m_target_psnr, m_target_pwe);
   assert(mode != CompMode::Unknown);
   if (mode == sperr::CompMode::FixedPSNR) {
     // Calculate the original data range and pass it to the encoder.
@@ -109,7 +109,7 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
     speck_budget = sperr::max_size;
   else
     speck_budget = m_bit_budget - m_condi_stream.size() * 8;
-  rtn = m_encoder.set_comp_params(speck_budget, m_qz_lev, m_target_psnr, m_target_pwe);
+  rtn = m_encoder.set_comp_params(speck_budget, m_target_psnr, m_target_pwe);
   if (rtn != RTNType::Good)
     return rtn;
 
@@ -214,13 +214,9 @@ auto sperr::SPERR3D_Compressor::get_outlier_stats() const -> std::pair<size_t, s
   return {m_LOS.size(), m_sperr_stream.size()};
 }
 
-auto sperr::SPERR3D_Compressor::set_comp_params(size_t budget,
-                                                int32_t qlev,
-                                                double psnr,
-                                                double pwe) -> RTNType
+auto sperr::SPERR3D_Compressor::set_comp_params(size_t budget, double psnr, double pwe) -> RTNType
 {
   // First set those ones that only need a plain copy
-  m_qz_lev = qlev;
   m_target_psnr = psnr;
   m_target_pwe = pwe;
 

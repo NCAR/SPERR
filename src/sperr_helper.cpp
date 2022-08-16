@@ -551,22 +551,15 @@ auto sperr::calc_mse(const vecd_type& v1, const vecd_type& v2, vecd_type& tmp_bu
   return mse;
 }
 
-auto sperr::compression_mode(size_t bit_budget, int32_t qz, double psnr, double pwe) -> CompMode
+auto sperr::compression_mode(size_t bit_budget, double psnr, double pwe) -> CompMode
 {
-  if (bit_budget < sperr::max_size && qz == sperr::lowest_int32 && psnr == sperr::max_d &&
-      pwe == 0.0) {
+  if (bit_budget < sperr::max_size && psnr == sperr::max_d && pwe == 0.0) {
     return CompMode::FixedSize;
   }
-  else if (bit_budget == sperr::max_size && qz > sperr::lowest_int32 && psnr == sperr::max_d &&
-           pwe == 0.0) {
-    return CompMode::FixedQz;
-  }
-  else if (bit_budget == sperr::max_size && qz == sperr::lowest_int32 && psnr < sperr::max_d &&
-           pwe == 0.0) {
+  else if (bit_budget == sperr::max_size && psnr < sperr::max_d && pwe == 0.0) {
     return CompMode::FixedPSNR;
   }
-  else if (bit_budget == sperr::max_size && qz == sperr::lowest_int32 && psnr == sperr::max_d &&
-           pwe > 0.0) {
+  else if (bit_budget == sperr::max_size && psnr == sperr::max_d && pwe > 0.0) {
     return CompMode::FixedPWE;
   }
   else {

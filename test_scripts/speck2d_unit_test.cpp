@@ -24,7 +24,7 @@ class speck_tester {
   //
   // Execute the compression/decompression pipeline. Return 0 on success
   //
-  int execute(double bpp, int32_t qz, double psnr, double pwe)
+  int execute(double bpp, double psnr, double pwe)
   {
     // Reset lmax and psnr
     m_psnr = 0.0;
@@ -48,13 +48,10 @@ class speck_tester {
       total_bits = sperr::max_size;
     else
       total_bits = static_cast<size_t>(bpp * total_vals);
-    const auto mode = sperr::compression_mode(total_bits, qz, psnr, pwe);
+    const auto mode = sperr::compression_mode(total_bits, psnr, pwe);
     switch (mode) {
       case sperr::CompMode::FixedSize:
         rtn = compressor.set_target_bpp(bpp);
-        break;
-      case sperr::CompMode::FixedQz:
-        compressor.set_target_qz_level(qz);
         break;
       case sperr::CompMode::FixedPSNR:
         compressor.set_target_psnr(psnr);
@@ -110,26 +107,25 @@ TEST(speck2d, PWE_odd_dim_image)
   speck_tester tester("../test_data/90x90.float", 90, 90);
 
   const auto bpp = sperr::max_d;
-  const auto q = sperr::lowest_int32;
   const auto target_psnr = sperr::max_d;
 
   double target_pwe = 1.0;
-  tester.execute(bpp, q, target_psnr, target_pwe);
+  tester.execute(bpp, target_psnr, target_pwe);
   auto lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);
 
   target_pwe = 0.5;
-  tester.execute(bpp, q, target_psnr, target_pwe);
+  tester.execute(bpp, target_psnr, target_pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);
 
   target_pwe = 0.1;
-  tester.execute(bpp, q, target_psnr, target_pwe);
+  tester.execute(bpp, target_psnr, target_pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);
 
   target_pwe = 0.06;
-  tester.execute(bpp, q, target_psnr, target_pwe);
+  tester.execute(bpp, target_psnr, target_pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);
 }
@@ -139,26 +135,25 @@ TEST(speck2d, PWE_lena_image)
   speck_tester tester("../test_data/lena512.float", 512, 512);
 
   const auto bpp = sperr::max_d;
-  const auto q = sperr::lowest_int32;
   const auto target_psnr = sperr::max_d;
 
   double target_pwe = 0.7;
-  tester.execute(bpp, q, target_psnr, target_pwe);
+  tester.execute(bpp, target_psnr, target_pwe);
   auto lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);
 
   target_pwe = 0.35;
-  tester.execute(bpp, q, target_psnr, target_pwe);
+  tester.execute(bpp, target_psnr, target_pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);
 
   target_pwe = 0.1;
-  tester.execute(bpp, q, target_psnr, target_pwe);
+  tester.execute(bpp, target_psnr, target_pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);
 
   target_pwe = 0.06;
-  tester.execute(bpp, q, target_psnr, target_pwe);
+  tester.execute(bpp, target_psnr, target_pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);
 }
@@ -168,26 +163,25 @@ TEST(speck2d, PWE_small_data_range)
   speck_tester tester("../test_data/vorticity.512_512", 512, 512);
 
   const auto bpp = sperr::max_d;
-  const auto q = sperr::lowest_int32;
   const auto target_psnr = sperr::max_d;
 
   double target_pwe = 3.2e-6;
-  tester.execute(bpp, q, target_psnr, target_pwe);
+  tester.execute(bpp, target_psnr, target_pwe);
   auto lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);
 
   target_pwe = 1e-6;
-  tester.execute(bpp, q, target_psnr, target_pwe);
+  tester.execute(bpp, target_psnr, target_pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);
 
   target_pwe = 5.5e-7;
-  tester.execute(bpp, q, target_psnr, target_pwe);
+  tester.execute(bpp, target_psnr, target_pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);
 
   target_pwe = 2.5e-7;
-  tester.execute(bpp, q, target_psnr, target_pwe);
+  tester.execute(bpp, target_psnr, target_pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, target_pwe);
 }
@@ -200,23 +194,22 @@ TEST(speck2d, PSNR_odd_dim_image)
   speck_tester tester("../test_data/90x90.float", 90, 90);
 
   const auto bpp = sperr::max_d;
-  const auto q = sperr::lowest_int32;
   const auto pwe = 0.0;
 
   double target_psnr = 70.0;
-  tester.execute(bpp, q, target_psnr, pwe);
+  tester.execute(bpp, target_psnr, pwe);
   auto psnr = tester.get_psnr();
   auto lmax = tester.get_lmax();
   EXPECT_GT(psnr, target_psnr);
 
   target_psnr = 90.0;
-  tester.execute(bpp, q, target_psnr, pwe);
+  tester.execute(bpp, target_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, target_psnr);
 
   target_psnr = 110.0;
-  tester.execute(bpp, q, target_psnr, pwe);
+  tester.execute(bpp, target_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, target_psnr);
@@ -227,76 +220,26 @@ TEST(speck2d, PSNR_small_data_range)
   speck_tester tester("../test_data/vorticity.512_512", 512, 512);
 
   const auto bpp = std::numeric_limits<double>::max();
-  const auto q = sperr::lowest_int32;
   const auto pwe = 0.0;
 
   double target_psnr = 80.0;
-  tester.execute(bpp, q, target_psnr, pwe);
+  tester.execute(bpp, target_psnr, pwe);
   auto psnr = tester.get_psnr();
   auto lmax = tester.get_lmax();
   EXPECT_GT(psnr, target_psnr);
 
   target_psnr = 100.0;
-  tester.execute(bpp, q, target_psnr, pwe);
+  tester.execute(bpp, target_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, target_psnr);
 
   target_psnr = 120.0;
-  tester.execute(bpp, q, target_psnr, pwe);
+  tester.execute(bpp, target_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, target_psnr);
 }
-
-//
-// Test target quantization level mode
-//
-//TEST(speck2d, QZ_lena)
-//{
-//  speck_tester tester("../test_data/lena512.float", 512, 512);
-//
-//  const auto bpp = std::numeric_limits<double>::max();
-//  const auto tar_psnr = std::numeric_limits<double>::max();
-//  const auto pwe = 0.0;
-//
-//  tester.execute(bpp, 1, tar_psnr, pwe);
-//  auto psnr = tester.get_psnr();
-//  auto lmax = tester.get_lmax();
-//  EXPECT_GT(psnr, 48.0146);
-//  EXPECT_LT(psnr, 48.0147);
-//  EXPECT_LT(lmax, 4.16155);
-//
-//  tester.execute(bpp, -1, tar_psnr, pwe);
-//  psnr = tester.get_psnr();
-//  lmax = tester.get_lmax();
-//  EXPECT_GT(psnr, 62.0407);
-//  EXPECT_LT(psnr, 62.0408);
-//  EXPECT_LT(lmax, 0.899415);
-//}
-//
-//TEST(speck2d, QZ_small_data_range)
-//{
-//  speck_tester tester("../test_data/vorticity.512_512", 512, 512);
-//
-//  const auto bpp = std::numeric_limits<double>::max();
-//  const auto tar_psnr = std::numeric_limits<double>::max();
-//  const auto pwe = 0.0;
-//
-//  tester.execute(bpp, -18, tar_psnr, pwe);
-//  auto psnr = tester.get_psnr();
-//  auto lmax = tester.get_lmax();
-//  EXPECT_GT(psnr, 59.5477);
-//  EXPECT_LT(psnr, 59.5478);
-//  EXPECT_LT(lmax, 8.37071e-06);
-//
-//  tester.execute(bpp, -22, tar_psnr, pwe);
-//  psnr = tester.get_psnr();
-//  lmax = tester.get_lmax();
-//  EXPECT_GT(psnr, 84.3168);
-//  EXPECT_LT(psnr, 84.3169);
-//  EXPECT_LT(lmax, 4.59038e-07);
-//}
 
 //
 // Test fixed-size mode
@@ -305,32 +248,31 @@ TEST(speck2d, BPP_lena)
 {
   speck_tester tester("../test_data/lena512.float", 512, 512);
 
-  const auto q = std::numeric_limits<int32_t>::lowest();
   const auto tar_psnr = std::numeric_limits<double>::max();
   const auto pwe = 0.0;
 
-  tester.execute(4.0, q, tar_psnr, pwe);
+  tester.execute(4.0, tar_psnr, pwe);
   auto psnr = tester.get_psnr();
   auto lmax = tester.get_lmax();
   EXPECT_GT(psnr, 54.2751);
   EXPECT_LT(psnr, 54.2752);
   EXPECT_LT(lmax, 2.2361);
 
-  tester.execute(2.0, q, tar_psnr, pwe);
+  tester.execute(2.0, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 43.2831);
   EXPECT_LT(psnr, 43.2832);
   EXPECT_LT(lmax, 7.1736);
 
-  tester.execute(1.0, q, tar_psnr, pwe);
+  tester.execute(1.0, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 38.7955);
   EXPECT_LT(psnr, 38.7956);
   EXPECT_LT(lmax, 14.5204);
 
-  tester.execute(0.5, q, tar_psnr, pwe);
+  tester.execute(0.5, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 35.6198);
@@ -342,25 +284,24 @@ TEST(speck2d, BPP_odd_dim_image)
 {
   speck_tester tester("../test_data/90x90.float", 90, 90);
 
-  const auto q = std::numeric_limits<int32_t>::lowest();
   const auto tar_psnr = std::numeric_limits<double>::max();
   const auto pwe = 0.0;
 
-  tester.execute(4.0, q, tar_psnr, pwe);
+  tester.execute(4.0, tar_psnr, pwe);
   auto psnr = tester.get_psnr();
   auto lmax = tester.get_lmax();
   EXPECT_GT(psnr, 58.4848);
   EXPECT_LT(psnr, 58.4849);
   EXPECT_LT(lmax, 0.772957);
 
-  tester.execute(2.0, q, tar_psnr, pwe);
+  tester.execute(2.0, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 46.5839);
   EXPECT_LT(psnr, 46.5840);
   EXPECT_LT(lmax, 2.98639);
 
-  tester.execute(1.0, q, tar_psnr, pwe);
+  tester.execute(1.0, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 39.7787);
@@ -372,32 +313,31 @@ TEST(speck2d, BPP_small_data_range)
 {
   speck_tester tester("../test_data/vorticity.512_512", 512, 512);
 
-  const auto q = std::numeric_limits<int32_t>::lowest();
   const auto tar_psnr = std::numeric_limits<double>::max();
   const auto pwe = 0.0;
 
-  tester.execute(4.0, q, tar_psnr, pwe);
+  tester.execute(4.0, tar_psnr, pwe);
   auto psnr = tester.get_psnr();
   auto lmax = tester.get_lmax();
   EXPECT_GT(psnr, 71.2826);
   EXPECT_LT(psnr, 71.2827);
   EXPECT_LT(lmax, 0.000002);
 
-  tester.execute(2.0, q, tar_psnr, pwe);
+  tester.execute(2.0, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 59.6593);
   EXPECT_LT(psnr, 59.6594);
   EXPECT_LT(lmax, 0.0000084);
 
-  tester.execute(1.0, q, tar_psnr, pwe);
+  tester.execute(1.0, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 52.3874);
   EXPECT_LT(psnr, 52.3875);
   EXPECT_LT(lmax, 0.0000213);
 
-  tester.execute(0.5, q, tar_psnr, pwe);
+  tester.execute(0.5, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
   EXPECT_GT(psnr, 46.8927);
@@ -412,11 +352,10 @@ TEST(speck2d, constant)
 {
   speck_tester tester("../test_data/const32x20x16.float", 32, 320);
 
-  const auto q = std::numeric_limits<int32_t>::lowest();
   const auto tar_psnr = std::numeric_limits<double>::max();
   const auto pwe = 0.0;
 
-  auto rtn = tester.execute(2.0, q, tar_psnr, pwe);
+  auto rtn = tester.execute(2.0, tar_psnr, pwe);
 
   EXPECT_EQ(rtn, 0);
   auto psnr = tester.get_psnr();

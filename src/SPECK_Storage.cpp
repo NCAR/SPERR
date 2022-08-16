@@ -150,11 +150,9 @@ void sperr::SPECK_Storage::set_dimensions(dims_type dims)
   m_dims = dims;
 }
 
-auto sperr::SPECK_Storage::set_comp_params(size_t budget, int32_t qlev, double psnr, double pwe)
-    -> RTNType
+auto sperr::SPECK_Storage::set_comp_params(size_t budget, double psnr, double pwe) -> RTNType
 {
   // First set those ones that only need a plain copy
-  m_qz_lev = qlev;
   m_target_psnr = psnr;
   m_target_pwe = pwe;
 
@@ -258,14 +256,6 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
 auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) const -> RTNType
 {
   switch (m_mode_cache) {
-    //case CompMode::FixedQz: {
-    //  assert(m_max_coeff_bit >= m_qz_lev);
-    //  const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev;
-    //  if (bitplane_idx >= num_qz_levs)
-    //    return RTNType::QzLevelReached;
-    //  else
-    //    return RTNType::Good;
-    //}
     case CompMode::FixedPSNR: {
       // Encoding terminates when both conditions are met:
       // 1) `m_threshold` reaches Sam's formula of terminal threshold, and

@@ -38,7 +38,7 @@ auto sperr::SPECK2D::encode() -> RTNType
   m_encode_mode = true;
 
   // Cache the current compression mode
-  m_mode_cache = sperr::compression_mode(m_encode_budget, m_qz_lev, m_target_psnr, m_target_pwe);
+  m_mode_cache = sperr::compression_mode(m_encode_budget, m_target_psnr, m_target_pwe);
   if (m_mode_cache == sperr::CompMode::Unknown)
     return RTNType::CompModeUnknown;
 
@@ -98,10 +98,6 @@ auto sperr::SPECK2D::encode() -> RTNType
     m_max_threshold_f = static_cast<float>(std::pow(2.0, max_coeff_bit));
   }
   m_threshold = static_cast<double>(m_max_threshold_f);
-
-  // If requested quantization level is too big, return right away.
-  //if (m_qz_lev > m_max_coeff_bit)
-  //  return RTNType::QzLevelTooBig;
 
   auto rtn = RTNType::Good;
   for (size_t bitplane = 0; bitplane < 128; bitplane++) {
