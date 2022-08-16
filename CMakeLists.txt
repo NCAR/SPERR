@@ -167,7 +167,8 @@ if( BUILD_UNIT_TESTS )
   else()
     message (STATUS "Fetching the latest GoogleTest Framework")
     FetchContent_Declare( googletest
-      URL https://github.com/google/googletest/archive/refs/heads/main.zip )
+      URL https://github.com/google/googletest/archive/refs/heads/main.zip
+      DOWNLOAD_EXTRACT_TIMESTAMP NEW ) # https://cmake.org/cmake/help/latest/policy/CMP0135.html
   endif()
 
   # Prevent overriding the parent project's compiler/linker settings on Windows
