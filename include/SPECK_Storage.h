@@ -79,10 +79,8 @@ class SPECK_Storage {
   vec8_type m_encoded_stream;       // Stores the SPECK bitstream
   dims_type m_dims = {0, 0, 0};     // Dimension of the 2D/3D volume
 
+  // In fixed-pwe mode, keep track of would-be quantized coefficient values.
   //
-  // A few data members for error estimation
-  //
-  std::vector<double> m_orig_coeff;
   std::vector<double> m_qz_coeff;
 
   //

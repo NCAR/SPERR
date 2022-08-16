@@ -191,7 +191,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
         m_coeff_buf[i] += tmpd[o1];
         m_bit_buffer.push_back(o1);
 
-        if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE)
+        if (m_mode_cache == CompMode::FixedPWE)
           m_qz_coeff[i] += tmpdq[o1];
       }
     }
@@ -203,7 +203,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
         m_coeff_buf[i] += tmpd[o1];
         m_bit_buffer.push_back(o1);
 
-        if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE)
+        if (m_mode_cache == CompMode::FixedPWE)
           m_qz_coeff[i] += tmpdq[o1];
 
         if (m_bit_buffer.size() >= m_encode_budget)

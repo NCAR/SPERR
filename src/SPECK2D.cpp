@@ -64,16 +64,11 @@ auto sperr::SPECK2D::encode() -> RTNType
   std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
                  [](auto v) { return std::abs(v); });
 
-  // Initialize these data structures for error estimation
-  if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE) {
-    m_orig_coeff.resize(m_coeff_buf.size());
-    std::copy(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_orig_coeff.begin());
+  // Use `m_qz_coeff` to keep track of would-be quantized coefficients.
+  if (m_mode_cache == CompMode::FixedPWE)
     m_qz_coeff.assign(m_coeff_buf.size(), 0.0);
-  }
-  else {
-    m_orig_coeff.clear();
+  else
     m_qz_coeff.clear();
-  }
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
@@ -300,9 +295,8 @@ auto sperr::SPECK2D::m_process_P_encode(size_t loc, size_t& counter, bool need_d
     m_LSP_new.push_back(pixel_idx);
     m_LIP[loc] = m_u64_garbage_val;
 
-    if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE) {
+    if (m_mode_cache == CompMode::FixedPWE)
       m_qz_coeff[pixel_idx] = m_threshold * 1.5;
-    }
   }
 
   return RTNType::Good;
