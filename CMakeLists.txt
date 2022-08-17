@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 3.14)
 
-project(SPERR VERSION 0.2 DESCRIPTION "Lossy Scientific Compression with SPERR")
+project(SPERR VERSION 0.3 DESCRIPTION "Lossy Scientific Compression with SPERR")
 
 #
 # specify the C++ standard
@@ -165,10 +165,16 @@ if( BUILD_UNIT_TESTS )
     FetchContent_Declare( googletest
       URL https://github.com/google/googletest/archive/refs/tags/release-1.10.0.zip )
   else()
-    message (STATUS "Fetching the latest GoogleTest Framework")
-    FetchContent_Declare( googletest
-      URL https://github.com/google/googletest/archive/refs/heads/main.zip
-      DOWNLOAD_EXTRACT_TIMESTAMP NEW ) # https://cmake.org/cmake/help/latest/policy/CMP0135.html
+    if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.24")
+      message (STATUS "Fetching the latest GoogleTest Framework, CMake version >= 3.24")
+      FetchContent_Declare( googletest
+        URL https://github.com/google/googletest/archive/refs/heads/main.zip
+        DOWNLOAD_EXTRACT_TIMESTAMP NEW )
+    else()
+      message (STATUS "Fetching the latest GoogleTest Framework, CMake version < 3.24")
+      FetchContent_Declare( googletest
+        URL https://github.com/google/googletest/archive/refs/heads/main.zip )
+    endif()
   endif()
 
   # Prevent overriding the parent project's compiler/linker settings on Windows
