@@ -84,9 +84,15 @@ auto sperr::SPECK3D::encode() -> RTNType
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
   if (m_mode_cache == CompMode::FixedPWE || m_mode_cache == CompMode::FixedPSNR) {
     auto terminal_threshold = 0.0;
-    if (m_mode_cache == CompMode::FixedPWE)
+    if (m_mode_cache == CompMode::FixedPWE) {
+      // Note: this is Peter's formula, which would yield estimately 4.55% outliers.
       terminal_threshold = std::sqrt(3.0) * m_target_pwe;
+    }
     else {  // FixedPSNR mode
+      // Note: based on Peter's estimation method, to achieved the target PSNR, the terminal
+      //       quantization threshold should be (2.0 * sqrt(3.0) * rmse).
+      //       This implementation uses a slightly smaller value so most times we don't need
+      //       to go through another level of quantization.
       const auto mse = (m_data_range * m_data_range) * std::pow(10.0, -m_target_psnr / 10.0);
       terminal_threshold = 1.5 * std::sqrt(mse * 3.0);
     }

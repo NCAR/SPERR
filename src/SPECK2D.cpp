@@ -75,6 +75,7 @@ auto sperr::SPECK2D::encode() -> RTNType
   m_LSP_mask_sum = 0;
 
   // Decide the starting threshold for quantization.
+  // See `SPECK3D.cpp:encode()` for more discussion on the starting threshold.
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
   if (m_mode_cache == CompMode::FixedPWE || m_mode_cache == CompMode::FixedPSNR) {
     auto terminal_threshold = 0.0;

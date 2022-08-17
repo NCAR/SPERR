@@ -255,10 +255,12 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
 
 auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) const -> RTNType
 {
+  assert(m_mode_cache != CompMode::Unknown);
+
   switch (m_mode_cache) {
     case CompMode::FixedPSNR: {
       // Encoding terminates when both conditions are met:
-      // 1) `m_threshold` reaches Sam's formula of terminal threshold, and
+      // 1) the pre-estimated level of quantization is reached, and
       // 2) the estimated PSNR is bigger than `m_target_psnr`.
       if (bitplane_idx + 1 >= m_num_bitplanes) {
         const auto mse = m_estimate_mse();
@@ -273,7 +275,7 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) const -> RTN
     }
     case CompMode::FixedPWE: {
       // Encoding terminates when both conditions are met:
-      // 1) `m_threshold` reaches Peter's formula of terminal threshold, and
+      // 1) the pre-estimated level of quantization is reached, and
       // 2) the estimated RMSE is less than half of `m_target_pwe`.
       if (bitplane_idx + 1 >= m_num_bitplanes) {
         const auto mse = m_estimate_mse();
@@ -318,6 +320,7 @@ auto sperr::SPECK_Storage::m_estimate_mse() const -> double
     }
   }
 
+  // Let's also process the last stride.
   tmp_buf[num_strides] = 0.0;
   for (size_t j = num_strides * stride_size; j < len; j++) {
     auto diff = m_coeff_buf[j];
