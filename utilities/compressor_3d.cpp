@@ -57,10 +57,6 @@ int main(int argc, char* argv[])
 #endif
 
   // Compression specifications
-  auto qz_level = sperr::lowest_int32;
-  app.add_option("--qz", qz_level, "Quantization level (can be negative) to reach.")
-      ->group("Compression Specifications (must choose one and only one)");
-
   auto bpp = sperr::max_d;
   app.add_option("--bpp", bpp, "Target bit-per-pixel to achieve.")
       ->group("Compression Specifications (must choose one and only one)");
@@ -79,7 +75,7 @@ int main(int argc, char* argv[])
   auto bit_budget = sperr::max_size;
   if (bpp != sperr::max_d)
     bit_budget -= 500;  // Just need to be different from the max size value.
-  const auto mode = sperr::compression_mode(bit_budget, qz_level, psnr, pwe);
+  const auto mode = sperr::compression_mode(bit_budget, psnr, pwe);
   if (mode == sperr::CompMode::Unknown) {
     std::cout << "Compression mode is unclear. Did you give one and only one "
                  "compression specification?"
@@ -143,9 +139,6 @@ int main(int argc, char* argv[])
   switch (mode) {
     case sperr::CompMode::FixedSize:
       rtn = compressor.set_target_bpp(bpp);
-      break;
-    case sperr::CompMode::FixedQz:
-      compressor.set_target_qz_level(qz_level);
       break;
     case sperr::CompMode::FixedPSNR:
       compressor.set_target_psnr(psnr);

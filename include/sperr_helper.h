@@ -27,7 +27,6 @@ using std::size_t;  // Seems most appropriate
 // Shortcut for the maximum values
 constexpr auto max_size = std::numeric_limits<size_t>::max();
 constexpr auto max_d = std::numeric_limits<double>::max();
-constexpr auto lowest_int32 = std::numeric_limits<int32_t>::lowest();  // -2147483648
 
 //
 // A few shortcuts
@@ -63,6 +62,7 @@ enum class RTNType {
   QzLevelReached,    // Not an error, just a termination condition
   PSNRReached,       // Not an error, just a termination condition
   PWEAlmostReached,  // Not an error, just a termination condition
+  DontTerminate,     // Not an error, just saying don't terminate
   CompModeUnknown,
   Error
 };
@@ -188,7 +188,7 @@ auto parse_header(const void*) -> HeaderInfo;
 auto calc_mse(const vecd_type&, const vecd_type&, vecd_type&) -> double;
 
 // Decide compression mode based on a collection of parameters.
-auto compression_mode(size_t bit_budget, int32_t qz, double psnr, double pwe) -> CompMode;
+auto compression_mode(size_t bit_budget, double psnr, double pwe) -> CompMode;
 
 };  // namespace sperr
 

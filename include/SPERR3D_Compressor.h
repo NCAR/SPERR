@@ -26,7 +26,7 @@ class SPERR3D_Compressor {
 
   void toggle_conditioning(Conditioner::settings_type);
 
-  auto set_comp_params(size_t bit_budget, int32_t qlev, double psnr, double pwe) -> RTNType;
+  auto set_comp_params(size_t bit_budget, double psnr, double pwe) -> RTNType;
 
   // Return 1) the number of outliers, and 2) the number of bytes to encode them.
   auto get_outlier_stats() const -> std::pair<size_t, size_t>;
@@ -51,7 +51,6 @@ class SPERR3D_Compressor {
   vec8_type m_encoded_stream;
 
   size_t m_bit_budget = 0;  // Total bit budget, including headers etc.
-  int32_t m_qz_lev = sperr::lowest_int32;
   double m_target_psnr = sperr::max_d;
   double m_target_pwe = 0.0;
 

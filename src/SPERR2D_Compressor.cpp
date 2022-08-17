@@ -47,16 +47,6 @@ auto SPERR2D_Compressor::get_outlier_stats() const -> std::pair<size_t, size_t>
   return {m_LOS.size(), m_sperr_stream.size()};
 }
 
-void SPERR2D_Compressor::set_target_qz_level(int32_t q)
-{
-  m_qz_lev = q;
-
-  // Also set other termination criteria to be "never terminate."
-  m_bit_budget = sperr::max_size;
-  m_target_psnr = sperr::max_d;
-  m_target_pwe = 0.0;
-}
-
 auto SPERR2D_Compressor::set_target_bpp(double bpp) -> RTNType
 {
   const auto total_vals = m_dims[0] * m_dims[1];
@@ -73,7 +63,6 @@ auto SPERR2D_Compressor::set_target_bpp(double bpp) -> RTNType
     --m_bit_budget;
 
   // Also set other termination criteria to be "never terminate."
-  m_qz_lev = sperr::lowest_int32;
   m_target_psnr = sperr::max_d;
   m_target_pwe = 0.0;
 
@@ -84,14 +73,12 @@ void SPERR2D_Compressor::set_target_psnr(double psnr)
 {
   m_target_psnr = std::max(psnr, 0.0);
   m_bit_budget = sperr::max_size;
-  m_qz_lev = sperr::lowest_int32;
   m_target_pwe = 0.0;
 }
 
 void SPERR2D_Compressor::set_target_pwe(double pwe)
 {
   m_bit_budget = sperr::max_size;
-  m_qz_lev = sperr::lowest_int32;
   m_target_psnr = sperr::max_d;
   m_target_pwe = std::max(pwe, 0.0);
 }
@@ -135,7 +122,7 @@ auto SPERR2D_Compressor::compress() -> RTNType
   }
 
   // Find out the compression mode, and initialize data members accordingly.
-  const auto mode = sperr::compression_mode(m_bit_budget, m_qz_lev, m_target_psnr, m_target_pwe);
+  const auto mode = sperr::compression_mode(m_bit_budget, m_target_psnr, m_target_pwe);
   assert(mode != sperr::CompMode::Unknown);
 
   if (mode == sperr::CompMode::FixedPSNR) {
@@ -173,7 +160,7 @@ auto SPERR2D_Compressor::compress() -> RTNType
     speck_bit_budget = sperr::max_size;
   else
     speck_bit_budget = m_bit_budget - (m_meta_size + m_condi_stream.size()) * 8;
-  m_encoder.set_comp_params(speck_bit_budget, m_qz_lev, m_target_psnr, m_target_pwe);
+  m_encoder.set_comp_params(speck_bit_budget, m_target_psnr, m_target_pwe);
 
   rtn = m_encoder.encode();
   if (rtn != RTNType::Good)

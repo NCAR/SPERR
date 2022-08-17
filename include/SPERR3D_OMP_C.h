@@ -28,7 +28,6 @@ class SPERR3D_OMP_C {
   auto get_outlier_stats() const -> std::pair<size_t, size_t>;
 
   auto set_target_bpp(double) -> RTNType;
-  void set_target_qz_level(int32_t);
   void set_target_psnr(double);
   void set_target_pwe(double);
 
@@ -50,7 +49,6 @@ class SPERR3D_OMP_C {
   const size_t m_header_magic = 26;  // Header size would be this number + num_chunks * 4
 
   size_t m_bit_budget = 0;  // Total bit budget, including headers etc.
-  int32_t m_qz_lev = sperr::lowest_int32;
   double m_target_psnr = sperr::max_d;
   double m_target_pwe = 0.0;
   bool m_orig_is_float = true;  // Is the original input float (true) or double (false)?

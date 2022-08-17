@@ -69,9 +69,9 @@ void sperr::SPECK_Storage::set_data_range(double range)
 
 auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
 {
-  // Header definition: 10 bytes in total:
-  // max_coeff_bits, stream_len
-  // int16_t,        uint64_t
+  // Header definition: 12 bytes in total:
+  // m_max_threshold_f, stream_len
+  // float,             uint64_t
 
   assert(m_bit_buffer.size() % 8 == 0);
   const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
@@ -81,9 +81,8 @@ auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
 
   // Fill header
   size_t pos = 0;
-  int16_t max_bit = static_cast<int16_t>(m_max_coeff_bit);  // int16_t is big enough
-  std::memcpy(ptr + pos, &max_bit, sizeof(max_bit));
-  pos += sizeof(max_bit);
+  std::memcpy(ptr + pos, &m_max_threshold_f, sizeof(m_max_threshold_f));
+  pos += sizeof(m_max_threshold_f);
 
   std::memcpy(ptr + pos, &bit_in_byte, sizeof(bit_in_byte));
   pos += sizeof(bit_in_byte);
@@ -105,10 +104,8 @@ auto sperr::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t 
 
   // Parse the header
   size_t pos = 0;
-  int16_t max_bit = 0;
-  std::memcpy(&max_bit, ptr + pos, sizeof(max_bit));
-  pos += sizeof(max_bit);
-  m_max_coeff_bit = max_bit;
+  std::memcpy(&m_max_threshold_f, ptr + pos, sizeof(m_max_threshold_f));
+  pos += sizeof(m_max_threshold_f);
 
   uint64_t bit_in_byte = 0;
   std::memcpy(&bit_in_byte, ptr + pos, sizeof(bit_in_byte));
@@ -153,11 +150,9 @@ void sperr::SPECK_Storage::set_dimensions(dims_type dims)
   m_dims = dims;
 }
 
-auto sperr::SPECK_Storage::set_comp_params(size_t budget, int32_t qlev, double psnr, double pwe)
-    -> RTNType
+auto sperr::SPECK_Storage::set_comp_params(size_t budget, double psnr, double pwe) -> RTNType
 {
   // First set those ones that only need a plain copy
-  m_qz_lev = qlev;
   m_target_psnr = psnr;
   m_target_pwe = pwe;
 
@@ -194,7 +189,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
         m_coeff_buf[i] += tmpd[o1];
         m_bit_buffer.push_back(o1);
 
-        if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE)
+        if (m_mode_cache == CompMode::FixedPWE)
           m_qz_coeff[i] += tmpdq[o1];
       }
     }
@@ -206,7 +201,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
         m_coeff_buf[i] += tmpd[o1];
         m_bit_buffer.push_back(o1);
 
-        if (m_mode_cache == CompMode::FixedPSNR || m_mode_cache == CompMode::FixedPWE)
+        if (m_mode_cache == CompMode::FixedPWE)
           m_qz_coeff[i] += tmpdq[o1];
 
         if (m_bit_buffer.size() >= m_encode_budget)
@@ -258,48 +253,90 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
   return RTNType::Good;
 }
 
-auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) -> RTNType
+auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) const -> RTNType
 {
   assert(m_mode_cache != CompMode::Unknown);
 
   switch (m_mode_cache) {
-    case CompMode::FixedQz: {
-      assert(m_max_coeff_bit >= m_qz_lev);
-      const size_t num_qz_levs = m_max_coeff_bit - m_qz_lev;
-      if (bitplane_idx >= num_qz_levs)
-        return RTNType::QzLevelReached;
-      else
-        return RTNType::Good;
-    }
     case CompMode::FixedPSNR: {
-      assert(m_orig_coeff.size() == m_qz_coeff.size());
-      assert(!m_orig_coeff.empty());
-      assert(m_data_range != sperr::max_d);
-
-      const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff, m_calc_mse_buf);
-      const auto psnr = std::log10(m_data_range * m_data_range / mse) * 10.0;
-
-      if (psnr > m_target_psnr) {
-        return RTNType::PSNRReached;
+      // Encoding terminates when both conditions are met:
+      // 1) the pre-estimated level of quantization is reached, and
+      // 2) the estimated PSNR is bigger than `m_target_psnr`.
+      if (bitplane_idx + 1 >= m_num_bitplanes) {
+        const auto mse = m_estimate_mse();
+        const auto psnr = std::log10(m_data_range * m_data_range / mse) * 10.0;
+        if (psnr > m_target_psnr)
+          return RTNType::PSNRReached;
+        else
+          return RTNType::DontTerminate;
       }
       else
-        return RTNType::Good;
+        return RTNType::DontTerminate;
     }
     case CompMode::FixedPWE: {
-      assert(m_orig_coeff.size() == m_qz_coeff.size());
-      assert(!m_orig_coeff.empty());
-      assert(m_target_pwe > 0.0);
-
-      const auto mse = sperr::calc_mse(m_orig_coeff, m_qz_coeff, m_calc_mse_buf);
-      const auto rmse = std::sqrt(mse);
-
-      if (rmse < m_target_pwe * 0.5) {
-        return RTNType::PWEAlmostReached;
+      // Encoding terminates when both conditions are met:
+      // 1) the pre-estimated level of quantization is reached, and
+      // 2) the estimated RMSE is less than half of `m_target_pwe`.
+      if (bitplane_idx + 1 >= m_num_bitplanes) {
+        const auto mse = m_estimate_mse();
+        const auto rmse = std::sqrt(mse);
+        if (rmse < m_target_pwe * 0.5)
+          return RTNType::PWEAlmostReached;
+        else
+          return RTNType::DontTerminate;
       }
-      else
-        return RTNType::Good;
+      else {
+        return RTNType::DontTerminate;
+      }
     }
     default:
-      return RTNType::Good;
+      // This is the fixed-size mode, which should always not terminate.
+      return RTNType::DontTerminate;
   }
+}
+
+auto sperr::SPECK_Storage::m_estimate_mse() const -> double
+{
+  const auto half_t = m_threshold * 0.5;
+  const auto len = m_coeff_buf.size();
+  const size_t stride_size = 4096;
+  const size_t num_strides = len / stride_size;
+  const size_t remainder_size = len - stride_size * num_strides;
+  auto tmp_buf = vecd_type(num_strides + 1);
+
+  for (size_t i = 0; i < num_strides; i++) {
+    tmp_buf[i] = 0.0;
+    for (size_t j = i * stride_size; j < (i + 1) * stride_size; j++) {
+      auto diff = m_coeff_buf[j];
+#if __cplusplus >= 202002L
+      if (m_LSP_mask[j]) [[likely]]
+#else
+      if (m_LSP_mask[j])
+#endif
+      {
+        diff = std::remainder(m_coeff_buf[j] + half_t, m_threshold);
+      }
+      tmp_buf[i] += diff * diff;
+    }
+  }
+
+  // Let's also process the last stride.
+  tmp_buf[num_strides] = 0.0;
+  for (size_t j = num_strides * stride_size; j < len; j++) {
+    auto diff = m_coeff_buf[j];
+#if __cplusplus >= 202002L
+    if (m_LSP_mask[j]) [[likely]]
+#else
+    if (m_LSP_mask[j])
+#endif
+    {
+      diff = std::remainder(m_coeff_buf[j] + half_t, m_threshold);
+    }
+    tmp_buf[num_strides] += diff * diff;
+  }
+
+  const auto total_sum = std::accumulate(tmp_buf.cbegin(), tmp_buf.cend(), 0.0);
+  const auto mse = total_sum / static_cast<double>(len);
+
+  return mse;
 }

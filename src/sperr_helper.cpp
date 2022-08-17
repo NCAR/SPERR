@@ -536,9 +536,8 @@ auto sperr::calc_mse(const vecd_type& v1, const vecd_type& v2, vecd_type& tmp_bu
 
   for (size_t i = 0; i < num_strides; i++) {
     auto beg1 = v1.cbegin() + i * stride_size;
-    auto end1 = beg1 + stride_size;
     auto beg2 = v2.cbegin() + i * stride_size;
-    tmp_buf[i] = std::inner_product(beg1, end1, beg2, 0.0, std::plus<>(),
+    tmp_buf[i] = std::inner_product(beg1, beg1 + stride_size, beg2, 0.0, std::plus<>(),
                                     [](auto a, auto b) { return (a - b) * (a - b); });
   }
   tmp_buf[num_strides] = 0.0;
@@ -552,22 +551,15 @@ auto sperr::calc_mse(const vecd_type& v1, const vecd_type& v2, vecd_type& tmp_bu
   return mse;
 }
 
-auto sperr::compression_mode(size_t bit_budget, int32_t qz, double psnr, double pwe) -> CompMode
+auto sperr::compression_mode(size_t bit_budget, double psnr, double pwe) -> CompMode
 {
-  if (bit_budget < sperr::max_size && qz == sperr::lowest_int32 && psnr == sperr::max_d &&
-      pwe == 0.0) {
+  if (bit_budget < sperr::max_size && psnr == sperr::max_d && pwe == 0.0) {
     return CompMode::FixedSize;
   }
-  else if (bit_budget == sperr::max_size && qz > sperr::lowest_int32 && psnr == sperr::max_d &&
-           pwe == 0.0) {
-    return CompMode::FixedQz;
-  }
-  else if (bit_budget == sperr::max_size && qz == sperr::lowest_int32 && psnr < sperr::max_d &&
-           pwe == 0.0) {
+  else if (bit_budget == sperr::max_size && psnr < sperr::max_d && pwe == 0.0) {
     return CompMode::FixedPSNR;
   }
-  else if (bit_budget == sperr::max_size && qz == sperr::lowest_int32 && psnr == sperr::max_d &&
-           pwe > 0.0) {
+  else if (bit_budget == sperr::max_size && psnr == sperr::max_d && pwe > 0.0) {
     return CompMode::FixedPWE;
   }
   else {
