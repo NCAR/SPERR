@@ -145,7 +145,7 @@ auto sperr::SPERR::encode() -> RTNType
   m_outlier_cnt = m_LOS.size();  // Initially everyone in LOS is an outlier
 
   // `m_q` is initialized to have the absolute value of all error.
-  m_q.assign(m_LOS.size(), 0.0);
+  m_q.resize(m_LOS.size());
   std::transform(m_LOS.cbegin(), m_LOS.cend(), m_q.begin(),
                  [](auto& out) { return std::abs(out.error); });
 
@@ -156,11 +156,11 @@ auto sperr::SPERR::encode() -> RTNType
   m_LSP_old.clear();
   m_LSP_old.reserve(m_LOS.size());
 
-  // Find the maximum q, and decide m_max_coeff_bit
+  // Find the maximum q.
   auto max_q = *(std::max_element(m_q.cbegin(), m_q.cend()));
-  auto max_bits = std::floor(std::log2(max_q));
-  m_max_coeff_bit = int32_t(max_bits);
-  m_threshold = std::pow(2.0, double(m_max_coeff_bit));
+  auto max_bits = static_cast<int32_t>(std::floor(std::log2(max_q)));
+  m_max_threshold_f = static_cast<float>(std::pow(2.0, double(max_bits)));
+  m_threshold = static_cast<double>(m_max_threshold_f);
 
   // Start the iterations!
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
@@ -196,9 +196,7 @@ auto sperr::SPERR::decode() -> RTNType
   m_bit_idx = 0;
   m_LOS_size = 0;
 
-  // Since we already have m_max_coeff_bit from the bit stream when decoding
-  // header, we can go straight into quantization!
-  m_threshold = std::pow(2.0, double(m_max_coeff_bit));
+  m_threshold = static_cast<double>(m_max_threshold_f);
 
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     if (m_sorting_pass())
@@ -350,8 +348,7 @@ auto sperr::SPERR::m_refinement_pass_encoding() -> bool
   for (auto idx : m_LSP_old) {
     // First test if this pixel is still an outlier
     // Note that every refinement pass generates exactly 1 bit for each pixel in
-    // `m_LSP_old` no matter if that pixel value is within error tolerance or
-    // not.
+    // `m_LSP_old` no matter if that pixel value is within error tolerance or not.
     auto diff = m_err_hat[idx] - std::abs(m_LOS[idx].error);
     auto was_outlier = std::abs(diff) >= m_tolerance;
     auto need_refine = m_q[idx] >= m_threshold;
@@ -454,34 +451,18 @@ auto sperr::SPERR::num_of_outliers() const -> size_t
   return m_LOS.size();
 }
 
-auto sperr::SPERR::num_of_bits() const -> size_t
-{
-  return m_bit_buffer.size();
-}
-
-auto sperr::SPERR::max_coeff_bits() const -> int32_t
-{
-  return m_max_coeff_bit;
-}
-
-auto sperr::SPERR::get_encoded_bitstream() const -> std::vector<uint8_t>
+auto sperr::SPERR::get_encoded_bitstream() -> std::vector<uint8_t>
 {
   // Header definition:
-  // total_len  max_coeff_bits  num_of_bits
-  // uint64_t   int32_t         uint64_t
+  // total_len  max_threshold_f   num_of_bits
+  // uint64_t   float             uint64_t
 
-  // Record the current (useful) number of bits
+  // Record the current (useful) number of bits before it's padded.
   const uint64_t num_bits = m_bit_buffer.size();
+  while (m_bit_buffer.size() % 8 != 0)
+    m_bit_buffer.push_back(false);
 
-  // Create a copy of the current bit buffer with length being multiples of 8.
-  // The purpose is to not mess up with `m_bit_buffer`.
-  // Also because vector<bool> is stored internally as 64-bit integers,
-  // It's very likely that our padding won't trigger a re-allocation.
-  m_bvec_tmp = m_bit_buffer;
-  while (m_bvec_tmp.size() % 8 != 0)
-    m_bvec_tmp.push_back(false);
-
-  const size_t buf_len = m_header_size + m_bvec_tmp.size() / 8;
+  const size_t buf_len = m_header_size + m_bit_buffer.size() / 8;
   auto buf = std::vector<uint8_t>(buf_len);
 
   // Fill header
@@ -490,8 +471,8 @@ auto sperr::SPERR::get_encoded_bitstream() const -> std::vector<uint8_t>
   std::memcpy(&buf[0], &m_total_len, sizeof(m_total_len));
   pos += sizeof(m_total_len);
 
-  std::memcpy(&buf[pos], &m_max_coeff_bit, sizeof(m_max_coeff_bit));
-  pos += sizeof(m_max_coeff_bit);
+  std::memcpy(&buf[pos], &m_max_threshold_f, sizeof(m_max_threshold_f));
+  pos += sizeof(m_max_threshold_f);
 
   std::memcpy(&buf[pos], &num_bits, sizeof(num_bits));
   pos += sizeof(num_bits);
@@ -499,9 +480,12 @@ auto sperr::SPERR::get_encoded_bitstream() const -> std::vector<uint8_t>
   assert(pos == m_header_size);
 
   // Assemble the bitstream into bytes
-  auto rtn = sperr::pack_booleans(buf, m_bvec_tmp, pos);
+  auto rtn = sperr::pack_booleans(buf, m_bit_buffer, pos);
   if (rtn != RTNType::Good)
     buf.clear();
+
+  // Restore `m_bit_buffer` to its original size.
+  m_bit_buffer.resize(num_bits);
 
   return buf;
 }
@@ -520,8 +504,8 @@ auto sperr::SPERR::parse_encoded_bitstream(const void* buf, size_t len) -> RTNTy
   std::memcpy(&m_total_len, ptr, sizeof(m_total_len));
   pos += sizeof(m_total_len);
 
-  std::memcpy(&m_max_coeff_bit, ptr + pos, sizeof(m_max_coeff_bit));
-  pos += sizeof(m_max_coeff_bit);
+  std::memcpy(&m_max_threshold_f, ptr + pos, sizeof(m_max_threshold_f));
+  pos += sizeof(m_max_threshold_f);
 
   std::memcpy(&num_bits, ptr + pos, sizeof(num_bits));
   pos += sizeof(num_bits);

@@ -51,10 +51,8 @@ class SPERR {
   auto release_outliers() -> std::vector<Outlier>&&;  // Release ownership of decoded outliers
   auto view_outliers() -> const std::vector<Outlier>&;
   auto num_of_outliers() const -> size_t;  // How many outliers are decoded?
-  auto num_of_bits() const -> size_t;      // How many bits are generated?
-  auto max_coeff_bits() const -> int32_t;  // Will be used when decoding.
 
-  auto get_encoded_bitstream() const -> std::vector<uint8_t>;
+  auto get_encoded_bitstream() -> std::vector<uint8_t>;
   auto parse_encoded_bitstream(const void*, size_t) -> RTNType;
 
   // Given a SPERR stream, tell how long the speck stream is.
@@ -99,7 +97,7 @@ class SPERR {
   //
   uint64_t m_total_len = 0;         // 1D array length
   double m_tolerance = 0.0;         // Error tolerance.
-  int32_t m_max_coeff_bit = 0;      // = log2(max_coefficient)
+  float m_max_threshold_f = 0.0;
   const size_t m_header_size = 20;  // in bytes
 
   size_t m_outlier_cnt = 0;   // How many data points are still exceeding the tolerance?
@@ -121,11 +119,6 @@ class SPERR {
   std::vector<bool> m_sig_map;          // encoding only
 
   std::vector<std::vector<SPECKSet1D>> m_LIS;
-
-  // Keep this temporary object a class member to reuse its storage when
-  // this SPERR object is reused.
-  // It's OK to be mutable since it serves as a temporary object anyway.
-  mutable std::vector<bool> m_bvec_tmp;
 };
 
 };  // namespace sperr
