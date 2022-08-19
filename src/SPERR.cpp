@@ -156,11 +156,18 @@ auto sperr::SPERR::encode() -> RTNType
   m_LSP_old.clear();
   m_LSP_old.reserve(m_LOS.size());
 
-  // Find the maximum q.
   auto max_q = *(std::max_element(m_q.cbegin(), m_q.cend()));
-  auto max_bits = static_cast<int32_t>(std::floor(std::log2(max_q)));
-  m_max_threshold_f = static_cast<float>(std::pow(2.0, double(max_bits)));
+  auto terminal_threshold = 1.99 / 1.5 * m_tolerance;
+  auto max_t = terminal_threshold;
+  while (max_t * 2.0 < max_q)
+    max_t *= 2.0;
+  m_max_threshold_f = static_cast<float>(max_t);
   m_threshold = static_cast<double>(m_max_threshold_f);
+
+  //auto max_q = *(std::max_element(m_q.cbegin(), m_q.cend()));
+  //auto max_bits = static_cast<int32_t>(std::floor(std::log2(max_q)));
+  //m_max_threshold_f = static_cast<float>(std::pow(2.0, double(max_bits)));
+  //m_threshold = static_cast<double>(m_max_threshold_f);
 
   // Start the iterations!
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
