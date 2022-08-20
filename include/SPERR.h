@@ -95,8 +95,8 @@ class SPERR {
   //
   // Private data members
   //
-  uint64_t m_total_len = 0;         // 1D array length
-  double m_tolerance = 0.0;         // Error tolerance.
+  uint64_t m_total_len = 0;  // 1D array length
+  double m_tolerance = 0.0;  // Error tolerance.
   float m_max_threshold_f = 0.0;
   const size_t m_header_size = 20;  // in bytes
 

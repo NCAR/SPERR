@@ -164,11 +164,6 @@ auto sperr::SPERR::encode() -> RTNType
   m_max_threshold_f = static_cast<float>(max_t);
   m_threshold = static_cast<double>(m_max_threshold_f);
 
-  //auto max_q = *(std::max_element(m_q.cbegin(), m_q.cend()));
-  //auto max_bits = static_cast<int32_t>(std::floor(std::log2(max_q)));
-  //m_max_threshold_f = static_cast<float>(std::pow(2.0, double(max_bits)));
-  //m_threshold = static_cast<double>(m_max_threshold_f);
-
   // Start the iterations!
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     // Reset the significance map
