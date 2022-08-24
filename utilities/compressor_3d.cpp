@@ -202,7 +202,7 @@ int main(int argc, char* argv[])
       auto stats = sperr::calc_stats(reinterpret_cast<const double*>(orig.data()), recover.data(),
                                      recover.size(), omp_num_threads);
       std::cout << ", PSNR = " << stats[2] << "dB,  L-Infty = " << stats[1];
-      std::printf(", Data range = (%.2e, %.2e).\n", stats[3], stats[4]);
+      std::printf(", Data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3], stats[4]);
     }
     else {
       const auto recover = decompressor.get_data<float>();
@@ -210,7 +210,7 @@ int main(int argc, char* argv[])
       auto stats = sperr::calc_stats(reinterpret_cast<const float*>(orig.data()), recover.data(),
                                      recover.size(), omp_num_threads);
       std::cout << ", PSNR = " << stats[2] << "dB,  L-Infty = " << stats[1];
-      std::printf(", Data range = (%.2e, %.2e).\n", stats[3], stats[4]);
+      std::printf(", Data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3], stats[4]);
     }
 
     if (mode == sperr::CompMode::FixedPWE) {
