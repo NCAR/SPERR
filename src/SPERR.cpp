@@ -157,7 +157,7 @@ auto sperr::SPERR::encode() -> RTNType
   m_LSP_old.reserve(m_LOS.size());
 
   auto max_q = *(std::max_element(m_q.cbegin(), m_q.cend()));
-  auto terminal_threshold = 1.99 / 1.5 * m_tolerance;
+  auto terminal_threshold = m_tolerance;
   auto max_t = terminal_threshold;
   while (max_t * 2.0 < max_q)
     max_t *= 2.0;
