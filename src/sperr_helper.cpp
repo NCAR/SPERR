@@ -580,8 +580,9 @@ auto sperr::calc_variance(const T* arr, size_t len) -> T
     });
   }
   tmp_buf[num_strides] = 0.0;
-  tmp_buf[num_strides] = std::accumulate(arr + num_strides * stride_size, arr + len, T{0.0},
-    [mean](auto init, auto v){ return init + (v - mean) * (v - mean); });
+  tmp_buf[num_strides] =
+      std::accumulate(arr + num_strides * stride_size, arr + len, T{0.0},
+                      [mean](auto init, auto v) { return init + (v - mean) * (v - mean); });
   const auto diff_sum = std::accumulate(tmp_buf.cbegin(), tmp_buf.cend(), T{0.0});
   const auto var = diff_sum / static_cast<T>(len);
 
