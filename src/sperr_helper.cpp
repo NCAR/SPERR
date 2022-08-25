@@ -315,7 +315,7 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
     last_linfty = std::max(last_linfty, diff);
     last_buf[i] = diff * diff;
   }
-  sum_vec[num_of_strides] = 0.0;
+  sum_vec[num_of_strides] = T{0.0};
   sum_vec[num_of_strides] =
       std::accumulate(last_buf.cbegin(), last_buf.cbegin() + remainder_size, T{0.0});
   linfty_vec[num_of_strides] = last_linfty;
