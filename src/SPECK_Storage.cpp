@@ -280,10 +280,11 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) const -> RTN
       if (bitplane_idx + 1 >= m_num_bitplanes) {
         const auto mse = m_estimate_mse();
         const auto rmse = std::sqrt(mse);
-        if (rmse < m_target_pwe * 0.5)
-          return RTNType::PWEAlmostReached;
-        else
-          return RTNType::DontTerminate;
+        std::printf("est. rmse = %.2e, target rmse = %.2e\n", rmse, m_target_pwe * 0.5);
+        // if (rmse < m_target_pwe * 0.5)
+        return RTNType::PWEAlmostReached;
+        // else
+        //   return RTNType::DontTerminate;
       }
       else {
         return RTNType::DontTerminate;
@@ -339,4 +340,29 @@ auto sperr::SPECK_Storage::m_estimate_mse() const -> double
   const auto mse = total_sum / static_cast<double>(len);
 
   return mse;
+}
+
+auto sperr::SPECK_Storage::m_estimate_finest_q() const -> double
+{
+  if (m_mode_cache != CompMode::FixedPWE)
+    return 0.0;
+
+  const auto total_vals = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
+  const auto sqrt3 = std::sqrt(3.0);
+  double p = 0.0;
+  double q = sqrt3 * m_target_pwe / std::sqrt(p * 3.0 + 1.0);
+  for (int i = 0; i < 10; i++) {
+    auto cnt = std::count_if(m_coeff_buf.cbegin(), m_coeff_buf.cend(),
+                             [q](auto v) { return std::abs(v) < q; });
+    auto p_new = static_cast<double>(cnt) / total_vals;
+    q = sqrt3 * m_target_pwe / std::sqrt(p_new * 3.0 + 1.0);
+    if (std::abs(p - p_new) < 0.01) {
+      std::printf("p * 100 = %.2f\n", p_new * 100.0);
+      break;
+    }
+    else
+      p = p_new;
+  }
+
+  return q;
 }

@@ -91,6 +91,10 @@ class SPECK_Storage {
 
   auto m_termination_check(size_t bitplane_idx) const -> RTNType;
   auto m_estimate_mse() const -> double;
+
+  // In fixed-PWE mode, estimate the finest level of quantization based on
+  // `m_target_pwe` and the wavelet coefficients.
+  auto m_estimate_finest_q() const -> double;
 };
 
 };  // namespace sperr
