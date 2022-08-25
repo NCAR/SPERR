@@ -186,7 +186,7 @@ TEST(speck3d_target_pwe, small_data_range)
   const auto bpp = sperr::max_d;
   const auto target_psnr = sperr::max_d;
 
-  auto pwe = double{1.4e-7};
+  auto pwe = double{1.5e-7};
   tester.execute(bpp, target_psnr, pwe);
   float lmax = tester.get_lmax();
   EXPECT_LE(lmax, pwe);
@@ -196,7 +196,7 @@ TEST(speck3d_target_pwe, small_data_range)
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, pwe);
 
-  pwe = 6.7e-8;
+  pwe = 6.7e-6;
   tester.execute(bpp, target_psnr, pwe);
   lmax = tester.get_lmax();
   EXPECT_LE(lmax, pwe);
