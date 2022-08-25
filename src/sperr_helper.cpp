@@ -315,6 +315,7 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
     last_linfty = std::max(last_linfty, diff);
     last_buf[i] = diff * diff;
   }
+  sum_vec[num_of_strides] = T{0.0};
   sum_vec[num_of_strides] =
       std::accumulate(last_buf.cbegin(), last_buf.cbegin() + remainder_size, T{0.0});
   linfty_vec[num_of_strides] = last_linfty;
@@ -531,7 +532,6 @@ auto sperr::calc_mse(const vecd_type& v1, const vecd_type& v2, vecd_type& tmp_bu
 
   const size_t stride_size = 4096;
   const size_t num_strides = len / stride_size;
-  const size_t remainder_size = len - stride_size * num_strides;
   tmp_buf.resize(num_strides + 1);
 
   for (size_t i = 0; i < num_strides; i++) {
@@ -549,6 +549,43 @@ auto sperr::calc_mse(const vecd_type& v1, const vecd_type& v2, vecd_type& tmp_bu
   const auto mse = total_sum / static_cast<double>(len);
 
   return mse;
+}
+
+template <typename T>
+auto sperr::calc_variance(const T* arr, size_t len) -> T
+{
+  if (len == 0)
+    return std::numeric_limits<T>::infinity();
+
+  const size_t stride_size = 4096;
+  const size_t num_strides = len / stride_size;
+  auto tmp_buf = std::vector<T>(num_strides + 1);
+
+  // First, calculate the mean of this array.
+  for (size_t i = 0; i < num_strides; i++) {
+    const T* beg = arr + i * stride_size;
+    tmp_buf[i] = std::accumulate(beg, beg + stride_size, T{0.0});
+  }
+  tmp_buf[num_strides] = 0.0;
+  tmp_buf[num_strides] = std::accumulate(arr + num_strides * stride_size, arr + len, T{0.0});
+  const auto elem_sum = std::accumulate(tmp_buf.cbegin(), tmp_buf.cend(), T{0.0});
+  const auto mean = elem_sum / static_cast<T>(len);
+
+  // Second, calculate the variance.
+  for (size_t i = 0; i < num_strides; i++) {
+    const T* beg = arr + i * stride_size;
+    tmp_buf[i] = std::accumulate(beg, beg + stride_size, T{0.0}, [mean](auto init, auto v) {
+      return init + (v - mean) * (v - mean);
+    });
+  }
+  tmp_buf[num_strides] = 0.0;
+  tmp_buf[num_strides] =
+      std::accumulate(arr + num_strides * stride_size, arr + len, T{0.0},
+                      [mean](auto init, auto v) { return init + (v - mean) * (v - mean); });
+  const auto diff_sum = std::accumulate(tmp_buf.cbegin(), tmp_buf.cend(), T{0.0});
+  const auto var = diff_sum / static_cast<T>(len);
+
+  return var;
 }
 
 auto sperr::compression_mode(size_t bit_budget, double psnr, double pwe) -> CompMode

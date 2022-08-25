@@ -92,8 +92,8 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
     return rtn;
   // Figure out which dwt3d strategy to use.
   // Note: this strategy needs to be consistent with SPERR3D_Decompressor.
-  auto xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  auto xforms_z = sperr::num_of_xforms(m_dims[2]);
+  const auto xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  const auto xforms_z = sperr::num_of_xforms(m_dims[2]);
   if (xforms_xy == xforms_z)
     m_cdf.dwt3d_dyadic();
   else
