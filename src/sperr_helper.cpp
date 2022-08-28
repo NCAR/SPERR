@@ -587,6 +587,8 @@ auto sperr::calc_variance(const T* arr, size_t len) -> T
 
   return var;
 }
+template auto sperr::calc_variance(const float* arr, size_t len) -> float;
+template auto sperr::calc_variance(const double* arr, size_t len) -> double;
 
 auto sperr::compression_mode(size_t bit_budget, double psnr, double pwe) -> CompMode
 {

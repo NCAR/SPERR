@@ -309,14 +309,8 @@ auto sperr::SPECK_Storage::m_estimate_mse() const -> double
     tmp_buf[i] = 0.0;
     for (size_t j = i * stride_size; j < (i + 1) * stride_size; j++) {
       auto diff = m_coeff_buf[j];
-#if __cplusplus >= 202002L
-      if (m_LSP_mask[j]) [[likely]]
-#else
       if (m_LSP_mask[j])
-#endif
-      {
         diff = std::remainder(m_coeff_buf[j] + half_t, m_threshold);
-      }
       tmp_buf[i] += diff * diff;
     }
   }
@@ -325,14 +319,8 @@ auto sperr::SPECK_Storage::m_estimate_mse() const -> double
   tmp_buf[num_strides] = 0.0;
   for (size_t j = num_strides * stride_size; j < len; j++) {
     auto diff = m_coeff_buf[j];
-#if __cplusplus >= 202002L
-    if (m_LSP_mask[j]) [[likely]]
-#else
     if (m_LSP_mask[j])
-#endif
-    {
       diff = std::remainder(m_coeff_buf[j] + half_t, m_threshold);
-    }
     tmp_buf[num_strides] += diff * diff;
   }
 
@@ -348,21 +336,48 @@ auto sperr::SPECK_Storage::m_estimate_finest_q() const -> double
     return 0.0;
 
   const auto total_vals = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
-  const auto sqrt3 = std::sqrt(3.0);
-  double p = 0.0;
-  double q = sqrt3 * m_target_pwe / std::sqrt(p * 3.0 + 1.0);
-  for (int i = 0; i < 10; i++) {
-    auto cnt = std::count_if(m_coeff_buf.cbegin(), m_coeff_buf.cend(),
-                             [q](auto v) { return std::abs(v) < q; });
-    auto p_new = static_cast<double>(cnt) / total_vals;
-    q = sqrt3 * m_target_pwe / std::sqrt(p_new * 3.0 + 1.0);
-    if (std::abs(p - p_new) < 0.01) {
-      std::printf("p * 100 = %.2f\n", p_new * 100.0);
-      break;
-    }
-    else
-      p = p_new;
-  }
 
-  return q;
+  // Iteration 1, didn't work too well
+  // const auto sqrt3 = std::sqrt(3.0);
+  // double p = 0.0;
+  // double q = sqrt3 * m_target_pwe / std::sqrt(p * 3.0 + 1.0);
+  // for (int i = 0; i < 10; i++) {
+  //   auto cnt = std::count_if(m_coeff_buf.cbegin(), m_coeff_buf.cend(),
+  //                            [q](auto v) { return std::abs(v) < q; });
+  //   auto p_new = static_cast<double>(cnt) / total_vals;
+  //   q = sqrt3 * m_target_pwe / std::sqrt(p_new * 3.0 + 1.0);
+  //   if (std::abs(p - p_new) < 0.01) {
+  //     std::printf("p * 100 = %.2f\n", p_new * 100.0);
+  //     break;
+  //   }
+  //   else
+  //     p = p_new;
+  // }
+
+  //const auto tmse = m_target_pwe * m_target_pwe * 0.25;
+  //const auto converge_thrd = tmse * 1e-3;
+  //const auto var = sperr::calc_variance(m_coeff_buf.data(), m_coeff_buf.size());
+  //const auto sigma = std::sqrt(var);
+  //const auto b = sigma / std::sqrt(2.0);
+  //auto qmin = 0.0, q = 0.0;
+  //auto qmax = m_target_pwe * 4.0;
+
+  //for (size_t i = 0; i < 1024; i++) {
+  //  q = (qmin + qmax) * 0.5;
+  //  const auto h = std::exp(q / b);
+  //  const auto emse = 2.0 * b * (b + q / (1.0 - h)) - q * (0.75 * q + b) / h;
+  //  if (std::abs(tmse - emse) < converge_thrd) {
+  //    std::printf("%lu, %.4e, %.4e, %.4e, %.4e, %.4e\n", 
+  //                i, m_target_pwe, tmse, emse, sigma, q);
+  //    break;
+  //  }
+  //  else if (emse > tmse)
+  //    qmax = q;
+  //  else
+  //    qmin = q;
+
+  //  if (i == 1023)
+  //    std::printf("!!Failed to converge!!\n");
+  //}
+  //return q;
 }
