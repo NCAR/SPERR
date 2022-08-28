@@ -279,6 +279,7 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) const -> RTN
       // 2) the estimated RMSE is less than half of `m_target_pwe`.
       if (bitplane_idx + 1 >= m_num_bitplanes) {
         const auto mse = m_estimate_mse();
+        std::printf("after quantization,  mse = %e\n", mse);
         const auto rmse = std::sqrt(mse);
         std::printf("est. rmse = %.2e, target rmse = %.2e\n", rmse, m_target_pwe * 0.5);
         // if (rmse < m_target_pwe * 0.5)
@@ -330,13 +331,46 @@ auto sperr::SPECK_Storage::m_estimate_mse() const -> double
   return mse;
 }
 
+auto sperr::SPECK_Storage::m_estimate_mse(double q) const -> double
+{
+  const auto half_q = q * 0.5;
+  const auto len = m_coeff_buf.size();
+  const size_t stride_size = 4096;
+  const size_t num_strides = len / stride_size;
+  const size_t remainder_size = len - stride_size * num_strides;
+  auto tmp_buf = vecd_type(num_strides + 1);
+
+  for (size_t i = 0; i < num_strides; i++) {
+    const auto beg = m_coeff_buf.cbegin() + i * stride_size;
+    tmp_buf[i] = std::accumulate(beg, beg + stride_size, 0.0, [half_q, q](auto init, auto v) {
+      auto diff = v >= q ? std::remainder(v + half_q, q) : v;
+      return init + diff * diff;
+    });
+  }
+
+  // Let's also process the last stride.
+  tmp_buf[num_strides] = 0.0;
+  tmp_buf[num_strides] = std::accumulate(m_coeff_buf.cbegin() + num_strides * stride_size,
+                                         m_coeff_buf.cend(), 0.0, [half_q, q](auto init, auto v) {
+                                           auto diff = v >= q ? std::remainder(v + half_q, q) : v;
+                                           return init + diff * diff;
+                                         });
+  const auto total_sum = std::accumulate(tmp_buf.cbegin(), tmp_buf.cend(), 0.0);
+  const auto mse = total_sum / static_cast<double>(len);
+
+  std::printf("before quantization, mse = %e\n", mse);
+
+  return mse;
+}
+
 auto sperr::SPECK_Storage::m_estimate_finest_q() const -> double
 {
   if (m_mode_cache != CompMode::FixedPWE)
     return 0.0;
+  else
+    return 0.0;
 
-  const auto total_vals = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
-
+  // const auto total_vals_d = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
   // Iteration 1, didn't work too well
   // const auto sqrt3 = std::sqrt(3.0);
   // double p = 0.0;
@@ -344,7 +378,7 @@ auto sperr::SPECK_Storage::m_estimate_finest_q() const -> double
   // for (int i = 0; i < 10; i++) {
   //   auto cnt = std::count_if(m_coeff_buf.cbegin(), m_coeff_buf.cend(),
   //                            [q](auto v) { return std::abs(v) < q; });
-  //   auto p_new = static_cast<double>(cnt) / total_vals;
+  //   auto p_new = static_cast<double>(cnt) / total_vals_d;
   //   q = sqrt3 * m_target_pwe / std::sqrt(p_new * 3.0 + 1.0);
   //   if (std::abs(p - p_new) < 0.01) {
   //     std::printf("p * 100 = %.2f\n", p_new * 100.0);
@@ -354,30 +388,30 @@ auto sperr::SPECK_Storage::m_estimate_finest_q() const -> double
   //     p = p_new;
   // }
 
-  //const auto tmse = m_target_pwe * m_target_pwe * 0.25;
-  //const auto converge_thrd = tmse * 1e-3;
-  //const auto var = sperr::calc_variance(m_coeff_buf.data(), m_coeff_buf.size());
-  //const auto sigma = std::sqrt(var);
-  //const auto b = sigma / std::sqrt(2.0);
-  //auto qmin = 0.0, q = 0.0;
-  //auto qmax = m_target_pwe * 4.0;
+  // const auto tmse = m_target_pwe * m_target_pwe * 0.25;
+  // const auto converge_thrd = tmse * 1e-3;
+  // const auto var = sperr::calc_variance(m_coeff_buf.data(), m_coeff_buf.size());
+  // const auto sigma = std::sqrt(var);
+  // const auto b = sigma / std::sqrt(2.0);
+  // auto qmin = 0.0, q = 0.0;
+  // auto qmax = m_target_pwe * 4.0;
 
-  //for (size_t i = 0; i < 1024; i++) {
-  //  q = (qmin + qmax) * 0.5;
-  //  const auto h = std::exp(q / b);
-  //  const auto emse = 2.0 * b * (b + q / (1.0 - h)) - q * (0.75 * q + b) / h;
-  //  if (std::abs(tmse - emse) < converge_thrd) {
-  //    std::printf("%lu, %.4e, %.4e, %.4e, %.4e, %.4e\n", 
-  //                i, m_target_pwe, tmse, emse, sigma, q);
-  //    break;
-  //  }
-  //  else if (emse > tmse)
-  //    qmax = q;
-  //  else
-  //    qmin = q;
+  // for (size_t i = 0; i < 1024; i++) {
+  //   q = (qmin + qmax) * 0.5;
+  //   const auto h = std::exp(q / b);
+  //   const auto emse = 2.0 * b * (b + q / (1.0 - h)) - q * (0.75 * q + b) / h;
+  //   if (std::abs(tmse - emse) < converge_thrd) {
+  //     std::printf("%lu, %.4e, %.4e, %.4e, %.4e, %.4e\n",
+  //                 i, m_target_pwe, tmse, emse, sigma, q);
+  //     break;
+  //   }
+  //   else if (emse > tmse)
+  //     qmax = q;
+  //   else
+  //     qmin = q;
 
   //  if (i == 1023)
   //    std::printf("!!Failed to converge!!\n");
   //}
-  //return q;
+  // return q;
 }

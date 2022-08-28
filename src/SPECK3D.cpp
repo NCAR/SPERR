@@ -86,9 +86,9 @@ auto sperr::SPECK3D::encode() -> RTNType
     auto terminal_threshold = 0.0;
     if (m_mode_cache == CompMode::FixedPWE) {
       // Note: this is Peter's formula, which would yield estimately 4.55% outliers.
-      // terminal_threshold = std::sqrt(3.0) * m_target_pwe;
-      terminal_threshold = m_estimate_finest_q();
-      std::printf("thrd = %e, old thrd = %e\n", terminal_threshold, std::sqrt(3.0) * m_target_pwe);
+      terminal_threshold = std::sqrt(3.0) * m_target_pwe;
+      m_estimate_mse(terminal_threshold);
+      //terminal_threshold = m_estimate_finest_q();
       assert(terminal_threshold > 0.0);
     }
     else {  // FixedPSNR mode
