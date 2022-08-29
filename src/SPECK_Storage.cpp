@@ -274,22 +274,10 @@ auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) const -> RTN
         return RTNType::DontTerminate;
     }
     case CompMode::FixedPWE: {
-      // Encoding terminates when both conditions are met:
-      // 1) the pre-estimated level of quantization is reached, and
-      // 2) the estimated RMSE is less than half of `m_target_pwe`.
-      if (bitplane_idx + 1 >= m_num_bitplanes) {
-        const auto mse = m_estimate_mse();
-        std::printf("after quantization,  mse = %e\n", mse);
-        const auto rmse = std::sqrt(mse);
-        std::printf("est. rmse = %.2e, target rmse = %.2e\n", rmse, m_target_pwe * 0.5);
-        // if (rmse < m_target_pwe * 0.5)
+      if (bitplane_idx + 1 >= m_num_bitplanes)
         return RTNType::PWEAlmostReached;
-        // else
-        //   return RTNType::DontTerminate;
-      }
-      else {
+      else
         return RTNType::DontTerminate;
-      }
     }
     default:
       // This is the fixed-size mode, which should always not terminate.
@@ -331,7 +319,7 @@ auto sperr::SPECK_Storage::m_estimate_mse() const -> double
   return mse;
 }
 
-auto sperr::SPECK_Storage::m_estimate_mse(double q) const -> double
+auto sperr::SPECK_Storage::m_estimate_rmse(double q) const -> double
 {
   const auto half_q = q * 0.5;
   const auto len = m_coeff_buf.size();
@@ -358,17 +346,47 @@ auto sperr::SPECK_Storage::m_estimate_mse(double q) const -> double
   const auto total_sum = std::accumulate(tmp_buf.cbegin(), tmp_buf.cend(), 0.0);
   const auto mse = total_sum / static_cast<double>(len);
 
-  std::printf("before quantization, mse = %e\n", mse);
-
-  return mse;
+  return std::sqrt(mse);
 }
 
 auto sperr::SPECK_Storage::m_estimate_finest_q() const -> double
 {
   if (m_mode_cache != CompMode::FixedPWE)
     return 0.0;
-  else
-    return 0.0;
+
+  const auto rmse_high = m_target_pwe * 0.5; // 2 sigma, 4.55%
+  auto q = 2 * std::sqrt(3.0) * 0.4 * m_target_pwe; // 2.5 sigma, 1.24%
+  while (m_estimate_rmse(q) > rmse_high)
+    q /= 1.5;
+
+  //auto q_min = 0.0;
+  //auto q_max = q * 2.0;
+  //while (m_estimate_rmse(q_max) < rmse_low)
+  //  q_max *= 2.0;
+  //const int n_itr = 16;
+  //for (int itr = 0; itr < n_itr; itr++) {
+  //  const auto rmse = m_estimate_rmse(q);
+  //  if (rmse < rmse_low)
+  //    q_min = q;
+  //  else if (rmse >= rmse_high)
+  //    q_max = q;
+  //  else {
+  //    std::printf("Meet requirement at itr = %d, final q = %.2e\n", itr, q);
+  //    break;
+  //  }
+  //  if (itr == n_itr - 1)
+  //    std::printf("Not meet requirement at itr = %d\n", itr);
+
+  //  q = (q_min + q_max) * 0.5;
+  //}
+
+  return q;
+
+
+
+
+
+
 
   // const auto total_vals_d = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
   // Iteration 1, didn't work too well
