@@ -351,85 +351,25 @@ auto sperr::SPECK_Storage::m_estimate_rmse(double q) const -> double
 
 auto sperr::SPECK_Storage::m_estimate_finest_q() const -> double
 {
-  if (m_mode_cache != CompMode::FixedPWE)
+  if (m_mode_cache == CompMode::FixedPWE) {
+    const auto rmse_high = m_target_pwe * 0.5;         // 2 sigma, 4.55%
+    auto q = 2 * std::sqrt(3.0) * 0.4 * m_target_pwe;  // 2.5 sigma, 1.24%
+
+    while (m_estimate_rmse(q) > rmse_high)
+      q /= std::sqrt(2.0);
+
+    return q;
+  }
+  else if (m_mode_cache == CompMode::FixedPSNR) {
+    // Note: based on Peter's estimation method, to achieved the target PSNR, the terminal
+    //       quantization threshold should be (2.0 * sqrt(3.0) * rmse).
+    const auto t_mse = (m_data_range * m_data_range) * std::pow(10.0, -m_target_psnr / 10.0);
+    const auto t_rmse = sqrt(t_mse);
+    auto q = 2.0 * std::sqrt(t_mse * 3.0);
+    while (m_estimate_rmse(q) > t_rmse)
+      q /= std::sqrt(2.0);
+    return q;
+  }
+  else
     return 0.0;
-
-  const auto rmse_high = m_target_pwe * 0.5; // 2 sigma, 4.55%
-  auto q = 2 * std::sqrt(3.0) * 0.4 * m_target_pwe; // 2.5 sigma, 1.24%
-  while (m_estimate_rmse(q) > rmse_high)
-    q /= 1.5;
-
-  //auto q_min = 0.0;
-  //auto q_max = q * 2.0;
-  //while (m_estimate_rmse(q_max) < rmse_low)
-  //  q_max *= 2.0;
-  //const int n_itr = 16;
-  //for (int itr = 0; itr < n_itr; itr++) {
-  //  const auto rmse = m_estimate_rmse(q);
-  //  if (rmse < rmse_low)
-  //    q_min = q;
-  //  else if (rmse >= rmse_high)
-  //    q_max = q;
-  //  else {
-  //    std::printf("Meet requirement at itr = %d, final q = %.2e\n", itr, q);
-  //    break;
-  //  }
-  //  if (itr == n_itr - 1)
-  //    std::printf("Not meet requirement at itr = %d\n", itr);
-
-  //  q = (q_min + q_max) * 0.5;
-  //}
-
-  return q;
-
-
-
-
-
-
-
-  // const auto total_vals_d = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
-  // Iteration 1, didn't work too well
-  // const auto sqrt3 = std::sqrt(3.0);
-  // double p = 0.0;
-  // double q = sqrt3 * m_target_pwe / std::sqrt(p * 3.0 + 1.0);
-  // for (int i = 0; i < 10; i++) {
-  //   auto cnt = std::count_if(m_coeff_buf.cbegin(), m_coeff_buf.cend(),
-  //                            [q](auto v) { return std::abs(v) < q; });
-  //   auto p_new = static_cast<double>(cnt) / total_vals_d;
-  //   q = sqrt3 * m_target_pwe / std::sqrt(p_new * 3.0 + 1.0);
-  //   if (std::abs(p - p_new) < 0.01) {
-  //     std::printf("p * 100 = %.2f\n", p_new * 100.0);
-  //     break;
-  //   }
-  //   else
-  //     p = p_new;
-  // }
-
-  // const auto tmse = m_target_pwe * m_target_pwe * 0.25;
-  // const auto converge_thrd = tmse * 1e-3;
-  // const auto var = sperr::calc_variance(m_coeff_buf.data(), m_coeff_buf.size());
-  // const auto sigma = std::sqrt(var);
-  // const auto b = sigma / std::sqrt(2.0);
-  // auto qmin = 0.0, q = 0.0;
-  // auto qmax = m_target_pwe * 4.0;
-
-  // for (size_t i = 0; i < 1024; i++) {
-  //   q = (qmin + qmax) * 0.5;
-  //   const auto h = std::exp(q / b);
-  //   const auto emse = 2.0 * b * (b + q / (1.0 - h)) - q * (0.75 * q + b) / h;
-  //   if (std::abs(tmse - emse) < converge_thrd) {
-  //     std::printf("%lu, %.4e, %.4e, %.4e, %.4e, %.4e\n",
-  //                 i, m_target_pwe, tmse, emse, sigma, q);
-  //     break;
-  //   }
-  //   else if (emse > tmse)
-  //     qmax = q;
-  //   else
-  //     qmin = q;
-
-  //  if (i == 1023)
-  //    std::printf("!!Failed to converge!!\n");
-  //}
-  // return q;
 }

@@ -78,14 +78,7 @@ auto sperr::SPECK2D::encode() -> RTNType
   // See `SPECK3D.cpp:encode()` for more discussion on the starting threshold.
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
   if (m_mode_cache == CompMode::FixedPWE || m_mode_cache == CompMode::FixedPSNR) {
-    auto terminal_threshold = 0.0;
-    if (m_mode_cache == CompMode::FixedPWE)
-      terminal_threshold = std::sqrt(3.0) * m_target_pwe;
-    else {  // FixedPSNR mode
-      const auto mse = (m_data_range * m_data_range) * std::pow(10.0, -m_target_psnr / 10.0);
-      terminal_threshold = 1.5 * std::sqrt(mse * 3.0);
-    }
-
+    const auto terminal_threshold = m_estimate_finest_q();
     auto max_t = terminal_threshold;
     m_num_bitplanes = 1;
     while (max_t * 2.0 < max_coeff) {
