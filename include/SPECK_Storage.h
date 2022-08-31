@@ -54,7 +54,6 @@ class SPECK_Storage {
   size_t m_encode_budget = 0;
   size_t m_LSP_mask_sum = 0;           // Number of TRUE values in `m_LSP_mask`
   size_t m_bit_idx = 0;                // Used for decode. Which bit we're at?
-  size_t m_num_bitplanes = 0;          // In PWE and PSNR mode, the estimate number of bitplanes
   float m_max_threshold_f = 0.0;       // float representation of max threshold
   double m_data_range = sperr::max_d;  // range of data before DWT
   double m_target_pwe = 0.0;           // used in fixed-PWE mode
@@ -79,7 +78,8 @@ class SPECK_Storage {
   dims_type m_dims = {0, 0, 0};     // Dimension of the 2D/3D volume
 
   // In fixed-pwe mode, keep track of would-be quantized coefficient values.
-  //
+  // These values are reconstructed exactly the same way as if during decompression.
+  // Other mathematically equivalent methods would however not give the same values.
   std::vector<double> m_qz_coeff;
 
   //
@@ -89,12 +89,7 @@ class SPECK_Storage {
   auto m_refinement_pass_encode() -> RTNType;
   auto m_refinement_pass_decode() -> RTNType;
 
-  auto m_termination_check(size_t bitplane_idx) const -> RTNType;
-  auto m_estimate_mse() const -> double;
   auto m_estimate_rmse(double q) const -> double;
-
-  // In fixed-PWE mode, estimate the finest level of quantization based on
-  // `m_target_pwe` and the wavelet coefficients.
   auto m_estimate_finest_q() const -> double;
 };
 
