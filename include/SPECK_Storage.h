@@ -81,7 +81,6 @@ class SPECK_Storage {
   // These values are reconstructed exactly the same way as if during decompression.
   // Other mathematically equivalent methods would however not give the same values.
   std::vector<double> m_qz_coeff;
-  std::vector<double> m_qz_coeff2;
 
   //
   // Member methods
@@ -92,7 +91,6 @@ class SPECK_Storage {
 
   auto m_estimate_rmse(double q) const -> double;
   auto m_estimate_finest_q() const -> double;
-  void m_save_quantized_coeff(double max_t, size_t num_bitplanes);
 };
 
 };  // namespace sperr
