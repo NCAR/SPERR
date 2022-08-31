@@ -52,6 +52,13 @@ auto sperr::SPECK_Storage::view_data() const -> const vecd_type&
 
 auto sperr::SPECK_Storage::release_quantized_coeff() -> vecd_type&&
 {
+  for (size_t i = 0; i < m_qz_coeff.size(); i++) {
+    auto diff = std::abs(m_qz_coeff[i] - m_qz_coeff2[i]);
+    if (diff > 1e-4)
+      std::printf("i = %lu, diff = %.4e\n", i, diff); 
+  }
+
+
   if (!m_qz_coeff.empty()) {
     assert(m_qz_coeff.size() == m_sign_array.size());
     const auto tmp = d2_type{-1.0, 1.0};
@@ -307,3 +314,16 @@ auto sperr::SPECK_Storage::m_estimate_finest_q() const -> double
   else
     return 0.0;
 }
+
+void sperr::SPECK_Storage::m_save_quantized_coeff(double max_t, size_t num_bitplanes)
+{
+  auto q = max_t;
+  for (size_t i = 1; i < num_bitplanes; i++)
+    q *= 0.5;
+
+  m_qz_coeff2.resize(m_coeff_buf.size());
+  std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_qz_coeff2.begin(),
+    [q](auto v){ if (v < q) return 0.0;
+                 else return (std::floor(v / q) + 0.5) * q; });
+}
+

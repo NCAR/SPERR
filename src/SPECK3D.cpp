@@ -102,6 +102,7 @@ auto sperr::SPECK3D::encode() -> RTNType
     m_max_threshold_f = static_cast<float>(std::pow(2.0, max_coeff_bit));
   }
   m_threshold = static_cast<double>(m_max_threshold_f);
+  m_save_quantized_coeff(m_threshold, num_bitplanes);
 
   auto rtn = RTNType::Good;
   for (size_t bitplane = 0; bitplane < num_bitplanes; bitplane++) {
