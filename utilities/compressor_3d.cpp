@@ -71,10 +71,6 @@ int main(int argc, char* argv[])
 
   CLI11_PARSE(app, argc, argv);
 
-  //pwe = 4.15566 / std::exp2(pwe);
-  pwe = 2494.37 / std::exp2(pwe);
-  std::cout << "Real pwe = " << pwe << std::endl;
-
   // Make sure that we have a valid compression mode
   auto bit_budget = sperr::max_size;
   if (bpp != sperr::max_d)
