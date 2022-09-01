@@ -59,10 +59,6 @@ enum class RTNType {
   QzModeMismatch,
   SetBPPBeforeDims,
   DataRangeNotSet,
-  QzLevelReached,    // Not an error, just a termination condition
-  PSNRReached,       // Not an error, just a termination condition
-  PWEAlmostReached,  // Not an error, just a termination condition
-  DontTerminate,     // Not an error, just saying don't terminate
   CompModeUnknown,
   Error
 };

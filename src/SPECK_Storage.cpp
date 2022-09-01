@@ -253,51 +253,9 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
   return RTNType::Good;
 }
 
-auto sperr::SPECK_Storage::m_termination_check(size_t bitplane_idx) const -> RTNType
+auto sperr::SPECK_Storage::m_estimate_rmse(double q) const -> double
 {
-  assert(m_mode_cache != CompMode::Unknown);
-
-  switch (m_mode_cache) {
-    case CompMode::FixedPSNR: {
-      // Encoding terminates when both conditions are met:
-      // 1) the pre-estimated level of quantization is reached, and
-      // 2) the estimated PSNR is bigger than `m_target_psnr`.
-      if (bitplane_idx + 1 >= m_num_bitplanes) {
-        const auto mse = m_estimate_mse();
-        const auto psnr = std::log10(m_data_range * m_data_range / mse) * 10.0;
-        if (psnr > m_target_psnr)
-          return RTNType::PSNRReached;
-        else
-          return RTNType::DontTerminate;
-      }
-      else
-        return RTNType::DontTerminate;
-    }
-    case CompMode::FixedPWE: {
-      // Encoding terminates when both conditions are met:
-      // 1) the pre-estimated level of quantization is reached, and
-      // 2) the estimated RMSE is less than half of `m_target_pwe`.
-      if (bitplane_idx + 1 >= m_num_bitplanes) {
-        const auto mse = m_estimate_mse();
-        const auto rmse = std::sqrt(mse);
-        if (rmse < m_target_pwe * 0.5)
-          return RTNType::PWEAlmostReached;
-        else
-          return RTNType::DontTerminate;
-      }
-      else {
-        return RTNType::DontTerminate;
-      }
-    }
-    default:
-      // This is the fixed-size mode, which should always not terminate.
-      return RTNType::DontTerminate;
-  }
-}
-
-auto sperr::SPECK_Storage::m_estimate_mse() const -> double
-{
-  const auto half_t = m_threshold * 0.5;
+  const auto half_q = q * 0.5;
   const auto len = m_coeff_buf.size();
   const size_t stride_size = 4096;
   const size_t num_strides = len / stride_size;
@@ -305,38 +263,47 @@ auto sperr::SPECK_Storage::m_estimate_mse() const -> double
   auto tmp_buf = vecd_type(num_strides + 1);
 
   for (size_t i = 0; i < num_strides; i++) {
-    tmp_buf[i] = 0.0;
-    for (size_t j = i * stride_size; j < (i + 1) * stride_size; j++) {
-      auto diff = m_coeff_buf[j];
-#if __cplusplus >= 202002L
-      if (m_LSP_mask[j]) [[likely]]
-#else
-      if (m_LSP_mask[j])
-#endif
-      {
-        diff = std::remainder(m_coeff_buf[j] + half_t, m_threshold);
-      }
-      tmp_buf[i] += diff * diff;
-    }
+    const auto beg = m_coeff_buf.cbegin() + i * stride_size;
+    tmp_buf[i] = std::accumulate(beg, beg + stride_size, 0.0, [half_q, q](auto init, auto v) {
+      auto diff = v >= q ? std::remainder(v + half_q, q) : v;
+      return init + diff * diff;
+    });
   }
 
   // Let's also process the last stride.
   tmp_buf[num_strides] = 0.0;
-  for (size_t j = num_strides * stride_size; j < len; j++) {
-    auto diff = m_coeff_buf[j];
-#if __cplusplus >= 202002L
-    if (m_LSP_mask[j]) [[likely]]
-#else
-    if (m_LSP_mask[j])
-#endif
-    {
-      diff = std::remainder(m_coeff_buf[j] + half_t, m_threshold);
-    }
-    tmp_buf[num_strides] += diff * diff;
-  }
-
+  tmp_buf[num_strides] = std::accumulate(m_coeff_buf.cbegin() + num_strides * stride_size,
+                                         m_coeff_buf.cend(), 0.0, [half_q, q](auto init, auto v) {
+                                           auto diff = v >= q ? std::remainder(v + half_q, q) : v;
+                                           return init + diff * diff;
+                                         });
   const auto total_sum = std::accumulate(tmp_buf.cbegin(), tmp_buf.cend(), 0.0);
   const auto mse = total_sum / static_cast<double>(len);
 
-  return mse;
+  return std::sqrt(mse);
+}
+
+auto sperr::SPECK_Storage::m_estimate_finest_q() const -> double
+{
+  if (m_mode_cache == CompMode::FixedPWE) {
+    const auto rmse_high = m_target_pwe * 0.5;         // 2 sigma, 4.55%
+    auto q = 2 * std::sqrt(3.0) * 0.4 * m_target_pwe;  // 2.5 sigma, 1.24%
+
+    while (m_estimate_rmse(q) > rmse_high)
+      q /= std::sqrt(2.0);
+
+    return q;
+  }
+  else if (m_mode_cache == CompMode::FixedPSNR) {
+    // Note: based on Peter's estimation method, to achieved the target PSNR, the terminal
+    //       quantization threshold should be (2.0 * sqrt(3.0) * rmse).
+    const auto t_mse = (m_data_range * m_data_range) * std::pow(10.0, -m_target_psnr / 10.0);
+    const auto t_rmse = std::sqrt(t_mse);
+    auto q = 2.0 * std::sqrt(t_mse * 3.0);
+    while (m_estimate_rmse(q) > t_rmse)
+      q /= std::sqrt(2.0);
+    return q;
+  }
+  else
+    return 0.0;
 }

@@ -81,36 +81,22 @@ auto sperr::SPECK3D::encode() -> RTNType
   m_LSP_mask_sum = 0;
 
   // Decide the starting threshold for quantization.
+  size_t num_bitplanes = 128;
   const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
   if (m_mode_cache == CompMode::FixedPWE || m_mode_cache == CompMode::FixedPSNR) {
-    auto terminal_threshold = 0.0;
-    if (m_mode_cache == CompMode::FixedPWE) {
-      // Note: this is Peter's formula, which would yield estimately 4.55% outliers.
-      terminal_threshold = std::sqrt(3.0) * m_target_pwe;
-    }
-    else {  // FixedPSNR mode
-      // Note: based on Peter's estimation method, to achieved the target PSNR, the terminal
-      //       quantization threshold should be (2.0 * sqrt(3.0) * rmse).
-      //       This implementation uses a slightly smaller value so most times we don't need
-      //       to go through another level of quantization.
-      const auto mse = (m_data_range * m_data_range) * std::pow(10.0, -m_target_psnr / 10.0);
-      terminal_threshold = 1.5 * std::sqrt(mse * 3.0);
-    }
-
+    const auto terminal_threshold = m_estimate_finest_q();
     auto max_t = terminal_threshold;
-    m_num_bitplanes = 1;
+    num_bitplanes = 1;
     while (max_t * 2.0 < max_coeff) {
       max_t *= 2.0;
-      m_num_bitplanes++;
+      num_bitplanes++;
     }
     m_max_threshold_f = static_cast<float>(max_t);
   }
   else {  // FixedSize mode
     // When max_coeff is between 0.0 and 1.0, std::log2(max_coeff) will become a
     // negative value. std::floor() will always find the smaller integer value,
-    // which will always reconstruct to a bitplane value that is smaller than
-    // max_coeff. Also, when max_coeff is close to 0.0, std::log2(max_coeff) can
-    // have a pretty big magnitude, so we use int32_t here.
+    // which will always reconstruct to a bitplane value that is smaller than max_coeff.
     //
     const auto max_coeff_bit = std::floor(std::log2(max_coeff));
     m_max_threshold_f = static_cast<float>(std::pow(2.0, max_coeff_bit));
@@ -118,7 +104,7 @@ auto sperr::SPECK3D::encode() -> RTNType
   m_threshold = static_cast<double>(m_max_threshold_f);
 
   auto rtn = RTNType::Good;
-  for (size_t bitplane = 0; bitplane < 128; bitplane++) {
+  for (size_t bitplane = 0; bitplane < num_bitplanes; bitplane++) {
     auto rtn = m_sorting_pass_encode();
     if (rtn == RTNType::BitBudgetMet)
       break;
@@ -128,12 +114,6 @@ auto sperr::SPECK3D::encode() -> RTNType
     if (rtn == RTNType::BitBudgetMet)
       break;
     assert(rtn == RTNType::Good);
-
-    // Examine terminating criteria for fixed QZ, PSNR, PWE modes.
-    rtn = m_termination_check(bitplane);
-    if (rtn != RTNType::DontTerminate) {
-      break;
-    }
 
     m_threshold *= 0.5;
     m_clean_LIS();
