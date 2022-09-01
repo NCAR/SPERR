@@ -298,7 +298,7 @@ auto sperr::SPECK_Storage::m_estimate_finest_q() const -> double
     // Note: based on Peter's estimation method, to achieved the target PSNR, the terminal
     //       quantization threshold should be (2.0 * sqrt(3.0) * rmse).
     const auto t_mse = (m_data_range * m_data_range) * std::pow(10.0, -m_target_psnr / 10.0);
-    const auto t_rmse = sqrt(t_mse);
+    const auto t_rmse = std::sqrt(t_mse);
     auto q = 2.0 * std::sqrt(t_mse * 3.0);
     while (m_estimate_rmse(q) > t_rmse)
       q /= std::sqrt(2.0);
