@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
 
   // Calculate and print statistics
   if (show_stats) {
-    std::cout << "Average bpp = " << stream.size() * 8.0 / total_vals;
+    const auto bpp = stream.size() * 8.0 / total_vals;
 
     // Use a decompressor to decompress and collect error statistics
     SPERR2D_Decompressor decompressor;
@@ -176,17 +176,27 @@ int main(int argc, char* argv[])
       const auto& recover = decompressor.view_data();
       assert(recover.size() * sizeof(double) == orig.size());
       auto stats = sperr::calc_stats(reinterpret_cast<const double*>(orig.data()), recover.data(),
-                                     recover.size(), 0);
-      std::cout << ", PSNR = " << stats[2] << "dB,  L-Infty = " << stats[1];
-      std::printf(", Data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3], stats[4]);
+                                     recover.size());
+      auto var = sperr::calc_variance(reinterpret_cast<const double*>(orig.data()), total_vals);
+      auto sigma = std::sqrt(var);
+      auto gain = std::log2(sigma / stats[0]) - bpp;
+      std::cout << "Average BPP = " << bpp << ", PSNR = " << stats[2]
+                << "dB, L-Infty = " << stats[1] << ", Accuracy Gain = " << gain << std::endl;
+      std::printf("Input data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3],
+                  stats[4]);
     }
     else {
       const auto recover = decompressor.get_data<float>();
       assert(recover.size() * sizeof(float) == orig.size());
       auto stats = sperr::calc_stats(reinterpret_cast<const float*>(orig.data()), recover.data(),
-                                     recover.size(), 0);
-      std::cout << ", PSNR = " << stats[2] << "dB,  L-Infty = " << stats[1];
-      std::printf(", Data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3], stats[4]);
+                                     recover.size());
+      auto var = sperr::calc_variance(reinterpret_cast<const float*>(orig.data()), total_vals);
+      auto sigma = std::sqrt(var);
+      auto gain = std::log2(sigma / stats[0]) - float(bpp);
+      std::cout << "Average BPP = " << bpp << ", PSNR = " << stats[2]
+                << "dB, L-Infty = " << stats[1] << ", Accuracy Gain = " << gain << std::endl;
+      std::printf("Input data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3],
+                  stats[4]);
     }
 
     if (mode == sperr::CompMode::FixedPWE) {

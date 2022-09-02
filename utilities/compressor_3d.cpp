@@ -204,7 +204,7 @@ int main(int argc, char* argv[])
       auto var = sperr::calc_variance(reinterpret_cast<const double*>(orig.data()), total_vals,
                                       omp_num_threads);
       auto sigma = std::sqrt(var);
-      auto gain = std::log2(sigma / stats[1]) - bpp;
+      auto gain = std::log2(sigma / stats[0]) - bpp;
       std::cout << "Average BPP = " << bpp << ", PSNR = " << stats[2]
                 << "dB, L-Infty = " << stats[1] << ", Accuracy Gain = " << gain << std::endl;
       std::printf("Input data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3],
@@ -215,11 +215,10 @@ int main(int argc, char* argv[])
       assert(recover.size() * sizeof(float) == orig.size());
       auto stats = sperr::calc_stats(reinterpret_cast<const float*>(orig.data()), recover.data(),
                                      recover.size(), omp_num_threads);
-
       auto var = sperr::calc_variance(reinterpret_cast<const float*>(orig.data()), total_vals,
                                       omp_num_threads);
       auto sigma = std::sqrt(var);
-      auto gain = std::log2(sigma / stats[1]) - float(bpp);
+      auto gain = std::log2(sigma / stats[0]) - float(bpp);
       std::cout << "Average BPP = " << bpp << ", PSNR = " << stats[2]
                 << "dB, L-Infty = " << stats[1] << ", Accuracy Gain = " << gain << std::endl;
       std::printf("Input data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3],
