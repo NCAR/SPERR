@@ -523,16 +523,22 @@ auto sperr::parse_header(const void* ptr) -> HeaderInfo
 }
 
 template <typename T>
-auto sperr::calc_variance(const T* arr, size_t len) -> T
+auto sperr::calc_variance(const T* arr, size_t len, size_t omp_nthreads) -> T
 {
   if (len == 0)
     return std::numeric_limits<T>::infinity();
+
+#ifdef USE_OMP
+  if (omp_nthreads == 0)
+    omp_nthreads = omp_get_max_threads();
+#endif
 
   const size_t stride_size = 4096;
   const size_t num_strides = len / stride_size;
   auto tmp_buf = std::vector<T>(num_strides + 1);
 
   // First, calculate the mean of this array.
+#pragma omp parallel for num_threads(omp_nthreads)
   for (size_t i = 0; i < num_strides; i++) {
     const T* beg = arr + i * stride_size;
     tmp_buf[i] = std::accumulate(beg, beg + stride_size, T{0.0});
@@ -543,6 +549,7 @@ auto sperr::calc_variance(const T* arr, size_t len) -> T
   const auto mean = elem_sum / static_cast<T>(len);
 
   // Second, calculate the variance.
+#pragma omp parallel for num_threads(omp_nthreads)
   for (size_t i = 0; i < num_strides; i++) {
     const T* beg = arr + i * stride_size;
     tmp_buf[i] = std::accumulate(beg, beg + stride_size, T{0.0}, [mean](auto init, auto v) {
@@ -558,8 +565,8 @@ auto sperr::calc_variance(const T* arr, size_t len) -> T
 
   return var;
 }
-template auto sperr::calc_variance(const float* arr, size_t len) -> float;
-template auto sperr::calc_variance(const double* arr, size_t len) -> double;
+template auto sperr::calc_variance(const float*, size_t, size_t) -> float;
+template auto sperr::calc_variance(const double*, size_t, size_t) -> double;
 
 auto sperr::compression_mode(size_t bit_budget, double psnr, double pwe) -> CompMode
 {
