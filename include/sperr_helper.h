@@ -176,13 +176,6 @@ struct HeaderInfo {
 };
 auto parse_header(const void*) -> HeaderInfo;
 
-// Calculate the mean square error (MSE) of two vectors.
-// In case of empty vectors or vectors of different sizes, it will return
-//   std::numeric_limits<double>::ifinity().
-// The last parameter is a temporary buffer space for this function to use. If this function is
-//   called repeatedly, it helps performance to pass in the same buffer every time.
-auto calc_mse(const vecd_type&, const vecd_type&, vecd_type&) -> double;
-
 // Calculate the variance of a given array.
 // In case of arrays of size zero, it will return std::numeric_limits<T>::infinity().
 template <typename T>

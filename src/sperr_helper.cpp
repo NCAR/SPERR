@@ -522,35 +522,6 @@ auto sperr::parse_header(const void* ptr) -> HeaderInfo
   return header;
 }
 
-auto sperr::calc_mse(const vecd_type& v1, const vecd_type& v2, vecd_type& tmp_buf) -> double
-{
-  const auto infy = std::numeric_limits<double>::infinity();
-  if (v1.empty() || v2.empty() || v1.size() != v2.size())
-    return infy;
-
-  const auto len = v1.size();
-
-  const size_t stride_size = 4096;
-  const size_t num_strides = len / stride_size;
-  tmp_buf.resize(num_strides + 1);
-
-  for (size_t i = 0; i < num_strides; i++) {
-    auto beg1 = v1.cbegin() + i * stride_size;
-    auto beg2 = v2.cbegin() + i * stride_size;
-    tmp_buf[i] = std::inner_product(beg1, beg1 + stride_size, beg2, 0.0, std::plus<>(),
-                                    [](auto a, auto b) { return (a - b) * (a - b); });
-  }
-  tmp_buf[num_strides] = 0.0;
-  tmp_buf[num_strides] = std::inner_product(
-      v1.cbegin() + num_strides * stride_size, v1.cend(), v2.cbegin() + num_strides * stride_size,
-      0.0, std::plus<>(), [](auto a, auto b) { return (a - b) * (a - b); });
-
-  const auto total_sum = std::accumulate(tmp_buf.cbegin(), tmp_buf.cend(), 0.0);
-  const auto mse = total_sum / static_cast<double>(len);
-
-  return mse;
-}
-
 template <typename T>
 auto sperr::calc_variance(const T* arr, size_t len) -> T
 {
