@@ -126,7 +126,7 @@ auto read_n_bytes(std::string filename, size_t n_bytes) -> std::vector<uint8_t>;
 // ret[3] : min of arr1
 // ret[4] : max of arr1
 template <typename T>
-auto calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_nthreads)
+auto calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_nthreads = 0)
     -> std::array<T, 5>;
 
 template <typename T>
@@ -178,8 +178,9 @@ auto parse_header(const void*) -> HeaderInfo;
 
 // Calculate the variance of a given array.
 // In case of arrays of size zero, it will return std::numeric_limits<T>::infinity().
+// In case of `omp_nthreads == 0`, it will use all available OpenMP threads.
 template <typename T>
-auto calc_variance(const T*, size_t) -> T;
+auto calc_variance(const T*, size_t len, size_t omp_nthreads = 0) -> T;
 
 // Decide compression mode based on a collection of parameters.
 auto compression_mode(size_t bit_budget, double psnr, double pwe) -> CompMode;
