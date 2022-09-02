@@ -21,7 +21,7 @@ int sam_read_n_bytes(const char* filename,
   fseek(f, 0, SEEK_END);
   if (ftell(f) < n_bytes) {
     fprintf(stderr, "Error! Input file size error: %s\n", filename);
-    fprintf(stderr, "  Expecting %ld bytes, got %ld bytes.\n", n_bytes, ftell(f));
+    fprintf(stderr, "  Expecting %lu bytes, got %ld bytes.\n", n_bytes, ftell(f));
     fclose(f);
     return 1;
   }

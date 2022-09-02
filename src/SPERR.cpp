@@ -404,10 +404,9 @@ auto sperr::SPERR::m_process_S_decoding(size_t idx1, size_t idx2, size_t& counte
     assert(m_bit_idx < m_bit_buffer.size());
   }
 
-  auto& set = m_LIS[idx1][idx2];
-
   if (is_sig) {
     counter++;
+    auto& set = m_LIS[idx1][idx2];
     if (set.length == 1) {  // This is a pixel
       // We recovered the location of another outlier!
       m_LOS.emplace_back(set.start, m_threshold * 1.5);
