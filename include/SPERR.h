@@ -50,12 +50,10 @@ class SPERR {
   // Output
   auto release_outliers() -> std::vector<Outlier>&&;  // Release ownership of decoded outliers
   auto view_outliers() -> const std::vector<Outlier>&;
-  auto num_of_outliers() const -> size_t;  // How many outliers are decoded?
-
   auto get_encoded_bitstream() -> std::vector<uint8_t>;
   auto parse_encoded_bitstream(const void*, size_t) -> RTNType;
 
-  // Given a SPERR stream, tell how long the speck stream is.
+  // Given a SPERR stream, tell how long the sperr stream is.
   auto get_sperr_stream_size(const void*) const -> uint64_t;
 
   // Action methods
@@ -73,7 +71,7 @@ class SPERR {
   auto m_ready_to_decode() const -> bool;
 
   // If the set to be decided is significant, return a pair containing true and
-  //   the index in the outlier list that makes it significant.
+  // the index in the outlier list that makes it significant.
   // If not, return a pair containing false and zero.
   auto m_decide_significance(const SPECKSet1D&) const -> std::pair<bool, size_t>;
 
@@ -98,7 +96,7 @@ class SPERR {
   uint64_t m_total_len = 0;  // 1D array length
   double m_tolerance = 0.0;  // Error tolerance.
   float m_max_threshold_f = 0.0;
-  const size_t m_header_size = 20;  // in bytes
+  const size_t m_header_size = 20;
 
   size_t m_outlier_cnt = 0;   // How many data points are still exceeding the tolerance?
   double m_threshold = 0.0;   // Threshold that's used for quantization

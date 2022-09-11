@@ -447,11 +447,6 @@ auto sperr::SPERR::m_refinement_decoding() -> bool
   return false;
 }
 
-auto sperr::SPERR::num_of_outliers() const -> size_t
-{
-  return m_LOS.size();
-}
-
 auto sperr::SPERR::get_encoded_bitstream() -> std::vector<uint8_t>
 {
   // Header definition:
