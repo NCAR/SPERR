@@ -362,7 +362,7 @@ TEST(speck2d, constant)
   EXPECT_EQ(rtn, 0);
   auto psnr = tester.get_psnr();
   auto lmax = tester.get_lmax();
-  auto infty = std::numeric_limits<float>::infinity();
+  auto infty = std::numeric_limits<double>::infinity();
   EXPECT_EQ(psnr, infty);
   EXPECT_EQ(lmax, 0.0f);
 }
