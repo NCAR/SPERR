@@ -75,20 +75,15 @@ class SPERR {
   // If not, return a pair containing false and zero.
   auto m_decide_significance(const SPECKSet1D&) const -> std::pair<bool, size_t>;
 
-  // For the following encoding methods that return a boolean,
-  // True means that all outliers are refined to be within the tolerance
-  // False means otherwise.
-  auto m_process_S_encoding(size_t idx1, size_t idx2, size_t& counter, bool output) -> bool;
-  auto m_code_S(size_t, size_t) -> bool;
-  auto m_sorting_pass() -> bool;  // Used in both encoding and decoding
-  auto m_refinement_pass_encoding() -> bool;
-  auto m_refinement_new_SP(size_t) -> bool;  // Refine a new Significant Pixel (encoding only).
+  // Encoding methods
+  void m_process_S_encoding(size_t idx1, size_t idx2, size_t& counter, bool output);
+  void m_refinement_pass_encoding();
+  void m_sorting_pass();          // Used in both encoding and decoding
+  void m_code_S(size_t, size_t);  // Used in both encoding and decoding
 
-  // For the following decoding methods that return a boolean,
-  // True means that all bits are processed and decoding finishes,
-  // False means otherwise.
-  auto m_process_S_decoding(size_t idx1, size_t idx2, size_t& counter, bool input) -> bool;
-  auto m_refinement_decoding() -> bool;
+  // Decoding methods
+  void m_process_S_decoding(size_t idx1, size_t idx2, size_t& counter, bool input);
+  void m_refinement_pass_decoding();
 
   //
   // Private data members
@@ -98,23 +93,21 @@ class SPERR {
   float m_max_threshold_f = 0.0;
   const size_t m_header_size = 20;
 
-  size_t m_outlier_cnt = 0;   // How many data points are still exceeding the tolerance?
   double m_threshold = 0.0;   // Threshold that's used for quantization
   bool m_encode_mode = true;  // Encode (true) or Decode (false) mode?
   size_t m_bit_idx = 0;       // decoding only. Which bit we're at?
   size_t m_LOS_size = 0;      // decoding only. Size of `m_LOS` at the end of an iteration.
+  size_t m_num_itrs = 0;      // encoding only. Number of iterations.
 
   std::vector<bool> m_bit_buffer;
-  std::vector<Outlier> m_LOS;     // List of OutlierS. This list is not altered when encoding,
-                                  // but constantly updated when decoding.
-  std::vector<double> m_q;        // encoding only. This list is refined in the refinement pass.
-  std::vector<double> m_err_hat;  // encoding only. This list contains values
-                                  // that would be reconstructed.
+  std::vector<double> m_q;     // encoding only. This list is refined in the refinement pass.
+  std::vector<Outlier> m_LOS;  // List of OutlierS. This list is not altered when encoding,
+                               // but constantly updated when decoding.
 
-  std::vector<bool> m_recovered_signs;  // decoding only
   std::vector<size_t> m_LSP_new;        // encoding only
   std::vector<size_t> m_LSP_old;        // encoding only
   std::vector<bool> m_sig_map;          // encoding only
+  std::vector<bool> m_recovered_signs;  // decoding only
 
   std::vector<std::vector<SPECKSet1D>> m_LIS;
 };

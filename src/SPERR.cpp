@@ -142,30 +142,28 @@ auto sperr::SPERR::encode() -> RTNType
   m_encode_mode = true;
 
   m_initialize_LIS();
-  m_outlier_cnt = m_LOS.size();  // Initially everyone in LOS is an outlier
 
   // `m_q` is initialized to have the absolute value of all error.
   m_q.resize(m_LOS.size());
   std::transform(m_LOS.cbegin(), m_LOS.cend(), m_q.begin(),
-                 [](auto& out) { return std::abs(out.error); });
-
-  // `m_err_hat` is initialized to have zeros.
-  m_err_hat.assign(m_LOS.size(), 0.0);
+                 [](auto out) { return std::abs(out.error); });
 
   m_LSP_new.clear();
   m_LSP_old.clear();
   m_LSP_old.reserve(m_LOS.size());
 
   auto max_q = *(std::max_element(m_q.cbegin(), m_q.cend()));
-  auto terminal_threshold = m_tolerance;
-  auto max_t = terminal_threshold;
-  while (max_t * 2.0 < max_q)
+  auto max_t = m_tolerance * 0.99;  // make the terminal threshold just a tiny bit smaller.
+  m_num_itrs = 1;
+  while (max_t * 2.0 < max_q) {
     max_t *= 2.0;
+    m_num_itrs++;
+  }
   m_max_threshold_f = static_cast<float>(max_t);
   m_threshold = static_cast<double>(m_max_threshold_f);
 
   // Start the iterations!
-  for (size_t bitplane = 0; bitplane < 64; bitplane++) {
+  for (size_t bitplane = 0; bitplane < m_num_itrs; bitplane++) {
     // Reset the significance map
     m_sig_map.assign(m_total_len, false);
     for (size_t i = 0; i < m_LOS.size(); i++) {
@@ -173,10 +171,8 @@ auto sperr::SPERR::encode() -> RTNType
         m_sig_map[m_LOS[i].location] = true;
     }
 
-    if (m_sorting_pass())
-      break;
-    if (m_refinement_pass_encoding())
-      break;
+    m_sorting_pass();
+    m_refinement_pass_encoding();
 
     m_threshold *= 0.5;
     m_clean_LIS();
@@ -201,13 +197,16 @@ auto sperr::SPERR::decode() -> RTNType
   m_threshold = static_cast<double>(m_max_threshold_f);
 
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
-    if (m_sorting_pass())
-      break;
-    if (m_refinement_decoding())
-      break;
+    m_sorting_pass();
+    m_refinement_pass_decoding();
 
     m_threshold *= 0.5;
     m_clean_LIS();
+
+    if (m_bit_idx >= m_bit_buffer.size()) {
+      assert(m_bit_idx == m_bit_buffer.size());
+      break;
+    }
   }
 
   // Put restored values in m_LOS with proper signs
@@ -248,8 +247,7 @@ auto sperr::SPERR::m_decide_significance(const SPECKSet1D& set) const -> std::pa
   return sig;
 }
 
-auto sperr::SPERR::m_process_S_encoding(size_t idx1, size_t idx2, size_t& counter, bool output)
-    -> bool
+void sperr::SPERR::m_process_S_encoding(size_t idx1, size_t idx2, size_t& counter, bool output)
 {
   auto& set = m_LIS[idx1][idx2];
   auto [is_sig, sig_idx] = m_decide_significance(set);
@@ -265,23 +263,17 @@ auto sperr::SPERR::m_process_S_encoding(size_t idx1, size_t idx2, size_t& counte
     if (set.length == 1) {                                  // Is a pixel
       m_bit_buffer.push_back(m_LOS[sig_idx].error >= 0.0);  // Record its sign
       m_LSP_new.push_back(sig_idx);
-
-      // Refine this pixel!
-      if (m_refinement_new_SP(sig_idx))
-        return true;
+      m_q[sig_idx] -= m_threshold;
     }
     else {  // Not a pixel
-      if (m_code_S(idx1, idx2))
-        return true;
+      m_code_S(idx1, idx2);
     }
 
     set.type = SetType::Garbage;
   }
-
-  return false;
 }
 
-auto sperr::SPERR::m_code_S(size_t idx1, size_t idx2) -> bool
+void sperr::SPERR::m_code_S(size_t idx1, size_t idx2)
 {
   auto sets = m_part_set(m_LIS[idx1][idx2]);
   size_t counter = 0;
@@ -292,14 +284,10 @@ auto sperr::SPERR::m_code_S(size_t idx1, size_t idx2) -> bool
     auto newi1 = s1.part_level;
     m_LIS[newi1].emplace_back(s1);
     auto newi2 = m_LIS[newi1].size() - 1;
-    if (m_encode_mode) {
-      if (m_process_S_encoding(newi1, newi2, counter, true))
-        return true;
-    }
-    else {
-      if (m_process_S_decoding(newi1, newi2, counter, true))
-        return true;
-    }
+    if (m_encode_mode)
+      m_process_S_encoding(newi1, newi2, counter, true);
+    else
+      m_process_S_decoding(newi1, newi2, counter, true);
   }
 
   // Process the 2nd set
@@ -312,96 +300,47 @@ auto sperr::SPERR::m_code_S(size_t idx1, size_t idx2) -> bool
     // If the 1st set wasn't significant, then the 2nd set must be significant,
     // thus don't need to output/input this information.
     bool IO = (counter == 0 ? false : true);
-    if (m_encode_mode) {
-      if (m_process_S_encoding(newi1, newi2, counter, IO))
-        return true;
-    }
-    else {
-      if (m_process_S_decoding(newi1, newi2, counter, IO))
-        return true;
-    }
+    if (m_encode_mode)
+      m_process_S_encoding(newi1, newi2, counter, IO);
+    else
+      m_process_S_decoding(newi1, newi2, counter, IO);
   }
-
-  return false;
 }
 
-auto sperr::SPERR::m_sorting_pass() -> bool
+void sperr::SPERR::m_sorting_pass()
 {
   size_t dummy = 0;
   for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
     size_t idx1 = m_LIS.size() - tmp;
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
-      if (m_encode_mode) {
-        if (m_process_S_encoding(idx1, idx2, dummy, true))
-          return true;
-      }
-      else {
-        if (m_process_S_decoding(idx1, idx2, dummy, true))
-          return true;
-      }
+      if (m_encode_mode)
+        m_process_S_encoding(idx1, idx2, dummy, true);
+      else
+        m_process_S_decoding(idx1, idx2, dummy, true);
     }
   }
-
-  return false;
 }
 
-auto sperr::SPERR::m_refinement_pass_encoding() -> bool
+void sperr::SPERR::m_refinement_pass_encoding()
 {
   for (auto idx : m_LSP_old) {
-    // First test if this pixel is still an outlier
-    // Note that every refinement pass generates exactly 1 bit for each pixel in
-    // `m_LSP_old` no matter if that pixel value is within error tolerance or not.
-    auto diff = m_err_hat[idx] - std::abs(m_LOS[idx].error);
-    auto was_outlier = std::abs(diff) >= m_tolerance;
     auto need_refine = m_q[idx] >= m_threshold;
     m_bit_buffer.push_back(need_refine);
     if (need_refine)
       m_q[idx] -= m_threshold;
-
-    // If this pixel was an outlier, we test again!
-    if (was_outlier) {
-      m_err_hat[idx] += need_refine ? m_threshold * 0.5 : m_threshold * -0.5;
-      diff = m_err_hat[idx] - std::abs(m_LOS[idx].error);
-      auto is_outlier = std::abs(diff) >= m_tolerance;
-      if (!is_outlier) {
-        m_outlier_cnt--;
-        if (m_outlier_cnt == 0)
-          return true;
-      }
-    }
   }
 
   // Now attach content from `m_LSP_new` to the end of `m_LSP_old`.
   m_LSP_old.insert(m_LSP_old.end(), m_LSP_new.begin(), m_LSP_new.end());
   m_LSP_new.clear();
-
-  return false;
 }
 
-auto sperr::SPERR::m_refinement_new_SP(size_t idx) -> bool
-{
-  m_q[idx] -= m_threshold;
-
-  m_err_hat[idx] = m_threshold * 1.5;
-
-  // Because a NewlySig pixel must be an outlier previously, so we only need to
-  // test if it is currently an outlier.
-  auto diff = m_err_hat[idx] - std::abs(m_LOS[idx].error);
-  auto is_outlier = std::abs(diff) >= m_tolerance;
-  if (!is_outlier)
-    m_outlier_cnt--;
-
-  return (m_outlier_cnt == 0);
-}
-
-auto sperr::SPERR::m_process_S_decoding(size_t idx1, size_t idx2, size_t& counter, bool input)
-    -> bool
+void sperr::SPERR::m_process_S_decoding(size_t idx1, size_t idx2, size_t& counter, bool input)
 {
   bool is_sig = true;
   if (input) {
     is_sig = m_bit_buffer[m_bit_idx++];
-    // Sanity check: the bit buffer should NOT be depleted at this point
-    assert(m_bit_idx < m_bit_buffer.size());
+    assert(m_bit_idx <= m_bit_buffer.size());
   }
 
   if (is_sig) {
@@ -412,39 +351,30 @@ auto sperr::SPERR::m_process_S_decoding(size_t idx1, size_t idx2, size_t& counte
       m_LOS.emplace_back(set.start, m_threshold * 1.5);
       m_recovered_signs.push_back(m_bit_buffer[m_bit_idx++]);
 
-      // The bit buffer CAN be depleted at this point, so let's do a test
-      if (m_bit_idx == m_bit_buffer.size())
-        return true;
+      assert(m_bit_idx <= m_bit_buffer.size());
     }
     else {
-      if (m_code_S(idx1, idx2))
-        return true;
+      m_code_S(idx1, idx2);
     }
 
     set.type = SetType::Garbage;
   }
-
-  return false;
 }
 
-auto sperr::SPERR::m_refinement_decoding() -> bool
+void sperr::SPERR::m_refinement_pass_decoding()
 {
   // Refine significant pixels from previous iterations only,
   //   because pixels added from this iteration are already refined.
+  assert(m_bit_idx + m_LOS_size <= m_bit_buffer.size());
   for (size_t idx = 0; idx < m_LOS_size; idx++) {
     if (m_bit_buffer[m_bit_idx++])
       m_LOS[idx].error += m_threshold * 0.5;
     else
       m_LOS[idx].error -= m_threshold * 0.5;
-
-    if (m_bit_idx == m_bit_buffer.size())
-      return true;
   }
 
   // Record the size of `m_LOS` after this iteration.
   m_LOS_size = m_LOS.size();
-
-  return false;
 }
 
 auto sperr::SPERR::get_encoded_bitstream() -> std::vector<uint8_t>
