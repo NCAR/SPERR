@@ -286,13 +286,8 @@ auto sperr::SPECK_Storage::m_estimate_rmse(double q) const -> double
 auto sperr::SPECK_Storage::m_estimate_finest_q() const -> double
 {
   if (m_mode_cache == CompMode::FixedPWE) {
-    const auto rmse_high = m_target_pwe * 0.5;         // 2 sigma, 4.55%
-    auto q = 2 * std::sqrt(3.0) * 0.4 * m_target_pwe;  // 2.5 sigma, 1.24%
-
-    while (m_estimate_rmse(q) > rmse_high)
-      q /= std::sqrt(2.0);
-
-    return q;
+    // Most recent tests show that q = 1.5 t is a pretty good estimation.
+    return m_target_pwe * 1.5;
   }
   else if (m_mode_cache == CompMode::FixedPSNR) {
     // Note: based on Peter's estimation method, to achieved the target PSNR, the terminal
@@ -301,7 +296,7 @@ auto sperr::SPECK_Storage::m_estimate_finest_q() const -> double
     const auto t_rmse = std::sqrt(t_mse);
     auto q = 2.0 * std::sqrt(t_mse * 3.0);
     while (m_estimate_rmse(q) > t_rmse)
-      q /= std::sqrt(2.0);
+      q /= std::pow(2.0, 0.25);  // Four adjustments would effectively halve q.
     return q;
   }
   else

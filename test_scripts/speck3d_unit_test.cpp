@@ -20,9 +20,9 @@ class speck_tester_omp {
 
   void prefer_chunk_dims(sperr::dims_type dims) { m_chunk_dims = dims; }
 
-  float get_psnr() const { return m_psnr; }
+  double get_psnr() const { return m_psnr; }
 
-  float get_lmax() const { return m_lmax; }
+  double get_lmax() const { return m_lmax; }
 
   //
   // Execute the compression/decompression pipeline. Return 0 on success
@@ -86,15 +86,15 @@ class speck_tester_omp {
       return 1;
     if (decompressor.decompress(stream.data()) != RTNType::Good)
       return 1;
-    auto vol = decompressor.get_data<float>();
+    const auto& vol = decompressor.view_data();
     if (vol.size() != total_vals)
       return 1;
 
     //
     // Compare results
     //
-    const size_t nbytes = sizeof(float) * total_vals;
-    auto orig = sperr::read_whole_file<float>(m_input_name);
+    auto orig = sperr::vecd_type(total_vals);
+    std::copy(in_buf.cbegin(), in_buf.cend(), orig.begin());
 
     auto ret = sperr::calc_stats(orig.data(), vol.data(), total_vals, 8);
     m_psnr = ret[2];
@@ -108,7 +108,7 @@ class speck_tester_omp {
   sperr::dims_type m_dims = {0, 0, 0};
   sperr::dims_type m_chunk_dims = {64, 64, 64};
   std::string m_output_name = "output.tmp";
-  float m_psnr, m_lmax;
+  double m_psnr, m_lmax;
   size_t m_num_t;
 };
 
@@ -143,7 +143,7 @@ TEST(speck3d_constant, omp_chunks)
   EXPECT_EQ(rtn, 0);
   auto psnr = tester.get_psnr();
   auto lmax = tester.get_lmax();
-  auto infty = std::numeric_limits<float>::infinity();
+  auto infty = std::numeric_limits<double>::infinity();
   EXPECT_EQ(psnr, infty);
   EXPECT_EQ(lmax, 0.0f);
 }
@@ -160,7 +160,7 @@ TEST(speck3d_target_pwe, small)
 
   auto pwe = double{0.741};
   tester.execute(bpp, target_psnr, pwe);
-  float lmax = tester.get_lmax();
+  auto lmax = tester.get_lmax();
   EXPECT_LE(lmax, pwe);
 
   pwe = 0.37;
@@ -188,7 +188,7 @@ TEST(speck3d_target_pwe, small_data_range)
 
   auto pwe = double{1.5e-7};
   tester.execute(bpp, target_psnr, pwe);
-  float lmax = tester.get_lmax();
+  auto lmax = tester.get_lmax();
   EXPECT_LE(lmax, pwe);
 
   pwe = 7.3e-7;
@@ -211,7 +211,7 @@ TEST(speck3d_target_pwe, big)
 
   double pwe = 0.92;
   tester.execute(bpp, target_psnr, pwe);
-  float lmax = tester.get_lmax();
+  auto lmax = tester.get_lmax();
   EXPECT_LE(lmax, pwe);
 
   pwe = 0.45;
@@ -227,7 +227,7 @@ TEST(speck3d_target_pwe, big)
   pwe = 0.018;
   tester.execute(bpp, target_psnr, pwe);
   lmax = tester.get_lmax();
-  EXPECT_LE(lmax, pwe * 1.0001);  // An example of double->float conversion caused issue.
+  EXPECT_LE(lmax, pwe);
 }
 
 //
@@ -242,8 +242,8 @@ TEST(speck3d_target_psnr, small)
 
   auto target_psnr = 90.0;
   tester.execute(bpp, target_psnr, pwe);
-  float psnr = tester.get_psnr();
-  float lmax = tester.get_lmax();
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
   EXPECT_GT(psnr, target_psnr);
 
   target_psnr = 120.0;
@@ -262,8 +262,8 @@ TEST(speck3d_target_psnr, big)
 
   auto target_psnr = 75.0;
   tester.execute(bpp, target_psnr, pwe);
-  float psnr = tester.get_psnr();
-  float lmax = tester.get_lmax();
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
   EXPECT_GT(psnr, target_psnr);
 
   target_psnr = 100.0;
@@ -282,8 +282,8 @@ TEST(speck3d_target_psnr, small_data_range)
 
   auto target_psnr = 85.0;
   tester.execute(bpp, target_psnr, pwe);
-  float psnr = tester.get_psnr();
-  float lmax = tester.get_lmax();
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
   EXPECT_GT(psnr, target_psnr);
 
   target_psnr = 110.0;
@@ -304,8 +304,8 @@ TEST(speck3d_bit_rate, small)
   const auto pwe = 0.0;
 
   tester.execute(4.0, tar_psnr, pwe);
-  float psnr = tester.get_psnr();
-  float lmax = tester.get_lmax();
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
   EXPECT_GT(psnr, 52.808);
   EXPECT_LT(psnr, 52.809);
   EXPECT_LT(lmax, 1.8526);
@@ -333,8 +333,8 @@ TEST(speck3d_bit_rate, big)
   const auto pwe = 0.0;
 
   tester.execute(2.0, tar_psnr, pwe);
-  float psnr = tester.get_psnr();
-  float lmax = tester.get_lmax();
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
   EXPECT_GT(psnr, 53.8102);
   EXPECT_LT(psnr, 53.8103);
   EXPECT_LT(lmax, 9.6954);
@@ -369,8 +369,8 @@ TEST(speck3d_bit_rate, narrow_data_range)
   const auto pwe = 0.0;
 
   tester.execute(4.0, tar_psnr, pwe);
-  float psnr = tester.get_psnr();
-  float lmax = tester.get_lmax();
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
   EXPECT_GT(psnr, 67.7939);
   EXPECT_LT(psnr, 67.7940);
   EXPECT_LT(lmax, 1.17879e-06);
