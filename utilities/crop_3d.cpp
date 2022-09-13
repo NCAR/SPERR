@@ -32,7 +32,9 @@ int main(int argc, char* argv[])
    * It is the user's responsibility to make sure the range to crop
    * is within the range of input file.
    */
-  auto inDims = std::array<size_t, 3>{std::atol(argv[2]), std::atol(argv[3]), std::atol(argv[4])};
+  auto inDims = std::array<size_t, 3>{static_cast<size_t>(std::atol(argv[2])),
+                                      static_cast<size_t>(std::atol(argv[3])),
+                                      static_cast<size_t>(std::atol(argv[4]))};
   auto inValNum = inDims[0] * inDims[1] * inDims[2];
   size_t outStartX = std::atol(argv[6]);
   size_t outFinishX = std::atol(argv[7]);
