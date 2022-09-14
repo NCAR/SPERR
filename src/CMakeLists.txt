@@ -29,6 +29,19 @@ if( USE_ZSTD )
     target_link_libraries( SPERR PUBLIC zstd )
 endif()
 
+#
+# LTO
+#
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported LANGUAGES CXX)
+
+if( ipo_supported )
+    message(STATUS "IPO / LTO enabled")
+    set_property(TARGET SPERR PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+else()
+    message(STATUS "IPO / LTO not supported")
+endif()
+
 set_target_properties( SPERR PROPERTIES VERSION ${SPERR_VERSION} )
 
 #
