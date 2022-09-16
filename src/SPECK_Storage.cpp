@@ -8,8 +8,6 @@
 #include <numeric>
 
 using d2_type = std::array<double, 2>;
-using b2_type = std::array<bool, 2>;
-using u2_type = std::array<uint32_t, 2>;
 
 template <typename T>
 auto sperr::SPECK_Storage::copy_data(const T* p, size_t len, dims_type dims) -> RTNType
@@ -178,19 +176,19 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
 {
   // First, process significant pixels previously found.
   //
-  const auto tmpd = d2_type{0.0, -m_threshold};
-  const auto tmpdq = d2_type{m_threshold * -0.5, m_threshold * 0.5};
+  const auto tmpd = d2_type{m_threshold * -0.5, m_threshold * 0.5};
 
   assert(m_encode_budget >= m_bit_buffer.size());
   if (m_encode_budget - m_bit_buffer.size() > m_LSP_mask_sum) {  // No need to check BitBudgetMet
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask[i]) {
         const bool o1 = m_coeff_buf[i] >= m_threshold;
-        m_coeff_buf[i] += tmpd[o1];
         m_bit_buffer.push_back(o1);
+        if (o1)
+          m_coeff_buf[i] -= m_threshold;
 
         if (m_mode_cache == CompMode::FixedPWE)
-          m_qz_coeff[i] += tmpdq[o1];
+          m_qz_coeff[i] += tmpd[o1];
       }
     }
   }
@@ -198,11 +196,12 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask[i]) {
         const bool o1 = m_coeff_buf[i] >= m_threshold;
-        m_coeff_buf[i] += tmpd[o1];
         m_bit_buffer.push_back(o1);
+        if (o1)
+          m_coeff_buf[i] -= m_threshold;
 
         if (m_mode_cache == CompMode::FixedPWE)
-          m_qz_coeff[i] += tmpdq[o1];
+          m_qz_coeff[i] += tmpd[o1];
 
         if (m_bit_buffer.size() >= m_encode_budget)
           return RTNType::BitBudgetMet;
