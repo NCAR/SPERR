@@ -179,7 +179,8 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
   const auto tmpd = d2_type{m_threshold * -0.5, m_threshold * 0.5};
 
   assert(m_encode_budget >= m_bit_buffer.size());
-  if (m_encode_budget - m_bit_buffer.size() > m_LSP_mask_sum) {  // No need to check BitBudgetMet
+
+  if (m_mode_cache == CompMode::FixedPWE) {
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask[i]) {
         const bool o1 = m_coeff_buf[i] >= m_threshold;
@@ -187,33 +188,31 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
         if (o1)
           m_coeff_buf[i] -= m_threshold;
 
-        if (m_mode_cache == CompMode::FixedPWE)
-          m_qz_coeff[i] += tmpd[o1];
+        m_qz_coeff[i] += tmpd[o1];
       }
     }
   }
-  else {  // Need to check BitBudgetMet
+  else {
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask[i]) {
         const bool o1 = m_coeff_buf[i] >= m_threshold;
         m_bit_buffer.push_back(o1);
         if (o1)
           m_coeff_buf[i] -= m_threshold;
-
-        if (m_mode_cache == CompMode::FixedPWE)
-          m_qz_coeff[i] += tmpd[o1];
-
-        if (m_bit_buffer.size() >= m_encode_budget)
-          return RTNType::BitBudgetMet;
       }
     }
+  }
+
+  // If we generated more than necessary bits (in fixed-rate mode), then we resize!
+  if (m_bit_buffer.size() >= m_encode_budget) {
+    m_bit_buffer.resize(m_encode_budget);
+    return RTNType::BitBudgetMet;
   }
 
   // Second, mark newly found significant pixels in `m_LSP_mask`.
   //
   for (auto idx : m_LSP_new)
     m_LSP_mask[idx] = true;
-  m_LSP_mask_sum += m_LSP_new.size();
   m_LSP_new.clear();
 
   return RTNType::Good;
@@ -226,7 +225,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
   const auto tmpd = d2_type{m_threshold * -0.5, m_threshold * 0.5};
 
   assert(m_bit_buffer.size() >= m_bit_idx);
-  if (m_bit_buffer.size() - m_bit_idx > m_LSP_mask_sum) {  // No need to check BitBudgetMet
+  if (m_bit_buffer.size() - m_bit_idx > m_LSP_mask_cnt) {  // No need to check BitBudgetMet
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask[i])
         m_coeff_buf[i] += tmpd[m_bit_buffer[m_bit_idx++]];
@@ -246,7 +245,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_decode() -> RTNType
   //
   for (auto idx : m_LSP_new)
     m_LSP_mask[idx] = true;
-  m_LSP_mask_sum += m_LSP_new.size();
+  m_LSP_mask_cnt += m_LSP_new.size();
   m_LSP_new.clear();
 
   return RTNType::Good;

@@ -77,7 +77,6 @@ auto sperr::SPECK3D::encode() -> RTNType
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
-  m_LSP_mask_sum = 0;
 
   // Decide the starting threshold for quantization.
   size_t num_bitplanes = 128;
@@ -143,7 +142,7 @@ auto sperr::SPECK3D::decode() -> RTNType
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
-  m_LSP_mask_sum = 0;
+  m_LSP_mask_cnt = 0;
   m_bit_idx = 0;
   m_threshold = static_cast<double>(m_max_threshold_f);
 

@@ -70,7 +70,6 @@ auto sperr::SPECK2D::encode() -> RTNType
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
-  m_LSP_mask_sum = 0;
 
   // Decide the starting threshold for quantization.
   // See `SPECK3D.cpp:encode()` for more discussion on the starting threshold.
@@ -130,7 +129,7 @@ auto sperr::SPECK2D::decode() -> RTNType
 
   // Mark every coefficient as insignificant
   m_LSP_mask.assign(m_coeff_buf.size(), false);
-  m_LSP_mask_sum = 0;
+  m_LSP_mask_cnt = 0;
 
   m_initialize_sets_lists();
   m_bit_idx = 0;

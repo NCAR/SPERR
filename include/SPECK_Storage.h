@@ -52,8 +52,8 @@ class SPECK_Storage {
   const size_t m_header_size = 12;  // See header definition in SPECK_Storage.cpp.
   const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
   size_t m_encode_budget = 0;
-  size_t m_LSP_mask_sum = 0;           // Number of TRUE values in `m_LSP_mask`
-  size_t m_bit_idx = 0;                // Used for decode. Which bit we're at?
+  size_t m_LSP_mask_cnt = 0;           // Number of TRUE values in `m_LSP_mask`. Decoding only
+  size_t m_bit_idx = 0;                // Which bit we're at? Decoding only
   float m_max_threshold_f = 0.0;       // float representation of max threshold
   double m_data_range = sperr::max_d;  // range of data before DWT
   double m_target_pwe = 0.0;           // used in fixed-PWE mode
