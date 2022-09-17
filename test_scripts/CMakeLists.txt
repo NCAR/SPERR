@@ -1,5 +1,3 @@
-enable_testing()
-
 add_executable(        test_sperr_helper sperr_helper_unit_test.cpp )
 target_link_libraries( test_sperr_helper PUBLIC SPERR gtest_main )
 

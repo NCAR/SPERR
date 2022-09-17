@@ -187,6 +187,8 @@ if( BUILD_UNIT_TESTS )
   #
   file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/test_data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 
+  enable_testing() # calling this function before adding subdirectory to enable 
+                   # invoking ctest from the top-level build directory.
   add_subdirectory( test_scripts )
 endif()
 
