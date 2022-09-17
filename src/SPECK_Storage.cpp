@@ -177,6 +177,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
   // First, process significant pixels previously found.
   //
   const auto tmpd = d2_type{m_threshold * -0.5, m_threshold * 0.5};
+  const auto tmptr = d2_type{0.0, -m_threshold};
 
   assert(m_encode_budget >= m_bit_buffer.size());
 
@@ -185,9 +186,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
       if (m_LSP_mask[i]) {
         const bool o1 = m_coeff_buf[i] >= m_threshold;
         m_bit_buffer.push_back(o1);
-        if (o1)
-          m_coeff_buf[i] -= m_threshold;
-
+        m_coeff_buf[i] += tmptr[o1];
         m_qz_coeff[i] += tmpd[o1];
       }
     }
@@ -197,8 +196,7 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
       if (m_LSP_mask[i]) {
         const bool o1 = m_coeff_buf[i] >= m_threshold;
         m_bit_buffer.push_back(o1);
-        if (o1)
-          m_coeff_buf[i] -= m_threshold;
+        m_coeff_buf[i] += tmptr[o1];
       }
     }
   }
