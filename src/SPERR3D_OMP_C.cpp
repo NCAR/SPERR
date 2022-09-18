@@ -115,6 +115,7 @@ auto SPERR3D_OMP_C::compress() -> RTNType
   // Need to make sure that the chunks are ready!
   auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
   const auto num_chunks = chunks.size();
+  assert(num_chunks != 0);
   if (m_chunk_buffers.size() != num_chunks)
     return RTNType::Error;
   if (std::any_of(m_chunk_buffers.begin(), m_chunk_buffers.end(),
@@ -150,11 +151,14 @@ auto SPERR3D_OMP_C::compress() -> RTNType
     if (m_bit_budget == sperr::max_size)
       my_budget = sperr::max_size;
     else {
-      const auto total_vals = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
-      const auto chunk_vals = static_cast<double>(chunks[i][1] * chunks[i][3] * chunks[i][5]);
-      const auto avail_bits =
-          static_cast<double>(m_bit_budget - (m_header_magic + chunks.size() * 4) * 8);
-      my_budget = static_cast<size_t>(chunk_vals / total_vals * avail_bits);
+      const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
+      const auto chunk_vals = chunks[i][1] * chunks[i][3] * chunks[i][5];
+      auto avail_bits = size_t{0};
+      if (num_chunks > 1)
+        avail_bits = m_bit_budget - (m_header_magic_nchunks + num_chunks * 4) * 8;
+      else
+        avail_bits = m_bit_budget - (m_header_magic_1chunk + num_chunks * 4) * 8;
+      my_budget = static_cast<size_t>((static_cast<double>(chunk_vals) / total_vals) * avail_bits);
       while (my_budget % 8 != 0)
         my_budget--;
     }
@@ -211,12 +215,18 @@ auto SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   //  -- 8 booleans                           (1 byte)
   //  -- volume and chunk dimensions          (4 x 6 = 24 bytes)
   //  -- length of bitstream for each chunk   (4 x num_chunks)
-
+  //
   auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
   const auto num_chunks = chunks.size();
+  assert(num_chunks != 0);
   if (num_chunks != m_encoded_streams.size())
     return std::vector<uint8_t>();
-  const auto header_size = m_header_magic + num_chunks * 4;
+  auto header_size = size_t{0};
+  if (num_chunks > 1)
+    header_size = m_header_magic_nchunks + num_chunks * 4;
+  else
+    header_size = m_header_magic_1chunk + num_chunks * 4;
+
   auto header = std::vector<uint8_t>(header_size);
 
   // Version number
@@ -227,26 +237,41 @@ auto SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   // bool[0]  : if ZSTD is used
   // bool[1]  : if this bitstream is for 3D (true) or 2D (false) data.
   // bool[2]  : if the original data is float (true) or double (false).
-  // bool[3-7]: undefined
+  // bool[3]  : if there are multiple chunks (true) or a single chunk (false).
+  // bool[4-7]: undefined
   //
-  auto b8 = std::array<bool, 8>{false, true, false, false, false, false, false, false};
-
+  const auto b8 = std::array<bool, 8>{
 #ifdef USE_ZSTD
-  b8[0] = true;
+      true,  // using ZSTD
+#else
+      false,  // NOT using ZSTD
 #endif
-
-  b8[2] = m_orig_is_float;
+      true,  // 3D
+      m_orig_is_float,
+      (num_chunks > 1),
+      false,   // undefined
+      false,   // undefined
+      false,   // undefined
+      false};  // undefined
 
   header[loc] = sperr::pack_8_booleans(b8);
   loc += 1;
 
   // Volume and chunk dimensions
-  uint32_t vcdim[6] = {
-      static_cast<uint32_t>(m_dims[0]),       static_cast<uint32_t>(m_dims[1]),
-      static_cast<uint32_t>(m_dims[2]),       static_cast<uint32_t>(m_chunk_dims[0]),
-      static_cast<uint32_t>(m_chunk_dims[1]), static_cast<uint32_t>(m_chunk_dims[2])};
-  std::memcpy(&header[loc], vcdim, sizeof(vcdim));
-  loc += sizeof(vcdim);
+  if (num_chunks > 1) {
+    const uint32_t vcdim[6] = {
+        static_cast<uint32_t>(m_dims[0]),       static_cast<uint32_t>(m_dims[1]),
+        static_cast<uint32_t>(m_dims[2]),       static_cast<uint32_t>(m_chunk_dims[0]),
+        static_cast<uint32_t>(m_chunk_dims[1]), static_cast<uint32_t>(m_chunk_dims[2])};
+    std::memcpy(&header[loc], vcdim, sizeof(vcdim));
+    loc += sizeof(vcdim);
+  }
+  else {
+    const uint32_t vdim[3] = {static_cast<uint32_t>(m_dims[0]), static_cast<uint32_t>(m_dims[1]),
+                              static_cast<uint32_t>(m_dims[2])};
+    std::memcpy(&header[loc], vdim, sizeof(vdim));
+    loc += sizeof(vdim);
+  }
 
   // Length of bitstream for each chunk
   // Note that we use uint32_t to keep the length, and we need to make sure

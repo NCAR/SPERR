@@ -46,7 +46,9 @@ class SPERR3D_OMP_C {
   std::vector<sperr::vec8_type> m_encoded_streams;
   sperr::vec8_type m_total_stream;
 
-  const size_t m_header_magic = 26;  // Header size would be this number + num_chunks * 4
+  // Header size would be the magic number + num_chunks * 4
+  const size_t m_header_magic_nchunks = 26;  
+  const size_t m_header_magic_1chunk = 14;  
 
   size_t m_bit_budget = 0;  // Total bit budget, including headers etc.
   double m_target_psnr = sperr::max_d;
