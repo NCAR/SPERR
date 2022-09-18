@@ -35,8 +35,8 @@ class SPERR3D_OMP_D {
   size_t m_num_threads = 1;                   // number of theads to use in OpenMP sections
 
   // Header size would be the magic number + num_chunks * 4
-  const size_t m_header_magic_nchunks = 26;  
-  const size_t m_header_magic_1chunk = 14;  
+  const size_t m_header_magic_nchunks = 26;
+  const size_t m_header_magic_1chunk = 14;
 
   std::vector<double> m_vol_buf;
   std::vector<size_t> m_offsets;
