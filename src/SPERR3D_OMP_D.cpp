@@ -68,7 +68,7 @@ auto SPERR3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
     m_chunk_dims[2] = vcdim[5];
   }
   else {
-    uint32_t vdim[6];
+    uint32_t vdim[3];
     std::memcpy(vdim, u8p + loc, sizeof(vdim));
     loc += sizeof(vdim);
     m_dims[0] = vdim[0];

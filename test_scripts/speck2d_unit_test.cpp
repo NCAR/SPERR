@@ -87,7 +87,7 @@ class speck_tester {
     //
     auto orig = sperr::vecd_type(total_vals);
     std::copy(in_buf.cbegin(), in_buf.cend(), orig.begin());
-    auto ret = sperr::calc_stats(orig.data(), slice.data(), total_vals, 8);
+    auto ret = sperr::calc_stats(orig.data(), slice.data(), total_vals, 0);
     m_psnr = ret[2];
     m_lmax = ret[1];
 

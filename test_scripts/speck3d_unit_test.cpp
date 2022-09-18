@@ -96,7 +96,7 @@ class speck_tester_omp {
     auto orig = sperr::vecd_type(total_vals);
     std::copy(in_buf.cbegin(), in_buf.cend(), orig.begin());
 
-    auto ret = sperr::calc_stats(orig.data(), vol.data(), total_vals, 8);
+    auto ret = sperr::calc_stats(orig.data(), vol.data(), total_vals, 0);
     m_psnr = ret[2];
     m_lmax = ret[1];
 
@@ -306,22 +306,19 @@ TEST(speck3d_bit_rate, small)
   tester.execute(4.0, tar_psnr, pwe);
   auto psnr = tester.get_psnr();
   auto lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 52.808);
-  EXPECT_LT(psnr, 52.809);
-  EXPECT_LT(lmax, 1.8526);
+  EXPECT_FLOAT_EQ(psnr, 52.903);
+  EXPECT_LE(lmax, 1.8526);
 
   tester.execute(2.0, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 41.1909);
-  EXPECT_LT(psnr, 41.1910);
+  EXPECT_FLOAT_EQ(psnr, 41.281158);
   EXPECT_LT(lmax, 6.4132);
 
   tester.execute(1.0, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 34.5465);
-  EXPECT_LT(psnr, 34.5466);
+  EXPECT_FLOAT_EQ(psnr, 34.645767);
   EXPECT_LT(lmax, 13.0171);
 }
 
