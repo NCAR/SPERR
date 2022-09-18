@@ -39,7 +39,7 @@ auto SPERR3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
   size_t loc = 1;
 
   // Parse Step 2: ZSTD application and 3D/2D recording need to be consistent.
-  auto b8 = sperr::unpack_8_booleans(u8p[loc]);
+  const auto b8 = sperr::unpack_8_booleans(u8p[loc]);
   loc++;
 
 #ifdef USE_ZSTD
@@ -53,20 +53,37 @@ auto SPERR3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
   if (b8[1] == false)
     return RTNType::SliceVolumeMismatch;
 
+  const auto multi_chunk = b8[3];
+
   // Parse Step 3: Extract volume and chunk dimensions
-  uint32_t vcdim[6];
-  std::memcpy(vcdim, u8p + loc, sizeof(vcdim));
-  loc += sizeof(vcdim);
-  m_dims[0] = vcdim[0];
-  m_dims[1] = vcdim[1];
-  m_dims[2] = vcdim[2];
-  m_chunk_dims[0] = vcdim[3];
-  m_chunk_dims[1] = vcdim[4];
-  m_chunk_dims[2] = vcdim[5];
+  if (multi_chunk) {
+    uint32_t vcdim[6];
+    std::memcpy(vcdim, u8p + loc, sizeof(vcdim));
+    loc += sizeof(vcdim);
+    m_dims[0] = vcdim[0];
+    m_dims[1] = vcdim[1];
+    m_dims[2] = vcdim[2];
+    m_chunk_dims[0] = vcdim[3];
+    m_chunk_dims[1] = vcdim[4];
+    m_chunk_dims[2] = vcdim[5];
+  }
+  else {
+    uint32_t vdim[3];
+    std::memcpy(vdim, u8p + loc, sizeof(vdim));
+    loc += sizeof(vdim);
+    m_dims[0] = vdim[0];
+    m_dims[1] = vdim[1];
+    m_dims[2] = vdim[2];
+    m_chunk_dims = m_dims;
+  }
 
   // Figure out how many chunks and their length
   auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
   const auto num_chunks = chunks.size();
+  if (multi_chunk)
+    assert(num_chunks > 1);
+  else
+    assert(num_chunks == 1);
   auto chunk_sizes = std::vector<size_t>(num_chunks, 0);
   for (size_t i = 0; i < num_chunks; i++) {
     uint32_t len;
@@ -76,7 +93,12 @@ auto SPERR3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
   }
 
   // Sanity check: if the buffer size matches what the header claims
-  const auto header_size = m_header_magic + num_chunks * 4;
+  auto header_size = size_t{0};
+  if (multi_chunk)
+    header_size = m_header_magic_nchunks + num_chunks * 4;
+  else
+    header_size = m_header_magic_1chunk + num_chunks * 4;
+
   const auto suppose_size = std::accumulate(chunk_sizes.begin(), chunk_sizes.end(), header_size);
   if (suppose_size != total_len)
     return RTNType::BitstreamWrongLen;
