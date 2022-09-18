@@ -213,7 +213,7 @@ auto SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   // The header would contain the following information
   //  -- a version number                     (1 byte)
   //  -- 8 booleans                           (1 byte)
-  //  -- volume and chunk dimensions          (4 x 6 = 24 bytes)
+  //  -- volume and/or chunk dimensions       (4 x 6 = 24 or 4 x 3 = 12 bytes)
   //  -- length of bitstream for each chunk   (4 x num_chunks)
   //
   auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);

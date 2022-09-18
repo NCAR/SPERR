@@ -307,7 +307,7 @@ TEST(speck3d_bit_rate, small)
   auto psnr = tester.get_psnr();
   auto lmax = tester.get_lmax();
   EXPECT_FLOAT_EQ(psnr, 52.903);
-  EXPECT_LE(lmax, 1.8526);
+  EXPECT_LT(lmax, 1.8526);
 
   tester.execute(2.0, tar_psnr, pwe);
   psnr = tester.get_psnr();
