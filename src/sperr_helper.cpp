@@ -489,7 +489,7 @@ auto sperr::parse_header(const void* ptr) -> HeaderInfo
   loc++;
 
   // Parse 8 booleans
-  auto b8 = sperr::unpack_8_booleans(u8p[loc]);
+  const auto b8 = sperr::unpack_8_booleans(u8p[loc]);
   loc++;
 
   header.zstd_applied = b8[0];
@@ -498,16 +498,30 @@ auto sperr::parse_header(const void* ptr) -> HeaderInfo
 
   // Parse the dimension info.
   if (header.is_3d) {
-    uint32_t vcdim[6];
-    std::memcpy(vcdim, u8p + loc, sizeof(vcdim));
-    loc += sizeof(vcdim);
+    if (b8[3]) {  // there are multiple chunks!
+      uint32_t vcdim[6];
+      std::memcpy(vcdim, u8p + loc, sizeof(vcdim));
+      loc += sizeof(vcdim);
 
-    header.vol_dims[0] = vcdim[0];
-    header.vol_dims[1] = vcdim[1];
-    header.vol_dims[2] = vcdim[2];
-    header.chunk_dims[0] = vcdim[3];
-    header.chunk_dims[1] = vcdim[4];
-    header.chunk_dims[2] = vcdim[5];
+      header.vol_dims[0] = vcdim[0];
+      header.vol_dims[1] = vcdim[1];
+      header.vol_dims[2] = vcdim[2];
+      header.chunk_dims[0] = vcdim[3];
+      header.chunk_dims[1] = vcdim[4];
+      header.chunk_dims[2] = vcdim[5];
+    }
+    else {
+      uint32_t vdim[3];
+      std::memcpy(vdim, u8p + loc, sizeof(vdim));
+      loc += sizeof(vdim);
+
+      header.vol_dims[0] = vdim[0];
+      header.vol_dims[1] = vdim[1];
+      header.vol_dims[2] = vdim[2];
+      header.chunk_dims[0] = vdim[0];
+      header.chunk_dims[1] = vdim[1];
+      header.chunk_dims[2] = vdim[2];
+    }
   }
   else {
     uint32_t dims[2];
