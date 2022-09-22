@@ -89,7 +89,7 @@ class CDF97 {
   void m_scatter_odd(citd_type begin, citd_type end, itd_type dest) const;
 
   // Two flavors of 3D transforms.
-  // They should be invoked by the `dwt3d()` and `idwt3d()` public methods though.
+  // They should be invoked by the `dwt3d()` and `idwt3d()` public methods, not users, though.
   void m_dwt3d_wavelet_packet();
   void m_idwt3d_wavelet_packet();
   void m_dwt3d_dyadic();

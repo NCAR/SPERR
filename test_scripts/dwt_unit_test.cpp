@@ -236,7 +236,7 @@ TEST(dwt3d, small_even_cube)
 
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
-  cdf.copy_data(in_copy.data(), dim_x * dim_y * dim_z, {dim_x, dim_y, dim_z});
+  cdf.take_data(std::move(in_copy), {dim_x, dim_y, dim_z});
   cdf.dwt3d();
   cdf.idwt3d();
 
@@ -270,7 +270,7 @@ TEST(dwt3d, big_odd_cube)
 
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
-  cdf.copy_data(in_copy.data(), dim_x * dim_y * dim_z, {dim_x, dim_y, dim_z});
+  cdf.take_data(std::move(in_copy), {dim_x, dim_y, dim_z});
   cdf.dwt3d();
   cdf.idwt3d();
 
@@ -304,7 +304,7 @@ TEST(dwt3d, big_even_cube)
 
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
-  cdf.copy_data(in_copy.data(), dim_x * dim_y * dim_z, {dim_x, dim_y, dim_z});
+  cdf.take_data(std::move(in_copy), {dim_x, dim_y, dim_z});
   cdf.dwt3d();
   cdf.idwt3d();
 
