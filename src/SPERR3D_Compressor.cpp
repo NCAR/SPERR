@@ -90,14 +90,7 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
   rtn = m_cdf.take_data(std::move(m_val_buf), m_dims);
   if (rtn != RTNType::Good)
     return rtn;
-  // Figure out which dwt3d strategy to use.
-  // Note: this strategy needs to be consistent with SPERR3D_Decompressor.
-  const auto xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  const auto xforms_z = sperr::num_of_xforms(m_dims[2]);
-  if (xforms_xy == xforms_z)
-    m_cdf.dwt3d_dyadic();
-  else
-    m_cdf.dwt3d_wavelet_packet();
+  m_cdf.dwt3d();
 
   // Step 3: SPECK encoding
   rtn = m_encoder.take_data(m_cdf.release_data(), m_dims);
@@ -132,10 +125,7 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
     auto qz_coeff = m_encoder.release_quantized_coeff();
     assert(!qz_coeff.empty());
     m_cdf.take_data(std::move(qz_coeff), m_dims);
-    if (xforms_xy == xforms_z)
-      m_cdf.idwt3d_dyadic();
-    else
-      m_cdf.idwt3d_wavelet_packet();
+    m_cdf.idwt3d();
     m_val_buf = m_cdf.release_data();
     m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
 
