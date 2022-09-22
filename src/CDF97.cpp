@@ -89,7 +89,46 @@ void sperr::CDF97::idwt2d()
   m_idwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, num_xforms_xy);
 }
 
-void sperr::CDF97::dwt3d_wavelet_packet()
+void sperr::CDF97::dwt3d()
+{
+  // Strategy to choose "dyadic" or "wavelet packet" 3D transform:
+  // 1) IF all 3 axes have 5 or more levels of transforms, THEN use dyadic;
+  // 2) ELSE IF XY and Z have different levels, THEN use wavelet packets;
+  // 3) ELSE use dyadic.
+  //
+  const auto num_xforms =
+      std::array<size_t, 3>{sperr::num_of_xforms(m_dims[0]), sperr::num_of_xforms(m_dims[1]),
+                            sperr::num_of_xforms(m_dims[2])};
+
+  if (num_xforms[0] >= 5 && num_xforms[1] >= 5 && num_xforms[2] >= 5) {
+    m_dwt3d_dyadic();
+  }
+  else if (std::min(num_xforms[0], num_xforms[1]) != num_xforms[2]) {
+    m_dwt3d_wavelet_packet();
+  }
+  else {
+    m_dwt3d_dyadic();
+  }
+}
+
+void sperr::CDF97::idwt3d()
+{
+  const auto num_xforms =
+      std::array<size_t, 3>{sperr::num_of_xforms(m_dims[0]), sperr::num_of_xforms(m_dims[1]),
+                            sperr::num_of_xforms(m_dims[2])};
+
+  if (num_xforms[0] >= 5 && num_xforms[1] >= 5 && num_xforms[2] >= 5) {
+    m_idwt3d_dyadic();
+  }
+  else if (std::min(num_xforms[0], num_xforms[1]) != num_xforms[2]) {
+    m_idwt3d_wavelet_packet();
+  }
+  else {
+    m_idwt3d_dyadic();
+  }
+}
+
+void sperr::CDF97::m_dwt3d_wavelet_packet()
 {
   /*
    *             Z
@@ -146,7 +185,7 @@ void sperr::CDF97::dwt3d_wavelet_packet()
   }
 }
 
-void sperr::CDF97::idwt3d_wavelet_packet()
+void sperr::CDF97::m_idwt3d_wavelet_packet()
 {
   const size_t plane_size_xy = m_dims[0] * m_dims[1];
 
@@ -205,11 +244,12 @@ void sperr::CDF97::idwt3d_wavelet_packet()
   }
 }
 
-void sperr::CDF97::dwt3d_dyadic()
+void sperr::CDF97::m_dwt3d_dyadic()
 {
-  const auto num_xforms = sperr::num_of_xforms(m_dims[0]);
-  assert(num_xforms == sperr::num_of_xforms(m_dims[1]));
-  assert(num_xforms == sperr::num_of_xforms(m_dims[2]));
+  const auto xforms =
+      std::array<size_t, 3>{sperr::num_of_xforms(m_dims[0]), sperr::num_of_xforms(m_dims[1]),
+                            sperr::num_of_xforms(m_dims[2])};
+  const auto num_xforms = *std::min_element(xforms.cbegin(), xforms.cend());
 
   for (size_t lev = 0; lev < num_xforms; lev++) {
     auto app_x = sperr::calc_approx_detail_len(m_dims[0], lev);
@@ -219,11 +259,12 @@ void sperr::CDF97::dwt3d_dyadic()
   }
 }
 
-void sperr::CDF97::idwt3d_dyadic()
+void sperr::CDF97::m_idwt3d_dyadic()
 {
-  const auto num_xforms = sperr::num_of_xforms(m_dims[0]);
-  assert(num_xforms == sperr::num_of_xforms(m_dims[1]));
-  assert(num_xforms == sperr::num_of_xforms(m_dims[2]));
+  const auto xforms =
+      std::array<size_t, 3>{sperr::num_of_xforms(m_dims[0]), sperr::num_of_xforms(m_dims[1]),
+                            sperr::num_of_xforms(m_dims[2])};
+  const auto num_xforms = *std::min_element(xforms.cbegin(), xforms.cend());
 
   for (size_t lev = num_xforms; lev > 0; lev--) {
     auto app_x = sperr::calc_approx_detail_len(m_dims[0], lev - 1);

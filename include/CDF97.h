@@ -37,15 +37,11 @@ class CDF97 {
 
   // Action items
   void dwt1d();
+  void dwt2d();
+  void dwt3d();
+  void idwt2d();
   void idwt1d();
-  void dwt2d();   // 1) calculates the number of levels of dwt,
-                  // 2) perform the actual dwt.
-  void idwt2d();  // 1) calculates the number of levels of dwt,
-                  // 2) perform the actual idwt
-  void dwt3d_wavelet_packet();
-  void idwt3d_wavelet_packet();
-  void dwt3d_dyadic();
-  void idwt3d_dyadic();
+  void idwt3d();
 
  private:
   using itd_type = vecd_type::iterator;
@@ -91,6 +87,13 @@ class CDF97 {
   // Note 2: two versions for even and odd length input.
   void m_scatter_even(citd_type begin, citd_type end, itd_type dest) const;
   void m_scatter_odd(citd_type begin, citd_type end, itd_type dest) const;
+
+  // Two flavors of 3D transforms.
+  // They should be invoked by the `dwt3d()` and `idwt3d()` public methods though.
+  void m_dwt3d_wavelet_packet();
+  void m_idwt3d_wavelet_packet();
+  void m_dwt3d_dyadic();
+  void m_idwt3d_dyadic();
 
   //
   // Methods from QccPack, so keep their original names, interface, and the use of raw pointers.
