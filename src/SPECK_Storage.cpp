@@ -182,7 +182,6 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
   assert(m_encode_budget >= m_bit_buffer.size());
 
   if (m_mode_cache == CompMode::FixedPWE) {
-    // Need to reconstruct values in `m_qz_coeff`.
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask[i]) {
         const bool o1 = m_coeff_buf[i] >= m_threshold;
@@ -193,7 +192,6 @@ auto sperr::SPECK_Storage::m_refinement_pass_encode() -> RTNType
     }
   }
   else {
-    // Need NOT to reconstruct values in `m_qz_coeff`.
     for (size_t i = 0; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask[i]) {
         const bool o1 = m_coeff_buf[i] >= m_threshold;
