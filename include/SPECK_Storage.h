@@ -73,7 +73,7 @@ class SPECK_Storage {
   std::vector<size_t> m_LIP;        // List of insignificant pixels
   std::vector<size_t> m_LSP_new;    // List of newly found significant pixels
   std::vector<bool> m_LSP_mask;     // Significant pixels previously found
-  std::vector<bool> m_sign_array;   // Keep the signs of every coefficient
+  std::vector<bool> m_sign_array;   // Keep the sign of every coefficient
   vec8_type m_encoded_stream;       // Stores the SPECK bitstream
   dims_type m_dims = {0, 0, 0};     // Dimension of the 2D/3D volume
 
