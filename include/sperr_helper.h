@@ -32,6 +32,7 @@ constexpr auto max_d = std::numeric_limits<double>::max();
 // A few shortcuts
 //
 using vecd_type = std::vector<double>;
+using vecb_type = std::vector<bool>;
 using vec8_type = std::vector<uint8_t>;
 using dims_type = std::array<size_t, 3>;
 
