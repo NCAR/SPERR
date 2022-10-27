@@ -12,6 +12,7 @@ add_library( SPERR
              SPERR3D_OMP_D.cpp
              SPERR2D_Compressor.cpp
              SPERR2D_Decompressor.cpp
+             SPECK3D_INT_ENC.cpp
              SPERR_C_API.cpp)
 target_include_directories( SPERR PUBLIC ${CMAKE_SOURCE_DIR}/include )
 
@@ -61,6 +62,7 @@ include/SPECK_Storage.h;\
 include/SPECK2D.h;\
 include/SPECK3D.h;\
 include/SPERR_C_API.h;\
+include/SPECK3D_INT_ENC.h;\
 include/SPERR.h;")
 set_target_properties( SPERR PROPERTIES PUBLIC_HEADER "${public_h_list}" )
 

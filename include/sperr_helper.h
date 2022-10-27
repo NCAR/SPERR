@@ -64,6 +64,31 @@ enum class RTNType {
   Error
 };
 
+class Set3D {
+ public:
+  //
+  // Member data
+  //
+  uint32_t start_x = 0;
+  uint32_t start_y = 0;
+  uint32_t start_z = 0;
+  uint32_t length_x = 0;
+  uint32_t length_y = 0;
+  uint32_t length_z = 0;
+  // which partition level is this set at (starting from zero, in all 3
+  // directions). This data member is the sum of all 3 partition levels.
+  uint16_t part_level = 0;
+  SigType signif = SigType::Insig;
+  SetType type = SetType::TypeS;  // Only used to indicate garbage status
+
+ public:
+  //
+  // Member functions
+  //
+  auto is_pixel() const -> bool;
+  auto is_empty() const -> bool;
+};
+
 // Compression Mode
 enum class CompMode { FixedSize, FixedQz, FixedPSNR, FixedPWE, Unknown };
 
@@ -83,6 +108,11 @@ auto num_of_partitions(size_t len) -> size_t;
 // It puts the approximation and detail length as the 1st and 2nd
 // element of the return array.
 auto calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<size_t, 2>;
+
+// Divide a Set3D into 8, 4, or 2 smaller subsets.
+auto partition_S_XYZ(const Set3D&) -> std::array<Set3D, 8>;
+auto partition_S_XY(const Set3D&) -> std::array<Set3D, 4>;
+auto partition_S_Z(const Set3D&) -> std::array<Set3D, 2>;
 
 // Pack and unpack booleans to array of chars.
 // When packing, the caller should make sure the number of booleans is a
