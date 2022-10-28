@@ -14,7 +14,7 @@ class SPECK3D_INT_ENC : public SPECK3D_INT {
   void encode();
 
   // Input and output
-  auto set_coeffs(veci_t coeffs, vecb_type signs, dims_type) -> RTNType;
+  auto use_coeffs(veci_t coeffs, vecb_type signs, dims_type) -> RTNType;
   auto release_bitstream() -> vecb_type&&;
 
  private:

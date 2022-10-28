@@ -10,7 +10,7 @@ void sperr::SPECK3D_INT_DEC::set_threshold_dims(uint64_t t, dims_type dims)
   m_dims = dims;
 }
 
-void sperr::SPECK3D_INT_DEC::set_bitstream(vecb_type stream)
+void sperr::SPECK3D_INT_DEC::use_bitstream(vecb_type stream)
 {
   m_bit_buffer = std::move(stream);
 }
@@ -81,22 +81,12 @@ void sperr::SPECK3D_INT_DEC::m_refinement_pass()
 {
   // First, process significant pixels previously found.
   //
-  const auto tmpd = d2_type{m_threshold * -0.5, m_threshold * 0.5};
+  const auto tmp = std::array<int_t, 2>{int_t{0}, m_threshold};
 
-  assert(m_bit_buffer.size() >= m_bit_idx);
-  if (m_bit_buffer.size() - m_bit_idx > m_LSP_mask_cnt) {  // No need to check BitBudgetMet
-    for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-      if (m_LSP_mask[i])
-        m_coeff_buf[i] += tmpd[m_bit_buffer[m_bit_idx++]];
-    }
-  }
-  else {  // Need to check BitBudgetMet
-    for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-      if (m_LSP_mask[i]) {
-        m_coeff_buf[i] += tmpd[m_bit_buffer[m_bit_idx++]];
-        if (m_bit_idx >= m_bit_buffer.size())
-          return RTNType::BitBudgetMet;
-      }
+  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+    if (m_LSP_mask[i]) {
+      m_coeff_buf[i] += tmp[*m_bit_itr];
+      ++m_bit_itr;
     }
   }
 
@@ -104,10 +94,7 @@ void sperr::SPECK3D_INT_DEC::m_refinement_pass()
   //
   for (auto idx : m_LSP_new)
     m_LSP_mask[idx] = true;
-  m_LSP_mask_cnt += m_LSP_new.size();
   m_LSP_new.clear();
-
-  return RTNType::Good;
 }
 
 void sperr::SPECK3D_INT_DEC::m_process_S(size_t idx1, size_t idx2, size_t& counter, bool read)
@@ -153,7 +140,7 @@ void sperr::SPECK3D_INT_DEC::m_process_P(size_t loc, size_t& counter, bool read)
 
 void sperr::SPECK3D_INT_DEC::m_code_S(size_t idx1, size_t idx2)
 {
-  auto subsets = sperr::partition_S_XYZ(m_LIS[idx1][idx2]);
+  auto subsets = m_partition_S_XYZ(m_LIS[idx1][idx2]);
   const auto set_end =
       std::remove_if(subsets.begin(), subsets.end(), [](auto& s) { return s.is_empty(); });
   const auto set_end_m1 = set_end - 1;

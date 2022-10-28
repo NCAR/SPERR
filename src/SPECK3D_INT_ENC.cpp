@@ -4,7 +4,7 @@
 #include <cassert>
 #include <numeric>
 
-auto sperr::SPECK3D_INT_ENC::set_coeffs(veci_t coeffs, vecb_type signs, dims_type dims) -> RTNType
+auto sperr::SPECK3D_INT_ENC::use_coeffs(veci_t coeffs, vecb_type signs, dims_type dims) -> RTNType
 {
   const auto total_vals = dims[0] * dims[1] * dims[2];
   if (coeffs.size() != total_vals || signs.size() != total_vals)
@@ -212,7 +212,7 @@ void sperr::SPECK3D_INT_ENC::m_process_P(size_t loc, SigType sig, size_t& counte
 
 void sperr::SPECK3D_INT_ENC::m_code_S(size_t idx1, size_t idx2, std::array<SigType, 8> subset_sigs)
 {
-  auto subsets = partition_S_XYZ(m_LIS[idx1][idx2]);
+  auto subsets = m_partition_S_XYZ(m_LIS[idx1][idx2]);
 
   // Since some subsets could be empty, let's put empty sets at the end.
   //
