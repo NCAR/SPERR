@@ -13,10 +13,8 @@ class SPECK3D_INT_DEC : public SPECK3D_INT {
   // core operations
   void decode();
 
-  void set_threshold_dims(uint64_t, dims_type);
-
   // Input and output
-  void use_bitstream(vecb_type);
+  void use_bitstream(const vec8_type&);
   auto release_coeffs() -> veci_t&&;
   auto release_signs() -> vecb_type&&;
 

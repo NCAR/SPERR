@@ -14,8 +14,8 @@ class SPECK3D_INT_ENC : public SPECK3D_INT {
   void encode();
 
   // Input and output
-  auto use_coeffs(veci_t coeffs, vecb_type signs, dims_type) -> RTNType;
-  auto release_bitstream() -> vecb_type&&;
+  void use_coeffs(veci_t coeffs, vecb_type signs);
+  auto get_bitstream() -> vec8_type;
 
  private:
   // auto m_ready_to_encode() const -> bool;
@@ -29,6 +29,9 @@ class SPECK3D_INT_ENC : public SPECK3D_INT {
   // Decide if a set is significant or not.
   // If it is significant, also identify the point that makes it significant.
   auto m_decide_significance(const Set3D&) const -> std::pair<SigType, std::array<uint32_t, 3>>;
+
+  // Data members
+  uint8_t m_num_bitplanes = 0;
 };
 
 };  // namespace sperr

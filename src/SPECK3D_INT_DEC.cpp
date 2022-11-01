@@ -2,17 +2,31 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>  // std::memcpy()
 #include <numeric>
 
-void sperr::SPECK3D_INT_DEC::set_threshold_dims(uint64_t t, dims_type dims)
+void sperr::SPECK3D_INT_DEC::use_bitstream(const vec8_type& stream)
 {
-  m_threshold = static_cast<int_t>(t);
-  m_dims = dims;
-}
+  // Header definition: 2 bytes in total:
+  // num_bitplanes (uint8_t), padding_size (uint8_t)
 
-void sperr::SPECK3D_INT_DEC::use_bitstream(vecb_type stream)
-{
-  m_bit_buffer = std::move(stream);
+  // Step 1: extract num_bitplanes and padding_size
+  auto header = vec8_type(m_header_size);
+  std::memcpy(header.data(), stream.data(), sizeof(header));
+
+  // Step 2: restore `m_threshold`
+  m_threshold = 1;
+  for (uint8_t i = 1; i < header[0]; i++)
+    m_threshold *= int_t{2};
+
+  // Step 3: unpack bits
+  const auto num_of_bools = (stream.size() - m_header_size) * 8;
+  m_bit_buffer.resize(num_of_bools);
+  sperr::unpack_booleans(m_bit_buffer, stream.data(), stream.size(), m_header_size);
+
+  // Step 4: remove padding bits
+  for (uint8_t i = 0; i < header[1]; i++)
+    m_bit_buffer.pop_back();
 }
 
 auto sperr::SPECK3D_INT_DEC::release_coeffs() -> veci_t&&

@@ -2,18 +2,48 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>  // std::memcpy()
 #include <numeric>
 
-auto sperr::SPECK3D_INT_ENC::use_coeffs(veci_t coeffs, vecb_type signs, dims_type dims) -> RTNType
+void sperr::SPECK3D_INT_ENC::use_coeffs(veci_t coeffs, vecb_type signs)
 {
-  const auto total_vals = dims[0] * dims[1] * dims[2];
-  if (coeffs.size() != total_vals || signs.size() != total_vals)
-    return RTNType::WrongDims;
-
   m_coeff_buf = std::move(coeffs);
   m_sign_array = std::move(signs);
-  m_dims = dims;
-  return RTNType::Good;
+}
+
+auto sperr::SPECK3D_INT_ENC::get_bitstream() -> vec8_type
+{
+  // Header definition: 2 bytes in total:
+  // num_bitplanes (uint8_t), padding_size (uint8_t)
+
+  // Step 1: pad `m_bit_buffer` to have multiply of eight sizes.
+  uint8_t pad = 0;
+  while (m_bit_buffer.size() % 8 != 0) {
+    m_bit_buffer.push_back(false);
+    pad++;
+  }
+
+  // Step 2: allocate space for returned bitstream
+  const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
+  const size_t total_size = m_header_size + bit_in_byte;
+  auto bitstream = vec8_type(total_size);
+  auto* const ptr = bitstream.data();
+
+  // Step 3: fill header
+  size_t pos = 0;
+  std::memcpy(ptr + pos, &m_num_bitplanes, sizeof(m_num_bitplanes));
+  pos += sizeof(m_num_bitplanes);
+  std::memcpy(ptr + pos, &pad, sizeof(pad));
+  pos += sizeof(pad);
+
+  // Step 4: assemble `m_bit_buffer` into bytes
+  sperr::pack_booleans(bitstream, m_bit_buffer, pos);
+
+  // Step 5: restore `m_bit_buffer` to its original size
+  for (uint8_t i = 0; i < pad; i++)
+    m_bit_buffer.pop_back();
+
+  return bitstream;
 }
 
 auto sperr::SPECK3D_INT_ENC::m_decide_significance(const Set3D& set) const
@@ -84,11 +114,11 @@ void sperr::SPECK3D_INT_ENC::encode()
 
   // Decide the starting threshold.
   const auto max_coeff = *std::max_element(m_coeff_buf.cbegin(), m_coeff_buf.cend());
-  size_t num_bitplanes = 1;
+  m_num_bitplanes = 1;
   m_threshold = 1;
   while (m_threshold * int_t{2} <= max_coeff) {
     m_threshold *= int_t{2};
-    num_bitplanes++;
+    m_num_bitplanes++;
   }
 
   // if (m_mode_cache == CompMode::FixedPWE || m_mode_cache == CompMode::FixedPSNR) {
@@ -107,7 +137,7 @@ void sperr::SPECK3D_INT_ENC::encode()
   // }
   // m_threshold = static_cast<double>(m_max_threshold_f);
 
-  for (size_t bitplane = 0; bitplane < num_bitplanes; bitplane++) {
+  for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
     m_sorting_pass();
     m_refinement_pass();
 

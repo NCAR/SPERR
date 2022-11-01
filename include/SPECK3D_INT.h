@@ -3,9 +3,6 @@
 
 #include "sperr_helper.h"
 
-using int_t = uint64_t;
-using veci_t = std::vector<int_t>;
-
 namespace sperr {
 
 class Set3D {
@@ -39,6 +36,8 @@ class Set3D {
 class SPECK3D_INT {
  public:
 
+  void set_dims(dims_type);
+
  protected:
   // auto m_ready_to_encode() const -> bool;
   void m_clean_LIS();
@@ -59,6 +58,7 @@ class SPECK3D_INT {
   int_t m_threshold = 0;
 
   const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
+  const size_t m_header_size = 2; // 2 bytes
 };
 
 };  // namespace sperr

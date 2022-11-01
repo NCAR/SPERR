@@ -1,294 +1,151 @@
-#include "SPERR3D_INT_ENC.h"
-#include "SPERR3D_INT_DEC.h"
+#include "SPECK3D_INT_ENC.h"
+#include "SPECK3D_INT_DEC.h"
 
-#include <cstring>
 #include "gtest/gtest.h"
+
+#include <algorithm>
+#include <cmath>
+#include <random>
 
 namespace {
 
-using sperr::RTNType;
+auto ProduceRandomArray(size_t len, float stddev, uint64_t seed) 
+    -> std::pair<std::vector<uint64_t>, std::vector<bool>>
+{
+  std::mt19937 gen{seed};
+  std::normal_distribution<float> d{0.0,stddev};
 
+  auto tmp = std::vector<float>(len);
+  std::generate(tmp.begin(), tmp.end(), [&gen, &d](){ return d(gen); });
+
+  auto coeffs = std::vector<uint64_t>(len);
+  auto signs = std::vector<bool>(len, true);
+  for (size_t i = 0; i < len; i++) {
+    coeffs[i] = std::round(std::abs(tmp[i]));
+    if (coeffs[i] != 0)
+      signs[i] = tmp[i] > 0.f;
+  }
+
+  return {coeffs, signs};
+} 
 
 //
-// Test constant fields.
+// Test a minimal test case
 //
-TEST(speck3d_constant, one_chunk)
+TEST(Speck3dInt, minimal)
 {
-  speck_tester_omp tester("../test_data/const32x20x16.float", {32, 20, 16}, 2);
+  const auto dims = sperr::dims_type{4, 3, 8};
+  const auto total_vals = dims[0] * dims[1] * dims[2];
 
-  const auto tar_psnr = std::numeric_limits<double>::max();
-  const auto pwe = 0.0;
+  auto input = sperr::veci_t(total_vals, 0);
+  auto input_signs = sperr::vecb_type(input.size(), true);
+  input[4] = 1;
+  input[7] = 3; input_signs[7] = false;
+  input[10] = 7;
+  input[11] = 9; input_signs[11] = false;
+  input[16] = 10;
+  input[19] = 12; input_signs[19] = false;
+  input[26] = 18;
+  input[29] = 19; input_signs[29] = false;
+  input[32] = 32;
+  input[39] = 32; input_signs[39] = false;
 
-  auto rtn = tester.execute(1.0, tar_psnr, pwe);
-  EXPECT_EQ(rtn, 0);
-  auto psnr = tester.get_psnr();
-  auto lmax = tester.get_lmax();
-  auto infty = std::numeric_limits<double>::infinity();
-  EXPECT_EQ(psnr, infty);
-  EXPECT_EQ(lmax, 0.0f);
+  // Encode
+  auto encoder = sperr::SPECK3D_INT_ENC();
+  encoder.use_coeffs(input, input_signs);
+  encoder.set_dims(dims);
+  encoder.encode();
+  auto bitstream = encoder.get_bitstream();
+
+  // Decode
+  auto decoder = sperr::SPECK3D_INT_DEC();
+  decoder.set_dims(dims);
+  decoder.use_bitstream(bitstream);
+  decoder.decode();
+  auto output = decoder.release_coeffs();
+  auto output_signs = decoder.release_signs();
+
+  EXPECT_EQ(input, output);
+  EXPECT_EQ(input_signs, output_signs);
 }
 
-TEST(speck3d_constant, omp_chunks)
+TEST(Speck3dInt, Random1)
 {
-  speck_tester_omp tester("../test_data/const32x32x59.float", {32, 32, 59}, 8);
-  tester.prefer_chunk_dims({32, 32, 32});
+  const auto dims = sperr::dims_type{10, 20, 30};
+  const auto total_vals = dims[0] * dims[1] * dims[2];
 
-  const auto tar_psnr = std::numeric_limits<double>::max();
-  const auto pwe = 0.0;
+  auto [input, input_signs] = ProduceRandomArray(total_vals, 2.9, 1); 
 
-  auto rtn = tester.execute(1.0, tar_psnr, pwe);
-  EXPECT_EQ(rtn, 0);
-  auto psnr = tester.get_psnr();
-  auto lmax = tester.get_lmax();
-  auto infty = std::numeric_limits<double>::infinity();
-  EXPECT_EQ(psnr, infty);
-  EXPECT_EQ(lmax, 0.0f);
+  // Encode
+  auto encoder = sperr::SPECK3D_INT_ENC();
+  encoder.use_coeffs(input, input_signs);
+  encoder.set_dims(dims);
+  encoder.encode();
+  auto bitstream = encoder.get_bitstream();
+
+  // Decode
+  auto decoder = sperr::SPECK3D_INT_DEC();
+  decoder.set_dims(dims);
+  decoder.use_bitstream(bitstream);
+  decoder.decode();
+  auto output = decoder.release_coeffs();
+  auto output_signs = decoder.release_signs();
+
+  EXPECT_EQ(input, output);
+  EXPECT_EQ(input_signs, output_signs);
 }
 
-//
-// Test target PWE
-//
-TEST(speck3d_target_pwe, small)
+TEST(Speck3dInt, Random2)
 {
-  speck_tester_omp tester("../test_data/wmag17.float", {17, 17, 17}, 1);
+  const auto dims = sperr::dims_type{63, 79, 128};
+  const auto total_vals = dims[0] * dims[1] * dims[2];
 
-  const auto bpp = sperr::max_d;
-  const auto target_psnr = sperr::max_d;
+  auto [input, input_signs] = ProduceRandomArray(total_vals, 499.0, 2); 
 
-  auto pwe = double{0.741};
-  tester.execute(bpp, target_psnr, pwe);
-  auto lmax = tester.get_lmax();
-  EXPECT_LE(lmax, pwe);
+  // Encode
+  auto encoder = sperr::SPECK3D_INT_ENC();
+  encoder.use_coeffs(input, input_signs);
+  encoder.set_dims(dims);
+  encoder.encode();
+  auto bitstream = encoder.get_bitstream();
 
-  pwe = 0.37;
-  tester.execute(bpp, target_psnr, pwe);
-  lmax = tester.get_lmax();
-  EXPECT_LE(lmax, pwe);
+  // Decode
+  auto decoder = sperr::SPECK3D_INT_DEC();
+  decoder.set_dims(dims);
+  decoder.use_bitstream(bitstream);
+  decoder.decode();
+  auto output = decoder.release_coeffs();
+  auto output_signs = decoder.release_signs();
 
-  pwe = 0.07;
-  tester.execute(bpp, target_psnr, pwe);
-  lmax = tester.get_lmax();
-  EXPECT_LE(lmax, pwe);
-
-  pwe = 0.01;
-  tester.execute(bpp, target_psnr, pwe);
-  lmax = tester.get_lmax();
-  EXPECT_LE(lmax, pwe);
+  EXPECT_EQ(input, output);
+  EXPECT_EQ(input_signs, output_signs);
 }
 
-TEST(speck3d_target_pwe, small_data_range)
+TEST(Speck3dInt, Random3)
 {
-  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 2);
+  const auto dims = sperr::dims_type{127, 155, 280};
+  const auto total_vals = dims[0] * dims[1] * dims[2];
 
-  const auto bpp = sperr::max_d;
-  const auto target_psnr = sperr::max_d;
+  auto [input, input_signs] = ProduceRandomArray(total_vals, 1234.5, 3); 
 
-  auto pwe = double{1.5e-7};
-  tester.execute(bpp, target_psnr, pwe);
-  auto lmax = tester.get_lmax();
-  EXPECT_LE(lmax, pwe);
+  // Encode
+  auto encoder = sperr::SPECK3D_INT_ENC();
+  encoder.use_coeffs(input, input_signs);
+  encoder.set_dims(dims);
+  encoder.encode();
+  auto bitstream = encoder.get_bitstream();
 
-  pwe = 7.3e-7;
-  tester.execute(bpp, target_psnr, pwe);
-  lmax = tester.get_lmax();
-  EXPECT_LE(lmax, pwe);
+  // Decode
+  auto decoder = sperr::SPECK3D_INT_DEC();
+  decoder.set_dims(dims);
+  decoder.use_bitstream(bitstream);
+  decoder.decode();
+  auto output = decoder.release_coeffs();
+  auto output_signs = decoder.release_signs();
 
-  pwe = 6.7e-6;
-  tester.execute(bpp, target_psnr, pwe);
-  lmax = tester.get_lmax();
-  EXPECT_LE(lmax, pwe);
+  EXPECT_EQ(input, output);
+  EXPECT_EQ(input_signs, output_signs);
 }
 
-TEST(speck3d_target_pwe, big)
-{
-  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 0);
-
-  const auto bpp = sperr::max_d;
-  const auto target_psnr = sperr::max_d;
-
-  double pwe = 0.92;
-  tester.execute(bpp, target_psnr, pwe);
-  auto lmax = tester.get_lmax();
-  EXPECT_LE(lmax, pwe);
-
-  pwe = 0.45;
-  tester.execute(bpp, target_psnr, pwe);
-  lmax = tester.get_lmax();
-  EXPECT_LE(lmax, pwe);
-
-  pwe = 0.08;
-  tester.execute(bpp, target_psnr, pwe);
-  lmax = tester.get_lmax();
-  EXPECT_LE(lmax, pwe);
-
-  pwe = 0.018;
-  tester.execute(bpp, target_psnr, pwe);
-  lmax = tester.get_lmax();
-  EXPECT_LE(lmax, pwe);
-}
-
-//
-// Test target PSNR
-//
-TEST(speck3d_target_psnr, small)
-{
-  speck_tester_omp tester("../test_data/wmag17.float", {17, 17, 17}, 1);
-
-  const auto bpp = sperr::max_d;
-  const auto pwe = 0.0;
-
-  auto target_psnr = 90.0;
-  tester.execute(bpp, target_psnr, pwe);
-  auto psnr = tester.get_psnr();
-  auto lmax = tester.get_lmax();
-  EXPECT_GT(psnr, target_psnr);
-
-  target_psnr = 120.0;
-  tester.execute(bpp, target_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, target_psnr - 0.1);  // An example of estimated error being too small.
-}
-
-TEST(speck3d_target_psnr, big)
-{
-  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 3);
-
-  const auto bpp = sperr::max_d;
-  const auto pwe = 0.0;
-
-  auto target_psnr = 75.0;
-  tester.execute(bpp, target_psnr, pwe);
-  auto psnr = tester.get_psnr();
-  auto lmax = tester.get_lmax();
-  EXPECT_GT(psnr, target_psnr);
-
-  target_psnr = 100.0;
-  tester.execute(bpp, target_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, target_psnr);
-}
-
-TEST(speck3d_target_psnr, small_data_range)
-{
-  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 0);
-
-  const auto bpp = sperr::max_d;
-  const auto pwe = 0.0;
-
-  auto target_psnr = 85.0;
-  tester.execute(bpp, target_psnr, pwe);
-  auto psnr = tester.get_psnr();
-  auto lmax = tester.get_lmax();
-  EXPECT_GT(psnr, target_psnr);
-
-  target_psnr = 110.0;
-  tester.execute(bpp, target_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, target_psnr);
-}
-
-//
-// Test fixed-size mode
-//
-TEST(speck3d_bit_rate, small)
-{
-  speck_tester_omp tester("../test_data/wmag17.float", {17, 17, 17}, 1);
-
-  const auto tar_psnr = std::numeric_limits<double>::max();
-  const auto pwe = 0.0;
-
-  tester.execute(4.0, tar_psnr, pwe);
-  auto psnr = tester.get_psnr();
-  auto lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 52.903);
-  EXPECT_LT(lmax, 1.8526);
-
-  tester.execute(2.0, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 41.281158);
-  EXPECT_LT(lmax, 6.4132);
-
-  tester.execute(1.0, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 34.645767);
-  EXPECT_LT(lmax, 13.0171);
-}
-
-TEST(speck3d_bit_rate, big)
-{
-  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 0);
-
-  const auto tar_psnr = std::numeric_limits<double>::max();
-  const auto pwe = 0.0;
-
-  tester.execute(2.0, tar_psnr, pwe);
-  auto psnr = tester.get_psnr();
-  auto lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 53.8102);
-  EXPECT_LT(psnr, 53.8103);
-  EXPECT_LT(lmax, 9.6954);
-
-  tester.execute(1.0, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 47.2219);
-  EXPECT_LT(psnr, 47.2220);
-  EXPECT_LT(lmax, 16.3006);
-
-  tester.execute(0.5, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 42.6877);
-  EXPECT_LT(psnr, 42.6878);
-  EXPECT_LT(lmax, 27.5579);
-
-  tester.execute(0.25, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 39.2763);
-  EXPECT_LT(psnr, 39.2764);
-  EXPECT_LT(lmax, 48.8490);
-}
-
-TEST(speck3d_bit_rate, narrow_data_range)
-{
-  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 2);
-
-  const auto tar_psnr = std::numeric_limits<double>::max();
-  const auto pwe = 0.0;
-
-  tester.execute(4.0, tar_psnr, pwe);
-  auto psnr = tester.get_psnr();
-  auto lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 67.7939);
-  EXPECT_LT(psnr, 67.7940);
-  EXPECT_LT(lmax, 1.17879e-06);
-
-  tester.execute(2.0, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 55.7831);
-  EXPECT_LT(psnr, 55.7832);
-  EXPECT_LT(lmax, 4.71049e-06);
-
-  tester.execute(0.8, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 47.2464);
-  EXPECT_LT(psnr, 47.2465);
-  EXPECT_LT(lmax, 1.74502e-05);
-
-  tester.execute(0.4, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 43.1739);
-  EXPECT_LT(psnr, 43.1740);
-  EXPECT_LT(lmax, 3.34412e-05);
-}
 
 }  // namespace

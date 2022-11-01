@@ -13,6 +13,11 @@ auto sperr::Set3D::is_empty() const -> bool
 { 
   return (length_z == 0 || length_y == 0 || length_x == 0); 
 }
+
+void sperr::SPECK3D_INT::set_dims(dims_type dims)
+{
+  m_dims = dims;
+}
   
 void sperr::SPECK3D_INT::m_clean_LIS()
 {
