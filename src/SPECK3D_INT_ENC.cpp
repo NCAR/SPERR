@@ -17,10 +17,10 @@ auto sperr::SPECK3D_INT_ENC::get_bitstream() -> vec8_type
   // num_bitplanes (uint8_t), padding_size (uint8_t)
 
   // Step 1: pad `m_bit_buffer` to have multiply of eight sizes.
-  uint8_t pad = 0;
+  uint8_t padding = 0;
   while (m_bit_buffer.size() % 8 != 0) {
     m_bit_buffer.push_back(false);
-    pad++;
+    padding++;
   }
 
   // Step 2: allocate space for returned bitstream
@@ -33,14 +33,14 @@ auto sperr::SPECK3D_INT_ENC::get_bitstream() -> vec8_type
   size_t pos = 0;
   std::memcpy(ptr + pos, &m_num_bitplanes, sizeof(m_num_bitplanes));
   pos += sizeof(m_num_bitplanes);
-  std::memcpy(ptr + pos, &pad, sizeof(pad));
-  pos += sizeof(pad);
+  std::memcpy(ptr + pos, &padding, sizeof(padding));
+  pos += sizeof(padding);
 
   // Step 4: assemble `m_bit_buffer` into bytes
   sperr::pack_booleans(bitstream, m_bit_buffer, pos);
 
   // Step 5: restore `m_bit_buffer` to its original size
-  for (uint8_t i = 0; i < pad; i++)
+  for (uint8_t i = 0; i < padding; i++)
     m_bit_buffer.pop_back();
 
   return bitstream;
