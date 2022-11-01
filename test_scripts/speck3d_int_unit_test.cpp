@@ -147,5 +147,32 @@ TEST(Speck3dInt, Random3)
   EXPECT_EQ(input_signs, output_signs);
 }
 
+TEST(Speck3dInt, RandomRandom)
+{
+  const auto dims = sperr::dims_type{63, 64, 119};
+  const auto total_vals = dims[0] * dims[1] * dims[2];
+
+  auto rd = std::random_device();
+  auto [input, input_signs] = ProduceRandomArray(total_vals, 8345.3, rd()); 
+
+  // Encode
+  auto encoder = sperr::SPECK3D_INT_ENC();
+  encoder.use_coeffs(input, input_signs);
+  encoder.set_dims(dims);
+  encoder.encode();
+  auto bitstream = encoder.get_bitstream();
+
+  // Decode
+  auto decoder = sperr::SPECK3D_INT_DEC();
+  decoder.set_dims(dims);
+  decoder.use_bitstream(bitstream);
+  decoder.decode();
+  auto output = decoder.release_coeffs();
+  auto output_signs = decoder.release_signs();
+
+  EXPECT_EQ(input, output);
+  EXPECT_EQ(input_signs, output_signs);
+}
+
 
 }  // namespace
