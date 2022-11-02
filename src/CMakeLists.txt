@@ -15,6 +15,7 @@ add_library( SPERR
              SPECK3D_INT.cpp
              SPECK3D_INT_ENC.cpp
              SPECK3D_INT_DEC.cpp
+             SPERR3D_INT_Driver.cpp
              SPERR_C_API.cpp)
 target_include_directories( SPERR PUBLIC ${CMAKE_SOURCE_DIR}/include )
 
@@ -67,6 +68,7 @@ include/SPERR_C_API.h;\
 include/SPECK3D_INT.h;\
 include/SPECK3D_INT_ENC.h;\
 include/SPECK3D_INT_DEC.h;\
+include/SPERR3D_INT_Driver.h;\
 include/SPERR.h;")
 set_target_properties( SPERR PROPERTIES PUBLIC_HEADER "${public_h_list}" )
 
