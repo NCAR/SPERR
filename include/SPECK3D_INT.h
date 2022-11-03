@@ -53,6 +53,7 @@ class SPECK3D_INT {
   std::vector<std::vector<Set3D>> m_LIS;
   std::vector<uint64_t> m_LIP, m_LSP_new;
   vecb_type m_bit_buffer, m_LSP_mask, m_sign_array;
+  vec8_type m_encoded_bitstream;
   dims_type m_dims = {0, 0, 0};  // Dimension of the 2D/3D volume
   veci_t m_coeff_buf;            // Quantized wavelet coefficients
   int_t m_threshold = 0;

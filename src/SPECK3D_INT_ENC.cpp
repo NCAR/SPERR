@@ -11,7 +11,12 @@ void sperr::SPECK3D_INT_ENC::use_coeffs(veci_t coeffs, vecb_type signs)
   m_sign_array = std::move(signs);
 }
 
-auto sperr::SPECK3D_INT_ENC::get_bitstream() -> vec8_type
+auto sperr::SPECK3D_INT_ENC::view_encoded_bitstream() const -> const vec8_type&
+{
+  return m_encoded_bitstream;
+}
+
+void sperr::SPECK3D_INT_ENC::m_assemble_bitstream()
 {
   // Header definition: 2 bytes in total:
   // num_bitplanes (uint8_t), padding_size (uint8_t)
@@ -23,11 +28,11 @@ auto sperr::SPECK3D_INT_ENC::get_bitstream() -> vec8_type
     padding++;
   }
 
-  // Step 2: allocate space for returned bitstream
+  // Step 2: allocate space for the encoded bitstream
   const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
   const size_t total_size = m_header_size + bit_in_byte;
-  auto bitstream = vec8_type(total_size);
-  auto* const ptr = bitstream.data();
+  m_encoded_bitstream.resize(total_size);
+  auto* const ptr = m_encoded_bitstream.data();
 
   // Step 3: fill header
   size_t pos = 0;
@@ -37,13 +42,11 @@ auto sperr::SPECK3D_INT_ENC::get_bitstream() -> vec8_type
   pos += sizeof(padding);
 
   // Step 4: assemble `m_bit_buffer` into bytes
-  sperr::pack_booleans(bitstream, m_bit_buffer, pos);
+  sperr::pack_booleans(m_encoded_bitstream, m_bit_buffer, pos);
 
   // Step 5: restore `m_bit_buffer` to its original size
   for (uint8_t i = 0; i < padding; i++)
     m_bit_buffer.pop_back();
-
-  return bitstream;
 }
 
 auto sperr::SPECK3D_INT_ENC::m_decide_significance(const Set3D& set) const
@@ -91,7 +94,7 @@ void sperr::SPECK3D_INT_ENC::encode()
 
   m_initialize_sets_lists();
 
-  // m_encoded_stream.clear();
+  m_encoded_bitstream.clear();
   m_bit_buffer.clear();
 
   // Keep signs of all coefficients
@@ -151,7 +154,7 @@ void sperr::SPECK3D_INT_ENC::encode()
     m_bit_buffer.push_back(false);
 
   // Finally we prepare the bitstream
-  // rtn = m_prepare_encoded_bitstream();
+  m_assemble_bitstream();
 }
 
 void sperr::SPECK3D_INT_ENC::m_process_S(size_t idx1,

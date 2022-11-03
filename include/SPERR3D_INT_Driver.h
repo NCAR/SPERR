@@ -6,10 +6,6 @@
 #include "SPECK3D_INT_ENC.h"
 #include "SPECK3D_INT_DEC.h"
 
-#ifdef USE_ZSTD
-#include "zstd.h"
-#endif
-
 namespace sperr {
 
 class SPERR3D_INT_Driver{
@@ -30,13 +26,13 @@ class SPERR3D_INT_Driver{
 
   auto compress() -> RTNType;
 
-  auto release_speck_bitstream() -> std::vector<uint8_t>&&;
+  auto release_encoded_bitstream() -> vec8_type&&;
 
  private:
   dims_type m_dims = {0, 0, 0};
   vecb_type m_sign_array;
   vecd_type m_vals_d;
-  veci_t m_vals_i;
+  veci_t m_vals_ui;
   std::vector<int64_t> m_vals_ll;
 
   Conditioner m_conditioner;
@@ -46,19 +42,12 @@ class SPERR3D_INT_Driver{
 
   Conditioner::settings_type m_conditioning_settings = {true, false, false, false};
 
-  // Store bitstreams from the conditioner and SPECK encoding, and the overall bitstream.
+  // Storage for various bitstreams
   Conditioner::meta_type m_condi_stream;
-  vec8_type m_speck_stream, m_encoded_stream;
+  vec8_type m_encoded_bitstream;
 
   double m_target_psnr = sperr::max_d;
   double m_target_pwe = 0.0;
-
-#ifdef USE_ZSTD
-  vec8_type m_zstd_buf;
-  std::unique_ptr<ZSTD_CCtx, decltype(&ZSTD_freeCCtx)> m_cctx = {nullptr, &ZSTD_freeCCtx};
-#endif
-
-  auto m_assemble_encoded_bitstream() -> RTNType;
 };
 
 };  // namespace sperr

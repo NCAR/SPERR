@@ -9,11 +9,11 @@
 
 namespace {
 
-auto ProduceRandomArray(size_t len, float stddev, uint64_t seed) 
+auto ProduceRandomArray(size_t len, float stddev, uint32_t seed) 
     -> std::pair<std::vector<uint64_t>, std::vector<bool>>
 {
   std::mt19937 gen{seed};
-  std::normal_distribution<float> d{0.0,stddev};
+  std::normal_distribution<float> d{0.0, stddev};
 
   auto tmp = std::vector<float>(len);
   std::generate(tmp.begin(), tmp.end(), [&gen, &d](){ return d(gen); });
@@ -55,7 +55,7 @@ TEST(Speck3dInt, minimal)
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
-  auto bitstream = encoder.get_bitstream();
+  const auto& bitstream = encoder.view_encoded_bitstream();
 
   // Decode
   auto decoder = sperr::SPECK3D_INT_DEC();
@@ -81,7 +81,7 @@ TEST(Speck3dInt, Random1)
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
-  auto bitstream = encoder.get_bitstream();
+  const auto& bitstream = encoder.view_encoded_bitstream();
 
   // Decode
   auto decoder = sperr::SPECK3D_INT_DEC();
@@ -107,7 +107,7 @@ TEST(Speck3dInt, Random2)
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
-  auto bitstream = encoder.get_bitstream();
+  const auto& bitstream = encoder.view_encoded_bitstream();
 
   // Decode
   auto decoder = sperr::SPECK3D_INT_DEC();
@@ -133,7 +133,7 @@ TEST(Speck3dInt, Random3)
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
-  auto bitstream = encoder.get_bitstream();
+  const auto& bitstream = encoder.view_encoded_bitstream();
 
   // Decode
   auto decoder = sperr::SPECK3D_INT_DEC();
@@ -160,7 +160,7 @@ TEST(Speck3dInt, RandomRandom)
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
-  auto bitstream = encoder.get_bitstream();
+  const auto& bitstream = encoder.view_encoded_bitstream();
 
   // Decode
   auto decoder = sperr::SPECK3D_INT_DEC();
