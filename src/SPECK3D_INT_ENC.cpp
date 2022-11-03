@@ -18,15 +18,13 @@ auto sperr::SPECK3D_INT_ENC::view_encoded_bitstream() const -> const vec8_type&
 
 void sperr::SPECK3D_INT_ENC::m_assemble_bitstream()
 {
-  // Header definition: 2 bytes in total:
-  // num_bitplanes (uint8_t), padding_size (uint8_t)
+  // Header definition: 9 bytes in total:
+  // num_bitplanes (uint8_t), useful_bits (uint64_t)
 
-  // Step 1: pad `m_bit_buffer` to have multiply of eight sizes.
-  uint8_t padding = 0;
-  while (m_bit_buffer.size() % 8 != 0) {
+  // Step 1: keep the number of useful bits, and then pad `m_bit_buffer`.
+  const uint64_t useful_bits = m_bit_buffer.size();
+  while (m_bit_buffer.size() % 8 != 0)
     m_bit_buffer.push_back(false);
-    padding++;
-  }
 
   // Step 2: allocate space for the encoded bitstream
   const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
@@ -38,15 +36,14 @@ void sperr::SPECK3D_INT_ENC::m_assemble_bitstream()
   size_t pos = 0;
   std::memcpy(ptr + pos, &m_num_bitplanes, sizeof(m_num_bitplanes));
   pos += sizeof(m_num_bitplanes);
-  std::memcpy(ptr + pos, &padding, sizeof(padding));
-  pos += sizeof(padding);
+  std::memcpy(ptr + pos, &useful_bits, sizeof(useful_bits));
+  pos += sizeof(useful_bits);
 
   // Step 4: assemble `m_bit_buffer` into bytes
   sperr::pack_booleans(m_encoded_bitstream, m_bit_buffer, pos);
 
   // Step 5: restore `m_bit_buffer` to its original size
-  for (uint8_t i = 0; i < padding; i++)
-    m_bit_buffer.pop_back();
+  m_bit_buffer.resize(useful_bits);
 }
 
 auto sperr::SPECK3D_INT_ENC::m_decide_significance(const Set3D& set) const

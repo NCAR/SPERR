@@ -37,6 +37,7 @@ class SPECK3D_INT {
  public:
 
   void set_dims(dims_type);
+  auto get_speck_full_len(const void*) const -> uint64_t;
 
  protected:
   // auto m_ready_to_encode() const -> bool;
@@ -59,7 +60,7 @@ class SPECK3D_INT {
   int_t m_threshold = 0;
 
   const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
-  const size_t m_header_size = 2; // 2 bytes
+  const size_t m_header_size = 9; // 9 bytes
 };
 
 };  // namespace sperr

@@ -7,16 +7,19 @@
 
 void sperr::SPECK3D_INT_DEC::use_bitstream(const vec8_type& stream)
 {
-  // Header definition: 2 bytes in total:
-  // num_bitplanes (uint8_t), padding_size (uint8_t)
+  // Header definition: 9 bytes in total:
+  // num_bitplanes (uint8_t), useful_bits (uint64_t)
 
-  // Step 1: extract num_bitplanes and padding_size
-  auto header = vec8_type(m_header_size);
-  std::memcpy(header.data(), stream.data(), sizeof(header));
+  // Step 1: extract num_bitplanes and useful_bits
+  uint8_t num_bitplanes = 0;
+  uint64_t useful_bits = 0;
+  std::memcpy(&num_bitplanes, stream.data(), sizeof(num_bitplanes));
+  std::memcpy(&useful_bits, stream.data() + sizeof(num_bitplanes), sizeof(&useful_bits));
+
 
   // Step 2: restore `m_threshold`
   m_threshold = 1;
-  for (uint8_t i = 1; i < header[0]; i++)
+  for (uint8_t i = 1; i < num_bitplanes; i++)
     m_threshold *= int_t{2};
 
   // Step 3: unpack bits
@@ -25,8 +28,7 @@ void sperr::SPECK3D_INT_DEC::use_bitstream(const vec8_type& stream)
   sperr::unpack_booleans(m_bit_buffer, stream.data(), stream.size(), m_header_size);
 
   // Step 4: remove padding bits
-  for (uint8_t i = 0; i < header[1]; i++)
-    m_bit_buffer.pop_back();
+  m_bit_buffer.resize(useful_bits);
 }
 
 auto sperr::SPECK3D_INT_DEC::release_coeffs() -> veci_t&&

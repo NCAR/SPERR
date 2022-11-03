@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <numeric>
 
 auto sperr::Set3D::is_pixel() const -> bool 
@@ -17,6 +18,18 @@ auto sperr::Set3D::is_empty() const -> bool
 void sperr::SPECK3D_INT::set_dims(dims_type dims)
 {
   m_dims = dims;
+}
+
+auto sperr::SPECK3D_INT::get_speck_full_len(const void* buf) const -> uint64_t
+{
+  // Given the header definition, directly go retrieve the value stored in the bytes 1--9.
+  const uint8_t* const ptr = static_cast<const uint8_t*>(buf);
+  uint64_t num_bits = 0;
+  std::memcpy(&num_bits, ptr + 1, sizeof(num_bits));
+  while (num_bits % 8 != 0)
+    ++num_bits;
+
+  return (m_header_size + num_bits / 8);
 }
   
 void sperr::SPECK3D_INT::m_clean_LIS()
