@@ -41,6 +41,16 @@ auto sperr::SPECK3D_INT_DEC::release_signs() -> vecb_type&&
   return std::move(m_sign_array);
 }
 
+auto sperr::SPECK3D_INT_DEC::view_coeffs() const -> const veci_t&
+{
+  return m_coeff_buf;
+}
+
+auto sperr::SPECK3D_INT_DEC::view_signs() const -> const vecb_type&
+{
+  return m_sign_array;
+}
+
 void sperr::SPECK3D_INT_DEC::decode()
 {
   //if (m_ready_to_decode() == false)

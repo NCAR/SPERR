@@ -17,6 +17,8 @@ class SPECK3D_INT_DEC : public SPECK3D_INT {
   void use_bitstream(const vec8_type&);
   auto release_coeffs() -> veci_t&&;
   auto release_signs() -> vecb_type&&;
+  auto view_coeffs() const -> const veci_t&;
+  auto view_signs() const -> const vecb_type&;
 
  private:
   //auto m_ready_to_decode() const -> bool;
