@@ -122,7 +122,7 @@ auto sperr::SPERR3D_INT_Driver::compress() -> RTNType
   m_vals_d = m_cdf.release_data();
 
   // Step 3: quantize floating-point coefficients to integers
-  const auto q1 = 1.0 / 1.5 * m_target_pwe;
+  const auto q1 = 1.0 / (1.5 * m_target_pwe);
   m_vals_ll.resize(total_vals);
   m_vals_ui.resize(total_vals);
   m_sign_array.resize(total_vals);
@@ -184,7 +184,7 @@ auto sperr::SPERR3D_INT_Driver::decompress() -> RTNType
   const auto& signs = m_decoder.view_signs();
   assert(vals_ui.size() == total_vals);
   assert(signs.size() == total_vals);
-  
+
   const auto tmpd = std::array<double, 2>{-1.0, 1.0};
   const auto q = m_target_pwe * 1.5;
   m_vals_d.resize(total_vals);
