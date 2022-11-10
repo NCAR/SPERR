@@ -64,6 +64,7 @@ enum class RTNType {
   SetBPPBeforeDims,
   DataRangeNotSet,
   CompModeUnknown,
+  FE_Invalid,
   Error
 };
 

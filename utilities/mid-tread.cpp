@@ -44,6 +44,12 @@ int main(int argc, char* argv[])
   app.add_option("--pwe", pwe, "Maximum point-wise error tolerance.")
       ->group("Compression Specifications (must choose one and only one)");
 
+  // Output specifications
+  auto zipfile = std::string();
+  app.add_option("-z", zipfile, "Compressed file.")->group("Output specifications");
+  auto reconfile = std::string();
+  app.add_option("-r", reconfile, "Compressed file.")->group("Output specifications");
+
   CLI11_PARSE(app, argc, argv);
 
   // Read the input file
@@ -64,11 +70,17 @@ int main(int argc, char* argv[])
     encoder.copy_data(reinterpret_cast<const double*>(orig.data()), total_vals);
   else
     encoder.copy_data(reinterpret_cast<const float*>(orig.data()), total_vals);
-  encoder.compress();
+  auto rtn = encoder.compress();
+  if (rtn == sperr::RTNType::FE_Invalid) {
+    std::cerr << "FE_Invalid detected!" << std::endl;
+    return 1;
+  }
+  else
+    std::cerr << "No FE_Invalid detected!" << std::endl;
   auto bitstream = encoder.release_encoded_bitstream();
 
   // Write out the encoded bitstream, and free up memory 
-  sperr::write_n_bytes("bit.stream", bitstream.size(), bitstream.data());
+  sperr::write_n_bytes(zipfile, bitstream.size(), bitstream.data());
   orig.clear();
   orig.shrink_to_fit();
 
@@ -79,7 +91,7 @@ int main(int argc, char* argv[])
   decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decompress();
   auto output = decoder.release_decoded_data();
-  sperr::write_n_bytes("decoded.data", 8 * output.size(), output.data());
+  sperr::write_n_bytes(reconfile, 8 * output.size(), output.data());
 
   return 0;
 }

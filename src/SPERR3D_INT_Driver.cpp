@@ -127,8 +127,11 @@ auto sperr::SPERR3D_INT_Driver::compress() -> RTNType
   m_vals_ui.resize(total_vals);
   m_sign_array.resize(total_vals);
   std::fesetround(FE_TONEAREST);
+  std::feclearexcept(FE_ALL_EXCEPT);
   std::transform(m_vals_d.cbegin(), m_vals_d.cend(), m_vals_ll.begin(),
                  [q1](auto d){ return std::llrint(d * q1); });
+  if (std::fetestexcept(FE_INVALID))
+    return RTNType::FE_Invalid;
   std::transform(m_vals_ll.cbegin(), m_vals_ll.cend(), m_vals_ui.begin(),
                  [](auto ll){ return static_cast<uint64_t>(std::abs(ll)); });
   std::transform(m_vals_ll.cbegin(), m_vals_ll.cend(), m_sign_array.begin(),
