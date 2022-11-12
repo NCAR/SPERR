@@ -20,13 +20,13 @@ class SPECK3D_INT_Driver{
   void take_data(std::vector<double>&&);
 
   // Use an encoded bitstream
-  // virtual auto use_bitstream(const void* p, size_t len) -> RTNType; 
+  virtual auto use_bitstream(const void* p, size_t len) -> RTNType; 
 
   //
   // Output
   //
   virtual auto release_encoded_bitstream() -> vec8_type&&;
-  auto release_decoded_data() -> vecd_type&&;
+  virtual auto release_decoded_data() -> vecd_type&&;
 
   //
   // Generic configurations
@@ -38,11 +38,11 @@ class SPECK3D_INT_Driver{
   // Actions
   //
   virtual auto encode() -> RTNType;
-  // virtual auto decode() -> RTNType;
+  virtual auto decode() -> RTNType;
 
  protected:
   dims_type            m_dims = {0, 0, 0};
-  double               m_q = 0.0;
+  double               m_q = 1.0;  // 1.0 is a better initial value than 0.0
   vecb_type            m_sign_array;
   vecd_type            m_vals_d;
   veci_t               m_vals_ui;

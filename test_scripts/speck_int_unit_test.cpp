@@ -1,5 +1,6 @@
 #include "SPECK3D_INT_ENC.h"
 #include "SPECK3D_INT_DEC.h"
+#include "SPECK3D_INT_Driver.h"
 
 #include "gtest/gtest.h"
 
@@ -121,32 +122,6 @@ TEST(Speck3dInt, Random2)
   EXPECT_EQ(input_signs, output_signs);
 }
 
-TEST(Speck3dInt, Random3)
-{
-  const auto dims = sperr::dims_type{127, 155, 280};
-  const auto total_vals = dims[0] * dims[1] * dims[2];
-
-  auto [input, input_signs] = ProduceRandomArray(total_vals, 1234.5, 3); 
-
-  // Encode
-  auto encoder = sperr::SPECK3D_INT_ENC();
-  encoder.use_coeffs(input, input_signs);
-  encoder.set_dims(dims);
-  encoder.encode();
-  const auto& bitstream = encoder.view_encoded_bitstream();
-
-  // Decode
-  auto decoder = sperr::SPECK3D_INT_DEC();
-  decoder.set_dims(dims);
-  decoder.use_bitstream(bitstream);
-  decoder.decode();
-  auto output = decoder.release_coeffs();
-  auto output_signs = decoder.release_signs();
-
-  EXPECT_EQ(input, output);
-  EXPECT_EQ(input_signs, output_signs);
-}
-
 TEST(Speck3dInt, RandomRandom)
 {
   const auto dims = sperr::dims_type{63, 64, 119};
@@ -172,6 +147,40 @@ TEST(Speck3dInt, RandomRandom)
 
   EXPECT_EQ(input, output);
   EXPECT_EQ(input_signs, output_signs);
+}
+
+//
+// Test the driver as well
+//
+TEST(Speck3dIntDriver, RandomRandom)
+{
+  const auto dims = sperr::dims_type{72, 128, 55};
+  const auto total_vals = dims[0] * dims[1] * dims[2];
+  const auto q = 0.31;
+
+  auto rd = std::random_device();
+  std::mt19937 gen{rd()};
+  std::normal_distribution<double> d{0.0, 1.0};
+  auto input = sperr::vecd_type(total_vals, 0.0);
+  std::generate(input.begin(), input.end(), [&gen, &d](){ return d(gen); });
+
+  // Encode
+  auto coder = sperr::SPECK3D_INT_Driver();
+  coder.copy_data(input.data(), input.size());
+  coder.set_dims(dims);
+  coder.set_q(q);
+  coder.encode();
+  const auto bitstream = coder.release_encoded_bitstream();
+
+  // Decode
+  coder.use_bitstream(bitstream.data(), bitstream.size());
+  coder.decode();
+  auto output = coder.release_decoded_data();
+
+  EXPECT_EQ(input.size(), output.size());
+  for (size_t i = 0; i < input.size(); i++) {
+    EXPECT_DOUBLE_EQ( static_cast<double>(std::llrint(input[i] / q)) * q, output[i] );
+  }
 }
 
 
