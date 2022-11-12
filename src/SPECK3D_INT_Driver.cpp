@@ -1,27 +1,29 @@
-#include "SPERR3D_INT_Driver.h"
+#include "SPECK3D_INT_Driver.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cfenv>
+#include <cmath>
 #include <cstring>
 
 template <typename T>
-void sperr::SPERR3D_INT_Driver::copy_data(const T* p, size_t len)
+void sperr::SPECK3D_INT_Driver::copy_data(const T* p, size_t len)
 {
   static_assert(std::is_floating_point<T>::value, "!! Only floating point values are supported !!");
 
   m_vals_d.resize(len);
   std::copy(p, p + len, m_vals_d.begin());
 }
-template void sperr::SPERR3D_INT_Driver::copy_data(const double*, size_t);
-template void sperr::SPERR3D_INT_Driver::copy_data(const float*, size_t);
+template void sperr::SPECK3D_INT_Driver::copy_data(const double*, size_t);
+template void sperr::SPECK3D_INT_Driver::copy_data(const float*, size_t);
 
-void sperr::SPERR3D_INT_Driver::take_data(sperr::vecd_type&& buf)
+void sperr::SPECK3D_INT_Driver::take_data(sperr::vecd_type&& buf)
 {
   m_vals_d = std::move(buf);
 }
 
-auto sperr::SPERR3D_INT_Driver::use_bitstream(const void* p, size_t len) -> RTNType
+#if 0
+auto sperr::SPECK3D_INT_Driver::use_bitstream(const void* p, size_t len) -> RTNType
 {
   // It'd be bad to have some buffers updated, and some others not.
   // So let's clean up everything at the very beginning of this routine
@@ -60,102 +62,87 @@ auto sperr::SPERR3D_INT_Driver::use_bitstream(const void* p, size_t len) -> RTNT
 
   return RTNType::Good;
 }
+#endif
 
-void sperr::SPERR3D_INT_Driver::toggle_conditioning(sperr::Conditioner::settings_type b4)
+
+auto sperr::SPECK3D_INT_Driver::release_encoded_bitstream() -> vec8_type&&
 {
-  m_conditioning_settings = b4;
+  return std::move(m_speck_bitstream);
 }
 
-void sperr::SPERR3D_INT_Driver::set_pwe(double pwe)
+void sperr::SPECK3D_INT_Driver::set_q(double q)
 {
-  m_target_pwe = std::max(0.0, pwe);
+  m_q = std::max(0.0, q);
 }
 
-void sperr::SPERR3D_INT_Driver::set_dims(dims_type dims)
+void sperr::SPECK3D_INT_Driver::set_dims(dims_type dims)
 {
   m_dims = dims;
 }
 
-auto sperr::SPERR3D_INT_Driver::release_encoded_bitstream() -> vec8_type&&
-{
-  return std::move(m_encoded_bitstream);
-}
-
-auto sperr::SPERR3D_INT_Driver::release_decoded_data() -> vecd_type&&
+auto sperr::SPECK3D_INT_Driver::release_decoded_data() -> vecd_type&&
 {
   return std::move(m_vals_d);
 }
 
-auto sperr::SPERR3D_INT_Driver::compress() -> RTNType
+auto sperr::SPECK3D_INT_Driver::m_translate_f2i(const vecd_type& arrf) -> RTNType
 {
 #pragma STDC FENV_ACCESS ON
 
-  const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
-  if (m_vals_d.empty() || m_vals_d.size() != total_vals)
-    return RTNType::Error;
-
-  m_condi_stream.fill(0);
-  m_encoded_bitstream.clear();
-
-  // Believe it or not, there are constant fields passed in for compression!
-  // Let's detect that case and skip the rest of the compression routine if it occurs.
-  auto constant = m_conditioner.test_constant(m_vals_d);
-  if (constant.first) {
-    m_condi_stream = constant.second;
-    m_encoded_bitstream.resize(constant.second.size());
-    std::copy(constant.second.cbegin(), constant.second.cend(), m_encoded_bitstream.begin());
-    return RTNType::Good;
-  }
-
-  // Step 1: data goes through the conditioner
-  m_conditioner.toggle_all_settings(m_conditioning_settings);
-  auto [rtn, condi_meta] = m_conditioner.condition(m_vals_d);
-  if (rtn != RTNType::Good)
-    return rtn;
-  m_condi_stream = condi_meta;
-
-  // Step 2: wavelet transform
-  rtn = m_cdf.take_data(std::move(m_vals_d), m_dims);
-  if (rtn != RTNType::Good)
-    return rtn;
-  m_cdf.dwt3d();
-  m_vals_d = m_cdf.release_data();
-
-  // Step 3: quantize floating-point coefficients to integers
-  const auto q1 = 1.0 / (1.5 * m_target_pwe);
+  const auto total_vals = arrf.size();
+  const auto q1 = 1.0 / m_q;
   m_vals_ll.resize(total_vals);
   m_vals_ui.resize(total_vals);
   m_sign_array.resize(total_vals);
   std::fesetround(FE_TONEAREST);
   std::feclearexcept(FE_ALL_EXCEPT);
-  std::transform(m_vals_d.cbegin(), m_vals_d.cend(), m_vals_ll.begin(),
+  std::transform(arrf.cbegin(), arrf.cend(), m_vals_ll.begin(),
                  [q1](auto d){ return std::llrint(d * q1); });
   if (std::fetestexcept(FE_INVALID))
     return RTNType::FE_Invalid;
   std::transform(m_vals_ll.cbegin(), m_vals_ll.cend(), m_vals_ui.begin(),
-                 [](auto ll){ return static_cast<uint64_t>(std::abs(ll)); });
+                 [](auto ll){ return static_cast<int_t>(std::abs(ll)); });
   std::transform(m_vals_ll.cbegin(), m_vals_ll.cend(), m_sign_array.begin(),
                  [](auto ll){ return ll >= 0ll; });
-
-  // Step 3: Integer SPECK encoding
-  m_encoder.set_dims(m_dims);
-  m_encoder.use_coeffs(std::move(m_vals_ui), std::move(m_sign_array));
-  m_encoder.encode();
-  const auto& speck_stream = m_encoder.view_encoded_bitstream();
-  if (speck_stream.empty())
-    return RTNType::Error;
-
-  // Step 4: Put together the conditioner and SPECK bitstreams.
-  const size_t total_len = m_condi_stream.size() + sizeof(double) + speck_stream.size();
-  m_encoded_bitstream.resize(total_len);
-  std::copy(m_condi_stream.cbegin(), m_condi_stream.cend(), m_encoded_bitstream.begin());
-  size_t pos = m_condi_stream.size();
-  std::copy(speck_stream.cbegin(), speck_stream.cend(), m_encoded_bitstream.begin() + pos);
 
   return RTNType::Good;
 }
 
-auto sperr::SPERR3D_INT_Driver::decompress() -> RTNType
+void sperr::SPECK3D_INT_Driver::m_translate_i2f(const veci_t& arri, const vecb_type& signs)
+{
+  assert(signs.size() == arri.size());
+
+  const auto tmpd = std::array<double, 2>{-1.0, 1.0};
+  const auto q = m_q;
+  m_vals_d.resize(signs.size());
+  std::transform(arri.cbegin(), arri.cend(), signs.cbegin(), m_vals_d.begin(),
+                 [tmpd, q](auto i, auto b){ return q * static_cast<double>(i) * tmpd[b]; });
+
+}
+
+auto sperr::SPECK3D_INT_Driver::encode() -> RTNType
+{
+  const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
+  if (m_vals_d.empty() || m_vals_d.size() != total_vals)
+    return RTNType::Error;
+
+  // Step 1: quantize floating-point values to integers.
+  //         Results are saved in `m_vals_ui` and `m_sign_array`.
+  auto rtn = m_translate_f2i(m_vals_d);
+  if (rtn != RTNType::Good)
+    return rtn;
+
+  // Step 2: Integer SPECK encoding
+  m_encoder.set_dims(m_dims);
+  m_encoder.use_coeffs(std::move(m_vals_ui), std::move(m_sign_array));
+  m_encoder.encode();
+  m_speck_bitstream = m_encoder.view_encoded_bitstream();
+
+  return RTNType::Good;
+}
+
+#if 0
+auto sperr::SPECK3D_INT_Driver::decompress() -> RTNType
 {
   m_vals_d.clear();
   m_vals_ui.clear();
@@ -204,4 +191,4 @@ auto sperr::SPERR3D_INT_Driver::decompress() -> RTNType
 
   return RTNType::Good;
 }
-
+#endif

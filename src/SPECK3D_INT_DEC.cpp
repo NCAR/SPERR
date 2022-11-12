@@ -14,7 +14,7 @@ void sperr::SPECK3D_INT_DEC::use_bitstream(const vec8_type& stream)
   uint8_t num_bitplanes = 0;
   uint64_t useful_bits = 0;
   std::memcpy(&num_bitplanes, stream.data(), sizeof(num_bitplanes));
-  std::memcpy(&useful_bits, stream.data() + sizeof(num_bitplanes), sizeof(&useful_bits));
+  std::memcpy(&useful_bits, stream.data() + sizeof(num_bitplanes), sizeof(useful_bits));
 
 
   // Step 2: restore `m_threshold`
