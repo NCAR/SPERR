@@ -52,8 +52,8 @@ class SPECK3D_INT_Driver{
   SPECK3D_INT_ENC m_encoder;
   SPECK3D_INT_DEC m_decoder;
 
-  auto m_translate_f2i(const vecd_type&) -> RTNType;
-  void m_translate_i2f(const veci_t&, const vecb_type&);
+  auto m_translate_f2i(const vecd_type&) -> RTNType; // Results put in `m_vals_ui` and `m_sign_array`.
+  void m_translate_i2f(const veci_t&, const vecb_type&); // Results put in `m_vals_d`.
 
 
 };
