@@ -16,6 +16,7 @@ if(NOT CMAKE_BUILD_TYPE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo")
 endif()
 
+include(CMakeDependentOption)
 #
 # Test system endian. SPERR only works on little endian machines,
 # which are pretty much all machines on the market in 2020.
@@ -34,6 +35,9 @@ option( BUILD_UNIT_TESTS "Build unit tests using GoogleTest" ON )
 option( BUILD_CLI_UTILITIES "Build a set of command line utilities" ON )
 option( USE_OMP "Use OpenMP parallelization on 3D volumes" ON )
 option( USE_ZSTD "Incorporate ZSTD to achieve further reduction (~5%)" OFF )
+cmake_dependent_option(USE_BUNDLED_ZSTD "prefer an the bundled ZStd to an external one" ON "USE_ZSTD" OFF)
+option( SPERR_PREFER_RPATH "Set RPATH; this can fight with package managers so turn off when building for them" ON )
+mark_as_advanced(FORCE SPERR_PREFER_RPATH)
 
 if(USE_OMP)
   find_package(OpenMP REQUIRED)
@@ -74,10 +78,11 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 if( USE_ZSTD )
     message(STATUS "ZSTD add-on enabled!")
 
+    if(USE_BUNDLED_ZSTD)
     project(zstd-download NONE)
     include(ExternalProject)
     ExternalProject_Add( zstd-download
-      GIT_REPOSITORY    git@github.com:facebook/zstd.git
+      GIT_REPOSITORY    https://github.com/facebook/zstd.git
       GIT_TAG           release
       GIT_SHALLOW       "True"
       PREFIX            "${CMAKE_CURRENT_BINARY_DIR}/zstd"
@@ -105,11 +110,18 @@ if( USE_ZSTD )
     ExternalProject_Get_Property( zstd-download INSTALL_DIR )
     include_directories("${INSTALL_DIR}/include")
     link_directories( "${INSTALL_DIR}/lib" )
+    set(SPERR_ZSTD_DEPENDENCY "")
+    else()
+      find_package(PkgConfig REQUIRED)
+      pkg_search_module(ZSTD IMPORTED_TARGET GLOBAL libzstd REQUIRED)
+      set(SPERR_ZSTD_DEPENDENCY "libzstd")
+    endif()
 else()
     message(STATUS "ZSTD add-on disabled!")
 endif()
 
 
+if(SPERR_PREFER_RPATH)
 #
 # Basically always use full rpath when installing.
 # These specifications need to be placed before defining any targets.
@@ -123,6 +135,7 @@ set( CMAKE_SKIP_BUILD_RPATH             FALSE )
 set( CMAKE_BUILD_WITH_INSTALL_RPATH     FALSE )
 set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" )
 set( CMAKE_INSTALL_RPATH_USE_LINK_PATH  TRUE  )
+endif()
 
 
 #
@@ -223,7 +236,7 @@ install( FILES "${CMAKE_BINARY_DIR}/SperrConfig.h" DESTINATION ${CMAKE_INSTALL_I
 
 # Copy over ZSTD libraries
 #
-if( USE_ZSTD )
+if( USE_ZSTD AND USE_BUNDLED_ZSTD )
   ExternalProject_Get_Property( zstd-download INSTALL_DIR )
   install( DIRECTORY "${INSTALL_DIR}/lib/" TYPE LIB )
 endif()
