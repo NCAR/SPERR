@@ -7,6 +7,6 @@ Name: SPERR
 Description: @SPERR_DESCRIPTION@
 Version: @SPERR_VERSION@
 
-Requires:
+Requires: @SPERR_ZSTD_DEPENDENCY@
 Libs: -L${libdir} -lSPERR
 Cflags: -I${includedir}

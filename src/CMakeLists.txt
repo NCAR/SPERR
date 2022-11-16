@@ -29,9 +29,13 @@ endif()
 # Also link zstd
 #
 if( USE_ZSTD )
-    # Declare dependency so that `zstd-download` is finished before SPERR is built.
-    add_dependencies( SPERR zstd-download )
-    target_link_libraries( SPERR PUBLIC zstd )
+    if(USE_BUNDLED_ZSTD)
+      # Declare dependency so that `zstd-download` is finished before SPERR is built.
+      add_dependencies( SPERR zstd-download )
+      target_link_libraries( SPERR PUBLIC zstd )
+    else()
+      target_link_libraries( SPERR PUBLIC PkgConfig::ZSTD )
+    endif()
 endif()
 
 #
