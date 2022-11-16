@@ -1,4 +1,4 @@
-#include "SPERR3D_INT_Driver.h"
+#include "SPERR3D.h"
 
 #include "CLI11.hpp"
 
@@ -63,14 +63,14 @@ int main(int argc, char* argv[])
   }
 
   // Use a compressor
-  auto encoder = sperr::SPERR3D_INT_Driver();
+  auto encoder = sperr::SPERR3D();
   encoder.set_dims(dims);
-  encoder.set_pwe(pwe);
+  encoder.set_q(1.5 * pwe);
   if (use_double)
     encoder.copy_data(reinterpret_cast<const double*>(orig.data()), total_vals);
   else
     encoder.copy_data(reinterpret_cast<const float*>(orig.data()), total_vals);
-  auto rtn = encoder.compress();
+  auto rtn = encoder.encode();
   if (rtn == sperr::RTNType::FE_Invalid) {
     std::cerr << "FE_Invalid detected!" << std::endl;
     return 1;
@@ -85,11 +85,11 @@ int main(int argc, char* argv[])
   orig.shrink_to_fit();
 
   // Use a decompressor
-  auto decoder = sperr::SPERR3D_INT_Driver();
+  auto decoder = sperr::SPERR3D();
   decoder.set_dims(dims);
-  decoder.set_pwe(pwe);
+  decoder.set_q(1.5 * pwe);
   decoder.use_bitstream(bitstream.data(), bitstream.size());
-  decoder.decompress();
+  decoder.decode();
   auto output = decoder.release_decoded_data();
   sperr::write_n_bytes(reconfile, 8 * output.size(), output.data());
 
