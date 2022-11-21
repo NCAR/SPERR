@@ -63,7 +63,7 @@ void sperr::SPECK3D_INT_Driver::set_dims(dims_type dims)
 
 auto sperr::SPECK3D_INT_Driver::num_coded_vals() const -> size_t
 {
-  return std::count_if(m_vals_ll.cbegin(), m_vals_ll.cend(), [](auto v){ return v > 0l; });
+  return std::count_if(m_vals_ll.cbegin(), m_vals_ll.cend(), [](auto v){ return v != 0l; });
 }
 
 auto sperr::SPECK3D_INT_Driver::m_translate_f2i(const vecd_type& arrf) -> RTNType
