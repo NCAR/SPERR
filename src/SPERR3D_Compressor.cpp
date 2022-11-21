@@ -119,7 +119,6 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
   std::copy(speck_stream.cbegin(), speck_stream.cend(),
             m_encoded_stream.begin() + m_condi_stream.size());
 
-#if 0
   // Step 4: Outlier correction if in FixedPWE mode.
   if (mode == sperr::CompMode::FixedPWE) {
     // Step 4.1: IDWT using quantized coefficients to have a reconstruction.
@@ -150,7 +149,6 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
         return RTNType::Error;
     }
   }
-#endif
 
   rtn = m_assemble_encoded_bitstream();
 
