@@ -35,6 +35,14 @@ class SPECK3D_INT_Driver{
   void set_dims(dims_type);
 
   //
+  // Queries
+  //
+
+  // Has to be called after an `encode` action.
+  // Returns the number of values coded in the resulting bitstream.
+  auto num_coded_vals() const -> size_t;
+
+  //
   // Actions
   //
   virtual auto encode() -> RTNType;
