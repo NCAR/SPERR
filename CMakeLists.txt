@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 3.14)
 
-project(SPERR VERSION 0.4 DESCRIPTION "Lossy Scientific Compression with SPERR")
+project(SPERR VERSION 0.5.1 DESCRIPTION "Lossy Scientific Compression with SPERR")
 
 #
 # specify the C++ standard
@@ -35,7 +35,7 @@ option( BUILD_UNIT_TESTS "Build unit tests using GoogleTest" ON )
 option( BUILD_CLI_UTILITIES "Build a set of command line utilities" ON )
 option( USE_OMP "Use OpenMP parallelization on 3D volumes" ON )
 option( USE_ZSTD "Incorporate ZSTD to achieve further reduction (~5%)" OFF )
-cmake_dependent_option(USE_BUNDLED_ZSTD "prefer an the bundled ZSTD to an external one" ON "USE_ZSTD" OFF)
+cmake_dependent_option(USE_BUNDLED_ZSTD "Prefer to use the bundled ZSTD to an external one" ON "USE_ZSTD" OFF)
 option( SPERR_PREFER_RPATH "Set RPATH; this can fight with package managers so turn off when building for them" ON )
 mark_as_advanced(FORCE SPERR_PREFER_RPATH)
 
@@ -76,9 +76,8 @@ configure_file("${CMAKE_SOURCE_DIR}/SperrConfig.h.in" SperrConfig.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if( USE_ZSTD )
-    message(STATUS "ZSTD add-on enabled!")
-
     if(USE_BUNDLED_ZSTD)
+      message(STATUS "ZSTD add-on enabled; using the bundled version!")
       project(zstd-download NONE)
       include(ExternalProject)
       ExternalProject_Add( zstd-download
@@ -115,7 +114,7 @@ if( USE_ZSTD )
       find_package(PkgConfig REQUIRED)
       pkg_search_module(ZSTD REQUIRED IMPORTED_TARGET GLOBAL libzstd )
       set(SPERR_ZSTD_DEPENDENCY "libzstd")
-      message(STATUS "  Found system ZSTD: ${ZSTD_LINK_LIBRARIES}")
+      message(STATUS "ZSTD add-on enabled; using the system version: ${ZSTD_LINK_LIBRARIES}")
     endif()
 else()
     message(STATUS "ZSTD add-on disabled!")
