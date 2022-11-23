@@ -5,72 +5,6 @@
 #include <cstring>  // std::memcpy()
 #include <numeric>
 
-void sperr::SPECK3D_INT_ENC::use_coeffs(veci_t coeffs, vecb_type signs)
-{
-  m_coeff_buf = std::move(coeffs);
-  m_sign_array = std::move(signs);
-}
-
-auto sperr::SPECK3D_INT_ENC::view_encoded_bitstream() const -> const vec8_type&
-{
-  return m_encoded_bitstream;
-}
-
-void sperr::SPECK3D_INT_ENC::m_assemble_bitstream()
-{
-  // Header definition: 9 bytes in total:
-  // num_bitplanes (uint8_t), useful_bits (uint64_t)
-
-  // Step 1: keep the number of useful bits, and then pad `m_bit_buffer`.
-  const uint64_t useful_bits = m_bit_buffer.size();
-  while (m_bit_buffer.size() % 8 != 0)
-    m_bit_buffer.push_back(false);
-
-  // Step 2: allocate space for the encoded bitstream
-  const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
-  const size_t total_size = m_header_size + bit_in_byte;
-  m_encoded_bitstream.resize(total_size);
-  auto* const ptr = m_encoded_bitstream.data();
-
-  // Step 3: fill header
-  size_t pos = 0;
-  std::memcpy(ptr + pos, &m_num_bitplanes, sizeof(m_num_bitplanes));
-  pos += sizeof(m_num_bitplanes);
-  std::memcpy(ptr + pos, &useful_bits, sizeof(useful_bits));
-  pos += sizeof(useful_bits);
-
-  // Step 4: assemble `m_bit_buffer` into bytes
-  sperr::pack_booleans(m_encoded_bitstream, m_bit_buffer, pos);
-
-  // Step 5: restore `m_bit_buffer` to its original size
-  m_bit_buffer.resize(useful_bits);
-}
-
-auto sperr::SPECK3D_INT_ENC::m_decide_significance(const Set3D& set) const
-    -> std::pair<SigType, std::array<uint32_t, 3>>
-{
-  assert(!set.is_empty());
-
-  const size_t slice_size = m_dims[0] * m_dims[1];
-
-  const auto gtr = [thld = m_threshold](auto v) { return v >= thld; };
-
-  for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
-    const size_t slice_offset = z * slice_size;
-    for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
-      auto first = m_coeff_buf.cbegin() + (slice_offset + y * m_dims[0] + set.start_x);
-      auto last = first + set.length_x;
-      auto found = std::find_if(first, last, gtr);
-      if (found != last) {
-        const auto x = static_cast<uint32_t>(std::distance(first, found));
-        return {SigType::Sig, {x, y - set.start_y, z - set.start_z}};
-      }
-    };
-  }
-
-  return {SigType::Insig, {0u, 0u, 0u}};
-}
-
 void sperr::SPECK3D_INT_ENC::encode()
 {
   // if (m_ready_to_encode() == false)
@@ -89,7 +23,7 @@ void sperr::SPECK3D_INT_ENC::encode()
   // else
   //  m_data_range = sperr::max_d;
 
-  m_initialize_sets_lists();
+  m_initialize_lists();
 
   m_encoded_bitstream.clear();
   m_bit_buffer.clear();
@@ -152,6 +86,45 @@ void sperr::SPECK3D_INT_ENC::encode()
 
   // Finally we prepare the bitstream
   m_assemble_bitstream();
+}
+
+void sperr::SPECK3D_INT_ENC::m_sorting_pass()
+{
+  // Since we have a separate representation of LIP, let's process that list first!
+  //
+  size_t dummy = 0;
+  for (size_t loc = 0; loc < m_LIP.size(); loc++)
+    m_process_P(loc, SigType::Dunno, dummy, true);
+
+  // Then we process regular sets in LIS.
+  //
+  for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
+    // From the end of m_LIS to its front
+    size_t idx1 = m_LIS.size() - tmp;
+    for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++)
+      m_process_S(idx1, idx2, SigType::Dunno, dummy, true);
+  }
+}
+
+void sperr::SPECK3D_INT_ENC::m_refinement_pass()
+{
+  // First, process significant pixels previously found.
+  //
+  const auto tmp1 = std::array<int_t, 2>{0, m_threshold};
+
+  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+    if (m_LSP_mask[i]) {
+      const bool o1 = m_coeff_buf[i] >= m_threshold;
+      m_bit_buffer.push_back(o1);
+      m_coeff_buf[i] -= tmp1[o1];
+    }
+  }
+
+  // Second, mark newly found significant pixels in `m_LSP_mask`.
+  //
+  for (auto idx : m_LSP_new)
+    m_LSP_mask[idx] = true;
+  m_LSP_new.clear();
 }
 
 void sperr::SPECK3D_INT_ENC::m_process_S(size_t idx1,
@@ -280,41 +253,27 @@ void sperr::SPECK3D_INT_ENC::m_code_S(size_t idx1, size_t idx2, std::array<SigTy
   }
 }
 
-void sperr::SPECK3D_INT_ENC::m_sorting_pass()
+auto sperr::SPECK3D_INT_ENC::m_decide_significance(const Set3D& set) const
+    -> std::pair<SigType, std::array<uint32_t, 3>>
 {
-  // Since we have a separate representation of LIP, let's process that list first!
-  //
-  size_t dummy = 0;
-  for (size_t loc = 0; loc < m_LIP.size(); loc++)
-    m_process_P(loc, SigType::Dunno, dummy, true);
+  assert(!set.is_empty());
 
-  // Then we process regular sets in LIS.
-  //
-  for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
-    // From the end of m_LIS to its front
-    size_t idx1 = m_LIS.size() - tmp;
-    for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++)
-      m_process_S(idx1, idx2, SigType::Dunno, dummy, true);
-  }
-}
+  const size_t slice_size = m_dims[0] * m_dims[1];
 
-void sperr::SPECK3D_INT_ENC::m_refinement_pass()
-{
-  // First, process significant pixels previously found.
-  //
-  const auto tmp1 = std::array<int_t, 2>{0, m_threshold};
+  const auto gtr = [thld = m_threshold](auto v) { return v >= thld; };
 
-  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-    if (m_LSP_mask[i]) {
-      const bool o1 = m_coeff_buf[i] >= m_threshold;
-      m_bit_buffer.push_back(o1);
-      m_coeff_buf[i] -= tmp1[o1];
-    }
+  for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
+    const size_t slice_offset = z * slice_size;
+    for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
+      auto first = m_coeff_buf.cbegin() + (slice_offset + y * m_dims[0] + set.start_x);
+      auto last = first + set.length_x;
+      auto found = std::find_if(first, last, gtr);
+      if (found != last) {
+        const auto x = static_cast<uint32_t>(std::distance(first, found));
+        return {SigType::Sig, {x, y - set.start_y, z - set.start_z}};
+      }
+    };
   }
 
-  // Second, mark newly found significant pixels in `m_LSP_mask`.
-  //
-  for (auto idx : m_LSP_new)
-    m_LSP_mask[idx] = true;
-  m_LSP_new.clear();
+  return {SigType::Insig, {0u, 0u, 0u}};
 }

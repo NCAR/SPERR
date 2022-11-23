@@ -5,58 +5,12 @@
 #include <cstring>  // std::memcpy()
 #include <numeric>
 
-void sperr::SPECK3D_INT_DEC::use_bitstream(const vec8_type& stream)
-{
-  // Header definition: 9 bytes in total:
-  // num_bitplanes (uint8_t), useful_bits (uint64_t)
-
-  // Step 1: extract num_bitplanes and useful_bits
-  uint8_t num_bitplanes = 0;
-  uint64_t useful_bits = 0;
-  std::memcpy(&num_bitplanes, stream.data(), sizeof(num_bitplanes));
-  std::memcpy(&useful_bits, stream.data() + sizeof(num_bitplanes), sizeof(useful_bits));
-
-
-  // Step 2: restore `m_threshold`
-  m_threshold = 1;
-  for (uint8_t i = 1; i < num_bitplanes; i++)
-    m_threshold *= int_t{2};
-
-  // Step 3: unpack bits
-  const auto num_of_bools = (stream.size() - m_header_size) * 8;
-  m_bit_buffer.resize(num_of_bools);
-  sperr::unpack_booleans(m_bit_buffer, stream.data(), stream.size(), m_header_size);
-
-  // Step 4: remove padding bits
-  m_bit_buffer.resize(useful_bits);
-}
-
-auto sperr::SPECK3D_INT_DEC::release_coeffs() -> veci_t&&
-{
-  return std::move(m_coeff_buf);
-}
-
-auto sperr::SPECK3D_INT_DEC::release_signs() -> vecb_type&&
-{
-  return std::move(m_sign_array);
-}
-
-auto sperr::SPECK3D_INT_DEC::view_coeffs() const -> const veci_t&
-{
-  return m_coeff_buf;
-}
-
-auto sperr::SPECK3D_INT_DEC::view_signs() const -> const vecb_type&
-{
-  return m_sign_array;
-}
-
 void sperr::SPECK3D_INT_DEC::decode()
 {
   //if (m_ready_to_decode() == false)
   //  return RTNType::Error;
 
-  m_initialize_sets_lists();
+  m_initialize_lists();
 
   // initialize coefficients to be zero, and sign array to be all positive
   const auto coeff_len = m_dims[0] * m_dims[1] * m_dims[2];
@@ -67,15 +21,12 @@ void sperr::SPECK3D_INT_DEC::decode()
   m_LSP_mask.assign(m_coeff_buf.size(), false);
   m_bit_itr = m_bit_buffer.cbegin();
 
-  // Find out how many bitplanes to proces
-  size_t num_bitplanes = 1;
-  auto thrd = m_threshold;
-  while (thrd / int_t{2} > int_t{0}) {
-    thrd /= int_t{2};
-    num_bitplanes++;
-  }
+  // Restore the biggest `m_threshold`
+  m_threshold = 1;
+  for (uint8_t i = 1; i < m_num_bitplanes; i++)
+    m_threshold *= int_t{2};
 
-  for (size_t bitplane = 0; bitplane < num_bitplanes; bitplane++) {
+  for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
     m_sorting_pass();
     m_refinement_pass();
 

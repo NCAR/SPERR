@@ -11,19 +11,11 @@ namespace sperr {
 class SPECK3D_INT_DEC : public SPECK3D_INT {
  public:
   // core operations
-  void decode();
-
-  // Input and output
-  void use_bitstream(const vec8_type&);
-  auto release_coeffs() -> veci_t&&;
-  auto release_signs() -> vecb_type&&;
-  auto view_coeffs() const -> const veci_t&;
-  auto view_signs() const -> const vecb_type&;
+  virtual void decode() override;
 
  private:
-  //auto m_ready_to_decode() const -> bool;
-  void m_sorting_pass();
-  void m_refinement_pass();
+  virtual void m_sorting_pass() override;
+  virtual void m_refinement_pass() override;
 
   void m_process_S(size_t idx1, size_t idx2, size_t& counter, bool);
   void m_process_P(size_t idx, size_t& counter, bool);

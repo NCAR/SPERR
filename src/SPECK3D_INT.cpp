@@ -14,23 +14,6 @@ auto sperr::Set3D::is_empty() const -> bool
 { 
   return (length_z == 0 || length_y == 0 || length_x == 0); 
 }
-
-void sperr::SPECK3D_INT::set_dims(dims_type dims)
-{
-  m_dims = dims;
-}
-
-auto sperr::SPECK3D_INT::get_speck_full_len(const void* buf) const -> uint64_t
-{
-  // Given the header definition, directly go retrieve the value stored in the bytes 1--9.
-  const uint8_t* const ptr = static_cast<const uint8_t*>(buf);
-  uint64_t num_bits = 0;
-  std::memcpy(&num_bits, ptr + 1, sizeof(num_bits));
-  while (num_bits % 8 != 0)
-    ++num_bits;
-
-  return (m_header_size + num_bits / 8);
-}
   
 void sperr::SPECK3D_INT::m_clean_LIS()
 {
@@ -45,7 +28,7 @@ void sperr::SPECK3D_INT::m_clean_LIS()
   m_LIP.erase(it, m_LIP.end());
 }
 
-void sperr::SPECK3D_INT::m_initialize_sets_lists()
+void sperr::SPECK3D_INT::m_initialize_lists()
 {
   std::array<size_t, 3> num_of_parts;  // how many times each dimension could be partitioned?
   num_of_parts[0] = sperr::num_of_partitions(m_dims[0]);
@@ -133,6 +116,7 @@ auto sperr::SPECK3D_INT::m_partition_S_XYZ(const Set3D& set) -> std::array<Set3D
 
   constexpr auto offsets = std::array<size_t, 3>{1, 2, 4};
 
+  //
   // The actual figuring out where it starts/ends part...
   //
   // subset (0, 0, 0)
@@ -233,10 +217,11 @@ auto sperr::SPECK3D_INT::m_partition_S_XY(const Set3D& set) -> std::array<Set3D,
       s.part_level++;
   }
 
+  const auto offsets = std::array<size_t, 3>{1, 2, 4};
+
   //
   // The actual figuring out where it starts/ends part...
   //
-  const auto offsets = std::array<size_t, 3>{1, 2, 4};
   // subset (0, 0, 0)
   size_t sub_i = 0 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
   auto& sub0 = subsets[sub_i];
