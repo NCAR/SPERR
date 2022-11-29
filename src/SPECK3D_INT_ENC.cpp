@@ -79,11 +79,6 @@ void sperr::SPECK3D_INT_ENC::encode()
     m_clean_LIS();
   }
 
-  // If the bit buffer has the last byte half-empty, let's fill in zero's.
-  // The decoding process will not read them anyway.
-  while (m_bit_buffer.size() % 8 != 0)
-    m_bit_buffer.push_back(false);
-
   // Finally we prepare the bitstream
   m_assemble_bitstream();
 }
