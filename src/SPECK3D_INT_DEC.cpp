@@ -78,15 +78,14 @@ void sperr::SPECK3D_INT_DEC::m_process_S(size_t idx1, size_t idx2, size_t& count
 {
   auto& set = m_LIS[idx1][idx2];
 
+  bool is_sig = true;
+
   if (read) {
-    set.signif = *m_bit_itr ? SigType::Sig : SigType::Insig;
+    is_sig = *m_bit_itr;
     ++m_bit_itr;
   }
-  else {
-    set.signif = SigType::Sig;
-  }
 
-  if (set.signif == SigType::Sig) {
+  if (is_sig) {
     counter++;  // Let's increment the counter first!
     m_code_S(idx1, idx2);
     set.type = SetType::Garbage;  // this current set is gonna be discarded.

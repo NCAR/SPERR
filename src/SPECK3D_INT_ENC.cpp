@@ -145,8 +145,8 @@ void sperr::SPECK3D_INT_ENC::m_process_S(size_t idx1,
 
   if (sig == SigType::Dunno) {
     auto set_sig = m_decide_significance(set);
-    set.signif = set_sig.first;
-    if (set.signif == SigType::Sig) {
+    sig = set_sig.first;
+    if (sig == SigType::Sig) {
       // Try to deduce the significance of some of its subsets.
       // Step 1: which one of the 8 subsets makes it significant?
       //         (Refer to m_partition_S_XYZ() for subset ordering.)
@@ -167,15 +167,11 @@ void sperr::SPECK3D_INT_ENC::m_process_S(size_t idx1,
       }
     }
   }
-  else {
-    set.signif = sig;
-  }
 
-  bool is_sig = (set.signif == SigType::Sig);
   if (output)
-    m_bit_buffer.push_back(is_sig);
+    m_bit_buffer.push_back(sig == SigType::Sig);
 
-  if (is_sig) {
+  if (sig == SigType::Sig) {
     counter++;  // Let's increment the counter first!
     m_code_S(idx1, idx2, subset_sigs);
     set.type = SetType::Garbage;  // this current set is gonna be discarded.
@@ -267,7 +263,7 @@ auto sperr::SPECK3D_INT_ENC::m_decide_significance(const Set3D& set) const
         const auto x = static_cast<uint32_t>(std::distance(first, found));
         return {SigType::Sig, {x, y - set.start_y, z - set.start_z}};
       }
-    };
+    }
   }
 
   return {SigType::Insig, {0u, 0u, 0u}};
