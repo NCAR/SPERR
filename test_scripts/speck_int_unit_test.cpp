@@ -1,3 +1,6 @@
+#include "SPECK1D_INT_ENC.h"
+#include "SPECK1D_INT_DEC.h"
+
 #include "SPECK3D_INT_ENC.h"
 #include "SPECK3D_INT_DEC.h"
 #include "SPECK3D_INT_Driver.h"
@@ -31,9 +34,124 @@ auto ProduceRandomArray(size_t len, float stddev, uint32_t seed)
 } 
 
 //
-// Test a minimal test case
+// Start 1D test cases
 //
-TEST(Speck3dInt, minimal)
+TEST(SPECK1D_INT, minimal)
+{
+  const auto dims = sperr::dims_type{40, 1, 1};
+
+  auto input = sperr::veci_t(dims[0], 0);
+  auto input_signs = sperr::vecb_type(input.size(), true);
+  input[4] = 1;
+  input[7] = 3; input_signs[7] = false;
+  input[10] = 7;
+  input[11] = 9; input_signs[11] = false;
+  input[16] = 10;
+  input[19] = 12; input_signs[19] = false;
+  input[26] = 18;
+  input[29] = 19; input_signs[29] = false;
+  input[32] = 32;
+  input[39] = 32; input_signs[39] = false;
+
+  // Encode
+  auto encoder = sperr::SPECK1D_INT_ENC();
+  encoder.use_coeffs(input, input_signs);
+  encoder.set_dims(dims);
+  encoder.encode();
+  const auto& bitstream = encoder.view_encoded_bitstream();
+
+  // Decode
+  auto decoder = sperr::SPECK1D_INT_DEC();
+  decoder.set_dims(dims);
+  decoder.use_bitstream(bitstream);
+  decoder.decode();
+  auto output = decoder.release_coeffs();
+  auto output_signs = decoder.release_signs();
+
+  EXPECT_EQ(input, output);
+  EXPECT_EQ(input_signs, output_signs);
+}
+
+TEST(SPECK1D_INT, Random1)
+{
+  const auto dims = sperr::dims_type{2000, 1, 1};
+
+  auto [input, input_signs] = ProduceRandomArray(dims[0], 2.9, 1); 
+
+  // Encode
+  auto encoder = sperr::SPECK1D_INT_ENC();
+  encoder.use_coeffs(input, input_signs);
+  encoder.set_dims(dims);
+  encoder.encode();
+  const auto& bitstream = encoder.view_encoded_bitstream();
+
+  // Decode
+  auto decoder = sperr::SPECK1D_INT_DEC();
+  decoder.set_dims(dims);
+  decoder.use_bitstream(bitstream);
+  decoder.decode();
+  auto output = decoder.release_coeffs();
+  auto output_signs = decoder.release_signs();
+
+  EXPECT_EQ(input, output);
+  EXPECT_EQ(input_signs, output_signs);
+}
+
+TEST(SPECK1D_INT, Random2)
+{
+  const auto dims = sperr::dims_type{63 * 79 * 128, 1, 1};
+
+  auto [input, input_signs] = ProduceRandomArray(dims[0], 499.0, 2); 
+
+  // Encode
+  auto encoder = sperr::SPECK3D_INT_ENC();
+  encoder.use_coeffs(input, input_signs);
+  encoder.set_dims(dims);
+  encoder.encode();
+  const auto& bitstream = encoder.view_encoded_bitstream();
+
+  // Decode
+  auto decoder = sperr::SPECK3D_INT_DEC();
+  decoder.set_dims(dims);
+  decoder.use_bitstream(bitstream);
+  decoder.decode();
+  auto output = decoder.release_coeffs();
+  auto output_signs = decoder.release_signs();
+
+  EXPECT_EQ(input, output);
+  EXPECT_EQ(input_signs, output_signs);
+}
+
+TEST(SPECK1D_INT, RandomRandom)
+{
+  const auto dims = sperr::dims_type{63 * 64 * 119, 1, 1};
+
+  auto rd = std::random_device();
+  auto [input, input_signs] = ProduceRandomArray(dims[0], 8345.3, rd()); 
+
+  // Encode
+  auto encoder = sperr::SPECK1D_INT_ENC();
+  encoder.use_coeffs(input, input_signs);
+  encoder.set_dims(dims);
+  encoder.encode();
+  const auto& bitstream = encoder.view_encoded_bitstream();
+
+  // Decode
+  auto decoder = sperr::SPECK1D_INT_DEC();
+  decoder.set_dims(dims);
+  decoder.use_bitstream(bitstream);
+  decoder.decode();
+  auto output = decoder.release_coeffs();
+  auto output_signs = decoder.release_signs();
+
+  EXPECT_EQ(input, output);
+  EXPECT_EQ(input_signs, output_signs);
+}
+
+//
+// Starting 3D test cases
+//
+TEST(SPECK3D_INT, minimal)
 {
   const auto dims = sperr::dims_type{4, 3, 8};
   const auto total_vals = dims[0] * dims[1] * dims[2];
@@ -70,7 +188,7 @@ TEST(Speck3dInt, minimal)
   EXPECT_EQ(input_signs, output_signs);
 }
 
-TEST(Speck3dInt, Random1)
+TEST(SPECK3D_INT, Random1)
 {
   const auto dims = sperr::dims_type{10, 20, 30};
   const auto total_vals = dims[0] * dims[1] * dims[2];
@@ -96,7 +214,7 @@ TEST(Speck3dInt, Random1)
   EXPECT_EQ(input_signs, output_signs);
 }
 
-TEST(Speck3dInt, Random2)
+TEST(SPECK3D_INT, Random2)
 {
   const auto dims = sperr::dims_type{63, 79, 128};
   const auto total_vals = dims[0] * dims[1] * dims[2];
@@ -122,7 +240,7 @@ TEST(Speck3dInt, Random2)
   EXPECT_EQ(input_signs, output_signs);
 }
 
-TEST(Speck3dInt, RandomRandom)
+TEST(SPECK3D_INT, RandomRandom)
 {
   const auto dims = sperr::dims_type{63, 64, 119};
   const auto total_vals = dims[0] * dims[1] * dims[2];
@@ -152,7 +270,7 @@ TEST(Speck3dInt, RandomRandom)
 //
 // Test the driver as well
 //
-TEST(Speck3dIntDriver, RandomRandom)
+TEST(SPECK3D_INT_Driver, RandomRandom)
 {
   const auto dims = sperr::dims_type{72, 128, 55};
   const auto total_vals = dims[0] * dims[1] * dims[2];
