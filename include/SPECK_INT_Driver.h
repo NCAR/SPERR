@@ -1,12 +1,13 @@
-#ifndef SPECK3D_INT_DRIVER_H
-#define SPECK3D_INT_DRIVER_H
+#ifndef SPECK_INT_DRIVER_H
+#define SPECK_INT_DRIVER_H
 
-#include "SPECK3D_INT_ENC.h"
-#include "SPECK3D_INT_DEC.h"
+//
+// This class is supposed to be the base class of 1D, 2D, and 3D drivers.
+//
 
 namespace sperr {
 
-class SPECK3D_INT_Driver{
+class SPECK_INT_Driver{
  public:
   //
   // Input
@@ -25,8 +26,8 @@ class SPECK3D_INT_Driver{
   //
   // Output
   //
-  virtual auto release_encoded_bitstream() -> vec8_type&&;
-  virtual auto release_decoded_data() -> vecd_type&&;
+  auto release_encoded_bitstream() -> vec8_type&&;
+  auto release_decoded_data() -> vecd_type&&;
 
   //
   // Generic configurations
@@ -45,8 +46,8 @@ class SPECK3D_INT_Driver{
   //
   // Actions
   //
-  virtual auto encode() -> RTNType;
-  virtual auto decode() -> RTNType;
+  virtual auto encode() -> RTNType = 0;
+  virtual auto decode() -> RTNType = 0;
 
  protected:
   dims_type            m_dims = {0, 0, 0};
@@ -60,8 +61,8 @@ class SPECK3D_INT_Driver{
   SPECK3D_INT_ENC m_encoder;
   SPECK3D_INT_DEC m_decoder;
 
-  auto m_translate_f2i(const vecd_type&) -> RTNType; // Results put in `m_vals_ui` and `m_sign_array`.
-  void m_translate_i2f(const veci_t&, const vecb_type&); // Results put in `m_vals_d`.
+  virtual auto m_translate_f2i(const vecd_type&) -> RTNType; 
+  virtual void m_translate_i2f(const veci_t&, const vecb_type&);
 
 
 };
