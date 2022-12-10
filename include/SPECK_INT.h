@@ -13,7 +13,7 @@ class SPECK_INT {
   void set_dims(dims_type);  
 
   // Retrieve the full length of a SPECK bitstream from its header
-  virtual auto get_speck_full_len(const void*) const -> uint64_t;
+  auto get_speck_full_len(const void*) const -> uint64_t;
 
   // Actions
   virtual void encode();
