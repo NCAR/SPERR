@@ -33,6 +33,9 @@ class Set3D {
 // Main SPECK3D_INT class; intended to be the base class of both encoder and decoder.
 //
 class SPECK3D_INT : public SPECK_INT {
+ public:
+  // Virtual destructor
+  virtual ~SPECK3D_INT() = default;
 
  protected:
 

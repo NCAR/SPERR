@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstring>
 
+
 template <typename T>
 void sperr::SPERR_Driver::copy_data(const T* p, size_t len)
 {
@@ -30,7 +31,7 @@ auto sperr::SPERR_Driver::use_bitstream(const void* p, size_t len) -> RTNType
   m_vals_ll.clear();
   m_sign_array.clear();
   m_condi_bitstream.fill(0);
-  m_encoded_bitstream.clear();
+  m_speck_bitstream.clear();
 
   const uint8_t* const ptr = static_cast<const uint8_t*>(p);
 
@@ -55,7 +56,7 @@ auto sperr::SPERR_Driver::use_bitstream(const void* p, size_t len) -> RTNType
 
   // Step 2: extract SPECK stream from it
   const uint8_t* const speck_p = ptr + pos;
-  const auto speck_full_len = m_decoder.get_speck_full_len(speck_p);
+  const auto speck_full_len = m_decoder->get_speck_full_len(speck_p);
   if (speck_full_len != len - pos)
       return RTNType::BitstreamWrongLen;
   m_speck_bitstream.resize(speck_full_len);
@@ -99,18 +100,18 @@ auto sperr::SPERR_Driver::num_coded_vals() const -> size_t
   return std::count_if(m_vals_ll.cbegin(), m_vals_ll.cend(), [](auto v){ return v != 0l; });
 }
 
-auto sperr::SPERR_Driver::m_midtread_f2i(const vecd_type& arrf) -> RTNType
+auto sperr::SPERR_Driver::m_midtread_f2i() -> RTNType
 {
 #pragma STDC FENV_ACCESS ON
 
-  const auto total_vals = arrf.size();
+  const auto total_vals = m_vals_d.size();
   const auto q1 = 1.0 / m_q;
   m_vals_ll.resize(total_vals);
   m_vals_ui.resize(total_vals);
   m_sign_array.resize(total_vals);
   std::fesetround(FE_TONEAREST);
   std::feclearexcept(FE_ALL_EXCEPT);
-  std::transform(arrf.cbegin(), arrf.cend(), m_vals_ll.begin(),
+  std::transform(m_vals_d.cbegin(), m_vals_d.cend(), m_vals_ll.begin(),
                  [q1](auto d){ return std::llrint(d * q1); });
   if (std::fetestexcept(FE_INVALID))
     return RTNType::FE_Invalid;
@@ -122,14 +123,14 @@ auto sperr::SPERR_Driver::m_midtread_f2i(const vecd_type& arrf) -> RTNType
   return RTNType::Good;
 }
 
-void sperr::SPERR_Driver::m_midtread_i2f(const veci_t& arri, const vecb_type& signs)
+void sperr::SPERR_Driver::m_midtread_i2f()
 {
-  assert(signs.size() == arri.size());
+  assert(m_sign_array.size() == m_vals_ui.size());
 
   const auto tmpd = std::array<double, 2>{-1.0, 1.0};
   const auto q = m_q;
-  m_vals_d.resize(signs.size());
-  std::transform(arri.cbegin(), arri.cend(), signs.cbegin(), m_vals_d.begin(),
+  m_vals_d.resize(m_sign_array.size());
+  std::transform(m_vals_ui.cbegin(), m_vals_ui.cend(), m_sign_array.cbegin(), m_vals_d.begin(),
                  [tmpd, q](auto i, auto b){ return q * static_cast<double>(i) * tmpd[b]; });
 
 }
@@ -144,7 +145,7 @@ auto sperr::SPERR_Driver::m_proc_2() -> RTNType
   return RTNType::Good;
 }
 
-auto sperr::SPERR_Driver::encode() -> RTNType
+auto sperr::SPERR_Driver::compress() -> RTNType
 {
   const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
   if (m_vals_d.empty() || m_vals_d.size() != total_vals)
@@ -153,22 +154,43 @@ auto sperr::SPERR_Driver::encode() -> RTNType
   m_condi_bitstream.fill(0);
   m_speck_bitstream.clear();
 
-  // Step 1: quantize floating-point values to integers.
-  //         Results are saved in `m_vals_ui` and `m_sign_array`.
-  auto rtn = m_translate_f2i(m_vals_d);
+  // Believe it or not, there are constant fields passed in for compression!
+  // Let's detect that case and skip the rest of the compression routine if it occurs.
+  auto constant = m_conditioner.test_constant(m_vals_d);
+  if (constant.first) {
+    m_condi_bitstream = constant.second;
+    return RTNType::Good;
+  }
+
+  // Step 1: data goes through the conditioner
+  m_conditioner.toggle_all_settings(m_conditioning_settings);
+  auto [rtn, condi_meta] = m_conditioner.condition(m_vals_d);
+  if (rtn != RTNType::Good)
+    return rtn;
+  m_condi_bitstream = condi_meta;
+
+  // Step 2: wavelet transform
+  rtn = m_cdf.take_data(std::move(m_vals_d), m_dims);
+  if (rtn != RTNType::Good)
+    return rtn;
+  m_wavelet_xform();
+  m_vals_d = m_cdf.release_data();
+
+  // Step 3: quantize floating-point coefficients to integers
+  rtn = m_quantize();
   if (rtn != RTNType::Good)
     return rtn;
 
-  // Step 2: Integer SPECK encoding
+  // Step 4: Integer SPECK encoding
   m_encoder->set_dims(m_dims);
   m_encoder->use_coeffs(std::move(m_vals_ui), std::move(m_sign_array));
   m_encoder->encode();
-  m_speck_bitstream = m_encoder->view_encoded_bitstream();
+  m_speck_bitstream = m_encoder->release_encoded_bitstream();
 
   return RTNType::Good;
 }
 
-auto sperr::SPERR_Driver::decode() -> RTNType
+auto sperr::SPERR_Driver::decompress() -> RTNType
 {
   m_vals_d.clear();
   m_vals_ui.clear();
@@ -176,18 +198,38 @@ auto sperr::SPERR_Driver::decode() -> RTNType
   m_sign_array.clear();
   const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
 
+  // `m_condi_bitstream` might be indicating a constant field, so let's see if that's
+  // the case, and if it is, we don't need to go through wavelet and speck stuff anymore.
+  auto constant = m_conditioner.parse_constant(m_condi_bitstream);
+  if (std::get<0>(constant)) {
+    auto val = std::get<1>(constant);
+    auto nval = std::get<2>(constant);
+    m_vals_d.assign(nval, val);
+    return RTNType::Good;
+  }
+
   // Step 1: Integer SPECK decode.
   assert(!m_speck_bitstream.empty());
   m_decoder->set_dims(m_dims);
   m_decoder->use_bitstream(m_speck_bitstream);
   m_decoder->decode();
 
-  // Step 2: Convert integers to doubles.
-  const auto& vals_ui = m_decoder->view_coeffs();
-  const auto& signs = m_decoder->view_signs();
-  assert(vals_ui.size() == total_vals);
-  assert(signs.size() == total_vals);
-  m_translate_i2f(vals_ui, signs);
+  // Step 2: Inverse quantization
+  auto rtn = m_inverse_quantize();
+  if (rtn != RTNType::Good)
+    return rtn;
+
+  // Step 3: Inverse wavelet transform
+  rtn = m_cdf.take_data(std::move(m_vals_d), m_dims);
+  if (rtn != RTNType::Good)
+    return rtn;
+  m_inverse_wavelet_xform();
+  m_vals_d = m_cdf.release_data();
+
+  // Step 4: Inverse Conditioning
+  rtn = m_conditioner.inverse_condition(m_vals_d, m_condi_bitstream);
+  if (rtn != RTNType::Good)
+    return rtn;
 
   return RTNType::Good;
 }

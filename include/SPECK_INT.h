@@ -10,6 +10,9 @@ namespace sperr {
 class SPECK_INT {
  public:
 
+  // Virtual destructor
+  virtual ~SPECK_INT() = default;
+
   void set_dims(dims_type);  
 
   // Retrieve the full length of a SPECK bitstream from its header
@@ -25,6 +28,7 @@ class SPECK_INT {
 
   // Output
   virtual auto view_encoded_bitstream() const -> const vec8_type&;
+  virtual auto release_encoded_bitstream() -> vec8_type&&;
   virtual auto release_coeffs() -> veci_t&&;
   virtual auto release_signs() -> vecb_type&&;
   virtual auto view_coeffs() const -> const veci_t&;

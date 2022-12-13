@@ -13,6 +13,12 @@ namespace sperr {
 
 class SPERR_Driver{
  public:
+
+  //
+  // Virtual Destructor
+  //
+  virtual ~SPERR_Driver() = default;
+
   //
   // Input
   //
@@ -71,11 +77,14 @@ class SPERR_Driver{
   std::unique_ptr<SPECK_INT> m_encoder = nullptr;
   std::unique_ptr<SPECK_INT> m_decoder = nullptr;
 
-  auto m_midtread_f2i(const vecd_type&) -> RTNType; 
-  void m_midtread_i2f(const veci_t&, const vecb_type&);
+  auto m_midtread_f2i() -> RTNType; 
+  void m_midtread_i2f();
 
-  virtual auto m_wavelet_xform() -> RTNType = 0;
-  virtual auto m_wavelet_inverse_xform() -> RTNType = 0;
+  virtual void m_wavelet_xform() = 0;
+  virtual void m_inverse_wavelet_xform() = 0;
+
+  virtual auto m_quantize() -> RTNType = 0;
+  virtual auto m_inverse_quantize() -> RTNType = 0;
 
   // Optional procedures for flexibility
   virtual auto m_proc_1() -> RTNType;

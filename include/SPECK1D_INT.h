@@ -17,8 +17,11 @@ class Set1D {
 // Main SPECK1D_INT class; intended to be the base class of both encoder and decoder.
 //
 class SPECK1D_INT : public SPECK_INT {
- protected:
+ public:
+  // Virtual destructor
+  virtual ~SPECK1D_INT() = default;
 
+ protected:
   virtual void m_clean_LIS() override;
   virtual void m_initialize_lists() override;
   auto m_partition_set(const Set1D&) const -> std::array<Set1D, 2>;

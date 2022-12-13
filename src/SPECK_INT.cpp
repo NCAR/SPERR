@@ -64,6 +64,11 @@ auto sperr::SPECK_INT::view_encoded_bitstream() const -> const vec8_type&
   return m_encoded_bitstream;
 }
 
+auto sperr::SPECK_INT::release_encoded_bitstream() -> vec8_type&&
+{
+  return std::move(m_encoded_bitstream);
+}
+
 auto sperr::SPECK_INT::release_coeffs() -> veci_t&&
 {
   return std::move(m_coeff_buf);

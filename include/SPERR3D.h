@@ -1,50 +1,23 @@
 #ifndef SPERR3D_H
 #define SPERR3D_H
 
-#include "CDF97.h"
-#include "Conditioner.h"
-#include "SPECK3D_INT_Driver.h"
+#include "SPERR_Driver.h"
 
 namespace sperr {
 
-class SPERR3D : public SPECK3D_INT_Driver {
+class SPERR3D : public SPERR_Driver {
  public:
-
   //
-  // Input
+  // Constructor
   //
-  virtual auto use_bitstream(const void* p, size_t len) -> RTNType; 
+  SPERR3D();
 
-  //
-  // Output
-  //
-  virtual auto release_encoded_bitstream() -> vec8_type&&;
+ protected:
+  virtual void m_wavelet_xform() override;
+  virtual void m_inverse_wavelet_xform() override;
 
-  //
-  // Configurations
-  //
-  void toggle_conditioning(Conditioner::settings_type);
-  void set_target_psnr(double);
-
-  //
-  // Actions
-  //
-  virtual auto encode() -> RTNType;
-  virtual auto decode() -> RTNType;
-
- private:
-  Conditioner     m_conditioner;
-  CDF97           m_cdf;
-  SPECK3D_INT_ENC m_encoder;
-  SPECK3D_INT_DEC m_decoder;
-
-  Conditioner::settings_type m_conditioning_settings = {true, false, false, false};
-
-  // Storage for various bitstreams
-  Conditioner::meta_type m_condi_bitstream;
-  vec8_type              m_encoded_bitstream;
-
-  double m_target_psnr = sperr::max_d;
+  virtual auto m_quantize() -> RTNType override;
+  virtual auto m_inverse_quantize() -> RTNType override;
 };
 
 };  // namespace sperr
