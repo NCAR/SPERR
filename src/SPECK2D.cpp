@@ -107,10 +107,6 @@ auto sperr::SPECK2D::encode() -> RTNType
     m_clean_LIS();
   }
 
-  // Fill the bit buffer to multiplies of eight
-  while (m_bit_buffer.size() % 8 != 0)
-    m_bit_buffer.push_back(false);
-
   // Finally we prepare the bitstream
   rtn = m_prepare_encoded_bitstream();
   return rtn;
