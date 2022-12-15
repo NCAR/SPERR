@@ -68,26 +68,31 @@ void sperr::SPECK_Storage::set_data_range(double range)
 auto sperr::SPECK_Storage::m_prepare_encoded_bitstream() -> RTNType
 {
   // Header definition: 12 bytes in total:
-  // m_max_threshold_f, stream_len
+  // m_max_threshold_f, num_useful_bits
   // float,             uint64_t
 
-  assert(m_bit_buffer.size() % 8 == 0);
-  const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
-  const size_t total_size = m_header_size + bit_in_byte;
+  const uint64_t useful_bits = m_bit_buffer.size();
+  while (m_bit_buffer.size() % 8 != 0)
+    m_bit_buffer.push_back(false);
+  const size_t total_size = m_header_size + m_bit_buffer.size() / 8;
   m_encoded_stream.resize(total_size);
-  auto* const ptr = m_encoded_stream.data();
 
   // Fill header
   size_t pos = 0;
+  auto* const ptr = m_encoded_stream.data();
   std::memcpy(ptr + pos, &m_max_threshold_f, sizeof(m_max_threshold_f));
   pos += sizeof(m_max_threshold_f);
 
-  std::memcpy(ptr + pos, &bit_in_byte, sizeof(bit_in_byte));
-  pos += sizeof(bit_in_byte);
+  std::memcpy(ptr + pos, &useful_bits, sizeof(useful_bits));
+  pos += sizeof(useful_bits);
   assert(pos == m_header_size);
 
   // Assemble the bitstream into bytes
   auto rtn = sperr::pack_booleans(m_encoded_stream, m_bit_buffer, pos);
+
+  // Restore the number of useful bits
+  m_bit_buffer.resize(useful_bits);
+
   return rtn;
 }
 
@@ -105,20 +110,21 @@ auto sperr::SPECK_Storage::parse_encoded_bitstream(const void* comp_buf, size_t 
   std::memcpy(&m_max_threshold_f, ptr + pos, sizeof(m_max_threshold_f));
   pos += sizeof(m_max_threshold_f);
 
-  uint64_t bit_in_byte = 0;
-  std::memcpy(&bit_in_byte, ptr + pos, sizeof(bit_in_byte));
-  pos += sizeof(bit_in_byte);
-  if (bit_in_byte != comp_size - pos)
+  uint64_t useful_bits = 0;
+  std::memcpy(&useful_bits, ptr + pos, sizeof(useful_bits));
+  pos += sizeof(useful_bits);
+  auto num_bytes = useful_bits / 8;
+  if (useful_bits % 8 != 0)
+    ++num_bytes;
+  if (num_bytes != comp_size - pos)
     return RTNType::BitstreamWrongLen;
 
   // Unpack bits
-  const auto num_of_bools = (comp_size - pos) * 8;
-  m_bit_buffer.resize(num_of_bools);  // allocate enough space before passing it around
+  m_bit_buffer.resize(num_bytes * 8);  // Allocate enough space before passing it around
   auto rtn = sperr::unpack_booleans(m_bit_buffer, comp_buf, comp_size, pos);
-  if (rtn != RTNType::Good)
-    return rtn;
+  m_bit_buffer.resize(useful_bits);  // Restore the actual useful number of bits
 
-  return RTNType::Good;
+  return rtn;
 }
 
 auto sperr::SPECK_Storage::view_encoded_bitstream() const -> const vec8_type&
@@ -137,10 +143,14 @@ auto sperr::SPECK_Storage::get_speck_stream_size(const void* buf) const -> uint6
   // go retrieve the value stored in the last 8 bytes of the header
   //
   const uint8_t* const ptr = static_cast<const uint8_t*>(buf);
-  uint64_t bit_in_byte;
-  std::memcpy(&bit_in_byte, ptr + m_header_size - 8, sizeof(bit_in_byte));
+  uint64_t useful_bits;
+  std::memcpy(&useful_bits, ptr + m_header_size - 8, sizeof(useful_bits));
 
-  return (m_header_size + size_t(bit_in_byte));
+  auto num_bytes = useful_bits / 8;
+  if (useful_bits % 8 != 0)
+    ++num_bytes;
+
+  return (m_header_size + num_bytes);
 }
 
 void sperr::SPECK_Storage::set_dimensions(dims_type dims)
