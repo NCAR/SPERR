@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <memory>
 
 int main(int argc, char* argv[])
 {
@@ -80,26 +81,26 @@ int main(int argc, char* argv[])
     std::cout << "Compression mode is unclear. Did you give one and only one "
                  "compression specification?"
               << std::endl;
-    return 1;
+    return __LINE__;
   }
 
   // Do some sanity check on compression parameters
   if (mode == sperr::CompMode::FixedSize) {
     if (bpp <= 0.0 || bpp >= 64.0) {
       std::cout << "Bit-per-pixel value must be between 0.0 and 64.0!" << std::endl;
-      return 1;
+      return __LINE__;
     }
   }
   else if (mode == sperr::CompMode::FixedPSNR) {
     if (psnr <= 0.0) {
       std::cout << "Target PSNR must be positive!" << std::endl;
-      return 1;
+      return __LINE__;
     }
   }
   else if (mode == sperr::CompMode::FixedPWE) {
     if (pwe <= 0.0) {
       std::cout << "Target PWE must be positive!" << std::endl;
-      return 1;
+      return __LINE__;
     }
   }
 
@@ -109,24 +110,24 @@ int main(int argc, char* argv[])
   if ((use_double && orig.size() != total_vals * sizeof(double)) ||
       (!use_double && orig.size() != total_vals * sizeof(float))) {
     std::cerr << "Read input file error: " << input_file << std::endl;
-    return 1;
+    return __LINE__;
   }
 
   // Use a compressor and take the input data
-  SPERR3D_OMP_C compressor;
-  compressor.set_num_threads(omp_num_threads);
+  auto compressor = std::make_unique<SPERR3D_OMP_C>();
+  compressor->set_num_threads(omp_num_threads);
   auto rtn = sperr::RTNType::Good;
   if (use_double) {
-    rtn = compressor.copy_data(reinterpret_cast<const double*>(orig.data()), total_vals,
-                               {dims[0], dims[1], dims[2]}, {chunks[0], chunks[1], chunks[2]});
+    rtn = compressor->copy_data(reinterpret_cast<const double*>(orig.data()), total_vals,
+                                {dims[0], dims[1], dims[2]}, {chunks[0], chunks[1], chunks[2]});
   }
   else {
-    rtn = compressor.copy_data(reinterpret_cast<const float*>(orig.data()), total_vals,
-                               {dims[0], dims[1], dims[2]}, {chunks[0], chunks[1], chunks[2]});
+    rtn = compressor->copy_data(reinterpret_cast<const float*>(orig.data()), total_vals,
+                                {dims[0], dims[1], dims[2]}, {chunks[0], chunks[1], chunks[2]});
   }
   if (rtn != sperr::RTNType::Good) {
     std::cerr << "Copy data failed!" << std::endl;
-    return 1;
+    return __LINE__;
   }
 
   // Free up memory if we don't need to compute stats
@@ -138,38 +139,38 @@ int main(int argc, char* argv[])
   // Tell the compressor which compression mode to use.
   switch (mode) {
     case sperr::CompMode::FixedSize:
-      rtn = compressor.set_target_bpp(bpp);
+      rtn = compressor->set_target_bpp(bpp);
       break;
     case sperr::CompMode::FixedPSNR:
-      compressor.set_target_psnr(psnr);
+      compressor->set_target_psnr(psnr);
       break;
     default:
-      compressor.set_target_pwe(pwe);
+      compressor->set_target_pwe(pwe);
       break;
   }
   if (rtn != sperr::RTNType::Good) {
     std::cerr << "Set bit-per-pixel failed!" << std::endl;
-    return 1;
+    return __LINE__;
   }
 
   // Perform the actual compression
-  rtn = compressor.compress();
+  rtn = compressor->compress();
   switch (rtn) {
     case sperr::RTNType::QzLevelTooBig:
       std::cerr << "Compression failed because `qz` is set too big!" << std::endl;
-      return 1;
+      return __LINE__;
     case sperr::RTNType::Good:
       break;
     default:
       std::cerr << "Compression failed!" << std::endl;
-      return 1;
+      return __LINE__;
   }
 
   // Get a hold of the encoded bitstream.
-  auto stream = compressor.get_encoded_bitstream();
+  auto stream = compressor->get_encoded_bitstream();
   if (stream.empty()) {
     std::cerr << "Compression bitstream empty!" << std::endl;
-    return 1;
+    return __LINE__;
   }
 
   // Write out the encoded bitstream.
@@ -177,12 +178,15 @@ int main(int argc, char* argv[])
     rtn = sperr::write_n_bytes(output_file, stream.size(), stream.data());
     if (rtn != sperr::RTNType::Good) {
       std::cerr << "Write compressed file failed!" << std::endl;
-      return 1;
+      return __LINE__;
     }
   }
 
   // Calculate and print statistics
   if (show_stats) {
+    const auto out_stats = compressor->get_outlier_stats();
+    compressor.reset(nullptr);
+
     const auto bpp = stream.size() * 8.0 / total_vals;
 
     // Use a decompressor to decompress and collect error statistics
@@ -190,11 +194,11 @@ int main(int argc, char* argv[])
     decompressor.set_num_threads(omp_num_threads);
     rtn = decompressor.use_bitstream(stream.data(), stream.size());
     if (rtn != RTNType::Good)
-      return 1;
+      return __LINE__;
 
     rtn = decompressor.decompress(stream.data());
     if (rtn != RTNType::Good)
-      return 1;
+      return __LINE__;
 
     if (use_double) {
       const auto& recover = decompressor.view_data();
@@ -226,8 +230,6 @@ int main(int argc, char* argv[])
     }
 
     if (mode == sperr::CompMode::FixedPWE) {
-      // Also collect outlier statistics
-      const auto out_stats = compressor.get_outlier_stats();
       if (out_stats.first == 0) {
         std::cout << "There were no outliers corrected!\n";
       }
