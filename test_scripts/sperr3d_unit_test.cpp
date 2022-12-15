@@ -26,15 +26,18 @@ TEST(SPERR3D, minimal)
   encoder.set_dims(dims);
   encoder.set_q(pwe);
   encoder.copy_data(inputd.data(), total_vals);
-  encoder.compress();
+  auto rtn = encoder.compress();
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
   auto bitstream = encoder.get_encoded_bitstream();
 
   // Decode
   auto decoder = sperr::SPERR3D();
   decoder.set_dims(dims);
   decoder.set_q(pwe);
-  decoder.use_bitstream(bitstream.data(), bitstream.size());
-  decoder.decompress();
+  rtn = decoder.use_bitstream(bitstream.data(), bitstream.size());
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
+  rtn = decoder.decompress();
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
   auto outputd = decoder.release_decoded_data();
 
   auto stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);

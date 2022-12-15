@@ -10,7 +10,7 @@
 // Given a big volume with dimension `dims` and logical indices  `ijk`,
 // return a location in the 1D array representing the volume.
 //
-size_t translate_idx(const std::array<size_t, 3>& dims, std::array<size_t, 3> ijk)
+size_t translate_idx(std::array<size_t, 3> dims, std::array<size_t, 3> ijk)
 {
   const auto plane = ijk[2] * dims[0] * dims[1];
   const auto col = ijk[1] * dims[0];
