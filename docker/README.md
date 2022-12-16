@@ -13,7 +13,7 @@ One can simply create a container and experiment with SPERR:
 docker run -it sperr-docker:tag1
 ```
 One can also mount a directory from the host system to the container
-so SPERR can compress/decompress on real data:
+so SPERR can operate on real data:
 ```
 docker run -it --mount type=bind,source=/absolute/path/to/host/directory,target=/data,readonly sperr-docker:tag1
 ```
@@ -22,3 +22,6 @@ docker run -it --mount type=bind,source=/absolute/path/to/host/directory,target=
 
 One can also pull an image from Docker Hub at
 [shaomeng/sperr-docker](https://hub.docker.com/r/shaomeng/sperr-docker).
+```
+docker pull shaomeng/sperr-docker:latest
+```
