@@ -17,9 +17,9 @@ USER Odie
 #
 # Clone the repo, and build it
 RUN cd /home/Odie && \
-    git clone https://github.com/NCAR/SPERR.git SPERR-src && \
+    git clone --depth 1 https://github.com/NCAR/SPERR.git SPERR-src && \
     cd SPERR-src && mkdir build && cd build && \
-    cmake -DUSE_ZSTD=ON .. && make -j 6
+    cmake .. && make -j 6
 #
 # Update PATH enviornment variable
 ENV PATH="$PATH:/home/Odie/SPERR-src/build/bin"
