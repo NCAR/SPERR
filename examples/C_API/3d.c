@@ -76,6 +76,13 @@ int main(int argc, char** argv)
     return rtn;
   }
 
+  /* Write the compressed bitstream to disk */
+  FILE* f = fopen("./output.stream", "w");
+  assert(f != NULL);
+  fwrite(bitstream, 1, stream_len, f);
+  fclose(f);
+  f = NULL;
+
   /* Decompress `bitstream` and put the decompressed volume in `outbuf` */
   void* outbuf = NULL; /* Will be free'd later */
   size_t out_dimx = 0;
@@ -93,7 +100,7 @@ int main(int argc, char** argv)
   }
 
   /* Write the decompressed buffer to disk */
-  FILE* f = fopen("./output.capi", "w");
+  f = fopen("./output.capi", "w");
   assert(f != NULL);
   if (is_float)
     fwrite(outbuf, sizeof(float), out_dimx * out_dimy * out_dimz, f);

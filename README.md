@@ -21,7 +21,7 @@ The name of SPERR stands for **SP**eck with **ERR**or bounding.
 SPERR documentation is hosted on Github [Wiki](https://github.com/NCAR/SPERR/wiki) pages. To get started, one might want to
 [build SPERR from source](https://github.com/NCAR/SPERR/wiki/Build-SPERR-From-Source) and explore [compression and decompression
 utilities](https://github.com/NCAR/SPERR/wiki/CLI:-Compression-And-Decompression-Utilities).
-One may also want to [pull a docker image](https://github.com/NCAR/SPERR/wiki/Containerized-SPERR%3A-Docker)
+One may also want to pull a [docker image](https://hub.docker.com/r/shaomeng/sperr-docker)
 which contains SPERR in a complete development environment.
 
 SPERR also provides programming [API in C++ and C](https://github.com/NCAR/SPERR/wiki#sperr-c-api).
