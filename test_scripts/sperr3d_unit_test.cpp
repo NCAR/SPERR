@@ -14,8 +14,8 @@ namespace {
 //
 TEST(SPERR3D, minimal)
 {
-  auto inputf = sperr::read_whole_file<float>("../test_data/wmag12.float");
-  const auto dims = sperr::dims_type{12, 12, 12};
+  auto inputf = sperr::read_whole_file<float>("../test_data/wmag128.float");
+  const auto dims = sperr::dims_type{128, 128, 128};
   const auto total_vals = inputf.size();
   auto inputd = sperr::vecd_type(total_vals);
   std::copy(inputf.cbegin(), inputf.cend(), inputd.begin());
@@ -42,6 +42,7 @@ TEST(SPERR3D, minimal)
 
   auto stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
   auto bpp = 8.0 * bitstream.size() / total_vals;
+  std::printf("bpp = %.2f, PSNR = %.2f\n", bpp, stats[2]);
 
   // TODO: add more rigourous tests.
   EXPECT_EQ(inputd.size(), outputd.size());

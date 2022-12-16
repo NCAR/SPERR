@@ -213,6 +213,8 @@ auto sperr::SPERR_Driver::decompress() -> RTNType
   m_decoder->set_dims(m_dims);
   m_decoder->use_bitstream(m_speck_bitstream);
   m_decoder->decode();
+  m_vals_ui = m_decoder->release_coeffs();
+  m_sign_array = m_decoder->release_signs();
 
   // Step 2: Inverse quantization
   auto rtn = m_inverse_quantize();

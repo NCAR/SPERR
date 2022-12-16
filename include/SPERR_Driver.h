@@ -62,10 +62,10 @@ class SPERR_Driver{
 
  protected:
   dims_type            m_dims = {0, 0, 0};
-  double               m_q = 1.0;  // 1.0 is a better initial value than 0.0
+  double               m_q = 1.0;     // 1.0 is a better initial value than 0.0
   vecd_type            m_vals_d;
-  std::vector<int64_t> m_vals_ll; // Signed integers produced by std::llrint()
-  vecui_t              m_vals_ui; // Unsigned integers to be passed to the encoder
+  std::vector<int64_t> m_vals_ll;     // Signed integers produced by std::llrint()
+  vecui_t              m_vals_ui;     // Unsigned integers to be passed to the encoder
   vecb_type            m_sign_array;  // Signs to be passed to the encoder
   Conditioner::settings_type m_conditioning_settings = {true, false, false, false};
 
@@ -80,9 +80,12 @@ class SPERR_Driver{
   auto m_midtread_f2i() -> RTNType; 
   void m_midtread_i2f();
 
+  // Both wavelet transforms operate on `m_vals_d`.
   virtual void m_wavelet_xform() = 0;
   virtual void m_inverse_wavelet_xform() = 0;
 
+  // Quantization reads from `m_vals_d`, and writes to `m_vals_ui` and `m_sign_array`.
+  // Inverse quantization reads from `m_vals_ui` and `m_sign_array`, and writes to `m_vals_d`.
   virtual auto m_quantize() -> RTNType = 0;
   virtual auto m_inverse_quantize() -> RTNType = 0;
 
