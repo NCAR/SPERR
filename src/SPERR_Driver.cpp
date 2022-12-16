@@ -116,7 +116,7 @@ auto sperr::SPERR_Driver::m_midtread_f2i() -> RTNType
   if (std::fetestexcept(FE_INVALID))
     return RTNType::FE_Invalid;
   std::transform(m_vals_ll.cbegin(), m_vals_ll.cend(), m_vals_ui.begin(),
-                 [](auto ll){ return static_cast<int_t>(std::abs(ll)); });
+                 [](auto ll){ return static_cast<uint_t>(std::abs(ll)); });
   std::transform(m_vals_ll.cbegin(), m_vals_ll.cend(), m_sign_array.begin(),
                  [](auto ll){ return ll >= 0ll; });
 

@@ -50,8 +50,8 @@ void sperr::SPECK3D_INT_ENC::encode()
   const auto max_coeff = *std::max_element(m_coeff_buf.cbegin(), m_coeff_buf.cend());
   m_num_bitplanes = 1;
   m_threshold = 1;
-  while (m_threshold * int_t{2} <= max_coeff) {
-    m_threshold *= int_t{2};
+  while (m_threshold * uint_t{2} <= max_coeff) {
+    m_threshold *= uint_t{2};
     m_num_bitplanes++;
   }
 
@@ -75,7 +75,7 @@ void sperr::SPECK3D_INT_ENC::encode()
     m_sorting_pass();
     m_refinement_pass();
 
-    m_threshold /= int_t{2};
+    m_threshold /= uint_t{2};
     m_clean_LIS();
   }
 
@@ -105,7 +105,7 @@ void sperr::SPECK3D_INT_ENC::m_refinement_pass()
 {
   // First, process significant pixels previously found.
   //
-  const auto tmp1 = std::array<int_t, 2>{0, m_threshold};
+  const auto tmp1 = std::array<uint_t, 2>{0, m_threshold};
 
   for (size_t i = 0; i < m_LSP_mask.size(); i++) {
     if (m_LSP_mask[i]) {

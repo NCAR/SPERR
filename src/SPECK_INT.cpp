@@ -34,7 +34,7 @@ void sperr::SPECK_INT::decode()
   // Return an error code
 }
 
-void sperr::SPECK_INT::use_coeffs(veci_t coeffs, vecb_type signs)
+void sperr::SPECK_INT::use_coeffs(vecui_t coeffs, vecb_type signs)
 {
   m_coeff_buf = std::move(coeffs);
   m_sign_array = std::move(signs);
@@ -69,7 +69,7 @@ auto sperr::SPECK_INT::release_encoded_bitstream() -> vec8_type&&
   return std::move(m_encoded_bitstream);
 }
 
-auto sperr::SPECK_INT::release_coeffs() -> veci_t&&
+auto sperr::SPECK_INT::release_coeffs() -> vecui_t&&
 {
   return std::move(m_coeff_buf);
 }
@@ -79,7 +79,7 @@ auto sperr::SPECK_INT::release_signs() -> vecb_type&&
   return std::move(m_sign_array);
 }
 
-auto sperr::SPECK_INT::view_coeffs() const -> const veci_t&
+auto sperr::SPECK_INT::view_coeffs() const -> const vecui_t&
 {
   return m_coeff_buf;
 }

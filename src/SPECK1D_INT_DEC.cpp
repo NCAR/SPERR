@@ -11,7 +11,7 @@ void sperr::SPECK1D_INT_DEC::decode()
 
   // initialize coefficients to be zero, and sign array to be all positive
   const auto coeff_len = m_dims[0];
-  m_coeff_buf.assign(coeff_len, int_t{0});
+  m_coeff_buf.assign(coeff_len, uint_t{0});
   m_sign_array.assign(coeff_len, true);
 
   // Mark every coefficient as insignificant
@@ -21,13 +21,13 @@ void sperr::SPECK1D_INT_DEC::decode()
   // Restore the biggest `m_threshold`
   m_threshold = 1;
   for (uint8_t i = 1; i < m_num_bitplanes; i++)
-    m_threshold *= int_t{2};
+    m_threshold *= uint_t{2};
 
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
     m_sorting_pass();
     m_refinement_pass();
 
-    m_threshold /= int_t{2};
+    m_threshold /= uint_t{2};
     m_clean_LIS();
   }
 }
@@ -55,7 +55,7 @@ void sperr::SPECK1D_INT_DEC::m_refinement_pass()
 {
   // First, process significant pixels previously found.
   //
-  const auto tmp = std::array<int_t, 2>{int_t{0}, m_threshold};
+  const auto tmp = std::array<uint_t, 2>{uint_t{0}, m_threshold};
 
   for (size_t i = 0; i < m_LSP_mask.size(); i++) {
     if (m_LSP_mask[i]) {

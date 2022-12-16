@@ -40,7 +40,7 @@ TEST(SPECK1D_INT, minimal)
 {
   const auto dims = sperr::dims_type{40, 1, 1};
 
-  auto input = sperr::veci_t(dims[0], 0);
+  auto input = sperr::vecui_t(dims[0], 0);
   auto input_signs = sperr::vecb_type(input.size(), true);
   input[4] = 1;
   input[7] = 3; input_signs[7] = false;
@@ -156,7 +156,7 @@ TEST(SPECK3D_INT, minimal)
   const auto dims = sperr::dims_type{4, 3, 8};
   const auto total_vals = dims[0] * dims[1] * dims[2];
 
-  auto input = sperr::veci_t(total_vals, 0);
+  auto input = sperr::vecui_t(total_vals, 0);
   auto input_signs = sperr::vecb_type(input.size(), true);
   input[4] = 1;
   input[7] = 3; input_signs[7] = false;

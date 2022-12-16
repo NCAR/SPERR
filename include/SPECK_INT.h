@@ -23,15 +23,15 @@ class SPECK_INT {
   virtual void decode();
 
   // Input
-  virtual void use_coeffs(veci_t coeffs, vecb_type signs);
+  virtual void use_coeffs(vecui_t coeffs, vecb_type signs);
   virtual void use_bitstream(const vec8_type&);
 
   // Output
   virtual auto view_encoded_bitstream() const -> const vec8_type&;
   virtual auto release_encoded_bitstream() -> vec8_type&&;
-  virtual auto release_coeffs() -> veci_t&&;
+  virtual auto release_coeffs() -> vecui_t&&;
   virtual auto release_signs() -> vecb_type&&;
-  virtual auto view_coeffs() const -> const veci_t&;
+  virtual auto view_coeffs() const -> const vecui_t&;
   virtual auto view_signs() const -> const vecb_type&;
 
  protected:
@@ -48,8 +48,8 @@ class SPECK_INT {
 
   // Data members
   dims_type m_dims = {0, 0, 0};
-  int_t m_threshold = 0;
-  veci_t m_coeff_buf;
+  uint_t m_threshold = 0;
+  vecui_t m_coeff_buf;
   vec8_type m_encoded_bitstream;
   vecb_type m_bit_buffer, m_LSP_mask, m_sign_array;
   std::vector<uint64_t> m_LIP, m_LSP_new;
