@@ -35,7 +35,7 @@ class SPERR3D_Decompressor {
 
  private:
   dims_type m_dims = {0, 0, 0};
-  Conditioner::meta_type m_condi_stream;
+  vec8_type m_condi_stream;
   vec8_type m_speck_stream;
   vecd_type m_val_buf;
 

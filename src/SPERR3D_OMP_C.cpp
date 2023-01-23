@@ -21,11 +21,6 @@ void SPERR3D_OMP_C::set_num_threads(size_t n)
 #endif
 }
 
-void SPERR3D_OMP_C::toggle_conditioning(sperr::Conditioner::settings_type b4)
-{
-  m_conditioning_settings = b4;
-}
-
 auto SPERR3D_OMP_C::get_outlier_stats() const -> std::pair<size_t, size_t>
 {
   using pair = std::pair<size_t, size_t>;
@@ -144,7 +139,6 @@ auto SPERR3D_OMP_C::compress() -> RTNType
 
     // Prepare for compression
     compressor.take_data(std::move(m_chunk_buffers[i]), {chunks[i][1], chunks[i][3], chunks[i][5]});
-    compressor.toggle_conditioning(m_conditioning_settings);
 
     // Figure out the bit budget for this chunk
     auto my_budget = size_t{0};

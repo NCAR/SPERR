@@ -6,11 +6,6 @@
 // classes manage storage of coefficients and bitstreams.
 //
 
-#include <limits>
-#include <string>
-#include <utility>  // std::pair<>
-#include <vector>
-
 #include "sperr_helper.h"
 
 namespace sperr {

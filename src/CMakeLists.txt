@@ -1,6 +1,7 @@
 add_library( SPERR
              sperr_helper.cpp
              Conditioner.cpp
+             Base_Filter.cpp
              CDF97.cpp
              SPECK_Storage.cpp
              SPECK2D.cpp
@@ -60,6 +61,7 @@ include/SPERR3D_OMP_D.h;\
 include/SPERR2D_Compressor.h;\
 include/SPERR2D_Decompressor.h;\
 include/Conditioner.h;\
+include/Base_Filter.h;\
 include/CDF97.h;\
 include/SPECK_Storage.h;\
 include/SPECK2D.h;\

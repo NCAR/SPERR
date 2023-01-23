@@ -83,11 +83,6 @@ void SPERR2D_Compressor::set_target_pwe(double pwe)
   m_target_pwe = std::max(pwe, 0.0);
 }
 
-void SPERR2D_Compressor::toggle_conditioning(sperr::Conditioner::settings_type settings)
-{
-  m_conditioning_settings = settings;
-}
-
 auto SPERR2D_Compressor::view_encoded_bitstream() const -> const std::vector<uint8_t>&
 {
   return m_encoded_stream;
@@ -104,22 +99,13 @@ auto SPERR2D_Compressor::compress() -> RTNType
   if (m_val_buf.empty() || m_val_buf.size() != total_vals)
     return RTNType::Error;
 
-  m_condi_stream.fill(0);
+  m_condi_stream.clear();
   m_speck_stream.clear();
   m_encoded_stream.clear();
 
   m_sperr_stream.clear();
   m_val_buf2.clear();
   m_LOS.clear();
-
-  // Believe it or not, there are constant fields passed in for compression!
-  // Let's detect that case and skip the rest of the compression routine if it occurs.
-  auto constant = m_conditioner.test_constant(m_val_buf);
-  if (constant.first) {
-    m_condi_stream = constant.second;
-    auto tmp = m_assemble_encoded_bitstream();
-    return tmp;
-  }
 
   // Find out the compression mode, and initialize data members accordingly.
   const auto mode = sperr::compression_mode(m_bit_budget, m_target_psnr, m_target_pwe);
@@ -138,14 +124,16 @@ auto SPERR2D_Compressor::compress() -> RTNType
   }
 
   // Step 1: data goes through the conditioner
-  m_conditioner.toggle_all_settings(m_conditioning_settings);
-  auto [rtn, condi_meta] = m_conditioner.condition(m_val_buf);
-  if (rtn != RTNType::Good)
+  m_condi_stream = m_conditioner.condition(m_val_buf);
+  // Believe it or not, there are constant fields passed in for compression!
+  // Let's detect that case and skip the rest of the compression routine if it occurs.
+  if (m_conditioner.is_constant(m_condi_stream[0])) {
+    auto rtn = m_assemble_encoded_bitstream(); 
     return rtn;
-  m_condi_stream = condi_meta;
+  }
 
   // Step 2: wavelet transform
-  rtn = m_cdf.take_data(std::move(m_val_buf), m_dims);
+  auto rtn = m_cdf.take_data(std::move(m_val_buf), m_dims);
   if (rtn != RTNType::Good)
     return rtn;
   m_cdf.dwt2d();

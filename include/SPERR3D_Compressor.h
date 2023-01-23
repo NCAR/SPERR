@@ -24,8 +24,6 @@ class SPERR3D_Compressor {
   // Accept incoming data: take ownership of a memory block
   auto take_data(std::vector<double>&& buf, dims_type dims) -> RTNType;
 
-  void toggle_conditioning(Conditioner::settings_type);
-
   auto set_comp_params(size_t bit_budget, double psnr, double pwe) -> RTNType;
 
   // Return 1) the number of outliers, and 2) the number of bytes to encode them.
@@ -44,10 +42,8 @@ class SPERR3D_Compressor {
   CDF97 m_cdf;
   SPECK3D m_encoder;
 
-  Conditioner::settings_type m_conditioning_settings = {true, false, false, false};
-
   // Store bitstreams from the conditioner and SPECK encoding, and the overall bitstream.
-  Conditioner::meta_type m_condi_stream;
+  vec8_type m_condi_stream;
   vec8_type m_encoded_stream;
 
   size_t m_bit_budget = 0;  // Total bit budget, including headers etc.
