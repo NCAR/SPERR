@@ -58,13 +58,7 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
   // Find out the compression mode, and initialize data members accordingly.
   const auto mode = sperr::compression_mode(m_bit_budget, m_target_psnr, m_target_pwe);
   assert(mode != CompMode::Unknown);
-  if (mode == sperr::CompMode::FixedPSNR) {
-    // Calculate the original data range and pass it to the encoder.
-    auto [min, max] = std::minmax_element(m_val_buf.cbegin(), m_val_buf.cend());
-    auto range = *max - *min;
-    m_encoder.set_data_range(range);
-  }
-  else if (mode == sperr::CompMode::FixedPWE) {
+  if (mode == sperr::CompMode::FixedPWE) {
     // Make a copy of the original data for outlier correction use.
     m_val_buf2.resize(total_vals);
     std::copy(m_val_buf.cbegin(), m_val_buf.cend(), m_val_buf2.begin());
@@ -78,6 +72,12 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
   if (m_conditioner.is_constant(m_condi_stream[0])) {
     auto rtn = m_assemble_encoded_bitstream();
     return rtn;
+  }
+  if (mode == sperr::CompMode::FixedPSNR) {
+    // Calculate data range using the conditioned data, and pass it to the encoder.
+    auto [min, max] = std::minmax_element(m_val_buf.cbegin(), m_val_buf.cend());
+    auto range = *max - *min;
+    m_encoder.set_data_range(range);
   }
 
   // Step 2: wavelet transform
