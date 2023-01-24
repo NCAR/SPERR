@@ -65,7 +65,7 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
   }
 
   // Step 1: data goes through the conditioner
-  m_condi_stream = m_conditioner.condition(m_val_buf);
+  m_condi_stream = m_conditioner.condition(m_val_buf, m_dims);
   assert(!m_condi_stream.empty());
   // Step 1.1: believe it or not, there are constant fields passed in for compression!
   // Let's detect that case and skip the rest of the compression routine if it occurs.
@@ -120,7 +120,7 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
     m_cdf.take_data(std::move(qz_coeff), m_dims);
     m_cdf.idwt3d();
     m_val_buf = m_cdf.release_data();
-    m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
+    m_conditioner.inverse_condition(m_val_buf, m_dims, m_condi_stream);
 
     // Step 4.2: Find all outliers
     for (size_t i = 0; i < total_vals; i++) {

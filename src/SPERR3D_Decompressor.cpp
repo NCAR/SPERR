@@ -90,7 +90,7 @@ auto sperr::SPERR3D_Decompressor::decompress() -> RTNType
   // `m_condi_stream` might be indicating a constant field, so let's see if that's
   // the case, and if it is, we don't need to go through dwt and speck stuff anymore.
   if (m_conditioner.is_constant(m_condi_stream[0])) {
-    auto rtn = m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
+    auto rtn = m_conditioner.inverse_condition(m_val_buf, m_dims, m_condi_stream);
     return rtn;
   }
 
@@ -119,7 +119,7 @@ auto sperr::SPERR3D_Decompressor::decompress() -> RTNType
   const auto& cdf_out = m_cdf.view_data();
   m_val_buf.resize(cdf_out.size());
   std::copy(cdf_out.begin(), cdf_out.end(), m_val_buf.begin());
-  m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
+  m_conditioner.inverse_condition(m_val_buf, m_dims, m_condi_stream);
 
   // Step 4: If there's SPERR data, then do the correction.
   if (!m_sperr_stream.empty()) {

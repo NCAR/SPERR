@@ -148,7 +148,7 @@ auto SPERR2D_Decompressor::decompress() -> RTNType
 {
   // `m_condi_stream` might be indicating a constant field, so let's test and handle that case.
   if (m_conditioner.is_constant(m_condi_stream[0])) {
-    auto rtn = m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
+    auto rtn = m_conditioner.inverse_condition(m_val_buf, m_dims, m_condi_stream);
     return rtn;
   }
 
@@ -173,7 +173,7 @@ auto SPERR2D_Decompressor::decompress() -> RTNType
 
   // Step 3: Inverse Conditioning
   m_val_buf = m_cdf.release_data();
-  m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
+  m_conditioner.inverse_condition(m_val_buf, m_dims, m_condi_stream);
 
   // Step 4: if there's SPERR stream, then do outlier correction.
   if (!m_sperr_stream.empty()) {

@@ -7,7 +7,7 @@
 
 #include "Conditioner.h"
 
-auto sperr::Conditioner::condition(vecd_type& buf) -> vec8_type
+auto sperr::Conditioner::condition(vecd_type& buf, dims_type dims) -> vec8_type
 {
   // The order of performing condition operations:
   // 1. Test constant. If it's a constant field, return immediately.
@@ -38,7 +38,7 @@ auto sperr::Conditioner::condition(vecd_type& buf) -> vec8_type
   // Operation 2
   //
   m_meta[m_custom_filter_idx] = !std::is_same<Base_Filter, decltype(m_filter)>::value; 
-  auto filter_header = m_filter.apply_filter(buf); 
+  auto filter_header = m_filter.apply_filter(buf, dims); 
 
   // Operation 3
   //
@@ -63,7 +63,7 @@ auto sperr::Conditioner::condition(vecd_type& buf) -> vec8_type
   return header;
 }
 
-auto sperr::Conditioner::inverse_condition(vecd_type& buf, const vec8_type& header) -> RTNType
+auto sperr::Conditioner::inverse_condition(vecd_type& buf, dims_type dims, const vec8_type& header) -> RTNType
 {
   if (header.size() < m_min_header_size)
     return RTNType::BitstreamWrongLen;
@@ -108,7 +108,7 @@ auto sperr::Conditioner::inverse_condition(vecd_type& buf, const vec8_type& head
     if (m_filter.header_size(filter_header) != header.size() - m_min_header_size)
       return RTNType::BitstreamWrongLen;
 
-    auto rtn = m_filter.inverse_filter(buf, filter_header);
+    auto rtn = m_filter.inverse_filter(buf, dims, filter_header);
     if (rtn != RTNType::Good)
       return rtn;
   }
