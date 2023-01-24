@@ -61,6 +61,7 @@ enum class RTNType {
   DataRangeNotSet,
   CompModeUnknown,
   CustomFilterMissing,
+  CustomFilterError,
   Error
 };
 

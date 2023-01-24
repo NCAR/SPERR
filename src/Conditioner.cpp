@@ -104,13 +104,13 @@ auto sperr::Conditioner::inverse_condition(vecd_type& buf, dims_type dims, const
     if (std::is_same<Base_Filter, decltype(m_filter)>::value)
       return RTNType::CustomFilterMissing;
     // Sanity check: the filter header size is correct
-    const auto* filter_header = header.data() + m_min_header_size;
-    if (m_filter.header_size(filter_header) != header.size() - m_min_header_size)
+    const auto* filter = header.data() + m_min_header_size;
+    const auto filter_len = header.size() - m_min_header_size;
+    if (m_filter.header_size(filter) != filter_len)
       return RTNType::BitstreamWrongLen;
 
-    auto rtn = m_filter.inverse_filter(buf, dims, filter_header);
-    if (rtn != RTNType::Good)
-      return rtn;
+    if (!m_filter.inverse_filter(buf, dims, filter, filter_len))
+      return RTNType::CustomFilterError;
   }
 
   return RTNType::Good;

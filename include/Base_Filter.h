@@ -15,7 +15,7 @@ class Base_Filter{
 
   // Action items
   virtual auto apply_filter(vecd_type& buf, dims_type dims) -> vec8_type;
-  virtual auto inverse_filter(vecd_type& buf, dims_type dims, const void* header) -> RTNType;
+  virtual auto inverse_filter(vecd_type& buf, dims_type dims, const void* header, size_t header_len) -> bool;
   virtual auto header_size(const void* header) const -> size_t;
 
 };
