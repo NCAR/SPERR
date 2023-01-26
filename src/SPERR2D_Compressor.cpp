@@ -121,7 +121,7 @@ auto SPERR2D_Compressor::compress() -> RTNType
   // Believe it or not, there are constant fields passed in for compression!
   // Let's detect that case and skip the rest of the compression routine if it occurs.
   if (m_conditioner.is_constant(m_condi_stream[0])) {
-    auto rtn = m_assemble_encoded_bitstream(); 
+    auto rtn = m_assemble_encoded_bitstream();
     return rtn;
   }
   if (mode == sperr::CompMode::FixedPSNR) {

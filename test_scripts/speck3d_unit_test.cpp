@@ -306,20 +306,20 @@ TEST(speck3d_bit_rate, small)
   tester.execute(4.0, tar_psnr, pwe);
   auto psnr = tester.get_psnr();
   auto lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 52.989689);
-  EXPECT_LT(lmax, 1.811209);
+  EXPECT_FLOAT_EQ(psnr, 52.963203);
+  EXPECT_LT(lmax, 1.811367);
 
   tester.execute(2.0, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 41.35218);
+  EXPECT_FLOAT_EQ(psnr, 41.338257);
   EXPECT_LT(lmax, 6.346528);
 
   tester.execute(1.0, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 34.798412);
-  EXPECT_LT(lmax, 12.281144);
+  EXPECT_FLOAT_EQ(psnr, 34.748322);
+  EXPECT_LT(lmax, 12.288722);
 }
 
 TEST(speck3d_bit_rate, big)
@@ -332,25 +332,25 @@ TEST(speck3d_bit_rate, big)
   tester.execute(2.0, tar_psnr, pwe);
   auto psnr = tester.get_psnr();
   auto lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 53.812553);
+  EXPECT_FLOAT_EQ(psnr, 53.811584);
   EXPECT_LT(lmax, 7.695327);
 
   tester.execute(1.0, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 47.225136);
+  EXPECT_FLOAT_EQ(psnr, 47.224228);
   EXPECT_LT(lmax, 16.300520);
 
   tester.execute(0.5, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 42.691662);
+  EXPECT_FLOAT_EQ(psnr, 42.690453);
   EXPECT_LT(lmax, 27.557829);
 
   tester.execute(0.25, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 39.283287);
+  EXPECT_FLOAT_EQ(psnr, 39.281017);
   EXPECT_LT(lmax, 48.848933);
 }
 
@@ -364,25 +364,25 @@ TEST(speck3d_bit_rate, narrow_data_range)
   tester.execute(4.0, tar_psnr, pwe);
   auto psnr = tester.get_psnr();
   auto lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 67.797501);
-  EXPECT_LT(lmax, 1.175035e-06);
+  EXPECT_FLOAT_EQ(psnr, 67.79631);
+  EXPECT_LT(lmax, 1.178883e-06);
 
   tester.execute(2.0, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 55.785942);
-  EXPECT_LT(lmax, 4.704157e-06);
+  EXPECT_FLOAT_EQ(psnr, 55.784821);
+  EXPECT_LT(lmax, 4.704819e-06);
 
   tester.execute(0.8, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 47.252743);
+  EXPECT_FLOAT_EQ(psnr, 47.250465);
   EXPECT_LT(lmax, 1.744330e-05);
 
   tester.execute(0.4, tar_psnr, pwe);
   psnr = tester.get_psnr();
   lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 43.181633);
+  EXPECT_FLOAT_EQ(psnr, 43.179199);
   EXPECT_LT(lmax, 3.340751e-05);
 }
 

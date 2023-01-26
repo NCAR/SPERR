@@ -6,7 +6,10 @@ auto sperr::Base_Filter::apply_filter(vecd_type& buf, dims_type dims) -> vec8_ty
   return empty;
 }
 
-auto sperr::Base_Filter::inverse_filter(vecd_type& buf, dims_type dims, const void* header, size_t header_len) -> bool
+auto sperr::Base_Filter::inverse_filter(vecd_type& buf,
+                                        dims_type dims,
+                                        const void* header,
+                                        size_t header_len) -> bool
 {
   return true;
 }

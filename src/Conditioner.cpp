@@ -19,12 +19,12 @@ auto sperr::Conditioner::condition(vecd_type& buf, dims_type dims) -> vec8_type
 
   // Operation 1
   //
-  if (std::all_of(buf.cbegin(), buf.cend(), [v0 = buf[0]](auto v){ return v == v0; })) {
+  if (std::all_of(buf.cbegin(), buf.cend(), [v0 = buf[0]](auto v) { return v == v0; })) {
     m_meta[m_constant_field_idx] = true;
     const double val = buf[0];
     const uint64_t nval = buf.size();
     // Assemble a header in the following order:
-    // m_meta   nval  val 
+    // m_meta   nval  val
     //
     auto header = vec8_type(m_constant_field_header_size);
     header[0] = sperr::pack_8_booleans(m_meta);
@@ -37,33 +37,32 @@ auto sperr::Conditioner::condition(vecd_type& buf, dims_type dims) -> vec8_type
 
   // Operation 2
   //
-  m_meta[m_custom_filter_idx] = !std::is_same<Base_Filter, decltype(m_filter)>::value; 
-  auto filter_header = m_filter.apply_filter(buf, dims); 
+  m_meta[m_custom_filter_idx] = !std::is_same<Base_Filter, decltype(m_filter)>::value;
+  auto filter_header = m_filter.apply_filter(buf, dims);
 
   // Operation 3
   //
   m_adjust_strides(buf.size());
-  double mean = m_calc_mean(buf);
-  const float mean_f = float(mean);
-  mean = double(mean_f);
-  std::for_each(buf.begin(), buf.end(), [mean](auto& v){ v-= mean; });
+  const auto mean = m_calc_mean(buf);
+  std::for_each(buf.begin(), buf.end(), [mean](auto& v) { v -= mean; });
 
   // Assemble a header in the following order:
-  // m_meta   mean_f  filter_header
+  // m_meta   mean  filter_header
   //
-  const auto header_size = 1 + sizeof(mean_f) + filter_header.size();
+  const auto header_size = 1 + sizeof(mean) + filter_header.size();
   auto header = vec8_type(header_size);
   header[0] = sperr::pack_8_booleans(m_meta);
   size_t pos = 1;
-  std::memcpy(header.data() + pos, &mean_f, sizeof(mean_f));
-  pos += sizeof(mean_f);
+  std::memcpy(header.data() + pos, &mean, sizeof(mean));
+  pos += sizeof(mean);
   if (filter_header.size() > 0)
     std::copy(filter_header.cbegin(), filter_header.cend(), header.begin() + pos);
 
   return header;
 }
 
-auto sperr::Conditioner::inverse_condition(vecd_type& buf, dims_type dims, const vec8_type& header) -> RTNType
+auto sperr::Conditioner::inverse_condition(vecd_type& buf, dims_type dims, const vec8_type& header)
+    -> RTNType
 {
   if (header.size() < m_min_header_size)
     return RTNType::BitstreamWrongLen;
@@ -72,12 +71,12 @@ auto sperr::Conditioner::inverse_condition(vecd_type& buf, dims_type dims, const
   m_meta = sperr::unpack_8_booleans(header[0]);
   size_t pos = 1;
 
-  // Operation 1: if this is a constant field? 
+  // Operation 1: if this is a constant field?
   //
   if (m_meta[m_constant_field_idx]) {
     if (header.size() != m_constant_field_header_size)
       return RTNType::BitstreamWrongLen;
-  
+
     uint64_t nval = 0;
     double val = 0.0;
     std::memcpy(&nval, header.data() + pos, sizeof(nval));
@@ -92,10 +91,9 @@ auto sperr::Conditioner::inverse_condition(vecd_type& buf, dims_type dims, const
 
   // Operation 2: add back the mean
   //
-  float mean_f = 0.f;
-  std::memcpy(&mean_f, header.data() + pos, sizeof(mean_f));
-  const double mean = double(mean_f);
-  std::for_each(buf.begin(), buf.end(), [mean](auto& v){ v += mean; });
+  double mean = 0.0;
+  std::memcpy(&mean, header.data() + pos, sizeof(mean));
+  std::for_each(buf.begin(), buf.end(), [mean](auto& v) { v += mean; });
 
   // Operation 3: if there's custom filter, apply the inverse of that filter
   //
@@ -187,4 +185,3 @@ void sperr::Conditioner::m_reset_meta()
 {
   m_meta = {true, false, false, false, false, false, false, false};
 }
-

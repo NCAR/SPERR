@@ -151,7 +151,8 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
 auto sperr::SPERR3D_Compressor::m_assemble_encoded_bitstream() -> RTNType
 {
   // Copy over the condi stream.
-  // `m_encoded_stream` is either empty, or is already allocated space and filled with the speck stream.
+  // `m_encoded_stream` is either empty, or is already allocated space and filled with the speck
+  // stream.
   if (m_encoded_stream.empty())
     m_encoded_stream.resize(m_condi_stream.size());
   std::copy(m_condi_stream.begin(), m_condi_stream.end(), m_encoded_stream.begin());

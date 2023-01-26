@@ -19,7 +19,8 @@ class Matthias_Filter : Base_Filter {
 
   // Action items
   virtual auto apply_filter(vecd_type& buf, dims_type dims) -> vec8_type override;
-  virtual auto inverse_filter(vecd_type&, dims_type, const void* header, size_t header_len) -> bool override;
+  virtual auto inverse_filter(vecd_type&, dims_type, const void* header, size_t header_len)
+      -> bool override;
   virtual auto header_size(const void* header) const -> size_t override;
 
  private:
@@ -27,10 +28,9 @@ class Matthias_Filter : Base_Filter {
 
   void m_extract_YZ_slice(vecd_type& buf, dims_type dims, size_t x);
   void m_restore_YZ_slice(vecd_type& buf, dims_type dims, size_t x);
-  auto m_calc_RMS() const -> double; // RMS of all values in `m_slice_buf`
+  auto m_calc_RMS() const -> double;  // RMS of all values in `m_slice_buf`
 };
 
-}; // namespace sperr
+};  // namespace sperr
 
 #endif
-

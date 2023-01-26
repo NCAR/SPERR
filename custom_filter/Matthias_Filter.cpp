@@ -1,11 +1,10 @@
 #include "Matthias_Filter.h"
 
 #include <algorithm>
-#include <numeric>
 #include <cassert>
-#include <cstring>
 #include <cmath>
-
+#include <cstring>
+#include <numeric>
 
 auto sperr::Matthias_Filter::apply_filter(vecd_type& buf, dims_type dims) -> vec8_type
 {
@@ -22,7 +21,7 @@ auto sperr::Matthias_Filter::apply_filter(vecd_type& buf, dims_type dims) -> vec
     mean /= double(m_slice_buf.size());
     const float mean_f = float(mean);
     mean = double(mean_f);
-    std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [mean](auto& v){ v -= mean; });
+    std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [mean](auto& v) { v -= mean; });
 
     // Operation 2: divide by RMS
     auto rms = m_calc_RMS();
@@ -30,12 +29,12 @@ auto sperr::Matthias_Filter::apply_filter(vecd_type& buf, dims_type dims) -> vec
     if (rms_f == 0.f)
       rms_f = 1.f;
     rms = double(rms_f);
-    std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [rms](auto& v){ v /= rms; });
+    std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [rms](auto& v) { v /= rms; });
 
     m_restore_YZ_slice(buf, dims, x);
 
     // Save meta
-    meta[x * 2] = mean_f; 
+    meta[x * 2] = mean_f;
     meta[x * 2 + 1] = rms_f;
   }
 
@@ -50,7 +49,10 @@ auto sperr::Matthias_Filter::apply_filter(vecd_type& buf, dims_type dims) -> vec
   return header;
 }
 
-auto sperr::Matthias_Filter::inverse_filter(vecd_type& buf, dims_type dims, const void* header, size_t header_len) -> bool 
+auto sperr::Matthias_Filter::inverse_filter(vecd_type& buf,
+                                            dims_type dims,
+                                            const void* header,
+                                            size_t header_len) -> bool
 {
   // Sanity check on the length
   const auto len = this->header_size(header);
@@ -68,10 +70,10 @@ auto sperr::Matthias_Filter::inverse_filter(vecd_type& buf, dims_type dims, cons
     m_extract_YZ_slice(buf, dims, x);
 
     // Operation 1: multiply by RMS
-    std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [rms](auto& v){ return v *= rms; });
+    std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [rms](auto& v) { return v *= rms; });
 
     // Operation 2: add mean
-    std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [mean](auto& v){ return v += mean; });
+    std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [mean](auto& v) { return v += mean; });
 
     m_restore_YZ_slice(buf, dims, x);
   }
@@ -117,7 +119,8 @@ void sperr::Matthias_Filter::m_restore_YZ_slice(vecd_type& buf, dims_type dims, 
 auto sperr::Matthias_Filter::m_calc_RMS() const -> double
 {
   assert(!m_slice_buf.empty());
-  auto sum = std::accumulate(m_slice_buf.cbegin(), m_slice_buf.cend(), 0.0, [](auto a, auto b) { return a + b * b; });
+  auto sum = std::accumulate(m_slice_buf.cbegin(), m_slice_buf.cend(), 0.0,
+                             [](auto a, auto b) { return a + b * b; });
   sum /= double(m_slice_buf.size());
   sum = std::sqrt(sum);
   return sum;

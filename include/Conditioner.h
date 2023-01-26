@@ -8,14 +8,13 @@
 // Finally, the Conditioner also detects constant fields.
 //
 
-#include "sperr_helper.h"
 #include "Base_Filter.h"
+#include "sperr_helper.h"
 
 namespace sperr {
 
 class Conditioner {
  public:
-
   auto condition(vecd_type& buf, dims_type) -> vec8_type;
   auto inverse_condition(vecd_type& buf, dims_type, const vec8_type& header) -> RTNType;
 
@@ -39,7 +38,7 @@ class Conditioner {
   const size_t m_default_num_strides = 2048;
   const size_t m_constant_field_idx = 7;
   const size_t m_custom_filter_idx = 1;
-  const size_t m_min_header_size = 5; // when there's only a mean value saved.
+  const size_t m_min_header_size = 9;  // when there's only a mean value saved.
 
   Base_Filter m_filter;
 
