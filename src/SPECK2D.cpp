@@ -83,13 +83,14 @@ auto sperr::SPECK2D::encode() -> RTNType
       max_t *= 2.0;
       num_bitplanes++;
     }
-    m_max_threshold_f = static_cast<float>(max_t);
+    m_max_threshold = max_t;
+    m_threshold = max_t;
   }
   else {  // FixedSize mode
     const auto max_coeff_bit = std::floor(std::log2(max_coeff));
-    m_max_threshold_f = static_cast<float>(std::pow(2.0, max_coeff_bit));
+    m_max_threshold = std::pow(2.0, max_coeff_bit);
+    m_threshold = std::pow(2.0, max_coeff_bit);
   }
-  m_threshold = static_cast<double>(m_max_threshold_f);
 
   auto rtn = RTNType::Good;
   for (size_t bitplane = 0; bitplane < num_bitplanes; bitplane++) {
@@ -130,7 +131,7 @@ auto sperr::SPECK2D::decode() -> RTNType
   m_initialize_sets_lists();
   m_bit_idx = 0;
 
-  m_threshold = static_cast<double>(m_max_threshold_f);
+  m_threshold = m_max_threshold;
 
   for (size_t bitplane = 0; bitplane < 128; bitplane++) {
     auto rtn = m_sorting_pass_decode();
