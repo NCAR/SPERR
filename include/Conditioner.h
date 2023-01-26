@@ -10,7 +10,6 @@
 
 #include "sperr_helper.h"
 #include "Base_Filter.h"
-#include "Matthias_Filter.h"
 
 namespace sperr {
 
@@ -43,7 +42,6 @@ class Conditioner {
   const size_t m_min_header_size = 5; // when there's only a mean value saved.
 
   Base_Filter m_filter;
-  //Matthias_Filter m_filter;
 
   // Buffers passed in here are guaranteed to have correct lengths and conditions.
   auto m_calc_mean(const vecd_type& buf) -> double;

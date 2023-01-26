@@ -22,13 +22,15 @@ auto sperr::Matthias_Filter::apply_filter(vecd_type& buf, dims_type dims) -> vec
     mean /= double(m_slice_buf.size());
     const float mean_f = float(mean);
     mean = double(mean_f);
-    std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [mean](auto& v){ return v -= mean; });
+    std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [mean](auto& v){ v -= mean; });
 
     // Operation 2: divide by RMS
     auto rms = m_calc_RMS();
-    const float rms_f = float(rms);
+    float rms_f = float(rms);
+    if (rms_f == 0.f)
+      rms_f = 1.f;
     rms = double(rms_f);
-    std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [rms](auto& v){ return v /= rms; });
+    std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [rms](auto& v){ v /= rms; });
 
     m_restore_YZ_slice(buf, dims, x);
 
@@ -57,7 +59,7 @@ auto sperr::Matthias_Filter::inverse_filter(vecd_type& buf, dims_type dims, cons
   if (len != sizeof(uint32_t) + sizeof(float) * 2 * dims[0])
     return false;
 
-  // float and uint32 have the same size
+  // float and uint32_t have the same size
   const float* const meta_p = static_cast<const float*>(header) + 1;
 
   for (size_t x = 0; x < dims[0]; x++) {
@@ -70,6 +72,8 @@ auto sperr::Matthias_Filter::inverse_filter(vecd_type& buf, dims_type dims, cons
 
     // Operation 2: add mean
     std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [mean](auto& v){ return v += mean; });
+
+    m_restore_YZ_slice(buf, dims, x);
   }
 
   return true;
@@ -87,24 +91,27 @@ void sperr::Matthias_Filter::m_extract_YZ_slice(vecd_type& buf, dims_type dims, 
 {
   assert(x < dims[0]);
 
-  const auto plane_size = dims[1] * dims[2];
-  m_slice_buf.resize(plane_size);
+  const auto YZ_slice = dims[1] * dims[2];
+  m_slice_buf.resize(YZ_slice);
+
   size_t idx = 0;
+  const auto XY_plane = dims[0] * dims[1];
   for (size_t z = 0; z < dims[2]; z++)
     for (size_t y = 0; y < dims[1]; y++)
-      m_slice_buf[idx++] = z * plane_size + y * dims[0] + x;
+      m_slice_buf[idx++] = buf[z * XY_plane + y * dims[0] + x];
 }
 
 void sperr::Matthias_Filter::m_restore_YZ_slice(vecd_type& buf, dims_type dims, size_t x)
 {
   assert(x < dims[0]);
-  const auto plane_size = dims[1] * dims[2];
-  assert(plane_size == m_slice_buf.size());
+  const auto YZ_slice = dims[1] * dims[2];
+  assert(YZ_slice == m_slice_buf.size());
 
   size_t idx = 0;
+  const auto XY_plane = dims[0] * dims[1];
   for (size_t z = 0; z < dims[2]; z++)
     for (size_t y = 0; y < dims[1]; y++)
-      buf[z * plane_size + y * dims[0] + x] = m_slice_buf[idx++];
+      buf[z * XY_plane + y * dims[0] + x] = m_slice_buf[idx++];
 }
 
 auto sperr::Matthias_Filter::m_calc_RMS() const -> double
