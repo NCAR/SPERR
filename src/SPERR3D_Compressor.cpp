@@ -55,6 +55,11 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
   m_val_buf2.clear();
   m_LOS.clear();
 
+  // Keep track of data range before and after the conditioning step, in case they change.
+  // This is only used in `FixedPWE` mode though.
+  auto range_before = double{0.0};
+  auto range_after = double{0.0};
+
   // Find out the compression mode, and initialize data members accordingly.
   const auto mode = sperr::compression_mode(m_bit_budget, m_target_psnr, m_target_pwe);
   assert(mode != CompMode::Unknown);
@@ -62,6 +67,8 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
     // Make a copy of the original data for outlier correction use.
     m_val_buf2.resize(total_vals);
     std::copy(m_val_buf.cbegin(), m_val_buf.cend(), m_val_buf2.begin());
+    auto [min, max] = std::minmax_element(m_val_buf.cbegin(), m_val_buf.cend());
+    range_before = *max - *min;
   }
 
   // Step 1: data goes through the conditioner
@@ -73,11 +80,17 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
     auto rtn = m_assemble_encoded_bitstream();
     return rtn;
   }
+
   if (mode == sperr::CompMode::FixedPSNR) {
     // Calculate data range using the conditioned data, and pass it to the encoder.
     auto [min, max] = std::minmax_element(m_val_buf.cbegin(), m_val_buf.cend());
     auto range = *max - *min;
     m_encoder.set_data_range(range);
+  }
+  else if (mode == sperr::CompMode::FixedPWE && m_conditioner.has_custom_filter(m_condi_stream[0])) {
+    // Only re-calculate data range when there's custom filter enabled in the conditioner.
+    auto [min, max] = std::minmax_element(m_val_buf.cbegin(), m_val_buf.cend());
+    range_after = *max - *min;
   }
 
   // Step 2: wavelet transform
@@ -96,7 +109,15 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
     speck_budget = sperr::max_size;
   else
     speck_budget = m_bit_budget - m_condi_stream.size() * 8;
-  rtn = m_encoder.set_comp_params(speck_budget, m_target_psnr, m_target_pwe);
+
+  // In the FixedPWE mode, in case there's custom filter, we scale the PWE tolerance
+  auto speck_pwe = m_target_pwe;
+  if (mode == sperr::CompMode::FixedPWE && m_conditioner.has_custom_filter(m_condi_stream[0])) {
+    assert(range_before != 0.0);
+    speck_pwe *= range_after / range_before;
+  }
+  
+  rtn = m_encoder.set_comp_params(speck_budget, m_target_psnr, speck_pwe);
   if (rtn != RTNType::Good)
     return rtn;
 
