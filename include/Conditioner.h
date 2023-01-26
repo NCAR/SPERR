@@ -19,6 +19,7 @@ class Conditioner {
   auto inverse_condition(vecd_type& buf, dims_type, const vec8_type& header) -> RTNType;
 
   auto is_constant(uint8_t) const -> bool;
+  auto has_custom_filter(uint8_t) const -> bool;
   auto header_size(const void*) const -> size_t;
 
  private:

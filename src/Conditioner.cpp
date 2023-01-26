@@ -120,6 +120,12 @@ auto sperr::Conditioner::is_constant(uint8_t byte) const -> bool
   return b8[m_constant_field_idx];
 }
 
+auto sperr::Conditioner::has_custom_filter(uint8_t byte) const -> bool
+{
+  auto b8 = sperr::unpack_8_booleans(byte);
+  return b8[m_custom_filter_idx];
+}
+
 auto sperr::Conditioner::header_size(const void* header) const -> size_t
 {
   const uint8_t* ptr = static_cast<const uint8_t*>(header);
