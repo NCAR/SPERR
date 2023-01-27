@@ -6,7 +6,7 @@
 
 ## Overview
 
-SPERR is a lossy compressor for scientific data (2D or 3D floating-point data, mostly produced by numerical simulations). 
+SPERR (sounds like spur) is a lossy compressor for scientific data (2D or 3D floating-point data, mostly produced by numerical simulations). 
 SPERR produces excellent rate-distortion curves, meaning that it achieves the least amount of ***average error***
 given a certain storage budget.
 
