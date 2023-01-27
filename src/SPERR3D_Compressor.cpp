@@ -87,7 +87,8 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
     auto range = *max - *min;
     m_encoder.set_data_range(range);
   }
-  else if (mode == sperr::CompMode::FixedPWE && m_conditioner.has_custom_filter(m_condi_stream[0])) {
+  else if (mode == sperr::CompMode::FixedPWE &&
+           m_conditioner.has_custom_filter(m_condi_stream[0])) {
     // Only re-calculate data range when there's custom filter enabled in the conditioner.
     auto [min, max] = std::minmax_element(m_val_buf.cbegin(), m_val_buf.cend());
     range_after = *max - *min;
@@ -116,7 +117,7 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
     assert(range_before != 0.0);
     speck_pwe *= range_after / range_before;
   }
-  
+
   rtn = m_encoder.set_comp_params(speck_budget, m_target_psnr, speck_pwe);
   if (rtn != RTNType::Good)
     return rtn;
