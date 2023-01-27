@@ -18,7 +18,11 @@ pipeline. In other words, there is no API to enable/disable the filter.
 There are four steps to bring a filter implementation to the SPERR compilation:
 (use `Matthias_Filter` here as an example)
 
-1. Copy the implementation files to their respective directories. the header, `Matthias_Filter.h` to the `include` directory.
+1. Copy the implementation files to their respective directories. For example, copy `Matthias_Filter.h` 
+   to the `include` directory, and `Matthias_Filter.cpp` to the `src` directory.
+2. Include the implementation files in `src/CMakeLists.txt`. For example, uncomment the following two
+   lines.
+3. Specify to use the custom filter in `include/Conditioner.h`. For example.
 
 ## Implement A Custom Filter
 
