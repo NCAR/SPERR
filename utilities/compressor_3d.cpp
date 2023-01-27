@@ -36,8 +36,15 @@ int main(int argc, char* argv[])
       ->group("Input Specifications");
 
   // Output specifications
-  auto output_file = std::string();
-  app.add_option("-o", output_file, "Output filename")->group("Output Specifications");
+  auto out_bitstream = std::string();
+  app.add_option("--out_bitstream", out_bitstream, "Output compressed bitstream")
+      ->group("Output Specifications");
+  auto out_decomp_f = std::string();
+  app.add_option("--out_decomp_f", out_decomp_f, "Output decompressed volume in single precision")
+      ->group("Output Specifications");
+  auto out_decomp_d = std::string();
+  app.add_option("--out_decomp_d", out_decomp_d, "Output decompressed volume in double precision")
+      ->group("Output Specifications");
 
   auto show_stats = bool{false};
   app.add_flag("--show_stats", show_stats, "Show statistics measuring the compression quality.")
@@ -174,16 +181,16 @@ int main(int argc, char* argv[])
   }
 
   // Write out the encoded bitstream.
-  if (!output_file.empty()) {
-    rtn = sperr::write_n_bytes(output_file, stream.size(), stream.data());
+  if (!out_bitstream.empty()) {
+    rtn = sperr::write_n_bytes(out_bitstream, stream.size(), stream.data());
     if (rtn != sperr::RTNType::Good) {
       std::cerr << "Write compressed file failed!" << std::endl;
       return __LINE__;
     }
   }
 
-  // Calculate and print statistics
-  if (show_stats) {
+  // Calculate and print statistics, or the decompressed volume
+  if (show_stats || !out_decomp_f.empty() || !out_decomp_d.empty()) {
     const auto out_stats = compressor->get_outlier_stats();
     compressor.reset(nullptr);
 
@@ -200,46 +207,68 @@ int main(int argc, char* argv[])
     if (rtn != RTNType::Good)
       return __LINE__;
 
-    if (use_double) {
-      const auto& recover = decompressor.view_data();
-      assert(recover.size() * sizeof(double) == orig.size());
-      auto stats = sperr::calc_stats(reinterpret_cast<const double*>(orig.data()), recover.data(),
-                                     recover.size(), omp_num_threads);
-      auto var = sperr::calc_variance(reinterpret_cast<const double*>(orig.data()), total_vals,
-                                      omp_num_threads);
-      auto sigma = std::sqrt(var);
-      auto gain = std::log2(sigma / stats[0]) - bpp;
-      std::cout << "Average BPP = " << bpp << ", PSNR = " << stats[2]
-                << "dB, L-Infty = " << stats[1] << ", Accuracy Gain = " << gain << std::endl;
-      std::printf("Input data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3],
-                  stats[4]);
-    }
-    else {
-      const auto recover = decompressor.get_data<float>();
-      assert(recover.size() * sizeof(float) == orig.size());
-      auto stats = sperr::calc_stats(reinterpret_cast<const float*>(orig.data()), recover.data(),
-                                     recover.size(), omp_num_threads);
-      auto var = sperr::calc_variance(reinterpret_cast<const float*>(orig.data()), total_vals,
-                                      omp_num_threads);
-      auto sigma = std::sqrt(var);
-      auto gain = std::log2(sigma / stats[0]) - float(bpp);
-      std::cout << "Average BPP = " << bpp << ", PSNR = " << stats[2]
-                << "dB, L-Infty = " << stats[1] << ", Accuracy Gain = " << gain << std::endl;
-      std::printf("Input data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3],
-                  stats[4]);
-    }
-
-    if (mode == sperr::CompMode::FixedPWE) {
-      if (out_stats.first == 0) {
-        std::cout << "There were no outliers corrected!\n";
+    if (show_stats) {
+      if (use_double) {
+        const auto& recover = decompressor.view_data();
+        assert(recover.size() * sizeof(double) == orig.size());
+        auto stats = sperr::calc_stats(reinterpret_cast<const double*>(orig.data()), recover.data(),
+                                       recover.size(), omp_num_threads);
+        auto var = sperr::calc_variance(reinterpret_cast<const double*>(orig.data()), total_vals,
+                                        omp_num_threads);
+        auto sigma = std::sqrt(var);
+        auto gain = std::log2(sigma / stats[0]) - bpp;
+        std::cout << "Average BPP = " << bpp << ", PSNR = " << stats[2]
+                  << "dB, L-Infty = " << stats[1] << ", Accuracy Gain = " << gain << std::endl;
+        std::printf("Input data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3],
+                    stats[4]);
       }
       else {
-        std::printf(
-            "There were %ld outliers, percentage of total data points = %.2f%%.\n"
-            "Correcting them takes bpp = %.2f, percentage of total storage = %.2f%%.\n",
-            out_stats.first, double(out_stats.first * 100) / double(total_vals),
-            double(out_stats.second * 8) / double(out_stats.first),
-            double(out_stats.second * 100) / double(stream.size()));
+        const auto recover = decompressor.get_data<float>();
+        assert(recover.size() * sizeof(float) == orig.size());
+        auto stats = sperr::calc_stats(reinterpret_cast<const float*>(orig.data()), recover.data(),
+                                       recover.size(), omp_num_threads);
+        auto var = sperr::calc_variance(reinterpret_cast<const float*>(orig.data()), total_vals,
+                                        omp_num_threads);
+        auto sigma = std::sqrt(var);
+        auto gain = std::log2(sigma / stats[0]) - float(bpp);
+        std::cout << "Average BPP = " << bpp << ", PSNR = " << stats[2]
+                  << "dB, L-Infty = " << stats[1] << ", Accuracy Gain = " << gain << std::endl;
+        std::printf("Input data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3],
+                    stats[4]);
+      }
+
+      if (mode == sperr::CompMode::FixedPWE) {
+        if (out_stats.first == 0) {
+          std::cout << "There were no outliers corrected!\n";
+        }
+        else {
+          std::printf(
+              "There were %ld outliers, percentage of total data points = %.2f%%.\n"
+              "Correcting them takes bpp = %.2f, percentage of total storage = %.2f%%.\n",
+              out_stats.first, double(out_stats.first * 100) / double(total_vals),
+              double(out_stats.second * 8) / double(out_stats.first),
+              double(out_stats.second * 100) / double(stream.size()));
+        }
+      }
+    }  // Finish printing stats
+
+    if (!out_decomp_f.empty()) {
+      const auto recover = decompressor.get_data<float>();
+      assert(recover.size() * sizeof(float) == orig.size());
+      rtn = sperr::write_n_bytes(out_decomp_f, recover.size() * sizeof(float), recover.data());
+      if (rtn != sperr::RTNType::Good) {
+        std::cerr << "Write decompressed file failed!" << std::endl;
+        return __LINE__;
+      }
+    }
+
+    if (!out_decomp_d.empty()) {
+      const auto& recover = decompressor.view_data();
+      assert(recover.size() * sizeof(double) == orig.size());
+      rtn = sperr::write_n_bytes(out_decomp_d, recover.size() * sizeof(double), recover.data());
+      if (rtn != sperr::RTNType::Good) {
+        std::cerr << "Write decompressed file failed!" << std::endl;
+        return __LINE__;
       }
     }
   }
