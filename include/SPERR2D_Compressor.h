@@ -25,8 +25,6 @@ class SPERR2D_Compressor {
   // Accept incoming data by taking ownership of the memory block
   auto take_data(std::vector<double>&& buf, sperr::dims_type dims) -> RTNType;
 
-  void toggle_conditioning(sperr::Conditioner::settings_type);
-
   auto set_target_bpp(double) -> RTNType;
   void set_target_psnr(double);
   void set_target_pwe(double);
@@ -52,7 +50,6 @@ class SPERR2D_Compressor {
 
   // A few data members for outlier correction
   sperr::SPERR m_sperr;
-  sperr::vec8_type m_sperr_stream;
   sperr::vecd_type m_val_buf2;        // A copy of `m_val_buf` used for outlier coding
   std::vector<sperr::Outlier> m_LOS;  // List of OutlierS
 
@@ -60,11 +57,9 @@ class SPERR2D_Compressor {
   sperr::CDF97 m_cdf;
   sperr::SPECK2D m_encoder;
 
-  sperr::Conditioner::settings_type m_conditioning_settings = {true, false, false, false};
-  sperr::Conditioner::meta_type m_condi_stream;
-
-  // Store bitstreams from the conditioner and SPECK encoding, and the overall bitstream.
+  sperr::vec8_type m_condi_stream;
   sperr::vec8_type m_speck_stream;
+  sperr::vec8_type m_sperr_stream;
   sperr::vec8_type m_encoded_stream;
 
   auto m_assemble_encoded_bitstream() -> RTNType;

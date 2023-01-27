@@ -16,7 +16,7 @@ auto SPERR2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   // 4) Verify that the application of ZSTD is consistant, and apply ZSTD if needed.
   // 5) disassemble conditioner, SPECK, and possibly SPERR streams.
 
-  m_condi_stream.fill(0);
+  m_condi_stream.clear();
   m_speck_stream.clear();
   m_val_buf.clear();
   m_sperr_stream.clear();
@@ -73,9 +73,10 @@ auto SPERR2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
 #endif
 
   // Task 5)
-  const auto condi_size = m_condi_stream.size();
+  const auto condi_size = m_conditioner.header_size(u8p);
   if (condi_size > plen)
     return RTNType::BitstreamWrongLen;
+  m_condi_stream.resize(condi_size);
   std::copy(u8p, u8p + condi_size, m_condi_stream.begin());
   u8p += condi_size;
   plen -= condi_size;
@@ -83,8 +84,7 @@ auto SPERR2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
   // `m_condi_stream` could indicate that the field is constant, in which case,
   // there is no speck stream anymore.  Let's detect that case and return early.
   // It will be the responsibility of `decompress()` to actually restore the constant field.
-  auto [constant, tmp1, tmp2] = m_conditioner.parse_constant(m_condi_stream);
-  if (constant) {
+  if (m_conditioner.is_constant(m_condi_stream[0])) {
     if (plen == 0)
       return RTNType::Good;
     else
@@ -147,10 +147,9 @@ auto SPERR2D_Decompressor::get_dims() const -> std::array<size_t, 3>
 auto SPERR2D_Decompressor::decompress() -> RTNType
 {
   // `m_condi_stream` might be indicating a constant field, so let's test and handle that case.
-  auto [constant, const_val, nconst_vals] = m_conditioner.parse_constant(m_condi_stream);
-  if (constant) {
-    m_val_buf.assign(nconst_vals, const_val);
-    return RTNType::Good;
+  if (m_conditioner.is_constant(m_condi_stream[0])) {
+    auto rtn = m_conditioner.inverse_condition(m_val_buf, m_dims, m_condi_stream);
+    return rtn;
   }
 
   // Step 1: SPECK decode
@@ -174,7 +173,7 @@ auto SPERR2D_Decompressor::decompress() -> RTNType
 
   // Step 3: Inverse Conditioning
   m_val_buf = m_cdf.release_data();
-  m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
+  m_conditioner.inverse_condition(m_val_buf, m_dims, m_condi_stream);
 
   // Step 4: if there's SPERR stream, then do outlier correction.
   if (!m_sperr_stream.empty()) {

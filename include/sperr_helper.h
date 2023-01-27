@@ -60,6 +60,8 @@ enum class RTNType {
   SetBPPBeforeDims,
   DataRangeNotSet,
   CompModeUnknown,
+  CustomFilterMissing,
+  CustomFilterError,
   Error
 };
 
