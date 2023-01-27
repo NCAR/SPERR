@@ -8,6 +8,18 @@ here performs two operation: 1) calculate mean of a slice
 and subtract mean for every value of that slice; and 2) calculate RMS of a slice and divide
 every value by the RMS.
 
+
+## Use A Custom Filter
+
+To use a custom filter, one needs to bring the filter implementation to the SPERR compilation.
+Once SPERR is compiled with a filter, SPERR will always include the filter in its data processing
+pipeline. In other words, there is no API to enable/disable the filter.
+
+There are four steps to bring a filter implementation to the SPERR compilation:
+(use `Matthias_Filter` here as an example)
+
+1. Copy the implementation files to their respective directories. the header, `Matthias_Filter.h` to the `include` directory.
+
 ## Implement A Custom Filter
 
 Implement a custom filter requires creating a custom filter class inherited from a
@@ -19,6 +31,3 @@ virtual auto inverse_filter(vecd_type&, dims_type, const void* header, size_t he
 virtual auto header_size(const void* header) const -> size_t
 ```
 The custom filter is free to implement any other non-mandatory functions.
-
-
-## Use A Custom Filter
