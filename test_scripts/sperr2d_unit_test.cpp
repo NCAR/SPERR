@@ -8,9 +8,9 @@ using sperr::RTNType;
 namespace {
 
 // Create a class that executes the entire pipeline, and calculates the error metrics
-class speck_tester {
+class sperr2d_tester {
  public:
-  speck_tester(const char* in, size_t x, size_t y)
+  sperr2d_tester(const char* in, size_t x, size_t y)
   {
     m_input_name = in;
     m_dims[0] = x;
@@ -104,9 +104,9 @@ class speck_tester {
 //
 // Test target PWE mode
 //
-TEST(speck2d, PWE_odd_dim_image)
+TEST(sperr2d_pwe, odd_dim_image)
 {
-  speck_tester tester("../test_data/90x90.float", 90, 90);
+  sperr2d_tester tester("../test_data/90x90.float", 90, 90);
 
   const auto bpp = sperr::max_d;
   const auto target_psnr = sperr::max_d;
@@ -132,9 +132,9 @@ TEST(speck2d, PWE_odd_dim_image)
   EXPECT_LE(lmax, target_pwe);
 }
 
-TEST(speck2d, PWE_lena_image)
+TEST(sperr2d_pwe, lena_image)
 {
-  speck_tester tester("../test_data/lena512.float", 512, 512);
+  sperr2d_tester tester("../test_data/lena512.float", 512, 512);
 
   const auto bpp = sperr::max_d;
   const auto target_psnr = sperr::max_d;
@@ -160,9 +160,9 @@ TEST(speck2d, PWE_lena_image)
   EXPECT_LE(lmax, target_pwe);
 }
 
-TEST(speck2d, PWE_small_data_range)
+TEST(sperr2d_pwe, small_data_range)
 {
-  speck_tester tester("../test_data/vorticity.512_512", 512, 512);
+  sperr2d_tester tester("../test_data/vorticity.512_512", 512, 512);
 
   const auto bpp = sperr::max_d;
   const auto target_psnr = sperr::max_d;
@@ -191,9 +191,9 @@ TEST(speck2d, PWE_small_data_range)
 //
 // Test target PSNR mode
 //
-TEST(speck2d, PSNR_odd_dim_image)
+TEST(sperr2d_psnr, odd_dim_image)
 {
-  speck_tester tester("../test_data/90x90.float", 90, 90);
+  sperr2d_tester tester("../test_data/90x90.float", 90, 90);
 
   const auto bpp = sperr::max_d;
   const auto pwe = 0.0;
@@ -217,9 +217,9 @@ TEST(speck2d, PSNR_odd_dim_image)
   EXPECT_GT(psnr, target_psnr - 0.12);  // an example of estimate error being a little small
 }
 
-TEST(speck2d, PSNR_small_data_range)
+TEST(sperr2d_psnr, small_data_range)
 {
-  speck_tester tester("../test_data/vorticity.512_512", 512, 512);
+  sperr2d_tester tester("../test_data/vorticity.512_512", 512, 512);
 
   const auto bpp = std::numeric_limits<double>::max();
   const auto pwe = 0.0;
@@ -246,9 +246,9 @@ TEST(speck2d, PSNR_small_data_range)
 //
 // Test fixed-size mode
 //
-TEST(speck2d, BPP_lena)
+TEST(sperr2d_bpp, lena)
 {
-  speck_tester tester("../test_data/lena512.float", 512, 512);
+  sperr2d_tester tester("../test_data/lena512.float", 512, 512);
 
   const auto tar_psnr = std::numeric_limits<double>::max();
   const auto pwe = 0.0;
@@ -278,9 +278,9 @@ TEST(speck2d, BPP_lena)
   EXPECT_LT(lmax, 37.173374);
 }
 
-TEST(speck2d, BPP_odd_dim_image)
+TEST(sperr2d_bpp, odd_dim_image)
 {
-  speck_tester tester("../test_data/90x90.float", 90, 90);
+  sperr2d_tester tester("../test_data/90x90.float", 90, 90);
 
   const auto tar_psnr = std::numeric_limits<double>::max();
   const auto pwe = 0.0;
@@ -304,9 +304,9 @@ TEST(speck2d, BPP_odd_dim_image)
   EXPECT_LT(lmax, 6.805244);
 }
 
-TEST(speck2d, BPP_small_data_range)
+TEST(sperr2d_bpp, small_data_range)
 {
-  speck_tester tester("../test_data/vorticity.512_512", 512, 512);
+  sperr2d_tester tester("../test_data/vorticity.512_512", 512, 512);
 
   const auto tar_psnr = std::numeric_limits<double>::max();
   const auto pwe = 0.0;
@@ -339,9 +339,9 @@ TEST(speck2d, BPP_small_data_range)
 //
 // Test constant fields.
 //
-TEST(speck2d, constant)
+TEST(sperr2d_constant, constant)
 {
-  speck_tester tester("../test_data/const32x20x16.float", 32, 320);
+  sperr2d_tester tester("../test_data/const32x20x16.float", 32, 320);
 
   const auto tar_psnr = std::numeric_limits<double>::max();
   const auto pwe = 0.0;

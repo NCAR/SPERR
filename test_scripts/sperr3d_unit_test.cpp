@@ -9,9 +9,9 @@ namespace {
 using sperr::RTNType;
 
 // Create a class that executes the entire pipeline, and calculates the error metrics.
-class speck_tester_omp {
+class sperr3d_tester {
  public:
-  speck_tester_omp(const char* in, sperr::dims_type dims, size_t num_t)
+  sperr3d_tester(const char* in, sperr::dims_type dims, size_t num_t)
   {
     m_input_name = in;
     m_dims = dims;
@@ -27,7 +27,7 @@ class speck_tester_omp {
   //
   // Execute the compression/decompression pipeline. Return 0 on success
   //
-  int execute(double bpp, double psnr, double pwe)
+  int execute(double bpp, double psnr, double pwe, bool prec64 = false)
   {
     // Reset lmax and psnr
     m_psnr = 0.0;
@@ -36,17 +36,35 @@ class speck_tester_omp {
     const size_t total_vals = m_dims[0] * m_dims[1] * m_dims[2];
 
     //
+    // Read in the input file
+    //
+    auto in_f = sperr::vecf_type();
+    auto in_d = sperr::vecd_type();
+    if (prec64) {
+      in_d = sperr::read_whole_file<double>(m_input_name);
+      if (in_d.size() != total_vals)
+        return 1;
+    }
+    else {
+      in_f = sperr::read_whole_file<float>(m_input_name);
+      if (in_f.size() != total_vals)
+        return 1;
+    }
+
+    //
     // Use a compressor
     //
-    auto in_buf = sperr::read_whole_file<float>(m_input_name);
-    if (in_buf.size() != total_vals)
-      return 1;
-
     auto compressor = SPERR3D_OMP_C();
     compressor.set_num_threads(m_num_t);
 
-    if (compressor.copy_data(in_buf.data(), total_vals, m_dims, m_chunk_dims) != RTNType::Good)
-      return 1;
+    if (prec64) {
+      if (compressor.copy_data(in_d.data(), total_vals, m_dims, m_chunk_dims) != RTNType::Good)
+        return 1;
+    }
+    else {
+      if (compressor.copy_data(in_f.data(), total_vals, m_dims, m_chunk_dims) != RTNType::Good)
+        return 1;
+    }
 
     size_t total_bits = 0;
     if (bpp > 64.0)
@@ -93,12 +111,18 @@ class speck_tester_omp {
     //
     // Compare results
     //
-    auto orig = sperr::vecd_type(total_vals);
-    std::copy(in_buf.cbegin(), in_buf.cend(), orig.begin());
-
-    auto ret = sperr::calc_stats(orig.data(), vol.data(), total_vals, 0);
-    m_psnr = ret[2];
-    m_lmax = ret[1];
+    if (prec64) {
+      auto ret = sperr::calc_stats(in_d.data(), vol.data(), total_vals, 0);
+      m_psnr = ret[2];
+      m_lmax = ret[1];
+    }
+    else {
+      auto orig = sperr::vecd_type(total_vals);
+      std::copy(in_f.cbegin(), in_f.cend(), orig.begin());
+      auto ret = sperr::calc_stats(orig.data(), vol.data(), total_vals, 0);
+      m_psnr = ret[2];
+      m_lmax = ret[1];
+    }
 
     return 0;
   }
@@ -115,9 +139,9 @@ class speck_tester_omp {
 //
 // Test constant fields.
 //
-TEST(speck3d_constant, one_chunk)
+TEST(sperr3d_constant, one_chunk)
 {
-  speck_tester_omp tester("../test_data/const32x20x16.float", {32, 20, 16}, 2);
+  sperr3d_tester tester("../test_data/const32x20x16.float", {32, 20, 16}, 2);
 
   const auto tar_psnr = std::numeric_limits<double>::max();
   const auto pwe = 0.0;
@@ -131,9 +155,9 @@ TEST(speck3d_constant, one_chunk)
   EXPECT_EQ(lmax, 0.0f);
 }
 
-TEST(speck3d_constant, omp_chunks)
+TEST(sperr3d_constant, omp_chunks)
 {
-  speck_tester_omp tester("../test_data/const32x32x59.float", {32, 32, 59}, 8);
+  sperr3d_tester tester("../test_data/const32x32x59.float", {32, 32, 59}, 8);
   tester.prefer_chunk_dims({32, 32, 32});
 
   const auto tar_psnr = std::numeric_limits<double>::max();
@@ -151,9 +175,9 @@ TEST(speck3d_constant, omp_chunks)
 //
 // Test target PWE
 //
-TEST(speck3d_target_pwe, small)
+TEST(sperr3d_target_pwe, small)
 {
-  speck_tester_omp tester("../test_data/wmag17.float", {17, 17, 17}, 1);
+  sperr3d_tester tester("../test_data/wmag17.float", {17, 17, 17}, 1);
 
   const auto bpp = sperr::max_d;
   const auto target_psnr = sperr::max_d;
@@ -179,9 +203,9 @@ TEST(speck3d_target_pwe, small)
   EXPECT_LE(lmax, pwe);
 }
 
-TEST(speck3d_target_pwe, small_data_range)
+TEST(sperr3d_target_pwe, small_data_range)
 {
-  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 2);
+  sperr3d_tester tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 2);
 
   const auto bpp = sperr::max_d;
   const auto target_psnr = sperr::max_d;
@@ -202,9 +226,9 @@ TEST(speck3d_target_pwe, small_data_range)
   EXPECT_LE(lmax, pwe);
 }
 
-TEST(speck3d_target_pwe, big)
+TEST(sperr3d_target_pwe, big)
 {
-  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 0);
+  sperr3d_tester tester("../test_data/wmag128.float", {128, 128, 128}, 0);
 
   const auto bpp = sperr::max_d;
   const auto target_psnr = sperr::max_d;
@@ -230,12 +254,42 @@ TEST(speck3d_target_pwe, big)
   EXPECT_LE(lmax, pwe);
 }
 
+TEST(sperr3d_target_pwe, tiny_tolerance)
+{
+  // Reported in https://github.com/NCAR/SPERR/issues/184
+  sperr3d_tester tester("../test_data/data16.in", {16, 16, 16}, 0);
+  const bool is_double = true;
+
+  const auto bpp = sperr::max_d;
+  const auto target_psnr = sperr::max_d;
+
+  double pwe = 1e-48;
+  tester.execute(bpp, target_psnr, pwe, is_double);
+  double lmax = tester.get_lmax();
+  EXPECT_LE(lmax, pwe);
+
+  pwe = 1e-50;
+  tester.execute(bpp, target_psnr, pwe, is_double);
+  lmax = tester.get_lmax();
+  EXPECT_LE(lmax, pwe);
+
+  pwe = 1e-52;
+  tester.execute(bpp, target_psnr, pwe, is_double);
+  lmax = tester.get_lmax();
+  EXPECT_LE(lmax, pwe);
+
+  pwe = 1e-55;
+  tester.execute(bpp, target_psnr, pwe, is_double);
+  lmax = tester.get_lmax();
+  EXPECT_LE(lmax, pwe);
+}
+
 //
 // Test target PSNR
 //
-TEST(speck3d_target_psnr, small)
+TEST(sperr3d_target_psnr, small)
 {
-  speck_tester_omp tester("../test_data/wmag17.float", {17, 17, 17}, 1);
+  sperr3d_tester tester("../test_data/wmag17.float", {17, 17, 17}, 1);
 
   const auto bpp = sperr::max_d;
   const auto pwe = 0.0;
@@ -253,9 +307,9 @@ TEST(speck3d_target_psnr, small)
   EXPECT_GT(psnr, target_psnr - 0.1);  // An example of estimated error being too small.
 }
 
-TEST(speck3d_target_psnr, big)
+TEST(sperr3d_target_psnr, big)
 {
-  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 3);
+  sperr3d_tester tester("../test_data/wmag128.float", {128, 128, 128}, 3);
 
   const auto bpp = sperr::max_d;
   const auto pwe = 0.0;
@@ -273,9 +327,9 @@ TEST(speck3d_target_psnr, big)
   EXPECT_GT(psnr, target_psnr);
 }
 
-TEST(speck3d_target_psnr, small_data_range)
+TEST(sperr3d_target_psnr, small_data_range)
 {
-  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 0);
+  sperr3d_tester tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 0);
 
   const auto bpp = sperr::max_d;
   const auto pwe = 0.0;
@@ -296,9 +350,9 @@ TEST(speck3d_target_psnr, small_data_range)
 //
 // Test fixed-size mode
 //
-TEST(speck3d_bit_rate, small)
+TEST(sperr3d_bit_rate, small)
 {
-  speck_tester_omp tester("../test_data/wmag17.float", {17, 17, 17}, 1);
+  sperr3d_tester tester("../test_data/wmag17.float", {17, 17, 17}, 1);
 
   const auto tar_psnr = std::numeric_limits<double>::max();
   const auto pwe = 0.0;
@@ -322,9 +376,9 @@ TEST(speck3d_bit_rate, small)
   EXPECT_LT(lmax, 12.511442);
 }
 
-TEST(speck3d_bit_rate, big)
+TEST(sperr3d_bit_rate, big)
 {
-  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 0);
+  sperr3d_tester tester("../test_data/wmag128.float", {128, 128, 128}, 0);
 
   const auto tar_psnr = std::numeric_limits<double>::max();
   const auto pwe = 0.0;
@@ -348,9 +402,9 @@ TEST(speck3d_bit_rate, big)
   EXPECT_LT(lmax, 27.557829);
 }
 
-TEST(speck3d_bit_rate, narrow_data_range)
+TEST(sperr3d_bit_rate, narrow_data_range)
 {
-  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 2);
+  sperr3d_tester tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 2);
 
   const auto tar_psnr = std::numeric_limits<double>::max();
   const auto pwe = 0.0;
