@@ -90,8 +90,8 @@ class SPERR {
   //
   uint64_t m_total_len = 0;  // 1D array length
   double m_tolerance = 0.0;  // Error tolerance.
-  float m_max_threshold_f = 0.0;
-  const size_t m_header_size = 20;
+  double m_max_threshold = 0.0;
+  const size_t m_header_size = 24;
 
   double m_threshold = 0.0;   // Threshold that's used for quantization
   bool m_encode_mode = true;  // Encode (true) or Decode (false) mode?

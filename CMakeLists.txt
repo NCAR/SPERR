@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 3.14)
 
-project(SPERR VERSION 0.5.2 DESCRIPTION "Lossy Scientific Compression with SPERR")
+project(SPERR VERSION 0.6.0 DESCRIPTION "Lossy Scientific Compression with SPERR")
 
 #
 # specify the C++ standard
