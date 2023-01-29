@@ -153,14 +153,13 @@ auto sperr::SPERR::encode() -> RTNType
   m_LSP_old.reserve(m_LOS.size());
 
   auto max_q = *(std::max_element(m_q.cbegin(), m_q.cend()));
-  auto max_t = m_tolerance * 0.99;  // make the terminal threshold just a tiny bit smaller.
+  m_threshold = m_tolerance;
   m_num_itrs = 1;
-  while (max_t * 2.0 < max_q) {
-    max_t *= 2.0;
+  while (m_threshold * 2.0 < max_q) {
+    m_threshold *= 2.0;
     m_num_itrs++;
   }
-  m_max_threshold_f = static_cast<float>(max_t);
-  m_threshold = static_cast<double>(m_max_threshold_f);
+  m_max_threshold = m_threshold;
 
   // Start the iterations!
   for (size_t bitplane = 0; bitplane < m_num_itrs; bitplane++) {
@@ -194,7 +193,7 @@ auto sperr::SPERR::decode() -> RTNType
   m_bit_idx = 0;
   m_LOS_size = 0;
 
-  m_threshold = static_cast<double>(m_max_threshold_f);
+  m_threshold = m_max_threshold;
 
   for (size_t bitplane = 0; bitplane < 64; bitplane++) {
     m_sorting_pass();
@@ -380,8 +379,8 @@ void sperr::SPERR::m_refinement_pass_decoding()
 auto sperr::SPERR::get_encoded_bitstream() -> std::vector<uint8_t>
 {
   // Header definition:
-  // total_len  max_threshold_f   num_of_bits
-  // uint64_t   float             uint64_t
+  // total_len  max_threshold   num_of_bits
+  // uint64_t   double          uint64_t
 
   // Record the current (useful) number of bits before it's padded.
   const uint64_t num_bits = m_bit_buffer.size();
@@ -397,8 +396,8 @@ auto sperr::SPERR::get_encoded_bitstream() -> std::vector<uint8_t>
   std::memcpy(&buf[0], &m_total_len, sizeof(m_total_len));
   pos += sizeof(m_total_len);
 
-  std::memcpy(&buf[pos], &m_max_threshold_f, sizeof(m_max_threshold_f));
-  pos += sizeof(m_max_threshold_f);
+  std::memcpy(&buf[pos], &m_max_threshold, sizeof(m_max_threshold));
+  pos += sizeof(m_max_threshold);
 
   std::memcpy(&buf[pos], &num_bits, sizeof(num_bits));
   pos += sizeof(num_bits);
@@ -430,8 +429,8 @@ auto sperr::SPERR::parse_encoded_bitstream(const void* buf, size_t len) -> RTNTy
   std::memcpy(&m_total_len, ptr, sizeof(m_total_len));
   pos += sizeof(m_total_len);
 
-  std::memcpy(&m_max_threshold_f, ptr + pos, sizeof(m_max_threshold_f));
-  pos += sizeof(m_max_threshold_f);
+  std::memcpy(&m_max_threshold, ptr + pos, sizeof(m_max_threshold));
+  pos += sizeof(m_max_threshold);
 
   std::memcpy(&num_bits, ptr + pos, sizeof(num_bits));
   pos += sizeof(num_bits);
@@ -454,10 +453,10 @@ auto sperr::SPERR::parse_encoded_bitstream(const void* buf, size_t len) -> RTNTy
 auto sperr::SPERR::get_sperr_stream_size(const void* buf) const -> uint64_t
 {
   // Given the header definition in `get_encoded_bitstream()`, directly
-  // go retrieve the value stored in byte 12-20.
+  // go retrieve the value stored in byte 16-24.
   const uint8_t* const ptr = static_cast<const uint8_t*>(buf);
   uint64_t num_bits;
-  std::memcpy(&num_bits, ptr + 12, sizeof(num_bits));
+  std::memcpy(&num_bits, ptr + 16, sizeof(num_bits));
   while (num_bits % 8 != 0)
     num_bits++;
 
