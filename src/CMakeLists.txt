@@ -18,7 +18,6 @@ add_library( SPERR
 target_include_directories( SPERR PUBLIC ${CMAKE_SOURCE_DIR}/include )
 
 if(USE_OMP)
-  target_compile_options(   SPERR PUBLIC ${OpenMP_CXX_FLAGS} )
   target_link_libraries(    SPERR PUBLIC OpenMP::OpenMP_CXX )
 endif()
 
@@ -26,13 +25,13 @@ endif()
 # Also link zstd
 #
 if( USE_ZSTD )
-    if(USE_BUNDLED_ZSTD)
-      # Declare dependency so that `zstd-download` is finished before SPERR is built.
-      add_dependencies( SPERR zstd-download )
-      target_link_libraries( SPERR PUBLIC zstd )
-    else()
-      target_link_libraries( SPERR PUBLIC PkgConfig::ZSTD )
-    endif()
+  if(USE_BUNDLED_ZSTD)
+    # Declare dependency so that `zstd-download` is finished before SPERR is built.
+    add_dependencies( SPERR zstd-download )
+    target_link_libraries( SPERR PUBLIC zstd )
+  else()
+    target_link_libraries( SPERR PUBLIC PkgConfig::ZSTD )
+  endif()
 endif()
 
 #

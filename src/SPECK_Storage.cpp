@@ -267,7 +267,6 @@ auto sperr::SPECK_Storage::m_estimate_rmse(double q) const -> double
   const auto len = m_coeff_buf.size();
   const size_t stride_size = 4096;
   const size_t num_strides = len / stride_size;
-  const size_t remainder_size = len - stride_size * num_strides;
   auto tmp_buf = vecd_type(num_strides + 1);
 
   for (size_t i = 0; i < num_strides; i++) {
