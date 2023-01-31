@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 
   // Output specification
   auto out_bitstream = std::string();
-  app.add_option("--out_bitstream", out_bitstream, "Output filename")
+  app.add_option("--out_bitstream", out_bitstream, "Output compressed bitstream")
       ->group("Output Specifications");
   auto out_decomp_f = std::string();
   app.add_option("--out_decomp_f", out_decomp_f, "Output decompressed volume in single precision")
