@@ -1,5 +1,7 @@
 #include "SPERR3D_Decompressor.h"
 
+#include "SPECK1D_INT_DEC.h"
+
 #include <cassert>
 #include <cstring>
 
@@ -69,12 +71,18 @@ auto sperr::SPERR3D_Decompressor::use_bitstream(const void* p, size_t len) -> RT
 
   // Step 3: extract SPERR stream
   if (pos < ptr_len) {
-    const uint8_t* const sperr_p = ptr + pos;
-    const auto sperr_size = m_sperr.get_sperr_stream_size(sperr_p);
-    if (pos + sperr_size != ptr_len)
-      return RTNType::BitstreamWrongLen;
+    // Original SPERR: 1D + midriser
+    //const uint8_t* const sperr_p = ptr + pos;
+    //const auto sperr_size = m_sperr.get_sperr_stream_size(sperr_p);
+    //if (pos + sperr_size != ptr_len)
+    //  return RTNType::BitstreamWrongLen;
+    //m_sperr_stream.resize(sperr_size);
+    //std::copy(sperr_p, sperr_p + sperr_size, m_sperr_stream.begin());
+
+    // Alternative Outlier Corrector: midtread
+    auto sperr_size = ptr_len - pos;
     m_sperr_stream.resize(sperr_size);
-    std::copy(sperr_p, sperr_p + sperr_size, m_sperr_stream.begin());
+    std::copy(ptr + pos, ptr + ptr_len, m_sperr_stream.begin());
   }
 
   return RTNType::Good;
@@ -125,15 +133,39 @@ auto sperr::SPERR3D_Decompressor::decompress() -> RTNType
   m_conditioner.inverse_condition(m_val_buf, m_condi_stream);
 
   // Step 4: If there's SPERR data, then do the correction.
-  if (!m_sperr_stream.empty()) {
-    rtn = m_sperr.parse_encoded_bitstream(m_sperr_stream.data(), m_sperr_stream.size());
-    if (rtn != RTNType::Good)
-      return rtn;
-    rtn = m_sperr.decode();
-    if (rtn != RTNType::Good)
-      return rtn;
+  //if (!m_sperr_stream.empty()) {
+  //  rtn = m_sperr.parse_encoded_bitstream(m_sperr_stream.data(), m_sperr_stream.size());
+  //  if (rtn != RTNType::Good)
+  //    return rtn;
+  //  rtn = m_sperr.decode();
+  //  if (rtn != RTNType::Good)
+  //    return rtn;
 
-    const auto& los = m_sperr.view_outliers();
+  //  const auto& los = m_sperr.view_outliers();
+  //  for (const auto& outlier : los)
+  //    m_val_buf[outlier.location] += outlier.error;
+  //}
+
+  // Step 4 alternative 1: 1D midtread
+  if (!m_sperr_stream.empty()) {
+    auto corrector = SPECK1D_INT_DEC();
+    corrector.set_dims({m_dims[0] * m_dims[1] * m_dims[2], 1, 1});
+    double tol;
+    std::memcpy(&tol, m_sperr_stream.data(), 8);
+    std::rotate(m_sperr_stream.begin(), m_sperr_stream.begin() + 8, m_sperr_stream.end());
+    m_sperr_stream.resize(m_sperr_stream.size() - 8);
+    corrector.use_bitstream(m_sperr_stream);
+    corrector.decode();
+    const auto buf_ui = corrector.view_coeffs();
+    const auto signs = corrector.view_signs();
+    auto los = std::vector<Outlier>();
+    for (size_t i = 0; i < buf_ui.size(); i++) {
+      if (buf_ui[i] != 0) {
+        auto v = double(buf_ui[i]) * tol;
+        if (!signs[i])  v = -v;
+        los.emplace_back(i, v);
+      }
+    }
     for (const auto& outlier : los)
       m_val_buf[outlier.location] += outlier.error;
   }

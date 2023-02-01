@@ -1,5 +1,7 @@
 #include "SPERR3D_Compressor.h"
 
+#include "SPECK1D_INT_ENC.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -137,17 +139,37 @@ auto sperr::SPERR3D_Compressor::compress() -> RTNType
     }
 
     // Step 4.3: Code located outliers
+    //if (!m_LOS.empty()) {
+    //  m_sperr.set_tolerance(m_target_pwe);
+    //  m_sperr.set_length(total_vals);
+    //  m_sperr.copy_outlier_list(m_LOS);
+    //  rtn = m_sperr.encode();
+    //  if (rtn != RTNType::Good)
+    //    return rtn;
+    //  m_sperr_stream = m_sperr.get_encoded_bitstream();
+    //  if (m_sperr_stream.empty())
+    //    return RTNType::Error;
+    //}
+
+    // Step 4.3 alternative 1: 1D midtread
     if (!m_LOS.empty()) {
-      m_sperr.set_tolerance(m_target_pwe);
-      m_sperr.set_length(total_vals);
-      m_sperr.copy_outlier_list(m_LOS);
-      rtn = m_sperr.encode();
-      if (rtn != RTNType::Good)
-        return rtn;
-      m_sperr_stream = m_sperr.get_encoded_bitstream();
-      if (m_sperr_stream.empty())
-        return RTNType::Error;
+      auto buf_ui = vecui_t(total_vals, 0);
+      auto signs = vecb_type(total_vals, true);
+      for (auto out : m_LOS) {
+        auto i = out.location;
+        signs[i] = out.error > 0.0;
+        buf_ui[i] = std::llrint(std::abs(out.error) / m_target_pwe);
+      }
+      auto corrector = SPECK1D_INT_ENC();
+      corrector.set_dims({total_vals, 1, 1});
+      corrector.use_coeffs(std::move(buf_ui), std::move(signs));
+      corrector.encode();
+      auto corr_stream = corrector.release_encoded_bitstream();
+      m_sperr_stream.resize(8 + corr_stream.size());
+      std::memcpy(m_sperr_stream.data(), &m_target_pwe, 8);
+      std::copy(corr_stream.begin(), corr_stream.end(), m_sperr_stream.begin() + 8);
     }
+
   }
 
   rtn = m_assemble_encoded_bitstream();

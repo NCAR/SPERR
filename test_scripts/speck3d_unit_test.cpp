@@ -84,7 +84,8 @@ class speck_tester_omp {
     decompressor.set_num_threads(m_num_t);
     if (decompressor.use_bitstream(stream.data(), stream.size()) != RTNType::Good)
       return 1;
-    if (decompressor.decompress(stream.data()) != RTNType::Good)
+    rtn = decompressor.decompress(stream.data());
+    if (rtn != RTNType::Good)
       return 1;
     const auto& vol = decompressor.view_data();
     if (vol.size() != total_vals)
