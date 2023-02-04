@@ -177,7 +177,7 @@ int main(int argc, char* argv[])
       assert(recover.size() * sizeof(double) == orig.size());
       auto stats = sperr::calc_stats(reinterpret_cast<const double*>(orig.data()), recover.data(),
                                      recover.size());
-      auto var = sperr::calc_variance(reinterpret_cast<const double*>(orig.data()), total_vals);
+      auto [mean, var] = sperr::calc_mean_var(reinterpret_cast<const double*>(orig.data()), total_vals);
       auto sigma = std::sqrt(var);
       auto gain = std::log2(sigma / stats[0]) - bpp;
       std::cout << "Average BPP = " << bpp << ", PSNR = " << stats[2]
@@ -190,7 +190,7 @@ int main(int argc, char* argv[])
       assert(recover.size() * sizeof(float) == orig.size());
       auto stats = sperr::calc_stats(reinterpret_cast<const float*>(orig.data()), recover.data(),
                                      recover.size());
-      auto var = sperr::calc_variance(reinterpret_cast<const float*>(orig.data()), total_vals);
+      auto [mean, var] = sperr::calc_mean_var(reinterpret_cast<const double*>(orig.data()), total_vals);
       auto sigma = std::sqrt(var);
       auto gain = std::log2(sigma / stats[0]) - float(bpp);
       std::cout << "Average BPP = " << bpp << ", PSNR = " << stats[2]

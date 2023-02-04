@@ -180,11 +180,13 @@ struct HeaderInfo {
 };
 auto parse_header(const void*) -> HeaderInfo;
 
-// Calculate the variance of a given array.
-// In case of arrays of size zero, it will return std::numeric_limits<T>::infinity().
+// Calculate the mean and variance of a given array.
+// In case of arrays of size zero, it will return {NaN, NaN}.
 // In case of `omp_nthreads == 0`, it will use all available OpenMP threads.
+// ret[0] : mean
+// ret[1] : variance
 template <typename T>
-auto calc_variance(const T*, size_t len, size_t omp_nthreads = 0) -> T;
+auto calc_mean_var(const T*, size_t len, size_t omp_nthreads = 0) -> std::array<T, 2>;
 
 // Decide compression mode based on a collection of parameters.
 auto compression_mode(size_t bit_budget, double psnr, double pwe) -> CompMode;

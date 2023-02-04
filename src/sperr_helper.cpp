@@ -253,7 +253,7 @@ template <typename T>
 auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_nthreads)
     -> std::array<T, 5>
 {
-  const size_t stride_size = 4096;
+  const size_t stride_size = 8192;
   const size_t num_of_strides = arr_len / stride_size;
   const size_t remainder_size = arr_len - stride_size * num_of_strides;
 
@@ -538,17 +538,17 @@ auto sperr::parse_header(const void* ptr) -> HeaderInfo
 }
 
 template <typename T>
-auto sperr::calc_variance(const T* arr, size_t len, size_t omp_nthreads) -> T
+auto sperr::calc_mean_var(const T* arr, size_t len, size_t omp_nthreads) -> std::array<T, 2>
 {
   if (len == 0)
-    return std::numeric_limits<T>::infinity();
+    return {std::nan("1"), std::nan("2")};
 
 #ifdef USE_OMP
   if (omp_nthreads == 0)
     omp_nthreads = omp_get_max_threads();
 #endif
 
-  const size_t stride_size = 4096;
+  const size_t stride_size = 16'384;
   const size_t num_strides = len / stride_size;
   auto tmp_buf = std::vector<T>(num_strides + 1);
 
@@ -578,10 +578,10 @@ auto sperr::calc_variance(const T* arr, size_t len, size_t omp_nthreads) -> T
   const auto diff_sum = std::accumulate(tmp_buf.cbegin(), tmp_buf.cend(), T{0.0});
   const auto var = diff_sum / static_cast<T>(len);
 
-  return var;
+  return {mean, var};
 }
-template auto sperr::calc_variance(const float*, size_t, size_t) -> float;
-template auto sperr::calc_variance(const double*, size_t, size_t) -> double;
+template auto sperr::calc_mean_var(const float*, size_t, size_t) -> std::array<float, 2>;
+template auto sperr::calc_mean_var(const double*, size_t, size_t) -> std::array<double, 2>;
 
 auto sperr::compression_mode(size_t bit_budget, double psnr, double pwe) -> CompMode
 {

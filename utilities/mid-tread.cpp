@@ -45,10 +45,10 @@ int main(int argc, char* argv[])
       ->group("Compression Specifications (must choose one and only one)");
 
   // Output specifications
-  auto zipfile = std::string();
-  app.add_option("-z", zipfile, "Compressed file.")->group("Output specifications");
-  auto reconfile = std::string();
-  app.add_option("-r", reconfile, "Compressed file.")->group("Output specifications");
+  //auto zipfile = std::string();
+  //app.add_option("-z", zipfile, "Compressed bitstream.")->group("Output specifications");
+  //auto reconfile = std::string();
+  //app.add_option("-r", reconfile, "Reconstructed file.")->group("Output specifications");
 
   CLI11_PARSE(app, argc, argv);
 
@@ -70,28 +70,45 @@ int main(int argc, char* argv[])
     encoder.copy_data(reinterpret_cast<const double*>(orig.data()), total_vals);
   else
     encoder.copy_data(reinterpret_cast<const float*>(orig.data()), total_vals);
-  auto rtn = encoder.encode();
+  auto rtn = encoder.compress();
   if (rtn == sperr::RTNType::FE_Invalid) {
     std::cerr << "FE_Invalid detected!" << std::endl;
     return 1;
   }
   else
     std::cerr << "No FE_Invalid detected!" << std::endl;
-  auto bitstream = encoder.release_encoded_bitstream();
+  auto bitstream = encoder.get_encoded_bitstream();
+  const auto bpp = double(bitstream.size() * 8) / double(total_vals);
+  std::printf("%.4f,  ", bpp);
 
-  // Write out the encoded bitstream, and free up memory 
-  sperr::write_n_bytes(zipfile, bitstream.size(), bitstream.data());
-  orig.clear();
-  orig.shrink_to_fit();
+  // Write out the encoded bitstream
+  //sperr::write_n_bytes(zipfile, bitstream.size(), bitstream.data());
 
   // Use a decompressor
   auto decoder = sperr::SPERR3D();
   decoder.set_dims(dims);
   decoder.set_q(1.5 * pwe);
   decoder.use_bitstream(bitstream.data(), bitstream.size());
-  decoder.decode();
+  decoder.decompress();
   auto output = decoder.release_decoded_data();
-  sperr::write_n_bytes(reconfile, 8 * output.size(), output.data());
+  //sperr::write_n_bytes(reconfile, 8 * output.size(), output.data());
+
+  // Compute statistics
+  const double* input_p = nullptr;
+  std::vector<double> input_v;
+  if (use_double)
+    input_p = reinterpret_cast<const double*>(orig.data());
+  else {
+    const float* tmp = reinterpret_cast<const float*>(orig.data());
+    input_v.resize(total_vals);
+    std::copy(tmp, tmp + total_vals, input_v.begin());
+    input_p = input_v.data();
+  }
+  auto [rmse, infy, psnr, min, max] = sperr::calc_stats(input_p, output.data(), total_vals, 4);
+  auto [mean, var] = sperr::calc_mean_var(input_p, total_vals, 4);
+  auto sigma = std::sqrt(var);
+  auto gain = std::log2(sigma / rmse) - bpp;
+  std::printf("%.4f\n", gain);
 
   return 0;
 }
