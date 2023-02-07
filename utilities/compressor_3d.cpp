@@ -12,7 +12,7 @@
 int main(int argc, char* argv[])
 {
   // Parse command line options
-  CLI::App app("Compress a 3D volume and output a SPERR bitstream\n");
+  CLI::App app("Compress a 3D data volume\n");
 
   // Input specifications
   auto input_file = std::string();

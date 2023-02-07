@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
   app.add_flag("-d", output_double,
                "Specify to output data to be in double type.\n"
                "Data is output as float by default.")
-      ->group("Execution Specifications");
+      ->group("Output Specifications");
 
   auto omp_num_threads = size_t{0};  // meaning to use the maximum number of threads.
 #ifdef USE_OMP

@@ -11,7 +11,7 @@
 int main(int argc, char* argv[])
 {
   // Parse command line options
-  CLI::App app("Compress a 2D slice and output a SPERR bitstream\n");
+  CLI::App app("Compress a 2D data slice\n");
 
   // Input specifications
   auto input_file = std::string();
@@ -39,10 +39,10 @@ int main(int argc, char* argv[])
   app.add_option("--out_bitstream", out_bitstream, "Output compressed bitstream")
       ->group("Output Specifications");
   auto out_decomp_f = std::string();
-  app.add_option("--out_decomp_f", out_decomp_f, "Output decompressed volume in single precision")
+  app.add_option("--out_decomp_f", out_decomp_f, "Output decompressed slice in single precision")
       ->group("Output Specifications");
   auto out_decomp_d = std::string();
-  app.add_option("--out_decomp_d", out_decomp_d, "Output decompressed volume in double precision")
+  app.add_option("--out_decomp_d", out_decomp_d, "Output decompressed slice in double precision")
       ->group("Output Specifications");
 
   auto show_stats = bool{false};
