@@ -170,7 +170,7 @@ int main(int argc, char* argv[])
 
   // Calculate and print statistics
   if (show_stats || !out_decomp_f.empty() || !out_decomp_d.empty()) {
-    const auto bpp = stream.size() * 8.0 / total_vals;
+    const auto bpp = stream.size() * 8.0 / double(total_vals);
 
     // Use a decompressor to decompress and collect error statistics
     SPERR2D_Decompressor decompressor;
@@ -183,32 +183,28 @@ int main(int argc, char* argv[])
       return __LINE__;
 
     if (show_stats) {
-      if (use_double) {
-        const auto& recover = decompressor.view_data();
-        assert(recover.size() * sizeof(double) == orig.size());
-        auto stats = sperr::calc_stats(reinterpret_cast<const double*>(orig.data()), recover.data(),
-                                       recover.size());
-        auto var = sperr::calc_variance(reinterpret_cast<const double*>(orig.data()), total_vals);
-        auto sigma = std::sqrt(var);
-        auto gain = std::log2(sigma / stats[0]) - bpp;
-        std::cout << "Average BPP = " << bpp << ", PSNR = " << stats[2]
-                  << "dB, L-Infty = " << stats[1] << ", Accuracy Gain = " << gain << std::endl;
-        std::printf("Input data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3],
-                    stats[4]);
-      }
+      // Make sure that we have a copy of the original data in double precision.
+      const double* orig_ptr = nullptr;
+      auto orig_tmp = std::vector<double>();
+      if (use_double)
+        orig_ptr = reinterpret_cast<const double*>(orig.data());
       else {
-        const auto recover = decompressor.get_data<float>();
-        assert(recover.size() * sizeof(float) == orig.size());
-        auto stats = sperr::calc_stats(reinterpret_cast<const float*>(orig.data()), recover.data(),
-                                       recover.size());
-        auto var = sperr::calc_variance(reinterpret_cast<const float*>(orig.data()), total_vals);
-        auto sigma = std::sqrt(var);
-        auto gain = std::log2(sigma / stats[0]) - float(bpp);
-        std::cout << "Average BPP = " << bpp << ", PSNR = " << stats[2]
-                  << "dB, L-Infty = " << stats[1] << ", Accuracy Gain = " << gain << std::endl;
-        std::printf("Input data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3],
-                    stats[4]);
+        const float* orig_f = reinterpret_cast<const float*>(orig.data());
+        orig_tmp.resize(total_vals);
+        std::copy(orig_f, orig_f + total_vals, orig_tmp.begin());
+        orig_ptr = orig_tmp.data();
       }
+
+      const auto& recover = decompressor.view_data();
+      assert(recover.size() == total_vals);
+      auto stats = sperr::calc_stats(orig_ptr, recover.data(), total_vals);
+      auto var = sperr::calc_variance(orig_ptr, total_vals);
+      auto sigma = std::sqrt(var);
+      auto gain = std::log2(sigma / stats[0]) - bpp;
+      std::cout << "Average BPP = " << bpp << ", PSNR = " << stats[2]
+                << "dB, L-Infty = " << stats[1] << ", Accuracy Gain = " << gain << std::endl;
+      std::printf("Input data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3],
+                  stats[4]);
 
       if (mode == sperr::CompMode::FixedPWE) {
         // Also collect outlier statistics
@@ -229,7 +225,7 @@ int main(int argc, char* argv[])
 
     if (!out_decomp_f.empty()) {
       const auto recover = decompressor.get_data<float>();
-      assert(recover.size() * sizeof(float) == orig.size());
+      assert(recover.size() == total_vals);
       rtn = sperr::write_n_bytes(out_decomp_f, recover.size() * sizeof(float), recover.data());
       if (rtn != sperr::RTNType::Good) {
         std::cerr << "Write decompressed file failed!" << std::endl;
@@ -239,14 +235,14 @@ int main(int argc, char* argv[])
 
     if (!out_decomp_d.empty()) {
       const auto& recover = decompressor.view_data();
-      assert(recover.size() * sizeof(double) == orig.size());
+      assert(recover.size() == total_vals);
       rtn = sperr::write_n_bytes(out_decomp_d, recover.size() * sizeof(double), recover.data());
       if (rtn != sperr::RTNType::Good) {
         std::cerr << "Write decompressed file failed!" << std::endl;
         return __LINE__;
       }
     }
-  }
+  }  // Finish using the decompressor
 
   return 0;
 }
