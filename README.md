@@ -4,6 +4,10 @@
 [![CodeQL](https://github.com/NCAR/SPERR/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/NCAR/SPERR/actions/workflows/codeql-analysis.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/5fb9befd9687440195ca739ec60abc39)](https://www.codacy.com/gh/shaomeng/SPERR/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=shaomeng/SPERR&amp;utm_campaign=Badge_Grade)
 
+
+[![DOI](https://zenodo.org/badge/94365653.svg)](https://zenodo.org/badge/latestdoi/94365653)
+
+
 ## Overview
 
 SPERR (pronounced like *spur*) is a lossy compressor for scientific data (2D or 3D floating-point data, mostly produced by numerical simulations). 
