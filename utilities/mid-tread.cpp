@@ -75,8 +75,8 @@ int main(int argc, char* argv[])
     std::cerr << "FE_Invalid detected!" << std::endl;
     return 1;
   }
-  else
-    std::cerr << "No FE_Invalid detected!" << std::endl;
+  //else
+  //  std::cerr << "No FE_Invalid detected!" << std::endl;
   auto bitstream = encoder.get_encoded_bitstream();
   const auto bpp = double(bitstream.size() * 8) / double(total_vals);
   std::printf("%.4f,  ", bpp);
@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
   auto [mean, var] = sperr::calc_mean_var(input_p, total_vals, 4);
   auto sigma = std::sqrt(var);
   auto gain = std::log2(sigma / rmse) - bpp;
-  std::printf("%.4f\n", gain);
+  std::printf("%.4f,  %.2e\n", gain, rmse);
 
   return 0;
 }

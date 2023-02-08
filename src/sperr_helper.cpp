@@ -540,8 +540,13 @@ auto sperr::parse_header(const void* ptr) -> HeaderInfo
 template <typename T>
 auto sperr::calc_mean_var(const T* arr, size_t len, size_t omp_nthreads) -> std::array<T, 2>
 {
-  if (len == 0)
-    return {std::nan("1"), std::nan("2")};
+  if (len == 0) {
+    static_assert(std::is_floating_point_v<T>);
+    if constexpr (std::is_same_v<T, float>)
+      return {std::nanf("1"), std::nanf("2")};
+    else
+      return {std::nan("1"), std::nan("2")};
+  }
 
 #ifdef USE_OMP
   if (omp_nthreads == 0)

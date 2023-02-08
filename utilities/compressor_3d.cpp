@@ -209,20 +209,24 @@ int main(int argc, char* argv[])
                 << "dB, L-Infty = " << stats[1] << ", Accuracy Gain = " << gain << std::endl;
       std::printf("Input data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3],
                   stats[4]);
+      //std::printf("%.4f,  %.4f\n", bpp, gain);
     }
     else {
-      const auto recover = decompressor.get_data<float>();
+      const auto& recover = decompressor.view_data();
       assert(recover.size() * sizeof(float) == orig.size());
-      auto stats = sperr::calc_stats(reinterpret_cast<const float*>(orig.data()), recover.data(),
-                                     recover.size(), omp_num_threads);
-      auto [mean, var] = sperr::calc_mean_var(reinterpret_cast<const double*>(orig.data()), total_vals,
-                                      omp_num_threads);
+      // Also make a copy of the original input in double precision.
+      auto orig_d = std::vector<double>(total_vals);
+      const float* p = reinterpret_cast<const float*>(orig.data());
+      std::copy(p, p + total_vals, orig_d.begin());
+      auto stats = sperr::calc_stats(orig_d.data(), recover.data(), total_vals, omp_num_threads);
+      auto [mean, var] = sperr::calc_mean_var(orig_d.data(), total_vals, omp_num_threads);
       auto sigma = std::sqrt(var);
-      auto gain = std::log2(sigma / stats[0]) - float(bpp);
+      auto gain = std::log2(sigma / stats[0]) - bpp;
       std::cout << "Average BPP = " << bpp << ", PSNR = " << stats[2]
                 << "dB, L-Infty = " << stats[1] << ", Accuracy Gain = " << gain << std::endl;
       std::printf("Input data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3],
                   stats[4]);
+      //std::printf("%.4f,  %.4f,  %.2e\n", bpp, gain, stats[0]);
     }
 
     if (mode == sperr::CompMode::FixedPWE) {
