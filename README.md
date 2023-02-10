@@ -26,7 +26,8 @@ SPERR documentation is hosted on Github [Wiki](https://github.com/NCAR/SPERR/wik
 [build SPERR from source](https://github.com/NCAR/SPERR/wiki/Build-SPERR-From-Source) and explore [compression and decompression
 utilities](https://github.com/NCAR/SPERR/wiki/CLI:-Compression-And-Decompression-Utilities).
 One may also want to pull a [docker image](https://hub.docker.com/r/shaomeng/sperr-docker)
-which contains SPERR in a complete development environment.
+which contains SPERR in a complete development environment. 
+Finally, a collection of canonical scientific data sets is available at [SDRBench](https://sdrbench.github.io/) for testing and evaluation purposes.
 
 SPERR also provides programming [API in C++ and C](https://github.com/NCAR/SPERR/wiki#sperr-c-api).
 
