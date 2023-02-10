@@ -11,8 +11,9 @@
 ## Overview
 
 SPERR (pronounced like *spur*) is a lossy compressor for scientific data (2D or 3D floating-point data, mostly produced by numerical simulations). 
-SPERR produces excellent rate-distortion curves, meaning that it achieves the least amount of ***average error***
-given a certain storage budget.
+SPERR has one of the highest coding efficiencies among popular lossy compressors, meaning that it usually uses the least amount of storage
+to satisfy a prescribed error tolerance (e.g., a maximum point-wise error tolerance).
+
 
 Under the hood, SPERR uses wavelet transforms, [SPECK](https://ieeexplore.ieee.org/document/1347192) coding, 
 and a custom outlier coding algorithm in its compression pipeline. 
@@ -23,8 +24,8 @@ The name of SPERR stands for **SP**eck with **ERR**or bounding.
 ## Documentation
 
 SPERR documentation is hosted on Github [Wiki](https://github.com/NCAR/SPERR/wiki) pages. To get started, one might want to
-[build SPERR from source](https://github.com/NCAR/SPERR/wiki/Build-SPERR-From-Source) and explore [compression and decompression
-utilities](https://github.com/NCAR/SPERR/wiki/CLI:-Compression-And-Decompression-Utilities).
+[build SPERR from source](https://github.com/NCAR/SPERR/wiki/Build-SPERR-From-Source) and explore compression and decompression
+utilities for [3D](https://github.com/NCAR/SPERR/wiki/CLI:-3D-Compression-and-Decompression-Utilities) and [2D](https://github.com/NCAR/SPERR/wiki/CLI:-2D-Compression-and-Decompression-Utilities) inputs.
 One may also want to pull a [docker image](https://hub.docker.com/r/shaomeng/sperr-docker)
 which contains SPERR in a complete development environment. 
 Finally, a collection of canonical scientific data sets is available at [SDRBench](https://sdrbench.github.io/) for testing and evaluation purposes.
