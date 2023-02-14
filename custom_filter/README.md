@@ -22,10 +22,16 @@ There are three steps to bring a filter implementation to the SPERR compilation:
    to the [`include`](https://github.com/NCAR/SPERR/tree/main/include) directory, and 
    `Matthias_Filter.cpp` to the [`src`](https://github.com/NCAR/SPERR/tree/main/src) directory.
 2. Include the implementation files in [`src/CMakeLists.txt`](https://github.com/NCAR/SPERR/blob/main/src/CMakeLists.txt). 
-   For example, uncomment the following two lines by removing the leading pound signs:
+   For example, add `Matthias_Filter.cpp` and `include/Matthias_Filter.h;\` to `CMakeLists.txt`
+and place them after the `Base_Filter`, so that they look like:
    ```cmake
-   # Matthias_Filter.cpp
-   # include/Matthias_Filter.h;\
+   ...
+   Base_Filter.cpp
+   Matthias_Filter.cpp
+   ...
+   include/Base_Filter.h;\
+   include/Matthias_Filter.h;\
+   ...
    ```
 3. Specify to use the custom filter in [`include/Conditioner.h`](https://github.com/NCAR/SPERR/blob/main/include/Conditioner.h). 
    For example, include the `Matthias_Filter` header, and change the filter declaration to be `Matthias_Filter`:
