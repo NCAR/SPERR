@@ -26,7 +26,7 @@ CPPAPI=output.cppapi
 #
 FILE=./test_data/lena512.float 
 ./2d.out $FILE 512 512 1 2.5
-./bin/compressor_2d --dims 512 512 -o output.stream --bpp 2.5 $FILE
+./bin/compressor_2d --dims 512 512 --out_bitstream output.stream --bpp 2.5 $FILE
 ./bin/decompressor_2d -o $CPPAPI output.stream
 
 if diff $CAPI $CPPAPI; then
@@ -42,7 +42,7 @@ rm -f $CAPI $CPPAPI
 #
 FILE=./test_data/lena512.float 
 ./2d.out $FILE 512 512 2 95.0
-./bin/compressor_2d --dims 512 512 -o output.stream --psnr 95.0 $FILE
+./bin/compressor_2d --dims 512 512 --out_bitstream output.stream --psnr 95.0 $FILE
 ./bin/decompressor_2d -o $CPPAPI output.stream
 
 if diff $CAPI $CPPAPI; then
@@ -58,7 +58,7 @@ rm -f $CAPI $CPPAPI
 #
 FILE=./test_data/lena512.float 
 ./2d.out $FILE 512 512 3 0.5
-./bin/compressor_2d --dims 512 512 -o output.stream --pwe 0.5 $FILE
+./bin/compressor_2d --dims 512 512 --out_bitstream output.stream --pwe 0.5 $FILE
 ./bin/decompressor_2d -o $CPPAPI output.stream
 
 if diff $CAPI $CPPAPI; then
@@ -75,7 +75,7 @@ rm -f $CAPI $CPPAPI
 #
 FILE=./test_data/density_128x128x256.d64
 ./3d.out $FILE 128 128 256 1 2.5 -d
-./bin/compressor_3d --dims 128 128 256 -d -o output.stream --bpp 2.5 $FILE
+./bin/compressor_3d --dims 128 128 256 -d --out_bitstream output.stream --bpp 2.5 $FILE
 ./bin/decompressor_3d -o $CPPAPI -d output.stream
 
 if diff $CAPI $CPPAPI; then
@@ -91,7 +91,7 @@ rm -f $CAPI $CPPAPI
 #
 FILE=./test_data/density_128x128x256.d64
 ./3d.out $FILE 128 128 256 2 102.5 -d
-./bin/compressor_3d --dims 128 128 256 -d -o output.stream --psnr 102.5 $FILE
+./bin/compressor_3d --dims 128 128 256 -d --out_bitstream output.stream --psnr 102.5 $FILE
 ./bin/decompressor_3d -o $CPPAPI -d output.stream
 
 if diff $CAPI $CPPAPI; then
@@ -107,7 +107,7 @@ rm -f $CAPI $CPPAPI
 #
 FILE=./test_data/density_128x128x256.d64
 ./3d.out $FILE 128 128 256 3 2.5e-5 -d
-./bin/compressor_3d --dims 128 128 256 -d -o output.stream --pwe 2.5e-5 $FILE
+./bin/compressor_3d --dims 128 128 256 -d --out_bitstream output.stream --pwe 2.5e-5 $FILE
 ./bin/decompressor_3d -o $CPPAPI -d output.stream
 
 if diff $CAPI $CPPAPI; then
