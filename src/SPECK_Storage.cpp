@@ -302,11 +302,8 @@ auto sperr::SPECK_Storage::m_estimate_finest_q() const -> double
     const auto t_mse = (m_data_range * m_data_range) * std::pow(10.0, -m_target_psnr / 10.0);
     const auto t_rmse = std::sqrt(t_mse);
     auto q = 2.0 * std::sqrt(t_mse * 3.0);
-    std::printf("range = %.2e, t_rmse = %.2e, q = %.2e\n", m_data_range, t_rmse, q);
-    while (m_estimate_rmse(q) > t_rmse) {
+    while (m_estimate_rmse(q) > t_rmse)
       q /= std::pow(2.0, 0.25);  // Four adjustments would effectively halve q.
-      std::printf("q adjusted to be %.2e\n", q);
-    }
     return q;
   }
   else

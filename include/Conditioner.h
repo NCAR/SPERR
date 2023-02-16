@@ -8,7 +8,7 @@
 // Finally, the Conditioner also detects constant fields.
 //
 
-#include "Matthias_Filter.h"
+#include "Base_Filter.h"
 #include "sperr_helper.h"
 
 namespace sperr {
@@ -41,7 +41,7 @@ class Conditioner {
   const size_t m_custom_filter_idx = 1;
   const size_t m_min_header_size = 9;  // when there's only a mean value saved.
 
-  Matthias_Filter m_filter;
+  Base_Filter m_filter;
 
   // Buffers passed in here are guaranteed to have correct lengths and conditions.
   auto m_calc_mean(const vecd_type& buf) -> double;
