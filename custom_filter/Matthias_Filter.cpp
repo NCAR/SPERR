@@ -11,7 +11,7 @@ auto sperr::Matthias_Filter::apply_filter(vecd_type& buf, dims_type dims) -> vec
   assert(buf.size() == dims[0] * dims[1] * dims[2]);
   assert(!buf.empty());
 
-  auto meta = std::vector<float>(dims[0] * 2);
+  auto meta = std::vector<double>(dims[0] * 2);
 
   for (size_t x = 0; x < dims[0]; x++) {
     m_extract_YZ_slice(buf, dims, x);
@@ -19,32 +19,28 @@ auto sperr::Matthias_Filter::apply_filter(vecd_type& buf, dims_type dims) -> vec
     // Operation 1: subtract mean
     auto mean = std::accumulate(m_slice_buf.cbegin(), m_slice_buf.cend(), 0.0);
     mean /= double(m_slice_buf.size());
-    const float mean_f = float(mean);
-    mean = double(mean_f);
     std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [mean](auto& v) { v -= mean; });
 
     // Operation 2: divide by RMS
     auto rms = m_calc_RMS();
-    float rms_f = float(rms);
-    if (rms_f == 0.f)
-      rms_f = 1.f;
-    rms = double(rms_f);
+    if (rms == 0.0)
+      rms = 1.0;
     std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [rms](auto& v) { v /= rms; });
 
     m_restore_YZ_slice(buf, dims, x);
 
-    // Save meta
-    meta[x * 2] = mean_f;
-    meta[x * 2 + 1] = rms_f;
+    // Save meta data
+    meta[x * 2] = mean;
+    meta[x * 2 + 1] = rms;
   }
 
   // Filter header definition:
-  // Length (uint32_t)  pairs of mean and rms (float + float)
+  // Length (uint32_t) +  pairs of mean and rms (double + double)
   //
-  const uint32_t len = sizeof(uint32_t) + sizeof(float) * 2 * dims[0];
+  const uint32_t len = sizeof(uint32_t) + sizeof(double) * 2 * dims[0];
   auto header = vec8_type(len);
   std::memcpy(header.data(), &len, sizeof(len));
-  std::memcpy(header.data() + sizeof(len), meta.data(), sizeof(float) * meta.size());
+  std::memcpy(header.data() + sizeof(len), meta.data(), sizeof(double) * meta.size());
 
   return header;
 }
@@ -58,15 +54,15 @@ auto sperr::Matthias_Filter::inverse_filter(vecd_type& buf,
   const auto len = this->header_size(header);
   if (len != header_len)
     return false;
-  if (len != sizeof(uint32_t) + sizeof(float) * 2 * dims[0])
+  if (len != sizeof(uint32_t) + sizeof(double) * 2 * dims[0])
     return false;
 
-  // float and uint32_t have the same size
-  const float* const meta_p = static_cast<const float*>(header) + 1;
+  const double* const meta_p = 
+      reinterpret_cast<const double*>(static_cast<const uint8_t*>(header) + 4);
 
   for (size_t x = 0; x < dims[0]; x++) {
-    const double mean = double(meta_p[x * 2]);
-    const double rms = double(meta_p[x * 2 + 1]);
+    const auto mean = meta_p[x * 2];
+    const auto rms = meta_p[x * 2 + 1];
     m_extract_YZ_slice(buf, dims, x);
 
     // Operation 1: multiply by RMS

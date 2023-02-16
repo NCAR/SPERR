@@ -2,6 +2,7 @@ add_library( SPERR
              sperr_helper.cpp
              Conditioner.cpp
              Base_Filter.cpp
+             Matthias_Filter.cpp
              CDF97.cpp
              SPECK_Storage.cpp
              SPECK2D.cpp
@@ -55,6 +56,7 @@ set( public_h_list
 "include/sperr_helper.h;\
 include/Conditioner.h;\
 include/Base_Filter.h;\
+include/Matthias_Filter.h;\
 include/CDF97.h;\
 include/SPECK_Storage.h;\
 include/SPECK2D.h;\
