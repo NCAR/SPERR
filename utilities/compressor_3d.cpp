@@ -111,6 +111,15 @@ int main(int argc, char* argv[])
     }
   }
 
+  //
+  // Print out chunking information
+  //
+  auto chk = sperr::chunk_volume({dims[0], dims[1], dims[2]}, {chunks[0], chunks[1], chunks[2]});
+  for (size_t i = 0; i < chk.size(); i++) {
+    std::printf("chunk %lu: start (%lu, %lu, %lu), length (%lu, %lu, %lu)\n", i,
+                chk[i][0], chk[i][2], chk[i][4], chk[i][1], chk[i][3], chk[i][5]);       
+  }
+
   // Read the input file
   const size_t total_vals = dims[0] * dims[1] * dims[2];
   auto orig = sperr::read_whole_file<uint8_t>(input_file);
