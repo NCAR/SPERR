@@ -1,5 +1,6 @@
 add_library( SPERR
              sperr_helper.cpp
+             ZFP_bitstream.cpp
              Conditioner.cpp
              Base_Filter.cpp
              CDF97.cpp
@@ -53,6 +54,8 @@ set_target_properties( SPERR PROPERTIES VERSION ${SPERR_VERSION} )
 #
 set( public_h_list 
 "include/sperr_helper.h;\
+include/bitstream.inl\
+include/ZFP_bitstream.h\
 include/Conditioner.h;\
 include/Base_Filter.h;\
 include/CDF97.h;\
