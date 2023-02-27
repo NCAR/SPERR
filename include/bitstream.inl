@@ -105,6 +105,10 @@ The following assumptions and restrictions apply:
    caught.
 */
 
+// This file is from ZFP (https://github.com/LLNL/zfp/blob/develop/include/zfp/bitstream.inl)
+// It is based on commit b2366c0 on Jul 6, 2022.
+// All changes from the ZFP repo are denoted by Sam.
+
 #include <climits>  // sam
 #include <cstddef>  // sam
 #include <cstdint>  // sam
@@ -516,4 +520,4 @@ stream_test_range(bitstream* s, bitstream_offset start_pos, bitstream_offset ran
 
 #undef unused_
 
-};  // namespace zfp
+};  // sam: namespace zfp
