@@ -1,6 +1,9 @@
 add_executable(        sperr_helper sperr_helper_unit_test.cpp )
 target_link_libraries( sperr_helper PUBLIC SPERR gtest_main )
 
+add_executable(        bitstream bitstream_unit_test.cpp )
+target_link_libraries( bitstream PUBLIC SPERR gtest_main )
+
 add_executable(        dwt dwt_unit_test.cpp )
 target_link_libraries( dwt PUBLIC SPERR gtest_main )
 
@@ -15,6 +18,7 @@ target_link_libraries( sperr PUBLIC SPERR gtest_main )
 
 include(GoogleTest)
 gtest_discover_tests( sperr_helper )
+gtest_discover_tests( bitstream )
 gtest_discover_tests( dwt     )
 gtest_discover_tests( sperr2d )
 gtest_discover_tests( sperr3d )

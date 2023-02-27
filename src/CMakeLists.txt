@@ -1,5 +1,6 @@
 add_library( SPERR
              sperr_helper.cpp
+             ZFP_bitstream.cpp
              Conditioner.cpp
              Base_Filter.cpp
              CDF97.cpp
