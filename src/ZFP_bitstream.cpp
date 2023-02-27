@@ -25,7 +25,7 @@ auto sperr::ZFP_bitstream::capacity() const -> size_t
   return m_capacity;
 }
 
-// Functions for read 
+// Functions for read
 auto sperr::ZFP_bitstream::rtell() const -> size_t
 {
   return zfp::stream_rtell(m_handle.get());
@@ -42,7 +42,7 @@ auto sperr::ZFP_bitstream::wtell() const -> size_t
   return zfp::stream_wtell(m_handle.get());
 }
 
-void sperr::ZFP_bitstream::wseek(size_t offset) 
+void sperr::ZFP_bitstream::wseek(size_t offset)
 {
   return zfp::stream_wseek(m_handle.get(), offset);
 }

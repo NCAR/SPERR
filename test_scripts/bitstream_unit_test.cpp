@@ -2,8 +2,8 @@
 
 #include "ZFP_bitstream.h"
 
-#include <vector>
 #include <random>
+#include <vector>
 
 namespace {
 
@@ -105,7 +105,7 @@ TEST(ZFP_bitstream, MemoryAllocation2)
   std::uniform_int_distribution<unsigned int> distrib(0, 1);
   for (size_t itr = 0; itr < 4; itr++) {
     uint64_t value = 0ul;
-    for(size_t i = 0; i < 64; i++) {
+    for (size_t i = 0; i < 64; i++) {
       uint64_t ran = distrib(gen);
       value += ran << i;
       vec.push_back(ran);
@@ -121,7 +121,7 @@ TEST(ZFP_bitstream, MemoryAllocation2)
   s1.wseek(vec.size());
   for (size_t itr = 0; itr < 3; itr++) {
     uint64_t value = 0ul;
-    for(size_t i = 0; i < 63; i++) {
+    for (size_t i = 0; i < 63; i++) {
       uint64_t ran = distrib(gen);
       value += ran << i;
       vec.push_back(ran);
@@ -155,7 +155,7 @@ TEST(ZFP_bitstream, TestRange)
   s1.write_bit(false);
   s1.write_bit(false);
   EXPECT_EQ(s1.wtell(), 192);
-  s1.flush(); 
+  s1.flush();
   EXPECT_EQ(s1.test_range(0, 63), false);
   EXPECT_EQ(s1.test_range(63, 63), false);
   EXPECT_EQ(s1.test_range(126, 63), false);
@@ -180,4 +180,4 @@ TEST(ZFP_bitstream, TestRange)
   EXPECT_EQ(s1.test_range(3, 189), false);
 }
 
-}
+}  // namespace
