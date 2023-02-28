@@ -49,7 +49,7 @@ class Conditioner {
   // Calculations are carried out by strides, which
   // should be a divisor of the input data size.
   size_t m_num_strides = m_default_num_strides;
-  std::vector<double> m_stride_buf;
+  vecd_type m_stride_buf;
   // Adjust the value of `m_num_strides` so it'll be a divisor of `len`.
   void m_adjust_strides(size_t len);
   // Reset meta fields

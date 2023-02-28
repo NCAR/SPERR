@@ -187,9 +187,9 @@ auto sperr::unpack_8_booleans(uint8_t src) -> std::array<bool, 8>
   return b8;
 }
 
-auto sperr::read_n_bytes(std::string filename, size_t n_bytes) -> std::vector<uint8_t>
+auto sperr::read_n_bytes(std::string filename, size_t n_bytes) -> vec8_type
 {
-  auto buf = std::vector<uint8_t>();
+  auto buf = vec_type<uint8_t>();
 
   std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename.data(), "rb"),
                                                         &std::fclose);
@@ -210,9 +210,9 @@ auto sperr::read_n_bytes(std::string filename, size_t n_bytes) -> std::vector<ui
 }
 
 template <typename T>
-auto sperr::read_whole_file(std::string filename) -> std::vector<T>
+auto sperr::read_whole_file(std::string filename) -> vec_type<T>
 {
-  std::vector<T> buf;
+  vec_type<T> buf;
 
   std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename.data(), "rb"),
                                                         &std::fclose);
@@ -231,9 +231,9 @@ auto sperr::read_whole_file(std::string filename) -> std::vector<T>
 
   return buf;
 }
-template auto sperr::read_whole_file(std::string) -> std::vector<float>;
-template auto sperr::read_whole_file(std::string) -> std::vector<double>;
-template auto sperr::read_whole_file(std::string) -> std::vector<uint8_t>;
+template auto sperr::read_whole_file(std::string) -> vecf_type;
+template auto sperr::read_whole_file(std::string) -> vecd_type;
+template auto sperr::read_whole_file(std::string) -> vec8_type;
 
 auto sperr::write_n_bytes(std::string filename, size_t n_bytes, const void* buffer) -> RTNType
 {
@@ -284,8 +284,8 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
     return {rmse, linfty, psnr, arr1min, arr1max};
   }
 
-  auto sum_vec = std::vector<T>(num_of_strides + 1);
-  auto linfty_vec = std::vector<T>(num_of_strides + 1);
+  auto sum_vec = vec_type<T>(num_of_strides + 1);
+  auto linfty_vec = vec_type<T>(num_of_strides + 1);
 
 //
 // Calculate diff summation and l-infty of each stride
@@ -414,9 +414,9 @@ auto sperr::chunk_volume(const std::array<size_t, 3>& vol_dim,
 
 template <typename T1, typename T2>
 auto sperr::gather_chunk(const T1* vol, dims_type vol_dim, const std::array<size_t, 6>& chunk)
-    -> std::vector<T2>
+    -> vec_type<T2>
 {
-  auto chunk_buf = std::vector<T2>();
+  auto chunk_buf = vec_type<T2>();
   if (chunk[0] + chunk[1] > vol_dim[0] || chunk[2] + chunk[3] > vol_dim[1] ||
       chunk[4] + chunk[5] > vol_dim[2])
     return chunk_buf;
@@ -437,18 +437,18 @@ auto sperr::gather_chunk(const T1* vol, dims_type vol_dim, const std::array<size
   return chunk_buf;
 }
 template auto sperr::gather_chunk(const float*, dims_type, const std::array<size_t, 6>&)
-    -> std::vector<float>;
+    -> sperr::vecf_type;
 template auto sperr::gather_chunk(const float*, dims_type, const std::array<size_t, 6>&)
-    -> std::vector<double>;
+    -> sperr::vecd_type;
 template auto sperr::gather_chunk(const double*, dims_type, const std::array<size_t, 6>&)
-    -> std::vector<float>;
+    -> sperr::vecf_type;
 template auto sperr::gather_chunk(const double*, dims_type, const std::array<size_t, 6>&)
-    -> std::vector<double>;
+    -> sperr::vecd_type;
 
 template <typename TBIG, typename TSML>
-void sperr::scatter_chunk(std::vector<TBIG>& big_vol,
+void sperr::scatter_chunk(vec_type<TBIG>& big_vol,
                           dims_type vol_dim,
-                          const std::vector<TSML>& small_vol,
+                          const vec_type<TSML>& small_vol,
                           const std::array<size_t, 6>& chunk)
 {
   size_t idx = 0;
@@ -461,21 +461,21 @@ void sperr::scatter_chunk(std::vector<TBIG>& big_vol,
     }
   }
 }
-template void sperr::scatter_chunk(std::vector<float>&,
+template void sperr::scatter_chunk(vec_type<float>&,
                                    dims_type,
-                                   const std::vector<float>&,
+                                   const vec_type<float>&,
                                    const std::array<size_t, 6>&);
-template void sperr::scatter_chunk(std::vector<float>&,
+template void sperr::scatter_chunk(vec_type<float>&,
                                    dims_type,
-                                   const std::vector<double>&,
+                                   const vec_type<double>&,
                                    const std::array<size_t, 6>&);
-template void sperr::scatter_chunk(std::vector<double>&,
+template void sperr::scatter_chunk(vec_type<double>&,
                                    dims_type,
-                                   const std::vector<float>&,
+                                   const vec_type<float>&,
                                    const std::array<size_t, 6>&);
-template void sperr::scatter_chunk(std::vector<double>&,
+template void sperr::scatter_chunk(vec_type<double>&,
                                    dims_type,
-                                   const std::vector<double>&,
+                                   const vec_type<double>&,
                                    const std::array<size_t, 6>&);
 
 auto sperr::parse_header(const void* ptr) -> HeaderInfo
@@ -549,7 +549,7 @@ auto sperr::calc_variance(const T* arr, size_t len, size_t omp_nthreads) -> T
 
   const size_t stride_size = 4096;
   const size_t num_strides = len / stride_size;
-  auto tmp_buf = std::vector<T>(num_strides + 1);
+  auto tmp_buf = vec_type<T>(num_strides + 1);
 
   // First, calculate the mean of this array.
 #pragma omp parallel for num_threads(omp_nthreads)
