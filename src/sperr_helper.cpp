@@ -47,8 +47,7 @@ auto sperr::calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<si
 
 // Good solution to deal with bools and unsigned chars
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
-auto sperr::pack_booleans(vec_type<uint8_t>& dest, const std::vector<bool>& src, size_t offset)
-    -> RTNType
+auto sperr::pack_booleans(vec8_type& dest, const std::vector<bool>& src, size_t offset) -> RTNType
 {
   // `src` has to have a size of multiples of 8.
   if (src.size() % 8 != 0)

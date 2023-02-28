@@ -97,7 +97,7 @@ auto calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<size_t, 2
 // provided by others, and others most likely provide it by raw pointers.
 // Note 2: these two methods only work on little endian machines.
 // Note 3: the caller should have already allocated enough space for `dest`.
-auto pack_booleans(vec_type<uint8_t>& dest, const std::vector<bool>& src, size_t dest_offset = 0)
+auto pack_booleans(vec8_type& dest, const std::vector<bool>& src, size_t dest_offset = 0)
     -> RTNType;
 auto unpack_booleans(std::vector<bool>& dest,
                      const void* src,
