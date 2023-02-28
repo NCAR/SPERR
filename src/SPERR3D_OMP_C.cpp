@@ -28,7 +28,7 @@ auto SPERR3D_OMP_C::get_outlier_stats() const -> std::pair<size_t, size_t>
   auto op = [](const pair& a, const pair& b) -> pair {
     return {a.first + b.first, a.second + b.second};
   };
-  return std::accumulate(m_outlier_stats.begin(), m_outlier_stats.end(), sum, op);
+  return std::accumulate(m_outlier_stats.cbegin(), m_outlier_stats.cend(), sum, op);
 }
 
 auto SPERR3D_OMP_C::set_target_bpp(double bpp) -> RTNType
@@ -38,8 +38,8 @@ auto SPERR3D_OMP_C::set_target_bpp(double bpp) -> RTNType
 
   // If the volume and chunk dimension hasn't been set, return error.
   auto eq0 = [](auto v) { return v == 0; };
-  if (std::any_of(m_dims.begin(), m_dims.end(), eq0) ||
-      std::any_of(m_chunk_dims.begin(), m_chunk_dims.end(), eq0))
+  if (std::any_of(m_dims.cbegin(), m_dims.cend(), eq0) ||
+      std::any_of(m_chunk_dims.cbegin(), m_chunk_dims.cend(), eq0))
     return RTNType::SetBPPBeforeDims;
 
   const auto total_vals = static_cast<double>(m_dims[0] * m_dims[1] * m_dims[2]);
@@ -113,7 +113,7 @@ auto SPERR3D_OMP_C::compress() -> RTNType
   assert(num_chunks != 0);
   if (m_chunk_buffers.size() != num_chunks)
     return RTNType::Error;
-  if (std::any_of(m_chunk_buffers.begin(), m_chunk_buffers.end(),
+  if (std::any_of(m_chunk_buffers.cbegin(), m_chunk_buffers.cend(),
                   [](auto& v) { return v.empty(); }))
     return RTNType::Error;
 
@@ -169,11 +169,11 @@ auto SPERR3D_OMP_C::compress() -> RTNType
   }
 
   auto fail =
-      std::find_if(chunk_rtn.begin(), chunk_rtn.end(), [](auto r) { return r != RTNType::Good; });
+      std::find_if(chunk_rtn.cbegin(), chunk_rtn.cend(), [](auto r) { return r != RTNType::Good; });
   if (fail != chunk_rtn.end())
     return (*fail);
 
-  if (std::any_of(m_encoded_streams.begin(), m_encoded_streams.end(),
+  if (std::any_of(m_encoded_streams.cbegin(), m_encoded_streams.cend(),
                   [](auto& s) { return s.empty(); }))
     return RTNType::EmptyStream;
 
@@ -188,11 +188,11 @@ auto SPERR3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
     return buf;
 
   auto total_size =
-      std::accumulate(m_encoded_streams.begin(), m_encoded_streams.end(), header.size(),
+      std::accumulate(m_encoded_streams.cbegin(), m_encoded_streams.cend(), header.size(),
                       [](size_t a, const auto& b) { return a + b.size(); });
   buf.resize(total_size, 0);
 
-  std::copy(header.begin(), header.end(), buf.begin());
+  std::copy(header.cbegin(), header.cend(), buf.begin());
   auto itr = buf.begin() + header.size();
   for (const auto& s : m_encoded_streams) {
     std::copy(s.begin(), s.end(), itr);
