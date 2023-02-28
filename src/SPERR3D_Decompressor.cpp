@@ -118,7 +118,7 @@ auto sperr::SPERR3D_Decompressor::decompress() -> RTNType
   // Step 3: Inverse Conditioning
   const auto& cdf_out = m_cdf.view_data();
   m_val_buf.resize(cdf_out.size());
-  std::copy(cdf_out.begin(), cdf_out.end(), m_val_buf.begin());
+  std::copy(cdf_out.cbegin(), cdf_out.cend(), m_val_buf.begin());
   m_conditioner.inverse_condition(m_val_buf, m_dims, m_condi_stream);
 
   // Step 4: If there's SPERR data, then do the correction.
@@ -142,7 +142,7 @@ template <typename T>
 auto sperr::SPERR3D_Decompressor::get_data() const -> std::vector<T>
 {
   auto out_buf = std::vector<T>(m_val_buf.size());
-  std::copy(m_val_buf.begin(), m_val_buf.end(), out_buf.begin());
+  std::copy(m_val_buf.cbegin(), m_val_buf.cend(), out_buf.begin());
 
   return out_buf;
 }

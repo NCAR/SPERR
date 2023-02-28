@@ -145,8 +145,7 @@ auto kahan_summation(const T*, size_t) -> T;
 //         dimension is not exact multiplies of requested chunk dimension,
 //         approximate values are used.
 // Note 2: this function works on degraded 2D or 1D volumes too.
-auto chunk_volume(const dims_type& vol_dim, const dims_type& chunk_dim)
-    -> std::vector<std::array<size_t, 6>>;
+auto chunk_volume(dims_type vol_dim, dims_type chunk_dim) -> std::vector<std::array<size_t, 6>>;
 
 // Gather a chunk from a bigger volume
 // If the requested chunk lives outside of the volume, whole or part,

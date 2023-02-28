@@ -330,11 +330,11 @@ void sperr::CDF97::m_dwt1d_one_level(itd_type array, size_t array_len)
 #endif
   {
     this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf.data(), array_len);
-    m_gather_even(m_qcc_buf.begin(), m_qcc_buf.begin() + array_len, array);
+    m_gather_even(m_qcc_buf.cbegin(), m_qcc_buf.cbegin() + array_len, array);
   }
   else {
     this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf.data(), array_len);
-    m_gather_odd(m_qcc_buf.begin(), m_qcc_buf.begin() + array_len, array);
+    m_gather_odd(m_qcc_buf.cbegin(), m_qcc_buf.cbegin() + array_len, array);
   }
 }
 
@@ -353,7 +353,7 @@ void sperr::CDF97::m_idwt1d_one_level(itd_type array, size_t array_len)
     m_scatter_odd(array, array + array_len, m_qcc_buf.begin());
     this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf.data(), array_len);
   }
-  std::copy(m_qcc_buf.begin(), m_qcc_buf.begin() + array_len, array);
+  std::copy(m_qcc_buf.cbegin(), m_qcc_buf.cbegin() + array_len, array);
 }
 
 void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_xy)

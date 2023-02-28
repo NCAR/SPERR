@@ -105,8 +105,8 @@ auto sperr::SPERR::m_ready_to_encode() const -> bool
     return false;
 
   // Make sure each outlier to process has an error greater or equal to the tolerance.
-  if (!std::all_of(m_LOS.begin(), m_LOS.end(),
-                   [tol = m_tolerance](auto& out) { return std::abs(out.error) >= tol; }))
+  if (!std::all_of(m_LOS.cbegin(), m_LOS.cend(),
+                   [tol = m_tolerance](auto out) { return std::abs(out.error) >= tol; }))
     return false;
 
   // Make sure there are no duplicate locations in the outlier list,
@@ -114,8 +114,8 @@ auto sperr::SPERR::m_ready_to_encode() const -> bool
   // Note that the list of outliers is already sorted at the beginning of encoding.
   if (m_LOS.back().location >= m_total_len)
     return false;
-  auto adj = std::adjacent_find(m_LOS.begin(), m_LOS.end(),
-                                [](auto& a, auto& b) { return a.location == b.location; });
+  auto adj = std::adjacent_find(m_LOS.cbegin(), m_LOS.cend(),
+                                [](auto a, auto b) { return a.location == b.location; });
   return (adj == m_LOS.end());
 }
 
@@ -135,7 +135,7 @@ auto sperr::SPERR::encode() -> RTNType
   // Actually, if the list of outliers is produced by this package (SPECK3D_Compressor),
   // it's already in the desired order so this step has no cost!
   // Outliers added individually will potentially trigger actual sorting operations though.
-  std::sort(m_LOS.begin(), m_LOS.end(), [](auto& a, auto& b) { return a.location < b.location; });
+  std::sort(m_LOS.begin(), m_LOS.end(), [](auto a, auto b) { return a.location < b.location; });
   if (!m_ready_to_encode())
     return RTNType::InvalidParam;
   m_bit_buffer.clear();
@@ -330,7 +330,7 @@ void sperr::SPERR::m_refinement_pass_encoding()
   }
 
   // Now attach content from `m_LSP_new` to the end of `m_LSP_old`.
-  m_LSP_old.insert(m_LSP_old.end(), m_LSP_new.begin(), m_LSP_new.end());
+  m_LSP_old.insert(m_LSP_old.cend(), m_LSP_new.cbegin(), m_LSP_new.cend());
   m_LSP_new.clear();
 }
 
