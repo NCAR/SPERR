@@ -3,6 +3,8 @@
 
 #include "CLI11.hpp"
 
+#include "Kokkos_Core.hpp"
+
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
@@ -11,6 +13,9 @@
 
 int main(int argc, char* argv[])
 {
+  // Initialize Kokkos
+  Kokkos::initialize(argc, argv);
+
   // Parse command line options
   CLI::App app("Compress a 3D data volume\n");
 
@@ -267,6 +272,9 @@ int main(int argc, char* argv[])
       }
     }
   }  // Finish using the decompressor.
+
+  // Finalize Kokkos
+  Kokkos::finalize();
 
   return 0;
 }

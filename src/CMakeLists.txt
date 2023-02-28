@@ -21,6 +21,8 @@ if(USE_OMP)
   target_link_libraries(    SPERR PUBLIC OpenMP::OpenMP_CXX )
 endif()
 
+target_link_libraries(SPERR PUBLIC Kokkos::kokkos)
+
 #
 # Also link zstd
 #

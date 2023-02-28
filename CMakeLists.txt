@@ -48,6 +48,8 @@ if(USE_OMP)
   endif()
 endif()
 
+find_package(Kokkos REQUIRED)
+
 #
 # Gather git commit SHA1
 #

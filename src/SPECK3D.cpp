@@ -5,6 +5,9 @@
 #include <cstring>
 #include <numeric>
 
+#include "Kokkos_Core.hpp"
+#include "Kokkos_StdAlgorithms.hpp"
+
 using d2_type = std::array<double, 2>;
 using u2_type = std::array<uint32_t, 2>;
 
@@ -342,6 +345,9 @@ auto sperr::SPECK3D::m_decide_significance(const SPECKSet3D& set) const
 {
   assert(!set.is_empty());
 
+  namespace KE = Kokkos::Experimental;
+  using exespace = Kokkos::DefaultExecutionSpace;
+
   const size_t slice_size = m_dims[0] * m_dims[1];
 
   const auto gtr = [thld = m_threshold](auto v) { return v >= thld; };
@@ -352,6 +358,7 @@ auto sperr::SPECK3D::m_decide_significance(const SPECKSet3D& set) const
       auto first = m_coeff_buf.begin() + (slice_offset + y * m_dims[0] + set.start_x);
       auto last = first + set.length_x;
       auto found = std::find_if(first, last, gtr);
+      //auto found = KE::find_if(exespace(), first, last, gtr);
       if (found != last) {
         auto xyz = std::array<uint32_t, 3>();
         xyz[0] = std::distance(first, found);
