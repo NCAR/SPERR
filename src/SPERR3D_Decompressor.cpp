@@ -139,9 +139,9 @@ auto sperr::SPERR3D_Decompressor::decompress() -> RTNType
 }
 
 template <typename T>
-auto sperr::SPERR3D_Decompressor::get_data() const -> std::vector<T>
+auto sperr::SPERR3D_Decompressor::get_data() const -> vec_type<T>
 {
-  auto out_buf = std::vector<T>(m_val_buf.size());
+  auto out_buf = vec_type<T>(m_val_buf.size());
   std::copy(m_val_buf.cbegin(), m_val_buf.cend(), out_buf.begin());
 
   return out_buf;

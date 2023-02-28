@@ -83,12 +83,12 @@ void SPERR2D_Compressor::set_target_pwe(double pwe)
   m_target_pwe = std::max(pwe, 0.0);
 }
 
-auto SPERR2D_Compressor::view_encoded_bitstream() const -> const std::vector<uint8_t>&
+auto SPERR2D_Compressor::view_encoded_bitstream() const -> const sperr::vec8_type&
 {
   return m_encoded_stream;
 }
 
-auto SPERR2D_Compressor::release_encoded_bitstream() -> std::vector<uint8_t>&&
+auto SPERR2D_Compressor::release_encoded_bitstream() -> sperr::vec8_type&&
 {
   return std::move(m_encoded_stream);
 }

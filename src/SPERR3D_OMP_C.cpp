@@ -214,14 +214,14 @@ auto SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   const auto num_chunks = chunks.size();
   assert(num_chunks != 0);
   if (num_chunks != m_encoded_streams.size())
-    return std::vector<uint8_t>();
+    return sperr::vec8_type();
   auto header_size = size_t{0};
   if (num_chunks > 1)
     header_size = m_header_magic_nchunks + num_chunks * 4;
   else
     header_size = m_header_magic_1chunk + num_chunks * 4;
 
-  auto header = std::vector<uint8_t>(header_size);
+  auto header = sperr::vec8_type(header_size);
 
   // Version number
   header[0] = static_cast<uint8_t>(SPERR_VERSION_MAJOR);

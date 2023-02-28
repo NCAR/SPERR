@@ -118,9 +118,9 @@ auto SPERR2D_Decompressor::use_bitstream(const void* p, size_t len) -> RTNType
 }
 
 template <typename T>
-auto SPERR2D_Decompressor::get_data() const -> std::vector<T>
+auto SPERR2D_Decompressor::get_data() const -> sperr::vec_type<T>
 {
-  auto out_buf = std::vector<T>(m_val_buf.size());
+  auto out_buf = sperr::vec_type<T>(m_val_buf.size());
   std::copy(m_val_buf.cbegin(), m_val_buf.cend(), out_buf.begin());
 
   return out_buf;

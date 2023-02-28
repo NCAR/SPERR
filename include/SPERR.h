@@ -50,7 +50,7 @@ class SPERR {
   // Output
   auto release_outliers() -> std::vector<Outlier>&&;  // Release ownership of decoded outliers
   auto view_outliers() -> const std::vector<Outlier>&;
-  auto get_encoded_bitstream() -> std::vector<uint8_t>;
+  auto get_encoded_bitstream() -> vec8_type;
   auto parse_encoded_bitstream(const void*, size_t) -> RTNType;
 
   // Given a SPERR stream, tell how long the sperr stream is.
