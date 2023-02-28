@@ -33,12 +33,12 @@ auto sperr::SPERR3D_Compressor::take_data(sperr::vecd_type&& buf, sperr::dims_ty
   return RTNType::Good;
 }
 
-auto sperr::SPERR3D_Compressor::view_encoded_bitstream() const -> const std::vector<uint8_t>&
+auto sperr::SPERR3D_Compressor::view_encoded_bitstream() const -> const vec8_type&
 {
   return m_encoded_stream;
 }
 
-auto sperr::SPERR3D_Compressor::release_encoded_bitstream() -> std::vector<uint8_t>&&
+auto sperr::SPERR3D_Compressor::release_encoded_bitstream() -> vec8_type&&
 {
   return std::move(m_encoded_stream);
 }

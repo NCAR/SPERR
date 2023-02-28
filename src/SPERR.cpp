@@ -376,7 +376,7 @@ void sperr::SPERR::m_refinement_pass_decoding()
   m_LOS_size = m_LOS.size();
 }
 
-auto sperr::SPERR::get_encoded_bitstream() -> std::vector<uint8_t>
+auto sperr::SPERR::get_encoded_bitstream() -> vec8_type
 {
   // Header definition:
   // total_len  max_threshold   num_of_bits
@@ -388,7 +388,7 @@ auto sperr::SPERR::get_encoded_bitstream() -> std::vector<uint8_t>
     m_bit_buffer.push_back(false);
 
   const size_t buf_len = m_header_size + m_bit_buffer.size() / 8;
-  auto buf = std::vector<uint8_t>(buf_len);
+  auto buf = vec8_type(buf_len);
 
   // Fill header
   size_t pos = 0;

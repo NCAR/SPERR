@@ -20,6 +20,8 @@
 #include "SperrConfig.h"
 #endif
 
+#include "Kokkos_Vector.hpp"
+
 namespace sperr {
 
 using std::size_t;  // Seems most appropriate
@@ -32,7 +34,7 @@ constexpr auto max_d = std::numeric_limits<double>::max();
 // A few shortcuts
 //
 template <typename T>
-using vec_type = std::vector<T>;
+using vec_type = Kokkos::vector<T>;
 using vecf_type = vec_type<float>;
 using vecd_type = vec_type<double>;
 using vec8_type = vec_type<uint8_t>;

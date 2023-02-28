@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
 
   // Let's free up some memory here
   in_stream.clear();
-  in_stream.shrink_to_fit();
+  //in_stream.shrink_to_fit();
 
   if (output_double) {
     const auto vol = decompressor.view_data();

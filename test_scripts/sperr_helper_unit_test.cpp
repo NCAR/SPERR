@@ -43,6 +43,7 @@ TEST(sperr_helper, approx_detail_len)
 
 TEST(sperr_helper, bit_packing)
 {
+  Kokkos::initialize();
   const size_t num_of_bytes = 11;
   const size_t byte_offset = 1;
   std::vector<bool> input{true,  true,  true,  true,  true,  true,  true,  true,   // 1st byte
@@ -57,7 +58,7 @@ TEST(sperr_helper, bit_packing)
                           true,  true,  true,  false, true,  true,  true,  false,  // 10th byte
                           false, false, true,  true,  true,  false, false, true};  // 11th byte
 
-  auto bytes = std::vector<uint8_t>(num_of_bytes + byte_offset);
+  auto bytes = sperr::vec8_type(num_of_bytes + byte_offset);
 
   // Pack booleans
   auto rtn1 = sperr::pack_booleans(bytes, input, byte_offset);
@@ -111,6 +112,7 @@ TEST(sperr_helper, bit_packing_one_byte)
 
 TEST(sperr_helper, bit_packing_1032_bools)
 {
+  {
   const size_t num_of_bits = 1032;  // 1024 + 8, so the last stride is partial.
   const size_t num_of_bytes = num_of_bits / 8;
   const size_t byte_offset = 23;
@@ -119,7 +121,7 @@ TEST(sperr_helper, bit_packing_1032_bools)
   std::mt19937 gen(rd());  // Standard mersenne_twister_engine seeded with rd()
   std::uniform_int_distribution<> distrib(0, 2);
   auto input = std::vector<bool>(num_of_bits);
-  auto bytes = std::vector<uint8_t>(num_of_bytes + byte_offset);
+  auto bytes = sperr::vec8_type(num_of_bytes + byte_offset);
   for (size_t i = 0; i < num_of_bits; i++)
     input[i] = distrib(gen);
 
@@ -135,6 +137,8 @@ TEST(sperr_helper, bit_packing_1032_bools)
     for (size_t i = 0; i < input.size(); i++)
       EXPECT_EQ(input[i], output[i]);
   }
+  }
+  Kokkos::finalize();
 }
 
 TEST(sperr_helper, domain_decomposition)

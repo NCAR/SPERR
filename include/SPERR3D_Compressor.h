@@ -31,8 +31,8 @@ class SPERR3D_Compressor {
 
   auto compress() -> RTNType;
 
-  auto view_encoded_bitstream() const -> const std::vector<uint8_t>&;
-  auto release_encoded_bitstream() -> std::vector<uint8_t>&&;
+  auto view_encoded_bitstream() const -> const vec8_type&;
+  auto release_encoded_bitstream() -> vec8_type&&;
 
  private:
   dims_type m_dims = {0, 0, 0};

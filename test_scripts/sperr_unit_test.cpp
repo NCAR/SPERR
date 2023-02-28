@@ -82,6 +82,7 @@ class err_tester {
 
 TEST(sperr, small_num_outliers)
 {
+  Kokkos::initialize();
   err_tester tester;
   tester.gen_outliers(100);
   tester.test_outliers();
@@ -100,11 +101,14 @@ TEST(sperr, medium_num_outliers)
 
 TEST(sperr, big_num_outliers)
 {
+  {
   err_tester tester;
   tester.gen_outliers(10000);
   tester.test_outliers();
   bool success = tester.test_recovery();
   EXPECT_EQ(success, true);
+  }
+  Kokkos::finalize();
 }
 
 }  // namespace

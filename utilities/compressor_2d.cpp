@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
   // Free up memory if we don't need to compute stats
   if (!show_stats) {
     orig.clear();
-    orig.shrink_to_fit();
+    //orig.shrink_to_fit();
   }
 
   // Tell the compressor which compression mode to use.

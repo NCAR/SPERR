@@ -106,6 +106,7 @@ class sperr2d_tester {
 //
 TEST(sperr2d_pwe, odd_dim_image)
 {
+  Kokkos::initialize();
   sperr2d_tester tester("../test_data/90x90.float", 90, 90);
 
   const auto bpp = sperr::max_d;
@@ -341,6 +342,7 @@ TEST(sperr2d_bpp, small_data_range)
 //
 TEST(sperr2d_constant, constant)
 {
+  {
   sperr2d_tester tester("../test_data/const32x20x16.float", 32, 320);
 
   const auto tar_psnr = std::numeric_limits<double>::max();
@@ -354,6 +356,8 @@ TEST(sperr2d_constant, constant)
   auto infty = std::numeric_limits<double>::infinity();
   EXPECT_EQ(psnr, infty);
   EXPECT_EQ(lmax, 0.0f);
+  }
+  Kokkos::finalize();
 }
 
 }  // namespace
