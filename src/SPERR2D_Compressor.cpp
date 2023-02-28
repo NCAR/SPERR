@@ -30,7 +30,7 @@ auto SPERR2D_Compressor::copy_data(const T* p, size_t len, sperr::dims_type dims
 template auto SPERR2D_Compressor::copy_data(const double*, size_t, sperr::dims_type) -> RTNType;
 template auto SPERR2D_Compressor::copy_data(const float*, size_t, sperr::dims_type) -> RTNType;
 
-auto SPERR2D_Compressor::take_data(std::vector<double>&& buf, sperr::dims_type dims) -> RTNType
+auto SPERR2D_Compressor::take_data(sperr::vecd_type&& buf, sperr::dims_type dims) -> RTNType
 {
   if (buf.size() != dims[0] * dims[1] || dims[2] != 1)
     return RTNType::WrongDims;

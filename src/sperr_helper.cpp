@@ -437,13 +437,13 @@ auto sperr::gather_chunk(const T1* vol, dims_type vol_dim, const std::array<size
   return chunk_buf;
 }
 template auto sperr::gather_chunk(const float*, dims_type, const std::array<size_t, 6>&)
-    -> std::vector<float>;
+    -> sperr::vecf_type;
 template auto sperr::gather_chunk(const float*, dims_type, const std::array<size_t, 6>&)
-    -> std::vector<double>;
+    -> sperr::vecd_type;
 template auto sperr::gather_chunk(const double*, dims_type, const std::array<size_t, 6>&)
-    -> std::vector<float>;
+    -> sperr::vecf_type;
 template auto sperr::gather_chunk(const double*, dims_type, const std::array<size_t, 6>&)
-    -> std::vector<double>;
+    -> sperr::vecd_type;
 
 template <typename TBIG, typename TSML>
 void sperr::scatter_chunk(std::vector<TBIG>& big_vol,
