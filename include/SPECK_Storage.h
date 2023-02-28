@@ -63,19 +63,19 @@ class SPECK_Storage {
 
   // Data storage shared by both 2D and 3D SPECK.
   //
-  std::vector<double> m_coeff_buf;  // Wavelet coefficients
-  std::vector<bool> m_bit_buffer;   // Bitstream produced by the algorithm
-  std::vector<size_t> m_LIP;        // List of insignificant pixels
-  std::vector<size_t> m_LSP_new;    // List of newly found significant pixels
-  std::vector<bool> m_LSP_mask;     // Significant pixels previously found
-  std::vector<bool> m_sign_array;   // Keep the signs of every coefficient
-  vec8_type m_encoded_stream;       // Stores the SPECK bitstream
-  dims_type m_dims = {0, 0, 0};     // Dimension of the 2D/3D volume
+  vecd_type m_coeff_buf;           // Wavelet coefficients
+  std::vector<bool> m_bit_buffer;  // Bitstream produced by the algorithm
+  std::vector<size_t> m_LIP;       // List of insignificant pixels
+  std::vector<size_t> m_LSP_new;   // List of newly found significant pixels
+  std::vector<bool> m_LSP_mask;    // Significant pixels previously found
+  std::vector<bool> m_sign_array;  // Keep the signs of every coefficient
+  vec8_type m_encoded_stream;      // Stores the SPECK bitstream
+  dims_type m_dims = {0, 0, 0};    // Dimension of the 2D/3D volume
 
   // In fixed-pwe mode, keep track of would-be quantized coefficient values.
   // These values are reconstructed exactly the same way as if during decompression.
   // Other mathematically equivalent methods would however not give the same values.
-  std::vector<double> m_qz_coeff;
+  vecd_type m_qz_coeff;
 
   //
   // Member methods

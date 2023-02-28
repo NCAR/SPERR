@@ -146,15 +146,15 @@ auto sperr::SPERR3D_Decompressor::get_data() const -> std::vector<T>
 
   return out_buf;
 }
-template auto sperr::SPERR3D_Decompressor::get_data() const -> std::vector<double>;
-template auto sperr::SPERR3D_Decompressor::get_data() const -> std::vector<float>;
+template auto sperr::SPERR3D_Decompressor::get_data() const -> sperr::vecd_type;
+template auto sperr::SPERR3D_Decompressor::get_data() const -> sperr::vecf_type;
 
-auto sperr::SPERR3D_Decompressor::view_data() const -> const std::vector<double>&
+auto sperr::SPERR3D_Decompressor::view_data() const -> const sperr::vecd_type&
 {
   return m_val_buf;
 }
 
-auto sperr::SPERR3D_Decompressor::release_data() -> std::vector<double>&&
+auto sperr::SPERR3D_Decompressor::release_data() -> sperr::vecd_type&&
 {
   m_dims = {0, 0, 0};
   return std::move(m_val_buf);

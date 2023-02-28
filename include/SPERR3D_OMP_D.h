@@ -23,8 +23,8 @@ class SPERR3D_OMP_D {
   // The pointer passed in here MUST be the same as the one passed to `use_bitstream()`.
   auto decompress(const void*) -> RTNType;
 
-  auto release_data() -> std::vector<double>&&;
-  auto view_data() const -> const std::vector<double>&;
+  auto release_data() -> sperr::vecd_type&&;
+  auto view_data() const -> const sperr::vecd_type&;
   template <typename T>
   auto get_data() const -> std::vector<T>;
   auto get_dims() const -> sperr::dims_type;
@@ -38,7 +38,7 @@ class SPERR3D_OMP_D {
   const size_t m_header_magic_nchunks = 26;
   const size_t m_header_magic_1chunk = 14;
 
-  std::vector<double> m_vol_buf;
+  sperr::vecd_type m_vol_buf;
   std::vector<size_t> m_offsets;
   const uint8_t* m_bitstream_ptr = nullptr;
 };
