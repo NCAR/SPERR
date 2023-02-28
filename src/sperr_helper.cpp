@@ -165,7 +165,7 @@ auto sperr::pack_8_booleans(std::array<bool, 8> src) -> uint8_t
   // It turns out that C++ doesn't specify bool to be one byte,
   // so to be safe we copy the content of src to array of uint8_t.
   auto bytes = std::array<uint8_t, 8>();
-  std::copy(src.begin(), src.end(), bytes.begin());
+  std::copy(src.cbegin(), src.cend(), bytes.begin());
   const uint64_t magic = 0x8040201008040201;
   uint64_t t = 0;
   std::memcpy(&t, bytes.data(), 8);
@@ -183,7 +183,7 @@ auto sperr::unpack_8_booleans(uint8_t src) -> std::array<bool, 8>
   auto bytes = std::array<uint8_t, 8>();
   std::memcpy(bytes.data(), &t, 8);
   auto b8 = std::array<bool, 8>();
-  std::copy(bytes.begin(), bytes.end(), b8.begin());
+  std::copy(bytes.cbegin(), bytes.cend(), b8.begin());
   return b8;
 }
 
@@ -323,7 +323,7 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
   //
   // Now calculate linfty
   //
-  linfty = *(std::max_element(linfty_vec.begin(), linfty_vec.end()));
+  linfty = *(std::max_element(linfty_vec.cbegin(), linfty_vec.cend()));
 
   //
   // Now calculate rmse and psnr
@@ -359,8 +359,7 @@ auto sperr::kahan_summation(const T* arr, size_t len) -> T
 template auto sperr::kahan_summation(const float*, size_t) -> float;
 template auto sperr::kahan_summation(const double*, size_t) -> double;
 
-auto sperr::chunk_volume(const std::array<size_t, 3>& vol_dim,
-                         const std::array<size_t, 3>& chunk_dim)
+auto sperr::chunk_volume(dims_type vol_dim, dims_type chunk_dim)
     -> std::vector<std::array<size_t, 6>>
 {
   // Step 1: figure out how many segments are there along each axis.
