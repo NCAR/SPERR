@@ -100,7 +100,7 @@ class SPERR {
   size_t m_num_itrs = 0;      // encoding only. Number of iterations.
 
   std::vector<bool> m_bit_buffer;
-  std::vector<double> m_q;     // encoding only. This list is refined in the refinement pass.
+  vecd_type m_q;               // encoding only. This list is refined in the refinement pass.
   std::vector<Outlier> m_LOS;  // List of OutlierS. This list is not altered when encoding,
                                // but constantly updated when decoding.
 

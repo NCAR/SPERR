@@ -215,7 +215,7 @@ int main(int argc, char* argv[])
     if (show_stats) {
       // Make sure that we have a copy of the original data in double precision.
       const double* orig_ptr = nullptr;
-      auto orig_tmp = std::vector<double>();
+      auto orig_tmp = sperr::vecd_type();
       if (use_double)
         orig_ptr = reinterpret_cast<const double*>(orig.data());
       else {

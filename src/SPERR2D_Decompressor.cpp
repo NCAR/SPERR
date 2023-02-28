@@ -121,19 +121,19 @@ template <typename T>
 auto SPERR2D_Decompressor::get_data() const -> std::vector<T>
 {
   auto out_buf = std::vector<T>(m_val_buf.size());
-  std::copy(m_val_buf.begin(), m_val_buf.end(), out_buf.begin());
+  std::copy(m_val_buf.cbegin(), m_val_buf.cend(), out_buf.begin());
 
   return out_buf;
 }
-template auto SPERR2D_Decompressor::get_data() const -> std::vector<double>;
-template auto SPERR2D_Decompressor::get_data() const -> std::vector<float>;
+template auto SPERR2D_Decompressor::get_data() const -> sperr::vecd_type;
+template auto SPERR2D_Decompressor::get_data() const -> sperr::vecf_type;
 
-auto SPERR2D_Decompressor::view_data() const -> const std::vector<double>&
+auto SPERR2D_Decompressor::view_data() const -> const sperr::vecd_type&
 {
   return m_val_buf;
 }
 
-auto SPERR2D_Decompressor::release_data() -> std::vector<double>&&
+auto SPERR2D_Decompressor::release_data() -> sperr::vecd_type&&
 {
   m_dims = {0, 0, 0};
   return std::move(m_val_buf);

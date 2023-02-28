@@ -30,7 +30,7 @@ auto SPERR2D_Compressor::copy_data(const T* p, size_t len, sperr::dims_type dims
 template auto SPERR2D_Compressor::copy_data(const double*, size_t, sperr::dims_type) -> RTNType;
 template auto SPERR2D_Compressor::copy_data(const float*, size_t, sperr::dims_type) -> RTNType;
 
-auto SPERR2D_Compressor::take_data(std::vector<double>&& buf, sperr::dims_type dims) -> RTNType
+auto SPERR2D_Compressor::take_data(sperr::vecd_type&& buf, sperr::dims_type dims) -> RTNType
 {
   if (buf.size() != dims[0] * dims[1] || dims[2] != 1)
     return RTNType::WrongDims;
@@ -118,7 +118,7 @@ auto SPERR2D_Compressor::compress() -> RTNType
   if (mode == sperr::CompMode::FixedPWE) {
     // Make a copy of the original data for outlier correction use.
     m_val_buf2.resize(total_vals);
-    std::copy(m_val_buf.begin(), m_val_buf.end(), m_val_buf2.begin());
+    std::copy(m_val_buf.cbegin(), m_val_buf.cend(), m_val_buf2.begin());
     auto [min, max] = std::minmax_element(m_val_buf.cbegin(), m_val_buf.cend());
     range_before = *max - *min;
   }
@@ -258,13 +258,13 @@ auto SPERR2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   // Task 2: assemble pieces of info together.
   m_encoded_stream.resize(total_size);
   auto itr = m_encoded_stream.begin();
-  std::copy(std::begin(meta), std::end(meta), itr);
+  std::copy(std::cbegin(meta), std::cend(meta), itr);
   itr += m_meta_size;
-  std::copy(m_condi_stream.begin(), m_condi_stream.end(), itr);
+  std::copy(m_condi_stream.cbegin(), m_condi_stream.cend(), itr);
   itr += m_condi_stream.size();
-  std::copy(m_speck_stream.begin(), m_speck_stream.end(), itr);
+  std::copy(m_speck_stream.cbegin(), m_speck_stream.cend(), itr);
   itr += m_speck_stream.size();
-  std::copy(m_sperr_stream.begin(), m_sperr_stream.end(), itr);
+  std::copy(m_sperr_stream.cbegin(), m_sperr_stream.cend(), itr);
   itr += m_sperr_stream.size();
   assert(itr == m_encoded_stream.end());
 
@@ -273,7 +273,7 @@ auto SPERR2D_Compressor::m_assemble_encoded_bitstream() -> RTNType
   const auto uncomp_size = total_size - m_meta_size;
   const auto comp_buf_len = ZSTD_compressBound(uncomp_size);
   auto comp_buf = sperr::vec8_type(m_meta_size + comp_buf_len);
-  std::copy(std::begin(meta), std::end(meta), comp_buf.begin());
+  std::copy(std::cbegin(meta), std::cend(meta), comp_buf.begin());
 
   auto comp_size =
       ZSTD_compress(comp_buf.data() + m_meta_size, comp_buf_len,

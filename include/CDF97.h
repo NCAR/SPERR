@@ -26,13 +26,13 @@ class CDF97 {
   // Note that copy_data() and take_data() effectively resets internal states of this class.
   template <typename T>
   auto copy_data(const T* buf, size_t len, dims_type dims) -> RTNType;
-  auto take_data(std::vector<double>&& buf, dims_type dims) -> RTNType;
+  auto take_data(vecd_type&& buf, dims_type dims) -> RTNType;
 
   //
   // Output
   //
-  auto view_data() const -> const std::vector<double>&;
-  auto release_data() -> std::vector<double>&&;
+  auto view_data() const -> const vecd_type&;
+  auto release_data() -> vecd_type&&;
   auto get_dims() const -> std::array<size_t, 3>;  // In 2D case, the 3rd value equals 1.
 
   // Action items
@@ -45,7 +45,7 @@ class CDF97 {
 
  private:
   using itd_type = vecd_type::iterator;
-  using citd_type = vecd_type::iterator;
+  using citd_type = vecd_type::const_iterator;
 
   //
   // Private methods helping DWT.

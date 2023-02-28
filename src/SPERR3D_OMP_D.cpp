@@ -99,7 +99,7 @@ auto SPERR3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
   else
     header_size = m_header_magic_1chunk + num_chunks * 4;
 
-  const auto suppose_size = std::accumulate(chunk_sizes.begin(), chunk_sizes.end(), header_size);
+  const auto suppose_size = std::accumulate(chunk_sizes.cbegin(), chunk_sizes.cend(), header_size);
   if (suppose_size != total_len)
     return RTNType::BitstreamWrongLen;
 
@@ -118,8 +118,8 @@ auto SPERR3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
 auto SPERR3D_OMP_D::decompress(const void* p) -> RTNType
 {
   auto eq0 = [](auto v) { return v == 0; };
-  if (std::any_of(m_dims.begin(), m_dims.end(), eq0) ||
-      std::any_of(m_chunk_dims.begin(), m_chunk_dims.end(), eq0))
+  if (std::any_of(m_dims.cbegin(), m_dims.cend(), eq0) ||
+      std::any_of(m_chunk_dims.cbegin(), m_chunk_dims.cend(), eq0))
     return RTNType::Error;
   if (p == nullptr || m_bitstream_ptr == nullptr)
     return RTNType::Error;
@@ -164,7 +164,7 @@ auto SPERR3D_OMP_D::decompress(const void* p) -> RTNType
   }
 
   auto fail =
-      std::find_if(chunk_rtn.begin(), chunk_rtn.end(), [](auto r) { return r != RTNType::Good; });
+      std::find_if(chunk_rtn.cbegin(), chunk_rtn.cend(), [](auto r) { return r != RTNType::Good; });
   if (fail != chunk_rtn.end())
     return *fail;
   else
@@ -191,7 +191,7 @@ template <typename T>
 auto SPERR3D_OMP_D::get_data() const -> std::vector<T>
 {
   auto rtn_buf = std::vector<T>(m_vol_buf.size());
-  std::copy(m_vol_buf.begin(), m_vol_buf.end(), rtn_buf.begin());
+  std::copy(m_vol_buf.cbegin(), m_vol_buf.cend(), rtn_buf.begin());
   return rtn_buf;
 }
 template auto SPERR3D_OMP_D::get_data() const -> std::vector<float>;

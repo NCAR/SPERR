@@ -74,7 +74,7 @@ auto sperr::SPECK2D::encode() -> RTNType
   // Decide the starting threshold for quantization.
   // See `SPECK3D.cpp:encode()` for more discussion on the starting threshold.
   size_t num_bitplanes = 128;
-  const auto max_coeff = *std::max_element(m_coeff_buf.begin(), m_coeff_buf.end());
+  const auto max_coeff = *std::max_element(m_coeff_buf.cbegin(), m_coeff_buf.cend());
   if (m_mode_cache == CompMode::FixedPWE || m_mode_cache == CompMode::FixedPSNR) {
     const auto terminal_threshold = m_estimate_finest_q();
     auto max_t = terminal_threshold;
@@ -586,7 +586,7 @@ auto sperr::SPECK2D::m_decide_set_S_significance(const SPECKSet2D& set) -> SigTy
 
   const auto gtr = [thrd = m_threshold](auto v) { return v >= thrd; };
   for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
-    auto first = m_coeff_buf.begin() + y * m_dims[0] + set.start_x;
+    auto first = m_coeff_buf.cbegin() + y * m_dims[0] + set.start_x;
     auto last = first + set.length_x;
     if (std::any_of(first, last, gtr))
       return SigType::Sig;
@@ -602,16 +602,16 @@ auto sperr::SPECK2D::m_decide_set_I_significance(const SPECKSet2D& set) -> SigTy
 
   const auto gtr = [thrd = m_threshold](auto v) { return v >= thrd; };
   for (size_t y = 0; y < set.start_y; y++) {
-    auto first = m_coeff_buf.begin() + y * m_dims[0] + set.start_x;
-    auto last = m_coeff_buf.begin() + (y + 1) * m_dims[0];
+    auto first = m_coeff_buf.cbegin() + y * m_dims[0] + set.start_x;
+    auto last = m_coeff_buf.cbegin() + (y + 1) * m_dims[0];
     if (std::any_of(first, last, gtr))
       return SigType::Sig;
   }
 
   // Second rectangle: the rest area at the bottom
   // Note: this rectangle is stored in a contiguous chunk of memory till the end of the buffer :)
-  auto first = m_coeff_buf.begin() + size_t{set.start_y} * size_t{set.length_x};
-  if (std::any_of(first, m_coeff_buf.end(), gtr))
+  auto first = m_coeff_buf.cbegin() + size_t{set.start_y} * size_t{set.length_x};
+  if (std::any_of(first, m_coeff_buf.cend(), gtr))
     return SigType::Sig;
   else
     return SigType::Insig;
