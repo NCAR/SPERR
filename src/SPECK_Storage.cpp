@@ -53,8 +53,8 @@ auto sperr::SPECK_Storage::release_quantized_coeff() -> vecd_type&&
   if (!m_qz_coeff.empty()) {
     assert(m_qz_coeff.size() == m_sign_array.size());
     const auto tmp = d2_type{-1.0, 1.0};
-    std::transform(m_qz_coeff.cbegin(), m_qz_coeff.cend(), m_sign_array.cbegin(), m_qz_coeff.begin(),
-                   [tmp](auto v, auto b) { return v * tmp[b]; });
+    std::transform(m_qz_coeff.cbegin(), m_qz_coeff.cend(), m_sign_array.cbegin(),
+                   m_qz_coeff.begin(), [tmp](auto v, auto b) { return v * tmp[b]; });
   }
 
   return std::move(m_qz_coeff);
