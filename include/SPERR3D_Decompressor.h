@@ -29,7 +29,7 @@ class SPERR3D_Decompressor {
 
   // Get the decompressed volume in a float or double buffer.
   template <typename T>
-  auto get_data() const -> std::vector<T>;
+  auto get_data() const -> sperr::vec_type<T>;
   auto view_data() const -> const sperr::vecd_type&;
   auto release_data() -> sperr::vecd_type&&;
 

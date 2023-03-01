@@ -177,7 +177,7 @@ auto SPERR3D_OMP_D::release_data() -> sperr::vecd_type&&
   return std::move(m_vol_buf);
 }
 
-auto SPERR3D_OMP_D::view_data() const -> const std::vector<double>&
+auto SPERR3D_OMP_D::view_data() const -> const sperr::vecd_type&
 {
   return m_vol_buf;
 }

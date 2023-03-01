@@ -163,7 +163,13 @@ auto SPERR3D_OMP_C::compress() -> RTNType
       chunk_rtn[i] = compressor.compress();
     }
 
-    m_encoded_streams[i] = compressor.view_encoded_bitstream();
+    //
+    // Cumbersome because Kokkos vector behaves incorrectly with the following direct assignment.
+    // m_encoded_streams[i] = compressor.view_encoded_bitstream();
+    //
+    const auto& handle = compressor.view_encoded_bitstream();
+    m_encoded_streams[i].resize(handle.size());
+    std::copy(handle.cbegin(), handle.cend(), m_encoded_streams[i].begin());
 
     m_outlier_stats[i] = compressor.get_outlier_stats();
   }
@@ -180,9 +186,9 @@ auto SPERR3D_OMP_C::compress() -> RTNType
   return RTNType::Good;
 }
 
-auto SPERR3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
+auto SPERR3D_OMP_C::get_encoded_bitstream() const -> sperr::vec8_type
 {
-  auto buf = std::vector<uint8_t>();
+  auto buf = sperr::vec8_type();
   auto header = m_generate_header();
   if (header.empty())
     return buf;
@@ -195,7 +201,7 @@ auto SPERR3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
   std::copy(header.cbegin(), header.cend(), buf.begin());
   auto itr = buf.begin() + header.size();
   for (const auto& s : m_encoded_streams) {
-    std::copy(s.begin(), s.end(), itr);
+    std::copy(s.cbegin(), s.cend(), itr);
     itr += s.size();
   }
 
@@ -204,6 +210,8 @@ auto SPERR3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
 
 auto SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
 {
+  auto header = sperr::vec8_type();
+
   // The header would contain the following information
   //  -- a version number                     (1 byte)
   //  -- 8 booleans                           (1 byte)
@@ -214,14 +222,14 @@ auto SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   const auto num_chunks = chunks.size();
   assert(num_chunks != 0);
   if (num_chunks != m_encoded_streams.size())
-    return std::vector<uint8_t>();
+    return header;
   auto header_size = size_t{0};
   if (num_chunks > 1)
     header_size = m_header_magic_nchunks + num_chunks * 4;
   else
     header_size = m_header_magic_1chunk + num_chunks * 4;
 
-  auto header = std::vector<uint8_t>(header_size);
+  header.resize(header_size);
 
   // Version number
   header[0] = static_cast<uint8_t>(SPERR_VERSION_MAJOR);

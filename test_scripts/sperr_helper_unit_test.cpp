@@ -57,7 +57,7 @@ TEST(sperr_helper, bit_packing)
                           true,  true,  true,  false, true,  true,  true,  false,  // 10th byte
                           false, false, true,  true,  true,  false, false, true};  // 11th byte
 
-  auto bytes = std::vector<uint8_t>(num_of_bytes + byte_offset);
+  auto bytes = sperr::vec8_type(num_of_bytes + byte_offset);
 
   // Pack booleans
   auto rtn1 = sperr::pack_booleans(bytes, input, byte_offset);
@@ -119,7 +119,7 @@ TEST(sperr_helper, bit_packing_1032_bools)
   std::mt19937 gen(rd());  // Standard mersenne_twister_engine seeded with rd()
   std::uniform_int_distribution<> distrib(0, 2);
   auto input = std::vector<bool>(num_of_bits);
-  auto bytes = std::vector<uint8_t>(num_of_bytes + byte_offset);
+  auto bytes = sperr::vec8_type(num_of_bytes + byte_offset);
   for (size_t i = 0; i < num_of_bits; i++)
     input[i] = distrib(gen);
 

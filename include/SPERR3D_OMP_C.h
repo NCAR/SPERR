@@ -32,7 +32,7 @@ class SPERR3D_OMP_C {
   auto compress() -> RTNType;
 
   // Provide a copy of the encoded bitstream to the caller.
-  auto get_encoded_bitstream() const -> std::vector<uint8_t>;
+  auto get_encoded_bitstream() const -> sperr::vec8_type;
 
  private:
   sperr::dims_type m_dims = {0, 0, 0};        // Dimension of the entire volume
