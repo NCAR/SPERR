@@ -142,18 +142,18 @@ class sperr3d_tester {
 TEST(sperr3d_constant, one_chunk)
 {
   Kokkos::initialize();
-  //sperr3d_tester tester("../test_data/const32x20x16.float", {32, 20, 16}, 2);
+  sperr3d_tester tester("../test_data/const32x20x16.float", {32, 20, 16}, 2);
 
-  //const auto tar_psnr = std::numeric_limits<double>::max();
-  //const auto pwe = 0.0;
+  const auto tar_psnr = std::numeric_limits<double>::max();
+  const auto pwe = 0.0;
 
-  //auto rtn = tester.execute(1.0, tar_psnr, pwe);
-  //EXPECT_EQ(rtn, 0);
-  //auto psnr = tester.get_psnr();
-  //auto lmax = tester.get_lmax();
-  //auto infty = std::numeric_limits<double>::infinity();
-  //EXPECT_EQ(psnr, infty);
-  //EXPECT_EQ(lmax, 0.0f);
+  auto rtn = tester.execute(1.0, tar_psnr, pwe);
+  EXPECT_EQ(rtn, 0);
+  auto psnr = tester.get_psnr();
+  auto lmax = tester.get_lmax();
+  auto infty = std::numeric_limits<double>::infinity();
+  EXPECT_EQ(psnr, infty);
+  EXPECT_EQ(lmax, 0.0f);
 }
 
 TEST(sperr3d_constant, omp_chunks)

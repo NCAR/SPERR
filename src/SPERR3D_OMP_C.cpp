@@ -163,7 +163,9 @@ auto SPERR3D_OMP_C::compress() -> RTNType
       chunk_rtn[i] = compressor.compress();
     }
 
-    m_encoded_streams[i] = compressor.view_encoded_bitstream();
+    const auto& tmp = compressor.view_encoded_bitstream();
+    m_encoded_streams[i].resize(tmp.size());
+    std::copy(tmp.cbegin(), tmp.cend(), m_encoded_streams[i].begin());
 
     m_outlier_stats[i] = compressor.get_outlier_stats();
   }
@@ -180,9 +182,9 @@ auto SPERR3D_OMP_C::compress() -> RTNType
   return RTNType::Good;
 }
 
-auto SPERR3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
+auto SPERR3D_OMP_C::get_encoded_bitstream() const -> sperr::vec8_type
 {
-  auto buf = std::vector<uint8_t>();
+  auto buf = sperr::vec8_type();
   auto header = m_generate_header();
   if (header.empty())
     return buf;
@@ -195,7 +197,7 @@ auto SPERR3D_OMP_C::get_encoded_bitstream() const -> std::vector<uint8_t>
   std::copy(header.cbegin(), header.cend(), buf.begin());
   auto itr = buf.begin() + header.size();
   for (const auto& s : m_encoded_streams) {
-    std::copy(s.begin(), s.end(), itr);
+    std::copy(s.cbegin(), s.cend(), itr);
     itr += s.size();
   }
 

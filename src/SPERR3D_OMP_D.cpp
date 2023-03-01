@@ -161,7 +161,7 @@ auto SPERR3D_OMP_D::decompress(const void* p) -> RTNType
       chunk_rtn[i * 3 + 2] = RTNType::Good;
       sperr::scatter_chunk(m_vol_buf, m_dims, small_vol, chunks[i]);
     }
-  }
+  } // End parallel for
 
   auto fail =
       std::find_if(chunk_rtn.cbegin(), chunk_rtn.cend(), [](auto r) { return r != RTNType::Good; });

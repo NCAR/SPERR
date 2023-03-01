@@ -449,10 +449,6 @@ void sperr::scatter_chunk(vec_type<TBIG>& big_vol,
                           const vec_type<TSML>& small_vol,
                           const std::array<size_t, 6>& chunk)
 {
-  for (size_t i = 0; i < 6; i++)
-    std::fprintf(stderr, "%lu,  ", chunk[i]);
-  std::fprintf(stderr, "\n, small size = %lu\n", small_vol.size());
-
   size_t idx = 0;
   for (size_t z = chunk[4]; z < chunk[4] + chunk[5]; z++) {
     const size_t plane_offset = z * vol_dim[0] * vol_dim[1];
