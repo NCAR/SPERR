@@ -8,6 +8,7 @@
 #include "Kokkos_Core.hpp"
 #include "Kokkos_StdAlgorithms.hpp"
 
+
 using d2_type = std::array<double, 2>;
 using u2_type = std::array<uint32_t, 2>;
 
@@ -347,28 +348,73 @@ auto sperr::SPECK3D::m_decide_significance(const SPECKSet3D& set) const
 
   namespace KE = Kokkos::Experimental;
   using exespace = Kokkos::DefaultExecutionSpace;
+  using range3d = Kokkos::MDRangePolicy<exespace, Kokkos::Rank<3>>;
 
   const size_t slice_size = m_dims[0] * m_dims[1];
 
   const auto gtr = [thld = m_threshold](auto v) { return v >= thld; };
 
+  Kokkos::View<double***, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> view_as_volume(
+              m_coeff_buf.data(), m_dims[0], m_dims[1], m_dims[2]);
+
+  auto local_thrd = m_threshold;
+  uint64_t result = 0;
+  auto searchrange = range3d({set.start_z, set.start_y, set.start_x},
+                         {set.start_z+set.length_z, 
+                          set.start_y+set.length_y, 
+                          set.start_x+set.length_x });
+  //std::fprintf(stderr, "RANGE START: %u, %u, %u\n", set.start_x, set.start_y, set.start_z);
+  //std::fprintf(stderr, "RANGE END  : %u, %u, %u\n", set.start_x+set.length_x, set.start_y+set.length_y, set.start_z+set.length_z);
+  Kokkos::parallel_reduce("kokkos_find_if", searchrange, KOKKOS_LAMBDA 
+    (const uint32_t z, const uint32_t y, const uint32_t x, uint64_t& update) {
+    auto idx = z*m_dims[0]*m_dims[1] + y*m_dims[0] + x;
+    //std::fprintf(stderr, "(%u, %u, %u)\n", x, y, z);
+    //if ((x==3) && (y==5) && (z==7)) {std::fprintf(stderr, "Kokkos: %f\n", m_coeff_buf[idx]); }
+    //update += (m_coeff_buf[idx]  >= local_thrd);
+    update += (view_as_volume(x, y, z) >= local_thrd);
+  }, result);//, Kokkos::Max<int>(result));
+
+  //std::printf("Found %lu sig. points\n", result);
+  if (result)
+    return {SigType::Sig, {0, 0, 0}};
+  else
+    return {SigType::Insig, {0, 0, 0}};
+
+  //using pair2_type = std::pair<size_t, size_t>;
+  //auto subview = Kokkos::subview(view_as_volume, 
+  //                               pair2_type(set.start_z, set.start_z + set.length_z),
+  //                               pair2_type(set.start_y, set.start_y + set.length_y),
+  //                               pair2_type(set.start_x, set.start_x + set.length_x));
+  //auto found = KE::find_if(exespace(), KE::begin(subview), KE::end(subview), gtr);
+
   for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
     const size_t slice_offset = z * slice_size;
     for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
-      auto first = m_coeff_buf.cbegin() + (slice_offset + y * m_dims[0] + set.start_x);
-      auto last = first + set.length_x;
-      auto found = std::find_if(first, last, gtr);
-      //auto found = KE::find_if(exespace(), first, last, gtr);
-      if (found != last) {
-        auto xyz = std::array<uint32_t, 3>();
-        xyz[0] = std::distance(first, found);
-        xyz[1] = y - set.start_y;
-        xyz[2] = z - set.start_z;
-        return {SigType::Sig, xyz};
+      for (auto x = set.start_x; x < (set.start_x + set.length_x); x++) {
+      //auto first = m_coeff_buf.cbegin() + (slice_offset + y * m_dims[0] + set.start_x);
+      //auto last = first + set.length_x;
+      //auto found = std::find_if(first, last, gtr);
+      //if (found != last) {
+      //  auto xyz = std::array<uint32_t, 3>();
+      //  xyz[0] = std::distance(first, found);
+      //  xyz[1] = y - set.start_y;
+      //  xyz[2] = z - set.start_z;
+      //  return {SigType::Sig, xyz};
+      //}
+        auto idx = slice_offset + y * m_dims[0] + x;
+        //if ((x==3) && (y==5) && (z==7)) {std::fprintf(stderr, "Serial: %f\n", m_coeff_buf[idx]); }
+        if (m_coeff_buf[idx] >= m_threshold) {
+          if (result==0) {
+            std::fprintf(stderr, "ERROR, parallel_reduce found no point\n");
+            std::fprintf(stderr, "index: %lu from (%lu, %lu, %lu)\n", idx, m_dims[0], m_dims[1], m_dims[2]);
+            throw;
+          }
+          return {SigType::Sig, {x - set.start_x, y - set.start_y, z - set.start_z}};
+        }
       }
     }
   }
-
+  if (result>0) {std::fprintf(stderr, "ERROR, found %lu points\n", result);}
   return {SigType::Insig, {0, 0, 0}};
 }
 
@@ -396,26 +442,26 @@ auto sperr::SPECK3D::m_process_S_encode(size_t idx1,
   if (sig == SigType::Dunno) {
     auto set_sig = m_decide_significance(set);
     set.signif = set_sig.first;
-    if (set.signif == SigType::Sig) {
-      // Try to deduce the significance of some of its subsets.
-      // Step 1: which one of the 8 subsets makes it significant?
-      //         (Refer to m_partition_S_XYZ() for subset ordering.)
-      auto xyz = set_sig.second;
-      size_t sub_i = 0;
-      sub_i += (xyz[0] < (set.length_x - set.length_x / 2)) ? 0 : 1;
-      sub_i += (xyz[1] < (set.length_y - set.length_y / 2)) ? 0 : 2;
-      sub_i += (xyz[2] < (set.length_z - set.length_z / 2)) ? 0 : 4;
-      subset_sigs[sub_i] = SigType::Sig;
+    //if (set.signif == SigType::Sig) {
+    //  // Try to deduce the significance of some of its subsets.
+    //  // Step 1: which one of the 8 subsets makes it significant?
+    //  //         (Refer to m_partition_S_XYZ() for subset ordering.)
+    //  auto xyz = set_sig.second;
+    //  size_t sub_i = 0;
+    //  sub_i += (xyz[0] < (set.length_x - set.length_x / 2)) ? 0 : 1;
+    //  sub_i += (xyz[1] < (set.length_y - set.length_y / 2)) ? 0 : 2;
+    //  sub_i += (xyz[2] < (set.length_z - set.length_z / 2)) ? 0 : 4;
+    //  subset_sigs[sub_i] = SigType::Sig;
 
-      // Step 2: if it's the 5th, 6th, 7th, or 8th subset significant, then
-      //         the first four subsets must be insignificant. Again, this is
-      //         based on the ordering of subsets.
-      // In a cube there is 30% - 40% chance this condition meets.
-      if (sub_i >= 4) {
-        for (size_t i = 0; i < 4; i++)
-          subset_sigs[i] = SigType::Insig;
-      }
-    }
+    //  // Step 2: if it's the 5th, 6th, 7th, or 8th subset significant, then
+    //  //         the first four subsets must be insignificant. Again, this is
+    //  //         based on the ordering of subsets.
+    //  // In a cube there is 30% - 40% chance this condition meets.
+    //  if (sub_i >= 4) {
+    //    for (size_t i = 0; i < 4; i++)
+    //      subset_sigs[i] = SigType::Insig;
+    //  }
+    //}
   }
   else {
     set.signif = sig;
