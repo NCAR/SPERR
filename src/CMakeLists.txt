@@ -2,16 +2,6 @@ add_library( SPERR
              sperr_helper.cpp
              Conditioner.cpp
              CDF97.cpp
-             SPECK_Storage.cpp
-             SPECK2D.cpp
-             SPECK3D.cpp
-             SPERR.cpp
-             SPERR3D_Compressor.cpp
-             SPERR3D_Decompressor.cpp
-             SPERR3D_OMP_C.cpp
-             SPERR3D_OMP_D.cpp
-             SPERR2D_Compressor.cpp
-             SPERR2D_Decompressor.cpp
              SPECK_INT.cpp
              SPECK3D_INT.cpp
              SPECK3D_INT_ENC.cpp
@@ -20,8 +10,8 @@ add_library( SPERR
              SPECK1D_INT_ENC.cpp
              SPECK1D_INT_DEC.cpp
              SPERR_Driver.cpp
-             SPERR3D.cpp
-             SPERR_C_API.cpp)
+             SPERR3D.cpp )
+             
 target_include_directories( SPERR PUBLIC ${CMAKE_SOURCE_DIR}/include )
 
 if(USE_OMP)
@@ -62,18 +52,8 @@ set_target_properties( SPERR PROPERTIES VERSION ${SPERR_VERSION} )
 #
 set( public_h_list 
 "include/sperr_helper.h;\
-include/SPERR3D_Compressor.h;\
-include/SPERR3D_Decompressor.h;\
-include/SPERR3D_OMP_C.h;\
-include/SPERR3D_OMP_D.h;\
-include/SPERR2D_Compressor.h;\
-include/SPERR2D_Decompressor.h;\
 include/Conditioner.h;\
 include/CDF97.h;\
-include/SPECK_Storage.h;\
-include/SPECK2D.h;\
-include/SPECK3D.h;\
-include/SPERR_C_API.h;\
 include/SPECK_INT.h;\
 include/SPECK3D_INT.h;\
 include/SPECK3D_INT_ENC.h;\
@@ -82,7 +62,6 @@ include/SPECK1D_INT.h;\
 include/SPECK1D_INT_ENC.h;\
 include/SPECK1D_INT_DEC.h;\
 include/SPERR_Driver.h;\
-include/SPERR3D.h;\
-include/SPERR.h;")
+include/SPERR3D.h;")
 set_target_properties( SPERR PROPERTIES PUBLIC_HEADER "${public_h_list}" )
 
