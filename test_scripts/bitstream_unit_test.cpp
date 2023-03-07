@@ -44,8 +44,8 @@ TEST(ZFP_bitstream, MemoryAllocation1)
   auto s1 = Stream(64);
   auto vec = std::vector<bool>();
 
-  std::random_device rd;   // Will be used to obtain a seed for the random number engine
-  std::mt19937 gen(rd());  // Standard mersenne_twister_engine seeded with rd()
+  std::random_device rd;
+  std::mt19937 gen(rd());
   std::uniform_int_distribution<unsigned int> distrib(0, 1);
 
   s1.rewind();
@@ -98,10 +98,11 @@ TEST(ZFP_bitstream, MemoryAllocation2)
   EXPECT_TRUE(s1.capacity() == 256 || s1.capacity() == 384);
 
   // Let's try one more time!
+  s1.flush();
   s1.rewind();
   auto vec = std::vector<bool>();
-  std::random_device rd;   // Will be used to obtain a seed for the random number engine
-  std::mt19937 gen(rd());  // Standard mersenne_twister_engine seeded with rd()
+  std::random_device rd;
+  std::mt19937 gen(rd());
   std::uniform_int_distribution<unsigned int> distrib(0, 1);
   for (size_t itr = 0; itr < 4; itr++) {
     uint64_t value = 0ul;
@@ -114,6 +115,7 @@ TEST(ZFP_bitstream, MemoryAllocation2)
   }
   EXPECT_EQ(s1.wtell(), vec.size());
   EXPECT_TRUE(s1.capacity() == 256 || s1.capacity() == 384);
+  s1.flush();
   s1.rewind();
   for (size_t i = 0; i < vec.size(); i++)
     EXPECT_EQ(s1.read_bit(), vec[i]) << "at idx = " << i;
@@ -165,7 +167,7 @@ TEST(ZFP_bitstream, TestRange)
   EXPECT_EQ(s1.test_range(64, 125), false);
   EXPECT_EQ(s1.test_range(64, 126), true);
   EXPECT_EQ(s1.test_range(63, 127), true);
-  EXPECT_EQ(s1.test_range(62, 129), true);
+  EXPECT_EQ(s1.test_range(0, 190), true);
 
   // Test remaining bits
   s1.rewind();
@@ -178,6 +180,40 @@ TEST(ZFP_bitstream, TestRange)
   EXPECT_EQ(s1.test_range(2, 191), true);
   EXPECT_EQ(s1.test_range(3, 190), true);
   EXPECT_EQ(s1.test_range(3, 189), false);
+}
+
+TEST(ZFP_bitstream, TestRandomWrite)
+{
+  auto s1 = Stream(256);
+  s1.write_n_bits(192878ul, 64);
+  s1.write_n_bits(598932ul, 64);
+  s1.write_n_bits(792878ul, 64);
+  s1.write_n_bits(594932ul, 64);
+  s1.flush();
+
+  // Make a copy to a bit vector
+  auto vec = std::vector<bool>(256);
+  s1.rewind();
+  for (size_t i = 0; i < vec.size(); i++)
+    vec[i] = s1.read_bit();
+
+  // Make many random writes
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<unsigned int> distrib1(0, 1);
+  std::uniform_int_distribution<unsigned int> distrib2(0, 255);
+  for (size_t i = 0; i < 50; i++) {
+    const auto bit = distrib1(gen);
+    const auto pos = distrib2(gen);
+    s1.random_write(bit, pos);
+    s1.rseek(pos);
+    EXPECT_EQ(s1.read_bit(), bit);
+    vec[pos] = bool(bit);
+  }
+
+  s1.rewind();
+  for (size_t i = 0; i < vec.size(); i++)
+    EXPECT_EQ(s1.read_bit(), vec[i]);
 }
 
 }  // namespace

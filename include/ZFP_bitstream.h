@@ -29,9 +29,16 @@ class ZFP_bitstream {
   }
 
   // Functions for write
+  // All write functions won't flush, except for `random_write()`.
   auto wtell() const -> size_t;
   void wseek(size_t offset);
   auto flush() -> size_t;  // See ZFP API for return value meaning
+  auto write_bit(bool bit) -> bool
+  {
+    if (zfp::stream_wtell(m_handle.get()) == m_capacity)
+      m_wgrow_buf();
+    return zfp::stream_write_bit(m_handle.get(), bit);
+  }
   auto write_n_bits(uint64_t value, size_t n) -> uint64_t
   {
     assert(n <= 64);
@@ -39,11 +46,10 @@ class ZFP_bitstream {
       m_wgrow_buf();
     return zfp::stream_write_bits(m_handle.get(), value, n);
   }
-  auto write_bit(bool bit) -> bool
+  // `random_write` will flush upon every call.
+  auto random_write(bool bit, size_t pos) -> bool
   {
-    if (zfp::stream_wtell(m_handle.get()) == m_capacity)
-      m_wgrow_buf();
-    return zfp::stream_write_bit(m_handle.get(), bit);
+    return zfp::stream_random_write(m_handle.get(), bit, pos);
   }
 
  private:
