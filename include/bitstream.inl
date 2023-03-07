@@ -109,7 +109,6 @@ The following assumptions and restrictions apply:
 // It is based on commit b2366c0 on Jul 6, 2022.
 // All changes from the ZFP repo are denoted by Sam.
 
-#include <algorithm>  // Sam, std::min()
 #include <climits>  // Sam
 #include <cstddef>  // Sam
 #include <cstdint>  // Sam
@@ -494,11 +493,10 @@ stream_test_range(bitstream* s, bitstream_offset start_pos, bitstream_offset ran
 
   /* step 1: test the buffered word */
   const bitstream_count buf_bit_num = s->bits;
-  const bitstream_count bits_to_test = std::min(buf_bit_num, range_len);
-  uint64 value = stream_read_bits(s, bits_to_test);
-  if (value != 0u) {
+  const bitstream_count num_to_test = buf_bit_num < range_len ? buf_bit_num : range_len;
+  uint64 value = stream_read_bits(s, num_to_test);
+  if (value != 0u)
     return 1u;
-  }
 
   /* step 2: test the whole integers */
   const bitstream_count no_buf_bit_num = range_len > buf_bit_num ? range_len - buf_bit_num : 0;

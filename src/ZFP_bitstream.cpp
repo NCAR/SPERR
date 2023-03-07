@@ -31,11 +31,6 @@ auto sperr::ZFP_bitstream::rtell() const -> size_t
   return zfp::stream_rtell(m_handle.get());
 }
 
-void sperr::ZFP_bitstream::rseek(size_t offset)
-{
-  zfp::stream_rseek(m_handle.get(), offset);
-}
-
 // Functions for write
 auto sperr::ZFP_bitstream::wtell() const -> size_t
 {

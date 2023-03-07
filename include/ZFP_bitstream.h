@@ -21,7 +21,7 @@ class ZFP_bitstream {
 
   // Functions for read
   auto rtell() const -> size_t;
-  void rseek(size_t offset);
+  void rseek(size_t offset) { zfp::stream_rseek(m_handle.get(), offset); }
   auto read_bit() -> bool { return zfp::stream_read_bit(m_handle.get()); }
   auto test_range(size_t start_pos, size_t range_len) -> bool
   {
