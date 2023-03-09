@@ -4,12 +4,12 @@
 sperr::ZFP_bitstream::ZFP_bitstream(size_t nbits)
 {
   // Number of longs that's absolutely needed.
-  auto num_of_longs = nbits / 64;
-  if (nbits % 64 != 0)
+  auto num_of_longs = nbits / 64ul;
+  if (nbits % 64ul != 0)
     num_of_longs++;
 
   m_buf.resize(num_of_longs);
-  m_capacity = num_of_longs * 64;
+  m_capacity = num_of_longs * 64ul;
 
   m_handle.reset(zfp::stream_open(m_buf.data(), m_buf.size() * sizeof(uint64_t)));
 }
@@ -36,6 +36,11 @@ void sperr::ZFP_bitstream::rseek(size_t offset)
   zfp::stream_rseek(m_handle.get(), offset);
 }
 
+auto sperr::ZFP_bitstream::test_range(size_t start_pos, size_t range_len) -> bool
+{
+  return zfp::test_range(m_handle.get(), start_pos, range_len);
+}
+
 // Functions for write
 auto sperr::ZFP_bitstream::wtell() const -> size_t
 {
@@ -59,7 +64,7 @@ void sperr::ZFP_bitstream::m_wgrow_buf()
 
   m_buf.push_back(0ul);
   m_buf.resize(m_buf.capacity());
-  m_capacity = m_buf.size() * 64;
+  m_capacity = m_buf.size() * zfp::stream_get_wsize();
   m_handle.reset(zfp::stream_open(m_buf.data(), m_buf.size() * sizeof(uint64_t)));
 
   zfp::stream_wseek(m_handle.get(), curr_pos);

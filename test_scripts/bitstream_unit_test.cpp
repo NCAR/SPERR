@@ -51,13 +51,13 @@ TEST(ZFP_bitstream, MemoryAllocation1)
   s1.rewind();
   for (size_t i = 0; i < 64; i++) {
     auto val = distrib(gen);
-    s1.write_bit(val);
+    s1.stream_write_bit(val);
     vec.push_back(val);
   }
   EXPECT_EQ(s1.capacity(), 64);
 
   // Write another bit; the capacity is expected to grow to 128.
-  s1.write_bit(1);
+  s1.stream_write_bit(1);
   vec.push_back(1);
   EXPECT_EQ(s1.capacity(), 128);
 
@@ -66,13 +66,13 @@ TEST(ZFP_bitstream, MemoryAllocation1)
   s1.flush();
   s1.rewind();
   for (size_t i = 0; i < vec.size(); i++)
-    EXPECT_EQ(s1.read_bit(), vec[i]) << "at idx = " << i;
+    EXPECT_EQ(s1.stream_read_bit(), vec[i]) << "at idx = " << i;
 
   // Let's try to trigger another memory re-allocation
   s1.wseek(65);
   for (size_t i = 0; i < 64; i++) {
     auto val = distrib(gen);
-    s1.write_bit(val);
+    s1.stream_write_bit(val);
     vec.push_back(val);
   }
   EXPECT_EQ(s1.capacity(), 256);
@@ -80,7 +80,7 @@ TEST(ZFP_bitstream, MemoryAllocation1)
   s1.flush();
   s1.rewind();
   for (size_t i = 0; i < vec.size(); i++)
-    EXPECT_EQ(s1.read_bit(), vec[i]) << "at idx = " << i;
+    EXPECT_EQ(s1.stream_read_bit(), vec[i]) << "at idx = " << i;
 }
 
 TEST(ZFP_bitstream, MemoryAllocation2)
@@ -88,13 +88,13 @@ TEST(ZFP_bitstream, MemoryAllocation2)
   auto s1 = Stream(130);
   EXPECT_EQ(s1.capacity(), 192);
 
-  s1.write_n_bits(928798ul, 64);
-  s1.write_n_bits(9845932ul, 64);
-  s1.write_n_bits(19821ul, 63);
+  s1.stream_write_n_bits(928798ul, 64);
+  s1.stream_write_n_bits(9845932ul, 64);
+  s1.stream_write_n_bits(19821ul, 63);
   EXPECT_EQ(s1.wtell(), 191);
   EXPECT_EQ(s1.capacity(), 192);
 
-  s1.write_n_bits(8219821ul, 63);
+  s1.stream_write_n_bits(8219821ul, 63);
   EXPECT_TRUE(s1.capacity() == 256 || s1.capacity() == 384);
 
   // Let's try one more time!
@@ -111,14 +111,14 @@ TEST(ZFP_bitstream, MemoryAllocation2)
       value += ran << i;
       vec.push_back(ran);
     }
-    s1.write_n_bits(value, 64);
+    s1.stream_write_n_bits(value, 64);
   }
   EXPECT_EQ(s1.wtell(), vec.size());
   EXPECT_TRUE(s1.capacity() == 256 || s1.capacity() == 384);
   s1.flush();
   s1.rewind();
   for (size_t i = 0; i < vec.size(); i++)
-    EXPECT_EQ(s1.read_bit(), vec[i]) << "at idx = " << i;
+    EXPECT_EQ(s1.stream_read_bit(), vec[i]) << "at idx = " << i;
 
   s1.wseek(vec.size());
   for (size_t itr = 0; itr < 3; itr++) {
@@ -128,14 +128,14 @@ TEST(ZFP_bitstream, MemoryAllocation2)
       value += ran << i;
       vec.push_back(ran);
     }
-    s1.write_n_bits(value, 63);
+    s1.stream_write_n_bits(value, 63);
   }
   EXPECT_EQ(s1.wtell(), vec.size());
   EXPECT_TRUE(s1.capacity() == 512 || s1.capacity() == 768);
   s1.flush();
   s1.rewind();
   for (size_t i = 0; i < vec.size(); i++)
-    EXPECT_EQ(s1.read_bit(), vec[i]) << "at idx = " << i;
+    EXPECT_EQ(s1.stream_read_bit(), vec[i]) << "at idx = " << i;
 }
 
 TEST(ZFP_bitstream, TestRange)
@@ -143,8 +143,8 @@ TEST(ZFP_bitstream, TestRange)
   auto s1 = Stream(19);
 
   // Test buffered word
-  s1.write_n_bits(0ul, 63);
-  s1.write_bit(true);
+  s1.stream_write_n_bits(0ul, 63);
+  s1.stream_write_bit(true);
   s1.flush();
   EXPECT_EQ(s1.test_range(2, 45), false);
   EXPECT_EQ(s1.test_range(2, 62), true);
@@ -152,10 +152,10 @@ TEST(ZFP_bitstream, TestRange)
   // Test whole integers
   s1.rewind();
   for (size_t i = 0; i < 3; i++)
-    s1.write_n_bits(0ul, 63);
-  s1.write_bit(true);
-  s1.write_bit(false);
-  s1.write_bit(false);
+    s1.stream_write_n_bits(0ul, 63);
+  s1.stream_write_bit(true);
+  s1.stream_write_bit(false);
+  s1.stream_write_bit(false);
   EXPECT_EQ(s1.wtell(), 192);
   s1.flush();
   EXPECT_EQ(s1.test_range(0, 63), false);
@@ -172,8 +172,8 @@ TEST(ZFP_bitstream, TestRange)
   // Test remaining bits
   s1.rewind();
   for (size_t i = 0; i < 3; i++)
-    s1.write_n_bits(0ul, 64);
-  s1.write_bit(true);
+    s1.stream_write_n_bits(0ul, 64);
+  s1.stream_write_bit(true);
   s1.flush();
   EXPECT_EQ(s1.test_range(0, 192), false);
   EXPECT_EQ(s1.test_range(1, 192), true);
@@ -185,17 +185,17 @@ TEST(ZFP_bitstream, TestRange)
 TEST(ZFP_bitstream, TestRandomWrite)
 {
   auto s1 = Stream(256);
-  s1.write_n_bits(192878ul, 64);
-  s1.write_n_bits(598932ul, 64);
-  s1.write_n_bits(792878ul, 64);
-  s1.write_n_bits(594932ul, 64);
+  s1.stream_write_n_bits(192878ul, 64);
+  s1.stream_write_n_bits(598932ul, 64);
+  s1.stream_write_n_bits(792878ul, 64);
+  s1.stream_write_n_bits(594932ul, 64);
   s1.flush();
 
   // Make a copy to a bit vector
   auto vec = std::vector<bool>(256);
   s1.rewind();
   for (size_t i = 0; i < vec.size(); i++)
-    vec[i] = s1.read_bit();
+    vec[i] = s1.stream_read_bit();
 
   // Make many random writes
   std::random_device rd;
@@ -207,13 +207,33 @@ TEST(ZFP_bitstream, TestRandomWrite)
     const auto pos = distrib2(gen);
     s1.random_write(bit, pos);
     s1.rseek(pos);
-    EXPECT_EQ(s1.read_bit(), bit);
+    EXPECT_EQ(s1.stream_read_bit(), bit);
     vec[pos] = bool(bit);
   }
 
   s1.rewind();
   for (size_t i = 0; i < vec.size(); i++)
-    EXPECT_EQ(s1.read_bit(), vec[i]);
+    EXPECT_EQ(s1.stream_read_bit(), vec[i]);
+}
+
+TEST(ZFP_bitstream, TestRandomRead)
+{
+  auto s1 = Stream(256);
+  s1.stream_write_n_bits(5192878ul, 64);
+  s1.stream_write_n_bits(1598932ul, 64);
+  s1.stream_write_n_bits(8792878ul, 64);
+  s1.stream_write_n_bits(3594932ul, 64);
+  s1.flush();
+
+  // Make many random reads 
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<unsigned int> distrib2(0, 255);
+  for (size_t i = 0; i < 50; i++) {
+    const auto pos = distrib2(gen);
+    s1.rseek(pos);
+    EXPECT_EQ(s1.random_read(pos), s1.stream_read_bit());
+  }
 }
 
 }  // namespace

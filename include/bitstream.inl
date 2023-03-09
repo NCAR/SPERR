@@ -109,7 +109,6 @@ The following assumptions and restrictions apply:
 // It is based on commit b2366c0 on Jul 6, 2022.
 // All changes from the ZFP repo are denoted by Sam.
 
-#include <algorithm>  // Sam, std::min()
 #include <climits>  // Sam
 #include <cstddef>  // Sam
 #include <cstdint>  // Sam
@@ -486,22 +485,28 @@ stream_clone(const bitstream* s)
   return c;
 }
 
+//
 // Sam addition: test if a range contains at least one "1" bit
+//
 inline_ uint
-stream_test_range(bitstream* s, bitstream_offset start_pos, bitstream_offset range_len)
+test_range(bitstream* s, bitstream_offset start_pos, bitstream_offset range_len)
 {
   stream_rseek(s, start_pos);
 
   /* step 1: test the buffered word */
   const bitstream_count buf_bit_num = s->bits;
-  const bitstream_count bits_to_test = std::min(buf_bit_num, range_len);
-  uint64 value = stream_read_bits(s, bits_to_test);
-  if (value != 0u) {
-    return 1u;
+  if (buf_bit_num >= range_len) { /* only need to test the buffered word */
+    uint64 value = stream_read_bits(s, range_len);
+    return (value != 0u ? 1u : 0u);
+  }
+  else {
+    uint64 value = stream_read_bits(s, buf_bit_num);
+    if (value != 0u)
+      return 1u;
   }
 
   /* step 2: test the whole integers */
-  const bitstream_count no_buf_bit_num = range_len > buf_bit_num ? range_len - buf_bit_num : 0;
+  const bitstream_count no_buf_bit_num = range_len - buf_bit_num;
   const bitstream_count whole_int_num = no_buf_bit_num / wsize;
   bitstream_count idx = 0;
   for (idx = 0; idx < whole_int_num; idx++) {
@@ -511,13 +516,14 @@ stream_test_range(bitstream* s, bitstream_offset start_pos, bitstream_offset ran
 
   /* step 3: test the remaining bits */
   const bitstream_count remaining_bit_num = no_buf_bit_num % wsize;
-  value = stream_read_bits(s, remaining_bit_num);
+  uint64 value = stream_read_bits(s, remaining_bit_num);
   return (value != 0u ? 1u : 0u);
 }
 
 // Sam addition: write a bit (must be 0 or 1) at a random position and flush (in a safe manner).
+//
 inline_ uint
-stream_random_write(bitstream* s, uint bit, bitstream_offset pos)
+random_write(bitstream* s, uint bit, bitstream_offset pos)
 {
   const bitstream_offset wstart = pos / wsize;
   const bitstream_offset wremaining = pos % wsize;
@@ -533,7 +539,31 @@ stream_random_write(bitstream* s, uint bit, bitstream_offset pos)
 
   return bit;
 }
-// Finish Sam addition
+
+// Sam addition: read a bit at a random position.
+//
+inline_ uint
+random_read(bitstream* s, bitstream_offset pos)
+{
+  const bitstream_offset wstart = pos / wsize;
+  const bitstream_offset wremaining = pos % wsize;
+
+  bitstream_word buffer = *(s->begin + wstart);
+  buffer >>= wremaining;
+  buffer = buffer & 1u;
+  return (uint)buffer;
+}
+
+// Sam addition: return the wsize in use
+//
+inline_ uint64
+stream_get_wsize()
+{
+  return wsize;
+}
+//
+// Finish all Sam addition
+//
 
 #undef unused_
 
