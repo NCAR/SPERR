@@ -22,6 +22,7 @@ class ZFP_bitstream {
   // Functions for read
   auto rtell() const -> size_t;
   void rseek(size_t offset);
+  auto stream_read_n_bits(size_t n) -> uint64_t;
   auto stream_read_bit() -> bool { return zfp::stream_read_bit(m_handle.get()); }
   auto random_read(size_t pos) const -> bool { return zfp::random_read(m_handle.get(), pos); }
   auto test_range(size_t start_pos, size_t range_len) -> bool;
@@ -44,8 +45,7 @@ class ZFP_bitstream {
       m_wgrow_buf();
     return zfp::stream_write_bits(m_handle.get(), value, n);
   }
-  // `random_write` will effectively flush upon every call.
-  auto random_write(bool bit, size_t pos) -> bool
+  auto random_write(bool bit, size_t pos) -> bool // will effectively flush upon every call.
   {
     return zfp::random_write(m_handle.get(), bit, pos);
   }

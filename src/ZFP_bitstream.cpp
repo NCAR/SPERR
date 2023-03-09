@@ -41,6 +41,12 @@ auto sperr::ZFP_bitstream::test_range(size_t start_pos, size_t range_len) -> boo
   return zfp::test_range(m_handle.get(), start_pos, range_len);
 }
 
+auto sperr::ZFP_bitstream::stream_read_n_bits(size_t n) -> uint64_t
+{
+  assert(n <= 64);
+  return zfp::stream_read_bits(m_handle.get(), n);
+}
+
 // Functions for write
 auto sperr::ZFP_bitstream::wtell() const -> size_t
 {
