@@ -45,7 +45,7 @@ class ZFP_bitstream {
       m_wgrow_buf();
     return zfp::stream_write_bits(m_handle.get(), value, n);
   }
-  auto random_write(bool bit, size_t pos) -> bool // will effectively flush upon every call.
+  auto random_write(bool bit, size_t pos) -> bool  // will effectively flush upon every call.
   {
     return zfp::random_write(m_handle.get(), bit, pos);
   }
