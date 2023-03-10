@@ -24,14 +24,14 @@ class ZFP_bitstream {
   void rseek(size_t offset);
   auto stream_read_n_bits(size_t n) -> uint64_t;
   auto stream_read_bit() -> bool { return zfp::stream_read_bit(m_handle.get()); }
-  auto random_read(size_t pos) const -> bool { return zfp::random_read(m_handle.get(), pos); }
+  auto random_read_bit(size_t pos) const -> bool { return zfp::random_read_bit(m_handle.get(), pos); }
   auto test_range(size_t start_pos, size_t range_len) -> bool;
 
   // Functions for write
-  // All write functions won't flush, except for `random_write()`.
+  //   All write functions won't flush, except for `random_write_bit()`.
   auto wtell() const -> size_t;
   void wseek(size_t offset);
-  auto flush() -> size_t;  // See ZFP API for return value meaning
+  auto flush() -> size_t;
   auto stream_write_bit(bool bit) -> bool
   {
     if (zfp::stream_wtell(m_handle.get()) == m_capacity)
@@ -45,10 +45,11 @@ class ZFP_bitstream {
       m_wgrow_buf();
     return zfp::stream_write_bits(m_handle.get(), value, n);
   }
-  auto random_write(bool bit, size_t pos) -> bool  // will effectively flush upon every call.
-  {
-    return zfp::random_write(m_handle.get(), bit, pos);
-  }
+  auto random_write_bit(bool bit, size_t pos) -> bool;  // will effectively flush upon every call.
+
+  // Functions that provide or parse a compact bitstream
+  auto get_bitstream(size_t num_bits) -> std::vector<std::byte>;
+  void parse_bitstream(const void* p, size_t num_bits);
 
  private:
   std::unique_ptr<zfp::bitstream, decltype(&zfp::stream_close)> m_handle = {nullptr,

@@ -205,7 +205,7 @@ TEST(ZFP_bitstream, TestRandomWrite)
   for (size_t i = 0; i < 50; i++) {
     const auto bit = distrib1(gen);
     const auto pos = distrib2(gen);
-    s1.random_write(bit, pos);
+    s1.random_write_bit(bit, pos);
     s1.rseek(pos);
     EXPECT_EQ(s1.stream_read_bit(), bit);
     vec[pos] = bool(bit);
@@ -232,8 +232,39 @@ TEST(ZFP_bitstream, TestRandomRead)
   for (size_t i = 0; i < 50; i++) {
     const auto pos = distrib2(gen);
     s1.rseek(pos);
-    EXPECT_EQ(s1.random_read(pos), s1.stream_read_bit());
+    EXPECT_EQ(s1.random_read_bit(pos), s1.stream_read_bit());
   }
+}
+
+TEST(ZFP_bitstream, CompactStream)
+{
+  // Test full 64-bit multiples
+  auto s1 = Stream(128);
+  s1.stream_write_n_bits(35192878ul, 64);
+  s1.stream_write_n_bits(85192878ul, 64);
+  s1.flush();
+
+  auto buf = s1.get_bitstream(128);
+  auto s2 = Stream();
+  s2.parse_bitstream(buf.data(), 128);
+
+  s1.rewind();
+  for (size_t i = 0; i < 128; i++)
+    EXPECT_EQ(s1.stream_read_bit(), s2.stream_read_bit());
+
+  // Test full 64-bit multiples and 8-bit multiples
+  buf = s1.get_bitstream(80);
+  s2.parse_bitstream(buf.data(), 80);
+  s1.rewind();
+  for (size_t i = 0; i < 80; i++)
+    EXPECT_EQ(s1.stream_read_bit(), s2.stream_read_bit());
+
+  // Test full 64-bit multiples, 8-bit multiples, and remaining bits
+  buf = s1.get_bitstream(85);
+  s2.parse_bitstream(buf.data(), 85);
+  s1.rewind();
+  for (size_t i = 0; i < 85; i++)
+    EXPECT_EQ(s1.stream_read_bit(), s2.stream_read_bit());
 }
 
 }  // namespace

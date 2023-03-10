@@ -1,5 +1,7 @@
 #include "ZFP_bitstream.h"
 
+#include <cstring>
+
 // Constructor
 sperr::ZFP_bitstream::ZFP_bitstream(size_t nbits)
 {
@@ -63,6 +65,11 @@ auto sperr::ZFP_bitstream::flush() -> size_t
   return zfp::stream_flush(m_handle.get());
 }
 
+auto sperr::ZFP_bitstream::random_write_bit(bool bit, size_t pos) -> bool
+{
+  return zfp::random_write_bit(m_handle.get(), bit, pos);
+}
+
 void sperr::ZFP_bitstream::m_wgrow_buf()
 {
   const auto curr_pos = zfp::stream_wtell(m_handle.get());
@@ -74,4 +81,46 @@ void sperr::ZFP_bitstream::m_wgrow_buf()
   m_handle.reset(zfp::stream_open(m_buf.data(), m_buf.size() * sizeof(uint64_t)));
 
   zfp::stream_wseek(m_handle.get(), curr_pos);
+}
+
+// Functions to provide or parse a compact bitstream
+auto sperr::ZFP_bitstream::get_bitstream(size_t num_bits) -> std::vector<std::byte>
+{
+  assert(num_bits <= m_capacity);
+  const auto num_longs = num_bits / 64;
+  const auto rem_bits = num_bits - num_longs * 64;
+  auto rem_bytes = rem_bits / 8;
+  if (rem_bits % 8 != 0)
+    rem_bytes++;
+
+  auto tmp = std::vector<std::byte>(num_longs * sizeof(uint64_t) + rem_bytes);
+  std::memcpy(tmp.data(), m_buf.data(), num_longs * sizeof(uint64_t));
+
+  if (rem_bits > 0) {
+    zfp::stream_rseek(m_handle.get(), num_longs * 64);
+    uint64_t value = zfp::stream_read_bits(m_handle.get(), rem_bits);
+    std::memcpy(tmp.data() + num_longs * sizeof(uint64_t), &value, rem_bytes);
+  }
+
+  return tmp;
+}
+
+void sperr::ZFP_bitstream::parse_bitstream(const void* p, size_t num_bits)
+{
+  if (num_bits > m_capacity)
+    m_wgrow_buf();
+
+  const auto num_longs = num_bits / 64;
+  const auto rem_bits = num_bits - num_longs * 64;
+  auto rem_bytes = rem_bits / 8;
+  if (rem_bits % 8 != 0)
+    rem_bytes++;
+
+  const auto* p_byte = static_cast<const std::byte*>(p);
+  std::memcpy(m_buf.data(), p_byte, num_longs * sizeof(uint64_t));
+
+  if (rem_bits > 0)
+    std::memcpy(m_buf.data() + num_longs, p_byte + num_longs * sizeof(uint64_t), rem_bytes);
+
+  zfp::stream_rewind(m_handle.get());
 }

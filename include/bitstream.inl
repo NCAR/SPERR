@@ -523,7 +523,7 @@ test_range(bitstream* s, bitstream_offset start_pos, bitstream_offset range_len)
 // Sam addition: write a bit (must be 0 or 1) at a random position and flush (in a safe manner).
 //
 inline_ uint
-random_write(bitstream* s, uint bit, bitstream_offset pos)
+random_write_bit(bitstream* s, uint bit, bitstream_offset pos)
 {
   const bitstream_offset wstart = pos / wsize;
   const bitstream_offset wremaining = pos % wsize;
@@ -543,7 +543,7 @@ random_write(bitstream* s, uint bit, bitstream_offset pos)
 // Sam addition: read a bit at a random position.
 //
 inline_ uint
-random_read(bitstream* s, bitstream_offset pos)
+random_read_bit(bitstream* s, bitstream_offset pos)
 {
   const bitstream_offset wstart = pos / wsize;
   const bitstream_offset wremaining = pos % wsize;
