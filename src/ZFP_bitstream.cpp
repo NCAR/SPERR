@@ -70,7 +70,7 @@ void sperr::ZFP_bitstream::m_wgrow_buf()
 
   m_buf.push_back(0ul);
   m_buf.resize(m_buf.capacity());
-  m_capacity = m_buf.size() * zfp::stream_get_wsize();
+  m_capacity = m_buf.size() * 64;
   m_handle.reset(zfp::stream_open(m_buf.data(), m_buf.size() * sizeof(uint64_t)));
 
   zfp::stream_wseek(m_handle.get(), curr_pos);

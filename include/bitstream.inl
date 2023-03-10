@@ -553,14 +553,6 @@ random_read(bitstream* s, bitstream_offset pos)
   buffer = buffer & 1u;
   return (uint)buffer;
 }
-
-// Sam addition: return the wsize in use
-//
-inline_ uint64
-stream_get_wsize()
-{
-  return wsize;
-}
 //
 // Finish all Sam addition
 //
