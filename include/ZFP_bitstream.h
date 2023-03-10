@@ -4,7 +4,6 @@
 #include "bitstream.inl"
 
 #include <cassert>
-#include <memory>
 #include <vector>
 
 namespace sperr {
@@ -23,8 +22,8 @@ class ZFP_bitstream {
   auto rtell() const -> size_t;
   void rseek(size_t offset);
   auto stream_read_n_bits(size_t n) -> uint64_t;
-  auto stream_read_bit() -> bool { return zfp::stream_read_bit(m_handle.get()); }
-  auto random_read_bit(size_t pos) const -> bool { return zfp::random_read_bit(m_handle.get(), pos); }
+  auto stream_read_bit() -> bool { return zfp::stream_read_bit(&m_handle); }
+  auto random_read_bit(size_t pos) const -> bool { return zfp::random_read_bit(&m_handle, pos); }
   auto test_range(size_t start_pos, size_t range_len) -> bool;
 
   // Functions for write
@@ -34,16 +33,16 @@ class ZFP_bitstream {
   auto flush() -> size_t;
   auto stream_write_bit(bool bit) -> bool
   {
-    if (zfp::stream_wtell(m_handle.get()) == m_capacity)
+    if (zfp::stream_wtell(&m_handle) == m_capacity)
       m_wgrow_buf();
-    return zfp::stream_write_bit(m_handle.get(), bit);
+    return zfp::stream_write_bit(&m_handle, bit);
   }
   auto stream_write_n_bits(uint64_t value, size_t n) -> uint64_t
   {
     assert(n <= 64);
-    if (zfp::stream_wtell(m_handle.get()) + n > m_capacity)
+    if (zfp::stream_wtell(&m_handle) + n > m_capacity)
       m_wgrow_buf();
-    return zfp::stream_write_bits(m_handle.get(), value, n);
+    return zfp::stream_write_bits(&m_handle, value, n);
   }
   auto random_write_bit(bool bit, size_t pos) -> bool;  // will effectively flush upon every call.
 
@@ -52,8 +51,7 @@ class ZFP_bitstream {
   void parse_bitstream(const void* p, size_t num_bits);
 
  private:
-  std::unique_ptr<zfp::bitstream, decltype(&zfp::stream_close)> m_handle = {nullptr,
-                                                                            &zfp::stream_close};
+  zfp::bitstream m_handle;
   std::vector<uint64_t> m_buf;
 
   size_t m_capacity = 0;

@@ -543,7 +543,7 @@ random_write_bit(bitstream* s, uint bit, bitstream_offset pos)
 // Sam addition: read a bit at a random position.
 //
 inline_ uint
-random_read_bit(bitstream* s, bitstream_offset pos)
+random_read_bit(const bitstream* s, bitstream_offset pos)
 {
   const bitstream_offset wstart = pos / wsize;
   const bitstream_offset wremaining = pos % wsize;
