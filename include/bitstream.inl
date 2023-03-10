@@ -535,7 +535,7 @@ random_write_bit(bitstream* s, uint bit, bitstream_offset pos)
     buffer |= mask;
   else
     buffer &= ~mask;
-  stream_write_word(s, buffer);
+  *s->ptr = buffer;
 
   return bit;
 }
