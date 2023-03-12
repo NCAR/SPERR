@@ -12,9 +12,10 @@ namespace sperr {
 class Bitstream {
  public:
   // Constructor and destructor
+  //
   // How many bits does it hold initially?
-  Bitstream(size_t nbits = 0);
- ~Bitstream();
+  Bitstream(size_t nbits = 64);
+  ~Bitstream();
   Bitstream(const Bitstream& other) = delete;
   Bitstream(Bitstream&& other) = delete;
   Bitstream& operator=(const Bitstream& other) = delete;

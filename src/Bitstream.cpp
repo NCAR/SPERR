@@ -1,12 +1,15 @@
 #include "Bitstream.h"
 
+#include <algorithm>  // std::max()
 #include <cstring>
 
 // Constructor
 sperr::Bitstream::Bitstream(size_t nbits)
 {
   assert(m_wsize == zfp::stream_alignment());
-  this->reserve(nbits);
+  // Actually, leaving the pointer `m_handle` NULL will require so many null pointer
+  //   tests down the road, so we make sure to initialize it in the constructor.
+  this->reserve(std::max(m_wsize, nbits));
 }
 
 // Destructor
@@ -70,7 +73,7 @@ auto sperr::Bitstream::stream_read_n_bits(size_t n) -> uint64_t
   return zfp::stream_read_bits(m_handle, n);
 }
 
-auto sperr::Bitstream::stream_read_bit() -> bool 
+auto sperr::Bitstream::stream_read_bit() -> bool
 {
   return zfp::stream_read_bit(m_handle);
 }
@@ -108,7 +111,7 @@ auto sperr::Bitstream::stream_write_n_bits(uint64_t value, size_t n) -> uint64_t
   assert(n <= 64);
   if (zfp::stream_wtell(m_handle) + n > m_capacity)
     m_wgrow_buf();
-  return zfp::stream_write_bits(m_handle, value, n); 
+  return zfp::stream_write_bits(m_handle, value, n);
 }
 
 auto sperr::Bitstream::random_write_bit(bool bit, size_t pos) -> bool
