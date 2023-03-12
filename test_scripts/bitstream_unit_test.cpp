@@ -12,7 +12,7 @@ using Stream = sperr::ZFP_bitstream;
 TEST(ZFP_bitstream, constructor)
 {
   auto s1 = Stream();
-  EXPECT_EQ(s1.capacity(), 1024);
+  EXPECT_EQ(s1.capacity(), 0);
 
   auto s2 = Stream(1024 + 1);
   EXPECT_EQ(s2.capacity(), 1024 + 64);

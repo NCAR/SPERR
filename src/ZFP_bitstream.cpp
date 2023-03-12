@@ -5,16 +5,8 @@
 // Constructor
 sperr::ZFP_bitstream::ZFP_bitstream(size_t nbits)
 {
-  // Number of longs that's absolutely needed.
-  auto num_of_longs = nbits / 64ul;
-  if (nbits % 64ul != 0)
-    num_of_longs++;
-
-  m_buf.resize(num_of_longs);
-  m_capacity = num_of_longs * 64ul;
-
-  m_handle = zfp::stream_open(m_buf.data(), m_buf.size() * sizeof(uint64_t));
-  zfp::stream_rewind(m_handle);
+  assert(m_wsize == zfp::stream_alignment());
+  this->reserve(nbits);
 }
 
 // Destructor
@@ -35,6 +27,25 @@ void sperr::ZFP_bitstream::rewind()
 auto sperr::ZFP_bitstream::capacity() const -> size_t
 {
   return m_capacity;
+}
+
+void sperr::ZFP_bitstream::reserve(size_t nbits)
+{
+  if (nbits > m_capacity) {
+    // Number of longs that's absolutely needed.
+    auto num_of_longs = nbits / m_wsize;
+    if (nbits % m_wsize != 0)
+      num_of_longs++;
+
+    m_buf.reserve(num_of_longs);
+    m_buf.resize(m_buf.capacity());
+    m_capacity = m_buf.size() * m_wsize;
+
+    if (m_handle)
+      zfp::stream_close(m_handle);
+    m_handle = zfp::stream_open(m_buf.data(), m_buf.size() * sizeof(uint64_t));
+    zfp::stream_rewind(m_handle);
+  }
 }
 
 // Functions for read
@@ -87,7 +98,7 @@ void sperr::ZFP_bitstream::m_wgrow_buf()
 
   m_buf.push_back(0ul);
   m_buf.resize(m_buf.capacity());
-  m_capacity = m_buf.size() * 64;
+  m_capacity = m_buf.size() * m_wsize;
 
   zfp::stream_close(m_handle);
   m_handle = zfp::stream_open(m_buf.data(), m_buf.size() * sizeof(uint64_t));
@@ -98,8 +109,8 @@ void sperr::ZFP_bitstream::m_wgrow_buf()
 auto sperr::ZFP_bitstream::get_bitstream(size_t num_bits) -> std::vector<std::byte>
 {
   assert(num_bits <= m_capacity);
-  const auto num_longs = num_bits / 64;
-  const auto rem_bits = num_bits - num_longs * 64;
+  const auto num_longs = num_bits / m_wsize;
+  const auto rem_bits = num_bits - num_longs * m_wsize;
   auto rem_bytes = rem_bits / 8;
   if (rem_bits % 8 != 0)
     rem_bytes++;
@@ -108,7 +119,7 @@ auto sperr::ZFP_bitstream::get_bitstream(size_t num_bits) -> std::vector<std::by
   std::memcpy(tmp.data(), m_buf.data(), num_longs * sizeof(uint64_t));
 
   if (rem_bits > 0) {
-    zfp::stream_rseek(m_handle, num_longs * 64);
+    zfp::stream_rseek(m_handle, num_longs * m_wsize);
     uint64_t value = zfp::stream_read_bits(m_handle, rem_bits);
     std::memcpy(tmp.data() + num_longs * sizeof(uint64_t), &value, rem_bytes);
   }
@@ -118,11 +129,10 @@ auto sperr::ZFP_bitstream::get_bitstream(size_t num_bits) -> std::vector<std::by
 
 void sperr::ZFP_bitstream::parse_bitstream(const void* p, size_t num_bits)
 {
-  while (num_bits > m_capacity)
-    m_wgrow_buf();
+  this->reserve(num_bits);
 
-  const auto num_longs = num_bits / 64;
-  const auto rem_bits = num_bits - num_longs * 64;
+  const auto num_longs = num_bits / m_wsize;
+  const auto rem_bits = num_bits - num_longs * m_wsize;
   auto rem_bytes = rem_bits / 8;
   if (rem_bits % 8 != 0)
     rem_bytes++;

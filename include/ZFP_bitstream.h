@@ -12,7 +12,7 @@ class ZFP_bitstream {
  public:
   // Constructor and destructor
   // How many bits does it hold initially?
-  ZFP_bitstream(size_t nbits = 1024);
+  ZFP_bitstream(size_t nbits = 0);
  ~ZFP_bitstream();
   ZFP_bitstream(const ZFP_bitstream& other) = delete;
   ZFP_bitstream(ZFP_bitstream&& other) = delete;
@@ -22,6 +22,7 @@ class ZFP_bitstream {
   // Functions for both read and write
   void rewind();
   auto capacity() const -> size_t;
+  void reserve(size_t nbits);
 
   // Functions for read
   auto rtell() const -> size_t;
@@ -59,6 +60,7 @@ class ZFP_bitstream {
   zfp::bitstream* m_handle = nullptr;
 
   std::vector<uint64_t> m_buf;
+  const size_t m_wsize = 64;
   size_t m_capacity = 0;
 
   // Grows the buffer in write mode
