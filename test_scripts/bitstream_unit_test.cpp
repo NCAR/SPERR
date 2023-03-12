@@ -1,15 +1,15 @@
 #include "gtest/gtest.h"
 
-#include "ZFP_bitstream.h"
+#include "Bitstream.h"
 
 #include <random>
 #include <vector>
 
 namespace {
 
-using Stream = sperr::ZFP_bitstream;
+using Stream = sperr::Bitstream;
 
-TEST(ZFP_bitstream, constructor)
+TEST(Bitstream, constructor)
 {
   auto s1 = Stream();
   EXPECT_EQ(s1.capacity(), 0);
@@ -39,7 +39,7 @@ TEST(ZFP_bitstream, constructor)
   EXPECT_EQ(s9.capacity(), 1024 - 64);
 }
 
-TEST(ZFP_bitstream, MemoryAllocation1)
+TEST(Bitstream, MemoryAllocation1)
 {
   auto s1 = Stream(64);
   auto vec = std::vector<bool>();
@@ -83,7 +83,7 @@ TEST(ZFP_bitstream, MemoryAllocation1)
     EXPECT_EQ(s1.stream_read_bit(), vec[i]) << "at idx = " << i;
 }
 
-TEST(ZFP_bitstream, MemoryAllocation2)
+TEST(Bitstream, MemoryAllocation2)
 {
   auto s1 = Stream(130);
   EXPECT_EQ(s1.capacity(), 192);
@@ -138,7 +138,7 @@ TEST(ZFP_bitstream, MemoryAllocation2)
     EXPECT_EQ(s1.stream_read_bit(), vec[i]) << "at idx = " << i;
 }
 
-TEST(ZFP_bitstream, TestRange)
+TEST(Bitstream, TestRange)
 {
   auto s1 = Stream(19);
 
@@ -182,7 +182,7 @@ TEST(ZFP_bitstream, TestRange)
   EXPECT_EQ(s1.test_range(3, 189), false);
 }
 
-TEST(ZFP_bitstream, TestRandomWrite)
+TEST(Bitstream, TestRandomWrite)
 {
   auto s1 = Stream(256);
   s1.stream_write_n_bits(192878ul, 64);
@@ -216,7 +216,7 @@ TEST(ZFP_bitstream, TestRandomWrite)
     EXPECT_EQ(s1.stream_read_bit(), vec[i]);
 }
 
-TEST(ZFP_bitstream, TestRandomRead)
+TEST(Bitstream, TestRandomRead)
 {
   auto s1 = Stream(256);
   s1.stream_write_n_bits(5192878ul, 64);
@@ -236,7 +236,7 @@ TEST(ZFP_bitstream, TestRandomRead)
   }
 }
 
-TEST(ZFP_bitstream, CompactStream)
+TEST(Bitstream, CompactStream)
 {
   // Test full 64-bit multiples
   auto s1 = Stream(128);

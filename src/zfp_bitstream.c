@@ -105,29 +105,14 @@ The following assumptions and restrictions apply:
    caught.
 */
 
-// This file is from ZFP (https://github.com/LLNL/zfp/blob/develop/include/zfp/bitstream.inl)
-// It is based on commit b2366c0 on Jul 6, 2022.
-// All changes from the ZFP repo are denoted by Sam.
-
-#include <climits>  // Sam
-#include <cstddef>  // Sam
-#include <cstdint>  // Sam
-#include <cstdlib>  // Sam
+#include <limits.h>
+#include <stdlib.h>
 
 #ifndef inline_
   #define inline_
 #endif
 
-// #include "zfp/bitstream.h"  // Sam removed it
-
-namespace zfp {  // Sam
-
-typedef unsigned int uint;          // Sam
-typedef uint64_t uint64;            // Sam
-typedef struct bitstream bitstream; // Sam: forward declaration of opaque type */
-typedef uint64 bitstream_offset;    // Sam: bit offset into stream where bits are read/written
-typedef bitstream_offset bitstream_size; // Sam: type for counting number of bits in a stream
-typedef size_t bitstream_count; // Sam: type for counting a small number of bits in a stream
+#include "zfp_bitstream.h"
 
 /* satisfy compiler when args unused */
 #define unused_(x) ((void)(x))
@@ -160,7 +145,7 @@ struct bitstream {
 /* private functions ------------------------------------------------------- */
 
 /* read a single word from memory */
-bitstream_word // Sam remove `static`
+static bitstream_word
 stream_read_word(bitstream* s)
 {
   bitstream_word w = *s->ptr++;
@@ -172,7 +157,7 @@ stream_read_word(bitstream* s)
 }
 
 /* write a single word to memory */
-void // Sam removed `static`
+static void
 stream_write_word(bitstream* s, bitstream_word value)
 {
   *s->ptr++ = value;
@@ -456,7 +441,7 @@ stream_set_stride(bitstream* s, size_t block, ptrdiff_t delta)
 inline_ bitstream*
 stream_open(void* buffer, size_t bytes)
 {
-  bitstream* s = (bitstream*)std::malloc(sizeof(bitstream));  // Sam added std
+  bitstream* s = (bitstream*)malloc(sizeof(bitstream));
   if (s) {
     s->begin = (bitstream_word*)buffer;
     s->end = s->begin + bytes / sizeof(bitstream_word);
@@ -472,22 +457,22 @@ stream_open(void* buffer, size_t bytes)
 inline_ void
 stream_close(bitstream* s)
 {
-  std::free(s);  // Sam added std
+  free(s);
 }
 
 /* make a copy of bit stream to shared memory buffer */
 inline_ bitstream*
 stream_clone(const bitstream* s)
 {
-  bitstream* c = (bitstream*)std::malloc(sizeof(bitstream));  // Sam added std
+  bitstream* c = (bitstream*)malloc(sizeof(bitstream));
   if (c)
     *c = *s;
   return c;
 }
 
-//
-// Sam addition: test if a range contains at least one "1" bit
-//
+/*
+ * Start Sam additions.
+ */
 inline_ uint
 test_range(bitstream* s, bitstream_offset start_pos, bitstream_offset range_len)
 {
@@ -520,8 +505,18 @@ test_range(bitstream* s, bitstream_offset start_pos, bitstream_offset range_len)
   return (value != 0u ? 1u : 0u);
 }
 
-// Sam addition: write a bit (must be 0 or 1) at a random position and flush (in a safe manner).
-//
+inline_ uint
+random_read_bit(const bitstream* s, bitstream_offset pos)
+{
+  const bitstream_offset wstart = pos / wsize;
+  const bitstream_offset wremaining = pos % wsize;
+
+  bitstream_word buffer = *(s->begin + wstart);
+  buffer >>= wremaining;
+  buffer = buffer & 1u;
+  return (uint)buffer;
+}
+
 inline_ uint
 random_write_bit(bitstream* s, uint bit, bitstream_offset pos)
 {
@@ -539,24 +534,8 @@ random_write_bit(bitstream* s, uint bit, bitstream_offset pos)
 
   return bit;
 }
-
-// Sam addition: read a bit at a random position.
-//
-inline_ uint
-random_read_bit(const bitstream* s, bitstream_offset pos)
-{
-  const bitstream_offset wstart = pos / wsize;
-  const bitstream_offset wremaining = pos % wsize;
-
-  bitstream_word buffer = *(s->begin + wstart);
-  buffer >>= wremaining;
-  buffer = buffer & 1u;
-  return (uint)buffer;
-}
-//
-// Finish all Sam addition
-//
+/*
+ * Finish Sam additions.
+ */
 
 #undef unused_
-
-};  // Sam: namespace zfp

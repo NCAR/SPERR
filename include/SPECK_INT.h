@@ -5,6 +5,8 @@
 
 #include "sperr_helper.h"
 
+#include "Bitstream.h"
+
 namespace sperr {
 
 class SPECK_INT {

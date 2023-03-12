@@ -1,23 +1,24 @@
-#ifndef ZFP_BITSTREAM_H
-#define ZFP_BITSTREAM_H
+#ifndef BITSTREAM_H
+#define BITSTREAM_H
 
-#include "bitstream.inl"
+#include "zfp_bitstream.h"
 
 #include <cassert>
+#include <cstdint>
 #include <vector>
 
 namespace sperr {
 
-class ZFP_bitstream {
+class Bitstream {
  public:
   // Constructor and destructor
   // How many bits does it hold initially?
-  ZFP_bitstream(size_t nbits = 0);
- ~ZFP_bitstream();
-  ZFP_bitstream(const ZFP_bitstream& other) = delete;
-  ZFP_bitstream(ZFP_bitstream&& other) = delete;
-  ZFP_bitstream& operator=(const ZFP_bitstream& other) = delete;
-  ZFP_bitstream& operator=(ZFP_bitstream&& other) = delete;
+  Bitstream(size_t nbits = 0);
+ ~Bitstream();
+  Bitstream(const Bitstream& other) = delete;
+  Bitstream(Bitstream&& other) = delete;
+  Bitstream& operator=(const Bitstream& other) = delete;
+  Bitstream& operator=(Bitstream&& other) = delete;
 
   // Functions for both read and write
   void rewind();
@@ -28,8 +29,8 @@ class ZFP_bitstream {
   auto rtell() const -> size_t;
   void rseek(size_t offset);
   auto stream_read_n_bits(size_t n) -> uint64_t;
-  auto stream_read_bit() -> bool { return zfp::stream_read_bit(m_handle); }
-  auto random_read_bit(size_t pos) const -> bool { return zfp::random_read_bit(m_handle, pos); }
+  auto stream_read_bit() -> bool;
+  auto random_read_bit(size_t pos) const -> bool;
   auto test_range(size_t start_pos, size_t range_len) -> bool;
 
   // Functions for write
@@ -37,19 +38,8 @@ class ZFP_bitstream {
   auto wtell() const -> size_t;
   void wseek(size_t offset);
   auto flush() -> size_t;
-  auto stream_write_bit(bool bit) -> bool
-  {
-    if (zfp::stream_wtell(m_handle) == m_capacity)
-      m_wgrow_buf();
-    return zfp::stream_write_bit(m_handle, bit);
-  }
-  auto stream_write_n_bits(uint64_t value, size_t n) -> uint64_t
-  {
-    assert(n <= 64);
-    if (zfp::stream_wtell(m_handle) + n > m_capacity)
-      m_wgrow_buf();
-    return zfp::stream_write_bits(m_handle, value, n);
-  }
+  auto stream_write_bit(bool bit) -> bool;
+  auto stream_write_n_bits(uint64_t value, size_t n) -> uint64_t;
   auto random_write_bit(bool bit, size_t pos) -> bool;  // will effectively flush upon every call.
 
   // Functions that provide or parse a compact bitstream
@@ -57,7 +47,7 @@ class ZFP_bitstream {
   void parse_bitstream(const void* p, size_t num_bits);
 
  private:
-  zfp::bitstream* m_handle = nullptr;
+  struct bitstream* m_handle = nullptr;
 
   std::vector<uint64_t> m_buf;
   const size_t m_wsize = 64;
