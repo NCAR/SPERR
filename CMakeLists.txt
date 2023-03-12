@@ -32,9 +32,9 @@ endif()
 
 option( BUILD_SHARED_LIBS "Build shared SPERR library" ON )
 option( BUILD_UNIT_TESTS "Build unit tests using GoogleTest" ON )
-option( BUILD_CLI_UTILITIES "Build a set of command line utilities" ON )
-option( USE_OMP "Use OpenMP parallelization on 3D volumes" ON )
-option( USE_ZSTD "Incorporate ZSTD to achieve further reduction (~5%)" ON )
+option( BUILD_CLI_UTILITIES "Build a set of command line utilities" OFF )
+option( USE_OMP "Use OpenMP parallelization on 3D volumes" OFF )
+option( USE_ZSTD "Incorporate ZSTD to achieve further reduction (~5%)" OFF )
 cmake_dependent_option(USE_BUNDLED_ZSTD "Prefer to use the bundled ZSTD to an external one" ON "USE_ZSTD" OFF)
 option( SPERR_PREFER_RPATH "Set RPATH; this can fight with package managers so turn off when building for them" ON )
 mark_as_advanced(FORCE SPERR_PREFER_RPATH)
@@ -48,7 +48,14 @@ if(USE_OMP)
   endif()
 endif()
 
-find_package(Kokkos REQUIRED)
+include(FetchContent)
+FetchContent_Declare(
+  kokkos
+  GIT_REPOSITORY https://github.com/kokkos/kokkos.git
+  GIT_TAG origin/develop
+)
+FetchContent_MakeAvailable(kokkos)
+# find_package(Kokkos REQUIRED)
 
 #
 # Gather git commit SHA1

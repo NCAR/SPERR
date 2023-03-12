@@ -360,21 +360,17 @@ auto sperr::SPECK3D::m_decide_significance(const SPECKSet3D& set) const
   auto local_thrd = m_threshold;
   uint64_t result = 0;
   auto searchrange = range3d({set.start_z, set.start_y, set.start_x},
-                         {set.start_z+set.length_z, 
-                          set.start_y+set.length_y, 
-                          set.start_x+set.length_x });
+                         {set.start_z + set.length_z, 
+                          set.start_y + set.length_y, 
+                          set.start_x + set.length_x });
   //std::fprintf(stderr, "RANGE START: %u, %u, %u\n", set.start_x, set.start_y, set.start_z);
   //std::fprintf(stderr, "RANGE END  : %u, %u, %u\n", set.start_x+set.length_x, set.start_y+set.length_y, set.start_z+set.length_z);
-  Kokkos::parallel_reduce("kokkos_find_if", searchrange, KOKKOS_LAMBDA 
-    (const uint32_t z, const uint32_t y, const uint32_t x, uint64_t& update) {
-    auto idx = z*m_dims[0]*m_dims[1] + y*m_dims[0] + x;
-    //std::fprintf(stderr, "(%u, %u, %u)\n", x, y, z);
-    //if ((x==3) && (y==5) && (z==7)) {std::fprintf(stderr, "Kokkos: %f\n", m_coeff_buf[idx]); }
-    //update += (m_coeff_buf[idx]  >= local_thrd);
-    update += (view_as_volume(x, y, z) >= local_thrd);
-  }, result);//, Kokkos::Max<int>(result));
+  Kokkos::parallel_reduce("kokkos_find_if", 120, KOKKOS_LAMBDA 
+    (const uint32_t x, uint64_t& update) {
+    update += 1;
+  }, result);
 
-  //std::printf("Found %lu sig. points\n", result);
+  std::printf("Found %lu sig. points\n", result);
   if (result)
     return {SigType::Sig, {0, 0, 0}};
   else
@@ -387,6 +383,7 @@ auto sperr::SPECK3D::m_decide_significance(const SPECKSet3D& set) const
   //                               pair2_type(set.start_x, set.start_x + set.length_x));
   //auto found = KE::find_if(exespace(), KE::begin(subview), KE::end(subview), gtr);
 
+#if 0
   for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
     const size_t slice_offset = z * slice_size;
     for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
@@ -416,6 +413,7 @@ auto sperr::SPECK3D::m_decide_significance(const SPECKSet3D& set) const
   }
   if (result>0) {std::fprintf(stderr, "ERROR, found %lu points\n", result);}
   return {SigType::Insig, {0, 0, 0}};
+#endif
 }
 
 auto sperr::SPECK3D::m_process_S_encode(size_t idx1,
