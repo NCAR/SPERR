@@ -75,7 +75,7 @@ void sperr::SPECK3D_INT_ENC::encode()
 
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
     m_sorting_pass();
-    m_refinement_pass();
+    m_refinement_pass_encode();
 
     m_threshold /= uint_t{2};
     m_clean_LIS();
@@ -101,40 +101,6 @@ void sperr::SPECK3D_INT_ENC::m_sorting_pass()
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++)
       m_process_S(idx1, idx2, SigType::Dunno, dummy, true);
   }
-}
-
-void sperr::SPECK3D_INT_ENC::m_refinement_pass()
-{
-  // First, process significant pixels previously found.
-  //
-  const auto tmp1 = std::array<uint_t, 2>{0, m_threshold};
-
-  //for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-  //  if (m_LSP_mask[i]) {
-  //    const bool o1 = m_coeff_buf[i] >= m_threshold;
-  //    m_bit_buffer.push_back(o1);
-  //    m_coeff_buf[i] -= tmp1[o1];
-  //  }
-  //}
-  for (size_t i = 0; i < m_LSP_mask.size(); i += 64) {
-    const auto value = m_LSP_mask.read_long(i);
-    if (value != 0ul) {
-      for (size_t j = 0; j < 64ul; j++) {
-        if ((value >> j) & uint64_t(1ul)) {
-          const bool o1 = m_coeff_buf[i + j] >= m_threshold;
-          m_bit_buffer.push_back(o1);
-          m_coeff_buf[i + j] -= tmp1[o1];
-        }
-      }
-    }
-  }
-
-  // Second, mark newly found significant pixels in `m_LSP_mask`.
-  //
-  for (auto idx : m_LSP_new)
-    m_LSP_mask.write_bit(idx, true);
-    //m_LSP_mask[idx] = true;
-  m_LSP_new.clear();
 }
 
 void sperr::SPECK3D_INT_ENC::m_process_S(size_t idx1,

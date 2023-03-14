@@ -41,7 +41,8 @@ class SPECK_INT {
   virtual void m_clean_LIS() = 0;
   virtual void m_initialize_lists() = 0;
   virtual void m_sorting_pass() = 0;
-  virtual void m_refinement_pass() = 0;
+  virtual void m_refinement_pass_encode();
+  virtual void m_refinement_pass_decode();
 
   // Misc. procedures
   virtual void m_assemble_bitstream();
@@ -57,6 +58,7 @@ class SPECK_INT {
   Bitmask m_LSP_mask;
   std::vector<uint64_t> m_LIP, m_LSP_new;
   uint8_t m_num_bitplanes = 0;
+  std::vector<bool>::const_iterator m_bit_itr;
 
   const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
   const size_t m_header_size = 9; // 9 bytes
