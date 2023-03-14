@@ -147,7 +147,7 @@ auto sperr::SPERR_Driver::m_proc_2() -> RTNType
 
 auto sperr::SPERR_Driver::compress() -> RTNType
 {
-  const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
+  const auto total_vals = uint64_t(m_dims[0]) * m_dims[1] * m_dims[2];
   if (m_vals_d.empty() || m_vals_d.size() != total_vals)
     return RTNType::Error;
 
@@ -196,7 +196,7 @@ auto sperr::SPERR_Driver::decompress() -> RTNType
   m_vals_ui.clear();
   m_vals_ll.clear();
   m_sign_array.clear();
-  const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
+  const auto total_vals = uint64_t(m_dims[0]) * m_dims[1] * m_dims[2];
 
   // `m_condi_bitstream` might be indicating a constant field, so let's see if that's
   // the case, and if it is, we don't need to go through wavelet and speck stuff anymore.
