@@ -84,7 +84,6 @@ int main(int argc, char* argv[])
   // Write out the encoded bitstream
   //sperr::write_n_bytes(zipfile, bitstream.size(), bitstream.data());
 
-#if 0
   // Use a decompressor
   auto decoder = sperr::SPERR3D();
   decoder.set_dims(dims);
@@ -110,7 +109,6 @@ int main(int argc, char* argv[])
   auto sigma = std::sqrt(var);
   auto gain = std::log2(sigma / rmse) - bpp;
   std::printf("%.4f,  %.2e\n", gain, rmse);
-#endif
 
   return 0;
 }
