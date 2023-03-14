@@ -513,7 +513,7 @@ random_read_bit(const bitstream* s, bitstream_offset pos)
 
   bitstream_word buffer = *(s->begin + wstart);
   buffer >>= wremaining;
-  buffer = buffer & 1u;
+  buffer &= 1u;
   return (uint)buffer;
 }
 
