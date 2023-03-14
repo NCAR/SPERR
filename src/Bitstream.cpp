@@ -31,16 +31,20 @@ auto sperr::Bitstream::capacity() const -> size_t
 {
   return m_capacity;
 }
+auto sperr::Bitstream::wsize() const -> size_t
+{
+  return m_wsize;
+}
 
 void sperr::Bitstream::reserve(size_t nbits)
 {
   if (nbits > m_capacity) {
     // Number of longs that's absolutely needed.
-    auto num_of_longs = nbits / m_wsize;
+    auto num_longs = nbits / m_wsize;
     if (nbits % m_wsize != 0)
-      num_of_longs++;
+      num_longs++;
 
-    m_buf.reserve(num_of_longs);
+    m_buf.reserve(num_longs);
     m_buf.resize(m_buf.capacity());
     m_capacity = m_buf.size() * m_wsize;
 
@@ -138,7 +142,7 @@ auto sperr::Bitstream::get_bitstream(size_t num_bits) -> std::vector<std::byte>
 {
   assert(num_bits <= m_capacity);
   const auto num_longs = num_bits / m_wsize;
-  const auto rem_bits = num_bits - num_longs * m_wsize;
+  const auto rem_bits = num_bits % m_wsize;
   auto rem_bytes = rem_bits / 8;
   if (rem_bits % 8 != 0)
     rem_bytes++;
@@ -160,7 +164,7 @@ void sperr::Bitstream::parse_bitstream(const void* p, size_t num_bits)
   this->reserve(num_bits);
 
   const auto num_longs = num_bits / m_wsize;
-  const auto rem_bits = num_bits - num_longs * m_wsize;
+  const auto rem_bits = num_bits % m_wsize;
   auto rem_bytes = rem_bits / 8;
   if (rem_bits % 8 != 0)
     rem_bytes++;

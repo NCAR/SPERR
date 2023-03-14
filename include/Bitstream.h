@@ -24,6 +24,7 @@ class Bitstream {
   // Functions for both read and write
   void rewind();
   auto capacity() const -> size_t;
+  auto wsize() const -> size_t;
   void reserve(size_t nbits);
 
   // Functions for read
