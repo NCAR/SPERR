@@ -5,7 +5,7 @@
 
 #include "sperr_helper.h"
 
-#include "Bitstream.h"
+#include "Bitmask.h"
 
 namespace sperr {
 
@@ -53,7 +53,8 @@ class SPECK_INT {
   uint_t m_threshold = 0;
   vecui_t m_coeff_buf;
   vec8_type m_encoded_bitstream;
-  vecb_type m_bit_buffer, m_LSP_mask, m_sign_array;
+  vecb_type m_bit_buffer, m_sign_array;
+  Bitmask m_LSP_mask;
   std::vector<uint64_t> m_LIP, m_LSP_new;
   uint8_t m_num_bitplanes = 0;
 

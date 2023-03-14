@@ -18,7 +18,9 @@ void sperr::SPECK3D_INT_DEC::decode()
   m_sign_array.assign(coeff_len, true);
 
   // Mark every coefficient as insignificant
-  m_LSP_mask.assign(m_coeff_buf.size(), false);
+  //m_LSP_mask.assign(m_coeff_buf.size(), false);
+  m_LSP_mask.resize(m_coeff_buf.size());
+  m_LSP_mask.reset();
   m_bit_itr = m_bit_buffer.cbegin();
 
   // Restore the biggest `m_threshold`
@@ -60,17 +62,29 @@ void sperr::SPECK3D_INT_DEC::m_refinement_pass()
   //
   const auto tmp = std::array<uint_t, 2>{uint_t{0}, m_threshold};
 
-  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-    if (m_LSP_mask[i]) {
-      m_coeff_buf[i] += tmp[*m_bit_itr];
-      ++m_bit_itr;
+  //for (size_t i = 0; i < m_LSP_mask.size(); i++) {
+  //  if (m_LSP_mask[i]) {
+  //    m_coeff_buf[i] += tmp[*m_bit_itr];
+  //    ++m_bit_itr;
+  //  }
+  //}
+  for (size_t i = 0; i < m_LSP_mask.size(); i += 64) {
+    const auto value = m_LSP_mask.read_long(i);
+    if (value != 0ul) {
+      for (size_t j = 0; j < 64ul; j++) {
+        if ((value >> j) & uint64_t(1ul)) {
+          m_coeff_buf[i + j] += tmp[*m_bit_itr];
+          ++m_bit_itr;
+        }
+      }
     }
   }
 
   // Second, mark newly found significant pixels in `m_LSP_mark`
   //
   for (auto idx : m_LSP_new)
-    m_LSP_mask[idx] = true;
+    m_LSP_mask.write_bit(idx, true);
+    //m_LSP_mask[idx] = true;
   m_LSP_new.clear();
 }
 
