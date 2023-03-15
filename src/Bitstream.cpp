@@ -1,6 +1,7 @@
 #include "Bitstream.h"
 
 #include <algorithm>  // std::max()
+#include <cassert>
 #include <cstring>
 
 // Constructor

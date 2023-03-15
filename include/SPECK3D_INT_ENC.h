@@ -15,7 +15,6 @@ class SPECK3D_INT_ENC : public SPECK3D_INT {
 
  private:
   virtual void m_sorting_pass() override;
-  virtual void m_refinement_pass() override;
 
   void m_process_S(size_t idx1, size_t idx2, SigType, size_t& counter, bool);
   void m_process_P(size_t idx, SigType, size_t& counter, bool);
@@ -24,7 +23,6 @@ class SPECK3D_INT_ENC : public SPECK3D_INT {
   // Decide if a set is significant or not.
   // If it is significant, also identify the point that makes it significant.
   auto m_decide_significance(const Set3D&) const -> std::pair<SigType, std::array<uint32_t, 3>>;
-
 };
 
 };  // namespace sperr

@@ -3,7 +3,6 @@
 
 #include "zfp_bitstream.h"
 
-#include <cassert>
 #include <cstdint>
 #include <vector>
 

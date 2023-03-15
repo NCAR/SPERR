@@ -5,17 +5,16 @@
 
 #include "sperr_helper.h"
 
-#include "Bitstream.h"
+#include "Bitmask.h"
 
 namespace sperr {
 
 class SPECK_INT {
  public:
-
   // Virtual destructor
   virtual ~SPECK_INT() = default;
 
-  void set_dims(dims_type);  
+  void set_dims(dims_type);
 
   // Retrieve the full length of a SPECK bitstream from its header
   auto get_speck_full_len(const void*) const -> uint64_t;
@@ -41,24 +40,27 @@ class SPECK_INT {
   virtual void m_clean_LIS() = 0;
   virtual void m_initialize_lists() = 0;
   virtual void m_sorting_pass() = 0;
-  virtual void m_refinement_pass() = 0;
+  virtual void m_refinement_pass_encode();
+  virtual void m_refinement_pass_decode();
 
   // Misc. procedures
   virtual void m_assemble_bitstream();
-  //virtual auto m_ready_to_encode() const -> RTNType;
-  //virtual auto m_ready_to_decode() const -> RTNType;
+  // virtual auto m_ready_to_encode() const -> RTNType;
+  // virtual auto m_ready_to_decode() const -> RTNType;
 
   // Data members
   dims_type m_dims = {0, 0, 0};
   uint_t m_threshold = 0;
   vecui_t m_coeff_buf;
   vec8_type m_encoded_bitstream;
-  vecb_type m_bit_buffer, m_LSP_mask, m_sign_array;
+  vecb_type m_bit_buffer, m_sign_array;
+  Bitmask m_LSP_mask;
   std::vector<uint64_t> m_LIP, m_LSP_new;
   uint8_t m_num_bitplanes = 0;
+  std::vector<bool>::const_iterator m_bit_itr;
 
   const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
-  const size_t m_header_size = 9; // 9 bytes
+  const size_t m_header_size = 9;  // 9 bytes
 
 };  // class SPECK_INT
 

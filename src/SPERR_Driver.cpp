@@ -6,7 +6,6 @@
 #include <cmath>
 #include <cstring>
 
-
 template <typename T>
 void sperr::SPERR_Driver::copy_data(const T* p, size_t len)
 {
@@ -58,7 +57,7 @@ auto sperr::SPERR_Driver::use_bitstream(const void* p, size_t len) -> RTNType
   const uint8_t* const speck_p = ptr + pos;
   const auto speck_full_len = m_decoder->get_speck_full_len(speck_p);
   if (speck_full_len != len - pos)
-      return RTNType::BitstreamWrongLen;
+    return RTNType::BitstreamWrongLen;
   m_speck_bitstream.resize(speck_full_len);
   std::copy(speck_p, speck_p + speck_full_len, m_speck_bitstream.begin());
 
@@ -75,7 +74,7 @@ auto sperr::SPERR_Driver::get_encoded_bitstream() -> vec8_type
   const auto total_len = m_condi_bitstream.size() + m_speck_bitstream.size();
   auto tmp = vec8_type(total_len);
   std::copy(m_condi_bitstream.cbegin(), m_condi_bitstream.cend(), tmp.begin());
-  std::copy(m_speck_bitstream.cbegin(), m_speck_bitstream.cend(), 
+  std::copy(m_speck_bitstream.cbegin(), m_speck_bitstream.cend(),
             tmp.begin() + m_condi_bitstream.size());
   return tmp;
 }
@@ -97,7 +96,7 @@ void sperr::SPERR_Driver::set_dims(dims_type dims)
 
 auto sperr::SPERR_Driver::num_coded_vals() const -> size_t
 {
-  return std::count_if(m_vals_ll.cbegin(), m_vals_ll.cend(), [](auto v){ return v != 0l; });
+  return std::count_if(m_vals_ll.cbegin(), m_vals_ll.cend(), [](auto v) { return v != 0l; });
 }
 
 auto sperr::SPERR_Driver::m_midtread_f2i() -> RTNType
@@ -112,13 +111,13 @@ auto sperr::SPERR_Driver::m_midtread_f2i() -> RTNType
   std::fesetround(FE_TONEAREST);
   std::feclearexcept(FE_ALL_EXCEPT);
   std::transform(m_vals_d.cbegin(), m_vals_d.cend(), m_vals_ll.begin(),
-                 [q1](auto d){ return std::llrint(d * q1); });
+                 [q1](auto d) { return std::llrint(d * q1); });
   if (std::fetestexcept(FE_INVALID))
     return RTNType::FE_Invalid;
   std::transform(m_vals_ll.cbegin(), m_vals_ll.cend(), m_vals_ui.begin(),
-                 [](auto ll){ return static_cast<uint_t>(std::abs(ll)); });
+                 [](auto ll) { return static_cast<uint_t>(std::abs(ll)); });
   std::transform(m_vals_ll.cbegin(), m_vals_ll.cend(), m_sign_array.begin(),
-                 [](auto ll){ return ll >= 0ll; });
+                 [](auto ll) { return ll >= 0ll; });
 
   return RTNType::Good;
 }
@@ -131,8 +130,7 @@ void sperr::SPERR_Driver::m_midtread_i2f()
   const auto q = m_q;
   m_vals_d.resize(m_sign_array.size());
   std::transform(m_vals_ui.cbegin(), m_vals_ui.cend(), m_sign_array.cbegin(), m_vals_d.begin(),
-                 [tmpd, q](auto i, auto b){ return q * static_cast<double>(i) * tmpd[b]; });
-
+                 [tmpd, q](auto i, auto b) { return q * static_cast<double>(i) * tmpd[b]; });
 }
 
 auto sperr::SPERR_Driver::m_proc_1() -> RTNType
@@ -147,7 +145,7 @@ auto sperr::SPERR_Driver::m_proc_2() -> RTNType
 
 auto sperr::SPERR_Driver::compress() -> RTNType
 {
-  const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
+  const auto total_vals = uint64_t(m_dims[0]) * m_dims[1] * m_dims[2];
   if (m_vals_d.empty() || m_vals_d.size() != total_vals)
     return RTNType::Error;
 
@@ -196,7 +194,7 @@ auto sperr::SPERR_Driver::decompress() -> RTNType
   m_vals_ui.clear();
   m_vals_ll.clear();
   m_sign_array.clear();
-  const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
+  const auto total_vals = uint64_t(m_dims[0]) * m_dims[1] * m_dims[2];
 
   // `m_condi_bitstream` might be indicating a constant field, so let's see if that's
   // the case, and if it is, we don't need to go through wavelet and speck stuff anymore.
@@ -235,4 +233,3 @@ auto sperr::SPERR_Driver::decompress() -> RTNType
 
   return RTNType::Good;
 }
-
