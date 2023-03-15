@@ -7,8 +7,8 @@
 
 void sperr::SPECK3D_INT_DEC::decode()
 {
-  //if (m_ready_to_decode() == false)
-  //  return RTNType::Error;
+  // if (m_ready_to_decode() == false)
+  //   return RTNType::Error;
 
   m_initialize_lists();
 
@@ -18,7 +18,6 @@ void sperr::SPECK3D_INT_DEC::decode()
   m_sign_array.assign(coeff_len, true);
 
   // Mark every coefficient as insignificant
-  //m_LSP_mask.assign(m_coeff_buf.size(), false);
   m_LSP_mask.resize(m_coeff_buf.size());
   m_LSP_mask.reset();
   m_bit_itr = m_bit_buffer.cbegin();
@@ -36,7 +35,6 @@ void sperr::SPECK3D_INT_DEC::decode()
     m_clean_LIS();
   }
 }
-
 
 void sperr::SPECK3D_INT_DEC::m_sorting_pass()
 {
@@ -123,4 +121,3 @@ void sperr::SPECK3D_INT_DEC::m_code_S(size_t idx1, size_t idx2)
     }
   }
 }
-

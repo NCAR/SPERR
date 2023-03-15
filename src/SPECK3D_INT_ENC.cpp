@@ -44,7 +44,6 @@ void sperr::SPECK3D_INT_ENC::encode()
   //  m_qz_coeff.clear();
 
   // Mark every coefficient as insignificant
-  //m_LSP_mask.assign(m_coeff_buf.size(), false);
   m_LSP_mask.resize(m_coeff_buf.size());
   m_LSP_mask.reset();
 

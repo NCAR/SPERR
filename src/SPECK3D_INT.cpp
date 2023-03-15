@@ -5,16 +5,16 @@
 #include <cstring>
 #include <numeric>
 
-auto sperr::Set3D::is_pixel() const -> bool 
-{ 
-  return (length_x == 1 && length_y == 1 && length_z == 1); 
+auto sperr::Set3D::is_pixel() const -> bool
+{
+  return (length_x == 1 && length_y == 1 && length_z == 1);
 }
 
-auto sperr::Set3D::is_empty() const -> bool 
-{ 
-  return (length_z == 0 || length_y == 0 || length_x == 0); 
+auto sperr::Set3D::is_empty() const -> bool
+{
+  return (length_z == 0 || length_y == 0 || length_x == 0);
 }
-  
+
 void sperr::SPECK3D_INT::m_clean_LIS()
 {
   for (auto& list : m_LIS) {

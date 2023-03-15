@@ -1,6 +1,6 @@
 #include "SPERR3D.h"
-#include "SPECK3D_INT_ENC.h"
 #include "SPECK3D_INT_DEC.h"
+#include "SPECK3D_INT_ENC.h"
 
 //
 // Constructor
@@ -32,5 +32,3 @@ auto sperr::SPERR3D::m_inverse_quantize() -> RTNType
   m_midtread_i2f();
   return RTNType::Good;
 }
-
-

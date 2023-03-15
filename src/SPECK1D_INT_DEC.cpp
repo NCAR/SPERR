@@ -15,7 +15,6 @@ void sperr::SPECK1D_INT_DEC::decode()
   m_sign_array.assign(coeff_len, true);
 
   // Mark every coefficient as insignificant
-  //m_LSP_mask.assign(m_coeff_buf.size(), false);
   m_LSP_mask.resize(m_coeff_buf.size());
   m_LSP_mask.reset();
   m_bit_itr = m_bit_buffer.cbegin();
@@ -33,7 +32,6 @@ void sperr::SPECK1D_INT_DEC::decode()
     m_clean_LIS();
   }
 }
-
 
 void sperr::SPECK1D_INT_DEC::m_sorting_pass()
 {
@@ -116,7 +114,7 @@ void sperr::SPECK1D_INT_DEC::m_code_S(size_t idx1, size_t idx2)
     read = false;
   const auto& set1 = subsets[1];
   assert(set1.length != 0);
-  if (set1.length == 1 ) {
+  if (set1.length == 1) {
     m_LIP.push_back(set1.start);
     m_process_P(m_LIP.size() - 1, sig_counter, read);
   }
@@ -126,6 +124,3 @@ void sperr::SPECK1D_INT_DEC::m_code_S(size_t idx1, size_t idx2)
     m_process_S(newidx1, m_LIS[newidx1].size() - 1, sig_counter, read);
   }
 }
-
-
-

@@ -18,7 +18,7 @@ auto sperr::Bitmask::size() const -> size_t
   return m_num_bits;
 }
 
-void sperr::Bitmask::resize(size_t nbits) 
+void sperr::Bitmask::resize(size_t nbits)
 {
   auto num_longs = nbits / 64;
   if (nbits % 64 != 0)

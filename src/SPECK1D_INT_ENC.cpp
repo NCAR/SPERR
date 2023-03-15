@@ -13,7 +13,6 @@ void sperr::SPECK1D_INT_ENC::encode()
   m_initialize_lists();
 
   // Mark every coefficient as insignificant
-  //m_LSP_mask.assign(m_coeff_buf.size(), false);
   m_LSP_mask.resize(m_coeff_buf.size());
   m_LSP_mask.reset();
 
@@ -74,7 +73,7 @@ void sperr::SPECK1D_INT_ENC::m_process_S(size_t idx1,
   //    subsets' significance is unknown.
   // 3) if sig is insignificant, then this set is not processed.
 
-  auto subset_sigs = std::array<SigType, 2>{SigType::Dunno, SigType::Dunno}; 
+  auto subset_sigs = std::array<SigType, 2>{SigType::Dunno, SigType::Dunno};
 
   if (sig == SigType::Dunno) {
     auto set_sig = m_decide_significance(set);
@@ -82,9 +81,9 @@ void sperr::SPECK1D_INT_ENC::m_process_S(size_t idx1,
     if (sig == SigType::Sig) {
       assert(set_sig.second >= 0);
       if (set_sig.second < set.length - set.length / 2)
-        subset_sigs = {SigType::Sig, SigType::Dunno}; 
+        subset_sigs = {SigType::Sig, SigType::Dunno};
       else
-        subset_sigs = {SigType::Insig, SigType::Sig}; 
+        subset_sigs = {SigType::Insig, SigType::Sig};
     }
   }
 
