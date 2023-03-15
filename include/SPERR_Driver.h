@@ -11,9 +11,8 @@
 
 namespace sperr {
 
-class SPERR_Driver{
+class SPERR_Driver {
  public:
-
   //
   // Virtual Destructor
   //
@@ -24,14 +23,14 @@ class SPERR_Driver{
   //
   // Accept incoming data: copy from a raw memory block
   template <typename T>
-  void copy_data(const T* p,      // Input: pointer to the memory block
-                 size_t len);     // Input: number of values
+  void copy_data(const T* p,   // Input: pointer to the memory block
+                 size_t len);  // Input: number of values
 
   // Accept incoming data: take ownership of a memory block
   void take_data(std::vector<double>&&);
 
   // Use an encoded bitstream
-  virtual auto use_bitstream(const void* p, size_t len) -> RTNType; 
+  virtual auto use_bitstream(const void* p, size_t len) -> RTNType;
 
   //
   // Output
@@ -61,23 +60,23 @@ class SPERR_Driver{
   virtual auto decompress() -> RTNType;
 
  protected:
-  dims_type            m_dims = {0, 0, 0};
-  double               m_q = 1.0;     // 1.0 is a better initial value than 0.0
-  vecd_type            m_vals_d;
-  std::vector<int64_t> m_vals_ll;     // Signed integers produced by std::llrint()
-  vecui_t              m_vals_ui;     // Unsigned integers to be passed to the encoder
-  vecb_type            m_sign_array;  // Signs to be passed to the encoder
+  dims_type m_dims = {0, 0, 0};
+  double m_q = 1.0;  // 1.0 is a better initial value than 0.0
+  vecd_type m_vals_d;
+  std::vector<int64_t> m_vals_ll;  // Signed integers produced by std::llrint()
+  vecui_t m_vals_ui;               // Unsigned integers to be passed to the encoder
+  vecb_type m_sign_array;          // Signs to be passed to the encoder
   Conditioner::settings_type m_conditioning_settings = {true, false, false, false};
 
   Conditioner::meta_type m_condi_bitstream;
-  vec8_type              m_speck_bitstream;
+  vec8_type m_speck_bitstream;
 
   CDF97 m_cdf;
   Conditioner m_conditioner;
   std::unique_ptr<SPECK_INT> m_encoder = nullptr;
   std::unique_ptr<SPECK_INT> m_decoder = nullptr;
 
-  auto m_midtread_f2i() -> RTNType; 
+  auto m_midtread_f2i() -> RTNType;
   void m_midtread_i2f();
 
   // Both wavelet transforms operate on `m_vals_d`.
@@ -92,7 +91,6 @@ class SPERR_Driver{
   // Optional procedures for flexibility
   virtual auto m_proc_1() -> RTNType;
   virtual auto m_proc_2() -> RTNType;
-
 };
 
 };  // namespace sperr

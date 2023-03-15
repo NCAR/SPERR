@@ -36,8 +36,8 @@ using vecb_type = std::vector<bool>;
 using vec8_type = std::vector<uint8_t>;
 using dims_type = std::array<size_t, 3>;
 
-using uint_t = uint64_t; // temporary use
-using vecui_t = std::vector<uint_t>; // temporary use
+using uint_t = uint64_t;              // temporary use
+using vecui_t = std::vector<uint_t>;  // temporary use
 
 //
 // Helper classes

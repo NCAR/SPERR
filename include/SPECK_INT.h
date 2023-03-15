@@ -11,11 +11,10 @@ namespace sperr {
 
 class SPECK_INT {
  public:
-
   // Virtual destructor
   virtual ~SPECK_INT() = default;
 
-  void set_dims(dims_type);  
+  void set_dims(dims_type);
 
   // Retrieve the full length of a SPECK bitstream from its header
   auto get_speck_full_len(const void*) const -> uint64_t;
@@ -46,8 +45,8 @@ class SPECK_INT {
 
   // Misc. procedures
   virtual void m_assemble_bitstream();
-  //virtual auto m_ready_to_encode() const -> RTNType;
-  //virtual auto m_ready_to_decode() const -> RTNType;
+  // virtual auto m_ready_to_encode() const -> RTNType;
+  // virtual auto m_ready_to_decode() const -> RTNType;
 
   // Data members
   dims_type m_dims = {0, 0, 0};
@@ -61,7 +60,7 @@ class SPECK_INT {
   std::vector<bool>::const_iterator m_bit_itr;
 
   const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
-  const size_t m_header_size = 9; // 9 bytes
+  const size_t m_header_size = 9;  // 9 bytes
 
 };  // class SPECK_INT
 

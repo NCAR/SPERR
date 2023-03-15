@@ -10,7 +10,7 @@ namespace sperr {
 class Bitmask {
  public:
   // Constructor
-  Bitmask(size_t nbits = 0); // How many bits does it hold initially?
+  Bitmask(size_t nbits = 0);  // How many bits does it hold initially?
 
   // Functions for both read and write
   //
@@ -32,7 +32,7 @@ class Bitmask {
 
  private:
   std::vector<uint64_t> m_buf;
-  size_t m_num_bits = 0; // The actual number of bits in use; not necessarily 64 * m_buf.size()
+  size_t m_num_bits = 0;  // The actual number of bits in use; not necessarily 64 * m_buf.size()
 };
 
 };  // namespace sperr
