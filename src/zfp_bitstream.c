@@ -107,12 +107,13 @@ The following assumptions and restrictions apply:
 
 #include <limits.h>
 #include <stdlib.h>
+#include "zfp_bitstream.h"
+
+/* clang-format off */
 
 #ifndef inline_
   #define inline_
 #endif
-
-#include "zfp_bitstream.h"
 
 /* satisfy compiler when args unused */
 #define unused_(x) ((void)(x))
@@ -537,5 +538,7 @@ random_write_bit(bitstream* s, uint bit, bitstream_offset pos)
 /*
  * Finish Sam additions.
  */
+
+/* clang-format on */
 
 #undef unused_
