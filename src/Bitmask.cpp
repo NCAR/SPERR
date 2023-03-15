@@ -40,7 +40,7 @@ auto sperr::Bitmask::read_long(size_t idx) const -> uint64_t
 auto sperr::Bitmask::read_bit(size_t idx) const -> bool
 {
   auto word = m_buf[idx / 64];
-  word &= uint64_t(1) << (idx % 64);
+  word &= uint64_t{1} << (idx % 64);
   return (word != 0);
 }
 
@@ -54,7 +54,7 @@ void sperr::Bitmask::write_bit(size_t idx, bool bit)
   const auto wstart = idx / 64;
 
   auto word = m_buf[wstart];
-  const auto mask = uint64_t(1) << (idx % 64);
+  const auto mask = uint64_t{1} << (idx % 64);
   if (bit)
     word |= mask;
   else
