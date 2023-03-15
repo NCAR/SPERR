@@ -13,7 +13,8 @@ void sperr::SPECK1D_INT_ENC::encode()
   m_initialize_lists();
 
   // Mark every coefficient as insignificant
-  m_LSP_mask.assign(m_coeff_buf.size(), false);
+  m_LSP_mask.resize(m_coeff_buf.size());
+  m_LSP_mask.reset();
 
   // Decide the starting threshold.
   const auto max_coeff = *std::max_element(m_coeff_buf.cbegin(), m_coeff_buf.cend());
@@ -26,7 +27,7 @@ void sperr::SPECK1D_INT_ENC::encode()
 
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
     m_sorting_pass();
-    m_refinement_pass();
+    m_refinement_pass_encode();
 
     m_threshold /= uint_t{2};
     m_clean_LIS();
@@ -54,27 +55,6 @@ void sperr::SPECK1D_INT_ENC::m_sorting_pass()
   }
 }
 
-void sperr::SPECK1D_INT_ENC::m_refinement_pass()
-{
-  // First, process significant pixels previously found.
-  //
-  const auto tmp1 = std::array<uint_t, 2>{0, m_threshold};
-
-  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-    if (m_LSP_mask[i]) {
-      const bool o1 = m_coeff_buf[i] >= m_threshold;
-      m_bit_buffer.push_back(o1);
-      m_coeff_buf[i] -= tmp1[o1];
-    }
-  }
-
-  // Second, mark newly found significant pixels in `m_LSP_mask`.
-  //
-  for (auto idx : m_LSP_new)
-    m_LSP_mask[idx] = true;
-  m_LSP_new.clear();
-}
-
 void sperr::SPECK1D_INT_ENC::m_process_S(size_t idx1,
                                          size_t idx2,
                                          SigType sig,
@@ -93,7 +73,7 @@ void sperr::SPECK1D_INT_ENC::m_process_S(size_t idx1,
   //    subsets' significance is unknown.
   // 3) if sig is insignificant, then this set is not processed.
 
-  auto subset_sigs = std::array<SigType, 2>{SigType::Dunno, SigType::Dunno}; 
+  auto subset_sigs = std::array<SigType, 2>{SigType::Dunno, SigType::Dunno};
 
   if (sig == SigType::Dunno) {
     auto set_sig = m_decide_significance(set);
@@ -101,9 +81,9 @@ void sperr::SPECK1D_INT_ENC::m_process_S(size_t idx1,
     if (sig == SigType::Sig) {
       assert(set_sig.second >= 0);
       if (set_sig.second < set.length - set.length / 2)
-        subset_sigs = {SigType::Sig, SigType::Dunno}; 
+        subset_sigs = {SigType::Sig, SigType::Dunno};
       else
-        subset_sigs = {SigType::Insig, SigType::Sig}; 
+        subset_sigs = {SigType::Insig, SigType::Sig};
     }
   }
 

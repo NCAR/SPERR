@@ -119,5 +119,53 @@ void sperr::SPECK_INT::m_assemble_bitstream()
   m_bit_buffer.resize(useful_bits);
 }
 
+void sperr::SPECK_INT::m_refinement_pass_encode()
+{
+  // First, process significant pixels previously found.
+  //
+  const auto tmp1 = std::array<uint_t, 2>{uint_t{0}, m_threshold};
 
+  for (size_t i = 0; i < m_LSP_mask.size(); i += 64) {
+    const auto value = m_LSP_mask.read_long(i);
+    if (value != 0) {
+      for (size_t j = 0; j < 64; j++) {
+        if ((value >> j) & uint64_t{1}) {
+          const bool o1 = m_coeff_buf[i + j] >= m_threshold;
+          m_coeff_buf[i + j] -= tmp1[o1];
+          m_bit_buffer.push_back(o1);
+        }
+      }
+    }
+  }
 
+  // Second, mark newly found significant pixels in `m_LSP_mask`.
+  //
+  for (auto idx : m_LSP_new)
+    m_LSP_mask.write_bit(idx, true);
+  m_LSP_new.clear();
+}
+
+void sperr::SPECK_INT::m_refinement_pass_decode()
+{
+  // First, process significant pixels previously found.
+  //
+  const auto tmp = std::array<uint_t, 2>{uint_t{0}, m_threshold};
+
+  for (size_t i = 0; i < m_LSP_mask.size(); i += 64) {
+    const auto value = m_LSP_mask.read_long(i);
+    if (value != 0) {
+      for (size_t j = 0; j < 64; j++) {
+        if ((value >> j) & uint64_t{1}) {
+          m_coeff_buf[i + j] += tmp[*m_bit_itr];
+          ++m_bit_itr;
+        }
+      }
+    }
+  }
+
+  // Second, mark newly found significant pixels in `m_LSP_mask`
+  //
+  for (auto idx : m_LSP_new)
+    m_LSP_mask.write_bit(idx, true);
+  m_LSP_new.clear();
+}

@@ -2,6 +2,7 @@ add_library( SPERR
              sperr_helper.cpp
              zfp_bitstream.c
              Bitstream.cpp
+             Bitmask.cpp
              Conditioner.cpp
              CDF97.cpp
              SPECK_INT.cpp
@@ -56,6 +57,7 @@ set( public_h_list
 "include/sperr_helper.h;\
 include/zfp_bitstream.h;\
 include/Bitstream.h;\
+include/Bitmask.h;\
 include/Conditioner.h;\
 include/CDF97.h;\
 include/SPECK_INT.h;\

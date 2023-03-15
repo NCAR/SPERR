@@ -15,7 +15,8 @@ void sperr::SPECK1D_INT_DEC::decode()
   m_sign_array.assign(coeff_len, true);
 
   // Mark every coefficient as insignificant
-  m_LSP_mask.assign(m_coeff_buf.size(), false);
+  m_LSP_mask.resize(m_coeff_buf.size());
+  m_LSP_mask.reset();
   m_bit_itr = m_bit_buffer.cbegin();
 
   // Restore the biggest `m_threshold`
@@ -25,13 +26,12 @@ void sperr::SPECK1D_INT_DEC::decode()
 
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
     m_sorting_pass();
-    m_refinement_pass();
+    m_refinement_pass_decode();
 
     m_threshold /= uint_t{2};
     m_clean_LIS();
   }
 }
-
 
 void sperr::SPECK1D_INT_DEC::m_sorting_pass()
 {
@@ -49,26 +49,6 @@ void sperr::SPECK1D_INT_DEC::m_sorting_pass()
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++)
       m_process_S(idx1, idx2, dummy, true);
   }
-}
-
-void sperr::SPECK1D_INT_DEC::m_refinement_pass()
-{
-  // First, process significant pixels previously found.
-  //
-  const auto tmp = std::array<uint_t, 2>{uint_t{0}, m_threshold};
-
-  for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-    if (m_LSP_mask[i]) {
-      m_coeff_buf[i] += tmp[*m_bit_itr];
-      ++m_bit_itr;
-    }
-  }
-
-  // Second, mark newly found significant pixels in `m_LSP_mark`
-  //
-  for (auto idx : m_LSP_new)
-    m_LSP_mask[idx] = true;
-  m_LSP_new.clear();
 }
 
 void sperr::SPECK1D_INT_DEC::m_process_S(size_t idx1, size_t idx2, size_t& counter, bool read)
@@ -134,7 +114,7 @@ void sperr::SPECK1D_INT_DEC::m_code_S(size_t idx1, size_t idx2)
     read = false;
   const auto& set1 = subsets[1];
   assert(set1.length != 0);
-  if (set1.length == 1 ) {
+  if (set1.length == 1) {
     m_LIP.push_back(set1.start);
     m_process_P(m_LIP.size() - 1, sig_counter, read);
   }
@@ -144,6 +124,3 @@ void sperr::SPECK1D_INT_DEC::m_code_S(size_t idx1, size_t idx2)
     m_process_S(newidx1, m_LIS[newidx1].size() - 1, sig_counter, read);
   }
 }
-
-
-

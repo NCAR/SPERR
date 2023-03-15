@@ -3,10 +3,8 @@
 
 #include <stddef.h>
 #include <stdint.h> /* Sam addition */
-/* 
- * #include "zfp/internal/zfp/types.h"
- * #include "zfp/internal/zfp/system.h"
- */
+
+/* clang-format off */
 
 typedef uint32_t uint;    /* Sam */
 typedef uint64_t uint64;  /* Sam */
@@ -119,5 +117,7 @@ int stream_set_stride(bitstream* stream, size_t block, ptrdiff_t delta);
 }
 #endif
 #endif /* !inline_ */
+
+/* clang-format off */
 
 #endif

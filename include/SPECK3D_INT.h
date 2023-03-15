@@ -16,7 +16,7 @@ class Set3D {
   uint32_t length_x = 0;
   uint32_t length_y = 0;
   uint32_t length_z = 0;
-  // which partition level is this set at (starting from zero, in all 3 directions). 
+  // which partition level is this set at (starting from zero, in all 3 directions).
   // This data member is the sum of all 3 partition levels.
   uint16_t part_level = 0;
   SetType type = SetType::TypeS;  // Only used to indicate garbage status
@@ -38,7 +38,6 @@ class SPECK3D_INT : public SPECK_INT {
   virtual ~SPECK3D_INT() = default;
 
  protected:
-
   virtual void m_clean_LIS() override;
   virtual void m_initialize_lists() override;
 
