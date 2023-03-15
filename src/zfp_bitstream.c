@@ -105,9 +105,9 @@ The following assumptions and restrictions apply:
    caught.
 */
 
+#include "zfp_bitstream.h"
 #include <limits.h>
 #include <stdlib.h>
-#include "zfp_bitstream.h"
 
 /* clang-format off */
 
