@@ -64,7 +64,7 @@ class SPECK_INT {
 
   uint8_t m_num_bitplanes = 0;
   uint64_t m_bit_idx = 0; // current bit idx when decoding
-  uint64_t m_total_bits = 0; // keeps track of useful bits in `m_bit_buffer` when decoding
+  uint64_t m_total_bits = 0; // keeps track of useful bits in `m_bit_buffer`
 };  // class SPECK_INT
 
 };  // namespace sperr
