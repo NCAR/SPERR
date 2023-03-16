@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "Bitstream.h"
+#include "Bitmask.h"
 
 #include <random>
 #include <vector>
@@ -8,6 +9,7 @@
 namespace {
 
 using Stream = sperr::Bitstream;
+using Mask = sperr::Bitmask;
 
 TEST(Bitstream, constructor)
 {
@@ -51,220 +53,175 @@ TEST(Bitstream, MemoryAllocation1)
   s1.rewind();
   for (size_t i = 0; i < 64; i++) {
     auto val = distrib(gen);
-    s1.stream_write_bit(val);
+    s1.write_bit(val);
     vec.push_back(val);
   }
   EXPECT_EQ(s1.capacity(), 64);
 
-  // Write another bit; the capacity is expected to grow to 128.
-  s1.stream_write_bit(1);
+  // Write another bit and flush; the capacity is expected to grow to 128.
+  s1.write_bit(1);
   vec.push_back(1);
+  EXPECT_EQ(s1.wtell(), 65);
+  EXPECT_EQ(s1.capacity(), 64);
+  s1.flush();
   EXPECT_EQ(s1.capacity(), 128);
 
   // All saved bits should be correct too.
-  EXPECT_EQ(s1.wtell(), 65);
-  s1.flush();
   s1.rewind();
   for (size_t i = 0; i < vec.size(); i++)
-    EXPECT_EQ(s1.stream_read_bit(), vec[i]) << "at idx = " << i;
+    EXPECT_EQ(s1.read_bit(), vec[i]) << "at idx = " << i;
 
   // Let's try to trigger another memory re-allocation
   s1.wseek(65);
   for (size_t i = 0; i < 64; i++) {
     auto val = distrib(gen);
-    s1.stream_write_bit(val);
+    s1.write_bit(val);
     vec.push_back(val);
   }
-  EXPECT_EQ(s1.capacity(), 256);
   EXPECT_EQ(s1.wtell(), 129);
+  EXPECT_EQ(s1.capacity(), 128);
   s1.flush();
+  EXPECT_EQ(s1.capacity(), 256);
   s1.rewind();
   for (size_t i = 0; i < vec.size(); i++)
-    EXPECT_EQ(s1.stream_read_bit(), vec[i]) << "at idx = " << i;
+    EXPECT_EQ(s1.read_bit(), vec[i]) << "at idx = " << i;
 }
 
-TEST(Bitstream, MemoryAllocation2)
+TEST(Bitstream, StreamWriteRead)
 {
-  auto s1 = Stream(130);
-  EXPECT_EQ(s1.capacity(), 192);
+  const size_t N = 150;
+  auto s1 = Stream();
+  auto vec = std::vector<bool>(N);
 
-  s1.stream_write_n_bits(928798ul, 64);
-  s1.stream_write_n_bits(9845932ul, 64);
-  s1.stream_write_n_bits(19821ul, 63);
-  EXPECT_EQ(s1.wtell(), 191);
-  EXPECT_EQ(s1.capacity(), 192);
-
-  s1.stream_write_n_bits(8219821ul, 63);
-  EXPECT_TRUE(s1.capacity() == 256 || s1.capacity() == 384);
-
-  // Let's try one more time!
-  s1.flush();
-  s1.rewind();
-  auto vec = std::vector<bool>();
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<unsigned int> distrib(0, 1);
-  for (size_t itr = 0; itr < 4; itr++) {
-    uint64_t value = 0ul;
-    for (size_t i = 0; i < 64; i++) {
-      uint64_t ran = distrib(gen);
-      value += ran << i;
-      vec.push_back(ran);
-    }
-    s1.stream_write_n_bits(value, 64);
-  }
-  EXPECT_EQ(s1.wtell(), vec.size());
-  EXPECT_TRUE(s1.capacity() == 256 || s1.capacity() == 384);
-  s1.flush();
-  s1.rewind();
-  for (size_t i = 0; i < vec.size(); i++)
-    EXPECT_EQ(s1.stream_read_bit(), vec[i]) << "at idx = " << i;
-
-  s1.wseek(vec.size());
-  for (size_t itr = 0; itr < 3; itr++) {
-    uint64_t value = 0ul;
-    for (size_t i = 0; i < 63; i++) {
-      uint64_t ran = distrib(gen);
-      value += ran << i;
-      vec.push_back(ran);
-    }
-    s1.stream_write_n_bits(value, 63);
-  }
-  EXPECT_EQ(s1.wtell(), vec.size());
-  EXPECT_TRUE(s1.capacity() == 512 || s1.capacity() == 768);
-  s1.flush();
-  s1.rewind();
-  for (size_t i = 0; i < vec.size(); i++)
-    EXPECT_EQ(s1.stream_read_bit(), vec[i]) << "at idx = " << i;
-}
-
-TEST(Bitstream, TestRange)
-{
-  auto s1 = Stream(19);
-
-  // Test buffered word
-  s1.stream_write_n_bits(0ul, 63);
-  s1.stream_write_bit(true);
-  s1.flush();
-  EXPECT_EQ(s1.test_range(2, 45), false);
-  EXPECT_EQ(s1.test_range(2, 62), true);
-
-  // Test whole integers
-  s1.rewind();
-  for (size_t i = 0; i < 3; i++)
-    s1.stream_write_n_bits(0ul, 63);
-  s1.stream_write_bit(true);
-  s1.stream_write_bit(false);
-  s1.stream_write_bit(false);
-  EXPECT_EQ(s1.wtell(), 192);
-  s1.flush();
-  EXPECT_EQ(s1.test_range(0, 63), false);
-  EXPECT_EQ(s1.test_range(63, 63), false);
-  EXPECT_EQ(s1.test_range(126, 63), false);
-  EXPECT_EQ(s1.test_range(0, 64), false);
-  EXPECT_EQ(s1.test_range(64, 64), false);
-  EXPECT_EQ(s1.test_range(128, 61), false);
-  EXPECT_EQ(s1.test_range(64, 125), false);
-  EXPECT_EQ(s1.test_range(64, 126), true);
-  EXPECT_EQ(s1.test_range(63, 127), true);
-  EXPECT_EQ(s1.test_range(0, 190), true);
-
-  // Test remaining bits
-  s1.rewind();
-  for (size_t i = 0; i < 3; i++)
-    s1.stream_write_n_bits(0ul, 64);
-  s1.stream_write_bit(true);
-  s1.flush();
-  EXPECT_EQ(s1.test_range(0, 192), false);
-  EXPECT_EQ(s1.test_range(1, 192), true);
-  EXPECT_EQ(s1.test_range(2, 191), true);
-  EXPECT_EQ(s1.test_range(3, 190), true);
-  EXPECT_EQ(s1.test_range(3, 189), false);
-}
-
-TEST(Bitstream, TestRandomWrite)
-{
-  auto s1 = Stream(256);
-  s1.stream_write_n_bits(192878ul, 64);
-  s1.stream_write_n_bits(598932ul, 64);
-  s1.stream_write_n_bits(792878ul, 64);
-  s1.stream_write_n_bits(594932ul, 64);
-  s1.flush();
-
-  // Make a copy to a bit vector
-  auto vec = std::vector<bool>(256);
-  s1.rewind();
-  for (size_t i = 0; i < vec.size(); i++)
-    vec[i] = s1.stream_read_bit();
-
-  // Make many random writes
+  // Make N writes
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution<unsigned int> distrib1(0, 1);
-  std::uniform_int_distribution<unsigned int> distrib2(0, 255);
-  for (size_t i = 0; i < 50; i++) {
-    const auto bit = distrib1(gen);
-    const auto pos = distrib2(gen);
-    s1.random_write_bit(bit, pos);
-    s1.rseek(pos);
-    EXPECT_EQ(s1.stream_read_bit(), bit);
-    vec[pos] = bool(bit);
+  for (size_t i = 0; i < N; i++) {
+    const bool bit = distrib1(gen);
+    vec[i] = bit;
+    s1.write_bit(bit);
   }
+  EXPECT_EQ(s1.wtell(), 150);
+  s1.flush();
+  EXPECT_EQ(s1.wtell(), 192);
 
   s1.rewind();
-  for (size_t i = 0; i < vec.size(); i++)
-    EXPECT_EQ(s1.stream_read_bit(), vec[i]);
+  for (size_t i = 0; i < N; i++)
+    EXPECT_EQ(s1.read_bit(), vec[i]) << " at idx = " << i;
 }
 
-TEST(Bitstream, TestRandomRead)
+TEST(Bitstream, RandomWriteRead)
 {
-  auto s1 = Stream(256);
-  s1.stream_write_n_bits(5192878ul, 64);
-  s1.stream_write_n_bits(1598932ul, 64);
-  s1.stream_write_n_bits(8792878ul, 64);
-  s1.stream_write_n_bits(3594932ul, 64);
-  s1.flush();
+  const size_t N = 256;
+  auto s1 = Stream(59);
+  auto vec = std::vector<bool>(N);
 
-  // Make many random reads 
+  // Make N stream writes
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::uniform_int_distribution<unsigned int> distrib2(0, 255);
-  for (size_t i = 0; i < 50; i++) {
+  std::uniform_int_distribution<unsigned int> distrib1(0, 1);
+  for (size_t i = 0; i < N; i++) {
+    const bool bit = distrib1(gen);
+    vec[i] = bit;
+    s1.write_bit(bit);
+  }
+  EXPECT_EQ(s1.wtell(), 256);
+  s1.flush();
+  EXPECT_EQ(s1.wtell(), 256);
+
+  // Make random writes on word boundaries
+  s1.wseek(63);
+  s1.write_bit(true);   vec[63] = true;
+  s1.wseek(127);
+  s1.write_bit(false);  vec[127] = false;
+  s1.wseek(191);
+  s1.write_bit(true);   vec[191] = true;
+  s1.wseek(255);
+  s1.write_bit(false);  vec[255] = false;
+  s1.rewind();
+  for (size_t i = 0; i < N; i++)
+    EXPECT_EQ(s1.read_bit(), vec[i]) << " at idx = " << i;
+  
+  // Make random reads
+  std::uniform_int_distribution<unsigned int> distrib2(0, N - 1);
+  for (size_t i = 0; i < 100 ; i++) {
     const auto pos = distrib2(gen);
     s1.rseek(pos);
-    EXPECT_EQ(s1.random_read_bit(pos), s1.stream_read_bit());
+    EXPECT_EQ(s1.read_bit(), vec[pos]) << " at idx = " << i;
   }
 }
 
 TEST(Bitstream, CompactStream)
 {
   // Test full 64-bit multiples
-  auto s1 = Stream(128);
-  s1.stream_write_n_bits(35192878ul, 64);
-  s1.stream_write_n_bits(85192878ul, 64);
+  size_t N = 128;
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<unsigned int> distrib1(0, 1);
+  auto s1 = Stream();
+
+  for (size_t i = 0; i < N; i++)
+    s1.write_bit(distrib1(gen));
   s1.flush();
 
-  auto buf = s1.get_bitstream(128);
+  auto buf = s1.get_bitstream(N);
   auto s2 = Stream();
   s2.parse_bitstream(buf.data(), 128);
-
-  s1.rewind();
-  for (size_t i = 0; i < 128; i++)
-    EXPECT_EQ(s1.stream_read_bit(), s2.stream_read_bit());
+  for (size_t i = 0; i < N; i++)
+    EXPECT_EQ(s1.read_bit(), s2.read_bit());
 
   // Test full 64-bit multiples and 8-bit multiples
   buf = s1.get_bitstream(80);
   s2.parse_bitstream(buf.data(), 80);
-  s1.rewind();
   for (size_t i = 0; i < 80; i++)
-    EXPECT_EQ(s1.stream_read_bit(), s2.stream_read_bit());
+    EXPECT_EQ(s1.read_bit(), s2.read_bit());
 
   // Test full 64-bit multiples, 8-bit multiples, and remaining bits
   buf = s1.get_bitstream(85);
   s2.parse_bitstream(buf.data(), 85);
-  s1.rewind();
   for (size_t i = 0; i < 85; i++)
-    EXPECT_EQ(s1.stream_read_bit(), s2.stream_read_bit());
+    EXPECT_EQ(s1.read_bit(), s2.read_bit());
+
+  // Test less than 64 bits
+  buf = s1.get_bitstream(45);
+  s2.parse_bitstream(buf.data(), 45);
+  for (size_t i = 0; i < 45; i++)
+    EXPECT_EQ(s1.read_bit(), s2.read_bit());
+
+  // Test less than 8 bits
+  buf = s1.get_bitstream(5);
+  s2.parse_bitstream(buf.data(), 5);
+  for (size_t i = 0; i < 5; i++)
+    EXPECT_EQ(s1.read_bit(), s2.read_bit());
+}
+
+TEST(Bitmask, RandomReadWrite)
+{
+  const size_t N = 192;
+  auto m1 = Mask(N);
+  EXPECT_EQ(m1.size(), N);
+  m1.write_long(0, 928798ul);
+  m1.write_long(64, 9845932ul);
+  m1.write_long(128, 77719821ul);
+  EXPECT_EQ(m1.read_long(1), 928798ul);
+  EXPECT_EQ(m1.read_long(65), 9845932ul);
+  EXPECT_EQ(m1.read_long(129), 77719821ul);
+
+  auto vec = std::vector<bool>();
+  for (size_t i = 0; i < N; i++)
+    vec.push_back(m1.read_bit(i));
+
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<unsigned int> distrib(0, 1);
+  for (size_t i = 30; i < N - 20; i++) {
+    bool ran = distrib(gen);
+    m1.write_bit(i, ran);
+    vec[i] = ran;
+  }
+  for (size_t i = 0; i < N; i++)
+    EXPECT_EQ(m1.read_bit(i), vec[i]) << "at idx = " << i;
 }
 
 }  // namespace

@@ -1,149 +1,142 @@
 #include "Bitstream.h"
 
 #include <algorithm>  // std::max()
+#include <iterator>  // std::distance()
 #include <cassert>
 #include <cstring>
 
 // Constructor
 sperr::Bitstream::Bitstream(size_t nbits)
 {
-  assert(m_wsize == zfp::stream_alignment());
-  // Actually, leaving the pointer `m_handle` NULL will require so many null pointer
-  //   tests down the road, so we make sure to initialize it in the constructor.
-  this->reserve(std::max(m_wsize, nbits));
-}
-
-// Destructor
-sperr::Bitstream::~Bitstream()
-{
-  if (m_handle) {
-    zfp::stream_close(m_handle);
-    m_handle = nullptr;
-  }
+  m_itr = m_buf.begin();  // give it an initial value!
+  this->reserve(std::max(64ul, nbits));
 }
 
 // Functions for both read and write
 void sperr::Bitstream::rewind()
 {
-  return zfp::stream_rewind(m_handle);
+  m_itr = m_buf.begin();
+  m_buffer = 0;
+  m_bits = 0;
 }
 
 auto sperr::Bitstream::capacity() const -> size_t
 {
-  return m_capacity;
-}
-auto sperr::Bitstream::wsize() const -> size_t
-{
-  return m_wsize;
+  return m_buf.size() * 64;
 }
 
 void sperr::Bitstream::reserve(size_t nbits)
 {
-  if (nbits > m_capacity) {
+  if (nbits > m_buf.size() * 64) {
     // Number of longs that's absolutely needed.
-    auto num_longs = nbits / m_wsize;
-    if (nbits % m_wsize != 0)
+    auto num_longs = nbits / 64;
+    if (nbits % 64 != 0)
       num_longs++;
 
-    m_buf.reserve(num_longs);
-    m_buf.resize(m_buf.capacity());
-    m_capacity = m_buf.size() * m_wsize;
-
-    if (m_handle)
-      zfp::stream_close(m_handle);
-    m_handle = zfp::stream_open(m_buf.data(), m_buf.size() * sizeof(uint64_t));
-    zfp::stream_rewind(m_handle);
+    const auto dist = std::distance(m_buf.begin(), m_itr);
+    m_buf.resize(num_longs, 0);
+    m_itr = m_buf.begin() + dist;
   }
 }
 
 // Functions for read
 auto sperr::Bitstream::rtell() const -> size_t
 {
-  return zfp::stream_rtell(m_handle);
+  // Stupid C++ insists that `m_buf.begin()` gives me a const iterator...
+  std::vector<uint64_t>::const_iterator itr2 = m_itr;
+  return std::distance(m_buf.begin(), itr2) * 64 - m_bits;
 }
 
 void sperr::Bitstream::rseek(size_t offset)
 {
-  zfp::stream_rseek(m_handle, offset);
+  m_itr = m_buf.begin() + offset / 64;
+  const auto rem = offset % 64;
+  if (rem) {
+    m_buffer = *m_itr >> rem;
+    ++m_itr;
+    m_bits = 64 - rem;
+  }
+  else {
+    m_buffer = 0;
+    m_bits = 0;
+  }
 }
 
-auto sperr::Bitstream::test_range(size_t start_pos, size_t range_len) -> bool
+auto sperr::Bitstream::read_bit() -> bool
 {
-  return zfp::test_range(m_handle, start_pos, range_len);
-}
-
-auto sperr::Bitstream::stream_read_n_bits(size_t n) -> uint64_t
-{
-  assert(n <= 64);
-  return zfp::stream_read_bits(m_handle, n);
-}
-
-auto sperr::Bitstream::stream_read_bit() -> bool
-{
-  return zfp::stream_read_bit(m_handle);
-}
-
-auto sperr::Bitstream::random_read_bit(size_t pos) const -> bool
-{
-  return zfp::random_read_bit(m_handle, pos);
+  if (m_bits == 0) {
+    m_buffer = *m_itr;
+    ++m_itr;
+    m_bits = 64;
+  }
+  --m_bits;
+  bool bit = m_buffer & uint64_t{1};
+  m_buffer >>= 1;
+  return bit;
 }
 
 // Functions for write
 auto sperr::Bitstream::wtell() const -> size_t
 {
-  return zfp::stream_wtell(m_handle);
+  // Stupid C++ insists that `m_buf.begin()` gives me a const iterator...
+  std::vector<uint64_t>::const_iterator itr2 = m_itr;
+  return std::distance(m_buf.begin(), itr2) * 64 + m_bits;
 }
 
 void sperr::Bitstream::wseek(size_t offset)
 {
-  return zfp::stream_wseek(m_handle, offset);
+  m_itr = m_buf.begin() + offset / 64;
+  const auto rem = offset % 64;
+  if (rem) {
+    m_buffer = *m_itr;
+    m_buffer &= (uint64_t{1} << rem) - 1;
+    m_bits = rem;
+  }
+  else {
+    m_buffer = 0;
+    m_bits = 0;
+  }
 }
 
-auto sperr::Bitstream::flush() -> size_t
+void sperr::Bitstream::write_bit(bool bit)
 {
-  return zfp::stream_flush(m_handle);
+  m_buffer += uint64_t{bit} << m_bits;
+  if (++m_bits == 64) {
+    if (m_itr == m_buf.end()) {  // allocate memory if necessary
+      const auto dist = m_buf.size();
+      m_buf.push_back(0);
+      m_buf.resize(m_buf.capacity());
+      m_itr = m_buf.begin() + dist;
+    }
+    *m_itr = m_buffer;
+    ++m_itr;
+    m_buffer = 0;
+    m_bits = 0;
+  }
 }
 
-auto sperr::Bitstream::stream_write_bit(bool bit) -> bool
+void sperr::Bitstream::flush()
 {
-  if (zfp::stream_wtell(m_handle) == m_capacity)
-    m_wgrow_buf();
-  return zfp::stream_write_bit(m_handle, bit);
-}
-
-auto sperr::Bitstream::stream_write_n_bits(uint64_t value, size_t n) -> uint64_t
-{
-  assert(n <= 64);
-  if (zfp::stream_wtell(m_handle) + n > m_capacity)
-    m_wgrow_buf();
-  return zfp::stream_write_bits(m_handle, value, n);
-}
-
-auto sperr::Bitstream::random_write_bit(bool bit, size_t pos) -> bool
-{
-  return zfp::random_write_bit(m_handle, bit, pos);
-}
-
-void sperr::Bitstream::m_wgrow_buf()
-{
-  const auto curr_pos = zfp::stream_wtell(m_handle);
-  zfp::stream_flush(m_handle);
-
-  m_buf.push_back(0ul);
-  m_buf.resize(m_buf.capacity());
-  m_capacity = m_buf.size() * m_wsize;
-
-  zfp::stream_close(m_handle);
-  m_handle = zfp::stream_open(m_buf.data(), m_buf.size() * sizeof(uint64_t));
-  zfp::stream_wseek(m_handle, curr_pos);
+  if (m_bits) { // only flush when there are remaining bits
+    if (m_itr == m_buf.end()) {
+      const auto dist = m_buf.size();
+      m_buf.push_back(0);
+      m_buf.resize(m_buf.capacity());
+      m_itr = m_buf.begin() + dist;
+    }
+    *m_itr = m_buffer;
+    ++m_itr;
+    m_buffer = 0;
+    m_bits = 0;
+  }
 }
 
 // Functions to provide or parse a compact bitstream
 auto sperr::Bitstream::get_bitstream(size_t num_bits) -> std::vector<std::byte>
 {
-  assert(num_bits <= m_capacity);
-  const auto num_longs = num_bits / m_wsize;
-  const auto rem_bits = num_bits % m_wsize;
+  assert(num_bits <= m_buf.size() * 64);
+  const auto num_longs = num_bits / 64;
+  const auto rem_bits = num_bits % 64;
   auto rem_bytes = rem_bits / 8;
   if (rem_bits % 8 != 0)
     rem_bytes++;
@@ -151,11 +144,13 @@ auto sperr::Bitstream::get_bitstream(size_t num_bits) -> std::vector<std::byte>
   auto tmp = std::vector<std::byte>(num_longs * sizeof(uint64_t) + rem_bytes);
   std::memcpy(tmp.data(), m_buf.data(), num_longs * sizeof(uint64_t));
 
-  if (rem_bits > 0) {
-    zfp::stream_rseek(m_handle, num_longs * m_wsize);
-    uint64_t value = zfp::stream_read_bits(m_handle, rem_bits);
+  if (rem_bytes > 0) {
+    this->rseek(num_longs * 64);
+    uint64_t value = *m_itr;
     std::memcpy(tmp.data() + num_longs * sizeof(uint64_t), &value, rem_bytes);
   }
+
+  this->rewind();
 
   return tmp;
 }
@@ -164,8 +159,8 @@ void sperr::Bitstream::parse_bitstream(const void* p, size_t num_bits)
 {
   this->reserve(num_bits);
 
-  const auto num_longs = num_bits / m_wsize;
-  const auto rem_bits = num_bits % m_wsize;
+  const auto num_longs = num_bits / 64;
+  const auto rem_bits = num_bits % 64;
   auto rem_bytes = rem_bits / 8;
   if (rem_bits % 8 != 0)
     rem_bytes++;
@@ -173,8 +168,8 @@ void sperr::Bitstream::parse_bitstream(const void* p, size_t num_bits)
   const auto* p_byte = static_cast<const std::byte*>(p);
   std::memcpy(m_buf.data(), p_byte, num_longs * sizeof(uint64_t));
 
-  if (rem_bits > 0)
+  if (rem_bytes > 0)
     std::memcpy(m_buf.data() + num_longs, p_byte + num_longs * sizeof(uint64_t), rem_bytes);
 
-  zfp::stream_rewind(m_handle);
+  this->rewind();
 }

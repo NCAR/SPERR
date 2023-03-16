@@ -1,7 +1,26 @@
 #ifndef BITSTREAM_H
 #define BITSTREAM_H
 
-#include "zfp_bitstream.h"
+/*
+ * Bitstream is intended and optimized for streaming reads and writes.
+ *   It is heavily modeled after the bitstream structure in ZFP:
+ *   (https://github.com/LLNL/zfp/blob/develop/include/zfp/bitstream.inl)
+ *   For heavy use of random reads and writes, please use the Bitmask class instead.
+ *
+ * Bitstream uses words of 64 bits in its storage. A buffered word of 64 bits is also
+ *   used to speed up stream reads and writes.
+ *
+ * A few caveats:
+ *   1. Random reads CAN be achieved via repeated rseek() and read_bit() calls.
+ *      However, it will be much less efficient than the random reads in Bitmask.
+ *   2. A function call of wseek() will erase the remaining bits in a word, i.e., 
+ *      from the wseek() position to the next word boundary, though the bits up to the wseek()
+ *      position will be preserved. This design is for better efficiency of write_bit().
+ *   3. Because of 2, true random writes is not possible; it's only possible at the end of
+ *      each word, e.g., positions of 63, 127, 191.
+ *   4. a function call of flush() will align the writing position to the beginning of the
+ *      next word.
+ */
 
 #include <cstdint>
 #include <vector>
@@ -10,52 +29,37 @@ namespace sperr {
 
 class Bitstream {
  public:
-  // Constructor and destructor
+  // Constructor
   //
   // How many bits does it hold initially?
   Bitstream(size_t nbits = 64);
-  ~Bitstream();
-  Bitstream(const Bitstream& other) = delete;
-  Bitstream(Bitstream&& other) = delete;
-  Bitstream& operator=(const Bitstream& other) = delete;
-  Bitstream& operator=(Bitstream&& other) = delete;
 
   // Functions for both read and write
   void rewind();
   auto capacity() const -> size_t;
-  auto wsize() const -> size_t;
   void reserve(size_t nbits);
 
   // Functions for read
   auto rtell() const -> size_t;
   void rseek(size_t offset);
-  auto stream_read_n_bits(size_t n) -> uint64_t;
-  auto stream_read_bit() -> bool;
-  auto random_read_bit(size_t pos) const -> bool;
-  auto test_range(size_t start_pos, size_t range_len) -> bool;
+  auto read_bit() -> bool;
 
   // Functions for write
-  //   All write functions won't flush, except for `random_write_bit()`.
   auto wtell() const -> size_t;
   void wseek(size_t offset);
-  auto flush() -> size_t;
-  auto stream_write_bit(bool bit) -> bool;
-  auto stream_write_n_bits(uint64_t value, size_t n) -> uint64_t;
-  auto random_write_bit(bool bit, size_t pos) -> bool;  // will effectively flush upon every call.
+  void write_bit(bool bit);
+  void flush();
 
   // Functions that provide or parse a compact bitstream
   auto get_bitstream(size_t num_bits) -> std::vector<std::byte>;
   void parse_bitstream(const void* p, size_t num_bits);
 
  private:
-  struct bitstream* m_handle = nullptr;
-
   std::vector<uint64_t> m_buf;
-  const size_t m_wsize = 64;
-  size_t m_capacity = 0;
+  std::vector<uint64_t>::iterator m_itr;  // Pointer to the next word to be read/written.
 
-  // Grows the buffer in write mode
-  void m_wgrow_buf();
+  uint64_t m_buffer = 0;  // incoming/outgoing bits
+  uint32_t m_bits = 0;    // number of buffered bits
 };
 
 };  // namespace sperr
