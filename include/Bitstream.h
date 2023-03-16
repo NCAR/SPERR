@@ -22,6 +22,7 @@
  *      next word.
  */
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -31,26 +32,29 @@ class Bitstream {
  public:
   // Constructor
   //
-  // How many bits does it hold initially?
-  Bitstream(size_t nbits = 64);
+  Bitstream(size_t nbits = 64); // How many bits does it hold initially?
 
   // Functions for both read and write
+  //
   void rewind();
   auto capacity() const -> size_t;
   void reserve(size_t nbits);
 
   // Functions for read
+  //
   auto rtell() const -> size_t;
   void rseek(size_t offset);
   auto read_bit() -> bool;
 
   // Functions for write
+  //
   auto wtell() const -> size_t;
   void wseek(size_t offset);
   void write_bit(bool bit);
   void flush();
 
   // Functions that provide or parse a compact bitstream
+  //
   auto get_bitstream(size_t num_bits) -> std::vector<std::byte>;
   void parse_bitstream(const void* p, size_t num_bits);
 
