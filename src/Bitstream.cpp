@@ -132,7 +132,7 @@ void sperr::Bitstream::flush()
 }
 
 // Functions to provide or parse a compact bitstream
-auto sperr::Bitstream::get_bitstream(size_t num_bits) -> std::vector<std::byte>
+auto sperr::Bitstream::get_bitstream(size_t num_bits) const -> std::vector<std::byte>
 {
   assert(num_bits <= m_buf.size() * 64);
   const auto num_longs = num_bits / 64;
@@ -145,12 +145,9 @@ auto sperr::Bitstream::get_bitstream(size_t num_bits) -> std::vector<std::byte>
   std::memcpy(tmp.data(), m_buf.data(), num_longs * sizeof(uint64_t));
 
   if (rem_bytes > 0) {
-    this->rseek(num_longs * 64);
-    uint64_t value = *m_itr;
+    uint64_t value = m_buf[num_longs];
     std::memcpy(tmp.data() + num_longs * sizeof(uint64_t), &value, rem_bytes);
   }
-
-  this->rewind();
 
   return tmp;
 }

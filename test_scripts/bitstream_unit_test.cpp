@@ -166,6 +166,7 @@ TEST(Bitstream, CompactStream)
   s1.flush();
 
   auto buf = s1.get_bitstream(N);
+  s1.rewind();
   auto s2 = Stream();
   s2.parse_bitstream(buf.data(), 128);
   for (size_t i = 0; i < N; i++)
@@ -173,24 +174,28 @@ TEST(Bitstream, CompactStream)
 
   // Test full 64-bit multiples and 8-bit multiples
   buf = s1.get_bitstream(80);
+  s1.rewind();
   s2.parse_bitstream(buf.data(), 80);
   for (size_t i = 0; i < 80; i++)
     EXPECT_EQ(s1.read_bit(), s2.read_bit());
 
   // Test full 64-bit multiples, 8-bit multiples, and remaining bits
   buf = s1.get_bitstream(85);
+  s1.rewind();
   s2.parse_bitstream(buf.data(), 85);
   for (size_t i = 0; i < 85; i++)
     EXPECT_EQ(s1.read_bit(), s2.read_bit());
 
   // Test less than 64 bits
   buf = s1.get_bitstream(45);
+  s1.rewind();
   s2.parse_bitstream(buf.data(), 45);
   for (size_t i = 0; i < 45; i++)
     EXPECT_EQ(s1.read_bit(), s2.read_bit());
 
   // Test less than 8 bits
   buf = s1.get_bitstream(5);
+  s1.rewind();
   s2.parse_bitstream(buf.data(), 5);
   for (size_t i = 0; i < 5; i++)
     EXPECT_EQ(s1.read_bit(), s2.read_bit());
