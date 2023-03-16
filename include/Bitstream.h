@@ -11,11 +11,11 @@
  *   used to speed up stream reads and writes.
  *
  * A few caveats:
- *   1. Random reads CAN be achieved via repeated rseek() and read_bit() calls.
+ *   1. Random reads CAN be achieved via repeated rseek() and rbit() calls.
  *      However, it will be much less efficient than the random reads in Bitmask.
  *   2. A function call of wseek() will erase the remaining bits in a buffered word, i.e.,
  *      from the wseek() position to the next word boundary, though the bits up to the wseek()
- *      position will be preserved. This design is for better efficiency of write_bit().
+ *      position will be preserved. This design is for better efficiency of wbit().
  *   3. Because of 2, true random writes is not possible; it's only possible at the end of
  *      each word, e.g., positions of 63, 127, 191.
  *   4. A function call of flush() will align the writing position to the beginning of the
@@ -47,13 +47,13 @@ class Bitstream {
   //
   auto rtell() const -> size_t;
   void rseek(size_t offset);
-  auto read_bit() -> bool;
+  auto rbit() -> bool;
 
   // Functions for write
   //
   auto wtell() const -> size_t;
   void wseek(size_t offset);
-  void write_bit(bool bit);
+  void wbit(bool bit);
   void flush();
 
   // Functions that provide or parse a compact bitstream

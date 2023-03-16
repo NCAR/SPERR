@@ -53,13 +53,13 @@ TEST(Bitstream, MemoryAllocation1)
   s1.rewind();
   for (size_t i = 0; i < 64; i++) {
     auto val = distrib(gen);
-    s1.write_bit(val);
+    s1.wbit(val);
     vec.push_back(val);
   }
   EXPECT_EQ(s1.capacity(), 64);
 
   // Write another bit and flush; the capacity is expected to grow to 128.
-  s1.write_bit(1);
+  s1.wbit(1);
   vec.push_back(1);
   EXPECT_EQ(s1.wtell(), 65);
   EXPECT_EQ(s1.capacity(), 64);
@@ -69,13 +69,13 @@ TEST(Bitstream, MemoryAllocation1)
   // All saved bits should be correct too.
   s1.rewind();
   for (size_t i = 0; i < vec.size(); i++)
-    EXPECT_EQ(s1.read_bit(), vec[i]) << "at idx = " << i;
+    EXPECT_EQ(s1.rbit(), vec[i]) << "at idx = " << i;
 
   // Let's try to trigger another memory re-allocation
   s1.wseek(65);
   for (size_t i = 0; i < 64; i++) {
     auto val = distrib(gen);
-    s1.write_bit(val);
+    s1.wbit(val);
     vec.push_back(val);
   }
   EXPECT_EQ(s1.wtell(), 129);
@@ -84,7 +84,7 @@ TEST(Bitstream, MemoryAllocation1)
   EXPECT_EQ(s1.capacity(), 256);
   s1.rewind();
   for (size_t i = 0; i < vec.size(); i++)
-    EXPECT_EQ(s1.read_bit(), vec[i]) << "at idx = " << i;
+    EXPECT_EQ(s1.rbit(), vec[i]) << "at idx = " << i;
 }
 
 TEST(Bitstream, StreamWriteRead)
@@ -100,7 +100,7 @@ TEST(Bitstream, StreamWriteRead)
   for (size_t i = 0; i < N; i++) {
     const bool bit = distrib1(gen);
     vec[i] = bit;
-    s1.write_bit(bit);
+    s1.wbit(bit);
   }
   EXPECT_EQ(s1.wtell(), 150);
   s1.flush();
@@ -108,7 +108,7 @@ TEST(Bitstream, StreamWriteRead)
 
   s1.rewind();
   for (size_t i = 0; i < N; i++)
-    EXPECT_EQ(s1.read_bit(), vec[i]) << " at idx = " << i;
+    EXPECT_EQ(s1.rbit(), vec[i]) << " at idx = " << i;
 }
 
 TEST(Bitstream, RandomWriteRead)
@@ -124,7 +124,7 @@ TEST(Bitstream, RandomWriteRead)
   for (size_t i = 0; i < N; i++) {
     const bool bit = distrib1(gen);
     vec[i] = bit;
-    s1.write_bit(bit);
+    s1.wbit(bit);
   }
   EXPECT_EQ(s1.wtell(), 256);
   s1.flush();
@@ -132,23 +132,23 @@ TEST(Bitstream, RandomWriteRead)
 
   // Make random writes on word boundaries
   s1.wseek(63);
-  s1.write_bit(true);   vec[63] = true;
+  s1.wbit(true);   vec[63] = true;
   s1.wseek(127);
-  s1.write_bit(false);  vec[127] = false;
+  s1.wbit(false);  vec[127] = false;
   s1.wseek(191);
-  s1.write_bit(true);   vec[191] = true;
+  s1.wbit(true);   vec[191] = true;
   s1.wseek(255);
-  s1.write_bit(false);  vec[255] = false;
+  s1.wbit(false);  vec[255] = false;
   s1.rewind();
   for (size_t i = 0; i < N; i++)
-    EXPECT_EQ(s1.read_bit(), vec[i]) << " at idx = " << i;
+    EXPECT_EQ(s1.rbit(), vec[i]) << " at idx = " << i;
   
   // Make random reads
   std::uniform_int_distribution<unsigned int> distrib2(0, N - 1);
   for (size_t i = 0; i < 100 ; i++) {
     const auto pos = distrib2(gen);
     s1.rseek(pos);
-    EXPECT_EQ(s1.read_bit(), vec[pos]) << " at idx = " << i;
+    EXPECT_EQ(s1.rbit(), vec[pos]) << " at idx = " << i;
   }
 }
 
@@ -162,7 +162,7 @@ TEST(Bitstream, CompactStream)
   auto s1 = Stream();
 
   for (size_t i = 0; i < N; i++)
-    s1.write_bit(distrib1(gen));
+    s1.wbit(distrib1(gen));
   s1.flush();
 
   auto buf = s1.get_bitstream(N);
@@ -171,7 +171,7 @@ TEST(Bitstream, CompactStream)
   auto s2 = Stream();
   s2.parse_bitstream(buf.data(), 128);
   for (size_t i = 0; i < N; i++)
-    EXPECT_EQ(s1.read_bit(), s2.read_bit());
+    EXPECT_EQ(s1.rbit(), s2.rbit());
 
   // Test full 64-bit multiples and 8-bit multiples
   buf = s1.get_bitstream(80);
@@ -179,7 +179,7 @@ TEST(Bitstream, CompactStream)
   s1.rewind();
   s2.parse_bitstream(buf.data(), 80);
   for (size_t i = 0; i < 80; i++)
-    EXPECT_EQ(s1.read_bit(), s2.read_bit());
+    EXPECT_EQ(s1.rbit(), s2.rbit());
 
   // Test full 64-bit multiples, 8-bit multiples, and remaining bits
   buf = s1.get_bitstream(85);
@@ -187,7 +187,7 @@ TEST(Bitstream, CompactStream)
   s1.rewind();
   s2.parse_bitstream(buf.data(), 85);
   for (size_t i = 0; i < 85; i++)
-    EXPECT_EQ(s1.read_bit(), s2.read_bit());
+    EXPECT_EQ(s1.rbit(), s2.rbit());
 
   // Test less than 64 bits
   buf = s1.get_bitstream(45);
@@ -195,7 +195,7 @@ TEST(Bitstream, CompactStream)
   s1.rewind();
   s2.parse_bitstream(buf.data(), 45);
   for (size_t i = 0; i < 45; i++)
-    EXPECT_EQ(s1.read_bit(), s2.read_bit());
+    EXPECT_EQ(s1.rbit(), s2.rbit());
 
   // Test less than 8 bits
   buf = s1.get_bitstream(5);
@@ -203,7 +203,7 @@ TEST(Bitstream, CompactStream)
   s1.rewind();
   s2.parse_bitstream(buf.data(), 5);
   for (size_t i = 0; i < 5; i++)
-    EXPECT_EQ(s1.read_bit(), s2.read_bit());
+    EXPECT_EQ(s1.rbit(), s2.rbit());
 }
 
 TEST(Bitmask, RandomReadWrite)
