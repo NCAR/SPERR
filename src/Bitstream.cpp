@@ -62,7 +62,7 @@ void sperr::Bitstream::rseek(size_t offset)
   }
 }
 
-auto sperr::Bitstream::read_bit() -> bool
+auto sperr::Bitstream::rbit() -> bool
 {
   if (m_bits == 0) {
     m_buffer = *m_itr;
@@ -98,7 +98,7 @@ void sperr::Bitstream::wseek(size_t offset)
   }
 }
 
-void sperr::Bitstream::write_bit(bool bit)
+void sperr::Bitstream::wbit(bool bit)
 {
   m_buffer += uint64_t{bit} << m_bits;
   if (++m_bits == 64) {
