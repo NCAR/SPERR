@@ -132,22 +132,33 @@ void sperr::Bitstream::flush()
 }
 
 // Functions to provide or parse a compact bitstream
-auto sperr::Bitstream::get_bitstream(size_t num_bits) const -> std::vector<std::byte>
+void sperr::Bitstream::write_bitstream(void* p, size_t num_bits) const
 {
   assert(num_bits <= m_buf.size() * 64);
   const auto num_longs = num_bits / 64;
-  const auto rem_bits = num_bits % 64;
-  auto rem_bytes = rem_bits / 8;
-  if (rem_bits % 8 != 0)
+  auto rem_bytes = num_bits / 8 - num_longs * sizeof(uint64_t);
+  if (num_bits % 8 != 0)
     rem_bytes++;
 
-  auto tmp = std::vector<std::byte>(num_longs * sizeof(uint64_t) + rem_bytes);
-  std::memcpy(tmp.data(), m_buf.data(), num_longs * sizeof(uint64_t));
+  if (num_longs > 0)
+    std::memcpy(p, m_buf.data(), num_longs * sizeof(uint64_t));
 
   if (rem_bytes > 0) {
     uint64_t value = m_buf[num_longs];
-    std::memcpy(tmp.data() + num_longs * sizeof(uint64_t), &value, rem_bytes);
+    auto* const p_byte = static_cast<std::byte*>(p);
+    std::memcpy(p_byte + num_longs * sizeof(uint64_t), &value, rem_bytes);
   }
+}
+
+auto sperr::Bitstream::get_bitstream(size_t num_bits) const -> std::vector<std::byte>
+{
+  assert(num_bits <= m_buf.size() * 64);
+  auto num_bytes = num_bits / 8;
+  if (num_bits % 8 != 0)
+    num_bytes++;
+
+  auto tmp = std::vector<std::byte>(num_bytes);
+  this->write_bitstream(tmp.data(), num_bits);
 
   return tmp;
 }
@@ -157,13 +168,14 @@ void sperr::Bitstream::parse_bitstream(const void* p, size_t num_bits)
   this->reserve(num_bits);
 
   const auto num_longs = num_bits / 64;
-  const auto rem_bits = num_bits % 64;
-  auto rem_bytes = rem_bits / 8;
-  if (rem_bits % 8 != 0)
+  auto rem_bytes = num_bits / 8 - num_longs * sizeof(uint64_t);
+  if (num_bits % 8 != 0)
     rem_bytes++;
 
-  const auto* p_byte = static_cast<const std::byte*>(p);
-  std::memcpy(m_buf.data(), p_byte, num_longs * sizeof(uint64_t));
+  const auto* const p_byte = static_cast<const std::byte*>(p);
+
+  if (num_longs > 0)
+    std::memcpy(m_buf.data(), p_byte, num_longs * sizeof(uint64_t));
 
   if (rem_bytes > 0)
     std::memcpy(m_buf.data() + num_longs, p_byte + num_longs * sizeof(uint64_t), rem_bytes);

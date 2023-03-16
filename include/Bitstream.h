@@ -13,13 +13,16 @@
  * A few caveats:
  *   1. Random reads CAN be achieved via repeated rseek() and read_bit() calls.
  *      However, it will be much less efficient than the random reads in Bitmask.
- *   2. A function call of wseek() will erase the remaining bits in a buffered word, i.e., 
+ *   2. A function call of wseek() will erase the remaining bits in a buffered word, i.e.,
  *      from the wseek() position to the next word boundary, though the bits up to the wseek()
  *      position will be preserved. This design is for better efficiency of write_bit().
  *   3. Because of 2, true random writes is not possible; it's only possible at the end of
  *      each word, e.g., positions of 63, 127, 191.
- *   4. a function call of flush() will align the writing position to the beginning of the
+ *   4. A function call of flush() will align the writing position to the beginning of the
  *      next word.
+ *   5. Functions write_bitstream() and parse_bitstream() take in a raw pointer and the
+ *      number of bits to write/read. The memory pointed to by the raw pointer needs to
+ *      be big enough to hold the number of bits specified.
  */
 
 #include <cstddef>
@@ -55,6 +58,7 @@ class Bitstream {
 
   // Functions that provide or parse a compact bitstream
   //
+  void write_bitstream(void* p, size_t num_bits) const;
   void parse_bitstream(const void* p, size_t num_bits);
   auto get_bitstream(size_t num_bits) const -> std::vector<std::byte>;
 
