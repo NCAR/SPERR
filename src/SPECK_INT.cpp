@@ -46,17 +46,14 @@ void sperr::SPECK_INT::use_bitstream(const vec8_type& stream)
   // num_bitplanes (uint8_t), num_useful_bits (uint64_t)
 
   // Step 1: extract num_bitplanes and num_useful_bits
-  uint64_t useful_bits = 0;
   std::memcpy(&m_num_bitplanes, stream.data(), sizeof(m_num_bitplanes));
-  std::memcpy(&useful_bits, stream.data() + sizeof(m_num_bitplanes), sizeof(useful_bits));
+  std::memcpy(&m_total_bits, stream.data() + sizeof(m_num_bitplanes), sizeof(m_total_bits));
 
   // Step 2: unpack bits
-  const auto num_of_bools = (stream.size() - m_header_size) * 8;
-  m_bit_buffer.resize(num_of_bools);
-  sperr::unpack_booleans(m_bit_buffer, stream.data(), stream.size(), m_header_size);
-
-  // Step 3: remove padding bits
-  m_bit_buffer.resize(useful_bits);
+  //const auto num_of_bools = (stream.size() - m_header_size) * 8;
+  //m_bit_buffer.resize(num_of_bools);
+  //sperr::unpack_booleans(m_bit_buffer, stream.data(), stream.size(), m_header_size);
+  m_bit_buffer.parse_bitstream(stream.data() + m_header_size, m_total_bits);
 }
 
 auto sperr::SPECK_INT::view_encoded_bitstream() const -> const vec8_type&
