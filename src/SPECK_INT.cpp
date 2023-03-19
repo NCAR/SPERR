@@ -133,7 +133,7 @@ void sperr::SPECK_INT::m_refinement_pass_encode()
           const bool o1 = m_coeff_buf[i + j] >= m_threshold;
           m_coeff_buf[i + j] -= tmp1[o1];
           //m_bit_buffer.push_back(o1);
-          m_bit_buffer.write_bit(o1);
+          m_bit_buffer.wbit(o1);
         }
       }
     }
@@ -157,7 +157,7 @@ void sperr::SPECK_INT::m_refinement_pass_decode()
     if (value != 0) {
       for (size_t j = 0; j < 64; j++) {
         if ((value >> j) & uint64_t{1}) {
-          m_coeff_buf[i + j] += tmp[m_bit_buffer.read_bit()];
+          m_coeff_buf[i + j] += tmp[m_bit_buffer.rbit()];
           ++m_bit_idx;
         }
       }
