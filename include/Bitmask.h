@@ -30,8 +30,8 @@ class Bitmask {
   // Functions for both read and write
   //
   auto size() const -> size_t;
-  void resize(size_t nbits);    // Resize to hold n bits.
-  void reset();                 // Set the current bitmask to be all 0s.
+  void resize(size_t nbits);  // Resize to hold n bits.
+  void reset();               // Set the current bitmask to be all 0s.
 
   // Functions for read
   //

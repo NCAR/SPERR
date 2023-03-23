@@ -67,7 +67,7 @@ class Bitstream {
   std::vector<uint64_t>::iterator m_itr;  // Iterator to the next word to be read/written.
 
   uint64_t m_buffer = 0;  // incoming/outgoing bits
-  uint32_t m_bits = 0;    // number of buffered bits
+  size_t m_bits = 0;    // number of buffered bits
 };
 
 };  // namespace sperr
