@@ -35,6 +35,8 @@ void sperr::SPECK3D_INT_DEC::decode()
     m_threshold /= uint_t{2};
     m_clean_LIS();
   }
+
+  assert(m_bit_idx == m_total_bits);
 }
 
 void sperr::SPECK3D_INT_DEC::m_sorting_pass()
