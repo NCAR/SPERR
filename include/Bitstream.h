@@ -35,7 +35,7 @@ class Bitstream {
  public:
   // Constructor
   //
-  Bitstream(size_t nbits = 64); // How many bits does it hold initially?
+  Bitstream(size_t nbits = 0);  // How many bits does it hold initially?
 
   // Functions for both read and write
   //
@@ -64,7 +64,7 @@ class Bitstream {
 
  private:
   std::vector<uint64_t> m_buf;
-  std::vector<uint64_t>::iterator m_itr;  // Pointer to the next word to be read/written.
+  std::vector<uint64_t>::iterator m_itr;  // Iterator to the next word to be read/written.
 
   uint64_t m_buffer = 0;  // incoming/outgoing bits
   uint32_t m_bits = 0;    // number of buffered bits

@@ -14,7 +14,7 @@ using Mask = sperr::Bitmask;
 TEST(Bitstream, constructor)
 {
   auto s1 = Stream();
-  EXPECT_EQ(s1.capacity(), 64);
+  EXPECT_EQ(s1.capacity(), 0);
 
   auto s2 = Stream(1024 + 1);
   EXPECT_EQ(s2.capacity(), 1024 + 64);
