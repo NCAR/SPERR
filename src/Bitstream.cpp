@@ -1,15 +1,14 @@
 #include "Bitstream.h"
 
-#include <algorithm>  // std::max()
-#include <iterator>  // std::distance()
 #include <cassert>
 #include <cstring>
+#include <iterator>  // std::distance()
 
 // Constructor
 sperr::Bitstream::Bitstream(size_t nbits)
 {
-  m_itr = m_buf.begin();  // give it an initial value!
-  this->reserve(std::max(64ul, nbits));
+  m_itr = m_buf.begin();
+  this->reserve(nbits);
 }
 
 // Functions for both read and write
@@ -117,7 +116,7 @@ void sperr::Bitstream::wbit(bool bit)
 
 void sperr::Bitstream::flush()
 {
-  if (m_bits) { // only flush when there are remaining bits
+  if (m_bits) {  // only flush when there are remaining bits
     if (m_itr == m_buf.end()) {
       const auto dist = m_buf.size();
       m_buf.push_back(0);
