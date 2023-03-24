@@ -17,7 +17,8 @@ void sperr::SPECK1D_INT_DEC::decode()
   // Mark every coefficient as insignificant
   m_LSP_mask.resize(m_coeff_buf.size());
   m_LSP_mask.reset();
-  m_bit_itr = m_bit_buffer.cbegin();
+  m_bit_buffer.rewind();
+  m_bit_idx = 0;
 
   // Restore the biggest `m_threshold`
   m_threshold = 1;
@@ -31,6 +32,8 @@ void sperr::SPECK1D_INT_DEC::decode()
     m_threshold /= uint_t{2};
     m_clean_LIS();
   }
+
+  assert(m_bit_idx == m_total_bits);
 }
 
 void sperr::SPECK1D_INT_DEC::m_sorting_pass()
@@ -57,8 +60,8 @@ void sperr::SPECK1D_INT_DEC::m_process_S(size_t idx1, size_t idx2, size_t& count
   bool is_sig = true;
 
   if (read) {
-    is_sig = *m_bit_itr;
-    ++m_bit_itr;
+    is_sig = m_bit_buffer.rbit();
+    ++m_bit_idx;
   }
 
   if (is_sig) {
@@ -74,14 +77,14 @@ void sperr::SPECK1D_INT_DEC::m_process_P(size_t loc, size_t& counter, bool read)
   const auto pixel_idx = m_LIP[loc];
 
   if (read) {
-    is_sig = *m_bit_itr;
-    ++m_bit_itr;
+    is_sig = m_bit_buffer.rbit();
+    ++m_bit_idx;
   }
 
   if (is_sig) {
     counter++;  // Let's increment the counter first!
-    m_sign_array[pixel_idx] = *m_bit_itr;
-    ++m_bit_itr;
+    m_sign_array[pixel_idx] = m_bit_buffer.rbit();
+    ++m_bit_idx;
 
     m_coeff_buf[pixel_idx] = m_threshold;
     m_LSP_new.push_back(pixel_idx);

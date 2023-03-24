@@ -8,8 +8,8 @@
 void sperr::SPECK1D_INT_ENC::encode()
 {
   m_encoded_bitstream.clear();
-  m_bit_buffer.clear();
-
+  m_bit_buffer.rewind();
+  m_total_bits = 0;
   m_initialize_lists();
 
   // Mark every coefficient as insignificant
@@ -32,6 +32,10 @@ void sperr::SPECK1D_INT_ENC::encode()
     m_threshold /= uint_t{2};
     m_clean_LIS();
   }
+
+  // Flush the bitstream, and record the total number of bits
+  m_total_bits = m_bit_buffer.wtell();
+  m_bit_buffer.flush();
 
   // Finally we prepare the bitstream
   m_assemble_bitstream();
@@ -88,7 +92,7 @@ void sperr::SPECK1D_INT_ENC::m_process_S(size_t idx1,
   }
 
   if (output)
-    m_bit_buffer.push_back(sig == SigType::Sig);
+    m_bit_buffer.wbit(sig == SigType::Sig);
 
   if (sig == SigType::Sig) {
     counter++;  // Let's increment the counter first!
@@ -110,11 +114,11 @@ void sperr::SPECK1D_INT_ENC::m_process_P(size_t loc, SigType sig, size_t& counte
     is_sig = (sig == SigType::Sig);
 
   if (output)
-    m_bit_buffer.push_back(is_sig);
+    m_bit_buffer.wbit(is_sig);
 
   if (is_sig) {
     counter++;  // Let's increment the counter first!
-    m_bit_buffer.push_back(m_sign_array[pixel_idx]);
+    m_bit_buffer.wbit(m_sign_array[pixel_idx]);
 
     assert(m_coeff_buf[pixel_idx] >= m_threshold);
     m_coeff_buf[pixel_idx] -= m_threshold;

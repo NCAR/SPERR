@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cfenv>
+#include <cfloat>  // FLT_ROUNDS
 #include <cmath>
 #include <cstring>
 
@@ -101,15 +102,18 @@ auto sperr::SPERR_Driver::num_coded_vals() const -> size_t
 
 auto sperr::SPERR_Driver::m_midtread_f2i() -> RTNType
 {
-#pragma STDC FENV_ACCESS ON
+  // Make sure that the rounding mode is what we wanted.
+  // Here are two methods of querying the current rounding mode; not sure
+  //   how they compare, so test both of them for now.
+  assert(FE_TONEAREST == FLT_ROUNDS);
+  assert(FE_TONEAREST == std::fegetround());
 
   const auto total_vals = m_vals_d.size();
   const auto q1 = 1.0 / m_q;
   m_vals_ll.resize(total_vals);
   m_vals_ui.resize(total_vals);
   m_sign_array.resize(total_vals);
-  std::fesetround(FE_TONEAREST);
-  std::feclearexcept(FE_ALL_EXCEPT);
+  std::feclearexcept(FE_INVALID);
   std::transform(m_vals_d.cbegin(), m_vals_d.cend(), m_vals_ll.begin(),
                  [q1](auto d) { return std::llrint(d * q1); });
   if (std::fetestexcept(FE_INVALID))

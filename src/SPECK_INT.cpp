@@ -46,17 +46,14 @@ void sperr::SPECK_INT::use_bitstream(const vec8_type& stream)
   // num_bitplanes (uint8_t), num_useful_bits (uint64_t)
 
   // Step 1: extract num_bitplanes and num_useful_bits
-  uint64_t useful_bits = 0;
   std::memcpy(&m_num_bitplanes, stream.data(), sizeof(m_num_bitplanes));
-  std::memcpy(&useful_bits, stream.data() + sizeof(m_num_bitplanes), sizeof(useful_bits));
+  std::memcpy(&m_total_bits, stream.data() + sizeof(m_num_bitplanes), sizeof(m_total_bits));
 
   // Step 2: unpack bits
-  const auto num_of_bools = (stream.size() - m_header_size) * 8;
-  m_bit_buffer.resize(num_of_bools);
-  sperr::unpack_booleans(m_bit_buffer, stream.data(), stream.size(), m_header_size);
-
-  // Step 3: remove padding bits
-  m_bit_buffer.resize(useful_bits);
+  // const auto num_of_bools = (stream.size() - m_header_size) * 8;
+  // m_bit_buffer.resize(num_of_bools);
+  // sperr::unpack_booleans(m_bit_buffer, stream.data(), stream.size(), m_header_size);
+  m_bit_buffer.parse_bitstream(stream.data() + m_header_size, m_total_bits);
 }
 
 auto sperr::SPECK_INT::view_encoded_bitstream() const -> const vec8_type&
@@ -95,12 +92,14 @@ void sperr::SPECK_INT::m_assemble_bitstream()
   // num_bitplanes (uint8_t), num_useful_bits (uint64_t)
 
   // Step 1: keep the number of useful bits, and then pad `m_bit_buffer`.
-  const uint64_t useful_bits = m_bit_buffer.size();
-  while (m_bit_buffer.size() % 8 != 0)
-    m_bit_buffer.push_back(false);
+  // const uint64_t useful_bits = m_bit_buffer.size();
+  // while (m_bit_buffer.size() % 8 != 0)
+  //  m_bit_buffer.push_back(false);
 
   // Step 2: allocate space for the encoded bitstream
-  const uint64_t bit_in_byte = m_bit_buffer.size() / 8;
+  uint64_t bit_in_byte = m_total_bits / 8;
+  if (m_total_bits % 8 != 0)
+    ++bit_in_byte;
   const size_t total_size = m_header_size + bit_in_byte;
   m_encoded_bitstream.resize(total_size);
   auto* const ptr = m_encoded_bitstream.data();
@@ -109,14 +108,15 @@ void sperr::SPECK_INT::m_assemble_bitstream()
   size_t pos = 0;
   std::memcpy(ptr + pos, &m_num_bitplanes, sizeof(m_num_bitplanes));
   pos += sizeof(m_num_bitplanes);
-  std::memcpy(ptr + pos, &useful_bits, sizeof(useful_bits));
-  pos += sizeof(useful_bits);
+  std::memcpy(ptr + pos, &m_total_bits, sizeof(m_total_bits));
+  pos += sizeof(m_total_bits);
 
   // Step 4: assemble `m_bit_buffer` into bytes
-  sperr::pack_booleans(m_encoded_bitstream, m_bit_buffer, pos);
+  // sperr::pack_booleans(m_encoded_bitstream, m_bit_buffer, pos);
+  m_bit_buffer.write_bitstream(ptr + m_header_size, m_total_bits);
 
   // Step 5: restore `m_bit_buffer` to its original size
-  m_bit_buffer.resize(useful_bits);
+  // m_bit_buffer.resize(useful_bits);
 }
 
 void sperr::SPECK_INT::m_refinement_pass_encode()
@@ -132,7 +132,8 @@ void sperr::SPECK_INT::m_refinement_pass_encode()
         if ((value >> j) & uint64_t{1}) {
           const bool o1 = m_coeff_buf[i + j] >= m_threshold;
           m_coeff_buf[i + j] -= tmp1[o1];
-          m_bit_buffer.push_back(o1);
+          // m_bit_buffer.push_back(o1);
+          m_bit_buffer.wbit(o1);
         }
       }
     }
@@ -156,12 +157,13 @@ void sperr::SPECK_INT::m_refinement_pass_decode()
     if (value != 0) {
       for (size_t j = 0; j < 64; j++) {
         if ((value >> j) & uint64_t{1}) {
-          m_coeff_buf[i + j] += tmp[*m_bit_itr];
-          ++m_bit_itr;
+          m_coeff_buf[i + j] += tmp[m_bit_buffer.rbit()];
+          ++m_bit_idx;
         }
       }
     }
   }
+  assert(m_bit_idx <= m_total_bits);
 
   // Second, mark newly found significant pixels in `m_LSP_mask`
   //
