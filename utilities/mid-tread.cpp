@@ -45,10 +45,10 @@ int main(int argc, char* argv[])
       ->group("Compression Specifications (must choose one and only one)");
 
   // Output specifications
-  //auto zipfile = std::string();
-  //app.add_option("-z", zipfile, "Compressed bitstream.")->group("Output specifications");
-  //auto reconfile = std::string();
-  //app.add_option("-r", reconfile, "Reconstructed file.")->group("Output specifications");
+  // auto zipfile = std::string();
+  // app.add_option("-z", zipfile, "Compressed bitstream.")->group("Output specifications");
+  // auto reconfile = std::string();
+  // app.add_option("-r", reconfile, "Reconstructed file.")->group("Output specifications");
 
   CLI11_PARSE(app, argc, argv);
 
@@ -75,16 +75,15 @@ int main(int argc, char* argv[])
     std::cerr << "FE_Invalid detected!" << std::endl;
     return 1;
   }
-  //else
-  //  std::cerr << "No FE_Invalid detected!" << std::endl;
+  // else
+  //   std::cerr << "No FE_Invalid detected!" << std::endl;
   auto bitstream = encoder.get_encoded_bitstream();
   const auto bpp = double(bitstream.size() * 8) / double(total_vals);
   std::printf("%.4f,  ", bpp);
 
   // Write out the encoded bitstream
-  //sperr::write_n_bytes(zipfile, bitstream.size(), bitstream.data());
+  // sperr::write_n_bytes(zipfile, bitstream.size(), bitstream.data());
 
-#if 0
   // Use a decompressor
   auto decoder = sperr::SPERR3D();
   decoder.set_dims(dims);
@@ -92,7 +91,7 @@ int main(int argc, char* argv[])
   decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decompress();
   auto output = decoder.release_decoded_data();
-  //sperr::write_n_bytes(reconfile, 8 * output.size(), output.data());
+  // sperr::write_n_bytes(reconfile, 8 * output.size(), output.data());
 
   // Compute statistics
   const double* input_p = nullptr;
@@ -110,7 +109,6 @@ int main(int argc, char* argv[])
   auto sigma = std::sqrt(var);
   auto gain = std::log2(sigma / rmse) - bpp;
   std::printf("%.4f,  %.2e\n", gain, rmse);
-#endif
 
   return 0;
 }

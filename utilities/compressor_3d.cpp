@@ -201,15 +201,15 @@ int main(int argc, char* argv[])
       assert(recover.size() * sizeof(double) == orig.size());
       auto stats = sperr::calc_stats(reinterpret_cast<const double*>(orig.data()), recover.data(),
                                      recover.size(), omp_num_threads);
-      auto [mean, var] = sperr::calc_mean_var(reinterpret_cast<const double*>(orig.data()), total_vals,
-                                      omp_num_threads);
+      auto [mean, var] = sperr::calc_mean_var(reinterpret_cast<const double*>(orig.data()),
+                                              total_vals, omp_num_threads);
       auto sigma = std::sqrt(var);
       auto gain = std::log2(sigma / stats[0]) - bpp;
       std::cout << "Average BPP = " << bpp << ", PSNR = " << stats[2]
                 << "dB, L-Infty = " << stats[1] << ", Accuracy Gain = " << gain << std::endl;
       std::printf("Input data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3],
                   stats[4]);
-      //std::printf("%.4f,  %.4f\n", bpp, gain);
+      // std::printf("%.4f,  %.4f\n", bpp, gain);
     }
     else {
       const auto& recover = decompressor.view_data();
@@ -226,7 +226,7 @@ int main(int argc, char* argv[])
                 << "dB, L-Infty = " << stats[1] << ", Accuracy Gain = " << gain << std::endl;
       std::printf("Input data range = %.2e (%.2e, %.2e).\n", (stats[4] - stats[3]), stats[3],
                   stats[4]);
-      //std::printf("%.4f,  %.4f,  %.2e\n", bpp, gain, stats[0]);
+      // std::printf("%.4f,  %.4f,  %.2e\n", bpp, gain, stats[0]);
     }
 
     if (mode == sperr::CompMode::FixedPWE) {
