@@ -50,9 +50,9 @@ void sperr::SPECK_INT::use_bitstream(const vec8_type& stream)
   std::memcpy(&m_total_bits, stream.data() + sizeof(m_num_bitplanes), sizeof(m_total_bits));
 
   // Step 2: unpack bits
-  //const auto num_of_bools = (stream.size() - m_header_size) * 8;
-  //m_bit_buffer.resize(num_of_bools);
-  //sperr::unpack_booleans(m_bit_buffer, stream.data(), stream.size(), m_header_size);
+  // const auto num_of_bools = (stream.size() - m_header_size) * 8;
+  // m_bit_buffer.resize(num_of_bools);
+  // sperr::unpack_booleans(m_bit_buffer, stream.data(), stream.size(), m_header_size);
   m_bit_buffer.parse_bitstream(stream.data() + m_header_size, m_total_bits);
 }
 
@@ -92,8 +92,8 @@ void sperr::SPECK_INT::m_assemble_bitstream()
   // num_bitplanes (uint8_t), num_useful_bits (uint64_t)
 
   // Step 1: keep the number of useful bits, and then pad `m_bit_buffer`.
-  //const uint64_t useful_bits = m_bit_buffer.size();
-  //while (m_bit_buffer.size() % 8 != 0)
+  // const uint64_t useful_bits = m_bit_buffer.size();
+  // while (m_bit_buffer.size() % 8 != 0)
   //  m_bit_buffer.push_back(false);
 
   // Step 2: allocate space for the encoded bitstream
@@ -112,11 +112,11 @@ void sperr::SPECK_INT::m_assemble_bitstream()
   pos += sizeof(m_total_bits);
 
   // Step 4: assemble `m_bit_buffer` into bytes
-  //sperr::pack_booleans(m_encoded_bitstream, m_bit_buffer, pos);
+  // sperr::pack_booleans(m_encoded_bitstream, m_bit_buffer, pos);
   m_bit_buffer.write_bitstream(ptr + m_header_size, m_total_bits);
 
   // Step 5: restore `m_bit_buffer` to its original size
-  //m_bit_buffer.resize(useful_bits);
+  // m_bit_buffer.resize(useful_bits);
 }
 
 void sperr::SPECK_INT::m_refinement_pass_encode()
@@ -132,7 +132,7 @@ void sperr::SPECK_INT::m_refinement_pass_encode()
         if ((value >> j) & uint64_t{1}) {
           const bool o1 = m_coeff_buf[i + j] >= m_threshold;
           m_coeff_buf[i + j] -= tmp1[o1];
-          //m_bit_buffer.push_back(o1);
+          // m_bit_buffer.push_back(o1);
           m_bit_buffer.wbit(o1);
         }
       }
