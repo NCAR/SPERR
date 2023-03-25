@@ -58,7 +58,8 @@ TEST(SPECK1D_INT, minimal)
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
-  const auto& bitstream = encoder.view_encoded_bitstream();
+  auto bitstream = sperr::vec8_type(); 
+  encoder.write_encoded_bitstream(bitstream);
 
   // Decode
   auto decoder = sperr::SPECK1D_INT_DEC();
@@ -83,7 +84,8 @@ TEST(SPECK1D_INT, Random1)
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
-  const auto& bitstream = encoder.view_encoded_bitstream();
+  auto bitstream = sperr::vec8_type(); 
+  encoder.write_encoded_bitstream(bitstream);
 
   // Decode
   auto decoder = sperr::SPECK1D_INT_DEC();
@@ -108,7 +110,8 @@ TEST(SPECK1D_INT, Random2)
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
-  const auto& bitstream = encoder.view_encoded_bitstream();
+  sperr::vec8_type bitstream; 
+  encoder.write_encoded_bitstream(bitstream);
 
   // Decode
   auto decoder = sperr::SPECK3D_INT_DEC();
@@ -134,7 +137,8 @@ TEST(SPECK1D_INT, RandomRandom)
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
-  const auto& bitstream = encoder.view_encoded_bitstream();
+  auto bitstream = sperr::vec8_type(); 
+  encoder.write_encoded_bitstream(bitstream);
 
   // Decode
   auto decoder = sperr::SPECK1D_INT_DEC();
@@ -174,7 +178,8 @@ TEST(SPECK3D_INT, minimal)
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
-  const auto& bitstream = encoder.view_encoded_bitstream();
+  auto bitstream = sperr::vec8_type(); 
+  encoder.write_encoded_bitstream(bitstream);
 
   // Decode
   auto decoder = sperr::SPECK3D_INT_DEC();
@@ -200,7 +205,8 @@ TEST(SPECK3D_INT, Random1)
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
-  const auto& bitstream = encoder.view_encoded_bitstream();
+  sperr::vec8_type bitstream; 
+  encoder.write_encoded_bitstream(bitstream);
 
   // Decode
   auto decoder = sperr::SPECK3D_INT_DEC();
@@ -226,7 +232,8 @@ TEST(SPECK3D_INT, Random2)
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
-  const auto& bitstream = encoder.view_encoded_bitstream();
+  sperr::vec8_type bitstream; 
+  encoder.write_encoded_bitstream(bitstream);
 
   // Decode
   auto decoder = sperr::SPECK3D_INT_DEC();
@@ -253,7 +260,8 @@ TEST(SPECK3D_INT, RandomRandom)
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
-  const auto& bitstream = encoder.view_encoded_bitstream();
+  sperr::vec8_type bitstream; 
+  encoder.write_encoded_bitstream(bitstream);
 
   // Decode
   auto decoder = sperr::SPECK3D_INT_DEC();

@@ -23,7 +23,6 @@ void sperr::SPECK3D_INT_ENC::encode()
   // else
   //  m_data_range = sperr::max_d;
 
-  m_encoded_bitstream.clear();
   m_bit_buffer.rewind();
   m_total_bits = 0;
   m_initialize_lists();
@@ -83,9 +82,6 @@ void sperr::SPECK3D_INT_ENC::encode()
   // Flush the bitstream, and record the total number of bits
   m_total_bits = m_bit_buffer.wtell();
   m_bit_buffer.flush();
-
-  // Finally we prepare the bitstream
-  m_assemble_bitstream();
 }
 
 void sperr::SPECK3D_INT_ENC::m_sorting_pass()

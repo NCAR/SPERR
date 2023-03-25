@@ -29,8 +29,7 @@ class SPECK_INT {
   virtual void use_bitstream(const vec8_type&);
 
   // Output
-  virtual auto view_encoded_bitstream() const -> const vec8_type&;
-  virtual auto release_encoded_bitstream() -> vec8_type&&;
+  virtual void write_encoded_bitstream(vec8_type&) const;
   virtual auto release_coeffs() -> vecui_t&&;
   virtual auto release_signs() -> vecb_type&&;
   virtual auto view_coeffs() const -> const vecui_t&;
@@ -45,7 +44,7 @@ class SPECK_INT {
   virtual void m_refinement_pass_decode();
 
   // Misc. procedures
-  virtual void m_assemble_bitstream();
+  // virtual void m_assemble_bitstream();
   // virtual auto m_ready_to_encode() const -> RTNType;
   // virtual auto m_ready_to_decode() const -> RTNType;
 
@@ -53,7 +52,6 @@ class SPECK_INT {
   dims_type m_dims = {0, 0, 0};
   uint_t m_threshold = 0;
   vecui_t m_coeff_buf;
-  vec8_type m_encoded_bitstream;
   vecb_type m_sign_array;
   Bitstream m_bit_buffer;
   Bitmask m_LSP_mask;
@@ -62,10 +60,10 @@ class SPECK_INT {
   const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
   const size_t m_header_size = 9;  // 9 bytes
 
-  uint8_t m_num_bitplanes = 0;
   uint64_t m_bit_idx = 0;     // current bit idx when decoding
   uint64_t m_total_bits = 0;  // keeps track of useful bits in `m_bit_buffer`
-};                            // class SPECK_INT
+  uint8_t m_num_bitplanes = 0;
+};
 
 };  // namespace sperr
 

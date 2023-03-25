@@ -187,7 +187,7 @@ auto sperr::SPERR_Driver::compress() -> RTNType
   m_encoder->set_dims(m_dims);
   m_encoder->use_coeffs(std::move(m_vals_ui), std::move(m_sign_array));
   m_encoder->encode();
-  m_speck_bitstream = m_encoder->release_encoded_bitstream();
+  m_encoder->write_encoded_bitstream(m_speck_bitstream);
 
   return RTNType::Good;
 }
