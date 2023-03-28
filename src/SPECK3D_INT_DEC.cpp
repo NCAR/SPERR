@@ -7,9 +7,6 @@
 
 void sperr::SPECK3D_INT_DEC::decode()
 {
-  // if (m_ready_to_decode() == false)
-  //   return RTNType::Error;
-
   m_initialize_lists();
 
   // initialize coefficients to be zero, and sign array to be all positive

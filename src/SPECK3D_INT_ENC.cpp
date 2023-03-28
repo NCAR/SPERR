@@ -7,40 +7,9 @@
 
 void sperr::SPECK3D_INT_ENC::encode()
 {
-  // if (m_ready_to_encode() == false)
-  //   return RTNType::Error;
-
-  // Cache the current compression mode
-  // m_mode_cache = sperr::compression_mode(m_encode_budget, m_target_psnr, m_target_pwe);
-  // if (m_mode_cache == sperr::CompMode::Unknown)
-  //  return RTNType::CompModeUnknown;
-
-  // Sanity check
-  // if (m_mode_cache == CompMode::FixedPSNR) {
-  //  if (m_data_range == sperr::max_d)
-  //    return RTNType::DataRangeNotSet;
-  //}
-  // else
-  //  m_data_range = sperr::max_d;
-
   m_bit_buffer.rewind();
   m_total_bits = 0;
   m_initialize_lists();
-
-  // Keep signs of all coefficients
-  // m_sign_array.resize(m_coeff_buf.size());
-  // std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_sign_array.begin(),
-  //               [](auto e) { return e >= 0.0; });
-
-  // Make every coefficient positive
-  // std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_coeff_buf.begin(),
-  //               [](auto v) { return std::abs(v); });
-
-  // Use `m_qz_coeff` to keep track of would-be quantized coefficients.
-  // if (m_mode_cache == CompMode::FixedPWE)
-  //  m_qz_coeff.assign(m_coeff_buf.size(), 0.0);
-  // else
-  //  m_qz_coeff.clear();
 
   // Mark every coefficient as insignificant
   m_LSP_mask.resize(m_coeff_buf.size());
@@ -54,22 +23,6 @@ void sperr::SPECK3D_INT_ENC::encode()
     m_threshold *= uint_t{2};
     m_num_bitplanes++;
   }
-
-  // if (m_mode_cache == CompMode::FixedPWE || m_mode_cache == CompMode::FixedPSNR) {
-  //   const auto terminal_threshold = m_estimate_finest_q();
-  //   auto max_t = terminal_threshold;
-  //   num_bitplanes = 1;
-  //   while (max_t * 2.0 < max_coeff) {
-  //     max_t *= 2.0;
-  //     num_bitplanes++;
-  //   }
-  //   m_max_threshold_f = static_cast<float>(max_t);
-  // }
-  // else {  // FixedSize mode
-  //   const auto max_coeff_bit = std::floor(std::log2(max_coeff));
-  //   m_max_threshold_f = static_cast<float>(std::pow(2.0, max_coeff_bit));
-  // }
-  // m_threshold = static_cast<double>(m_max_threshold_f);
 
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
     m_sorting_pass();
