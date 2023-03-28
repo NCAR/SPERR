@@ -5,37 +5,6 @@
 #include <cstring>  // std::memcpy()
 #include <numeric>
 
-void sperr::SPECK1D_INT_DEC::decode()
-{
-  m_initialize_lists();
-
-  // initialize coefficients to be zero, and sign array to be all positive
-  const auto coeff_len = m_dims[0];
-  m_coeff_buf.assign(coeff_len, uint_t{0});
-  m_sign_array.assign(coeff_len, true);
-
-  // Mark every coefficient as insignificant
-  m_LSP_mask.resize(m_coeff_buf.size());
-  m_LSP_mask.reset();
-  m_bit_buffer.rewind();
-  m_bit_idx = 0;
-
-  // Restore the biggest `m_threshold`
-  m_threshold = 1;
-  for (uint8_t i = 1; i < m_num_bitplanes; i++)
-    m_threshold *= uint_t{2};
-
-  for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
-    m_sorting_pass();
-    m_refinement_pass_decode();
-
-    m_threshold /= uint_t{2};
-    m_clean_LIS();
-  }
-
-  assert(m_bit_idx == m_total_bits);
-}
-
 void sperr::SPECK1D_INT_DEC::m_sorting_pass()
 {
   // Since we have a separate representation of LIP, let's process that list first

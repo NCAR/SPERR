@@ -9,10 +9,6 @@ namespace sperr {
 // Main SPECK3D_INT_DEC class
 //
 class SPECK3D_INT_DEC : public SPECK3D_INT {
- public:
-  // core operations
-  virtual void decode() override;
-
  private:
   virtual void m_sorting_pass() override;
 

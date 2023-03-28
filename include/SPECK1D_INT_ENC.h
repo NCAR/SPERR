@@ -9,10 +9,6 @@ namespace sperr {
 // Main SPECK1D_INT_ENC class
 //
 class SPECK1D_INT_ENC : public SPECK1D_INT {
- public:
-  // core operations
-  virtual void encode() override;
-
  private:
   virtual void m_sorting_pass() override;
 

@@ -29,7 +29,7 @@ class SPECK_INT {
   virtual void use_bitstream(const vec8_type&);
 
   // Output
-  virtual void write_encoded_bitstream(vec8_type&) const;
+  virtual void write_encoded_bitstream(vec8_type& buf, size_t offset = 0) const;
   virtual auto release_coeffs() -> vecui_t&&;
   virtual auto release_signs() -> vecb_type&&;
   virtual auto view_coeffs() const -> const vecui_t&;
@@ -42,11 +42,6 @@ class SPECK_INT {
   virtual void m_sorting_pass() = 0;
   virtual void m_refinement_pass_encode();
   virtual void m_refinement_pass_decode();
-
-  // Misc. procedures
-  // virtual void m_assemble_bitstream();
-  // virtual auto m_ready_to_encode() const -> RTNType;
-  // virtual auto m_ready_to_decode() const -> RTNType;
 
   // Data members
   dims_type m_dims = {0, 0, 0};

@@ -24,14 +24,65 @@ auto sperr::SPECK_INT::get_speck_full_len(const void* buf) const -> uint64_t
 
 void sperr::SPECK_INT::encode()
 {
-  std::printf("This func should not be run!\n");
-  // Return an error code
+  m_bit_buffer.rewind();
+  m_total_bits = 0;
+  m_initialize_lists();
+
+  // Mark every coefficient as insignificant
+  m_LSP_mask.resize(m_coeff_buf.size());
+  m_LSP_mask.reset();
+
+  // Decide the starting threshold.
+  const auto max_coeff = *std::max_element(m_coeff_buf.cbegin(), m_coeff_buf.cend());
+  m_num_bitplanes = 1;
+  m_threshold = 1;
+  while (m_threshold * uint_t{2} <= max_coeff) {
+    m_threshold *= uint_t{2};
+    m_num_bitplanes++;
+  }
+
+  for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
+    m_sorting_pass();
+    m_refinement_pass_encode();
+
+    m_threshold /= uint_t{2};
+    m_clean_LIS();
+  }
+
+  // Flush the bitstream, and record the total number of bits
+  m_total_bits = m_bit_buffer.wtell();
+  m_bit_buffer.flush();
 }
 
 void sperr::SPECK_INT::decode()
 {
-  std::printf("This func should not be run!\n");
-  // Return an error code
+  m_initialize_lists();
+
+  // initialize coefficients to be zero, and sign array to be all positive
+  const auto coeff_len = m_dims[0] * m_dims[1] * m_dims[2];
+  m_coeff_buf.assign(coeff_len, uint_t{0});
+  m_sign_array.assign(coeff_len, true);
+
+  // Mark every coefficient as insignificant
+  m_LSP_mask.resize(m_coeff_buf.size());
+  m_LSP_mask.reset();
+  m_bit_buffer.rewind();
+  m_bit_idx = 0;
+
+  // Restore the biggest `m_threshold`
+  m_threshold = 1;
+  for (uint8_t i = 1; i < m_num_bitplanes; i++)
+    m_threshold *= uint_t{2};
+
+  for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
+    m_sorting_pass();
+    m_refinement_pass_decode();
+
+    m_threshold /= uint_t{2};
+    m_clean_LIS();
+  }
+
+  assert(m_bit_idx == m_total_bits);
 }
 
 void sperr::SPECK_INT::use_coeffs(vecui_t coeffs, vecb_type signs)
@@ -73,7 +124,7 @@ auto sperr::SPECK_INT::view_signs() const -> const vecb_type&
   return m_sign_array;
 }
 
-void sperr::SPECK_INT::write_encoded_bitstream(vec8_type& buffer) const
+void sperr::SPECK_INT::write_encoded_bitstream(vec8_type& buffer, size_t offset) const
 {
   // Header definition: 9 bytes in total:
   // num_bitplanes (uint8_t), num_useful_bits (uint64_t)
@@ -86,7 +137,7 @@ void sperr::SPECK_INT::write_encoded_bitstream(vec8_type& buffer) const
 
   buffer.resize(total_size);
   buffer.resize(total_size);
-  auto* const ptr = buffer.data();
+  auto* const ptr = buffer.data() + offset;
 
   // Step 2: fill header
   size_t pos = 0;
@@ -112,7 +163,6 @@ void sperr::SPECK_INT::m_refinement_pass_encode()
         if ((value >> j) & uint64_t{1}) {
           const bool o1 = m_coeff_buf[i + j] >= m_threshold;
           m_coeff_buf[i + j] -= tmp1[o1];
-          // m_bit_buffer.push_back(o1);
           m_bit_buffer.wbit(o1);
         }
       }

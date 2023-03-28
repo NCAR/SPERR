@@ -5,38 +5,6 @@
 #include <cstring>  // std::memcpy()
 #include <numeric>
 
-void sperr::SPECK3D_INT_ENC::encode()
-{
-  m_bit_buffer.rewind();
-  m_total_bits = 0;
-  m_initialize_lists();
-
-  // Mark every coefficient as insignificant
-  m_LSP_mask.resize(m_coeff_buf.size());
-  m_LSP_mask.reset();
-
-  // Decide the starting threshold.
-  const auto max_coeff = *std::max_element(m_coeff_buf.cbegin(), m_coeff_buf.cend());
-  m_num_bitplanes = 1;
-  m_threshold = 1;
-  while (m_threshold * uint_t{2} <= max_coeff) {
-    m_threshold *= uint_t{2};
-    m_num_bitplanes++;
-  }
-
-  for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
-    m_sorting_pass();
-    m_refinement_pass_encode();
-
-    m_threshold /= uint_t{2};
-    m_clean_LIS();
-  }
-
-  // Flush the bitstream, and record the total number of bits
-  m_total_bits = m_bit_buffer.wtell();
-  m_bit_buffer.flush();
-}
-
 void sperr::SPECK3D_INT_ENC::m_sorting_pass()
 {
   // Since we have a separate representation of LIP, let's process that list first!
@@ -199,5 +167,5 @@ auto sperr::SPECK3D_INT_ENC::m_decide_significance(const Set3D& set) const
     }
   }
 
-  return {SigType::Insig, {0u, 0u, 0u}};
+  return {SigType::Insig, {0, 0, 0}};
 }
