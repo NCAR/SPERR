@@ -45,14 +45,6 @@ class SPERR_Driver {
   void set_dims(dims_type);
 
   //
-  // Queries
-  //
-
-  // Has to be called after an `encode` action.
-  // Returns the number of values coded in the resulting bitstream.
-  auto num_coded_vals() const -> size_t;
-
-  //
   // Actions
   //
   void toggle_conditioning(Conditioner::settings_type);
@@ -63,7 +55,6 @@ class SPERR_Driver {
   dims_type m_dims = {0, 0, 0};
   double m_q = 1.0;  // 1.0 is a better initial value than 0.0
   vecd_type m_vals_d;
-  std::vector<int64_t> m_vals_ll;  // Signed integers produced by std::llrint()
   vecui_t m_vals_ui;               // Unsigned integers to be passed to the encoder
   vecb_type m_sign_array;          // Signs to be passed to the encoder
   Conditioner::settings_type m_conditioning_settings = {true, false, false, false};

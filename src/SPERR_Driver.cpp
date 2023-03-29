@@ -28,7 +28,6 @@ auto sperr::SPERR_Driver::use_bitstream(const void* p, size_t len) -> RTNType
   // So let's clean up everything at the very beginning of this routine.
   m_vals_d.clear();
   m_vals_ui.clear();
-  m_vals_ll.clear();
   m_sign_array.clear();
   m_condi_bitstream.fill(0);
   m_speck_bitstream.clear();
@@ -95,11 +94,6 @@ void sperr::SPERR_Driver::set_dims(dims_type dims)
   m_dims = dims;
 }
 
-auto sperr::SPERR_Driver::num_coded_vals() const -> size_t
-{
-  return std::count_if(m_vals_ll.cbegin(), m_vals_ll.cend(), [](auto v) { return v != 0l; });
-}
-
 auto sperr::SPERR_Driver::m_midtread_f2i() -> RTNType
 {
   // Make sure that the rounding mode is what we wanted.
@@ -110,18 +104,18 @@ auto sperr::SPERR_Driver::m_midtread_f2i() -> RTNType
 
   const auto total_vals = m_vals_d.size();
   const auto q1 = 1.0 / m_q;
-  m_vals_ll.resize(total_vals);
+  auto vals_ll = std::vector<long long int>(total_vals);
   m_vals_ui.resize(total_vals);
   m_sign_array.resize(total_vals);
   std::feclearexcept(FE_INVALID);
-  std::transform(m_vals_d.cbegin(), m_vals_d.cend(), m_vals_ll.begin(),
+  std::transform(m_vals_d.cbegin(), m_vals_d.cend(), vals_ll.begin(),
                  [q1](auto d) { return std::llrint(d * q1); });
   if (std::fetestexcept(FE_INVALID))
     return RTNType::FE_Invalid;
-  std::transform(m_vals_ll.cbegin(), m_vals_ll.cend(), m_vals_ui.begin(),
+  std::transform(vals_ll.cbegin(), vals_ll.cend(), m_vals_ui.begin(),
                  [](auto ll) { return static_cast<uint_t>(std::abs(ll)); });
-  std::transform(m_vals_ll.cbegin(), m_vals_ll.cend(), m_sign_array.begin(),
-                 [](auto ll) { return ll >= 0ll; });
+  std::transform(vals_ll.cbegin(), vals_ll.cend(), m_sign_array.begin(),
+                 [](auto ll) { return ll >= 0; });
 
   return RTNType::Good;
 }
@@ -196,7 +190,6 @@ auto sperr::SPERR_Driver::decompress() -> RTNType
 {
   m_vals_d.clear();
   m_vals_ui.clear();
-  m_vals_ll.clear();
   m_sign_array.clear();
   const auto total_vals = uint64_t(m_dims[0]) * m_dims[1] * m_dims[2];
 
