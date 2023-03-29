@@ -10,8 +10,15 @@
 
 namespace sperr {
 
+template <typename T>
 class SPECK_INT {
+
+using uint_type = T;
+using vecui_type = std::vector<uint_type>;
+
  public:
+  // Constructor
+  SPECK_INT();
   // Virtual destructor
   virtual ~SPECK_INT() = default;
 
@@ -25,14 +32,14 @@ class SPECK_INT {
   virtual void decode();
 
   // Input
-  virtual void use_coeffs(vecui_t coeffs, vecb_type signs);
+  virtual void use_coeffs(vecui_type coeffs, vecb_type signs);
   virtual void use_bitstream(const vec8_type&);
 
   // Output
   virtual void write_encoded_bitstream(vec8_type& buf, size_t offset = 0) const;
-  virtual auto release_coeffs() -> vecui_t&&;
+  virtual auto release_coeffs() -> vecui_type&&;
   virtual auto release_signs() -> vecb_type&&;
-  virtual auto view_coeffs() const -> const vecui_t&;
+  virtual auto view_coeffs() const -> const vecui_type&;
   virtual auto view_signs() const -> const vecb_type&;
 
  protected:
@@ -45,8 +52,8 @@ class SPECK_INT {
 
   // Data members
   dims_type m_dims = {0, 0, 0};
-  uint_t m_threshold = 0;
-  vecui_t m_coeff_buf;
+  uint_type m_threshold = 0;
+  vecui_type m_coeff_buf;
   vecb_type m_sign_array;
   Bitstream m_bit_buffer;
   Bitmask m_LSP_mask;
