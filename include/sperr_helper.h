@@ -43,6 +43,8 @@ enum class SigType : unsigned char { Insig, Sig, NewlySig, Dunno, Garbage };
 
 enum class SetType : unsigned char { TypeS, TypeI, Garbage };
 
+enum class UINTType : unsigned char { UINT64, UINT32, UINT16, UINT8};
+
 // Return Type
 enum class RTNType {
   Good = 0,
@@ -50,7 +52,6 @@ enum class RTNType {
   BitstreamWrongLen,
   IOError,
   InvalidParam,
-  QzLevelTooBig,  // a very specific type of invalid param
   EmptyStream,    // a condition but not sure if it's an error
   BitBudgetMet,
   VersionMismatch,

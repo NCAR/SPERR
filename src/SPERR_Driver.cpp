@@ -27,10 +27,10 @@ auto sperr::SPERR_Driver::use_bitstream(const void* p, size_t len) -> RTNType
 {
   // So let's clean up everything at the very beginning of this routine.
   m_vals_d.clear();
-  m_vals_ui.clear();
   m_sign_array.clear();
   m_condi_bitstream.fill(0);
   m_speck_bitstream.clear();
+  std::visit([](auto& vec){vec.clear();}, m_vals_ui);
 
   const uint8_t* const ptr = static_cast<const uint8_t*>(p);
 
@@ -105,7 +105,7 @@ auto sperr::SPERR_Driver::m_midtread_f2i() -> RTNType
   const auto total_vals = m_vals_d.size();
   const auto q1 = 1.0 / m_q;
   auto vals_ll = std::vector<long long int>(total_vals);
-  m_vals_ui.resize(total_vals);
+  std::visit([total_vals](auto& vec){ m_vals_ui.resize(total_vals); });
   m_sign_array.resize(total_vals);
   std::feclearexcept(FE_INVALID);
   std::transform(m_vals_d.cbegin(), m_vals_d.cend(), vals_ll.begin(),
@@ -122,7 +122,7 @@ auto sperr::SPERR_Driver::m_midtread_f2i() -> RTNType
 
 void sperr::SPERR_Driver::m_midtread_i2f()
 {
-  assert(m_sign_array.size() == m_vals_ui.size());
+  //assert(m_sign_array.size() == m_vals_ui.size());
 
   const auto tmpd = std::array<double, 2>{-1.0, 1.0};
   const auto q = m_q;
@@ -189,7 +189,7 @@ auto sperr::SPERR_Driver::compress() -> RTNType
 auto sperr::SPERR_Driver::decompress() -> RTNType
 {
   m_vals_d.clear();
-  m_vals_ui.clear();
+  std::visit([](auto& vec){vec.clear();}, m_vals_ui);
   m_sign_array.clear();
   const auto total_vals = uint64_t(m_dims[0]) * m_dims[1] * m_dims[2];
 
