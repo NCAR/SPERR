@@ -5,7 +5,8 @@
 #include <cstring>  // std::memcpy()
 #include <numeric>
 
-void sperr::SPECK3D_INT_DEC::m_sorting_pass()
+template <typename T>
+void sperr::SPECK3D_INT_DEC<T>::m_sorting_pass()
 {
   // Since we have a separate representation of LIP, let's process that list first
   //
@@ -23,7 +24,8 @@ void sperr::SPECK3D_INT_DEC::m_sorting_pass()
   }
 }
 
-void sperr::SPECK3D_INT_DEC::m_process_S(size_t idx1, size_t idx2, size_t& counter, bool read)
+template <typename T>
+void sperr::SPECK3D_INT_DEC<T>::m_process_S(size_t idx1, size_t idx2, size_t& counter, bool read)
 {
   auto& set = m_LIS[idx1][idx2];
 
@@ -41,7 +43,8 @@ void sperr::SPECK3D_INT_DEC::m_process_S(size_t idx1, size_t idx2, size_t& count
   }
 }
 
-void sperr::SPECK3D_INT_DEC::m_process_P(size_t loc, size_t& counter, bool read)
+template <typename T>
+void sperr::SPECK3D_INT_DEC<T>::m_process_P(size_t loc, size_t& counter, bool read)
 {
   bool is_sig = true;
   const auto pixel_idx = m_LIP[loc];
@@ -63,7 +66,8 @@ void sperr::SPECK3D_INT_DEC::m_process_P(size_t loc, size_t& counter, bool read)
   }
 }
 
-void sperr::SPECK3D_INT_DEC::m_code_S(size_t idx1, size_t idx2)
+template <typename T>
+void sperr::SPECK3D_INT_DEC<T>::m_code_S(size_t idx1, size_t idx2)
 {
   auto subsets = m_partition_S_XYZ(m_LIS[idx1][idx2]);
   const auto set_end =

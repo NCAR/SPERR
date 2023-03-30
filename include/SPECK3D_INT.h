@@ -32,12 +32,23 @@ class Set3D {
 //
 // Main SPECK3D_INT class; intended to be the base class of both encoder and decoder.
 //
-class SPECK3D_INT : public SPECK_INT {
+template <typename T>
+class SPECK3D_INT : public SPECK_INT<T> {
  public:
   // Virtual destructor
   virtual ~SPECK3D_INT() = default;
 
  protected:
+  //
+  // Bring members from the base class to this derived class.
+  //
+  using SPECK_INT<T>::m_LIP;
+  using SPECK_INT<T>::m_dims;
+  using SPECK_INT<T>::m_LSP_new;
+  using SPECK_INT<T>::m_coeff_buf;
+  using SPECK_INT<T>::m_bit_buffer;
+  using SPECK_INT<T>::m_u64_garbage_val;
+
   virtual void m_clean_LIS() override;
   virtual void m_initialize_lists() override;
 

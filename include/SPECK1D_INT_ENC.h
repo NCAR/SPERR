@@ -8,8 +8,21 @@ namespace sperr {
 //
 // Main SPECK1D_INT_ENC class
 //
-class SPECK1D_INT_ENC : public SPECK1D_INT {
+template <typename T>
+class SPECK1D_INT_ENC : public SPECK1D_INT<T> {
  private:
+  //
+  // Bring members from parent classes to this derived class.
+  //
+  using SPECK_INT<T>::m_LIP;
+  using SPECK_INT<T>::m_LSP_new;
+  using SPECK_INT<T>::m_threshold;
+  using SPECK_INT<T>::m_coeff_buf;
+  using SPECK_INT<T>::m_bit_buffer;
+  using SPECK_INT<T>::m_sign_array;
+  using SPECK_INT<T>::m_u64_garbage_val;
+  using SPECK1D_INT<T>::m_LIS;
+
   virtual void m_sorting_pass() override;
 
   void m_process_S(size_t idx1, size_t idx2, SigType, size_t& counter, bool);

@@ -5,7 +5,8 @@
 #include <cstring>
 #include <numeric>
 
-void sperr::SPECK1D_INT::m_clean_LIS()
+template <typename T>
+void sperr::SPECK1D_INT<T>::m_clean_LIS()
 {
   for (auto& list : m_LIS) {
     auto it = std::remove_if(list.begin(), list.end(),
@@ -18,7 +19,8 @@ void sperr::SPECK1D_INT::m_clean_LIS()
   m_LIP.erase(it, m_LIP.end());
 }
 
-void sperr::SPECK1D_INT::m_initialize_lists()
+template <typename T>
+void sperr::SPECK1D_INT<T>::m_initialize_lists()
 {
   const auto total_len = m_dims[0];
   auto num_of_parts = sperr::num_of_partitions(total_len);
@@ -36,7 +38,8 @@ void sperr::SPECK1D_INT::m_initialize_lists()
   m_LIS[sets[1].part_level].emplace_back(sets[1]);
 }
 
-auto sperr::SPECK1D_INT::m_partition_set(const Set1D& set) const -> std::array<Set1D, 2>
+template <typename T>
+auto sperr::SPECK1D_INT<T>::m_partition_set(const Set1D& set) const -> std::array<Set1D, 2>
 {
   std::array<Set1D, 2> subsets;
   // Prepare the 1st set

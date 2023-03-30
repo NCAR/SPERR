@@ -9,6 +9,7 @@ template <typename T>
 sperr::SPECK_INT<T>::SPECK_INT()
 {
   static_assert(std::is_integral_v<T>);
+  static_assert(std::is_unsigned_v<T>);
 }
 
 template <typename T>

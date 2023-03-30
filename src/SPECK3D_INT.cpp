@@ -15,7 +15,8 @@ auto sperr::Set3D::is_empty() const -> bool
   return (length_z == 0 || length_y == 0 || length_x == 0);
 }
 
-void sperr::SPECK3D_INT::m_clean_LIS()
+template <typename T>
+void sperr::SPECK3D_INT<T>::m_clean_LIS()
 {
   for (auto& list : m_LIS) {
     auto it = std::remove_if(list.begin(), list.end(),
@@ -28,7 +29,8 @@ void sperr::SPECK3D_INT::m_clean_LIS()
   m_LIP.erase(it, m_LIP.end());
 }
 
-void sperr::SPECK3D_INT::m_initialize_lists()
+template <typename T>
+void sperr::SPECK3D_INT<T>::m_initialize_lists()
 {
   std::array<size_t, 3> num_of_parts;  // how many times each dimension could be partitioned?
   num_of_parts[0] = sperr::num_of_partitions(m_dims[0]);
@@ -97,7 +99,8 @@ void sperr::SPECK3D_INT::m_initialize_lists()
   m_bit_buffer.reserve(m_coeff_buf.size());  // a reasonable starting point
 }
 
-auto sperr::SPECK3D_INT::m_partition_S_XYZ(const Set3D& set) -> std::array<Set3D, 8>
+template <typename T>
+auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) -> std::array<Set3D, 8>
 {
   const auto split_x = std::array<uint32_t, 2>{set.length_x - set.length_x / 2, set.length_x / 2};
   const auto split_y = std::array<uint32_t, 2>{set.length_y - set.length_y / 2, set.length_y / 2};
@@ -202,7 +205,8 @@ auto sperr::SPECK3D_INT::m_partition_S_XYZ(const Set3D& set) -> std::array<Set3D
   return subsets;
 }
 
-auto sperr::SPECK3D_INT::m_partition_S_XY(const Set3D& set) -> std::array<Set3D, 4>
+template <typename T>
+auto sperr::SPECK3D_INT<T>::m_partition_S_XY(const Set3D& set) -> std::array<Set3D, 4>
 {
   std::array<Set3D, 4> subsets;
 
@@ -265,7 +269,8 @@ auto sperr::SPECK3D_INT::m_partition_S_XY(const Set3D& set) -> std::array<Set3D,
   return subsets;
 }
 
-auto sperr::SPECK3D_INT::m_partition_S_Z(const Set3D& set) -> std::array<Set3D, 2>
+template <typename T>
+auto sperr::SPECK3D_INT<T>::m_partition_S_Z(const Set3D& set) -> std::array<Set3D, 2>
 {
   std::array<Set3D, 2> subsets;
 
