@@ -19,15 +19,32 @@ void sperr::SPECK_INT<T>::set_dims(dims_type dims)
 }
 
 template <typename T>
-auto sperr::SPECK_INT<T>::get_speck_full_len(const void* buf) const -> uint64_t
+auto sperr::SPECK_INT<T>::get_num_bitplanes(const void* buf) const -> uint8_t
 {
-  // Given the header definition, directly go retrieve the value stored in the bytes 1--9.
+  // Given the header definition, directly retrieve the value stored in the first byte.
+  const uint8_t* const ptr = static_cast<const uint8_t*>(buf);
+  uint8_t bitplanes = 0;
+  std::memcpy(&bitplanes, ptr, sizeof(bitplanes));
+  return bitplanes;
+
+}
+
+template <typename T>
+auto sperr::SPECK_INT<T>::get_speck_bits(const void* buf) const -> uint64_t
+{
+  // Given the header definition, directly retrieve the value stored in bytes 1--9.
   const uint8_t* const ptr = static_cast<const uint8_t*>(buf);
   uint64_t num_bits = 0;
   std::memcpy(&num_bits, ptr + 1, sizeof(num_bits));
+  return num_bits;
+}
+
+template <typename T>
+auto sperr::SPECK_INT<T>::get_stream_full_len(const void* buf) const -> uint64_t
+{
+  auto num_bits = get_speck_bits(buf);
   while (num_bits % 8 != 0)
     ++num_bits;
-
   return (m_header_size + num_bits / 8);
 }
 

@@ -17,15 +17,16 @@ using uint_type = T;
 using vecui_type = std::vector<uint_type>;
 
  public:
-  // Constructor
+  // Constructor and destructor
   SPECK_INT();
-  // Virtual destructor
   virtual ~SPECK_INT() = default;
 
   void set_dims(dims_type);
 
-  // Retrieve the full length of a SPECK bitstream from its header
-  auto get_speck_full_len(const void*) const -> uint64_t;
+  // Retrieve info of a SPECK bitstream from its header
+  auto get_num_bitplanes(const void*) const -> uint8_t;
+  auto get_speck_bits(const void*) const -> uint64_t;
+  auto get_stream_full_len(const void*) const -> uint64_t;
 
   // Actions
   virtual void encode();
