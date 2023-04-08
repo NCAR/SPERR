@@ -80,8 +80,12 @@ class SPERR_Driver {
   CDF97 m_cdf;
   Conditioner m_conditioner;
 
-  auto m_midtread_f2i() -> RTNType;
-  void m_midtread_i2f();
+  // Derived classes instantiate the correct `m_encoder` and `m_decoder` depending on
+  // 3D/2D/1D classes, and the integer length in use.
+  virtual void m_instantiate_coders() = 0;
+
+  // Instantiate `m_vals_ui` based on the chosen integer length.
+  virtual void m_instantiate_int_vec();
 
   // Both wavelet transforms operate on `m_vals_d`.
   virtual void m_wavelet_xform() = 0;
@@ -95,6 +99,9 @@ class SPERR_Driver {
   // Optional procedures for flexibility
   virtual auto m_proc_1() -> RTNType;
   virtual auto m_proc_2() -> RTNType;
+
+  auto m_midtread_f2i() -> RTNType;
+  void m_midtread_i2f();
 };
 
 };  // namespace sperr
