@@ -21,6 +21,9 @@ using vecui_type = std::vector<uint_type>;
   SPECK_INT();
   virtual ~SPECK_INT() = default;
 
+  // The integer type in use
+  auto integer_len() const -> UINTType;
+
   void set_dims(dims_type);
 
   // Retrieve info of a SPECK bitstream from its header

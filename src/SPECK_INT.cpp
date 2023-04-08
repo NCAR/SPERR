@@ -13,6 +13,19 @@ sperr::SPECK_INT<T>::SPECK_INT()
 }
 
 template <typename T>
+auto sperr::SPECK_INT<T>::integer_len() const -> UINTType
+{
+  if constexpr (std::is_same_v<uint64_t, T>)
+    return UINTType::UINT64;
+  else if constexpr (std::is_same_v<uint32_t, T>)
+    return UINTType::UINT32;
+  else if constexpr (std::is_same_v<uint16_t, T>)
+    return UINTType::UINT16;
+  else
+    return UINTType::UINT8;
+}
+
+template <typename T>
 void sperr::SPECK_INT<T>::set_dims(dims_type dims)
 {
   m_dims = dims;
