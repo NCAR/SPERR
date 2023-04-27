@@ -199,12 +199,11 @@ void sperr::SPERR_Driver::m_midtread_i2f()
   assert(m_sign_array.size() == std::visit([](auto& vec) { return vec.size(); }, m_vals_ui));
 
   const auto tmpd = std::array<double, 2>{-1.0, 1.0};
-  const auto q = m_q;
   m_vals_d.resize(m_sign_array.size());
   std::visit(
-      [&m_vals_d = m_vals_d, &m_sign_array = m_sign_array, tmpd, q](auto& vec) {
+      [&vals_d = m_vals_d, &sign_array = m_sign_array, tmpd, q = m_q](auto& vec) {
         std::transform(
-            vec.cbegin(), vec.cend(), m_sign_array.cbegin(), m_vals_d.begin(),
+            vec.cbegin(), vec.cend(), sign_array.cbegin(), vals_d.begin(),
             [tmpd, q](auto i, auto b) { return (q * static_cast<double>(i) * tmpd[b]); });
       },
       m_vals_ui);
@@ -260,10 +259,36 @@ auto sperr::SPERR_Driver::compress() -> RTNType
     return rtn;
 
   // Step 4: Integer SPECK encoding
-  m_encoder->set_dims(m_dims);
-  m_encoder->use_coeffs(std::move(m_vals_ui), std::move(m_sign_array));
-  m_encoder->encode();
-  m_encoder->write_encoded_bitstream(m_speck_bitstream);
+  std::visit([&dims = m_dims](auto& encoder) { encoder->set_dims(dims); }, m_encoder);
+  switch (m_uint_flag) {
+    case UINTType::UINT64:
+      assert(m_vals_ui.index() == 0);
+      assert(m_encoder.index() == 0);
+      std::get<0>(m_encoder)->use_coeffs(std::move(std::get<0>(m_vals_ui)),
+                                         std::move(m_sign_array));
+      break;
+    case UINTType::UINT32:
+      assert(m_vals_ui.index() == 1);
+      assert(m_encoder.index() == 1);
+      std::get<1>(m_encoder)->use_coeffs(std::move(std::get<1>(m_vals_ui)),
+                                         std::move(m_sign_array));
+      break;
+    case UINTType::UINT16:
+      assert(m_vals_ui.index() == 2);
+      assert(m_encoder.index() == 2);
+      std::get<2>(m_encoder)->use_coeffs(std::move(std::get<2>(m_vals_ui)),
+                                         std::move(m_sign_array));
+      break;
+    default:
+      assert(m_vals_ui.index() == 3);
+      assert(m_encoder.index() == 3);
+      std::get<3>(m_encoder)->use_coeffs(std::move(std::get<3>(m_vals_ui)),
+                                         std::move(m_sign_array));
+  }
+  std::visit([](auto& encoder) { encoder->encode(); }, m_encoder);
+  std::visit([&speck_bitstream = m_speck_bitstream](
+                 auto& encoder) { encoder->write_encoded_bitstream(speck_bitstream); },
+             m_encoder);
 
   return RTNType::Good;
 }
@@ -287,11 +312,30 @@ auto sperr::SPERR_Driver::decompress() -> RTNType
 
   // Step 1: Integer SPECK decode.
   assert(!m_speck_bitstream.empty());
-  m_decoder->set_dims(m_dims);
-  m_decoder->use_bitstream(m_speck_bitstream);
-  m_decoder->decode();
-  m_vals_ui = m_decoder->release_coeffs();
-  m_sign_array = m_decoder->release_signs();
+  std::visit([&dims = m_dims](auto& decoder) { decoder->set_dims(dims); }, m_decoder);
+  std::visit([&speck_bitstream =
+                  m_speck_bitstream](auto& decoder) { decoder->use_bitstream(speck_bitstream); },
+             m_decoder);
+  std::visit([](auto& decoder) { decoder->decode(); }, m_decoder);
+  switch (m_uint_flag) {
+    case UINTType::UINT64:
+      assert(m_decoder.index() == 0);
+      m_vals_ui = std::get<0>(m_decoder)->release_coeffs();
+      break;
+    case UINTType::UINT32:
+      assert(m_decoder.index() == 1);
+      m_vals_ui = std::get<1>(m_decoder)->release_coeffs();
+      break;
+    case UINTType::UINT16:
+      assert(m_decoder.index() == 2);
+      m_vals_ui = std::get<2>(m_decoder)->release_coeffs();
+      break;
+    default:
+      assert(m_decoder.index() == 3);
+      m_vals_ui = std::get<3>(m_decoder)->release_coeffs();
+      break;
+  }
+  m_sign_array = std::visit([](auto& decoder) { return decoder->release_signs(); }, m_decoder);
 
   // Step 2: Inverse quantization
   auto rtn = m_inverse_quantize();

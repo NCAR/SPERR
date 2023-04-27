@@ -93,6 +93,8 @@ class SPERR_Driver {
 
   // Quantization reads from `m_vals_d`, and writes to `m_vals_ui` and `m_sign_array`.
   // Inverse quantization reads from `m_vals_ui` and `m_sign_array`, and writes to `m_vals_d`.
+  // This base class provides two midtread quantization implementations, but derived classe
+  //   can have other quantization methods.
   virtual auto m_quantize() -> RTNType = 0;
   virtual auto m_inverse_quantize() -> RTNType = 0;
 
