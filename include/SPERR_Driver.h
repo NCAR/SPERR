@@ -82,7 +82,8 @@ class SPERR_Driver {
 
   // Derived classes instantiate the correct `m_encoder` and `m_decoder` depending on
   // 3D/2D/1D classes, and the integer length in use.
-  virtual void m_instantiate_coders() = 0;
+  virtual void m_instantiate_encoder() = 0;
+  virtual void m_instantiate_decoder() = 0;
 
   // Instantiate `m_vals_ui` based on the chosen integer length.
   virtual void m_instantiate_int_vec();

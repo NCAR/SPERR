@@ -39,7 +39,6 @@ auto sperr::SPECK_INT<T>::get_num_bitplanes(const void* buf) const -> uint8_t
   uint8_t bitplanes = 0;
   std::memcpy(&bitplanes, ptr, sizeof(bitplanes));
   return bitplanes;
-
 }
 
 template <typename T>
@@ -76,7 +75,7 @@ void sperr::SPECK_INT<T>::encode()
   const auto max_coeff = *std::max_element(m_coeff_buf.cbegin(), m_coeff_buf.cend());
   m_num_bitplanes = 1;
   m_threshold = 1;
-  while (m_threshold * uint_type{2} <= max_coeff) {
+  while (m_threshold* uint_type{2} <= max_coeff) {
     m_threshold *= uint_type{2};
     m_num_bitplanes++;
   }

@@ -26,10 +26,10 @@ void sperr::SPECK3D_INT_ENC<T>::m_sorting_pass()
 
 template <typename T>
 void sperr::SPECK3D_INT_ENC<T>::m_process_S(size_t idx1,
-                                         size_t idx2,
-                                         SigType sig,
-                                         size_t& counter,
-                                         bool output)
+                                            size_t idx2,
+                                            SigType sig,
+                                            size_t& counter,
+                                            bool output)
 {
   // Significance type cannot be NewlySig!
   assert(sig != SigType::NewlySig);
@@ -109,7 +109,9 @@ void sperr::SPECK3D_INT_ENC<T>::m_process_P(size_t loc, SigType sig, size_t& cou
 }
 
 template <typename T>
-void sperr::SPECK3D_INT_ENC<T>::m_code_S(size_t idx1, size_t idx2, std::array<SigType, 8> subset_sigs)
+void sperr::SPECK3D_INT_ENC<T>::m_code_S(size_t idx1,
+                                         size_t idx2,
+                                         std::array<SigType, 8> subset_sigs)
 {
   auto subsets = m_partition_S_XYZ(m_LIS[idx1][idx2]);
 

@@ -1,7 +1,9 @@
 #ifndef SPECK_INT_H
 #define SPECK_INT_H
 
+//
 // This is the base class of 1D, 2D, and 3D integer SPECK implementations.
+//
 
 #include "sperr_helper.h"
 
@@ -12,9 +14,8 @@ namespace sperr {
 
 template <typename T>
 class SPECK_INT {
-
-using uint_type = T;
-using vecui_type = std::vector<uint_type>;
+  using uint_type = T;
+  using vecui_type = std::vector<uint_type>;
 
  public:
   // Constructor and destructor

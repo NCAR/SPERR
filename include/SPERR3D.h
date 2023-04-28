@@ -10,10 +10,11 @@ class SPERR3D : public SPERR_Driver {
   //
   // Constructor
   //
-  //SPERR3D();
+  // SPERR3D();
 
  protected:
-  virtual void m_instantiate_coders() override;
+  virtual void m_instantiate_encoder() override;
+  virtual void m_instantiate_decoder() override;
 
   virtual void m_wavelet_xform() override;
   virtual void m_inverse_wavelet_xform() override;

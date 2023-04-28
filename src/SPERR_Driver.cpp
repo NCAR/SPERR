@@ -76,7 +76,7 @@ auto sperr::SPERR_Driver::use_bitstream(const void* p, size_t len) -> RTNType
 
   // Integer length decision 2: make sure `m_vals_ui` and `m_decoder` use the decided length
   m_instantiate_int_vec();
-  m_instantiate_coders();
+  m_instantiate_decoder();
 
   return RTNType::Good;
 }
@@ -259,6 +259,7 @@ auto sperr::SPERR_Driver::compress() -> RTNType
     return rtn;
 
   // Step 4: Integer SPECK encoding
+  m_instantiate_encoder();
   std::visit([&dims = m_dims](auto& encoder) { encoder->set_dims(dims); }, m_encoder);
   switch (m_uint_flag) {
     case UINTType::UINT64:

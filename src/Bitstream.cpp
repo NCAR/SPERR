@@ -69,7 +69,7 @@ auto sperr::Bitstream::rbit() -> bool
     m_bits = 64;
   }
   --m_bits;
-  bool bit = m_buffer & uint64_t{1};
+  bool bit = m_buffer& uint64_t{1};
   m_buffer >>= 1;
   return bit;
 }
