@@ -305,3 +305,8 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_Z(const Set3D& set) -> std::array<Set3
 
   return subsets;
 }
+
+template class sperr::SPECK3D_INT<uint64_t>;
+template class sperr::SPECK3D_INT<uint32_t>;
+template class sperr::SPECK3D_INT<uint16_t>;
+template class sperr::SPECK3D_INT<uint8_t>;

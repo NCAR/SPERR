@@ -94,3 +94,8 @@ void sperr::SPECK3D_INT_DEC<T>::m_code_S(size_t idx1, size_t idx2)
     }
   }
 }
+
+template class sperr::SPECK3D_INT_DEC<uint64_t>;
+template class sperr::SPECK3D_INT_DEC<uint32_t>;
+template class sperr::SPECK3D_INT_DEC<uint16_t>;
+template class sperr::SPECK3D_INT_DEC<uint8_t>;

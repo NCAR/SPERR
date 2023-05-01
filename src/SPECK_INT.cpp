@@ -250,3 +250,8 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
     m_LSP_mask.write_bit(idx, true);
   m_LSP_new.clear();
 }
+
+template class sperr::SPECK_INT<uint64_t>;
+template class sperr::SPECK_INT<uint32_t>;
+template class sperr::SPECK_INT<uint16_t>;
+template class sperr::SPECK_INT<uint8_t>;

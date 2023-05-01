@@ -55,3 +55,8 @@ auto sperr::SPECK1D_INT<T>::m_partition_set(const Set1D& set) const -> std::arra
 
   return subsets;
 }
+
+template class sperr::SPECK1D_INT<uint64_t>;
+template class sperr::SPECK1D_INT<uint32_t>;
+template class sperr::SPECK1D_INT<uint16_t>;
+template class sperr::SPECK1D_INT<uint8_t>;

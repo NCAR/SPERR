@@ -152,3 +152,8 @@ auto sperr::SPECK1D_INT_ENC<T>::m_decide_significance(const Set1D& set) const
   else
     return {SigType::Insig, 0};
 }
+
+template class sperr::SPECK1D_INT_ENC<uint64_t>;
+template class sperr::SPECK1D_INT_ENC<uint32_t>;
+template class sperr::SPECK1D_INT_ENC<uint16_t>;
+template class sperr::SPECK1D_INT_ENC<uint8_t>;

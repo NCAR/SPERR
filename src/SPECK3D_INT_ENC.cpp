@@ -176,3 +176,8 @@ auto sperr::SPECK3D_INT_ENC<T>::m_decide_significance(const Set3D& set) const
 
   return {SigType::Insig, {0, 0, 0}};
 }
+
+template class sperr::SPECK3D_INT_ENC<uint64_t>;
+template class sperr::SPECK3D_INT_ENC<uint32_t>;
+template class sperr::SPECK3D_INT_ENC<uint16_t>;
+template class sperr::SPECK3D_INT_ENC<uint8_t>;

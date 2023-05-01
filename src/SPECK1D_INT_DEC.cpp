@@ -100,3 +100,8 @@ void sperr::SPECK1D_INT_DEC<T>::m_code_S(size_t idx1, size_t idx2)
     m_process_S(newidx1, m_LIS[newidx1].size() - 1, sig_counter, read);
   }
 }
+
+template class sperr::SPECK1D_INT_DEC<uint64_t>;
+template class sperr::SPECK1D_INT_DEC<uint32_t>;
+template class sperr::SPECK1D_INT_DEC<uint16_t>;
+template class sperr::SPECK1D_INT_DEC<uint8_t>;
