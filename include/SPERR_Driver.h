@@ -23,10 +23,10 @@ class SPERR_Driver {
   //
   // Input
   //
-  // Accept incoming data: copy from a raw memory block
+  // Accept incoming data: copy from a raw memory block.
+  // `len` is the number of values.
   template <typename T>
-  void copy_data(const T* p,   // Input: pointer to the memory block
-                 size_t len);  // Input: number of values
+  void copy_data(const T* p, size_t len);
 
   // Accept incoming data: take ownership of a memory block
   void take_data(std::vector<double>&&);
@@ -81,7 +81,7 @@ class SPERR_Driver {
   Conditioner m_conditioner;
 
   // Derived classes instantiate the correct `m_encoder` and `m_decoder` depending on
-  // 3D/2D/1D classes, and the integer length in use.
+  //  3D/2D/1D classes, and the integer length in use.
   virtual void m_instantiate_encoder() = 0;
   virtual void m_instantiate_decoder() = 0;
 
@@ -94,15 +94,11 @@ class SPERR_Driver {
 
   // Quantization reads from `m_vals_d`, and writes to `m_vals_ui` and `m_sign_array`.
   // Inverse quantization reads from `m_vals_ui` and `m_sign_array`, and writes to `m_vals_d`.
-  // This base class provides two midtread quantization implementations, but derived classe
-  //   can have other quantization methods.
   virtual auto m_quantize() -> RTNType = 0;
   virtual auto m_inverse_quantize() -> RTNType = 0;
 
-  // Optional procedures for flexibility
-  virtual auto m_proc_1() -> RTNType;
-  virtual auto m_proc_2() -> RTNType;
-
+  // This base class provides two midtread quantization implementations, but derived classes
+  //  can have other quantization methods.
   auto m_midtread_f2i() -> RTNType;
   void m_midtread_i2f();
 };

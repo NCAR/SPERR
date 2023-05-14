@@ -42,9 +42,9 @@ auto sperr::SPERR_Driver::use_bitstream(const void* p, size_t len) -> RTNType
   size_t pos = condi_size;
 
   // `m_condi_bitstream` might be indicating that the field is a constant field.
-  // In that case, there will be no more speck or sperr streams.
-  // Let's detect that case here and return early if it is true.
-  // It will be up to the decompress() routine to restore the actual constant field.
+  //  In that case, there will be no more speck or sperr streams.
+  //  Let's detect that case here and return early if it is true.
+  //  It will be up to the decompress() routine to restore the actual constant field.
   auto constant = m_conditioner.parse_constant(m_condi_bitstream);
   if (std::get<0>(constant)) {
     if (condi_size == len)
@@ -136,7 +136,7 @@ auto sperr::SPERR_Driver::m_midtread_f2i() -> RTNType
 {
   // Make sure that the rounding mode is what we wanted.
   // Here are two methods of querying the current rounding mode; not sure
-  //   how they compare, so test both of them for now.
+  //  how they compare, so test both of them for now.
   assert(FE_TONEAREST == FLT_ROUNDS);
   assert(FE_TONEAREST == std::fegetround());
 
@@ -208,18 +208,10 @@ void sperr::SPERR_Driver::m_midtread_i2f()
       },
       m_vals_ui);
 
+  // std::visit() obscures the intention, but the task is really the same as the following:
+  //
   // std::transform(m_vals_ui.cbegin(), m_vals_ui.cend(), m_sign_array.cbegin(), m_vals_d.begin(),
   //                [tmpd, q](auto i, auto b) { return q * static_cast<double>(i) * tmpd[b]; });
-}
-
-auto sperr::SPERR_Driver::m_proc_1() -> RTNType
-{
-  return RTNType::Good;
-}
-
-auto sperr::SPERR_Driver::m_proc_2() -> RTNType
-{
-  return RTNType::Good;
 }
 
 auto sperr::SPERR_Driver::compress() -> RTNType
@@ -302,7 +294,7 @@ auto sperr::SPERR_Driver::decompress() -> RTNType
   const auto total_vals = uint64_t(m_dims[0]) * m_dims[1] * m_dims[2];
 
   // `m_condi_bitstream` might be indicating a constant field, so let's see if that's
-  // the case, and if it is, we don't need to go through wavelet and speck stuff anymore.
+  //  the case, and if it is, we don't need to go through wavelet and speck stuff anymore.
   auto constant = m_conditioner.parse_constant(m_condi_bitstream);
   if (std::get<0>(constant)) {
     auto val = std::get<1>(constant);
@@ -318,7 +310,7 @@ auto sperr::SPERR_Driver::decompress() -> RTNType
                   m_speck_bitstream](auto& decoder) { decoder->use_bitstream(speck_bitstream); },
              m_decoder);
   std::visit([](auto& decoder) { decoder->decode(); }, m_decoder);
-  switch (m_uint_flag) {
+  switch (m_uint_flag) {  // `m_uint_flag` was properly set during `use_bitstream()`.
     case UINTType::UINT64:
       assert(m_decoder.index() == 0);
       m_vals_ui = std::get<0>(m_decoder)->release_coeffs();

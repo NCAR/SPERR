@@ -6,11 +6,6 @@
 namespace sperr {
 
 class SPERR3D : public SPERR_Driver {
- public:
-  //
-  // Constructor
-  //
-  // SPERR3D();
 
  protected:
   virtual void m_instantiate_encoder() override;

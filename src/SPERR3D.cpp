@@ -2,15 +2,6 @@
 #include "SPECK3D_INT_DEC.h"
 #include "SPECK3D_INT_ENC.h"
 
-//
-// Constructor
-//
-// sperr::SPERR3D::SPERR3D()
-//{
-//  m_encoder = std::make_unique<SPECK3D_INT_ENC>();
-//  m_decoder = std::make_unique<SPECK3D_INT_DEC>();
-//}
-
 void sperr::SPERR3D::m_instantiate_encoder()
 {
   switch (m_uint_flag) {
