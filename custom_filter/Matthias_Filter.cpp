@@ -8,6 +8,16 @@
 
 auto sperr::Matthias_Filter::apply_filter(vecd_type& buf, dims_type dims) -> vec8_type
 {
+  // In case of 2D slices, really does nothing, just record a header size of 4 bytes.
+  if (dims[2] == 1) {
+    const uint32_t len = sizeof(uint32_t);
+    auto header = vec8_type(len);
+    std::memcpy(header.data(), &len, sizeof(len));
+    return header;
+  }
+
+  // Continue with 3D cases.
+  //
   assert(buf.size() == dims[0] * dims[1] * dims[2]);
   assert(!buf.empty());
 
@@ -54,6 +64,13 @@ auto sperr::Matthias_Filter::inverse_filter(vecd_type& buf,
   const auto len = this->header_size(header);
   if (len != header_len)
     return false;
+
+  // In case of 2D slices, really does nothing.
+  if (dims[2] == 1)
+    return true;
+
+  // Continue with 3D cases.
+  //
   if (len != sizeof(uint32_t) + sizeof(double) * 2 * dims[0])
     return false;
 
