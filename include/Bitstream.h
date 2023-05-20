@@ -24,6 +24,8 @@
  *   5. Functions write_bitstream() and parse_bitstream() take in a raw pointer and the
  *      number of bits to write/read. The memory pointed to by the raw pointer needs to
  *      be big enough to hold the number of bits specified.
+ *   6. get_bitstream() and write_bitstream() needs to be supplied a number of bits because
+ *      a Bitstream itself will lose track of how many useful bits are there after flush().
  */
 
 #include <cstddef>

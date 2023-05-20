@@ -61,3 +61,14 @@ void sperr::Bitmask::write_bit(size_t idx, bool bit)
     word &= ~mask;
   m_buf[wstart] = word;
 }
+
+auto sperr::Bitmask::view_buffer() const -> const std::vector<uint64_t>&
+{
+  return m_buf;
+}
+
+void sperr::Bitmask::use_bitstream(const void* p)
+{
+  const auto* pu64 = static_cast<const uint64_t*>(p);
+  std::copy(pu64, pu64 + m_buf.size(), m_buf.begin());
+}

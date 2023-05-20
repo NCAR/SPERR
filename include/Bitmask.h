@@ -25,6 +25,7 @@ namespace sperr {
 class Bitmask {
  public:
   // Constructor
+  //
   Bitmask(size_t nbits = 0);  // How many bits does it hold initially?
 
   // Functions for both read and write
@@ -42,6 +43,13 @@ class Bitmask {
   //
   void write_long(size_t idx, uint64_t value);
   void write_bit(size_t idx, bool bit);
+
+  // Functions for direct access of the underlying data buffer
+  // Note: `use_bitstream()` reads the number of values (uint64_t type) that provide
+  //       enough bits for the specified size of this mask.
+  //
+  auto view_buffer() const -> const std::vector<uint64_t>&;
+  void use_bitstream(const void* p);
 
  private:
   std::vector<uint64_t> m_buf;
