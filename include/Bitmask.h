@@ -51,6 +51,10 @@ class Bitmask {
   auto view_buffer() const -> const std::vector<uint64_t>&;
   void use_bitstream(const void* p);
 
+  // Compare if two Bitmasks are identical.
+  //
+  auto operator==(const Bitmask& rhs) const -> bool = default;
+
  private:
   std::vector<uint64_t> m_buf;
   size_t m_num_bits = 0;

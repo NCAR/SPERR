@@ -234,4 +234,30 @@ TEST(Bitmask, RandomReadWrite)
     EXPECT_EQ(m1.read_bit(i), vec[i]) << "at idx = " << i;
 }
 
+TEST(Bitmask, BufferTransfer)
+{
+  auto src = Mask(64);
+  src.write_long(0, 78344ul);
+  auto buf = src.view_buffer();
+
+  auto dst = Mask(64);
+  dst.use_bitstream(buf.data());
+  EXPECT_EQ(src, dst);
+
+  src.resize(120);
+  src.write_long(100, 19837ul);
+  buf = src.view_buffer();
+
+  dst.resize(120);
+  dst.use_bitstream(buf.data());
+  EXPECT_EQ(src, dst);
+
+  src.resize(20);
+  buf = src.view_buffer();
+
+  dst.resize(20);
+  dst.use_bitstream(buf.data());
+  EXPECT_EQ(src, dst);
+}
+
 }  // namespace
