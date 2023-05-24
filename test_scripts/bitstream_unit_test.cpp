@@ -234,6 +234,7 @@ TEST(Bitmask, RandomReadWrite)
     EXPECT_EQ(m1.read_bit(i), vec[i]) << "at idx = " << i;
 }
 
+#if __cplusplus >= 202002L
 TEST(Bitmask, BufferTransfer)
 {
   auto src = Mask(60);
@@ -267,5 +268,6 @@ TEST(Bitmask, BufferTransfer)
   dst.use_bitstream(buf.data());
   EXPECT_EQ(src, dst);
 }
+#endif
 
 }  // namespace
