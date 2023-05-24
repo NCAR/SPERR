@@ -5,7 +5,8 @@
 #include <cstring>  // std::memcpy()
 #include <numeric>
 
-void sperr::SPECK1D_INT_DEC::m_sorting_pass()
+template <typename T>
+void sperr::SPECK1D_INT_DEC<T>::m_sorting_pass()
 {
   // Since we have a separate representation of LIP, let's process that list first
   //
@@ -23,7 +24,8 @@ void sperr::SPECK1D_INT_DEC::m_sorting_pass()
   }
 }
 
-void sperr::SPECK1D_INT_DEC::m_process_S(size_t idx1, size_t idx2, size_t& counter, bool read)
+template <typename T>
+void sperr::SPECK1D_INT_DEC<T>::m_process_S(size_t idx1, size_t idx2, size_t& counter, bool read)
 {
   auto& set = m_LIS[idx1][idx2];
   bool is_sig = true;
@@ -40,7 +42,8 @@ void sperr::SPECK1D_INT_DEC::m_process_S(size_t idx1, size_t idx2, size_t& count
   }
 }
 
-void sperr::SPECK1D_INT_DEC::m_process_P(size_t loc, size_t& counter, bool read)
+template <typename T>
+void sperr::SPECK1D_INT_DEC<T>::m_process_P(size_t loc, size_t& counter, bool read)
 {
   bool is_sig = true;
   const auto pixel_idx = m_LIP[loc];
@@ -62,7 +65,8 @@ void sperr::SPECK1D_INT_DEC::m_process_P(size_t loc, size_t& counter, bool read)
   }
 }
 
-void sperr::SPECK1D_INT_DEC::m_code_S(size_t idx1, size_t idx2)
+template <typename T>
+void sperr::SPECK1D_INT_DEC<T>::m_code_S(size_t idx1, size_t idx2)
 {
   auto subsets = m_partition_set(m_LIS[idx1][idx2]);
   auto sig_counter = size_t{0};
@@ -96,3 +100,8 @@ void sperr::SPECK1D_INT_DEC::m_code_S(size_t idx1, size_t idx2)
     m_process_S(newidx1, m_LIS[newidx1].size() - 1, sig_counter, read);
   }
 }
+
+template class sperr::SPECK1D_INT_DEC<uint64_t>;
+template class sperr::SPECK1D_INT_DEC<uint32_t>;
+template class sperr::SPECK1D_INT_DEC<uint16_t>;
+template class sperr::SPECK1D_INT_DEC<uint8_t>;

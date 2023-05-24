@@ -13,8 +13,9 @@
 
 namespace {
 
+template <typename T>
 auto ProduceRandomArray(size_t len, float stddev, uint32_t seed) 
-    -> std::pair<std::vector<uint64_t>, std::vector<bool>>
+    -> std::pair<std::vector<T>, std::vector<bool>>
 {
   std::mt19937 gen{seed};
   std::normal_distribution<float> d{0.0, stddev};
@@ -22,10 +23,15 @@ auto ProduceRandomArray(size_t len, float stddev, uint32_t seed)
   auto tmp = std::vector<float>(len);
   std::generate(tmp.begin(), tmp.end(), [&gen, &d](){ return d(gen); });
 
-  auto coeffs = std::vector<uint64_t>(len);
+  auto coeffs = std::vector<T>(len);
   auto signs = std::vector<bool>(len, true);
   for (size_t i = 0; i < len; i++) {
-    coeffs[i] = std::round(std::abs(tmp[i]));
+    auto l = std::lround(std::abs(tmp[i]));
+    if (l > std::numeric_limits<T>::max())
+      coeffs[i] = std::numeric_limits<T>::max();
+    else
+      coeffs[i] = l;
+    // Only specify signs for non-zero values.
     if (coeffs[i] != 0)
       signs[i] = tmp[i] > 0.f;
   }
@@ -40,7 +46,7 @@ TEST(SPECK1D_INT, minimal)
 {
   const auto dims = sperr::dims_type{40, 1, 1};
 
-  auto input = sperr::vecui_t(dims[0], 0);
+  auto input = std::vector<uint8_t>(dims[0], 0);
   auto input_signs = sperr::vecb_type(input.size(), true);
   input[4] = 1;
   input[7] = 3; input_signs[7] = false;
@@ -53,34 +59,120 @@ TEST(SPECK1D_INT, minimal)
   input[32] = 32;
   input[39] = 32; input_signs[39] = false;
 
-  // Encode
-  auto encoder = sperr::SPECK1D_INT_ENC();
+  //
+  // Test 1-byte integer
+  //
+  {
+  auto encoder = sperr::SPECK1D_INT_ENC<uint8_t>();
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
   auto bitstream = sperr::vec8_type(); 
   encoder.write_encoded_bitstream(bitstream);
 
-  // Decode
-  auto decoder = sperr::SPECK1D_INT_DEC();
+  auto decoder = sperr::SPECK1D_INT_DEC<uint8_t>();
   decoder.set_dims(dims);
   decoder.use_bitstream(bitstream);
   decoder.decode();
   auto output = decoder.release_coeffs();
   auto output_signs = decoder.release_signs();
 
+  EXPECT_EQ(encoder.integer_len(), 1);
+  EXPECT_EQ(decoder.integer_len(), 1);
   EXPECT_EQ(input, output);
   EXPECT_EQ(input_signs, output_signs);
+  }
+
+  //
+  // Test 2-byte integer
+  //
+  auto input16 = std::vector<uint16_t>(dims[0], 0);
+  std::copy(input.cbegin(), input.cend(), input16.begin());
+  input16[30] = 300;
+  {
+  auto encoder = sperr::SPECK1D_INT_ENC<uint16_t>();
+  encoder.use_coeffs(input16, input_signs);
+  encoder.set_dims(dims);
+  encoder.encode();
+  auto bitstream = sperr::vec8_type(); 
+  encoder.write_encoded_bitstream(bitstream);
+
+  auto decoder = sperr::SPECK1D_INT_DEC<uint16_t>();
+  decoder.set_dims(dims);
+  decoder.use_bitstream(bitstream);
+  decoder.decode();
+  auto output = decoder.release_coeffs();
+  auto output_signs = decoder.release_signs();
+
+  EXPECT_EQ(encoder.integer_len(), 2);
+  EXPECT_EQ(decoder.integer_len(), 2);
+  EXPECT_EQ(input16, output);
+  EXPECT_EQ(input_signs, output_signs);
+  }
+
+  //
+  // Test 4-byte integer
+  //
+  auto input32 = std::vector<uint32_t>(dims[0], 0);
+  std::copy(input16.cbegin(), input16.cend(), input32.begin());
+  input32[20] = 70'000;
+  {
+  auto encoder = sperr::SPECK1D_INT_ENC<uint32_t>();
+  encoder.use_coeffs(input32, input_signs);
+  encoder.set_dims(dims);
+  encoder.encode();
+  auto bitstream = sperr::vec8_type(); 
+  encoder.write_encoded_bitstream(bitstream);
+
+  auto decoder = sperr::SPECK1D_INT_DEC<uint32_t>();
+  decoder.set_dims(dims);
+  decoder.use_bitstream(bitstream);
+  decoder.decode();
+  auto output = decoder.release_coeffs();
+  auto output_signs = decoder.release_signs();
+
+  EXPECT_EQ(encoder.integer_len(), 4);
+  EXPECT_EQ(decoder.integer_len(), 4);
+  EXPECT_EQ(input32, output);
+  EXPECT_EQ(input_signs, output_signs);
+  }
+
+  //
+  // Test 8-byte integer
+  //
+  auto input64 = std::vector<uint64_t>(dims[0], 0);
+  std::copy(input32.cbegin(), input32.cend(), input64.begin());
+  input64[23] = 5'000'700'000;
+  {
+  auto encoder = sperr::SPECK1D_INT_ENC<uint64_t>();
+  encoder.use_coeffs(input64, input_signs);
+  encoder.set_dims(dims);
+  encoder.encode();
+  auto bitstream = sperr::vec8_type(); 
+  encoder.write_encoded_bitstream(bitstream);
+
+  auto decoder = sperr::SPECK1D_INT_DEC<uint64_t>();
+  decoder.set_dims(dims);
+  decoder.use_bitstream(bitstream);
+  decoder.decode();
+  auto output = decoder.release_coeffs();
+  auto output_signs = decoder.release_signs();
+
+  EXPECT_EQ(encoder.integer_len(), 8);
+  EXPECT_EQ(decoder.integer_len(), 8);
+  EXPECT_EQ(input64, output);
+  EXPECT_EQ(input_signs, output_signs);
+  }
 }
 
 TEST(SPECK1D_INT, Random1)
 {
   const auto dims = sperr::dims_type{2000, 1, 1};
 
-  auto [input, input_signs] = ProduceRandomArray(dims[0], 2.9, 1); 
+  auto [input, input_signs] = ProduceRandomArray<uint8_t>(dims[0], 2.9, 1); 
 
   // Encode
-  auto encoder = sperr::SPECK1D_INT_ENC();
+  auto encoder = sperr::SPECK1D_INT_ENC<uint8_t>();
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
@@ -88,7 +180,7 @@ TEST(SPECK1D_INT, Random1)
   encoder.write_encoded_bitstream(bitstream);
 
   // Decode
-  auto decoder = sperr::SPECK1D_INT_DEC();
+  auto decoder = sperr::SPECK1D_INT_DEC<uint8_t>();
   decoder.set_dims(dims);
   decoder.use_bitstream(bitstream);
   decoder.decode();
@@ -103,10 +195,10 @@ TEST(SPECK1D_INT, Random2)
 {
   const auto dims = sperr::dims_type{63 * 79 * 128, 1, 1};
 
-  auto [input, input_signs] = ProduceRandomArray(dims[0], 499.0, 2); 
+  auto [input, input_signs] = ProduceRandomArray<uint16_t>(dims[0], 499.0, 2); 
 
   // Encode
-  auto encoder = sperr::SPECK3D_INT_ENC();
+  auto encoder = sperr::SPECK3D_INT_ENC<uint16_t>();
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
@@ -114,7 +206,7 @@ TEST(SPECK1D_INT, Random2)
   encoder.write_encoded_bitstream(bitstream);
 
   // Decode
-  auto decoder = sperr::SPECK3D_INT_DEC();
+  auto decoder = sperr::SPECK3D_INT_DEC<uint16_t>();
   decoder.set_dims(dims);
   decoder.use_bitstream(bitstream);
   decoder.decode();
@@ -130,10 +222,10 @@ TEST(SPECK1D_INT, RandomRandom)
   const auto dims = sperr::dims_type{63 * 64 * 119, 1, 1};
 
   auto rd = std::random_device();
-  auto [input, input_signs] = ProduceRandomArray(dims[0], 8345.3, rd()); 
+  auto [input, input_signs] = ProduceRandomArray<uint64_t>(dims[0], 8345.3, rd()); 
 
   // Encode
-  auto encoder = sperr::SPECK1D_INT_ENC();
+  auto encoder = sperr::SPECK1D_INT_ENC<uint64_t>();
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
@@ -141,7 +233,7 @@ TEST(SPECK1D_INT, RandomRandom)
   encoder.write_encoded_bitstream(bitstream);
 
   // Decode
-  auto decoder = sperr::SPECK1D_INT_DEC();
+  auto decoder = sperr::SPECK1D_INT_DEC<uint64_t>();
   decoder.set_dims(dims);
   decoder.use_bitstream(bitstream);
   decoder.decode();
@@ -159,8 +251,7 @@ TEST(SPECK3D_INT, minimal)
 {
   const auto dims = sperr::dims_type{4, 3, 8};
   const auto total_vals = dims[0] * dims[1] * dims[2];
-
-  auto input = sperr::vecui_t(total_vals, 0);
+  auto input = std::vector<uint8_t>(total_vals, 0);
   auto input_signs = sperr::vecb_type(input.size(), true);
   input[4] = 1;
   input[7] = 3; input_signs[7] = false;
@@ -173,24 +264,114 @@ TEST(SPECK3D_INT, minimal)
   input[32] = 32;
   input[39] = 32; input_signs[39] = false;
 
-  // Encode
-  auto encoder = sperr::SPECK3D_INT_ENC();
+  //
+  // Test 1-byte integers
+  //
+  {
+  auto encoder = sperr::SPECK3D_INT_ENC<uint8_t>();
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
   auto bitstream = sperr::vec8_type(); 
   encoder.write_encoded_bitstream(bitstream);
 
-  // Decode
-  auto decoder = sperr::SPECK3D_INT_DEC();
+  auto decoder = sperr::SPECK3D_INT_DEC<uint8_t>();
   decoder.set_dims(dims);
   decoder.use_bitstream(bitstream);
   decoder.decode();
   auto output = decoder.release_coeffs();
   auto output_signs = decoder.release_signs();
 
+  EXPECT_EQ(encoder.integer_len(), 1);
+  EXPECT_EQ(decoder.integer_len(), 1);
+  EXPECT_EQ(input, output);
   EXPECT_EQ(input, output);
   EXPECT_EQ(input_signs, output_signs);
+  }
+
+  //
+  // Test 2-byte integers
+  //
+  auto input16 = std::vector<uint16_t>(total_vals, 0);
+  std::copy(input.begin(), input.end(), input16.begin());
+  input16[30] = 300; input_signs[30] = false;
+  {
+  auto encoder = sperr::SPECK3D_INT_ENC<uint16_t>();
+  encoder.use_coeffs(input16, input_signs);
+  encoder.set_dims(dims);
+  encoder.encode();
+  auto bitstream = sperr::vec8_type(); 
+  encoder.write_encoded_bitstream(bitstream);
+
+  auto decoder = sperr::SPECK3D_INT_DEC<uint16_t>();
+  decoder.set_dims(dims);
+  decoder.use_bitstream(bitstream);
+  decoder.decode();
+  auto output = decoder.release_coeffs();
+  auto output_signs = decoder.release_signs();
+
+  EXPECT_EQ(encoder.integer_len(), 2);
+  EXPECT_EQ(decoder.integer_len(), 2);
+  EXPECT_EQ(input16, output);
+  EXPECT_EQ(input16, output);
+  EXPECT_EQ(input_signs, output_signs);
+  }
+
+  //
+  // Test 4-byte integers
+  //
+  auto input32 = std::vector<uint32_t>(total_vals, 0);
+  std::copy(input16.begin(), input16.end(), input32.begin());
+  input32[20] = 7'0300; input_signs[20] = false;
+  {
+  auto encoder = sperr::SPECK3D_INT_ENC<uint32_t>();
+  encoder.use_coeffs(input32, input_signs);
+  encoder.set_dims(dims);
+  encoder.encode();
+  auto bitstream = sperr::vec8_type(); 
+  encoder.write_encoded_bitstream(bitstream);
+
+  auto decoder = sperr::SPECK3D_INT_DEC<uint32_t>();
+  decoder.set_dims(dims);
+  decoder.use_bitstream(bitstream);
+  decoder.decode();
+  auto output = decoder.release_coeffs();
+  auto output_signs = decoder.release_signs();
+
+  EXPECT_EQ(encoder.integer_len(), 4);
+  EXPECT_EQ(decoder.integer_len(), 4);
+  EXPECT_EQ(input32, output);
+  EXPECT_EQ(input32, output);
+  EXPECT_EQ(input_signs, output_signs);
+  }
+
+  //
+  // Test 8-byte integers
+  //
+  auto input64 = std::vector<uint64_t>(total_vals, 0);
+  std::copy(input32.begin(), input32.end(), input64.begin());
+  input64[27] = 5'000'700'990; input_signs[27] = false;
+  {
+  auto encoder = sperr::SPECK3D_INT_ENC<uint64_t>();
+  encoder.use_coeffs(input64, input_signs);
+  encoder.set_dims(dims);
+  encoder.encode();
+  auto bitstream = sperr::vec8_type(); 
+  encoder.write_encoded_bitstream(bitstream);
+
+  auto decoder = sperr::SPECK3D_INT_DEC<uint64_t>();
+  decoder.set_dims(dims);
+  decoder.use_bitstream(bitstream);
+  decoder.decode();
+  auto output = decoder.release_coeffs();
+  auto output_signs = decoder.release_signs();
+
+  EXPECT_EQ(encoder.integer_len(), 8);
+  EXPECT_EQ(decoder.integer_len(), 8);
+  EXPECT_EQ(input64, output);
+  EXPECT_EQ(input64, output);
+  EXPECT_EQ(input_signs, output_signs);
+  }
 }
 
 TEST(SPECK3D_INT, Random1)
@@ -198,10 +379,10 @@ TEST(SPECK3D_INT, Random1)
   const auto dims = sperr::dims_type{10, 20, 30};
   const auto total_vals = dims[0] * dims[1] * dims[2];
 
-  auto [input, input_signs] = ProduceRandomArray(total_vals, 2.9, 1); 
+  auto [input, input_signs] = ProduceRandomArray<uint8_t>(total_vals, 2.9, 1); 
 
   // Encode
-  auto encoder = sperr::SPECK3D_INT_ENC();
+  auto encoder = sperr::SPECK3D_INT_ENC<uint8_t>();
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
@@ -209,7 +390,7 @@ TEST(SPECK3D_INT, Random1)
   encoder.write_encoded_bitstream(bitstream);
 
   // Decode
-  auto decoder = sperr::SPECK3D_INT_DEC();
+  auto decoder = sperr::SPECK3D_INT_DEC<uint8_t>();
   decoder.set_dims(dims);
   decoder.use_bitstream(bitstream);
   decoder.decode();
@@ -225,10 +406,10 @@ TEST(SPECK3D_INT, Random2)
   const auto dims = sperr::dims_type{63, 79, 128};
   const auto total_vals = dims[0] * dims[1] * dims[2];
 
-  auto [input, input_signs] = ProduceRandomArray(total_vals, 499.0, 2); 
+  auto [input, input_signs] = ProduceRandomArray<uint16_t>(total_vals, 499.0, 2); 
 
   // Encode
-  auto encoder = sperr::SPECK3D_INT_ENC();
+  auto encoder = sperr::SPECK3D_INT_ENC<uint16_t>();
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
@@ -236,7 +417,7 @@ TEST(SPECK3D_INT, Random2)
   encoder.write_encoded_bitstream(bitstream);
 
   // Decode
-  auto decoder = sperr::SPECK3D_INT_DEC();
+  auto decoder = sperr::SPECK3D_INT_DEC<uint16_t>();
   decoder.set_dims(dims);
   decoder.use_bitstream(bitstream);
   decoder.decode();
@@ -253,10 +434,10 @@ TEST(SPECK3D_INT, RandomRandom)
   const auto total_vals = dims[0] * dims[1] * dims[2];
 
   auto rd = std::random_device();
-  auto [input, input_signs] = ProduceRandomArray(total_vals, 8345.3, rd()); 
+  auto [input, input_signs] = ProduceRandomArray<uint64_t>(total_vals, 8345.3, rd()); 
 
   // Encode
-  auto encoder = sperr::SPECK3D_INT_ENC();
+  auto encoder = sperr::SPECK3D_INT_ENC<uint64_t>();
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
@@ -264,7 +445,7 @@ TEST(SPECK3D_INT, RandomRandom)
   encoder.write_encoded_bitstream(bitstream);
 
   // Decode
-  auto decoder = sperr::SPECK3D_INT_DEC();
+  auto decoder = sperr::SPECK3D_INT_DEC<uint64_t>();
   decoder.set_dims(dims);
   decoder.use_bitstream(bitstream);
   decoder.decode();
@@ -274,7 +455,6 @@ TEST(SPECK3D_INT, RandomRandom)
   EXPECT_EQ(input, output);
   EXPECT_EQ(input_signs, output_signs);
 }
-
 
 
 }  // namespace

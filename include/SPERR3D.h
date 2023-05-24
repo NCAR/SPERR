@@ -6,13 +6,11 @@
 namespace sperr {
 
 class SPERR3D : public SPERR_Driver {
- public:
-  //
-  // Constructor
-  //
-  SPERR3D();
 
  protected:
+  virtual void m_instantiate_encoder() override;
+  virtual void m_instantiate_decoder() override;
+
   virtual void m_wavelet_xform() override;
   virtual void m_inverse_wavelet_xform() override;
 

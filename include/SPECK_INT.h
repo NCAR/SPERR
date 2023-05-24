@@ -1,7 +1,9 @@
 #ifndef SPECK_INT_H
 #define SPECK_INT_H
 
+//
 // This is the base class of 1D, 2D, and 3D integer SPECK implementations.
+//
 
 #include "sperr_helper.h"
 
@@ -12,20 +14,23 @@ namespace sperr {
 
 template <typename T>
 class SPECK_INT {
-
-using uint_type = T;
-using vecui_type = std::vector<uint_type>;
+  using uint_type = T;
+  using vecui_type = std::vector<uint_type>;
 
  public:
-  // Constructor
+  // Constructor and destructor
   SPECK_INT();
-  // Virtual destructor
   virtual ~SPECK_INT() = default;
+
+  // The length (1, 2, 4, 8) of the integer type in use
+  auto integer_len() const -> size_t;
 
   void set_dims(dims_type);
 
-  // Retrieve the full length of a SPECK bitstream from its header
-  auto get_speck_full_len(const void*) const -> uint64_t;
+  // Retrieve info of a SPECK bitstream from its header
+  auto get_num_bitplanes(const void*) const -> uint8_t;
+  auto get_speck_bits(const void*) const -> uint64_t;
+  auto get_stream_full_len(const void*) const -> uint64_t;
 
   // Actions
   virtual void encode();
@@ -45,21 +50,21 @@ using vecui_type = std::vector<uint_type>;
  protected:
   // Core SPECK procedures
   virtual void m_clean_LIS() = 0;
-  virtual void m_initialize_lists() = 0;
   virtual void m_sorting_pass() = 0;
+  virtual void m_initialize_lists() = 0;
   virtual void m_refinement_pass_encode();
   virtual void m_refinement_pass_decode();
 
   // Data members
   dims_type m_dims = {0, 0, 0};
   uint_type m_threshold = 0;
+  Bitmask m_LSP_mask;
   vecui_type m_coeff_buf;
   vecb_type m_sign_array;
   Bitstream m_bit_buffer;
-  Bitmask m_LSP_mask;
   std::vector<uint64_t> m_LIP, m_LSP_new;
 
-  const size_t m_u64_garbage_val = std::numeric_limits<size_t>::max();
+  const uint64_t m_u64_garbage_val = std::numeric_limits<uint64_t>::max();
   const size_t m_header_size = 9;  // 9 bytes
 
   uint64_t m_bit_idx = 0;     // current bit idx when decoding

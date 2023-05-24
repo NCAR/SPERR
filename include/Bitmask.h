@@ -25,13 +25,15 @@ namespace sperr {
 class Bitmask {
  public:
   // Constructor
+  //
   Bitmask(size_t nbits = 0);  // How many bits does it hold initially?
 
   // Functions for both read and write
   //
-  auto size() const -> size_t;
-  void resize(size_t nbits);  // Resize to hold n bits.
-  void reset();               // Set the current bitmask to be all 0s.
+  auto size() const -> size_t;  // Num. of useful bits in this mask.
+  void resize(size_t nbits);    // Resize to hold n bits.
+  void reset();                 // Set the current bitmask to be all 0's.
+  void reset_true();            // Set the current bitmask to be all 1's.
 
   // Functions for read
   //
@@ -42,6 +44,19 @@ class Bitmask {
   //
   void write_long(size_t idx, uint64_t value);
   void write_bit(size_t idx, bool bit);
+
+  // Functions for direct access of the underlying data buffer
+  // Note: `use_bitstream()` reads the number of values (uint64_t type) that provide
+  //       enough bits for the specified size of this mask.
+  //
+  auto view_buffer() const -> const std::vector<uint64_t>&;
+  void use_bitstream(const void* p);
+
+  // Compare if two Bitmasks are identical.
+  //
+#if __cplusplus >= 202002L
+  auto operator==(const Bitmask& rhs) const -> bool = default;
+#endif
 
  private:
   std::vector<uint64_t> m_buf;

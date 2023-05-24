@@ -19,10 +19,13 @@
  *   3. Because of 2, true random writes is not possible; it's only possible at the end of
  *      each word, e.g., positions of 63, 127, 191.
  *   4. A function call of flush() will align the writing position to the beginning of the
- *      next word.
+ *      next word, i.e., the number of truly useful bits is lost!
+ *      One wants to call wtell() to retrieve and keep that info.
  *   5. Functions write_bitstream() and parse_bitstream() take in a raw pointer and the
  *      number of bits to write/read. The memory pointed to by the raw pointer needs to
  *      be big enough to hold the number of bits specified.
+ *   6. get_bitstream() and write_bitstream() needs to be supplied a number of bits because
+ *      a Bitstream itself will lose track of how many useful bits are there after flush().
  */
 
 #include <cstddef>

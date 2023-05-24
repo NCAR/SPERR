@@ -9,6 +9,20 @@ template <typename T>
 sperr::SPECK_INT<T>::SPECK_INT()
 {
   static_assert(std::is_integral_v<T>);
+  static_assert(std::is_unsigned_v<T>);
+}
+
+template <typename T>
+auto sperr::SPECK_INT<T>::integer_len() const -> size_t
+{
+  if constexpr (std::is_same_v<uint64_t, T>)
+    return sizeof(uint64_t);
+  else if constexpr (std::is_same_v<uint32_t, T>)
+    return sizeof(uint32_t);
+  else if constexpr (std::is_same_v<uint16_t, T>)
+    return sizeof(uint16_t);
+  else
+    return sizeof(uint8_t);
 }
 
 template <typename T>
@@ -18,15 +32,31 @@ void sperr::SPECK_INT<T>::set_dims(dims_type dims)
 }
 
 template <typename T>
-auto sperr::SPECK_INT<T>::get_speck_full_len(const void* buf) const -> uint64_t
+auto sperr::SPECK_INT<T>::get_num_bitplanes(const void* buf) const -> uint8_t
 {
-  // Given the header definition, directly go retrieve the value stored in the bytes 1--9.
+  // Given the header definition, directly retrieve the value stored in the first byte.
+  const uint8_t* const ptr = static_cast<const uint8_t*>(buf);
+  uint8_t bitplanes = 0;
+  std::memcpy(&bitplanes, ptr, sizeof(bitplanes));
+  return bitplanes;
+}
+
+template <typename T>
+auto sperr::SPECK_INT<T>::get_speck_bits(const void* buf) const -> uint64_t
+{
+  // Given the header definition, directly retrieve the value stored in bytes 1--9.
   const uint8_t* const ptr = static_cast<const uint8_t*>(buf);
   uint64_t num_bits = 0;
   std::memcpy(&num_bits, ptr + 1, sizeof(num_bits));
+  return num_bits;
+}
+
+template <typename T>
+auto sperr::SPECK_INT<T>::get_stream_full_len(const void* buf) const -> uint64_t
+{
+  auto num_bits = get_speck_bits(buf);
   while (num_bits % 8 != 0)
     ++num_bits;
-
   return (m_header_size + num_bits / 8);
 }
 
@@ -45,7 +75,7 @@ void sperr::SPECK_INT<T>::encode()
   const auto max_coeff = *std::max_element(m_coeff_buf.cbegin(), m_coeff_buf.cend());
   m_num_bitplanes = 1;
   m_threshold = 1;
-  while (m_threshold * uint_type{2} <= max_coeff) {
+  while (m_threshold* uint_type{2} <= max_coeff) {
     m_threshold *= uint_type{2};
     m_num_bitplanes++;
   }
@@ -220,3 +250,8 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
     m_LSP_mask.write_bit(idx, true);
   m_LSP_new.clear();
 }
+
+template class sperr::SPECK_INT<uint64_t>;
+template class sperr::SPECK_INT<uint32_t>;
+template class sperr::SPECK_INT<uint16_t>;
+template class sperr::SPECK_INT<uint8_t>;

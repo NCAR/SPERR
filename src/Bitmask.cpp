@@ -1,6 +1,7 @@
 #include "Bitmask.h"
 
 #include <algorithm>
+#include <limits>
 
 sperr::Bitmask::Bitmask(size_t nbits)
 {
@@ -32,6 +33,11 @@ void sperr::Bitmask::reset()
   std::fill(m_buf.begin(), m_buf.end(), 0);
 }
 
+void sperr::Bitmask::reset_true()
+{
+  std::fill(m_buf.begin(), m_buf.end(), std::numeric_limits<uint64_t>::max());
+}
+
 auto sperr::Bitmask::read_long(size_t idx) const -> uint64_t
 {
   return m_buf[idx / 64];
@@ -60,4 +66,15 @@ void sperr::Bitmask::write_bit(size_t idx, bool bit)
   else
     word &= ~mask;
   m_buf[wstart] = word;
+}
+
+auto sperr::Bitmask::view_buffer() const -> const std::vector<uint64_t>&
+{
+  return m_buf;
+}
+
+void sperr::Bitmask::use_bitstream(const void* p)
+{
+  const auto* pu64 = static_cast<const uint64_t*>(p);
+  std::copy(pu64, pu64 + m_buf.size(), m_buf.begin());
 }

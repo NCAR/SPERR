@@ -9,6 +9,8 @@
 #include "Conditioner.h"
 #include "SPECK_INT.h"
 
+#include <variant>
+
 namespace sperr {
 
 class SPERR_Driver {
@@ -21,10 +23,10 @@ class SPERR_Driver {
   //
   // Input
   //
-  // Accept incoming data: copy from a raw memory block
+  // Accept incoming data: copy from a raw memory block.
+  // `len` is the number of values.
   template <typename T>
-  void copy_data(const T* p,   // Input: pointer to the memory block
-                 size_t len);  // Input: number of values
+  void copy_data(const T* p, size_t len);
 
   // Accept incoming data: take ownership of a memory block
   void take_data(std::vector<double>&&);
@@ -52,11 +54,24 @@ class SPERR_Driver {
   virtual auto decompress() -> RTNType;
 
  protected:
+  // Default to use 64-bit integers, but can also use smaller sizes.
+  //
+  UINTType m_uint_flag = UINTType::UINT64;
+  std::variant<std::vector<uint64_t>,
+               std::vector<uint32_t>,
+               std::vector<uint16_t>,
+               std::vector<uint8_t>>
+      m_vals_ui;
+  std::variant<std::unique_ptr<SPECK_INT<uint64_t>>,
+               std::unique_ptr<SPECK_INT<uint32_t>>,
+               std::unique_ptr<SPECK_INT<uint16_t>>,
+               std::unique_ptr<SPECK_INT<uint8_t>>>
+      m_encoder, m_decoder;
+
   dims_type m_dims = {0, 0, 0};
   double m_q = 1.0;  // 1.0 is a better initial value than 0.0
   vecd_type m_vals_d;
-  vecui_t m_vals_ui;               // Unsigned integers to be passed to the encoder
-  vecb_type m_sign_array;          // Signs to be passed to the encoder
+  vecb_type m_sign_array;  // Signs to be passed to the encoder
   Conditioner::settings_type m_conditioning_settings = {true, false, false, false};
 
   Conditioner::meta_type m_condi_bitstream;
@@ -64,11 +79,14 @@ class SPERR_Driver {
 
   CDF97 m_cdf;
   Conditioner m_conditioner;
-  std::unique_ptr<SPECK_INT> m_encoder = nullptr;
-  std::unique_ptr<SPECK_INT> m_decoder = nullptr;
 
-  auto m_midtread_f2i() -> RTNType;
-  void m_midtread_i2f();
+  // Derived classes instantiate the correct `m_encoder` and `m_decoder` depending on
+  //  3D/2D/1D classes, and the integer length in use.
+  virtual void m_instantiate_encoder() = 0;
+  virtual void m_instantiate_decoder() = 0;
+
+  // Instantiate `m_vals_ui` based on the chosen integer length.
+  virtual void m_instantiate_int_vec();
 
   // Both wavelet transforms operate on `m_vals_d`.
   virtual void m_wavelet_xform() = 0;
@@ -79,9 +97,10 @@ class SPERR_Driver {
   virtual auto m_quantize() -> RTNType = 0;
   virtual auto m_inverse_quantize() -> RTNType = 0;
 
-  // Optional procedures for flexibility
-  virtual auto m_proc_1() -> RTNType;
-  virtual auto m_proc_2() -> RTNType;
+  // This base class provides two midtread quantization implementations, but derived classes
+  //  can have other quantization methods.
+  auto m_midtread_f2i() -> RTNType;
+  void m_midtread_i2f();
 };
 
 };  // namespace sperr
