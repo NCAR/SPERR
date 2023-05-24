@@ -236,11 +236,11 @@ TEST(Bitmask, RandomReadWrite)
 
 TEST(Bitmask, BufferTransfer)
 {
-  auto src = Mask(64);
+  auto src = Mask(60);
   src.write_long(0, 78344ul);
   auto buf = src.view_buffer();
 
-  auto dst = Mask(64);
+  auto dst = Mask(60);
   dst.use_bitstream(buf.data());
   EXPECT_EQ(src, dst);
 
@@ -252,10 +252,18 @@ TEST(Bitmask, BufferTransfer)
   dst.use_bitstream(buf.data());
   EXPECT_EQ(src, dst);
 
-  src.resize(20);
+  src.resize(128);
   buf = src.view_buffer();
 
-  dst.resize(20);
+  dst.resize(128);
+  dst.use_bitstream(buf.data());
+  EXPECT_EQ(src, dst);
+
+  src.resize(150);
+  src.write_long(130, 19837ul);
+  buf = src.view_buffer();
+
+  dst.resize(150);
   dst.use_bitstream(buf.data());
   EXPECT_EQ(src, dst);
 }

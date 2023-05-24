@@ -22,8 +22,8 @@ class SPECK_INT {
   SPECK_INT();
   virtual ~SPECK_INT() = default;
 
-  // The integer type in use
-  auto integer_len() const -> UINTType;
+  // The length (1, 2, 4, 8) of the integer type in use
+  auto integer_len() const -> size_t;
 
   void set_dims(dims_type);
 

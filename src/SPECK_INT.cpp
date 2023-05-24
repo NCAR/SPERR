@@ -13,16 +13,16 @@ sperr::SPECK_INT<T>::SPECK_INT()
 }
 
 template <typename T>
-auto sperr::SPECK_INT<T>::integer_len() const -> UINTType
+auto sperr::SPECK_INT<T>::integer_len() const -> size_t
 {
   if constexpr (std::is_same_v<uint64_t, T>)
-    return UINTType::UINT64;
+    return sizeof(uint64_t);
   else if constexpr (std::is_same_v<uint32_t, T>)
-    return UINTType::UINT32;
+    return sizeof(uint32_t);
   else if constexpr (std::is_same_v<uint16_t, T>)
-    return UINTType::UINT16;
+    return sizeof(uint16_t);
   else
-    return UINTType::UINT8;
+    return sizeof(uint8_t);
 }
 
 template <typename T>
