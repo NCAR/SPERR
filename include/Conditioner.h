@@ -23,37 +23,28 @@ class Conditioner {
   auto header_size(const void*) const -> size_t;
 
  private:
-  //
-  // what operations are applied?
-  //
-  std::array<bool, 8> m_meta = {true,    // subtract mean
-                                false,   // custom filter used?
-                                false,   // unused
-                                false,   // unused
-                                false,   // unused
-                                false,   // unused
-                                false,   // unused
-                                false};  // [7]: is this a constant field?
+  using meta_type = std::array<bool, 8>;
+  const uint8_t m_custom_filter_idx = 1;
+  const uint8_t m_constant_field_idx = 7;
+  const uint8_t m_min_header_size = 9;              // when there's only a mean value saved.
+  const uint8_t m_constant_field_header_size = 17;  // when recording a constant field.
 
-  const size_t m_constant_field_header_size = 17;
   const size_t m_default_num_strides = 2048;
-  const size_t m_constant_field_idx = 7;
-  const size_t m_custom_filter_idx = 1;
-  const size_t m_min_header_size = 9;  // when there's only a mean value saved.
 
   Base_Filter m_filter;
+  vecd_type m_stride_buf;
 
   // Buffers passed in here are guaranteed to have correct lengths and conditions.
   auto m_calc_mean(const vecd_type& buf) -> double;
 
-  // Calculations are carried out by strides, which
-  // should be a divisor of the input data size.
+  // Calculation is carried out by strides, which should be a divisor of the input data size.
   size_t m_num_strides = m_default_num_strides;
-  vecd_type m_stride_buf;
+
   // Adjust the value of `m_num_strides` so it'll be a divisor of `len`.
   void m_adjust_strides(size_t len);
-  // Reset meta fields
-  void m_reset_meta();
+
+  // Reset meta data field; see the cpp file for detail.
+  void m_reset_meta(meta_type&) const;
 };
 
 };  // namespace sperr
