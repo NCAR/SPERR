@@ -24,7 +24,7 @@ class SPECK_FLT {
   // Input
   //
   // Accept incoming data: copy from a raw memory block.
-  // `len` is the number of values.
+  // Note: `len` is the number of values.
   template <typename T>
   void copy_data(const T* p, size_t len);
 
@@ -32,6 +32,7 @@ class SPECK_FLT {
   void take_data(std::vector<double>&&);
 
   // Use an encoded bitstream
+  // Note: `len` is the number of bytes.
   virtual auto use_bitstream(const void* p, size_t len) -> RTNType;
 
   //
@@ -54,9 +55,7 @@ class SPECK_FLT {
   virtual auto decompress() -> RTNType;
 
  protected:
-  // Default to use 64-bit integers, but can also use smaller sizes.
-  //
-  UINTType m_uint_flag = UINTType::UINT64;
+  UINTType m_uint_flag = UINTType::UINT64; // Default to use 64-bit integers.
   std::variant<std::vector<uint64_t>,
                std::vector<uint32_t>,
                std::vector<uint16_t>,
@@ -81,7 +80,7 @@ class SPECK_FLT {
   Conditioner m_conditioner;
 
   // Derived classes instantiate the correct `m_encoder` and `m_decoder` depending on
-  //  3D/2D/1D classes, and the integer length in use.
+  //   3D/2D/1D classes, and on the integer length in use.
   virtual void m_instantiate_encoder() = 0;
   virtual void m_instantiate_decoder() = 0;
 
@@ -98,7 +97,7 @@ class SPECK_FLT {
   virtual auto m_inverse_quantize() -> RTNType = 0;
 
   // This base class provides two midtread quantization implementations, but derived classes
-  //  can have other quantization methods.
+  //   can have other quantization methods.
   auto m_midtread_f2i() -> RTNType;
   void m_midtread_i2f();
 };

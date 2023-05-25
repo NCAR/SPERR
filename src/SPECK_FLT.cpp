@@ -42,9 +42,9 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   size_t pos = condi_size;
 
   // `m_condi_bitstream` might be indicating that the field is a constant field.
-  //  In that case, there will be no more speck or sperr streams.
-  //  Let's detect that case here and return early if it is true.
-  //  It will be up to the decompress() routine to restore the actual constant field.
+  //    In that case, there will be no more speck or sperr streams.
+  //    Let's detect that case here and return early if it is true.
+  //    It will be up to the decompress() routine to restore the actual constant field.
   auto constant = m_conditioner.parse_constant(m_condi_bitstream);
   if (std::get<0>(constant)) {
     if (condi_size == len)
@@ -53,14 +53,13 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
       return RTNType::BitstreamWrongLen;
   }
 
-  // Bitstream parser 2: extract SPECK stream from it
+  // Bitstream parser 2: extract SPECK stream from it.
+  // Note: there's no instantiated decoder yet, so not reading speck bitstream length
+  //       from its header. Instead, just take what's left in the bitstream.
   const uint8_t* const speck_p = ptr + pos;
-  const auto speck_full_len = std::visit(
-      [speck_p](const auto& decoder) { return decoder->get_stream_full_len(speck_p); }, m_decoder);
-  if (speck_full_len != len - pos)
-    return RTNType::BitstreamWrongLen;
-  m_speck_bitstream.resize(speck_full_len);
-  std::copy(speck_p, speck_p + speck_full_len, m_speck_bitstream.begin());
+  const auto speck_len = len - pos;
+  m_speck_bitstream.resize(speck_len);
+  std::copy(speck_p, speck_p + speck_len, m_speck_bitstream.begin());
 
   // Integer length decision 1: decide the integer length to use
   const uint32_t num_bitplanes = std::visit(
@@ -136,7 +135,7 @@ auto sperr::SPECK_FLT::m_midtread_f2i() -> RTNType
 {
   // Make sure that the rounding mode is what we wanted.
   // Here are two methods of querying the current rounding mode; not sure
-  //  how they compare, so test both of them for now.
+  //    how they compare, so test both of them for now.
   std::fesetround(FE_TONEAREST);
   assert(FE_TONEAREST == std::fegetround());
   assert(FLT_ROUNDS == 1);
@@ -295,7 +294,7 @@ auto sperr::SPECK_FLT::decompress() -> RTNType
   const auto total_vals = uint64_t(m_dims[0]) * m_dims[1] * m_dims[2];
 
   // `m_condi_bitstream` might be indicating a constant field, so let's see if that's
-  //  the case, and if it is, we don't need to go through wavelet and speck stuff anymore.
+  //    the case, and if it is, we don't need to go through wavelet and speck stuff anymore.
   auto constant = m_conditioner.parse_constant(m_condi_bitstream);
   if (std::get<0>(constant)) {
     auto val = std::get<1>(constant);
