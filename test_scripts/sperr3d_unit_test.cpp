@@ -19,12 +19,12 @@ TEST(SPERR3D, minimal)
   const auto total_vals = inputf.size();
   auto inputd = sperr::vecd_type(total_vals);
   std::copy(inputf.cbegin(), inputf.cend(), inputd.begin());
-  double pwe = 1e-3;
+  double q = 1.5e-3;
   
   // Encode
   auto encoder = sperr::SPERR3D();
   encoder.set_dims(dims);
-  encoder.set_q(pwe);
+  encoder.set_q(q);
   encoder.copy_data(inputd.data(), total_vals);
   auto rtn = encoder.compress();
   ASSERT_EQ(rtn, sperr::RTNType::Good);
@@ -33,7 +33,7 @@ TEST(SPERR3D, minimal)
   // Decode
   auto decoder = sperr::SPERR3D();
   decoder.set_dims(dims);
-  decoder.set_q(pwe);
+  decoder.set_q(q);
   rtn = decoder.use_bitstream(bitstream.data(), bitstream.size());
   ASSERT_EQ(rtn, sperr::RTNType::Good);
   rtn = decoder.decompress();

@@ -137,8 +137,9 @@ auto sperr::SPERR_Driver::m_midtread_f2i() -> RTNType
   // Make sure that the rounding mode is what we wanted.
   // Here are two methods of querying the current rounding mode; not sure
   //  how they compare, so test both of them for now.
-  assert(FE_TONEAREST == FLT_ROUNDS);
+  std::fesetround(FE_TONEAREST);
   assert(FE_TONEAREST == std::fegetround());
+  assert(FLT_ROUNDS == 1);
 
   const auto total_vals = m_vals_d.size();
   const auto q1 = 1.0 / m_q;
