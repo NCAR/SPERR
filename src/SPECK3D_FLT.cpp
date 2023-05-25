@@ -1,8 +1,8 @@
-#include "SPERR3D.h"
+#include "SPECK3D_FLT.h"
 #include "SPECK3D_INT_DEC.h"
 #include "SPECK3D_INT_ENC.h"
 
-void sperr::SPERR3D::m_instantiate_encoder()
+void sperr::SPECK3D_FLT::m_instantiate_encoder()
 {
   switch (m_uint_flag) {
     case UINTType::UINT64:
@@ -23,7 +23,7 @@ void sperr::SPERR3D::m_instantiate_encoder()
   }
 }
 
-void sperr::SPERR3D::m_instantiate_decoder()
+void sperr::SPECK3D_FLT::m_instantiate_decoder()
 {
   switch (m_uint_flag) {
     case UINTType::UINT64:
@@ -44,23 +44,23 @@ void sperr::SPERR3D::m_instantiate_decoder()
   }
 }
 
-void sperr::SPERR3D::m_wavelet_xform()
+void sperr::SPECK3D_FLT::m_wavelet_xform()
 {
   m_cdf.dwt3d();
 }
 
-void sperr::SPERR3D::m_inverse_wavelet_xform()
+void sperr::SPECK3D_FLT::m_inverse_wavelet_xform()
 {
   m_cdf.idwt3d();
 }
 
-auto sperr::SPERR3D::m_quantize() -> RTNType
+auto sperr::SPECK3D_FLT::m_quantize() -> RTNType
 {
   auto rtn = m_midtread_f2i();
   return rtn;
 }
 
-auto sperr::SPERR3D::m_inverse_quantize() -> RTNType
+auto sperr::SPECK3D_FLT::m_inverse_quantize() -> RTNType
 {
   m_midtread_i2f();
   return RTNType::Good;

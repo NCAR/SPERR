@@ -1,8 +1,8 @@
-#ifndef SPERR_DRIVER_H
-#define SPERR_DRIVER_H
+#ifndef SPECK_FLT_H
+#define SPECK_FLT_H
 
 //
-// This class is supposed to be the base class of 1D, 2D, and 3D SPERR.
+// This class is supposed to be the base class of 1D, 2D, and 3D SPECK algorithm on floats.
 //
 
 #include "CDF97.h"
@@ -13,12 +13,12 @@
 
 namespace sperr {
 
-class SPERR_Driver {
+class SPECK_FLT {
  public:
   //
   // Virtual Destructor
   //
-  virtual ~SPERR_Driver() = default;
+  virtual ~SPECK_FLT() = default;
 
   //
   // Input
@@ -37,7 +37,7 @@ class SPERR_Driver {
   //
   // Output
   //
-  auto get_encoded_bitstream() -> vec8_type;
+  auto get_encoded_bitstream() const -> vec8_type;
   auto release_decoded_data() -> vecd_type&&;
 
   //

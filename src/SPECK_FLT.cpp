@@ -1,4 +1,4 @@
-#include "SPERR_Driver.h"
+#include "SPECK_FLT.h"
 
 #include <algorithm>
 #include <cassert>
@@ -8,22 +8,22 @@
 #include <cstring>
 
 template <typename T>
-void sperr::SPERR_Driver::copy_data(const T* p, size_t len)
+void sperr::SPECK_FLT::copy_data(const T* p, size_t len)
 {
   static_assert(std::is_floating_point<T>::value, "!! Only floating point values are supported !!");
 
   m_vals_d.resize(len);
   std::copy(p, p + len, m_vals_d.begin());
 }
-template void sperr::SPERR_Driver::copy_data(const double*, size_t);
-template void sperr::SPERR_Driver::copy_data(const float*, size_t);
+template void sperr::SPECK_FLT::copy_data(const double*, size_t);
+template void sperr::SPECK_FLT::copy_data(const float*, size_t);
 
-void sperr::SPERR_Driver::take_data(sperr::vecd_type&& buf)
+void sperr::SPECK_FLT::take_data(sperr::vecd_type&& buf)
 {
   m_vals_d = std::move(buf);
 }
 
-auto sperr::SPERR_Driver::use_bitstream(const void* p, size_t len) -> RTNType
+auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
 {
   // So let's clean up everything at the very beginning of this routine.
   m_vals_d.clear();
@@ -81,12 +81,12 @@ auto sperr::SPERR_Driver::use_bitstream(const void* p, size_t len) -> RTNType
   return RTNType::Good;
 }
 
-void sperr::SPERR_Driver::toggle_conditioning(sperr::Conditioner::settings_type settings)
+void sperr::SPECK_FLT::toggle_conditioning(sperr::Conditioner::settings_type settings)
 {
   m_conditioning_settings = settings;
 }
 
-auto sperr::SPERR_Driver::get_encoded_bitstream() -> vec8_type
+auto sperr::SPECK_FLT::get_encoded_bitstream() const -> vec8_type
 {
   const auto total_len = m_condi_bitstream.size() + m_speck_bitstream.size();
   auto tmp = vec8_type(total_len);
@@ -96,22 +96,22 @@ auto sperr::SPERR_Driver::get_encoded_bitstream() -> vec8_type
   return tmp;
 }
 
-auto sperr::SPERR_Driver::release_decoded_data() -> vecd_type&&
+auto sperr::SPECK_FLT::release_decoded_data() -> vecd_type&&
 {
   return std::move(m_vals_d);
 }
 
-void sperr::SPERR_Driver::set_q(double q)
+void sperr::SPECK_FLT::set_q(double q)
 {
   m_q = std::max(0.0, q);
 }
 
-void sperr::SPERR_Driver::set_dims(dims_type dims)
+void sperr::SPECK_FLT::set_dims(dims_type dims)
 {
   m_dims = dims;
 }
 
-void sperr::SPERR_Driver::m_instantiate_int_vec()
+void sperr::SPECK_FLT::m_instantiate_int_vec()
 {
   switch (m_uint_flag) {
     case UINTType::UINT64:
@@ -132,7 +132,7 @@ void sperr::SPERR_Driver::m_instantiate_int_vec()
   }
 }
 
-auto sperr::SPERR_Driver::m_midtread_f2i() -> RTNType
+auto sperr::SPECK_FLT::m_midtread_f2i() -> RTNType
 {
   // Make sure that the rounding mode is what we wanted.
   // Here are two methods of querying the current rounding mode; not sure
@@ -195,7 +195,7 @@ auto sperr::SPERR_Driver::m_midtread_f2i() -> RTNType
   return RTNType::Good;
 }
 
-void sperr::SPERR_Driver::m_midtread_i2f()
+void sperr::SPECK_FLT::m_midtread_i2f()
 {
   assert(m_sign_array.size() == std::visit([](auto& vec) { return vec.size(); }, m_vals_ui));
 
@@ -215,7 +215,7 @@ void sperr::SPERR_Driver::m_midtread_i2f()
   //                [tmpd, q](auto i, auto b) { return q * static_cast<double>(i) * tmpd[b]; });
 }
 
-auto sperr::SPERR_Driver::compress() -> RTNType
+auto sperr::SPECK_FLT::compress() -> RTNType
 {
   const auto total_vals = uint64_t(m_dims[0]) * m_dims[1] * m_dims[2];
   if (m_vals_d.empty() || m_vals_d.size() != total_vals)
@@ -287,7 +287,7 @@ auto sperr::SPERR_Driver::compress() -> RTNType
   return RTNType::Good;
 }
 
-auto sperr::SPERR_Driver::decompress() -> RTNType
+auto sperr::SPECK_FLT::decompress() -> RTNType
 {
   m_vals_d.clear();
   std::visit([](auto& vec) { vec.clear(); }, m_vals_ui);

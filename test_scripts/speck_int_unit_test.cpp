@@ -3,7 +3,6 @@
 
 #include "SPECK3D_INT_ENC.h"
 #include "SPECK3D_INT_DEC.h"
-#include "SPERR3D.h"
 
 #include "gtest/gtest.h"
 

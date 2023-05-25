@@ -1,11 +1,11 @@
-#ifndef SPERR3D_H
-#define SPERR3D_H
+#ifndef SPECK3D_FLT_H
+#define SPECK3D_FLT_H
 
-#include "SPERR_Driver.h"
+#include "SPECK_FLT.h"
 
 namespace sperr {
 
-class SPERR3D : public SPERR_Driver {
+class SPECK3D_FLT : public SPECK_FLT {
 
  protected:
   virtual void m_instantiate_encoder() override;

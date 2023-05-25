@@ -1,4 +1,4 @@
-#include "SPERR3D.h"
+#include "SPECK3D_FLT.h"
 
 #include "gtest/gtest.h"
 
@@ -12,7 +12,7 @@ namespace {
 //
 // Test a minimal data set
 //
-TEST(SPERR3D, minimal)
+TEST(SPECK3D_FLT, minimal)
 {
   auto inputf = sperr::read_whole_file<float>("../test_data/wmag128.float");
   const auto dims = sperr::dims_type{128, 128, 128};
@@ -22,7 +22,7 @@ TEST(SPERR3D, minimal)
   double q = 1.5e-3;
   
   // Encode
-  auto encoder = sperr::SPERR3D();
+  auto encoder = sperr::SPECK3D_FLT();
   encoder.set_dims(dims);
   encoder.set_q(q);
   encoder.copy_data(inputd.data(), total_vals);
@@ -31,7 +31,7 @@ TEST(SPERR3D, minimal)
   auto bitstream = encoder.get_encoded_bitstream();
 
   // Decode
-  auto decoder = sperr::SPERR3D();
+  auto decoder = sperr::SPECK3D_FLT();
   decoder.set_dims(dims);
   decoder.set_q(q);
   rtn = decoder.use_bitstream(bitstream.data(), bitstream.size());
