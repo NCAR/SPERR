@@ -19,7 +19,7 @@ TEST(SPECK3D_FLT, minimal)
   const auto total_vals = inputf.size();
   auto inputd = sperr::vecd_type(total_vals);
   std::copy(inputf.cbegin(), inputf.cend(), inputd.begin());
-  double q = 1.5e-3;
+  double q = 1.5e-1;
   
   // Encode
   auto encoder = sperr::SPECK3D_FLT();
@@ -44,6 +44,7 @@ TEST(SPECK3D_FLT, minimal)
   auto stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
   auto bpp = 8.0 * bitstream.size() / total_vals;
   std::printf("bpp = %.2f, PSNR = %.2f\n", bpp, stats[2]);
+  std::printf("encoder int len = %lu, decoder int len = %lu\n", encoder.integer_len(), decoder.integer_len());
 
   // TODO: add more rigourous tests.
   EXPECT_EQ(inputd.size(), outputd.size());

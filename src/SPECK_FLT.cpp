@@ -68,7 +68,7 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
 
   m_instantiate_int_vec();
   m_instantiate_decoder();
-  const auto speck_len = len - pos; // Assume that the bitstream length is what's left.
+  const auto speck_len = len - pos;  // Assume that the bitstream length is what's left.
   std::visit([speck_p, speck_len](auto& dec) { dec->use_bitstream(speck_p, speck_len); },
              m_decoder);
 
@@ -98,6 +98,40 @@ void sperr::SPECK_FLT::set_q(double q)
 void sperr::SPECK_FLT::set_dims(dims_type dims)
 {
   m_dims = dims;
+}
+
+auto sperr::SPECK_FLT::integer_len() const -> size_t
+{
+  switch (m_uint_flag) {
+    case UINTType::UINT64:
+      assert(m_vals_ui.index() == 0);
+      assert(m_encoder.index() == 0 ||
+             std::visit([](auto& coder) { return coder == nullptr; }, m_encoder));
+      assert(m_decoder.index() == 0 ||
+             std::visit([](auto& coder) { return coder == nullptr; }, m_decoder));
+      return sizeof(uint64_t);
+    case UINTType::UINT32:
+      assert(m_vals_ui.index() == 1);
+      assert(m_encoder.index() == 1 ||
+             std::visit([](auto& coder) { return coder == nullptr; }, m_encoder));
+      assert(m_decoder.index() == 1 ||
+             std::visit([](auto& coder) { return coder == nullptr; }, m_decoder));
+      return sizeof(uint32_t);
+    case UINTType::UINT16:
+      assert(m_vals_ui.index() == 2);
+      assert(m_encoder.index() == 2 ||
+             std::visit([](auto& coder) { return coder == nullptr; }, m_encoder));
+      assert(m_decoder.index() == 2 ||
+             std::visit([](auto& coder) { return coder == nullptr; }, m_decoder));
+      return sizeof(uint16_t);
+    default:
+      assert(m_vals_ui.index() == 3);
+      assert(m_encoder.index() == 3 ||
+             std::visit([](auto& coder) { return coder == nullptr; }, m_encoder));
+      assert(m_decoder.index() == 3 ||
+             std::visit([](auto& coder) { return coder == nullptr; }, m_decoder));
+      return sizeof(uint8_t);
+  }
 }
 
 void sperr::SPECK_FLT::m_instantiate_int_vec()

@@ -42,10 +42,11 @@ class SPECK_FLT {
   auto release_decoded_data() -> vecd_type&&;
 
   //
-  // General configurations
+  // General configuration and info.
   //
   void set_q(double q);
   void set_dims(dims_type);
+  auto integer_len() const -> size_t;
 
   //
   // Actions
@@ -54,26 +55,27 @@ class SPECK_FLT {
   virtual auto decompress() -> RTNType;
 
  protected:
+  double m_q = 1.0;  // 1.0 is a better initial value than 0.0
   UINTType m_uint_flag = UINTType::UINT64;  // Default to use 64-bit integers.
-  std::variant<std::vector<uint64_t>,
-               std::vector<uint32_t>,
-               std::vector<uint16_t>,
-               std::vector<uint8_t>>
-      m_vals_ui;
+  dims_type m_dims = {0, 0, 0};
+  vecd_type m_vals_d;
+  vecb_type m_sign_array;  // Signs to be passed to the integer encoder
+  vec8_type m_condi_bitstream;
+
+  Conditioner m_conditioner;
+  CDF97 m_cdf;
+
   std::variant<std::unique_ptr<SPECK_INT<uint64_t>>,
                std::unique_ptr<SPECK_INT<uint32_t>>,
                std::unique_ptr<SPECK_INT<uint16_t>>,
                std::unique_ptr<SPECK_INT<uint8_t>>>
       m_encoder, m_decoder;
 
-  double m_q = 1.0;  // 1.0 is a better initial value than 0.0
-  dims_type m_dims = {0, 0, 0};
-  vecd_type m_vals_d;
-  vecb_type m_sign_array;  // Signs to be passed to the encoder
-  vec8_type m_condi_bitstream;
-
-  CDF97 m_cdf;
-  Conditioner m_conditioner;
+  std::variant<std::vector<uint64_t>,
+               std::vector<uint32_t>,
+               std::vector<uint16_t>,
+               std::vector<uint8_t>>
+      m_vals_ui;
 
   // Instantiate `m_vals_ui` based on the chosen integer length.
   void m_instantiate_int_vec();
