@@ -67,11 +67,11 @@ TEST(SPECK1D_INT, minimal)
   encoder.set_dims(dims);
   encoder.encode();
   auto bitstream = sperr::vec8_type(); 
-  encoder.write_encoded_bitstream(bitstream);
+  encoder.append_encoded_bitstream(bitstream);
 
   auto decoder = sperr::SPECK1D_INT_DEC<uint8_t>();
   decoder.set_dims(dims);
-  decoder.use_bitstream(bitstream);
+  decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decode();
   auto output = decoder.release_coeffs();
   auto output_signs = decoder.release_signs();
@@ -94,11 +94,11 @@ TEST(SPECK1D_INT, minimal)
   encoder.set_dims(dims);
   encoder.encode();
   auto bitstream = sperr::vec8_type(); 
-  encoder.write_encoded_bitstream(bitstream);
+  encoder.append_encoded_bitstream(bitstream);
 
   auto decoder = sperr::SPECK1D_INT_DEC<uint16_t>();
   decoder.set_dims(dims);
-  decoder.use_bitstream(bitstream);
+  decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decode();
   auto output = decoder.release_coeffs();
   auto output_signs = decoder.release_signs();
@@ -121,11 +121,11 @@ TEST(SPECK1D_INT, minimal)
   encoder.set_dims(dims);
   encoder.encode();
   auto bitstream = sperr::vec8_type(); 
-  encoder.write_encoded_bitstream(bitstream);
+  encoder.append_encoded_bitstream(bitstream);
 
   auto decoder = sperr::SPECK1D_INT_DEC<uint32_t>();
   decoder.set_dims(dims);
-  decoder.use_bitstream(bitstream);
+  decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decode();
   auto output = decoder.release_coeffs();
   auto output_signs = decoder.release_signs();
@@ -148,11 +148,11 @@ TEST(SPECK1D_INT, minimal)
   encoder.set_dims(dims);
   encoder.encode();
   auto bitstream = sperr::vec8_type(); 
-  encoder.write_encoded_bitstream(bitstream);
+  encoder.append_encoded_bitstream(bitstream);
 
   auto decoder = sperr::SPECK1D_INT_DEC<uint64_t>();
   decoder.set_dims(dims);
-  decoder.use_bitstream(bitstream);
+  decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decode();
   auto output = decoder.release_coeffs();
   auto output_signs = decoder.release_signs();
@@ -176,12 +176,12 @@ TEST(SPECK1D_INT, Random1)
   encoder.set_dims(dims);
   encoder.encode();
   auto bitstream = sperr::vec8_type(); 
-  encoder.write_encoded_bitstream(bitstream);
+  encoder.append_encoded_bitstream(bitstream);
 
   // Decode
   auto decoder = sperr::SPECK1D_INT_DEC<uint8_t>();
   decoder.set_dims(dims);
-  decoder.use_bitstream(bitstream);
+  decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decode();
   auto output = decoder.release_coeffs();
   auto output_signs = decoder.release_signs();
@@ -202,12 +202,12 @@ TEST(SPECK1D_INT, Random2)
   encoder.set_dims(dims);
   encoder.encode();
   sperr::vec8_type bitstream; 
-  encoder.write_encoded_bitstream(bitstream);
+  encoder.append_encoded_bitstream(bitstream);
 
   // Decode
   auto decoder = sperr::SPECK3D_INT_DEC<uint16_t>();
   decoder.set_dims(dims);
-  decoder.use_bitstream(bitstream);
+  decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decode();
   auto output = decoder.release_coeffs();
   auto output_signs = decoder.release_signs();
@@ -229,12 +229,12 @@ TEST(SPECK1D_INT, RandomRandom)
   encoder.set_dims(dims);
   encoder.encode();
   auto bitstream = sperr::vec8_type(); 
-  encoder.write_encoded_bitstream(bitstream);
+  encoder.append_encoded_bitstream(bitstream);
 
   // Decode
   auto decoder = sperr::SPECK1D_INT_DEC<uint64_t>();
   decoder.set_dims(dims);
-  decoder.use_bitstream(bitstream);
+  decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decode();
   auto output = decoder.release_coeffs();
   auto output_signs = decoder.release_signs();
@@ -272,11 +272,11 @@ TEST(SPECK3D_INT, minimal)
   encoder.set_dims(dims);
   encoder.encode();
   auto bitstream = sperr::vec8_type(); 
-  encoder.write_encoded_bitstream(bitstream);
+  encoder.append_encoded_bitstream(bitstream);
 
   auto decoder = sperr::SPECK3D_INT_DEC<uint8_t>();
   decoder.set_dims(dims);
-  decoder.use_bitstream(bitstream);
+  decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decode();
   auto output = decoder.release_coeffs();
   auto output_signs = decoder.release_signs();
@@ -300,11 +300,11 @@ TEST(SPECK3D_INT, minimal)
   encoder.set_dims(dims);
   encoder.encode();
   auto bitstream = sperr::vec8_type(); 
-  encoder.write_encoded_bitstream(bitstream);
+  encoder.append_encoded_bitstream(bitstream);
 
   auto decoder = sperr::SPECK3D_INT_DEC<uint16_t>();
   decoder.set_dims(dims);
-  decoder.use_bitstream(bitstream);
+  decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decode();
   auto output = decoder.release_coeffs();
   auto output_signs = decoder.release_signs();
@@ -328,11 +328,11 @@ TEST(SPECK3D_INT, minimal)
   encoder.set_dims(dims);
   encoder.encode();
   auto bitstream = sperr::vec8_type(); 
-  encoder.write_encoded_bitstream(bitstream);
+  encoder.append_encoded_bitstream(bitstream);
 
   auto decoder = sperr::SPECK3D_INT_DEC<uint32_t>();
   decoder.set_dims(dims);
-  decoder.use_bitstream(bitstream);
+  decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decode();
   auto output = decoder.release_coeffs();
   auto output_signs = decoder.release_signs();
@@ -356,11 +356,11 @@ TEST(SPECK3D_INT, minimal)
   encoder.set_dims(dims);
   encoder.encode();
   auto bitstream = sperr::vec8_type(); 
-  encoder.write_encoded_bitstream(bitstream);
+  encoder.append_encoded_bitstream(bitstream);
 
   auto decoder = sperr::SPECK3D_INT_DEC<uint64_t>();
   decoder.set_dims(dims);
-  decoder.use_bitstream(bitstream);
+  decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decode();
   auto output = decoder.release_coeffs();
   auto output_signs = decoder.release_signs();
@@ -386,12 +386,12 @@ TEST(SPECK3D_INT, Random1)
   encoder.set_dims(dims);
   encoder.encode();
   sperr::vec8_type bitstream; 
-  encoder.write_encoded_bitstream(bitstream);
+  encoder.append_encoded_bitstream(bitstream);
 
   // Decode
   auto decoder = sperr::SPECK3D_INT_DEC<uint8_t>();
   decoder.set_dims(dims);
-  decoder.use_bitstream(bitstream);
+  decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decode();
   auto output = decoder.release_coeffs();
   auto output_signs = decoder.release_signs();
@@ -413,12 +413,12 @@ TEST(SPECK3D_INT, Random2)
   encoder.set_dims(dims);
   encoder.encode();
   sperr::vec8_type bitstream; 
-  encoder.write_encoded_bitstream(bitstream);
+  encoder.append_encoded_bitstream(bitstream);
 
   // Decode
   auto decoder = sperr::SPECK3D_INT_DEC<uint16_t>();
   decoder.set_dims(dims);
-  decoder.use_bitstream(bitstream);
+  decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decode();
   auto output = decoder.release_coeffs();
   auto output_signs = decoder.release_signs();
@@ -441,12 +441,12 @@ TEST(SPECK3D_INT, RandomRandom)
   encoder.set_dims(dims);
   encoder.encode();
   sperr::vec8_type bitstream; 
-  encoder.write_encoded_bitstream(bitstream);
+  encoder.append_encoded_bitstream(bitstream);
 
   // Decode
   auto decoder = sperr::SPECK3D_INT_DEC<uint64_t>();
   decoder.set_dims(dims);
-  decoder.use_bitstream(bitstream);
+  decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decode();
   auto output = decoder.release_coeffs();
   auto output_signs = decoder.release_signs();

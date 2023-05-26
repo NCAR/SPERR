@@ -62,6 +62,7 @@ QccPack-0.61-1/install
 # build and install directory
 build*/
 install*/
+.vscode/
 
 # big test data
 test_data/wmag256.float

@@ -29,7 +29,6 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   m_vals_d.clear();
   m_sign_array.clear();
   m_condi_bitstream.clear();
-  m_speck_bitstream.clear();
   std::visit([](auto& vec) { vec.clear(); }, m_vals_ui);
 
   const uint8_t* const ptr = static_cast<const uint8_t*>(p);
@@ -54,16 +53,10 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   }
 
   // Bitstream parser 2: extract SPECK stream from it.
-  // Note: there's no instantiated decoder yet, so not reading speck bitstream length
-  //       from its header. Instead, just take what's left in the bitstream.
+  // Based on the number of bitplanes, decide on an integer length to use, and then
+  //    instantiate the proper decoder, and ask the decoder to parse the SPECK stream.
   const uint8_t* const speck_p = ptr + pos;
-  const auto speck_len = len - pos;
-  m_speck_bitstream.resize(speck_len);
-  std::copy(speck_p, speck_p + speck_len, m_speck_bitstream.begin());
-
-  // Integer length decision 1: decide the integer length to use
-  const auto num_bitplanes = std::visit(
-      [speck_p](const auto& decoder) { return decoder->get_num_bitplanes(speck_p); }, m_decoder);
+  const auto num_bitplanes = speck_int_get_num_bitplanes(speck_p);
   if (num_bitplanes <= 8)
     m_uint_flag = UINTType::UINT8;
   else if (num_bitplanes <= 16)
@@ -73,21 +66,23 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   else
     m_uint_flag = UINTType::UINT64;
 
-  // Integer length decision 2: make sure `m_vals_ui` and `m_decoder` use the decided length
   m_instantiate_int_vec();
   m_instantiate_decoder();
+  const auto speck_len = len - pos; // Assume that the bitstream length is what's left.
+  std::visit([speck_p, speck_len](auto& dec) { dec->use_bitstream(speck_p, speck_len); },
+             m_decoder);
 
   return RTNType::Good;
 }
 
-auto sperr::SPECK_FLT::get_encoded_bitstream() const -> vec8_type
+void sperr::SPECK_FLT::append_encoded_bitstream(vec8_type& buf) const
 {
-  const auto total_len = m_condi_bitstream.size() + m_speck_bitstream.size();
-  auto tmp = vec8_type(total_len);
-  std::copy(m_condi_bitstream.cbegin(), m_condi_bitstream.cend(), tmp.begin());
-  std::copy(m_speck_bitstream.cbegin(), m_speck_bitstream.cend(),
-            tmp.begin() + m_condi_bitstream.size());
-  return tmp;
+  const auto orig_size = buf.size();
+  buf.resize(orig_size + m_condi_bitstream.size());
+  std::copy(m_condi_bitstream.cbegin(), m_condi_bitstream.cend(), buf.begin() + orig_size);
+
+  if (!m_conditioner.is_constant(m_condi_bitstream[0]))
+    std::visit([&buf](auto& enc) { enc->append_encoded_bitstream(buf); }, m_encoder);
 }
 
 auto sperr::SPECK_FLT::release_decoded_data() -> vecd_type&&
@@ -216,7 +211,6 @@ auto sperr::SPECK_FLT::compress() -> RTNType
     return RTNType::Error;
 
   m_condi_bitstream.clear();
-  m_speck_bitstream.clear();
 
   // Step 1: data goes through the conditioner
   //    Believe it or not, there are constant fields passed in for compression!
@@ -266,9 +260,6 @@ auto sperr::SPECK_FLT::compress() -> RTNType
                                          std::move(m_sign_array));
   }
   std::visit([](auto& encoder) { encoder->encode(); }, m_encoder);
-  std::visit([&speck_bitstream = m_speck_bitstream](
-                 auto& encoder) { encoder->write_encoded_bitstream(speck_bitstream); },
-             m_encoder);
 
   return RTNType::Good;
 }
@@ -287,11 +278,8 @@ auto sperr::SPECK_FLT::decompress() -> RTNType
   }
 
   // Step 1: Integer SPECK decode.
-  assert(!m_speck_bitstream.empty());
+  //    Note: the decoder has already parsed the bitstream in function `use_bitstream()`.
   std::visit([&dims = m_dims](auto& decoder) { decoder->set_dims(dims); }, m_decoder);
-  std::visit([&speck_bitstream =
-                  m_speck_bitstream](auto& decoder) { decoder->use_bitstream(speck_bitstream); },
-             m_decoder);
   std::visit([](auto& decoder) { decoder->decode(); }, m_decoder);
   switch (m_uint_flag) {  // `m_uint_flag` was properly set during `use_bitstream()`.
     case UINTType::UINT64:

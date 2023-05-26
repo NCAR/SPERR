@@ -38,7 +38,7 @@ class SPECK_FLT {
   //
   // Output
   //
-  auto get_encoded_bitstream() const -> vec8_type;
+  void append_encoded_bitstream(vec8_type& buf) const;
   auto release_decoded_data() -> vecd_type&&;
 
   //
@@ -70,7 +70,7 @@ class SPECK_FLT {
   dims_type m_dims = {0, 0, 0};
   vecd_type m_vals_d;
   vecb_type m_sign_array;  // Signs to be passed to the encoder
-  vec8_type m_condi_bitstream, m_speck_bitstream;
+  vec8_type m_condi_bitstream;
 
   CDF97 m_cdf;
   Conditioner m_conditioner;

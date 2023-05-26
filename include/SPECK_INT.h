@@ -12,6 +12,15 @@
 
 namespace sperr {
 
+//
+// Given a bitstream, one needs to know the integer length needed *before* instantiate a
+//    SPECK_INT class to decode the bitstream. Thus, provide this free-standing helper.
+//
+auto speck_int_get_num_bitplanes(const void* bitstream) -> uint8_t;
+
+//
+// Class SPECK_INT
+//
 template <typename T>
 class SPECK_INT {
   using uint_type = T;
@@ -28,7 +37,8 @@ class SPECK_INT {
   void set_dims(dims_type);
 
   // Retrieve info of a SPECK bitstream from its header
-  auto get_num_bitplanes(const void*) const -> uint8_t;
+  // Note that `speck_int_get_num_bitplanes()` is provided as a free-standing helper function.
+  //
   auto get_speck_bits(const void*) const -> uint64_t;
   auto get_stream_full_len(const void*) const -> uint64_t;
 
@@ -38,10 +48,10 @@ class SPECK_INT {
 
   // Input
   void use_coeffs(vecui_type coeffs, vecb_type signs);
-  void use_bitstream(const vec8_type&);
+  void use_bitstream(const void* p, size_t len);
 
   // Output
-  void write_encoded_bitstream(vec8_type& buf, size_t offset = 0) const;
+  void append_encoded_bitstream(vec8_type& buf) const;
   auto release_coeffs() -> vecui_type&&;
   auto release_signs() -> vecb_type&&;
   auto view_coeffs() const -> const vecui_type&;

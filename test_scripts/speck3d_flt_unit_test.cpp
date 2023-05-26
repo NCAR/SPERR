@@ -28,7 +28,8 @@ TEST(SPECK3D_FLT, minimal)
   encoder.copy_data(inputd.data(), total_vals);
   auto rtn = encoder.compress();
   ASSERT_EQ(rtn, sperr::RTNType::Good);
-  auto bitstream = encoder.get_encoded_bitstream();
+  auto bitstream = sperr::vec8_type();
+  encoder.append_encoded_bitstream(bitstream);
 
   // Decode
   auto decoder = sperr::SPECK3D_FLT();
