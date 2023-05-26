@@ -2,7 +2,7 @@
 #define SPECK_FLT_H
 
 //
-// This class is supposed to be the base class of 1D, 2D, and 3D SPECK algorithm on floats.
+// This class serves as the base class of 1D, 2D, and 3D SPECK algorithm on floats.
 //
 
 #include "CDF97.h"
@@ -50,7 +50,6 @@ class SPECK_FLT {
   //
   // Actions
   //
-  void toggle_conditioning(Conditioner::settings_type);
   virtual auto compress() -> RTNType;
   virtual auto decompress() -> RTNType;
 
@@ -67,14 +66,11 @@ class SPECK_FLT {
                std::unique_ptr<SPECK_INT<uint8_t>>>
       m_encoder, m_decoder;
 
-  dims_type m_dims = {0, 0, 0};
   double m_q = 1.0;  // 1.0 is a better initial value than 0.0
+  dims_type m_dims = {0, 0, 0};
   vecd_type m_vals_d;
   vecb_type m_sign_array;  // Signs to be passed to the encoder
-  Conditioner::settings_type m_conditioning_settings = {true, false, false, false};
-
-  Conditioner::meta_type m_condi_bitstream;
-  vec8_type m_speck_bitstream;
+  vec8_type m_condi_bitstream, m_speck_bitstream;
 
   CDF97 m_cdf;
   Conditioner m_conditioner;

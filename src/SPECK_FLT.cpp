@@ -28,16 +28,17 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   // So let's clean up everything at the very beginning of this routine.
   m_vals_d.clear();
   m_sign_array.clear();
-  m_condi_bitstream.fill(0);
+  m_condi_bitstream.clear();
   m_speck_bitstream.clear();
   std::visit([](auto& vec) { vec.clear(); }, m_vals_ui);
 
   const uint8_t* const ptr = static_cast<const uint8_t*>(p);
 
   // Bitstream parser 1: extract conditioner stream
-  const auto condi_size = m_condi_bitstream.size();
+  const auto condi_size = m_conditioner.header_size(ptr);
   if (condi_size > len)
     return RTNType::BitstreamWrongLen;
+  m_condi_bitstream.resize(condi_size);
   std::copy(ptr, ptr + condi_size, m_condi_bitstream.begin());
   size_t pos = condi_size;
 
@@ -45,8 +46,7 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   //    In that case, there will be no more speck or sperr streams.
   //    Let's detect that case here and return early if it is true.
   //    It will be up to the decompress() routine to restore the actual constant field.
-  auto constant = m_conditioner.parse_constant(m_condi_bitstream);
-  if (std::get<0>(constant)) {
+  if (m_conditioner.is_constant(m_condi_bitstream[0])) {
     if (condi_size == len)
       return RTNType::Good;
     else
@@ -78,11 +78,6 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   m_instantiate_decoder();
 
   return RTNType::Good;
-}
-
-void sperr::SPECK_FLT::toggle_conditioning(sperr::Conditioner::settings_type settings)
-{
-  m_conditioning_settings = settings;
 }
 
 auto sperr::SPECK_FLT::get_encoded_bitstream() const -> vec8_type
@@ -220,26 +215,18 @@ auto sperr::SPECK_FLT::compress() -> RTNType
   if (m_vals_d.empty() || m_vals_d.size() != total_vals)
     return RTNType::Error;
 
-  m_condi_bitstream.fill(0);
+  m_condi_bitstream.clear();
   m_speck_bitstream.clear();
 
-  // Believe it or not, there are constant fields passed in for compression!
-  // Let's detect that case and skip the rest of the compression routine if it occurs.
-  auto constant = m_conditioner.test_constant(m_vals_d);
-  if (constant.first) {
-    m_condi_bitstream = constant.second;
-    return RTNType::Good;
-  }
-
   // Step 1: data goes through the conditioner
-  m_conditioner.toggle_all_settings(m_conditioning_settings);
-  auto [rtn, condi_meta] = m_conditioner.condition(m_vals_d);
-  if (rtn != RTNType::Good)
-    return rtn;
-  m_condi_bitstream = condi_meta;
+  //    Believe it or not, there are constant fields passed in for compression!
+  //    Let's detect that case and skip the rest of the compression routine if it occurs.
+  m_condi_bitstream = m_conditioner.condition(m_vals_d, m_dims);
+  if (m_conditioner.is_constant(m_condi_bitstream[0]))
+    return RTNType::Good;
 
   // Step 2: wavelet transform
-  rtn = m_cdf.take_data(std::move(m_vals_d), m_dims);
+  auto rtn = m_cdf.take_data(std::move(m_vals_d), m_dims);
   if (rtn != RTNType::Good)
     return rtn;
   m_wavelet_xform();
@@ -291,16 +278,12 @@ auto sperr::SPECK_FLT::decompress() -> RTNType
   m_vals_d.clear();
   std::visit([](auto& vec) { vec.clear(); }, m_vals_ui);
   m_sign_array.clear();
-  const auto total_vals = uint64_t(m_dims[0]) * m_dims[1] * m_dims[2];
 
   // `m_condi_bitstream` might be indicating a constant field, so let's see if that's
   //    the case, and if it is, we don't need to go through wavelet and speck stuff anymore.
-  auto constant = m_conditioner.parse_constant(m_condi_bitstream);
-  if (std::get<0>(constant)) {
-    auto val = std::get<1>(constant);
-    auto nval = std::get<2>(constant);
-    m_vals_d.assign(nval, val);
-    return RTNType::Good;
+  if (m_conditioner.is_constant(m_condi_bitstream[0])) {
+    auto rtn = m_conditioner.inverse_condition(m_vals_d, m_dims, m_condi_bitstream);
+    return rtn;
   }
 
   // Step 1: Integer SPECK decode.
@@ -343,7 +326,7 @@ auto sperr::SPECK_FLT::decompress() -> RTNType
   m_vals_d = m_cdf.release_data();
 
   // Step 4: Inverse Conditioning
-  rtn = m_conditioner.inverse_condition(m_vals_d, m_condi_bitstream);
+  rtn = m_conditioner.inverse_condition(m_vals_d, m_dims, m_condi_bitstream);
   if (rtn != RTNType::Good)
     return rtn;
 

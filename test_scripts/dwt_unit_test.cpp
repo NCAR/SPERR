@@ -18,10 +18,10 @@ TEST(dwt1d, big_image_even)
   const float* fptr = reinterpret_cast<const float*>(in_buf.data());
 
   // Make a copy and then use a conditioner
-  auto in_copy = std::vector<double>(total_vals);
+  auto in_copy = sperr::vecd_type(total_vals);
   std::copy(fptr, fptr + total_vals, in_copy.begin());
   auto condi = sperr::Conditioner();
-  auto [rtn, meta] = condi.condition(in_copy);
+  auto meta = condi.condition(in_copy, {dim_x, 1, 1});
 
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
@@ -34,7 +34,7 @@ TEST(dwt1d, big_image_even)
   EXPECT_EQ(result.size(), total_vals);
 
   // Apply the conditioner
-  rtn = condi.inverse_condition(result, meta);
+  auto rtn = condi.inverse_condition(result, {dim_x, 1, 1}, meta);
 
   for (size_t i = 0; i < total_vals; i++) {
     EXPECT_EQ(fptr[i], float(result[i]));
@@ -54,10 +54,10 @@ TEST(dwt1d, big_image_odd)
   const float* fptr = reinterpret_cast<const float*>(in_buf.data());
 
   // Make a copy and use a conditioner
-  auto in_copy = std::vector<double>(total_vals);
+  auto in_copy = sperr::vecd_type(total_vals);
   std::copy(fptr, fptr + total_vals, in_copy.begin());
   auto condi = sperr::Conditioner();
-  auto [rtn, meta] = condi.condition(in_copy);
+  auto meta = condi.condition(in_copy, {dim_x, 1, 1});
 
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
@@ -70,7 +70,7 @@ TEST(dwt1d, big_image_odd)
   EXPECT_EQ(result.size(), total_vals);
 
   // Apply the conditioner again
-  rtn = condi.inverse_condition(result, meta);
+  auto rtn = condi.inverse_condition(result, {dim_x, 1, 1}, meta);
 
   for (size_t i = 0; i < total_vals; i++) {
     EXPECT_EQ(fptr[i], float(result[i]));
@@ -89,10 +89,10 @@ TEST(dwt2d, small_image_even)
     std::cerr << "Input read error!" << std::endl;
 
   // Make a copy and use a conditioner
-  auto in_copy = std::vector<double>(total_vals);
+  auto in_copy = sperr::vecd_type(total_vals);
   std::copy(in_buf.begin(), in_buf.end(), in_copy.begin());
   auto condi = sperr::Conditioner();
-  auto [rtn, meta] = condi.condition(in_copy);
+  auto meta = condi.condition(in_copy, {dim_x, dim_y, 1});
 
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
@@ -105,7 +105,7 @@ TEST(dwt2d, small_image_even)
   EXPECT_EQ(result.size(), total_vals);
 
   // Apply the conditioner again
-  rtn = condi.inverse_condition(result, meta);
+  auto rtn = condi.inverse_condition(result, {dim_x, dim_y, 1}, meta);
 
   for (size_t i = 0; i < total_vals; i++) {
     EXPECT_EQ(in_buf[i], float(result[i]));
@@ -124,10 +124,10 @@ TEST(dwt2d, small_image_odd)
     std::cerr << "Input read error!" << std::endl;
 
   // Make a copy and use a conditioner
-  auto in_copy = std::vector<double>(total_vals);
+  auto in_copy = sperr::vecd_type(total_vals);
   std::copy(in_buf.begin(), in_buf.end(), in_copy.begin());
   auto condi = sperr::Conditioner();
-  auto [rtn, meta] = condi.condition(in_copy);
+  auto meta = condi.condition(in_copy, {dim_x, dim_y, 1});
 
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
@@ -140,7 +140,7 @@ TEST(dwt2d, small_image_odd)
   EXPECT_EQ(result.size(), total_vals);
 
   // Apply the conditioner
-  rtn = condi.inverse_condition(result, meta);
+  auto rtn = condi.inverse_condition(result, {dim_x, dim_y, 1}, meta);
 
   for (size_t i = 0; i < total_vals; i++) {
     EXPECT_EQ(in_buf[i], float(result[i]));
@@ -159,10 +159,10 @@ TEST(dwt2d, big_image_even)
     std::cerr << "Input read error!" << std::endl;
 
   // Make a copy and use a conditioner
-  auto in_copy = std::vector<double>(total_vals);
+  auto in_copy = sperr::vecd_type(total_vals);
   std::copy(in_buf.begin(), in_buf.end(), in_copy.begin());
   auto condi = sperr::Conditioner();
-  auto [rtn, meta] = condi.condition(in_copy);
+  auto meta = condi.condition(in_copy, {dim_x, dim_y, 1});
 
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
@@ -175,7 +175,7 @@ TEST(dwt2d, big_image_even)
   EXPECT_EQ(result.size(), total_vals);
 
   // Apply the conditioner
-  rtn = condi.inverse_condition(result, meta);
+  auto rtn = condi.inverse_condition(result, {dim_x, dim_y, 1}, meta);
 
   for (size_t i = 0; i < total_vals; i++) {
     EXPECT_EQ(in_buf[i], float(result[i]));
@@ -194,10 +194,10 @@ TEST(dwt2d, big_image_odd)
     std::cerr << "Input read error!" << std::endl;
 
   // Make a copy and use a conditioner
-  auto in_copy = std::vector<double>(total_vals);
+  auto in_copy = sperr::vecd_type(total_vals);
   std::copy(in_buf.begin(), in_buf.end(), in_copy.begin());
   auto condi = sperr::Conditioner();
-  auto [rtn, meta] = condi.condition(in_copy);
+  auto meta = condi.condition(in_copy, {dim_x, dim_y, 1});
 
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
@@ -210,7 +210,7 @@ TEST(dwt2d, big_image_odd)
   EXPECT_EQ(result.size(), total_vals);
 
   // Apply the conditioner
-  rtn = condi.inverse_condition(result, meta);
+  auto rtn = condi.inverse_condition(result, {dim_x, dim_y, 1}, meta);
 
   for (size_t i = 0; i < total_vals; i++) {
     EXPECT_EQ(in_buf[i], float(result[i]));
@@ -229,10 +229,10 @@ TEST(dwt3d, small_even_cube)
     std::cerr << "Input read error!" << std::endl;
 
   // Make a copy and use a conditioner
-  auto in_copy = std::vector<double>(total_vals);
+  auto in_copy = sperr::vecd_type(total_vals);
   std::copy(in_buf.begin(), in_buf.end(), in_copy.begin());
   auto condi = sperr::Conditioner();
-  auto [rtn, meta] = condi.condition(in_copy);
+  auto meta = condi.condition(in_copy, {dim_x, dim_y, dim_z});
 
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
@@ -245,7 +245,7 @@ TEST(dwt3d, small_even_cube)
   EXPECT_EQ(result.size(), total_vals);
 
   // Apply the conditioner
-  rtn = condi.inverse_condition(result, meta);
+  auto rtn = condi.inverse_condition(result, {dim_x, dim_y, dim_z}, meta);
   for (size_t i = 0; i < total_vals; i++) {
     EXPECT_EQ(in_buf[i], float(result[i]));
   }
@@ -263,10 +263,10 @@ TEST(dwt3d, big_odd_cube)
     std::cerr << "Input read error!" << std::endl;
 
   // Make a copy and use a conditioner
-  auto in_copy = std::vector<double>(total_vals);
+  auto in_copy = sperr::vecd_type(total_vals);
   std::copy(in_buf.begin(), in_buf.end(), in_copy.begin());
   auto condi = sperr::Conditioner();
-  auto [rtn, meta] = condi.condition(in_copy);
+  auto meta = condi.condition(in_copy, {dim_x, dim_y, dim_z});
 
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
@@ -279,7 +279,7 @@ TEST(dwt3d, big_odd_cube)
   EXPECT_EQ(result.size(), total_vals);
 
   // Apply the conditioner
-  rtn = condi.inverse_condition(result, meta);
+  auto rtn = condi.inverse_condition(result, {dim_x, dim_y, dim_z}, meta);
   for (size_t i = 0; i < total_vals; i++) {
     EXPECT_EQ(in_buf[i], float(result[i]));
   }
@@ -297,10 +297,10 @@ TEST(dwt3d, big_even_cube)
     std::cerr << "Input read error!" << std::endl;
 
   // Make a copy and use a conditioner
-  auto in_copy = std::vector<double>(total_vals);
+  auto in_copy = sperr::vecd_type(total_vals);
   std::copy(in_buf.begin(), in_buf.end(), in_copy.begin());
   auto condi = sperr::Conditioner();
-  auto [rtn, meta] = condi.condition(in_copy);
+  auto meta = condi.condition(in_copy, {dim_x, dim_y, dim_z});
 
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
@@ -313,7 +313,7 @@ TEST(dwt3d, big_even_cube)
   EXPECT_EQ(result.size(), total_vals);
 
   // Apply the conditioner
-  rtn = condi.inverse_condition(result, meta);
+  auto rtn = condi.inverse_condition(result, {dim_x, dim_y, dim_z}, meta);
   for (size_t i = 0; i < total_vals; i++) {
     EXPECT_EQ(in_buf[i], float(result[i]));
   }
