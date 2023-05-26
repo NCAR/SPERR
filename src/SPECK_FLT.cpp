@@ -62,7 +62,7 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   std::copy(speck_p, speck_p + speck_len, m_speck_bitstream.begin());
 
   // Integer length decision 1: decide the integer length to use
-  const uint32_t num_bitplanes = std::visit(
+  const auto num_bitplanes = std::visit(
       [speck_p](const auto& decoder) { return decoder->get_num_bitplanes(speck_p); }, m_decoder);
   if (num_bitplanes <= 8)
     m_uint_flag = UINTType::UINT8;

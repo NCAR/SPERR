@@ -54,7 +54,7 @@ class SPECK_FLT {
   virtual auto decompress() -> RTNType;
 
  protected:
-  UINTType m_uint_flag = UINTType::UINT64; // Default to use 64-bit integers.
+  UINTType m_uint_flag = UINTType::UINT64;  // Default to use 64-bit integers.
   std::variant<std::vector<uint64_t>,
                std::vector<uint32_t>,
                std::vector<uint16_t>,
@@ -75,13 +75,13 @@ class SPECK_FLT {
   CDF97 m_cdf;
   Conditioner m_conditioner;
 
+  // Instantiate `m_vals_ui` based on the chosen integer length.
+  void m_instantiate_int_vec();
+
   // Derived classes instantiate the correct `m_encoder` and `m_decoder` depending on
   //   3D/2D/1D classes, and on the integer length in use.
   virtual void m_instantiate_encoder() = 0;
   virtual void m_instantiate_decoder() = 0;
-
-  // Instantiate `m_vals_ui` based on the chosen integer length.
-  virtual void m_instantiate_int_vec();
 
   // Both wavelet transforms operate on `m_vals_d`.
   virtual void m_wavelet_xform() = 0;

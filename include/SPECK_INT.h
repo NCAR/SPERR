@@ -37,23 +37,23 @@ class SPECK_INT {
   virtual void decode();
 
   // Input
-  virtual void use_coeffs(vecui_type coeffs, vecb_type signs);
-  virtual void use_bitstream(const vec8_type&);
+  void use_coeffs(vecui_type coeffs, vecb_type signs);
+  void use_bitstream(const vec8_type&);
 
   // Output
-  virtual void write_encoded_bitstream(vec8_type& buf, size_t offset = 0) const;
-  virtual auto release_coeffs() -> vecui_type&&;
-  virtual auto release_signs() -> vecb_type&&;
-  virtual auto view_coeffs() const -> const vecui_type&;
-  virtual auto view_signs() const -> const vecb_type&;
+  void write_encoded_bitstream(vec8_type& buf, size_t offset = 0) const;
+  auto release_coeffs() -> vecui_type&&;
+  auto release_signs() -> vecb_type&&;
+  auto view_coeffs() const -> const vecui_type&;
+  auto view_signs() const -> const vecb_type&;
 
  protected:
   // Core SPECK procedures
   virtual void m_clean_LIS() = 0;
   virtual void m_sorting_pass() = 0;
   virtual void m_initialize_lists() = 0;
-  virtual void m_refinement_pass_encode();
-  virtual void m_refinement_pass_decode();
+  void m_refinement_pass_encode();
+  void m_refinement_pass_decode();
 
   // Data members
   dims_type m_dims = {0, 0, 0};
