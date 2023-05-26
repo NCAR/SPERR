@@ -31,9 +31,12 @@ constexpr auto max_d = std::numeric_limits<double>::max();
 //
 // A few shortcuts
 //
-using vecd_type = std::vector<double>;
-using vecb_type = std::vector<bool>;
-using vec8_type = std::vector<uint8_t>;
+template <typename T>
+using vec_type = std::vector<T>;
+using vecb_type = vec_type<bool>;
+using vecd_type = vec_type<double>;
+using vecf_type = vec_type<float>;
+using vec8_type = vec_type<uint8_t>;
 using dims_type = std::array<size_t, 3>;
 
 //
@@ -62,7 +65,9 @@ enum class RTNType {
   SetBPPBeforeDims,
   DataRangeNotSet,
   CompModeUnknown,
-  FE_Invalid,
+  CustomFilterMissing,
+  CustomFilterError,
+  FE_Invalid, // floating point exception: FE_INVALID
   Error
 };
 
@@ -95,7 +100,7 @@ auto calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<size_t, 2
 // provided by others, and others most likely provide it by raw pointers.
 // Note 2: these two methods only work on little endian machines.
 // Note 3: the caller should have already allocated enough space for `dest`.
-auto pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& src, size_t dest_offset = 0)
+auto pack_booleans(vec8_type& dest, const std::vector<bool>& src, size_t dest_offset = 0)
     -> RTNType;
 auto unpack_booleans(std::vector<bool>& dest,
                      const void* src,
@@ -113,9 +118,9 @@ auto unpack_8_booleans(uint8_t) -> std::array<bool, 8>;
 // Upon success, it returns a vector of size `n_bytes`.
 // Otherwise, it returns an empty vector.
 auto write_n_bytes(std::string filename, size_t n_bytes, const void* buffer) -> RTNType;
-auto read_n_bytes(std::string filename, size_t n_bytes) -> std::vector<uint8_t>;
+auto read_n_bytes(std::string filename, size_t n_bytes) -> vec8_type;
 template <typename T>
-auto read_whole_file(std::string filename) -> std::vector<T>;
+auto read_whole_file(std::string filename) -> vec_type<T>;
 
 // Calculate a suite of statistics.
 // Note that arr1 is considered as the ground truth array, so it's the range of
@@ -142,23 +147,22 @@ auto kahan_summation(const T*, size_t) -> T;
 //         dimension is not exact multiplies of requested chunk dimension,
 //         approximate values are used.
 // Note 2: this function works on degraded 2D or 1D volumes too.
-auto chunk_volume(const dims_type& vol_dim, const dims_type& chunk_dim)
-    -> std::vector<std::array<size_t, 6>>;
+auto chunk_volume(dims_type vol_dim, dims_type chunk_dim) -> std::vector<std::array<size_t, 6>>;
 
 // Gather a chunk from a bigger volume
 // If the requested chunk lives outside of the volume, whole or part,
 // this function returns an empty vector.
 template <typename T1, typename T2>
 auto gather_chunk(const T1* vol, dims_type vol_dim, const std::array<size_t, 6>& chunk)
-    -> std::vector<T2>;
+    -> vec_type<T2>;
 
 // Put this chunk to a bigger volume
 // The `big_vol` should have enough space allocated, and the `small_vol` should contain
 // enough elements to scatter. Memory errors will occur if the conditions are not met.
 template <typename TBIG, typename TSML>
-void scatter_chunk(std::vector<TBIG>& big_vol,
+void scatter_chunk(vec_type<TBIG>& big_vol,
                    dims_type vol_dim,
-                   const std::vector<TSML>& small_vol,
+                   const vec_type<TSML>& small_vol,
                    const std::array<size_t, 6>& chunk);
 
 // Structure that holds information extracted from SPERR headers.

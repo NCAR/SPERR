@@ -359,8 +359,7 @@ auto sperr::kahan_summation(const T* arr, size_t len) -> T
 template auto sperr::kahan_summation(const float*, size_t) -> float;
 template auto sperr::kahan_summation(const double*, size_t) -> double;
 
-auto sperr::chunk_volume(const std::array<size_t, 3>& vol_dim,
-                         const std::array<size_t, 3>& chunk_dim)
+auto sperr::chunk_volume(dims_type vol_dim, dims_type chunk_dim)
     -> std::vector<std::array<size_t, 6>>
 {
   // Step 1: figure out how many segments are there along each axis.
