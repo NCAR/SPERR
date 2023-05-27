@@ -187,14 +187,17 @@ auto sperr::SPECK_FLT::m_midtread_f2i() -> RTNType
   std::visit([total_vals](auto&& vec) { vec.resize(total_vals); }, m_vals_ui);
   m_sign_array.resize(total_vals);
 
-  for (size_t i = 0; i < total_vals; i++) {
-    auto ll = std::llrint(m_vals_d[i] / m_q);
-    m_sign_array[i] = (ll >= 0);
-    std::visit([i, ll](auto&& vec) { vec[i] = (std::abs(ll)); }, m_vals_ui);
-  }
+  // The following switch{} block functions the same as the following:
+  //
+  //    for (size_t i = 0; i < total_vals; i++) {
+  //      auto ll = std::llrint(m_vals_d[i] / m_q);
+  //      m_sign_array[i] = (ll >= 0);
+  //      std::visit([i, ll](auto&& vec) { vec[i] = (std::abs(ll)); }, m_vals_ui);
+  //    }
+  //
+  // but it's just not very efficient to put std::visit() inside of a pretty big loop,
+  // so we use the switch block.
 
-  /* Not sure if std::visit() inside of a loop makes a performance bottleneck, so
-   * keep this switch implementation for now.
   switch (m_uint_flag) {
     case UINTType::UINT64:
       for (size_t i = 0; i < total_vals; i++) {
@@ -223,7 +226,7 @@ auto sperr::SPECK_FLT::m_midtread_f2i() -> RTNType
         m_sign_array[i] = (ll >= 0);
         std::get<3>(m_vals_ui)[i] = static_cast<uint8_t>(std::abs(ll));
       }
-  } */
+  }
 
   return RTNType::Good;
 }

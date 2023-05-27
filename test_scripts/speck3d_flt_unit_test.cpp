@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <iostream>
 
+
 namespace {
 
 //
@@ -70,8 +71,10 @@ TEST(SPECK3D_FLT, IntegerLen)
   rtn = decoder.decompress();
   ASSERT_EQ(rtn, sperr::RTNType::Good);
   auto outputd = decoder.release_decoded_data();
-  //auto stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
-  //std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
+#ifdef PRINT
+  auto stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
+  std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
+#endif
   EXPECT_EQ(encoder.integer_len(), 2);
   EXPECT_EQ(decoder.integer_len(), 2);
 
@@ -86,8 +89,10 @@ TEST(SPECK3D_FLT, IntegerLen)
   decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decompress();
   outputd = decoder.release_decoded_data();
-  //stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
-  //std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
+#ifdef PRINT
+  stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
+  std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
+#endif
   EXPECT_EQ(encoder.integer_len(), 1);
   EXPECT_EQ(decoder.integer_len(), 1);
 
@@ -102,8 +107,10 @@ TEST(SPECK3D_FLT, IntegerLen)
   decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decompress();
   outputd = decoder.release_decoded_data();
-  //stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
-  //std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
+#ifdef PRINT
+  stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
+  std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
+#endif
   EXPECT_EQ(encoder.integer_len(), 4);
   EXPECT_EQ(decoder.integer_len(), 4);
 
@@ -118,8 +125,10 @@ TEST(SPECK3D_FLT, IntegerLen)
   decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decompress();
   outputd = decoder.release_decoded_data();
-  //stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
-  //std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
+#ifdef PRINT
+  stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
+  std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
+#endif
   EXPECT_EQ(encoder.integer_len(), 8);
   EXPECT_EQ(decoder.integer_len(), 8);
 }
