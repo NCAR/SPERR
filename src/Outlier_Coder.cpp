@@ -6,6 +6,8 @@
 #include <cfenv>
 #include <cmath>
 
+sperr::Outlier::Outlier(size_t p, double e) : pos(p), err(e) {}
+
 void sperr::Outlier_Coder::add_outlier(Outlier out)
 {
   m_LOS.push_back(out);
@@ -69,25 +71,25 @@ auto sperr::Outlier_Coder::m_instantiate_uvec_coders() -> RTNType
     if (m_vals_ui.index() != 0)
       m_vals_ui = std::vector<uint8_t>();
     if (m_encoder.index() != 0)
-      m_encoder = SPECK1D_INT_ENC<uint8_t>();
+      m_encoder.emplace<0>(); 
     if (m_decoder.index() != 0)
-      m_decoder = SPECK1D_INT_DEC<uint8_t>();
+      m_decoder.emplace<0>(); 
   }
   else if (maxint <= std::numeric_limits<uint16_t>::max()) {
-    m_vals_ui = std::vector<uint16_t>();
-    m_encoder = SPECK1D_INT_ENC<uint16_t>();
-    m_decoder = SPECK1D_INT_DEC<uint16_t>();
+    m_vals_ui.emplace<1>(); 
+    m_encoder.emplace<1>();
+    m_decoder.emplace<1>();
   }
   else if (maxint <= std::numeric_limits<uint32_t>::max()) {
-    m_vals_ui = std::vector<uint32_t>();
-    m_encoder = SPECK1D_INT_ENC<uint32_t>();
-    m_decoder = SPECK1D_INT_DEC<uint32_t>();
+    m_vals_ui.emplace<2>(); 
+    m_encoder.emplace<2>();
+    m_decoder.emplace<2>();
   }
   else {
     assert(maxint <= std::numeric_limits<uint64_t>::max());
-    m_vals_ui = std::vector<uint64_t>();
-    m_encoder = SPECK1D_INT_ENC<uint64_t>();
-    m_decoder = SPECK1D_INT_DEC<uint64_t>();
+    m_vals_ui.emplace<3>(); 
+    m_encoder.emplace<3>();
+    m_decoder.emplace<3>();
   }
 
   return RTNType::Good;
@@ -116,17 +118,17 @@ void sperr::Outlier_Coder::m_quantize()
   }
 }
 
-void m_inverse_quantize()
+void sperr::Outlier_Coder::m_inverse_quantize()
 {
   m_LOS.clear();
-  const tmp = std::array<double, 2>{-1.0, 0.0};
+  const auto tmp = std::array<double, 2>{-1.0, 0.0};
 
   if (m_vals_ui.index() == 0) {
     const auto& ui = std::get<0>(m_vals_ui);
     for (size_t i = 0; i < ui.size(); i++)
       if (ui[i] != 0) {
         auto sign = tmp[m_sign_array[i]];
-        m_LOS.emplace_back({i, sign * m_tol * ui[i]});
+        m_LOS.emplace_back(i, sign * m_tol * ui[i]);
       }
   }
   else if (m_vals_ui.index() == 1) {
@@ -134,7 +136,7 @@ void m_inverse_quantize()
     for (size_t i = 0; i < ui.size(); i++)
       if (ui[i] != 0) {
         auto sign = tmp[m_sign_array[i]];
-        m_LOS.emplace_back({i, sign * m_tol * ui[i]});
+        m_LOS.emplace_back(i, sign * m_tol * ui[i]);
       }
   }
   else if (m_vals_ui.index() == 2) {
@@ -142,7 +144,7 @@ void m_inverse_quantize()
     for (size_t i = 0; i < ui.size(); i++)
       if (ui[i] != 0) {
         auto sign = tmp[m_sign_array[i]];
-        m_LOS.emplace_back({i, sign * m_tol * ui[i]});
+        m_LOS.emplace_back(i, sign * m_tol * ui[i]);
       }
   }
   else {
@@ -150,7 +152,7 @@ void m_inverse_quantize()
     for (size_t i = 0; i < ui.size(); i++)
       if (ui[i] != 0) {
         auto sign = tmp[m_sign_array[i]];
-        m_LOS.emplace_back({i, sign * m_tol * ui[i]});
+        m_LOS.emplace_back(i, sign * m_tol * ui[i]);
       }
   }
 }

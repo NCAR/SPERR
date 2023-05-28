@@ -13,6 +13,9 @@ class Outlier {
  public:
   size_t pos = 0;
   double err = 0.0;
+
+  Outlier() = default;
+  Outlier(size_t, double);
 };
 
 class Outlier_Coder {
