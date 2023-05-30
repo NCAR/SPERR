@@ -331,28 +331,7 @@ auto sperr::SPECK_FLT::decompress() -> RTNType
   //    Note: the decoder has already parsed the bitstream in function `use_bitstream()`.
   std::visit([&dims = m_dims](auto&& decoder) { decoder->set_dims(dims); }, m_decoder);
   std::visit([](auto&& decoder) { decoder->decode(); }, m_decoder);
-  switch (m_uint_flag) {  // `m_uint_flag` was properly set during `use_bitstream()`.
-    case UINTType::UINT64:
-      assert(m_decoder.index() == 0);
-      m_vals_ui = std::get<0>(m_decoder)->release_coeffs();
-      assert(m_vals_ui.index() == 0);
-      break;
-    case UINTType::UINT32:
-      assert(m_decoder.index() == 1);
-      m_vals_ui = std::get<1>(m_decoder)->release_coeffs();
-      assert(m_vals_ui.index() == 1);
-      break;
-    case UINTType::UINT16:
-      assert(m_decoder.index() == 2);
-      m_vals_ui = std::get<2>(m_decoder)->release_coeffs();
-      assert(m_vals_ui.index() == 2);
-      break;
-    default:
-      assert(m_decoder.index() == 3);
-      m_vals_ui = std::get<3>(m_decoder)->release_coeffs();
-      assert(m_vals_ui.index() == 3);
-      break;
-  }
+  std::visit([&vec = m_vals_ui](auto&& dec) { vec = dec->release_coeffs(); }, m_decoder);
   m_sign_array = std::visit([](auto&& dec) { return dec->release_signs(); }, m_decoder);
 
   // Step 2: Inverse quantization
