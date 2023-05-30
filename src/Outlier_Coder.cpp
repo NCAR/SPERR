@@ -2,8 +2,8 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cfloat>  // FLT_ROUNDS
 #include <cfenv>
+#include <cfloat>  // FLT_ROUNDS
 #include <cmath>
 
 sperr::Outlier::Outlier(size_t p, double e) : pos(p), err(e) {}
@@ -30,6 +30,17 @@ void sperr::Outlier_Coder::set_tolerance(double tol)
 
 auto sperr::Outlier_Coder::use_bitstream(const void* p, size_t len) -> RTNType
 {
+  const auto num_bitplanes = speck_int_get_num_bitplanes(speck_p);
+  if (num_bitplanes <= 8)
+    m_instantiate_uvec_coders(UINTType::UINT8);
+  else if (num_bitplanes <= 16)
+    m_instantiate_uvec_coders(UINTType::UINT16);
+  else if (num_bitplanes <= 32)
+    m_instantiate_uvec_coders(UINTType::UINT32);
+  else
+    m_instantiate_uvec_coders(UINTType::UINT64);
+
+  // TODO
   return RTNType::Good;
 }
 
@@ -40,22 +51,15 @@ auto sperr::Outlier_Coder::view_outlier_list() const -> const std::vector<Outlie
 
 void sperr::Outlier_Coder::append_encoded_bitstream(vec8_type& buf) const
 {
-
+  // Just append the bitstream produced by `m_encoder` is fine.
+  std::visit([&buf](auto&& enc) { enc.append_encoded_bitstream(buf); }, m_encoder);
 }
 
 auto sperr::Outlier_Coder::encode() -> RTNType
 {
-  return RTNType::Good;
-}
+  // TODO
 
-auto sperr::Outlier_Coder::decode() -> RTNType
-{
-  return RTNType::Good;
-}
-
-auto sperr::Outlier_Coder::m_instantiate_uvec_coders() -> RTNType
-{
-  // Find the biggest magnitude of outlier errors
+  // Find the biggest magnitude of outlier errors, and then instantiate data structures.
   auto maxerr = *std::max_element(m_LOS.cbegin(), m_LOS.cend(), [](auto v1, auto v2) {
     return std::abs(v1.err) < std::abs(v2.err);
   });
@@ -67,32 +71,51 @@ auto sperr::Outlier_Coder::m_instantiate_uvec_coders() -> RTNType
   if (std::fetestexcept(FE_INVALID))
     return RTNType::FE_Invalid;
 
-  if (maxint <= std::numeric_limits<uint8_t>::max()) {
+  if (maxint <=  std::numeric_limits<uint8_t>::max())
+    m_instantiate_uvec_coders(UINTType::UINT8);
+  else if (maxint <=  std::numeric_limits<uint16_t>::max())
+    m_instantiate_uvec_coders(UINTType::UINT16);
+  else if (maxint <=  std::numeric_limits<uint32_t>::max())
+    m_instantiate_uvec_coders(UINTType::UINT32);
+  else
+    m_instantiate_uvec_coders(UINTType::UINT64);
+
+
+  return RTNType::Good;
+}
+
+auto sperr::Outlier_Coder::decode() -> RTNType
+{
+  // TODO
+  return RTNType::Good;
+}
+
+void sperr::Outlier_Coder::m_instantiate_uvec_coders(UINTType type);
+{
+  if (type == UINTType::UINT8) {
     if (m_vals_ui.index() != 0)
       m_vals_ui = std::vector<uint8_t>();
     if (m_encoder.index() != 0)
-      m_encoder.emplace<0>(); 
+      m_encoder.emplace<0>();
     if (m_decoder.index() != 0)
-      m_decoder.emplace<0>(); 
+      m_decoder.emplace<0>();
   }
-  else if (maxint <= std::numeric_limits<uint16_t>::max()) {
-    m_vals_ui.emplace<1>(); 
+  else if (type == UINTType::UINT16) {
+    m_vals_ui.emplace<1>();
     m_encoder.emplace<1>();
     m_decoder.emplace<1>();
   }
-  else if (maxint <= std::numeric_limits<uint32_t>::max()) {
-    m_vals_ui.emplace<2>(); 
+  else if (type == UINTType::UINT32) {
+    m_vals_ui.emplace<2>();
     m_encoder.emplace<2>();
     m_decoder.emplace<2>();
   }
   else {
     assert(maxint <= std::numeric_limits<uint64_t>::max());
-    m_vals_ui.emplace<3>(); 
+    m_vals_ui.emplace<3>();
     m_encoder.emplace<3>();
     m_decoder.emplace<3>();
   }
-
-  return RTNType::Good;
 }
 
 void sperr::Outlier_Coder::m_quantize()
@@ -121,38 +144,27 @@ void sperr::Outlier_Coder::m_quantize()
 void sperr::Outlier_Coder::m_inverse_quantize()
 {
   m_LOS.clear();
-  const auto tmp = std::array<double, 2>{-1.0, 0.0};
 
+  // First, bring all non-zero integer correctors to `m_LOS`.
   if (m_vals_ui.index() == 0) {
     const auto& ui = std::get<0>(m_vals_ui);
     for (size_t i = 0; i < ui.size(); i++)
-      if (ui[i] != 0) {
-        auto sign = tmp[m_sign_array[i]];
-        m_LOS.emplace_back(i, sign * m_tol * ui[i]);
-      }
-  }
-  else if (m_vals_ui.index() == 1) {
-    const auto& ui = std::get<1>(m_vals_ui);
-    for (size_t i = 0; i < ui.size(); i++)
-      if (ui[i] != 0) {
-        auto sign = tmp[m_sign_array[i]];
-        m_LOS.emplace_back(i, sign * m_tol * ui[i]);
-      }
-  }
-  else if (m_vals_ui.index() == 2) {
-    const auto& ui = std::get<2>(m_vals_ui);
-    for (size_t i = 0; i < ui.size(); i++)
-      if (ui[i] != 0) {
-        auto sign = tmp[m_sign_array[i]];
-        m_LOS.emplace_back(i, sign * m_tol * ui[i]);
-      }
+      if (ui[i] != 0)
+        m_LOS.emplace_back(i, double(ui[i]));
   }
   else {
-    const auto& ui = std::get<3>(m_vals_ui);
-    for (size_t i = 0; i < ui.size(); i++)
-      if (ui[i] != 0) {
-        auto sign = tmp[m_sign_array[i]];
-        m_LOS.emplace_back(i, sign * m_tol * ui[i]);
-      }
+    for (size_t i = 0; i < m_total_len; i++) {
+      auto ui = std::visit([i](auto&& vec) { return uint64_t{vec[i]}; }, m_vals_ui);
+      if (ui != 0)
+        m_LOS.emplace_back(i, double(ui));
+    }
   }
+
+  // Second, restore the floating-point correctors.
+  const auto tmp = std::array<double, 2>{-1.0, 0.0};
+  std::transform(m_LOS.begin(), m_LOS.end(), m_sign_array.begin(), m_LOS.begin(),
+                 [q = m_tol, tmp](auto los, auto s) {
+                   los.err *= q * tmp[s];
+                   return los;
+                 });
 }

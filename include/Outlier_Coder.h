@@ -65,8 +65,7 @@ class Outlier_Coder {
                std::vector<uint64_t>>
       m_vals_ui;
 
-  // Instantiate based on the biggest outlier from `m_LOS`.
-  auto m_instantiate_uvec_coders() -> RTNType;
+  void m_instantiate_uvec_coders(UINTType);
   void m_quantize();
   void m_inverse_quantize();
 };

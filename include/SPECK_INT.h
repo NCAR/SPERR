@@ -43,11 +43,11 @@ class SPECK_INT {
   auto get_stream_full_len(const void*) const -> uint64_t;
 
   // Actions
-  virtual void encode();
-  virtual void decode();
+  void encode();
+  void decode();
 
   // Input
-  void use_coeffs(vecui_type coeffs, vecb_type signs);
+  auto use_coeffs(vecui_type coeffs, vecb_type signs) -> RTNType;
   void use_bitstream(const void* p, size_t len);
 
   // Output

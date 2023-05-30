@@ -126,10 +126,13 @@ void sperr::SPECK_INT<T>::decode()
 }
 
 template <typename T>
-void sperr::SPECK_INT<T>::use_coeffs(vecui_type coeffs, vecb_type signs)
+auto sperr::SPECK_INT<T>::use_coeffs(vecui_type coeffs, vecb_type signs) -> RTNType
 {
+  if (std::all_of(coeffs.cbegin(), coeffs.cend(), [](auto v) { return v == 0; }))
+    return RTNType::AllZeroInts;
   m_coeff_buf = std::move(coeffs);
   m_sign_array = std::move(signs);
+  return RTNType::Good;
 }
 
 template <typename T>

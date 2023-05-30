@@ -285,27 +285,30 @@ auto sperr::SPECK_FLT::compress() -> RTNType
     case UINTType::UINT64:
       assert(m_vals_ui.index() == 0);
       assert(m_encoder.index() == 0);
-      std::get<0>(m_encoder)->use_coeffs(std::move(std::get<0>(m_vals_ui)),
-                                         std::move(m_sign_array));
+      rtn = std::get<0>(m_encoder)->use_coeffs(std::move(std::get<0>(m_vals_ui)),
+                                               std::move(m_sign_array));
       break;
     case UINTType::UINT32:
       assert(m_vals_ui.index() == 1);
       assert(m_encoder.index() == 1);
-      std::get<1>(m_encoder)->use_coeffs(std::move(std::get<1>(m_vals_ui)),
-                                         std::move(m_sign_array));
+      rtn = std::get<1>(m_encoder)->use_coeffs(std::move(std::get<1>(m_vals_ui)),
+                                               std::move(m_sign_array));
       break;
     case UINTType::UINT16:
       assert(m_vals_ui.index() == 2);
       assert(m_encoder.index() == 2);
-      std::get<2>(m_encoder)->use_coeffs(std::move(std::get<2>(m_vals_ui)),
-                                         std::move(m_sign_array));
+      rtn = std::get<2>(m_encoder)->use_coeffs(std::move(std::get<2>(m_vals_ui)),
+                                               std::move(m_sign_array));
       break;
     default:
       assert(m_vals_ui.index() == 3);
       assert(m_encoder.index() == 3);
-      std::get<3>(m_encoder)->use_coeffs(std::move(std::get<3>(m_vals_ui)),
-                                         std::move(m_sign_array));
+      rtn = std::get<3>(m_encoder)->use_coeffs(std::move(std::get<3>(m_vals_ui)),
+                                               std::move(m_sign_array));
   }
+  if (rtn != RTNType::Good)
+    return rtn;
+
   std::visit([](auto&& encoder) { encoder->encode(); }, m_encoder);
 
   return RTNType::Good;
