@@ -1,0 +1,12 @@
+1. SPECK_INT
+   Header (9 bytes) + SPECK bitstream
+     ^-- num_bitplanes (1 byte) + num_useful_bits (8 bytes)
+
+2. Conditioner
+   Booleans (1 byte) + mean (8 bytes) + [custom filter]
+     ^-- Is this a constant field?
+     ^-- Is there a custom filter?
+         (Answering yes to either question will result in a longer conditioner bitstream.)
+
+3. SPECK_FLT
+   Conditioner Stream + SPECK_INT Stream
