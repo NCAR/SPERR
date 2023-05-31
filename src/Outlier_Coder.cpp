@@ -128,7 +128,7 @@ auto sperr::Outlier_Coder::encode() -> RTNType
 auto sperr::Outlier_Coder::decode() -> RTNType
 {
   // Sanity check
-  if (m_total_len == 0)
+  if (m_total_len == 0 || m_tol <= 0.0)
     return RTNType::Error;
 
   // Step 1: Integer SPECK decode
@@ -213,10 +213,11 @@ void sperr::Outlier_Coder::m_inverse_quantize()
   }
 
   // Second, restore the floating-point correctors.
-  const auto tmp = std::array<double, 2>{-1.0, 0.0};
-  std::transform(m_LOS.cbegin(), m_LOS.cend(), m_sign_array.cbegin(), m_LOS.begin(),
-                 [q = m_tol, tmp](auto los, auto s) {
-                   los.err *= q * tmp[s];
+  const auto tmp = std::array<double, 2>{-1.0, 1.0};
+  std::transform(m_LOS.cbegin(), m_LOS.cend(), m_LOS.begin(),
+                 [q = m_tol, &signs = m_sign_array, tmp](auto los) {
+                   auto b = signs[los.pos];
+                   los.err *= (q * tmp[b]);
                    return los;
                  });
 }
