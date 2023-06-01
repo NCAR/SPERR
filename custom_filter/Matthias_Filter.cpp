@@ -21,7 +21,13 @@ auto sperr::Matthias_Filter::apply_filter(vecd_type& buf, dims_type dims) -> vec
   assert(buf.size() == dims[0] * dims[1] * dims[2]);
   assert(!buf.empty());
 
-  auto meta = std::vector<double>(dims[0] * 2);
+  // Filter header definition:
+  // Length (uint32_t) +  pairs of mean and rms (double + double)
+  //
+  const uint32_t len = sizeof(uint32_t) + sizeof(double) * 2 * dims[0];
+  auto header = vec8_type(len);
+  std::memcpy(header.data(), &len, sizeof(len));
+  double* const meta = reinterpret_cast<double*>(header.data() + sizeof(len));
 
   for (size_t x = 0; x < dims[0]; x++) {
     m_extract_YZ_slice(buf, dims, x);
@@ -43,14 +49,6 @@ auto sperr::Matthias_Filter::apply_filter(vecd_type& buf, dims_type dims) -> vec
     meta[x * 2] = mean;
     meta[x * 2 + 1] = rms;
   }
-
-  // Filter header definition:
-  // Length (uint32_t) +  pairs of mean and rms (double + double)
-  //
-  const uint32_t len = sizeof(uint32_t) + sizeof(double) * 2 * dims[0];
-  auto header = vec8_type(len);
-  std::memcpy(header.data(), &len, sizeof(len));
-  std::memcpy(header.data() + sizeof(len), meta.data(), sizeof(double) * meta.size());
 
   return header;
 }
