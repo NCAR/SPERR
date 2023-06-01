@@ -8,7 +8,9 @@
 #include "CDF97.h"
 #include "Conditioner.h"
 #include "SPECK_INT.h"
+#include "Outlier_Coder.h"
 
+#include <optional>
 #include <variant>
 
 namespace sperr {
@@ -44,7 +46,10 @@ class SPECK_FLT {
   //
   // General configuration and info.
   //
+  // Note that if configured via `set_q()`, then there's no outlier correction performed.
+  //    If configured via `set_tolerance()`, then outlier correction is also performed.
   void set_q(double q);
+  void set_tolerance(double tol);
   void set_dims(dims_type);
   auto integer_len() const -> size_t;
 
@@ -55,8 +60,8 @@ class SPECK_FLT {
   virtual auto decompress() -> RTNType;
 
  protected:
-  double m_q = 1.0;  // 1.0 is a better initial value than 0.0
-  UINTType m_uint_flag = UINTType::UINT64;  // Default to use 64-bit integers.
+  double m_q = 1.0;
+  UINTType m_uint_flag = UINTType::UINT64;
   dims_type m_dims = {0, 0, 0};
   vecd_type m_vals_d;
   vecb_type m_sign_array;  // Signs to be passed to the integer encoder
@@ -76,6 +81,10 @@ class SPECK_FLT {
                std::vector<uint16_t>,
                std::vector<uint8_t>>
       m_vals_ui;
+
+  // A few data members needed for outlier coding
+  std::optional<double> m_tol;
+  Outlier_Coder m_out_coder;
 
   // Instantiate `m_vals_ui` based on the chosen integer length.
   void m_instantiate_int_vec();

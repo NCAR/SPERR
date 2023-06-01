@@ -92,7 +92,14 @@ auto sperr::SPECK_FLT::release_decoded_data() -> vecd_type&&
 
 void sperr::SPECK_FLT::set_q(double q)
 {
-  m_q = std::max(0.0, q);
+  m_q = q;
+  m_tol.reset();
+}
+
+void sperr::SPECK_FLT::set_tolerance(double tol)
+{
+  m_tol = tol;
+  m_q = 1.5 * tol;
 }
 
 void sperr::SPECK_FLT::set_dims(dims_type dims)
@@ -238,23 +245,18 @@ void sperr::SPECK_FLT::m_midtread_i2f()
   const auto tmpd = std::array<double, 2>{-1.0, 1.0};
   m_vals_d.resize(m_sign_array.size());
   std::visit(
-      [&vals_d = m_vals_d, &sign_array = m_sign_array, tmpd, q = m_q](auto&& vec) {
+      [&vals_d = m_vals_d, &signs = m_sign_array, q = m_q, tmpd](auto&& vec) {
         std::transform(
-            vec.cbegin(), vec.cend(), sign_array.cbegin(), vals_d.begin(),
+            vec.cbegin(), vec.cend(), signs.cbegin(), vals_d.begin(),
             [tmpd, q](auto i, auto b) { return (q * static_cast<double>(i) * tmpd[b]); });
       },
       m_vals_ui);
-
-  // std::visit() obscures the intention, but the task is really the same as the following:
-  //
-  // std::transform(m_vals_ui.cbegin(), m_vals_ui.cend(), m_sign_array.cbegin(), m_vals_d.begin(),
-  //                [tmpd, q](auto i, auto b) { return q * static_cast<double>(i) * tmpd[b]; });
 }
 
 auto sperr::SPECK_FLT::compress() -> RTNType
 {
   const auto total_vals = uint64_t(m_dims[0]) * m_dims[1] * m_dims[2];
-  if (m_vals_d.empty() || m_vals_d.size() != total_vals)
+  if (m_vals_d.empty() || m_q <= 0.0 || m_vals_d.size() != total_vals)
     return RTNType::Error;
 
   m_condi_bitstream.clear();
@@ -316,6 +318,9 @@ auto sperr::SPECK_FLT::compress() -> RTNType
 
 auto sperr::SPECK_FLT::decompress() -> RTNType
 {
+  if (m_q <= 0.0 || m_condi_bitstream.empty())
+    return RTNType::Error;
+
   m_vals_d.clear();
   std::visit([](auto&& vec) { vec.clear(); }, m_vals_ui);
   m_sign_array.clear();
