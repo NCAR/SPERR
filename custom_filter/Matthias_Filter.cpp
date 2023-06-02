@@ -81,10 +81,10 @@ auto sperr::Matthias_Filter::inverse_filter(vecd_type& buf,
     m_extract_YZ_slice(buf, dims, x);
 
     // Operation 1: multiply by RMS
-    std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [rms](auto& v) { return v *= rms; });
+    std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [rms](auto& v) { v *= rms; });
 
     // Operation 2: add mean
-    std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [mean](auto& v) { return v += mean; });
+    std::for_each(m_slice_buf.begin(), m_slice_buf.end(), [mean](auto& v) { v += mean; });
 
     m_restore_YZ_slice(buf, dims, x);
   }
