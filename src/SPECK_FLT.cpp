@@ -68,9 +68,21 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
 
   m_instantiate_int_vec();
   m_instantiate_decoder();
-  const auto speck_len = len - pos;  // Assume that the bitstream length is what's left.
-  std::visit([speck_p, speck_len](auto&& dec) { dec->use_bitstream(speck_p, speck_len); },
+  const auto speck_len =
+      std::visit([speck_p](auto&& dec) { return dec->get_stream_full_len(speck_p); }, m_decoder);
+  pos += speck_len;
+  assert(pos <= len);
+  std::visit([speck_p, speck_len](auto&& dec) { return dec->use_bitstream(speck_p, speck_len); },
              m_decoder);
+
+  // Bitstream parser 3: extract Outlier Coder stream if there's any.
+  if (pos < len) {
+    const uint8_t* const out_p = ptr + pos;
+    assert(m_out_coder.get_stream_full_len(out_p) == len - pos);
+    auto rtn = m_out_coder.use_bitstream(out_p, len);
+    if (rtn != RTNType::Good)
+      return rtn;
+  }
 
   return RTNType::Good;
 }
@@ -83,6 +95,9 @@ void sperr::SPECK_FLT::append_encoded_bitstream(vec8_type& buf) const
 
   if (!m_conditioner.is_constant(m_condi_bitstream[0]))
     std::visit([&buf](auto&& enc) { enc->append_encoded_bitstream(buf); }, m_encoder);
+
+  if (m_tol)
+    m_out_coder.append_encoded_bitstream(buf);
 }
 
 auto sperr::SPECK_FLT::release_decoded_data() -> vecd_type&&
@@ -112,31 +127,23 @@ auto sperr::SPECK_FLT::integer_len() const -> size_t
   switch (m_uint_flag) {
     case UINTType::UINT64:
       assert(m_vals_ui.index() == 0);
-      assert(m_encoder.index() == 0 ||
-             std::visit([](auto&& coder) { return coder == nullptr; }, m_encoder));
-      assert(m_decoder.index() == 0 ||
-             std::visit([](auto&& coder) { return coder == nullptr; }, m_decoder));
+      assert(m_encoder.index() == 0);
+      assert(m_decoder.index() == 0);
       return sizeof(uint64_t);
     case UINTType::UINT32:
       assert(m_vals_ui.index() == 1);
-      assert(m_encoder.index() == 1 ||
-             std::visit([](auto&& coder) { return coder == nullptr; }, m_encoder));
-      assert(m_decoder.index() == 1 ||
-             std::visit([](auto&& coder) { return coder == nullptr; }, m_decoder));
+      assert(m_encoder.index() == 1);
+      assert(m_decoder.index() == 1);
       return sizeof(uint32_t);
     case UINTType::UINT16:
       assert(m_vals_ui.index() == 2);
-      assert(m_encoder.index() == 2 ||
-             std::visit([](auto&& coder) { return coder == nullptr; }, m_encoder));
-      assert(m_decoder.index() == 2 ||
-             std::visit([](auto&& coder) { return coder == nullptr; }, m_decoder));
+      assert(m_encoder.index() == 2);
+      assert(m_decoder.index() == 2);
       return sizeof(uint16_t);
     default:
       assert(m_vals_ui.index() == 3);
-      assert(m_encoder.index() == 3 ||
-             std::visit([](auto&& coder) { return coder == nullptr; }, m_encoder));
-      assert(m_decoder.index() == 3 ||
-             std::visit([](auto&& coder) { return coder == nullptr; }, m_decoder));
+      assert(m_encoder.index() == 3);
+      assert(m_decoder.index() == 3);
       return sizeof(uint8_t);
   }
 }
@@ -268,17 +275,46 @@ auto sperr::SPECK_FLT::compress() -> RTNType
   if (m_conditioner.is_constant(m_condi_bitstream[0]))
     return RTNType::Good;
 
+  // Side step for outlier coding
+  if (m_tol) {
+    m_vals_orig.resize(total_vals);
+    std::copy(m_vals_d.cbegin(), m_vals_d.cend(), m_vals_orig.begin());
+  }
+
   // Step 2: wavelet transform
-  auto rtn = m_cdf.take_data(std::move(m_vals_d), m_dims);
-  if (rtn != RTNType::Good)
-    return rtn;
+  m_cdf.take_data(std::move(m_vals_d), m_dims);
   m_wavelet_xform();
   m_vals_d = m_cdf.release_data();
 
   // Step 3: quantize floating-point coefficients to integers
-  rtn = m_quantize();
+  auto rtn = m_quantize();
   if (rtn != RTNType::Good)
     return rtn;
+
+  // Side step for outlier coding: find out all the outliers, and encode them!
+  if (m_tol) {
+    rtn = m_inverse_quantize();
+    if (rtn != RTNType::Good)
+      return rtn;
+    rtn = m_cdf.take_data(std::move(m_vals_d), m_dims);
+    if (rtn != RTNType::Good)
+      return rtn;
+    m_inverse_wavelet_xform();
+    m_vals_d = m_cdf.release_data();
+    auto LOS = std::vector<Outlier>();
+    LOS.reserve(0.04 * total_vals);  // Reserve space to hold about 4% of elements.
+    for (size_t i = 0; i < total_vals; i++) {
+      auto diff = m_vals_orig[i] - m_vals_d[i];
+      if (std::abs(diff) > *m_tol)
+        LOS.emplace_back(i, diff);
+    }
+    m_out_coder.set_length(total_vals);
+    m_out_coder.set_tolerance(*m_tol);
+    m_out_coder.use_outlier_list(std::move(LOS));
+    rtn = m_out_coder.encode();
+    if (rtn != RTNType::Good)
+      return rtn;
+  }
 
   // Step 4: Integer SPECK encoding
   m_instantiate_encoder();
@@ -350,6 +386,18 @@ auto sperr::SPECK_FLT::decompress() -> RTNType
     return rtn;
   m_inverse_wavelet_xform();
   m_vals_d = m_cdf.release_data();
+
+  // Side step: outlier correction, if needed
+  if (m_tol) {
+    m_out_coder.set_length(m_dims[0] * m_dims[1] * m_dims[2]);
+    m_out_coder.set_tolerance(*m_tol);
+    rtn = m_out_coder.decode();
+    if (rtn != RTNType::Good)
+      return rtn;
+    const auto& recovered = m_out_coder.view_outlier_list();
+    for (auto out : recovered)
+      m_vals_d[out.pos] += out.err;
+  }
 
   // Step 4: Inverse Conditioning
   rtn = m_conditioner.inverse_condition(m_vals_d, m_dims, m_condi_bitstream);
