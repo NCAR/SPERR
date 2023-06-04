@@ -6,7 +6,6 @@
 #include <cstdio>
 #include <iostream>
 
-
 namespace {
 
 //
@@ -133,5 +132,45 @@ TEST(SPECK3D_FLT, IntegerLen)
   EXPECT_EQ(decoder.integer_len(), 8);
 }
 
+//
+// Test outlier correction
+//
+#if 0
+TEST(SPECK3D_FLT, OutlierCorrection)
+{
+  auto inputf = sperr::read_whole_file<float>("../test_data/vorticity.128_128_41");
+  const auto dims = sperr::dims_type{128, 128, 41};
+  const auto total_vals = inputf.size();
+  auto inputd = sperr::vecd_type(total_vals);
+  std::copy(inputf.cbegin(), inputf.cend(), inputd.begin());
+  double tol = 1.5e-1;
+  
+  // Encode
+  auto encoder = sperr::SPECK3D_FLT();
+  encoder.set_dims(dims);
+  encoder.set_tolerance(tol);
+  encoder.copy_data(inputd.data(), total_vals);
+  auto rtn = encoder.compress();
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
+  auto bitstream = sperr::vec8_type();
+  encoder.append_encoded_bitstream(bitstream);
+
+  // Decode
+  auto decoder = sperr::SPECK3D_FLT();
+  decoder.set_dims(dims);
+  decoder.set_tolerance(tol);
+  rtn = decoder.use_bitstream(bitstream.data(), bitstream.size());
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
+  rtn = decoder.decompress();
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
+  auto outputd = decoder.release_decoded_data();
+#ifdef PRINT
+  auto stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
+  std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
+#endif
+  EXPECT_EQ(encoder.integer_len(), 2);
+  EXPECT_EQ(decoder.integer_len(), 2);
+}
+#endif
 
 }  // namespace

@@ -127,23 +127,20 @@ auto sperr::SPECK_FLT::integer_len() const -> size_t
   switch (m_uint_flag) {
     case UINTType::UINT64:
       assert(m_vals_ui.index() == 0);
-      assert(m_encoder.index() == 0);
-      assert(m_decoder.index() == 0);
+      // Either this is an encoder, or this is a decoder.
+      assert(m_encoder.index() == 0 || m_decoder.index() == 0);
       return sizeof(uint64_t);
     case UINTType::UINT32:
       assert(m_vals_ui.index() == 1);
-      assert(m_encoder.index() == 1);
-      assert(m_decoder.index() == 1);
+      assert(m_encoder.index() == 1 || m_decoder.index() == 1);
       return sizeof(uint32_t);
     case UINTType::UINT16:
       assert(m_vals_ui.index() == 2);
-      assert(m_encoder.index() == 2);
-      assert(m_decoder.index() == 2);
+      assert(m_encoder.index() == 2 || m_decoder.index() == 2);
       return sizeof(uint16_t);
     default:
       assert(m_vals_ui.index() == 3);
-      assert(m_encoder.index() == 3);
-      assert(m_decoder.index() == 3);
+      assert(m_encoder.index() == 3 || m_decoder.index() == 3);
       return sizeof(uint8_t);
   }
 }
