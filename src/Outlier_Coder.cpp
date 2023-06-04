@@ -28,6 +28,22 @@ void sperr::Outlier_Coder::set_tolerance(double tol)
   m_tol = tol;
 }
 
+auto sperr::Outlier_Coder::view_outlier_list() const -> const std::vector<Outlier>&
+{
+  return m_LOS;
+}
+
+void sperr::Outlier_Coder::append_encoded_bitstream(vec8_type& buf) const
+{
+  // Just append the bitstream produced by `m_encoder` is fine.
+  std::visit([&buf](auto&& enc) { enc.append_encoded_bitstream(buf); }, m_encoder);
+}
+
+auto sperr::Outlier_Coder::get_stream_full_len(const void* p) const -> size_t
+{
+  return std::visit([p](auto&& dec) { return dec.get_stream_full_len(p); }, m_decoder);
+}
+
 auto sperr::Outlier_Coder::use_bitstream(const void* p, size_t len) -> RTNType
 {
   // Decide on the integer length to use.
@@ -50,17 +66,6 @@ auto sperr::Outlier_Coder::use_bitstream(const void* p, size_t len) -> RTNType
   std::visit([p, len](auto&& dec) { dec.use_bitstream(p, len); }, m_decoder);
 
   return RTNType::Good;
-}
-
-auto sperr::Outlier_Coder::view_outlier_list() const -> const std::vector<Outlier>&
-{
-  return m_LOS;
-}
-
-void sperr::Outlier_Coder::append_encoded_bitstream(vec8_type& buf) const
-{
-  // Just append the bitstream produced by `m_encoder` is fine.
-  std::visit([&buf](auto&& enc) { enc.append_encoded_bitstream(buf); }, m_encoder);
 }
 
 auto sperr::Outlier_Coder::encode() -> RTNType

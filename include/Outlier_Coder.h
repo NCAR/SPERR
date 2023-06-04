@@ -34,6 +34,7 @@ class Outlier_Coder {
   //
   auto view_outlier_list() const -> const std::vector<Outlier>&;
   void append_encoded_bitstream(vec8_type& buf) const;
+  auto get_stream_full_len(const void*) const -> size_t;
 
   //
   // Action items
