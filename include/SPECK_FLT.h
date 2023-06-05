@@ -84,6 +84,7 @@ class SPECK_FLT {
 
   // A few data members needed for outlier coding
   std::optional<double> m_tol;
+  bool m_has_outliers = false;
   Outlier_Coder m_out_coder;
   vecd_type m_vals_orig;
 

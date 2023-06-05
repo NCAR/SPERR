@@ -42,6 +42,23 @@ void sperr::SPECK_INT<T>::set_dims(dims_type dims)
 }
 
 template <typename T>
+void sperr::SPECK_INT<T>::reset()
+{
+  m_dims = {0, 0, 0};
+  m_threshold = 0;
+  m_coeff_buf.clear();
+  m_sign_array.clear();
+  m_bit_buffer.rewind();
+  m_LIP.clear();
+  m_LSP_new.clear();
+  m_bit_idx = 0;
+  m_total_bits = 0;
+  m_num_bitplanes = 0;
+
+  m_clean_LIS();
+}
+
+template <typename T>
 auto sperr::SPECK_INT<T>::get_speck_bits(const void* buf) const -> uint64_t
 {
   // Given the header definition, directly retrieve the value stored in bytes 1--9.

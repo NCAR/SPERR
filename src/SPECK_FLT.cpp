@@ -39,7 +39,6 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
     return RTNType::BitstreamWrongLen;
   m_condi_bitstream.resize(condi_size);
   std::copy(ptr, ptr + condi_size, m_condi_bitstream.begin());
-  size_t pos = condi_size;
 
   // `m_condi_bitstream` might be indicating that the field is a constant field.
   //    In that case, there will be no more speck or sperr streams.
@@ -55,6 +54,7 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   // Bitstream parser 2: extract SPECK stream from it.
   // Based on the number of bitplanes, decide on an integer length to use, and then
   //    instantiate the proper decoder, and ask the decoder to parse the SPECK stream.
+  size_t pos = condi_size;
   const uint8_t* const speck_p = ptr + pos;
   const auto num_bitplanes = speck_int_get_num_bitplanes(speck_p);
   if (num_bitplanes <= 8)
@@ -77,12 +77,15 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
 
   // Bitstream parser 3: extract Outlier Coder stream if there's any.
   if (pos < len) {
+    m_has_outliers = true;
     const uint8_t* const out_p = ptr + pos;
     assert(m_out_coder.get_stream_full_len(out_p) == len - pos);
-    auto rtn = m_out_coder.use_bitstream(out_p, len);
+    auto rtn = m_out_coder.use_bitstream(out_p, len - pos);
     if (rtn != RTNType::Good)
       return rtn;
   }
+  else
+    m_has_outliers = false;
 
   return RTNType::Good;
 }
@@ -93,11 +96,15 @@ void sperr::SPECK_FLT::append_encoded_bitstream(vec8_type& buf) const
   buf.resize(orig_size + m_condi_bitstream.size());
   std::copy(m_condi_bitstream.cbegin(), m_condi_bitstream.cend(), buf.begin() + orig_size);
 
-  if (!m_conditioner.is_constant(m_condi_bitstream[0]))
+  if (!m_conditioner.is_constant(m_condi_bitstream[0])) {
+
+    // Append SPECK_INT bitstream.
     std::visit([&buf](auto&& enc) { enc->append_encoded_bitstream(buf); }, m_encoder);
 
-  if (m_tol)
-    m_out_coder.append_encoded_bitstream(buf);
+    // Append outlier coder bitstream.
+    if (m_tol.has_value() && m_has_outliers)
+      m_out_coder.append_encoded_bitstream(buf);
+  }
 }
 
 auto sperr::SPECK_FLT::release_decoded_data() -> vecd_type&&
@@ -305,12 +312,17 @@ auto sperr::SPECK_FLT::compress() -> RTNType
       if (std::abs(diff) > *m_tol)
         LOS.emplace_back(i, diff);
     }
-    m_out_coder.set_length(total_vals);
-    m_out_coder.set_tolerance(*m_tol);
-    m_out_coder.use_outlier_list(std::move(LOS));
-    rtn = m_out_coder.encode();
-    if (rtn != RTNType::Good)
-      return rtn;
+    if (LOS.empty())
+      m_has_outliers = false;
+    else {
+      m_has_outliers = true;
+      m_out_coder.set_length(total_vals);
+      m_out_coder.set_tolerance(*m_tol);
+      m_out_coder.use_outlier_list(std::move(LOS));
+      rtn = m_out_coder.encode();
+      if (rtn != RTNType::Good)
+        return rtn;
+    }
   }
 
   // Step 4: Integer SPECK encoding
@@ -385,7 +397,7 @@ auto sperr::SPECK_FLT::decompress() -> RTNType
   m_vals_d = m_cdf.release_data();
 
   // Side step: outlier correction, if needed
-  if (m_tol) {
+  if (m_tol.has_value() && m_has_outliers) {
     m_out_coder.set_length(m_dims[0] * m_dims[1] * m_dims[2]);
     m_out_coder.set_tolerance(*m_tol);
     rtn = m_out_coder.decode();
