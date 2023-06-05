@@ -72,7 +72,7 @@ enum class RTNType {
 };
 
 // Compression Mode
-enum class CompMode { FixedSize, FixedQz, FixedPSNR, FixedPWE, Unknown };
+enum class CompMode { FixedSize, FixedPSNR, FixedPWE, Unknown };
 
 //
 // Helper functions
@@ -189,9 +189,6 @@ auto parse_header(const void*) -> HeaderInfo;
 // ret[1] : variance
 template <typename T>
 auto calc_mean_var(const T*, size_t len, size_t omp_nthreads = 0) -> std::array<T, 2>;
-
-// Decide compression mode based on a collection of parameters.
-auto compression_mode(size_t bit_budget, double psnr, double pwe) -> CompMode;
 
 };  // namespace sperr
 

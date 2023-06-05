@@ -583,18 +583,3 @@ auto sperr::calc_mean_var(const T* arr, size_t len, size_t omp_nthreads) -> std:
 template auto sperr::calc_mean_var(const float*, size_t, size_t) -> std::array<float, 2>;
 template auto sperr::calc_mean_var(const double*, size_t, size_t) -> std::array<double, 2>;
 
-auto sperr::compression_mode(size_t bit_budget, double psnr, double pwe) -> CompMode
-{
-  if (bit_budget < sperr::max_size && psnr == sperr::max_d && pwe == 0.0) {
-    return CompMode::FixedSize;
-  }
-  else if (bit_budget == sperr::max_size && psnr < sperr::max_d && pwe == 0.0) {
-    return CompMode::FixedPSNR;
-  }
-  else if (bit_budget == sperr::max_size && psnr == sperr::max_d && pwe > 0.0) {
-    return CompMode::FixedPWE;
-  }
-  else {
-    return CompMode::Unknown;
-  }
-}
