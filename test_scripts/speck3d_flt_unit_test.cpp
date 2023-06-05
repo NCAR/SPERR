@@ -135,7 +135,6 @@ TEST(SPECK3D_FLT, IntegerLen)
 //
 // Test outlier correction
 //
-#if 0
 TEST(SPECK3D_FLT, OutlierCorrection)
 {
   auto inputf = sperr::read_whole_file<float>("../test_data/vorticity.128_128_41");
@@ -143,7 +142,7 @@ TEST(SPECK3D_FLT, OutlierCorrection)
   const auto total_vals = inputf.size();
   auto inputd = sperr::vecd_type(total_vals);
   std::copy(inputf.cbegin(), inputf.cend(), inputd.begin());
-  double tol = 1.5e-1;
+  double tol = 1.0e-5;
   
   // Encode
   auto encoder = sperr::SPECK3D_FLT();
@@ -168,9 +167,82 @@ TEST(SPECK3D_FLT, OutlierCorrection)
   auto stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
   std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
 #endif
-  EXPECT_EQ(encoder.integer_len(), 2);
-  EXPECT_EQ(decoder.integer_len(), 2);
-}
+  for (size_t i = 0; i < inputd.size(); i++)
+    EXPECT_NEAR(inputd[i], outputd[i], tol);
+
+  //
+  // Test a new tolerance
+  //
+  tol = 7.3e-6;
+  encoder.set_tolerance(tol);
+  encoder.copy_data(inputd.data(), total_vals);
+  rtn = encoder.compress();
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
+  bitstream.clear();
+  encoder.append_encoded_bitstream(bitstream);
+
+  decoder.set_tolerance(tol);
+  rtn = decoder.use_bitstream(bitstream.data(), bitstream.size());
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
+  rtn = decoder.decompress();
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
+  outputd = decoder.release_decoded_data();
+#ifdef PRINT
+  stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
+  std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
 #endif
+  for (size_t i = 0; i < inputd.size(); i++)
+    EXPECT_NEAR(inputd[i], outputd[i], tol);
+
+  //
+  // Test a smaller-than-32-bit-epsilon tolerance
+  //
+  tol = 2.9e-9;
+  encoder.set_tolerance(tol);
+  encoder.copy_data(inputd.data(), total_vals);
+  rtn = encoder.compress();
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
+  bitstream.clear();
+  encoder.append_encoded_bitstream(bitstream);
+
+  decoder.set_tolerance(tol);
+  rtn = decoder.use_bitstream(bitstream.data(), bitstream.size());
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
+  rtn = decoder.decompress();
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
+  outputd = decoder.release_decoded_data();
+#ifdef PRINT
+  stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
+  std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
+#endif
+  for (size_t i = 0; i < inputd.size(); i++)
+    EXPECT_NEAR(inputd[i], outputd[i], tol);
+
+  //
+  // Test a big tolerance which essentially produces all zero integer arrays. 
+  // The compression should still carry on, and tolerance being honored.
+  //
+  tol = 1e-2;
+  encoder.set_tolerance(tol);
+  encoder.copy_data(inputd.data(), total_vals);
+  rtn = encoder.compress();
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
+  bitstream.clear();
+  encoder.append_encoded_bitstream(bitstream);
+
+  decoder.set_tolerance(tol);
+  rtn = decoder.use_bitstream(bitstream.data(), bitstream.size());
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
+  rtn = decoder.decompress();
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
+  outputd = decoder.release_decoded_data();
+#ifdef PRINT
+  stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
+  std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
+  std::printf("  -- bitstream size = %lu bytes\n", bitstream.size());
+#endif
+  for (size_t i = 0; i < inputd.size(); i++)
+    EXPECT_NEAR(inputd[i], outputd[i], tol);
+}
 
 }  // namespace

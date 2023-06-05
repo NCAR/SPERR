@@ -100,7 +100,7 @@ void sperr::SPECK_INT<T>::encode()
   const auto max_coeff = *std::max_element(m_coeff_buf.cbegin(), m_coeff_buf.cend());
   m_num_bitplanes = 1;
   m_threshold = 1;
-  while (m_threshold* uint_type{2} <= max_coeff) {
+  while (m_threshold * uint_type{2} <= max_coeff) {
     m_threshold *= uint_type{2};
     m_num_bitplanes++;
   }

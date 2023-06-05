@@ -97,7 +97,6 @@ void sperr::SPECK_FLT::append_encoded_bitstream(vec8_type& buf) const
   std::copy(m_condi_bitstream.cbegin(), m_condi_bitstream.cend(), buf.begin() + orig_size);
 
   if (!m_conditioner.is_constant(m_condi_bitstream[0])) {
-
     // Append SPECK_INT bitstream.
     std::visit([&buf](auto&& enc) { enc->append_encoded_bitstream(buf); }, m_encoder);
 
@@ -306,7 +305,7 @@ auto sperr::SPECK_FLT::compress() -> RTNType
     m_inverse_wavelet_xform();
     m_vals_d = m_cdf.release_data();
     auto LOS = std::vector<Outlier>();
-    LOS.reserve(0.04 * total_vals);  // Reserve space to hold about 4% of elements.
+    LOS.reserve(0.04 * total_vals);  // Reserve space to hold about 4% of total values.
     for (size_t i = 0; i < total_vals; i++) {
       auto diff = m_vals_orig[i] - m_vals_d[i];
       if (std::abs(diff) > *m_tol)
