@@ -88,6 +88,14 @@ void sperr::SPECK_INT<T>::encode()
   m_LSP_mask.resize(m_coeff_buf.size());
   m_LSP_mask.reset();
 
+  // Treat it as a special case when all coeffs (m_coeff_buf) are zero.
+  //    In such a case, we mark `m_num_bitplanes` as zero.
+  //    Of course, `m_total_bits` is also zero.
+  if (std::all_of(m_coeff_buf.cbegin(), m_coeff_buf.cend(), [](auto v) { return v == 0; })) {
+    m_num_bitplanes = 0;
+    return;
+  }
+
   // Decide the starting threshold.
   const auto max_coeff = *std::max_element(m_coeff_buf.cbegin(), m_coeff_buf.cend());
   m_num_bitplanes = 1;
@@ -126,6 +134,13 @@ void sperr::SPECK_INT<T>::decode()
   m_bit_buffer.rewind();
   m_bit_idx = 0;
 
+  // Handle the special case of all coeffs (m_coeff_buf) are zero by return now!
+  //    This case is indicated by both `m_num_bitplanes` and `m_total_bits` equal zero.
+  if (m_num_bitplanes == 0) {
+    assert(m_total_bits == 0);
+    return;
+  }
+
   // Restore the biggest `m_threshold`
   m_threshold = 1;
   for (uint8_t i = 1; i < m_num_bitplanes; i++)
@@ -145,8 +160,8 @@ void sperr::SPECK_INT<T>::decode()
 template <typename T>
 auto sperr::SPECK_INT<T>::use_coeffs(vecui_type coeffs, vecb_type signs) -> RTNType
 {
-  if (std::all_of(coeffs.cbegin(), coeffs.cend(), [](auto v) { return v == 0; }))
-    return RTNType::AllZeroInts;
+  if (coeffs.size() != signs.size())
+    return RTNType::Error;
   m_coeff_buf = std::move(coeffs);
   m_sign_array = std::move(signs);
   return RTNType::Good;

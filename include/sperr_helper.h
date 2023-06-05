@@ -68,7 +68,6 @@ enum class RTNType {
   CustomFilterMissing,
   CustomFilterError,
   FE_Invalid, // floating point exception: FE_INVALID
-  AllZeroInts,
   Error
 };
 
