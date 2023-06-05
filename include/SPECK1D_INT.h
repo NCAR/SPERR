@@ -20,7 +20,7 @@ template <typename T>
 class SPECK1D_INT : public SPECK_INT<T> {
  public:
   // Virtual destructor
-  virtual ~SPECK1D_INT() = default;
+  ~SPECK1D_INT() override = default;
 
  protected:
   //
@@ -30,8 +30,8 @@ class SPECK1D_INT : public SPECK_INT<T> {
   using SPECK_INT<T>::m_dims;
   using SPECK_INT<T>::m_u64_garbage_val;
 
-  virtual void m_clean_LIS() override;
-  virtual void m_initialize_lists() override;
+  void m_clean_LIS() override;
+  void m_initialize_lists() override;
   auto m_partition_set(const Set1D&) const -> std::array<Set1D, 2>;
 
   //

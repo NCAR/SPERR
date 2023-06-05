@@ -129,7 +129,7 @@ auto sperr::Conditioner::has_custom_filter(uint8_t byte) const -> bool
 
 auto sperr::Conditioner::header_size(const void* header) const -> size_t
 {
-  const uint8_t* ptr = static_cast<const uint8_t*>(header);
+  const auto* ptr = static_cast<const uint8_t*>(header);
   auto b8 = sperr::unpack_8_booleans(ptr[0]);
   if (b8[m_constant_field_idx])
     return m_constant_field_header_size;

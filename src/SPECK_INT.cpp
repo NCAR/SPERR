@@ -11,7 +11,7 @@
 auto sperr::speck_int_get_num_bitplanes(const void* buf) -> uint8_t
 {
   // Given the header definition, directly retrieve the value stored in the first byte.
-  const uint8_t* const ptr = static_cast<const uint8_t*>(buf);
+  const auto* const ptr = static_cast<const uint8_t*>(buf);
   return ptr[0];
 }
 
@@ -62,7 +62,7 @@ template <typename T>
 auto sperr::SPECK_INT<T>::get_speck_bits(const void* buf) const -> uint64_t
 {
   // Given the header definition, directly retrieve the value stored in bytes 1--9.
-  const uint8_t* const ptr = static_cast<const uint8_t*>(buf);
+  const auto* const ptr = static_cast<const uint8_t*>(buf);
   uint64_t num_bits = 0;
   std::memcpy(&num_bits, ptr + 1, sizeof(num_bits));
   return num_bits;

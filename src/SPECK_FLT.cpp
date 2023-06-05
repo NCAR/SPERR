@@ -31,7 +31,7 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   m_condi_bitstream.clear();
   std::visit([](auto&& vec) { vec.clear(); }, m_vals_ui);
 
-  const uint8_t* const ptr = static_cast<const uint8_t*>(p);
+  const auto* const ptr = static_cast<const uint8_t*>(p);
 
   // Bitstream parser 1: extract conditioner stream
   const auto condi_size = m_conditioner.header_size(ptr);

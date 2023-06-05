@@ -42,7 +42,7 @@ void sperr::Bitstream::reserve(size_t nbits)
 auto sperr::Bitstream::rtell() const -> size_t
 {
   // Stupid C++ insists that `m_buf.begin()` gives me a const iterator...
-  std::vector<uint64_t>::const_iterator itr2 = m_itr;
+  std::vector<uint64_t>::const_iterator itr2 = m_itr;  // NOLINT
   return std::distance(m_buf.begin(), itr2) * 64 - m_bits;
 }
 
@@ -69,7 +69,7 @@ auto sperr::Bitstream::rbit() -> bool
     m_bits = 64;
   }
   --m_bits;
-  bool bit = m_buffer& uint64_t{1};
+  bool bit = m_buffer & uint64_t{1};
   m_buffer >>= 1;
   return bit;
 }
@@ -78,7 +78,7 @@ auto sperr::Bitstream::rbit() -> bool
 auto sperr::Bitstream::wtell() const -> size_t
 {
   // Stupid C++ insists that `m_buf.begin()` gives me a const iterator...
-  std::vector<uint64_t>::const_iterator itr2 = m_itr;
+  std::vector<uint64_t>::const_iterator itr2 = m_itr;  // NOLINT
   return std::distance(m_buf.begin(), itr2) * 64 + m_bits;
 }
 

@@ -36,7 +36,7 @@ template <typename T>
 class SPECK3D_INT : public SPECK_INT<T> {
  public:
   // Virtual destructor
-  virtual ~SPECK3D_INT() = default;
+  ~SPECK3D_INT() override = default;
 
  protected:
   //
@@ -49,8 +49,8 @@ class SPECK3D_INT : public SPECK_INT<T> {
   using SPECK_INT<T>::m_bit_buffer;
   using SPECK_INT<T>::m_u64_garbage_val;
 
-  virtual void m_clean_LIS() override;
-  virtual void m_initialize_lists() override;
+  void m_clean_LIS() override;
+  void m_initialize_lists() override;
 
   // Divide a Set3D into 8, 4, or 2 smaller subsets.
   auto m_partition_S_XYZ(const Set3D&) -> std::array<Set3D, 8>;

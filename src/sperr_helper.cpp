@@ -479,7 +479,7 @@ template void sperr::scatter_chunk(std::vector<double>&,
 
 auto sperr::parse_header(const void* ptr) -> HeaderInfo
 {
-  const uint8_t* u8p = static_cast<const uint8_t*>(ptr);
+  const auto* u8p = static_cast<const uint8_t*>(ptr);
   size_t loc = 0;
   auto header = HeaderInfo();
 
@@ -500,7 +500,6 @@ auto sperr::parse_header(const void* ptr) -> HeaderInfo
     if (b8[3]) {  // there are multiple chunks!
       uint32_t vcdim[6];
       std::memcpy(vcdim, u8p + loc, sizeof(vcdim));
-      loc += sizeof(vcdim);
 
       header.vol_dims[0] = vcdim[0];
       header.vol_dims[1] = vcdim[1];
@@ -512,7 +511,6 @@ auto sperr::parse_header(const void* ptr) -> HeaderInfo
     else {
       uint32_t vdim[3];
       std::memcpy(vdim, u8p + loc, sizeof(vdim));
-      loc += sizeof(vdim);
 
       header.vol_dims[0] = vdim[0];
       header.vol_dims[1] = vdim[1];
@@ -525,7 +523,6 @@ auto sperr::parse_header(const void* ptr) -> HeaderInfo
   else {
     uint32_t dims[2];
     std::memcpy(dims, u8p + loc, sizeof(dims));
-    loc += sizeof(dims);
 
     header.vol_dims[0] = dims[0];
     header.vol_dims[1] = dims[1];

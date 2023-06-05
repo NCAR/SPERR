@@ -25,7 +25,7 @@ class SPECK3D_INT_ENC : public SPECK3D_INT<T> {
   using SPECK3D_INT<T>::m_LIS;
   using SPECK3D_INT<T>::m_partition_S_XYZ;
 
-  virtual void m_sorting_pass() override;
+  void m_sorting_pass() override;
 
   void m_process_S(size_t idx1, size_t idx2, SigType, size_t& counter, bool);
   void m_process_P(size_t idx, SigType, size_t& counter, bool);
