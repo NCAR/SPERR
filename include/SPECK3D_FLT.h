@@ -16,6 +16,8 @@ class SPECK3D_FLT : public SPECK_FLT {
 
   auto m_quantize() -> RTNType override;
   auto m_inverse_quantize() -> RTNType override;
+
+  auto m_estimate_mse(double q) const -> double override;
 };
 
 };  // namespace sperr
