@@ -9,7 +9,7 @@
          (Answering yes to either question will result in a longer conditioner bitstream.)
 
 3. SPECK_FLT
-   Conditioner Stream + SPECK_INT Stream + Outlier_Coder Stream
+   Conditioner Stream + m_q (8 byte) + SPECK_INT Stream + Outlier_Coder Stream
 
 4. Outlier Coder
    Just the SPECK_INT Stream (no header)
