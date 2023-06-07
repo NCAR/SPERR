@@ -7,10 +7,9 @@
 
 #include "CDF97.h"
 #include "Conditioner.h"
-#include "SPECK_INT.h"
 #include "Outlier_Coder.h"
+#include "SPECK_INT.h"
 
-#include <optional>
 #include <variant>
 
 namespace sperr {
@@ -46,9 +45,9 @@ class SPECK_FLT {
   //
   // General configuration and info.
   //
-  // Note that if configured via `set_q()`, then there's no outlier correction performed.
+  // Note that if configured via `set_psnr()`, then there's no outlier correction performed.
   //    If configured via `set_tolerance()`, then outlier correction is also performed.
-  void set_q(double q);
+  void set_psnr(double psnr);
   void set_tolerance(double tol);
   void set_dims(dims_type);
   auto integer_len() const -> size_t;
@@ -56,19 +55,20 @@ class SPECK_FLT {
   //
   // Actions
   //
-  virtual auto compress() -> RTNType;
-  virtual auto decompress() -> RTNType;
+  auto compress() -> RTNType;
+  auto decompress() -> RTNType;
 
  protected:
-  double m_q = 1.0;
   UINTType m_uint_flag = UINTType::UINT64;
   dims_type m_dims = {0, 0, 0};
   vecd_type m_vals_d;
-  vecb_type m_sign_array;  // Signs to be passed to the integer encoder
+  vecb_type m_sign_array;
+  vecd_type m_vals_orig;  // encoding only
   vec8_type m_condi_bitstream;
 
-  Conditioner m_conditioner;
   CDF97 m_cdf;
+  Conditioner m_conditioner;
+  Outlier_Coder m_out_coder;
 
   std::variant<std::unique_ptr<SPECK_INT<uint64_t>>,
                std::unique_ptr<SPECK_INT<uint32_t>>,
@@ -82,11 +82,11 @@ class SPECK_FLT {
                std::vector<uint8_t>>
       m_vals_ui;
 
-  // A few data members needed for outlier coding
-  std::optional<double> m_tol;
-  bool m_has_outliers = false;
-  Outlier_Coder m_out_coder;
-  vecd_type m_vals_orig;
+  double m_q = 0.0;            // encoding and decoding
+  bool m_has_outlier = false;  // encoding (PWE mode) and decoding
+  double m_data_range = 0.0;   // encoding only, PSNR mode only
+  double m_target = 0.0;       // encoding only, quality target.
+  bool m_is_pwe_mode = false;  // encoding only. PWE mode = true, PSNR mode = false
 
   // Instantiate `m_vals_ui` based on the chosen integer length.
   void m_instantiate_int_vec();
@@ -105,10 +105,17 @@ class SPECK_FLT {
   virtual auto m_quantize() -> RTNType = 0;
   virtual auto m_inverse_quantize() -> RTNType = 0;
 
+  // MSE estimation is dependent on the quantization scheme in use.
+  virtual auto m_estimate_mse(double q) const -> double = 0;
+
   // This base class provides two midtread quantization implementations, but derived classes
   //   can have other quantization methods.
   auto m_midtread_f2i() -> RTNType;
   void m_midtread_i2f();
+
+  // Estimate MSE assuming midtread quantization strategy.
+  auto m_estimate_mse_midtread(double q) const -> double;
+  auto m_estimate_q() const -> double;
 };
 
 };  // namespace sperr

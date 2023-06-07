@@ -6,6 +6,7 @@
 #include <cfloat>  // FLT_ROUNDS
 #include <cmath>
 #include <cstring>
+#include <numeric>
 
 template <typename T>
 void sperr::SPECK_FLT::copy_data(const T* p, size_t len)
@@ -30,6 +31,10 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   m_sign_array.clear();
   m_condi_bitstream.clear();
   std::visit([](auto&& vec) { vec.clear(); }, m_vals_ui);
+  m_q = 0.0;
+  m_has_outlier = false;
+  m_target = 0.0;         // doesn't matter in decompression
+  m_is_pwe_mode = false;  // doesn't matter in decompression
 
   const auto* const ptr = static_cast<const uint8_t*>(p);
 
@@ -51,10 +56,15 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
       return RTNType::BitstreamWrongLen;
   }
 
-  // Bitstream parser 2: extract SPECK stream from it.
+  // Bitstream parser 2: extract m_q in use.
+  size_t pos = condi_size;
+  std::memcpy(&m_q, ptr + pos, sizeof(m_q));
+  pos += sizeof(m_q);
+  assert(m_q > 0.0);
+
+  // Bitstream parser 3: extract SPECK stream from it.
   // Based on the number of bitplanes, decide on an integer length to use, and then
   //    instantiate the proper decoder, and ask the decoder to parse the SPECK stream.
-  size_t pos = condi_size;
   const uint8_t* const speck_p = ptr + pos;
   const auto num_bitplanes = speck_int_get_num_bitplanes(speck_p);
   if (num_bitplanes <= 8)
@@ -75,9 +85,9 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   std::visit([speck_p, speck_len](auto&& dec) { return dec->use_bitstream(speck_p, speck_len); },
              m_decoder);
 
-  // Bitstream parser 3: extract Outlier Coder stream if there's any.
+  // Bitstream parser 4: extract Outlier Coder stream if there's any.
   if (pos < len) {
-    m_has_outliers = true;
+    m_has_outlier = true;
     const uint8_t* const out_p = ptr + pos;
     assert(m_out_coder.get_stream_full_len(out_p) == len - pos);
     auto rtn = m_out_coder.use_bitstream(out_p, len - pos);
@@ -85,23 +95,29 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
       return rtn;
   }
   else
-    m_has_outliers = false;
+    m_has_outlier = false;
 
   return RTNType::Good;
 }
 
 void sperr::SPECK_FLT::append_encoded_bitstream(vec8_type& buf) const
 {
-  const auto orig_size = buf.size();
+  auto orig_size = buf.size();
   buf.resize(orig_size + m_condi_bitstream.size());
   std::copy(m_condi_bitstream.cbegin(), m_condi_bitstream.cend(), buf.begin() + orig_size);
 
   if (!m_conditioner.is_constant(m_condi_bitstream[0])) {
+    // Allocate space and store the m_q value in use.
+    assert(m_q > 0.0);
+    orig_size = buf.size();
+    buf.resize(orig_size + sizeof(m_q));
+    std::memcpy(buf.data() + orig_size, &m_q, sizeof(m_q));
+
     // Append SPECK_INT bitstream.
     std::visit([&buf](auto&& enc) { enc->append_encoded_bitstream(buf); }, m_encoder);
 
     // Append outlier coder bitstream.
-    if (m_tol.has_value() && m_has_outliers)
+    if (m_has_outlier)
       m_out_coder.append_encoded_bitstream(buf);
   }
 }
@@ -111,16 +127,26 @@ auto sperr::SPECK_FLT::release_decoded_data() -> vecd_type&&
   return std::move(m_vals_d);
 }
 
-void sperr::SPECK_FLT::set_q(double q)
+void sperr::SPECK_FLT::set_psnr(double psnr)
 {
-  m_q = q;
-  m_tol.reset();
+  assert(psnr > 0.0);
+  m_target = psnr;
+  m_is_pwe_mode = false;
+
+  m_q = 0.0;  // The real m_q needs to be calculated later
+  m_data_range = 0.0;
+  m_has_outlier = false;
 }
 
 void sperr::SPECK_FLT::set_tolerance(double tol)
 {
-  m_tol = tol;
-  m_q = 1.5 * tol;
+  assert(tol > 0.0);
+  m_target = tol;
+  m_is_pwe_mode = true;
+
+  m_q = 0.0;  // Though `m_q` is simple in this case, calculate it the same place as in PSNR mode.
+  m_has_outlier = false;
+  m_data_range = 0.0;
 }
 
 void sperr::SPECK_FLT::set_dims(dims_type dims)
@@ -172,6 +198,50 @@ void sperr::SPECK_FLT::m_instantiate_int_vec()
   }
 }
 
+auto sperr::SPECK_FLT::m_estimate_mse_midtread(double q) const -> double
+{
+  assert(!m_vals_d.empty());
+
+  const auto len = m_vals_d.size();
+  const size_t stride_size = 4096;
+  const size_t num_strides = len / stride_size;
+  auto tmp_buf = vecd_type(num_strides + 1);
+
+  for (size_t i = 0; i < num_strides; i++) {
+    const auto beg = m_vals_d.cbegin() + i * stride_size;
+    tmp_buf[i] = std::accumulate(beg, beg + stride_size, 0.0, [q](auto init, auto v) {
+      auto diff = std::remainder(v, q);
+      return init + diff * diff;
+    });
+  }
+
+  // Let's also process the last stride.
+  tmp_buf[num_strides] = 0.0;
+  tmp_buf[num_strides] = std::accumulate(m_vals_d.cbegin() + num_strides * stride_size,
+                                         m_vals_d.cend(), 0.0, [q](auto init, auto v) {
+                                           auto diff = std::remainder(v, q);
+                                           return init + diff * diff;
+                                         });
+  const auto total_sum = std::accumulate(tmp_buf.cbegin(), tmp_buf.cend(), 0.0);
+  const auto mse = total_sum / static_cast<double>(len);
+
+  return mse;
+}
+
+auto sperr::SPECK_FLT::m_estimate_q() const -> double
+{
+  // Note: based on Peter's estimation method, to achieved the target PSNR, the terminal
+  //       quantization threshold should be (2.0 * sqrt(3.0) * rmse).
+  assert(m_data_range > 0.0);
+  assert(!m_is_pwe_mode);
+  const auto t_mse = (m_data_range * m_data_range) * std::pow(10.0, -m_target / 10.0);
+  const auto t_rmse = std::sqrt(t_mse);
+  auto q = 2.0 * std::sqrt(t_mse * 3.0);
+  while (m_estimate_mse(q) > t_mse)
+    q /= std::pow(2.0, 0.25);  // Four adjustments would effectively halve q.
+  return q;
+}
+
 auto sperr::SPECK_FLT::m_midtread_f2i() -> RTNType
 {
   // Make sure that the rounding mode is what we wanted.
@@ -185,6 +255,7 @@ auto sperr::SPECK_FLT::m_midtread_f2i() -> RTNType
   auto maxd = *std::max_element(m_vals_d.cbegin(), m_vals_d.cend(),
                                 [](auto a, auto b) { return std::abs(a) < std::abs(b); });
   std::feclearexcept(FE_INVALID);
+  assert(m_q > 0.0);
   auto maxll = std::llrint(std::abs(maxd) / m_q);
   if (std::fetestexcept(FE_INVALID))
     return RTNType::FE_Invalid;
@@ -251,6 +322,7 @@ auto sperr::SPECK_FLT::m_midtread_f2i() -> RTNType
 void sperr::SPECK_FLT::m_midtread_i2f()
 {
   assert(m_sign_array.size() == std::visit([](auto&& vec) { return vec.size(); }, m_vals_ui));
+  assert(m_q > 0.0);
 
   const auto tmpd = std::array<double, 2>{-1.0, 1.0};
   m_vals_d.resize(m_sign_array.size());
@@ -266,10 +338,11 @@ void sperr::SPECK_FLT::m_midtread_i2f()
 auto sperr::SPECK_FLT::compress() -> RTNType
 {
   const auto total_vals = uint64_t(m_dims[0]) * m_dims[1] * m_dims[2];
-  if (m_vals_d.empty() || m_q <= 0.0 || m_vals_d.size() != total_vals)
+  if (m_vals_d.empty() || m_vals_d.size() != total_vals)
     return RTNType::Error;
 
   m_condi_bitstream.clear();
+  m_has_outlier = false;
 
   // Step 1: data goes through the conditioner
   //    Believe it or not, there are constant fields passed in for compression!
@@ -278,10 +351,14 @@ auto sperr::SPECK_FLT::compress() -> RTNType
   if (m_conditioner.is_constant(m_condi_bitstream[0]))
     return RTNType::Good;
 
-  // Side step for outlier coding
-  if (m_tol) {
+  // Side step for outlier coding, or m_q calculation based on PSNR.
+  if (m_is_pwe_mode) {
     m_vals_orig.resize(total_vals);
     std::copy(m_vals_d.cbegin(), m_vals_d.cend(), m_vals_orig.begin());
+  }
+  else {
+    auto [min, max] = std::minmax_element(m_vals_d.cbegin(), m_vals_d.cend());
+    m_data_range = *max - *min;
   }
 
   // Step 2: wavelet transform
@@ -289,13 +366,19 @@ auto sperr::SPECK_FLT::compress() -> RTNType
   m_wavelet_xform();
   m_vals_d = m_cdf.release_data();
 
+  // Calculate `m_q`
+  if (m_is_pwe_mode)
+    m_q = m_target * 1.5;
+  else
+    m_q = m_estimate_q();
+
   // Step 3: quantize floating-point coefficients to integers
   auto rtn = m_quantize();
   if (rtn != RTNType::Good)
     return rtn;
 
   // Side step for outlier coding: find out all the outliers, and encode them!
-  if (m_tol) {
+  if (m_is_pwe_mode) {
     rtn = m_inverse_quantize();
     if (rtn != RTNType::Good)
       return rtn;
@@ -308,15 +391,15 @@ auto sperr::SPECK_FLT::compress() -> RTNType
     LOS.reserve(0.04 * total_vals);  // Reserve space to hold about 4% of total values.
     for (size_t i = 0; i < total_vals; i++) {
       auto diff = m_vals_orig[i] - m_vals_d[i];
-      if (std::abs(diff) > *m_tol)
+      if (std::abs(diff) > m_target)
         LOS.emplace_back(i, diff);
     }
     if (LOS.empty())
-      m_has_outliers = false;
+      m_has_outlier = false;
     else {
-      m_has_outliers = true;
+      m_has_outlier = true;
       m_out_coder.set_length(total_vals);
-      m_out_coder.set_tolerance(*m_tol);
+      m_out_coder.set_tolerance(m_target);
       m_out_coder.use_outlier_list(std::move(LOS));
       rtn = m_out_coder.encode();
       if (rtn != RTNType::Good)
@@ -362,7 +445,7 @@ auto sperr::SPECK_FLT::compress() -> RTNType
 
 auto sperr::SPECK_FLT::decompress() -> RTNType
 {
-  if (m_q <= 0.0 || m_condi_bitstream.empty())
+  if (m_condi_bitstream.empty())
     return RTNType::Error;
 
   m_vals_d.clear();
@@ -378,6 +461,7 @@ auto sperr::SPECK_FLT::decompress() -> RTNType
 
   // Step 1: Integer SPECK decode.
   //    Note: the decoder has already parsed the bitstream in function `use_bitstream()`.
+  assert(m_q > 0.0);
   std::visit([&dims = m_dims](auto&& decoder) { decoder->set_dims(dims); }, m_decoder);
   std::visit([](auto&& decoder) { decoder->decode(); }, m_decoder);
   std::visit([&vec = m_vals_ui](auto&& dec) { vec = dec->release_coeffs(); }, m_decoder);
@@ -396,9 +480,9 @@ auto sperr::SPECK_FLT::decompress() -> RTNType
   m_vals_d = m_cdf.release_data();
 
   // Side step: outlier correction, if needed
-  if (m_tol.has_value() && m_has_outliers) {
+  if (m_has_outlier) {
     m_out_coder.set_length(m_dims[0] * m_dims[1] * m_dims[2]);
-    m_out_coder.set_tolerance(*m_tol);
+    m_out_coder.set_tolerance(m_q / 1.5);  // `m_target` is not set during decompression.
     rtn = m_out_coder.decode();
     if (rtn != RTNType::Good)
       return rtn;

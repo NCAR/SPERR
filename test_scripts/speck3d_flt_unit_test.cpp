@@ -6,6 +6,8 @@
 #include <cstdio>
 #include <iostream>
 
+#define PRINT
+
 namespace {
 
 //
@@ -14,13 +16,13 @@ namespace {
 TEST(SPECK3D_FLT, ConstantField)
 {
   const auto dims = sperr::dims_type{12, 13, 15};
-  const auto total_vals = 12 * 13 * 15;
-  auto tmp = std::vector<double>(total_vals, 4.332);
-  auto input = tmp;
+  const auto total_vals = dims[0] * dims[1] * dims[2];
+  auto input = std::vector<double>(total_vals, 4.332);
+  auto tmp = input;
 
   auto encoder = sperr::SPECK3D_FLT();
   encoder.set_dims(dims);
-  encoder.set_q(1.2e-2);
+  encoder.set_tolerance(1.2e-2);
   encoder.take_data(std::move(tmp));
   auto rtn = encoder.compress();
   ASSERT_EQ(rtn, sperr::RTNType::Good);
@@ -30,12 +32,30 @@ TEST(SPECK3D_FLT, ConstantField)
 
   auto decoder = sperr::SPECK3D_FLT();
   decoder.set_dims(dims);
-  decoder.set_q(1.2e-2);
   rtn = decoder.use_bitstream(bitstream.data(), bitstream.size());
   ASSERT_EQ(rtn, sperr::RTNType::Good);
   rtn = decoder.decompress();
   ASSERT_EQ(rtn, sperr::RTNType::Good);
   auto output = decoder.release_decoded_data();
+  EXPECT_EQ(input, output);
+
+  // Test specifying PSNR
+  encoder.set_dims(dims);
+  encoder.set_psnr(89.0);
+  tmp = input;
+  encoder.take_data(std::move(tmp));
+  rtn = encoder.compress();
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
+  bitstream.clear(); 
+  encoder.append_encoded_bitstream(bitstream);
+  EXPECT_EQ(bitstream.size(), 17);  // Constant storage to record a constant field.
+
+  decoder.set_dims(dims);
+  rtn = decoder.use_bitstream(bitstream.data(), bitstream.size());
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
+  rtn = decoder.decompress();
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
+  output = decoder.release_decoded_data();
   EXPECT_EQ(input, output);
 }
 
@@ -49,12 +69,12 @@ TEST(SPECK3D_FLT, IntegerLen)
   const auto total_vals = inputf.size();
   auto inputd = sperr::vecd_type(total_vals);
   std::copy(inputf.cbegin(), inputf.cend(), inputd.begin());
-  double q = 1.5e-1;
+  double psnr = 40.0;
   
   // Encode
   auto encoder = sperr::SPECK3D_FLT();
   encoder.set_dims(dims);
-  encoder.set_q(q);
+  encoder.set_psnr(psnr);
   encoder.copy_data(inputd.data(), total_vals);
   auto rtn = encoder.compress();
   ASSERT_EQ(rtn, sperr::RTNType::Good);
@@ -64,7 +84,6 @@ TEST(SPECK3D_FLT, IntegerLen)
   // Decode
   auto decoder = sperr::SPECK3D_FLT();
   decoder.set_dims(dims);
-  decoder.set_q(q);
   rtn = decoder.use_bitstream(bitstream.data(), bitstream.size());
   ASSERT_EQ(rtn, sperr::RTNType::Good);
   rtn = decoder.decompress();
@@ -74,17 +93,16 @@ TEST(SPECK3D_FLT, IntegerLen)
   auto stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
   std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
 #endif
-  EXPECT_EQ(encoder.integer_len(), 2);
-  EXPECT_EQ(decoder.integer_len(), 2);
+  EXPECT_EQ(encoder.integer_len(), 1);
+  EXPECT_EQ(decoder.integer_len(), 1);
 
-  // Test a new q value
-  q = 3.0;
-  encoder.set_q(q);
+  // Test a new PSNR target.
+  psnr = 50.0;
+  encoder.set_psnr(psnr);
   encoder.copy_data(inputd.data(), total_vals);
   encoder.compress();
   bitstream.clear();
   encoder.append_encoded_bitstream(bitstream);
-  decoder.set_q(q);
   decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decompress();
   outputd = decoder.release_decoded_data();
@@ -92,17 +110,16 @@ TEST(SPECK3D_FLT, IntegerLen)
   stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
   std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
 #endif
-  EXPECT_EQ(encoder.integer_len(), 1);
-  EXPECT_EQ(decoder.integer_len(), 1);
+  EXPECT_EQ(encoder.integer_len(), 2);
+  EXPECT_EQ(decoder.integer_len(), 2);
 
-  // Test a new q value
-  q = 3e-3;
-  encoder.set_q(q);
+  // Test a new PSNR target.
+  psnr = 190.0;
+  encoder.set_psnr(psnr);
   encoder.copy_data(inputd.data(), total_vals);
   encoder.compress();
   bitstream.clear();
   encoder.append_encoded_bitstream(bitstream);
-  decoder.set_q(q);
   decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decompress();
   outputd = decoder.release_decoded_data();
@@ -113,14 +130,13 @@ TEST(SPECK3D_FLT, IntegerLen)
   EXPECT_EQ(encoder.integer_len(), 4);
   EXPECT_EQ(decoder.integer_len(), 4);
 
-  // Test a new q value
-  q = 1e-8;
-  encoder.set_q(q);
+  // Test a new PSNR target.
+  psnr = 210.0;
+  encoder.set_psnr(psnr);
   encoder.copy_data(inputd.data(), total_vals);
   encoder.compress();
   bitstream.clear();
   encoder.append_encoded_bitstream(bitstream);
-  decoder.set_q(q);
   decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decompress();
   outputd = decoder.release_decoded_data();
@@ -165,30 +181,6 @@ TEST(SPECK3D_FLT, OutlierCorrection)
   auto outputd = decoder.release_decoded_data();
 #ifdef PRINT
   auto stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
-  std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
-#endif
-  for (size_t i = 0; i < inputd.size(); i++)
-    EXPECT_NEAR(inputd[i], outputd[i], tol);
-
-  //
-  // Test a new tolerance
-  //
-  tol = 7.3e-6;
-  encoder.set_tolerance(tol);
-  encoder.copy_data(inputd.data(), total_vals);
-  rtn = encoder.compress();
-  ASSERT_EQ(rtn, sperr::RTNType::Good);
-  bitstream.clear();
-  encoder.append_encoded_bitstream(bitstream);
-
-  decoder.set_tolerance(tol);
-  rtn = decoder.use_bitstream(bitstream.data(), bitstream.size());
-  ASSERT_EQ(rtn, sperr::RTNType::Good);
-  rtn = decoder.decompress();
-  ASSERT_EQ(rtn, sperr::RTNType::Good);
-  outputd = decoder.release_decoded_data();
-#ifdef PRINT
-  stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
   std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
 #endif
   for (size_t i = 0; i < inputd.size(); i++)
