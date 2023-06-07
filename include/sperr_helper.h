@@ -55,7 +55,6 @@ enum class RTNType {
   BitstreamWrongLen,
   IOError,
   InvalidParam,
-  EmptyStream,  // a condition but not sure if it's an error
   BitBudgetMet,
   VersionMismatch,
   ZSTDMismatch,
