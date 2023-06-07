@@ -16,8 +16,6 @@ void sperr::SPERR3D_OMP_C::set_num_threads(size_t n)
     m_num_threads = omp_get_max_threads();
   else
     m_num_threads = n;
-#else
-  m_num_threads = 1;
 #endif
 }
 
@@ -87,20 +85,26 @@ auto sperr::SPERR3D_OMP_C::compress() -> RTNType
                       [](auto& v) { return v.empty(); }));
 
   // Let's prepare some data structures for compression!
+  auto chunk_rtn = std::vector<RTNType>(num_chunks, RTNType::Good);
+  m_encoded_streams.resize(num_chunks);
+
+#ifdef USE_OMP
   m_compressors.resize(num_chunks);
   std::for_each(m_compressors.begin(), m_compressors.end(), [](auto& p) {
     if (p == nullptr)
       p = std::make_unique<SPECK3D_FLT>();
   });
-  auto chunk_rtn = std::vector<RTNType>(num_chunks, RTNType::Good);
-  m_encoded_streams.resize(num_chunks);
+#else
+  if (m_compressor == nullptr)
+    m_compressor = std::make_unique<SPECK3D_FLT>();
+#endif
 
 #pragma omp parallel for num_threads(m_num_threads)
   for (size_t i = 0; i < num_chunks; i++) {
 #ifdef USE_OMP
     auto& compressor = m_compressors[omp_get_thread_num()];
 #else
-    auto& compressor = m_compressors[0];
+    auto& compressor = m_compressor;
 #endif
 
     // Setup compressor parameters, and compress!
