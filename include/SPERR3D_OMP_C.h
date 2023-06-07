@@ -31,14 +31,14 @@ class SPERR3D_OMP_C {
  private:
   dims_type m_dims = {0, 0, 0};        // Dimension of the entire volume
   dims_type m_chunk_dims = {0, 0, 0};  // Preferred dimensions for a chunk
-  bool m_orig_is_float = true;  // The original input precision is saved in header.
+  bool m_orig_is_float = true;         // The original input precision is saved in header.
   size_t m_num_threads = 1;
   double m_quality = 0.0;
   CompMode m_comp_mode = CompMode::Unknown;
 
   std::vector<vecd_type> m_chunk_buffers;
   std::vector<vec8_type> m_encoded_streams;
-  std::vector<SPECK3D_FLT> m_compressors;
+  std::vector<std::unique_ptr<SPECK3D_FLT>> m_compressors;
 
   // Header size would be the magic number + num_chunks * 4
   const size_t m_header_magic_nchunks = 26;

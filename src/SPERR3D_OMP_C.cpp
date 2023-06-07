@@ -23,9 +23,9 @@ void sperr::SPERR3D_OMP_C::set_num_threads(size_t n)
 
 template <typename T>
 auto sperr::SPERR3D_OMP_C::copy_data(const T* vol,
-                              size_t len,
-                              sperr::dims_type vol_dims,
-                              sperr::dims_type chunk_dims) -> RTNType
+                                     size_t len,
+                                     sperr::dims_type vol_dims,
+                                     sperr::dims_type chunk_dims) -> RTNType
 {
   static_assert(std::is_floating_point<T>::value, "!! Only floating point values are supported !!");
 
@@ -55,8 +55,10 @@ auto sperr::SPERR3D_OMP_C::copy_data(const T* vol,
 
   return RTNType::Good;
 }
-template auto sperr::SPERR3D_OMP_C::copy_data(const float*, size_t, dims_type, dims_type) -> RTNType;
-template auto sperr::SPERR3D_OMP_C::copy_data(const double*, size_t, dims_type, dims_type) -> RTNType;
+template auto sperr::SPERR3D_OMP_C::copy_data(const float*, size_t, dims_type, dims_type)
+    -> RTNType;
+template auto sperr::SPERR3D_OMP_C::copy_data(const double*, size_t, dims_type, dims_type)
+    -> RTNType;
 
 void sperr::SPERR3D_OMP_C::set_psnr(double psnr)
 {
@@ -77,22 +79,21 @@ auto sperr::SPERR3D_OMP_C::compress() -> RTNType
   // Need to make sure that the chunks are ready!
   auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
   const auto num_chunks = chunks.size();
-  assert(num_chunks != 0);
   if (m_chunk_buffers.size() != num_chunks)
     return RTNType::Error;
-  if (std::any_of(m_chunk_buffers.cbegin(), m_chunk_buffers.cend(),
-                  [](auto& v) { return v.empty(); }))
-    return RTNType::Error;
-
-  // Sanity check: what compression mode to use?
+  assert(num_chunks != 0);
   assert(m_comp_mode != sperr::CompMode::Unknown);
+  assert(std::none_of(m_chunk_buffers.cbegin(), m_chunk_buffers.cend(),
+                      [](auto& v) { return v.empty(); }));
 
   // Let's prepare some data structures for compression!
   m_compressors.resize(num_chunks);
-
+  std::for_each(m_compressors.begin(), m_compressors.end(), [](auto& p) {
+    if (p == nullptr)
+      p = std::make_unique<SPECK3D_FLT>();
+  });
   auto chunk_rtn = std::vector<RTNType>(num_chunks, RTNType::Good);
   m_encoded_streams.resize(num_chunks);
-  std::for_each(m_encoded_streams.begin(), m_encoded_streams.end(), [](auto& v) { v.clear(); });
 
 #pragma omp parallel for num_threads(m_num_threads)
   for (size_t i = 0; i < num_chunks; i++) {
@@ -103,21 +104,22 @@ auto sperr::SPERR3D_OMP_C::compress() -> RTNType
 #endif
 
     // Setup compressor parameters, and compress!
-    compressor.take_data(std::move(m_chunk_buffers[i]));
-    compressor.set_dims({chunks[i][1], chunks[i][3], chunks[i][5]});
+    compressor->take_data(std::move(m_chunk_buffers[i]));
+    compressor->set_dims({chunks[i][1], chunks[i][3], chunks[i][5]});
     if (m_comp_mode == CompMode::FixedPSNR)
-      compressor.set_psnr(m_quality);
+      compressor->set_psnr(m_quality);
     else if (m_comp_mode == CompMode::FixedPWE)
-      compressor.set_tolerance(m_quality);
-    chunk_rtn[i] = compressor.compress();
+      compressor->set_tolerance(m_quality);
+    chunk_rtn[i] = compressor->compress();
 
     // Save bitstream for each chunk in `m_encoded_stream`.
+    m_encoded_streams[i].clear();
     m_encoded_streams[i].reserve(128);
-    compressor.append_encoded_bitstream(m_encoded_streams[i]);
+    compressor->append_encoded_bitstream(m_encoded_streams[i]);
   }
 
   auto fail = std::find(chunk_rtn.cbegin(), chunk_rtn.cend(), RTNType::Good);
-  if (fail != chunk_rtn.end())
+  if (fail != chunk_rtn.cend())
     return (*fail);
 
   assert(std::none_of(m_encoded_streams.cbegin(), m_encoded_streams.cend(),
@@ -178,15 +180,14 @@ auto sperr::SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   // bool[3]  : if there are multiple chunks (true) or a single chunk (false).
   // bool[4-7]: unused
   //
-  const auto b8 = std::array<bool, 8>{
-      false,  // unused
-      true,   // 3D
-      m_orig_is_float,
-      (num_chunks > 1),
-      false,   // unused
-      false,   // unused
-      false,   // unused
-      false};  // unused
+  const auto b8 = std::array<bool, 8>{false,  // unused
+                                      true,   // 3D
+                                      m_orig_is_float,
+                                      (num_chunks > 1),
+                                      false,   // unused
+                                      false,   // unused
+                                      false,   // unused
+                                      false};  // unused
 
   header[loc] = sperr::pack_8_booleans(b8);
   loc += 1;
@@ -207,9 +208,7 @@ auto sperr::SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
     loc += sizeof(vdim);
   }
 
-  // Length of bitstream for each chunk
-  // Note that we use uint32_t to keep the length, and we need to make sure
-  // that no chunk size is bigger than that.
+  // Length of bitstream for each chunk.
   for (const auto& stream : m_encoded_streams) {
     assert(stream.size() <= uint64_t{std::numeric_limits<uint32_t>::max()});
     uint32_t len = stream.size();
