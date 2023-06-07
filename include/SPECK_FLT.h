@@ -85,7 +85,7 @@ class SPECK_FLT {
   double m_q = 0.0;            // encoding and decoding
   bool m_has_outlier = false;  // encoding (PWE mode) and decoding
   double m_data_range = 0.0;   // encoding only, PSNR mode only
-  double m_target = 0.0;       // encoding only, quality target.
+  double m_quality = 0.0;      // encoding only, quality target.
   bool m_is_pwe_mode = false;  // encoding only. PWE mode = true, PSNR mode = false
 
   // Instantiate `m_vals_ui` based on the chosen integer length.

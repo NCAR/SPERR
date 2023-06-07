@@ -216,11 +216,11 @@ void sperr::Outlier_Coder::m_inverse_quantize()
   else {
     for (size_t i = 0; i < m_total_len; i++) {
       auto ui = std::visit([i](auto&& vec) { return uint64_t{vec[i]}; }, m_vals_ui);
-      if (ui[i] != 0) {
-        if (ui[i] == 1)
-          m_LOS.emplace_back(i, double(ui[i]) + 0.1);
+      if (ui != 0) {
+        if (ui == 1)
+          m_LOS.emplace_back(i, double(ui) + 0.1);
         else
-          m_LOS.emplace_back(i, double(ui[i]) - 0.25);
+          m_LOS.emplace_back(i, double(ui) - 0.25);
       }
     }
   }

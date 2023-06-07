@@ -33,7 +33,7 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   std::visit([](auto&& vec) { vec.clear(); }, m_vals_ui);
   m_q = 0.0;
   m_has_outlier = false;
-  m_target = 0.0;         // doesn't matter in decompression
+  m_quality = 0.0;        // doesn't matter in decompression
   m_is_pwe_mode = false;  // doesn't matter in decompression
 
   const auto* const ptr = static_cast<const uint8_t*>(p);
@@ -130,7 +130,7 @@ auto sperr::SPECK_FLT::release_decoded_data() -> vecd_type&&
 void sperr::SPECK_FLT::set_psnr(double psnr)
 {
   assert(psnr > 0.0);
-  m_target = psnr;
+  m_quality = psnr;
   m_is_pwe_mode = false;
 
   m_q = 0.0;  // The real m_q needs to be calculated later
@@ -141,7 +141,7 @@ void sperr::SPECK_FLT::set_psnr(double psnr)
 void sperr::SPECK_FLT::set_tolerance(double tol)
 {
   assert(tol > 0.0);
-  m_target = tol;
+  m_quality = tol;
   m_is_pwe_mode = true;
 
   m_q = 0.0;  // Though `m_q` is simple in this case, calculate it the same place as in PSNR mode.
@@ -234,7 +234,7 @@ auto sperr::SPECK_FLT::m_estimate_q() const -> double
   //       quantization threshold should be (2.0 * sqrt(3.0) * rmse).
   assert(m_data_range > 0.0);
   assert(!m_is_pwe_mode);
-  const auto t_mse = (m_data_range * m_data_range) * std::pow(10.0, -m_target / 10.0);
+  const auto t_mse = (m_data_range * m_data_range) * std::pow(10.0, -m_quality / 10.0);
   const auto t_rmse = std::sqrt(t_mse);
   auto q = 2.0 * std::sqrt(t_mse * 3.0);
   while (m_estimate_mse(q) > t_mse)
@@ -368,7 +368,7 @@ auto sperr::SPECK_FLT::compress() -> RTNType
 
   // Calculate `m_q`
   if (m_is_pwe_mode)
-    m_q = m_target * 1.5;
+    m_q = m_quality * 1.5;
   else
     m_q = m_estimate_q();
 
@@ -391,7 +391,7 @@ auto sperr::SPECK_FLT::compress() -> RTNType
     LOS.reserve(0.04 * total_vals);  // Reserve space to hold about 4% of total values.
     for (size_t i = 0; i < total_vals; i++) {
       auto diff = m_vals_orig[i] - m_vals_d[i];
-      if (std::abs(diff) > m_target)
+      if (std::abs(diff) > m_quality)
         LOS.emplace_back(i, diff);
     }
     if (LOS.empty())
@@ -399,7 +399,7 @@ auto sperr::SPECK_FLT::compress() -> RTNType
     else {
       m_has_outlier = true;
       m_out_coder.set_length(total_vals);
-      m_out_coder.set_tolerance(m_target);
+      m_out_coder.set_tolerance(m_quality);
       m_out_coder.use_outlier_list(std::move(LOS));
       rtn = m_out_coder.encode();
       if (rtn != RTNType::Good)
@@ -482,7 +482,7 @@ auto sperr::SPECK_FLT::decompress() -> RTNType
   // Side step: outlier correction, if needed
   if (m_has_outlier) {
     m_out_coder.set_length(m_dims[0] * m_dims[1] * m_dims[2]);
-    m_out_coder.set_tolerance(m_q / 1.5);  // `m_target` is not set during decompression.
+    m_out_coder.set_tolerance(m_q / 1.5);  // `m_quality` is not set during decompression.
     rtn = m_out_coder.decode();
     if (rtn != RTNType::Good)
       return rtn;

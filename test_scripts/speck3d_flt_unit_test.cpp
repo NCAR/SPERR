@@ -6,8 +6,6 @@
 #include <cstdio>
 #include <iostream>
 
-#define PRINT
-
 namespace {
 
 //
