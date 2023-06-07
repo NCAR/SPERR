@@ -206,14 +206,22 @@ void sperr::Outlier_Coder::m_inverse_quantize()
   if (m_vals_ui.index() == 0) {
     const auto& ui = std::get<0>(m_vals_ui);
     for (size_t i = 0; i < ui.size(); i++)
-      if (ui[i] != 0)
-        m_LOS.emplace_back(i, double(ui[i]));
+      if (ui[i] != 0) {
+        if (ui[i] == 1)
+          m_LOS.emplace_back(i, double(ui[i]) + 0.1);
+        else
+          m_LOS.emplace_back(i, double(ui[i]) - 0.25);
+      }
   }
   else {
     for (size_t i = 0; i < m_total_len; i++) {
       auto ui = std::visit([i](auto&& vec) { return uint64_t{vec[i]}; }, m_vals_ui);
-      if (ui != 0)
-        m_LOS.emplace_back(i, double(ui));
+      if (ui[i] != 0) {
+        if (ui[i] == 1)
+          m_LOS.emplace_back(i, double(ui[i]) + 0.1);
+        else
+          m_LOS.emplace_back(i, double(ui[i]) - 0.25);
+      }
     }
   }
 
