@@ -261,7 +261,9 @@ TEST(SPECK3D_INT, minimal)
   input[26] = 18;
   input[29] = 19; input_signs[29] = false;
   input[32] = 32;
-  input[39] = 32; input_signs[39] = false;
+  input[49] = 32; input_signs[49] = false;
+  // Construct a value that's in between of signed and unsigned 8-bit int.
+  input[42] = uint8_t(std::numeric_limits<int8_t>::max()) + 8;
 
   //
   // Test 1-byte integers
@@ -294,6 +296,9 @@ TEST(SPECK3D_INT, minimal)
   auto input16 = std::vector<uint16_t>(total_vals, 0);
   std::copy(input.begin(), input.end(), input16.begin());
   input16[30] = 300; input_signs[30] = false;
+  // Construct a value that's in between of signed and unsigned 16-bit int.
+  input16[39] = uint16_t(std::numeric_limits<int16_t>::max()) + 16;
+  input_signs[39] = false;
   {
   auto encoder = sperr::SPECK3D_INT_ENC<uint16_t>();
   encoder.use_coeffs(input16, input_signs);
@@ -322,6 +327,8 @@ TEST(SPECK3D_INT, minimal)
   auto input32 = std::vector<uint32_t>(total_vals, 0);
   std::copy(input16.begin(), input16.end(), input32.begin());
   input32[20] = 7'0300; input_signs[20] = false;
+  // Construct a value that's in between of signed and unsigned 32-bit int.
+  input32[55] = uint32_t(std::numeric_limits<int32_t>::max()) + 32;
   {
   auto encoder = sperr::SPECK3D_INT_ENC<uint32_t>();
   encoder.use_coeffs(input32, input_signs);
@@ -350,6 +357,9 @@ TEST(SPECK3D_INT, minimal)
   auto input64 = std::vector<uint64_t>(total_vals, 0);
   std::copy(input32.begin(), input32.end(), input64.begin());
   input64[27] = 5'000'700'990; input_signs[27] = false;
+  // Construct a value that's in between of signed and unsigned 64-bit int.
+  input64[68] = uint64_t(std::numeric_limits<int64_t>::max()) + 64;
+  input_signs[68] = false;
   {
   auto encoder = sperr::SPECK3D_INT_ENC<uint64_t>();
   encoder.use_coeffs(input64, input_signs);
