@@ -127,6 +127,11 @@ auto sperr::SPECK_FLT::release_decoded_data() -> vecd_type&&
   return std::move(m_vals_d);
 }
 
+auto sperr::SPECK_FLT::view_decoded_data() const -> const vecd_type&
+{
+  return m_vals_d;
+}
+
 void sperr::SPECK_FLT::set_psnr(double psnr)
 {
   assert(psnr > 0.0);

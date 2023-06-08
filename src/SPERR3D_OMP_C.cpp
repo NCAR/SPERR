@@ -89,7 +89,7 @@ auto sperr::SPERR3D_OMP_C::compress() -> RTNType
   m_encoded_streams.resize(num_chunks);
 
 #ifdef USE_OMP
-  m_compressors.resize(num_chunks);
+  m_compressors.resize(m_num_threads);
   std::for_each(m_compressors.begin(), m_compressors.end(), [](auto& p) {
     if (p == nullptr)
       p = std::make_unique<SPECK3D_FLT>();
@@ -122,8 +122,9 @@ auto sperr::SPERR3D_OMP_C::compress() -> RTNType
     compressor->append_encoded_bitstream(m_encoded_streams[i]);
   }
 
-  auto fail = std::find(chunk_rtn.cbegin(), chunk_rtn.cend(), RTNType::Good);
-  if (fail != chunk_rtn.cend())
+  auto fail = std::find_if_not(chunk_rtn.begin(), chunk_rtn.end(),
+                               [](auto r) { return r == RTNType::Good; });
+  if (fail != chunk_rtn.end())
     return (*fail);
 
   assert(std::none_of(m_encoded_streams.cbegin(), m_encoded_streams.cend(),

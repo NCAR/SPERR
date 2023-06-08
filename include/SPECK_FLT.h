@@ -41,6 +41,7 @@ class SPECK_FLT {
   //
   void append_encoded_bitstream(vec8_type& buf) const;
   auto release_decoded_data() -> vecd_type&&;
+  auto view_decoded_data() const -> const vecd_type&;
 
   //
   // General configuration and info.

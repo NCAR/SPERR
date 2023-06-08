@@ -15,6 +15,7 @@ add_library( SPERR
              SPECK_FLT.cpp
              SPECK3D_FLT.cpp
              SPERR3D_OMP_C.cpp
+             SPERR3D_OMP_D.cpp
              Outlier_Coder.cpp )
              
 target_include_directories( SPERR PUBLIC ${CMAKE_SOURCE_DIR}/include )
@@ -72,6 +73,7 @@ include/SPECK1D_INT_DEC.h;\
 include/SPECK_FLT.h;\
 include/SPECK3D_FLT.h;\
 include/SPERR3D_OMP_C.h;\
+include/SPERR3D_OMP_D.h;\
 include/Outlier_Coder.h;")
 set_target_properties( SPERR PROPERTIES PUBLIC_HEADER "${public_h_list}" )
 
