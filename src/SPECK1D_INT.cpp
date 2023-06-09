@@ -27,8 +27,9 @@ void sperr::SPECK1D_INT<T>::m_initialize_lists()
   auto num_of_lists = num_of_parts + 1;
   if (m_LIS.size() < num_of_lists)
     m_LIS.resize(num_of_lists);
-  for (auto& list : m_LIS)
-    list.clear();
+  std::for_each(m_LIS.begin(), m_LIS.end(), [](auto& list) { list.clear(); });
+  m_LIP.clear();  // Costly mistake to forget to clean this list...
+  m_LIP.reserve(m_coeff_buf.size() / 32);
 
   // Put in two sets, each representing a half of the long array.
   Set1D set;

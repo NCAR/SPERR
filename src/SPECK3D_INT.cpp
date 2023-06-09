@@ -42,6 +42,8 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   if (m_LIS.size() < num_of_sizes)
     m_LIS.resize(num_of_sizes);
   std::for_each(m_LIS.begin(), m_LIS.end(), [](auto& list) { list.clear(); });
+  m_LIP.clear();
+  m_LIP.reserve(m_coeff_buf.size() / 4);
 
   // Starting from a set representing the whole volume, identify the smaller
   // sets and put them in LIS accordingly.
@@ -91,8 +93,6 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   // it at the front of it's corresponding vector. One-time expense.
   const auto parts = big.part_level;
   m_LIS[parts].insert(m_LIS[parts].begin(), big);
-  m_LIP.clear();
-  m_LIP.reserve(m_coeff_buf.size() / 4);
 
   m_LSP_new.clear();
   m_LSP_new.reserve(m_coeff_buf.size() / 8);
