@@ -99,7 +99,7 @@ auto sperr::unpack_booleans(std::vector<bool>& dest,
   // See Github issue #122.
 
   if (src == nullptr)
-    return RTNType::InvalidParam;
+    return RTNType::Error;
 
   if (src_len < src_offset)
     return RTNType::BitstreamWrongLen;

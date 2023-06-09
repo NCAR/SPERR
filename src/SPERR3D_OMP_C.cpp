@@ -33,7 +33,7 @@ auto sperr::SPERR3D_OMP_C::copy_data(const T* vol,
     m_orig_is_float = false;
 
   if (len != vol_dims[0] * vol_dims[1] * vol_dims[2])
-    return RTNType::WrongDims;
+    return RTNType::VectorWrongLen;
   else
     m_dims = vol_dims;
 
