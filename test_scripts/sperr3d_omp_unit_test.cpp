@@ -11,7 +11,6 @@ using sperr::RTNType;
 //
 // Test constant fields.
 //
-#if 0
 TEST(speck3d_constant, one_chunk)
 {
   auto input = sperr::read_whole_file<float>("../test_data/const32x20x16.float");
@@ -125,7 +124,6 @@ TEST(speck3d_target_pwe, small_data_range)
   for (size_t i = 0; i < input.size(); i++)
     EXPECT_NEAR(input[i], output2[i], tol);
 }
-#endif
 
 TEST(speck3d_target_pwe, big)
 {
@@ -156,7 +154,6 @@ TEST(speck3d_target_pwe, big)
     EXPECT_NEAR(input[i], output[i], tol);
 
   // Test a new tolerance
-  /*
   tol = 6.7e-1;
   encoder.copy_data(input.data(), total_len, dims, chunks);
   encoder.set_tolerance(tol);
@@ -169,7 +166,6 @@ TEST(speck3d_target_pwe, big)
   const auto& output2 = decoder.view_decoded_data();
   for (size_t i = 0; i < input.size(); i++)
     EXPECT_NEAR(input[i], output2[i], tol);
-  */
 }
 
 //

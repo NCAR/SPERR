@@ -153,7 +153,7 @@ void sperr::Outlier_Coder::m_instantiate_uvec_coders(UINTType type)
   switch (type) {
     case UINTType::UINT8:
       if (m_vals_ui.index() != 0)
-        m_vals_ui = std::vector<uint8_t>();
+        m_vals_ui.emplace<0>();
       if (m_encoder.index() != 0)
         m_encoder.emplace<0>();
       if (m_decoder.index() != 0)

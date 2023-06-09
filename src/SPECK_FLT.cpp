@@ -162,44 +162,44 @@ void sperr::SPECK_FLT::set_dims(dims_type dims)
 auto sperr::SPECK_FLT::integer_len() const -> size_t
 {
   switch (m_uint_flag) {
-    case UINTType::UINT64:
+    case UINTType::UINT8:
       assert(m_vals_ui.index() == 0);
       // Either this is an encoder, or this is a decoder.
       assert(m_encoder.index() == 0 || m_decoder.index() == 0);
-      return sizeof(uint64_t);
-    case UINTType::UINT32:
+      return sizeof(uint8_t);
+    case UINTType::UINT16:
       assert(m_vals_ui.index() == 1);
       assert(m_encoder.index() == 1 || m_decoder.index() == 1);
-      return sizeof(uint32_t);
-    case UINTType::UINT16:
+      return sizeof(uint16_t);
+    case UINTType::UINT32:
       assert(m_vals_ui.index() == 2);
       assert(m_encoder.index() == 2 || m_decoder.index() == 2);
-      return sizeof(uint16_t);
+      return sizeof(uint32_t);
     default:
       assert(m_vals_ui.index() == 3);
       assert(m_encoder.index() == 3 || m_decoder.index() == 3);
-      return sizeof(uint8_t);
+      return sizeof(uint64_t);
   }
 }
 
 void sperr::SPECK_FLT::m_instantiate_int_vec()
 {
   switch (m_uint_flag) {
-    case UINTType::UINT64:
+    case UINTType::UINT8:
       if (m_vals_ui.index() != 0)
-        m_vals_ui = std::vector<uint64_t>();
-      break;
-    case UINTType::UINT32:
-      if (m_vals_ui.index() != 1)
-        m_vals_ui = std::vector<uint32_t>();
+        m_vals_ui = std::vector<uint8_t>();
       break;
     case UINTType::UINT16:
-      if (m_vals_ui.index() != 2)
+      if (m_vals_ui.index() != 1)
         m_vals_ui = std::vector<uint16_t>();
+      break;
+    case UINTType::UINT32:
+      if (m_vals_ui.index() != 2)
+        m_vals_ui = std::vector<uint32_t>();
       break;
     default:
       if (m_vals_ui.index() != 3)
-        m_vals_ui = std::vector<uint8_t>();
+        m_vals_ui = std::vector<uint64_t>();
   }
 }
 
@@ -292,33 +292,41 @@ auto sperr::SPECK_FLT::m_midtread_f2i() -> RTNType
   // so we use the switch block.
 
   switch (m_uint_flag) {
-    case UINTType::UINT64:
+    case UINTType::UINT8: {
+      auto& vec = std::get<0>(m_vals_ui);
       for (size_t i = 0; i < total_vals; i++) {
         auto ll = std::llrint(m_vals_d[i] / m_q);
         m_sign_array[i] = (ll >= 0);
-        std::get<0>(m_vals_ui)[i] = static_cast<uint64_t>(std::abs(ll));
+        vec[i] = static_cast<uint8_t>(std::abs(ll));
       }
       break;
-    case UINTType::UINT32:
+    }
+    case UINTType::UINT16: {
+      auto& vec = std::get<1>(m_vals_ui);
       for (size_t i = 0; i < total_vals; i++) {
         auto ll = std::llrint(m_vals_d[i] / m_q);
         m_sign_array[i] = (ll >= 0);
-        std::get<1>(m_vals_ui)[i] = static_cast<uint32_t>(std::abs(ll));
+        vec[i] = static_cast<uint16_t>(std::abs(ll));
       }
       break;
-    case UINTType::UINT16:
+    }
+    case UINTType::UINT32: {
+      auto& vec = std::get<2>(m_vals_ui);
       for (size_t i = 0; i < total_vals; i++) {
         auto ll = std::llrint(m_vals_d[i] / m_q);
         m_sign_array[i] = (ll >= 0);
-        std::get<2>(m_vals_ui)[i] = static_cast<uint16_t>(std::abs(ll));
+        vec[i] = static_cast<uint32_t>(std::abs(ll));
       }
       break;
-    default:
+    }
+    default: {
+      auto& vec = std::get<3>(m_vals_ui);
       for (size_t i = 0; i < total_vals; i++) {
         auto ll = std::llrint(m_vals_d[i] / m_q);
         m_sign_array[i] = (ll >= 0);
-        std::get<3>(m_vals_ui)[i] = static_cast<uint8_t>(std::abs(ll));
+        vec[i] = static_cast<uint64_t>(std::abs(ll));
       }
+    }
   }
 
   return RTNType::Good;
@@ -416,19 +424,19 @@ auto sperr::SPECK_FLT::compress() -> RTNType
   m_instantiate_encoder();
   std::visit([&dims = m_dims](auto&& encoder) { encoder->set_dims(dims); }, m_encoder);
   switch (m_uint_flag) {
-    case UINTType::UINT64:
+    case UINTType::UINT8:
       assert(m_vals_ui.index() == 0);
       assert(m_encoder.index() == 0);
       rtn = std::get<0>(m_encoder)->use_coeffs(std::move(std::get<0>(m_vals_ui)),
                                                std::move(m_sign_array));
       break;
-    case UINTType::UINT32:
+    case UINTType::UINT16:
       assert(m_vals_ui.index() == 1);
       assert(m_encoder.index() == 1);
       rtn = std::get<1>(m_encoder)->use_coeffs(std::move(std::get<1>(m_vals_ui)),
                                                std::move(m_sign_array));
       break;
-    case UINTType::UINT16:
+    case UINTType::UINT32:
       assert(m_vals_ui.index() == 2);
       assert(m_encoder.index() == 2);
       rtn = std::get<2>(m_encoder)->use_coeffs(std::move(std::get<2>(m_vals_ui)),

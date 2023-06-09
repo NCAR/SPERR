@@ -71,16 +71,16 @@ class SPECK_FLT {
   Conditioner m_conditioner;
   Outlier_Coder m_out_coder;
 
-  std::variant<std::unique_ptr<SPECK_INT<uint64_t>>,
-               std::unique_ptr<SPECK_INT<uint32_t>>,
+  std::variant<std::unique_ptr<SPECK_INT<uint8_t>>,
                std::unique_ptr<SPECK_INT<uint16_t>>,
-               std::unique_ptr<SPECK_INT<uint8_t>>>
+               std::unique_ptr<SPECK_INT<uint32_t>>,
+               std::unique_ptr<SPECK_INT<uint64_t>>>
       m_encoder, m_decoder;
 
-  std::variant<std::vector<uint64_t>,
-               std::vector<uint32_t>,
+  std::variant<std::vector<uint8_t>,
                std::vector<uint16_t>,
-               std::vector<uint8_t>>
+               std::vector<uint32_t>,
+               std::vector<uint64_t>>
       m_vals_ui;
 
   double m_q = 0.0;            // encoding and decoding

@@ -46,7 +46,7 @@ enum class SigType : unsigned char { Insig, Sig, NewlySig, Dunno, Garbage };
 
 enum class SetType : unsigned char { TypeS, TypeI, Garbage };
 
-enum class UINTType : unsigned char { UINT64, UINT32, UINT16, UINT8 };
+enum class UINTType : unsigned char { UINT8, UINT16, UINT32, UINT64 };
 
 // Return Type
 enum class RTNType {
