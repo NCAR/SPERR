@@ -11,7 +11,6 @@ using sperr::RTNType;
 //
 // Test constant fields.
 //
-#if 0
 TEST(speck3d_constant, one_chunk)
 {
   auto input = sperr::read_whole_file<float>("../test_data/const32x20x16.float");
@@ -22,9 +21,9 @@ TEST(speck3d_constant, one_chunk)
 
   // Use an encoder
   auto encoder = sperr::SPERR3D_OMP_C();
-  encoder.copy_data(input.data(), total_len, dims, dims);
+  encoder.set_dims_and_chunks(dims, dims);
   encoder.set_psnr(99.0);
-  encoder.compress();
+  encoder.compress(input.data(), input.size());
   auto stream1 = sperr::vec8_type();
   encoder.append_encoded_bitstream(stream1);
 
@@ -38,9 +37,8 @@ TEST(speck3d_constant, one_chunk)
   EXPECT_EQ(output_dims, dims);
 
   // Re-use the same objects, and test specifying PWE instead of PSNR.
-  encoder.copy_data(input.data(), total_len, dims, dims);
   encoder.set_tolerance(1.0);
-  encoder.compress();
+  encoder.compress(input.data(), input.size());
   auto stream2 = sperr::vec8_type();
   encoder.append_encoded_bitstream(stream2);
 
@@ -62,10 +60,10 @@ TEST(speck3d_constant, omp_chunks)
 
   // Use an encoder
   auto encoder = sperr::SPERR3D_OMP_C();
-  encoder.copy_data(inputd.data(), total_len, dims, chunks);
+  encoder.set_dims_and_chunks(dims, chunks);
   encoder.set_psnr(99.0);
   encoder.set_num_threads(3);
-  encoder.compress();
+  encoder.compress(inputd.data(), inputd.size());
   auto stream = sperr::vec8_type();
   encoder.append_encoded_bitstream(stream);
 
@@ -93,10 +91,10 @@ TEST(speck3d_target_pwe, small_data_range)
   // Use an encoder
   double tol = 1.5e-7;
   auto encoder = sperr::SPERR3D_OMP_C();
-  encoder.copy_data(input.data(), total_len, dims, chunks);
+  encoder.set_dims_and_chunks(dims, chunks);
   encoder.set_tolerance(tol);
   encoder.set_num_threads(4);
-  encoder.compress();
+  encoder.compress(input.data(), input.size());
   auto stream = sperr::vec8_type();
   encoder.append_encoded_bitstream(stream);
 
@@ -113,9 +111,8 @@ TEST(speck3d_target_pwe, small_data_range)
 
   // Test a new tolerance
   tol = 6.7e-6;
-  encoder.copy_data(input.data(), total_len, dims, chunks);
   encoder.set_tolerance(tol);
-  encoder.compress();
+  encoder.compress(input.data(), input.size());
   stream.clear(); 
   encoder.append_encoded_bitstream(stream);
 
@@ -136,10 +133,10 @@ TEST(speck3d_target_pwe, big)
   // Use an encoder
   double tol = 1.5e-2;
   auto encoder = sperr::SPERR3D_OMP_C();
-  encoder.copy_data(input.data(), total_len, dims, chunks);
+  encoder.set_dims_and_chunks(dims, chunks);
   encoder.set_tolerance(tol);
   encoder.set_num_threads(4);
-  encoder.compress();
+  encoder.compress(input.data(), input.size());
   auto stream = sperr::vec8_type();
   encoder.append_encoded_bitstream(stream);
 
@@ -156,9 +153,8 @@ TEST(speck3d_target_pwe, big)
 
   // Test a new tolerance
   tol = 6.7e-1;
-  encoder.copy_data(input.data(), total_len, dims, chunks);
   encoder.set_tolerance(tol);
-  encoder.compress();
+  encoder.compress(input.data(), input.size());
   stream.clear(); 
   encoder.append_encoded_bitstream(stream);
 
@@ -168,7 +164,6 @@ TEST(speck3d_target_pwe, big)
   for (size_t i = 0; i < input.size(); i++)
     EXPECT_NEAR(input[i], output2[i], tol);
 }
-#endif
 
 //
 // Test target PSNR
@@ -185,10 +180,10 @@ TEST(speck3d_target_psnr, big)
   // Use an encoder
   double psnr = 88.0;
   auto encoder = sperr::SPERR3D_OMP_C();
-  encoder.copy_data(input.data(), total_len, dims, chunks);
+  encoder.set_dims_and_chunks(dims, chunks);
   encoder.set_psnr(psnr);
   encoder.set_num_threads(4);
-  encoder.compress();
+  encoder.compress(inputd.data(), inputd.size());
   auto stream = sperr::vec8_type();
   encoder.append_encoded_bitstream(stream);
 
@@ -206,9 +201,8 @@ TEST(speck3d_target_psnr, big)
 
   // Test a new psnr
   psnr = 130.0;
-  encoder.copy_data(input.data(), total_len, dims, chunks);
   encoder.set_psnr(psnr);
-  encoder.compress();
+  encoder.compress(input.data(), input.size());
   stream.clear(); 
   encoder.append_encoded_bitstream(stream);
 
@@ -232,10 +226,10 @@ TEST(speck3d_target_psnr, small_data_range)
   // Use an encoder
   double psnr = 88.0;
   auto encoder = sperr::SPERR3D_OMP_C();
-  encoder.copy_data(input.data(), total_len, dims, chunks);
+  encoder.set_dims_and_chunks(dims, chunks);
   encoder.set_psnr(psnr);
   encoder.set_num_threads(3);
-  encoder.compress();
+  encoder.compress(inputd.data(), inputd.size());
   auto stream = sperr::vec8_type();
   encoder.append_encoded_bitstream(stream);
 
@@ -253,9 +247,8 @@ TEST(speck3d_target_psnr, small_data_range)
 
   // Test a new psnr
   psnr = 125.0;
-  encoder.copy_data(input.data(), total_len, dims, chunks);
   encoder.set_psnr(psnr);
-  encoder.compress();
+  encoder.compress(input.data(), input.size());
   stream.clear(); 
   encoder.append_encoded_bitstream(stream);
 

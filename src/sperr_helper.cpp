@@ -412,7 +412,7 @@ auto sperr::chunk_volume(dims_type vol_dim, dims_type chunk_dim)
 }
 
 template <typename T1, typename T2>
-auto sperr::gather_chunk(const T1* vol, dims_type vol_dim, const std::array<size_t, 6>& chunk)
+auto sperr::gather_chunk(const T1* vol, dims_type vol_dim, std::array<size_t, 6> chunk)
     -> std::vector<T2>
 {
   auto chunk_buf = std::vector<T2>();
@@ -435,13 +435,13 @@ auto sperr::gather_chunk(const T1* vol, dims_type vol_dim, const std::array<size
   // Will be subject to Named Return Value Optimization.
   return chunk_buf;
 }
-template auto sperr::gather_chunk(const float*, dims_type, const std::array<size_t, 6>&)
+template auto sperr::gather_chunk(const float*, dims_type, std::array<size_t, 6>)
     -> std::vector<float>;
-template auto sperr::gather_chunk(const float*, dims_type, const std::array<size_t, 6>&)
+template auto sperr::gather_chunk(const float*, dims_type, std::array<size_t, 6>)
     -> std::vector<double>;
-template auto sperr::gather_chunk(const double*, dims_type, const std::array<size_t, 6>&)
+template auto sperr::gather_chunk(const double*, dims_type, std::array<size_t, 6>)
     -> std::vector<float>;
-template auto sperr::gather_chunk(const double*, dims_type, const std::array<size_t, 6>&)
+template auto sperr::gather_chunk(const double*, dims_type, std::array<size_t, 6>)
     -> std::vector<double>;
 
 template <typename TBIG, typename TSML>
@@ -581,4 +581,3 @@ auto sperr::calc_mean_var(const T* arr, size_t len, size_t omp_nthreads) -> std:
 }
 template auto sperr::calc_mean_var(const float*, size_t, size_t) -> std::array<float, 2>;
 template auto sperr::calc_mean_var(const double*, size_t, size_t) -> std::array<double, 2>;
-

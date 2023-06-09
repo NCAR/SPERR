@@ -16,15 +16,15 @@ class SPERR3D_OMP_C {
   // If 0 is passed in, the maximal number of threads will be used.
   void set_num_threads(size_t);
 
-  // Upon receiving incoming data, a chunking scheme is decided, and the volume
-  //    is divided and kept in separate chunks.
-  template <typename T>
-  auto copy_data(const T*, size_t len, dims_type vol_dims, dims_type chunk_dims) -> RTNType;
-
+  // Note on `chunk_dims`: it's a preferred value, but when the volume dimension is not
+  //    divisible by chunk dimensions, the actual chunk dimension will change.
+  void set_dims_and_chunks(dims_type vol_dims, dims_type chunk_dims);
   void set_psnr(double);
   void set_tolerance(double);
 
-  auto compress() -> RTNType;
+  // Apply compression on a volume pointed to by `buf`.
+  template <typename T>
+  auto compress(const T* buf, size_t buf_len) -> RTNType;
 
   void append_encoded_bitstream(vec8_type& buf) const;
 
@@ -35,7 +35,6 @@ class SPERR3D_OMP_C {
   double m_quality = 0.0;
   CompMode m_comp_mode = CompMode::Unknown;
 
-  std::vector<vecd_type> m_chunk_buffers;
   std::vector<vec8_type> m_encoded_streams;
 
 #ifdef USE_OMP

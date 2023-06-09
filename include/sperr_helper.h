@@ -147,8 +147,7 @@ auto chunk_volume(dims_type vol_dim, dims_type chunk_dim) -> std::vector<std::ar
 // If the requested chunk lives outside of the volume, whole or part,
 // this function returns an empty vector.
 template <typename T1, typename T2>
-auto gather_chunk(const T1* vol, dims_type vol_dim, const std::array<size_t, 6>& chunk)
-    -> vec_type<T2>;
+auto gather_chunk(const T1* vol, dims_type vol_dim, std::array<size_t, 6> chunk) -> vec_type<T2>;
 
 // Put this chunk to a bigger volume
 // The `big_vol` should have enough space allocated, and the `small_vol` should contain
