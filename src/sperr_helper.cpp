@@ -491,7 +491,6 @@ auto sperr::parse_header(const void* ptr) -> HeaderInfo
   const auto b8 = sperr::unpack_8_booleans(u8p[loc]);
   loc++;
 
-  header.zstd_applied = b8[0];
   header.is_3d = b8[1];
   header.orig_is_float = b8[2];
 

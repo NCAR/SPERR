@@ -163,7 +163,6 @@ void scatter_chunk(vec_type<TBIG>& big_vol,
 // This structure is returned by helper function `parse_header()`.
 struct HeaderInfo {
   uint8_t version_major = 0;
-  bool zstd_applied = false;
   bool is_3d = false;
   bool orig_is_float = false;
 

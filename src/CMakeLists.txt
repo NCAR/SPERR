@@ -25,25 +25,12 @@ if(USE_OMP)
   target_link_libraries(    SPERR PUBLIC OpenMP::OpenMP_CXX )
 endif()
 
-#
-# Also link zstd
-#
-if( USE_ZSTD )
-    if(USE_BUNDLED_ZSTD)
-      # Declare dependency so that `zstd-download` is finished before SPERR is built.
-      add_dependencies( SPERR zstd-download )
-      target_link_libraries( SPERR PUBLIC zstd )
-    else()
-      target_link_libraries( SPERR PUBLIC PkgConfig::ZSTD )
-    endif()
-endif()
 
 #
 # LTO
 #
 include(CheckIPOSupported)
 check_ipo_supported(RESULT ipo_supported LANGUAGES CXX)
-
 if( ipo_supported )
     message(STATUS "IPO / LTO enabled")
     set_property(TARGET SPERR PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
