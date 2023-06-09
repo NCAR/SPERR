@@ -181,7 +181,7 @@ void sperr::Outlier_Coder::m_quantize()
   std::visit([len = m_total_len](auto&& vec) { vec.assign(len, 0); }, m_vals_ui);
   m_sign_array.assign(m_total_len, true);
 
-  // For performance reasons, bring conditions outside.
+  // For performance reasons, avoid using std::visit() for `m_vals_ui.index() == 0` case.
   if (m_vals_ui.index() == 0) {
     for (auto out : m_LOS) {
       auto ll = std::llrint(out.err / m_tol);
@@ -203,6 +203,7 @@ void sperr::Outlier_Coder::m_inverse_quantize()
   m_LOS.clear();
 
   // First, bring all non-zero integer correctors to `m_LOS`.
+  // For performance reasons, avoid using std::visit() for `m_vals_ui.index() == 0` case.
   if (m_vals_ui.index() == 0) {
     const auto& ui = std::get<0>(m_vals_ui);
     for (size_t i = 0; i < ui.size(); i++)
