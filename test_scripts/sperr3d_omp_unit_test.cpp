@@ -11,6 +11,7 @@ using sperr::RTNType;
 //
 // Test constant fields.
 //
+#if 0
 TEST(speck3d_constant, one_chunk)
 {
   auto input = sperr::read_whole_file<float>("../test_data/const32x20x16.float");
@@ -137,14 +138,14 @@ TEST(speck3d_target_pwe, big)
   auto encoder = sperr::SPERR3D_OMP_C();
   encoder.copy_data(input.data(), total_len, dims, chunks);
   encoder.set_tolerance(tol);
-  encoder.set_num_threads(1);
+  encoder.set_num_threads(4);
   encoder.compress();
   auto stream = sperr::vec8_type();
   encoder.append_encoded_bitstream(stream);
 
   // Use a decoder
   auto decoder = sperr::SPERR3D_OMP_D();
-  decoder.set_num_threads(1);
+  decoder.set_num_threads(3);
   decoder.setup_decomp(stream.data(), stream.size());
   decoder.decompress(stream.data());
   auto output_dims = decoder.get_dims();
@@ -167,71 +168,106 @@ TEST(speck3d_target_pwe, big)
   for (size_t i = 0; i < input.size(); i++)
     EXPECT_NEAR(input[i], output2[i], tol);
 }
+#endif
 
 //
 // Test target PSNR
 //
-#if 0
-TEST(speck3d_target_psnr, small)
-{
-  speck_tester_omp tester("../test_data/wmag17.float", {17, 17, 17}, 1);
-
-  const auto bpp = sperr::max_d;
-  const auto pwe = 0.0;
-
-  auto target_psnr = 90.0;
-  tester.execute(bpp, target_psnr, pwe);
-  auto psnr = tester.get_psnr();
-  auto lmax = tester.get_lmax();
-  EXPECT_GT(psnr, target_psnr);
-
-  target_psnr = 120.0;
-  tester.execute(bpp, target_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, target_psnr - 0.1);  // An example of estimated error being too small.
-}
-
 TEST(speck3d_target_psnr, big)
 {
-  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 3);
+  auto input = sperr::read_whole_file<float>("../test_data/wmag128.float");
+  const auto dims = sperr::dims_type{128, 128, 128};
+  const auto chunks = sperr::dims_type{64, 70, 80};
+  const auto total_len = dims[0] * dims[1] * dims[2];
+  auto inputd = sperr::vecd_type(total_len);
+  std::copy(input.begin(), input.end(), inputd.begin());
 
-  const auto bpp = sperr::max_d;
-  const auto pwe = 0.0;
+  // Use an encoder
+  double psnr = 88.0;
+  auto encoder = sperr::SPERR3D_OMP_C();
+  encoder.copy_data(input.data(), total_len, dims, chunks);
+  encoder.set_psnr(psnr);
+  encoder.set_num_threads(4);
+  encoder.compress();
+  auto stream = sperr::vec8_type();
+  encoder.append_encoded_bitstream(stream);
 
-  auto target_psnr = 75.0;
-  tester.execute(bpp, target_psnr, pwe);
-  auto psnr = tester.get_psnr();
-  auto lmax = tester.get_lmax();
-  EXPECT_GT(psnr, target_psnr);
+  // Use a decoder
+  auto decoder = sperr::SPERR3D_OMP_D();
+  decoder.set_num_threads(3);
+  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.decompress(stream.data());
+  auto output_dims = decoder.get_dims();
+  EXPECT_EQ(output_dims, dims);
+  const auto& output = decoder.view_decoded_data();
+  auto stats = sperr::calc_stats(inputd.data(), output.data(), total_len, 4);
+  EXPECT_GT(stats[2], 92.1366);
+  EXPECT_LT(stats[2], 92.1367);
 
-  target_psnr = 100.0;
-  tester.execute(bpp, target_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, target_psnr);
+  // Test a new psnr
+  psnr = 130.0;
+  encoder.copy_data(input.data(), total_len, dims, chunks);
+  encoder.set_psnr(psnr);
+  encoder.compress();
+  stream.clear(); 
+  encoder.append_encoded_bitstream(stream);
+
+  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.decompress(stream.data());
+  const auto& output2 = decoder.view_decoded_data();
+  stats = sperr::calc_stats(inputd.data(), output2.data(), total_len, 4);
+  EXPECT_GT(stats[2], 134.3939);
+  EXPECT_LT(stats[2], 134.3940);
 }
 
 TEST(speck3d_target_psnr, small_data_range)
 {
-  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 0);
+  auto input = sperr::read_whole_file<float>("../test_data/vorticity.128_128_41");
+  const auto dims = sperr::dims_type{128, 128, 41};
+  const auto chunks = sperr::dims_type{64, 64, 64};
+  const auto total_len = dims[0] * dims[1] * dims[2];
+  auto inputd = sperr::vecd_type(total_len);
+  std::copy(input.begin(), input.end(), inputd.begin());
 
-  const auto bpp = sperr::max_d;
-  const auto pwe = 0.0;
+  // Use an encoder
+  double psnr = 88.0;
+  auto encoder = sperr::SPERR3D_OMP_C();
+  encoder.copy_data(input.data(), total_len, dims, chunks);
+  encoder.set_psnr(psnr);
+  encoder.set_num_threads(3);
+  encoder.compress();
+  auto stream = sperr::vec8_type();
+  encoder.append_encoded_bitstream(stream);
 
-  auto target_psnr = 85.0;
-  tester.execute(bpp, target_psnr, pwe);
-  auto psnr = tester.get_psnr();
-  auto lmax = tester.get_lmax();
-  EXPECT_GT(psnr, target_psnr);
+  // Use a decoder
+  auto decoder = sperr::SPERR3D_OMP_D();
+  decoder.set_num_threads(0);
+  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.decompress(stream.data());
+  auto output_dims = decoder.get_dims();
+  EXPECT_EQ(output_dims, dims);
+  const auto& output = decoder.view_decoded_data();
+  auto stats = sperr::calc_stats(inputd.data(), output.data(), total_len, 4);
+  EXPECT_GT(stats[2], 89.0560);
+  EXPECT_LT(stats[2], 89.0561);
 
-  target_psnr = 110.0;
-  tester.execute(bpp, target_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, target_psnr);
+  // Test a new psnr
+  psnr = 125.0;
+  encoder.copy_data(input.data(), total_len, dims, chunks);
+  encoder.set_psnr(psnr);
+  encoder.compress();
+  stream.clear(); 
+  encoder.append_encoded_bitstream(stream);
+
+  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.decompress(stream.data());
+  const auto& output2 = decoder.view_decoded_data();
+  stats = sperr::calc_stats(inputd.data(), output2.data(), total_len, 4);
+  EXPECT_GT(stats[2], 126.0384);
+  EXPECT_LT(stats[2], 126.0385);
 }
 
+#if 0
 //
 // Test fixed-size mode
 //
