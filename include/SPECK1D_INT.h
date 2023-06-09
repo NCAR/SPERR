@@ -18,10 +18,6 @@ class Set1D {
 //
 template <typename T>
 class SPECK1D_INT : public SPECK_INT<T> {
- public:
-  // Virtual destructor
-  ~SPECK1D_INT() override = default;
-
  protected:
   //
   // Bring members from the base class to this derived class.

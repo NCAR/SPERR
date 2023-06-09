@@ -18,7 +18,7 @@ class SPERR3D_OMP_D {
   void set_num_threads(size_t);
 
   // Parse the header of this stream, and stores the pointer.
-  auto use_bitstream(const void*, size_t) -> RTNType;
+  auto setup_decomp(const void*, size_t) -> RTNType;
 
   // The pointer passed in here MUST be the same as the one passed to `use_bitstream()`.
   auto decompress(const void*) -> RTNType;
@@ -33,7 +33,7 @@ class SPERR3D_OMP_D {
   sperr::dims_type m_chunk_dims = {0, 0, 0};  // Preferred dimensions for a chunk
 
 #ifdef USE_OMP
-  size_t m_num_threads = 0;
+  size_t m_num_threads = 1;
   std::vector<std::unique_ptr<SPECK3D_FLT>> m_decompressors;
 #else
   std::unique_ptr<SPECK3D_FLT> m_decompressor;

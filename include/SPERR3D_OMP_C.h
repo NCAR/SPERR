@@ -39,7 +39,7 @@ class SPERR3D_OMP_C {
   std::vector<vec8_type> m_encoded_streams;
 
 #ifdef USE_OMP
-  size_t m_num_threads = 0;
+  size_t m_num_threads = 1;
   std::vector<std::unique_ptr<SPECK3D_FLT>> m_compressors;
 #else
   std::unique_ptr<SPECK3D_FLT> m_compressor;

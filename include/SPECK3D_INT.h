@@ -34,10 +34,6 @@ class Set3D {
 //
 template <typename T>
 class SPECK3D_INT : public SPECK_INT<T> {
- public:
-  // Virtual destructor
-  ~SPECK3D_INT() override = default;
-
  protected:
   //
   // Bring members from the base class to this derived class.

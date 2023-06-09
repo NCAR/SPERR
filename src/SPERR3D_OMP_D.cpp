@@ -19,7 +19,7 @@ void sperr::SPERR3D_OMP_D::set_num_threads(size_t n)
 #endif
 }
 
-auto sperr::SPERR3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
+auto sperr::SPERR3D_OMP_D::setup_decomp(const void* p, size_t total_len) -> RTNType
 {
   // This method parses the header of a bitstream and puts volume dimension and
   // chunk size information in respective member variables.

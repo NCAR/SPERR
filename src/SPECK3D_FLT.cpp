@@ -10,15 +10,18 @@ void sperr::SPECK3D_FLT::m_instantiate_encoder()
         m_encoder = std::make_unique<SPECK3D_INT_ENC<uint64_t>>();
       break;
     case UINTType::UINT32:
-      if (m_encoder.index() != 1 || std::get_if<0>(&m_encoder) == nullptr)
-        m_encoder = std::make_unique<SPECK3D_INT_ENC<uint32_t>>();
+      if (m_encoder.index() != 1 || std::get_if<1>(&m_encoder) == nullptr) {
+        std::visit([](auto&& enc) { if (enc != nullptr) enc->reset(); }, m_encoder);
+        auto tmp = std::make_unique<SPECK3D_INT_ENC<uint32_t>>();
+        m_encoder = std::move(tmp);
+      }
       break;
     case UINTType::UINT16:
-      if (m_encoder.index() != 2 || std::get_if<0>(&m_encoder) == nullptr)
+      if (m_encoder.index() != 2 || std::get_if<2>(&m_encoder) == nullptr)
         m_encoder = std::make_unique<SPECK3D_INT_ENC<uint16_t>>();
       break;
     default:
-      if (m_encoder.index() != 3 || std::get_if<0>(&m_encoder) == nullptr)
+      if (m_encoder.index() != 3 || std::get_if<3>(&m_encoder) == nullptr)
         m_encoder = std::make_unique<SPECK3D_INT_ENC<uint8_t>>();
   }
 }
