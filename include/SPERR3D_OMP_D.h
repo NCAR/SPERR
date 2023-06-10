@@ -46,6 +46,14 @@ class SPERR3D_OMP_D {
   // Header size would be the magic number + num_chunks * 4
   const size_t m_header_magic_nchunks = 26;
   const size_t m_header_magic_1chunk = 14;
+
+  // Put this chunk to a bigger volume
+  // Memory errors will occur if the big and small volumes are not the same size as described.
+  void m_scatter_chunk(vecd_type& big_vol,
+                       dims_type vol_dim,
+                       const vecd_type& small_vol,
+                       std::array<size_t, 6> chunk_info);
+
 };
 
 } // End of namespace sperr

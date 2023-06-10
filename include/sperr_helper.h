@@ -143,21 +143,6 @@ auto kahan_summation(const T*, size_t) -> T;
 // Note 2: this function works on degraded 2D or 1D volumes too.
 auto chunk_volume(dims_type vol_dim, dims_type chunk_dim) -> std::vector<std::array<size_t, 6>>;
 
-// Gather a chunk from a bigger volume
-// If the requested chunk lives outside of the volume, whole or part,
-// this function returns an empty vector.
-template <typename T1, typename T2>
-auto gather_chunk(const T1* vol, dims_type vol_dim, std::array<size_t, 6> chunk) -> vec_type<T2>;
-
-// Put this chunk to a bigger volume
-// The `big_vol` should have enough space allocated, and the `small_vol` should contain
-// enough elements to scatter. Memory errors will occur if the conditions are not met.
-template <typename TBIG, typename TSML>
-void scatter_chunk(vec_type<TBIG>& big_vol,
-                   dims_type vol_dim,
-                   const vec_type<TSML>& small_vol,
-                   const std::array<size_t, 6>& chunk);
-
 // Structure that holds information extracted from SPERR headers.
 // This structure is returned by helper function `parse_header()`.
 struct HeaderInfo {

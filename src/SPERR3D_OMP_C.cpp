@@ -84,7 +84,7 @@ auto sperr::SPERR3D_OMP_C::compress(const T* buf, size_t buf_len) -> RTNType
 #endif
 
     // Gather data for this chunk, Setup compressor parameters, and compress!
-    auto chunk = sperr::gather_chunk<T, double>(buf, m_dims, chunk_idx[i]);
+    auto chunk = m_gather_chunk<T>(buf, m_dims, chunk_idx[i]);
     assert(!chunk.empty());
     compressor->take_data(std::move(chunk));
     compressor->set_dims({chunk_idx[i][1], chunk_idx[i][3], chunk_idx[i][5]});
@@ -204,3 +204,33 @@ auto sperr::SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
 
   return header;
 }
+
+template <typename T>
+auto sperr::SPERR3D_OMP_C::m_gather_chunk(const T* vol,
+                                          dims_type vol_dim,
+                                          std::array<size_t, 6> chunk) -> vecd_type
+{
+  auto chunk_buf = vecd_type();
+  if (chunk[0] + chunk[1] > vol_dim[0] || chunk[2] + chunk[3] > vol_dim[1] ||
+      chunk[4] + chunk[5] > vol_dim[2])
+    return chunk_buf;
+
+  chunk_buf.resize(chunk[1] * chunk[3] * chunk[5]);
+
+  size_t idx = 0;
+  for (size_t z = chunk[4]; z < chunk[4] + chunk[5]; z++) {
+    const size_t plane_offset = z * vol_dim[0] * vol_dim[1];
+    for (size_t y = chunk[2]; y < chunk[2] + chunk[3]; y++) {
+      const size_t col_offset = plane_offset + y * vol_dim[0];
+      for (size_t x = chunk[0]; x < chunk[0] + chunk[1]; x++)
+        chunk_buf[idx++] = vol[col_offset + x];
+    }
+  }
+
+  // Will be subject to Named Return Value Optimization.
+  return chunk_buf;
+}
+template auto sperr::SPERR3D_OMP_C::m_gather_chunk(const float*, dims_type, std::array<size_t, 6>)
+    -> vecd_type;
+template auto sperr::SPERR3D_OMP_C::m_gather_chunk(const double*, dims_type, std::array<size_t, 6>)
+    -> vecd_type;

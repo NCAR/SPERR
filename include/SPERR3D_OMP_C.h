@@ -52,6 +52,12 @@ class SPERR3D_OMP_C {
   // Private methods
   //
   auto m_generate_header() const -> vec8_type;
+
+  // Gather a chunk from a bigger volume.
+  // If the requested chunk lives outside of the volume, whole or part,
+  //    this function returns an empty vector.
+  template <typename T>
+  auto m_gather_chunk(const T* vol, dims_type vol_dim, std::array<size_t, 6> chunk) -> vecd_type;
 };
 
 }  // End of namespace sperr
