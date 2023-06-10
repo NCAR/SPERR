@@ -216,14 +216,15 @@ auto sperr::SPERR3D_OMP_C::m_gather_chunk(const T* vol,
     return chunk_buf;
 
   chunk_buf.resize(chunk[1] * chunk[3] * chunk[5]);
+  const auto row_len = chunk[1];
 
   size_t idx = 0;
   for (size_t z = chunk[4]; z < chunk[4] + chunk[5]; z++) {
     const size_t plane_offset = z * vol_dim[0] * vol_dim[1];
     for (size_t y = chunk[2]; y < chunk[2] + chunk[3]; y++) {
-      const size_t col_offset = plane_offset + y * vol_dim[0];
-      for (size_t x = chunk[0]; x < chunk[0] + chunk[1]; x++)
-        chunk_buf[idx++] = vol[col_offset + x];
+      const auto start_i = plane_offset + y * vol_dim[0] + chunk[0];
+      std::copy(vol + start_i, vol + start_i + row_len, chunk_buf.begin() + idx);
+      idx += row_len;
     }
   }
 

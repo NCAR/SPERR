@@ -182,12 +182,15 @@ void sperr::SPERR3D_OMP_D::m_scatter_chunk(vecd_type& big_vol,
                                            std::array<size_t, 6> chunk_info)
 {
   size_t idx = 0;
+  const auto row_len = chunk_info[1];
+
   for (size_t z = chunk_info[4]; z < chunk_info[4] + chunk_info[5]; z++) {
     const size_t plane_offset = z * vol_dim[0] * vol_dim[1];
     for (size_t y = chunk_info[2]; y < chunk_info[2] + chunk_info[3]; y++) {
-      const size_t col_offset = plane_offset + y * vol_dim[0];
-      for (size_t x = chunk_info[0]; x < chunk_info[0] + chunk_info[1]; x++)
-        big_vol[col_offset + x] = small_vol[idx++];
+      const auto start_i = plane_offset + y * vol_dim[0] + chunk_info[0];
+      std::copy(small_vol.begin() + idx, small_vol.begin() + idx + row_len,
+                big_vol.begin() + start_i);
+      idx += row_len;
     }
   }
 }
