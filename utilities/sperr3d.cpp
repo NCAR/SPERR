@@ -2,8 +2,8 @@
 #include "SPERR3D_OMP_D.h"
 
 #include "CLI/App.hpp"
-#include "CLI/Formatter.hpp"
 #include "CLI/Config.hpp"
+#include "CLI/Formatter.hpp"
 
 #include <cassert>
 #include <cstdlib>
@@ -15,25 +15,51 @@ int main(int argc, char* argv[])
   // Parse command line options
   CLI::App app("3D SPERR compression and decompression\n");
 
-  // Input specifications
+  // Input specification
   auto input_file = std::string();
-  app.add_option("filename", input_file, 
-                 "A data volume to be compressed,\n"
-                 "or a bitstream to be decompressed.")
+  app.add_option("filename", input_file,
+                 "A data volume to be compressed, or\n"
+                 "a bitstream to be decompressed.")
       ->check(CLI::ExistingFile);
 
-  auto comp_flag = bool{false};
-  auto* comp_ptr = app.add_flag("-c", comp_flag, "Perform a compression task");
-  auto decomp_flag = bool{false};
-  auto* decomp_ptr = app.add_flag("-d", decomp_flag, "Perform a decompression task")
-                      ->excludes(comp_ptr);
+  //
+  // Execution settings
+  //
+  auto cflag = bool{false};
+  auto* cptr = app.add_flag("-c", cflag, "Perform a compression task")->group("Execution settings");
+  auto dflag = bool{false};
+  auto* dptr = app.add_flag("-d", dflag, "Perform a decompression task")
+                   ->excludes(cptr)
+                   ->group("Execution settings");
 
+  auto omp_num_threads = size_t{0};  // meaning to use the maximum number of threads.
+#ifdef USE_OMP
+  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. 0 is to use all.")
+      ->group("Execution settings");
+#endif
+
+  //
+  // Output settings
+  //
+  auto out_bitstream = std::string();
+  app.add_option("--out_bitstream", out_bitstream, "Output compressed bitstream.")
+      ->needs(cptr)
+      ->group("Output settings");
+  auto out_decomp_f = std::string();
+  app.add_option("--out_decomp_f", out_decomp_f, "Output decompressed volume in f32 precision.")
+      ->group("Output settings");
+  auto out_decomp_d = std::string();
+  app.add_option("--out_decomp_d", out_decomp_d, "Output decompressed volume in f64 precision.")
+      ->group("Output settings");
+
+  //
+  // Compression settings
+  //
   auto dims = std::vector<size_t>();
   app.add_option("--dims", dims,
                  "Dimensions of the input volume. E.g., `--dims 128 128 128`\n"
                  "(The fastest-varying dimension appears first.)")
       ->expected(3)
-      ->needs(comp_ptr)
       ->group("Compression settings");
 
   auto chunks = std::vector<size_t>{256, 256, 256};
@@ -41,42 +67,40 @@ int main(int argc, char* argv[])
                  "Dimensions of the preferred chunk size. Default: 256 256 256\n"
                  "(Volume dims don't need to be divisible by these chunk dims.)")
       ->expected(3)
-      ->needs(comp_ptr)
       ->group("Compression settings");
 
-  auto float_bits = int{32};
-  app.add_flag("--float", float_bits,
-               "Specify the input data type: must be 32 or 64.")
-      ->needs(comp_ptr)
+  auto ftype = size_t{32};
+  app.add_option("--ftype", ftype, "Specify the input float type in bits: 32 or 64.")
+      ->group("Compression settings");
+
+  auto pwe = double{0.0};
+  auto* pwe_ptr = app.add_option("--pwe", pwe, "Maximum point-wise error (PWE) tolerance.")
+                      ->group("Compression settings");
+
+  auto psnr = sperr::max_d;
+  auto* psnr_ptr = app.add_option("--psnr", psnr, "Target PSNR to achieve.")
+                       ->excludes(pwe_ptr)
+                       ->group("Compression settings");
+
+  auto bpp = sperr::max_d;
+  app.add_option("--bpp", bpp, "Target bit-per-pixel (BPP) to achieve.")
+      ->excludes(pwe_ptr)
+      ->excludes(psnr_ptr)
       ->group("Compression settings");
 
   auto show_stats = bool{false};
   app.add_flag("--show_stats", show_stats, "Show statistics measuring the compression quality.")
-      ->needs(comp_ptr)
       ->group("Compression settings");
 
-  auto omp_num_threads = size_t{0};  // meaning to use the maximum number of threads.
-#ifdef USE_OMP
-  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use.");
-#endif
-
-  auto pwe = double{0.0};
-  auto* pwe_ptr = app.add_option("--pwe", pwe, "Maximum point-wise error (PWE) tolerance.")
-                    ->needs(comp_ptr)
-                    ->group("Compression settings");
-
-  auto psnr = sperr::max_d;
-  auto* psnr_ptr = app.add_option("--psnr", psnr, "Target PSNR to achieve.")
-                      ->excludes(pwe_ptr)
-                      ->needs(comp_ptr)
-                      ->group("Compression settings");
-
-  auto bpp = sperr::max_d;
-  app.add_option("--bpp", bpp, "Target bit-per-pixel to achieve.")
-      ->excludes(pwe_ptr)
-      ->excludes(psnr_ptr)
-      ->needs(comp_ptr)
-      ->group("Compression settings");
+  //
+  // Decompression settings
+  //
+  auto first_bpp = sperr::max_d;
+  app.add_option("--first_bpp", first_bpp,
+                 "Decompression using partial data, up to a certain BPP.\n"
+                 "By default, decompression uses all input data in the bitstream.")
+      ->needs(dptr)
+      ->group("Decompression settings");
 
   CLI11_PARSE(app, argc, argv);
 
