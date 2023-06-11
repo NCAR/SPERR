@@ -1,4 +1,5 @@
 add_executable( show_version show_version.cpp )
+target_link_libraries( show_version )
 
 #add_executable( header_parser header_parser.cpp )
 #target_link_libraries( header_parser PUBLIC SPERR )
@@ -15,6 +16,6 @@ add_executable( show_version show_version.cpp )
 # add_executable( decompressor_3d decompressor_3d.cpp )
 # target_link_libraries( decompressor_3d PUBLIC SPERR )
 
-add_executable( mid-tread mid-tread.cpp )
-target_link_libraries( mid-tread PUBLIC SPERR )
+add_executable( sperr3d sperr3d.cpp )
+target_link_libraries( sperr3d PUBLIC SPERR PUBLIC CLI11::CLI11 )
 

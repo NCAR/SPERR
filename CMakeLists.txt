@@ -101,12 +101,14 @@ add_subdirectory( src )
 # Build command line utilities
 #
 if( BUILD_CLI_UTILITIES )
-  # Download CLI11
+  # Download and build CLI11
   #
-  if( NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp )
-      file(DOWNLOAD https://github.com/CLIUtils/CLI11/releases/latest/download/CLI11.hpp
-                    ${CMAKE_CURRENT_BINARY_DIR}/CLI11.hpp )
-  endif()
+  include(FetchContent)
+  FetchContent_Declare( cli11
+    GIT_REPOSITORY https://github.com/CLIUtils/CLI11
+    GIT_TAG        291c58789c031208f08f4f261a858b5b7083e8e2 # v2.3.2
+  )
+  FetchContent_MakeAvailable(cli11)
 
   add_subdirectory( utilities ${CMAKE_BINARY_DIR}/bin )
 endif()
@@ -176,7 +178,7 @@ endif()
 # Install utilities
 #
 if( BUILD_CLI_UTILITIES )
-  install( TARGETS show_version mid-tread #compressor_3d decompressor_3d compressor_2d decompressor_2d header_parser 
+  install( TARGETS show_version # mid-tread #compressor_3d decompressor_3d compressor_2d decompressor_2d header_parser 
            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
 endif()
 

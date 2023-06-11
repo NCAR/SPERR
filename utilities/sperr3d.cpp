@@ -1,7 +1,9 @@
 #include "SPERR3D_OMP_C.h"
 #include "SPERR3D_OMP_D.h"
 
-#include "CLI11.hpp"
+#include "CLI/App.hpp"
+#include "CLI/Formatter.hpp"
+#include "CLI/Config.hpp"
 
 #include <cassert>
 #include <cstdlib>
@@ -11,66 +13,74 @@
 int main(int argc, char* argv[])
 {
   // Parse command line options
-  CLI::App app("Compress a 3D volume and output a SPERR bitstream\n");
+  CLI::App app("3D SPERR compression and decompression\n");
 
   // Input specifications
   auto input_file = std::string();
-  app.add_option("filename", input_file, "Input data file to the compressor")
-      ->required()
-      ->check(CLI::ExistingFile)
-      ->group("Input Specifications");
+  app.add_option("filename", input_file, 
+                 "A data volume to be compressed,\n"
+                 "or a bitstream to be decompressed.")
+      ->check(CLI::ExistingFile);
+
+  auto comp_flag = bool{false};
+  auto* comp_ptr = app.add_flag("-c", comp_flag, "Perform a compression task");
+  auto decomp_flag = bool{false};
+  auto* decomp_ptr = app.add_flag("-d", decomp_flag, "Perform a decompression task")
+                      ->excludes(comp_ptr);
 
   auto dims = std::vector<size_t>();
   app.add_option("--dims", dims,
                  "Dimensions of the input volume. E.g., `--dims 128 128 128`\n"
                  "(The fastest-varying dimension appears first.)")
       ->expected(3)
-      ->required()
-      ->group("Input Specifications");
+      ->needs(comp_ptr)
+      ->group("Compression settings");
 
-  auto use_double = bool{false};
-  app.add_flag("-d", use_double,
-               "Specify that input data is in double type.\n"
-               "Data is treated as float by default.")
-      ->group("Input Specifications");
-
-  // Output specifications
-  auto output_file = std::string();
-  app.add_option("-o", output_file, "Output filename")->group("Output Specifications");
-
-  auto show_stats = bool{false};
-  app.add_flag("--show_stats", show_stats, "Show statistics measuring the compression quality.")
-      ->group("Output Specifications");
-
-  // Execution specifications
   auto chunks = std::vector<size_t>{256, 256, 256};
   app.add_option("--chunks", chunks,
                  "Dimensions of the preferred chunk size. Default: 256 256 256\n"
-                 "(Volume dims don't need to be divisible of these chunk dims.)")
+                 "(Volume dims don't need to be divisible by these chunk dims.)")
       ->expected(3)
-      ->group("Execution Specifications");
+      ->needs(comp_ptr)
+      ->group("Compression settings");
+
+  auto float_bits = int{32};
+  app.add_flag("--float", float_bits,
+               "Specify the input data type: must be 32 or 64.")
+      ->needs(comp_ptr)
+      ->group("Compression settings");
+
+  auto show_stats = bool{false};
+  app.add_flag("--show_stats", show_stats, "Show statistics measuring the compression quality.")
+      ->needs(comp_ptr)
+      ->group("Compression settings");
 
   auto omp_num_threads = size_t{0};  // meaning to use the maximum number of threads.
 #ifdef USE_OMP
-  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use.")
-      ->group("Execution Specifications");
+  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use.");
 #endif
 
-  // Compression specifications
-  auto bpp = sperr::max_d;
-  app.add_option("--bpp", bpp, "Target bit-per-pixel to achieve.")
-      ->group("Compression Specifications (must choose one and only one)");
-
   auto pwe = double{0.0};
-  app.add_option("--pwe", pwe, "Maximum point-wise error tolerance.")
-      ->group("Compression Specifications (must choose one and only one)");
+  auto* pwe_ptr = app.add_option("--pwe", pwe, "Maximum point-wise error (PWE) tolerance.")
+                    ->needs(comp_ptr)
+                    ->group("Compression settings");
 
   auto psnr = sperr::max_d;
-  app.add_option("--psnr", psnr, "Target PSNR to achieve.")
-      ->group("Compression Specifications (must choose one and only one)");
+  auto* psnr_ptr = app.add_option("--psnr", psnr, "Target PSNR to achieve.")
+                      ->excludes(pwe_ptr)
+                      ->needs(comp_ptr)
+                      ->group("Compression settings");
+
+  auto bpp = sperr::max_d;
+  app.add_option("--bpp", bpp, "Target bit-per-pixel to achieve.")
+      ->excludes(pwe_ptr)
+      ->excludes(psnr_ptr)
+      ->needs(comp_ptr)
+      ->group("Compression settings");
 
   CLI11_PARSE(app, argc, argv);
 
+#if 0
   // Make sure that we have a valid compression mode
   auto bit_budget = sperr::max_size;
   if (bpp != sperr::max_d)
@@ -245,6 +255,7 @@ int main(int argc, char* argv[])
       }
     }
   }
+#endif
 
   return 0;
 }
