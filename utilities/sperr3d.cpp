@@ -156,6 +156,13 @@ int main(int argc, char* argv[])
       std::cout << "Compression failed!" << std::endl;
       return __LINE__;
     }
+
+    // If not calculating stats, we can free up some memory now!
+    if (!show_stats) {
+      input.clear();
+      input.shrink_to_fit();
+    }
+
     auto stream = sperr::vec8_type();
     encoder->append_encoded_bitstream(stream);
     if (!out_bitstream.empty()) {
@@ -165,15 +172,10 @@ int main(int argc, char* argv[])
         return __LINE__;
       }
     }
-    encoder.reset();  // Free up some memory.
+    encoder.reset();  // Free up some more memory.
 
     // Need to do a decompression in the following cases.
     if (show_stats || !out_decomp_d.empty() || !out_decomp_f.empty()) {
-      if (!show_stats) {  // If not calculating stats, we can free up some memory!
-        input.clear();
-        input.shrink_to_fit();
-      }
-
       auto decoder = sperr::SPERR3D_OMP_D();
       decoder.set_num_threads(omp_num_threads);
       decoder.setup_decomp(stream.data(), stream.size());
