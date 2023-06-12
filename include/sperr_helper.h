@@ -27,6 +27,7 @@ using std::size_t;  // Seems most appropriate
 // Shortcut for the maximum values
 constexpr auto max_size = std::numeric_limits<size_t>::max();
 constexpr auto max_d = std::numeric_limits<double>::max();
+constexpr auto max_f = std::numeric_limits<float>::max();
 
 //
 // A few shortcuts
