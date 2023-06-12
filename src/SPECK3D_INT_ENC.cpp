@@ -48,12 +48,12 @@ void sperr::SPECK3D_INT_ENC<T>::m_process_S(size_t idx1,
 
   if (sig == SigType::Dunno) {
     auto set_sig = m_decide_significance(set);
-    sig = set_sig.first;
-    if (sig == SigType::Sig) {
+    sig = set_sig ? SigType::Sig : SigType::Insig;
+    if (set_sig) {
       // Try to deduce the significance of some of its subsets.
       // Step 1: which one of the 8 subsets makes it significant?
       //         (Refer to m_partition_S_XYZ() for subset ordering.)
-      auto xyz = set_sig.second;
+      auto xyz = *set_sig;
       size_t sub_i = 0;
       sub_i += (xyz[0] < (set.length_x - set.length_x / 2)) ? 0 : 1;
       sub_i += (xyz[1] < (set.length_y - set.length_y / 2)) ? 0 : 2;
@@ -153,7 +153,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_code_S(size_t idx1,
 
 template <typename T>
 auto sperr::SPECK3D_INT_ENC<T>::m_decide_significance(const Set3D& set) const
-    -> std::pair<SigType, std::array<uint32_t, 3>>
+    -> std::optional<std::array<uint32_t, 3>>
 {
   assert(!set.is_empty());
 
@@ -169,12 +169,13 @@ auto sperr::SPECK3D_INT_ENC<T>::m_decide_significance(const Set3D& set) const
       auto found = std::find_if(first, last, gtr);
       if (found != last) {
         const auto x = static_cast<uint32_t>(std::distance(first, found));
-        return {SigType::Sig, {x, y - set.start_y, z - set.start_z}};
+        auto arr = std::array<uint32_t, 3>{x, y - set.start_y, z - set.start_z};
+        return std::optional<std::array<uint32_t, 3>>(arr);
       }
     }
   }
 
-  return {SigType::Insig, {0, 0, 0}};
+  return std::optional<std::array<uint32_t, 3>>();
 }
 
 template class sperr::SPECK3D_INT_ENC<uint64_t>;

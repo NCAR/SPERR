@@ -47,10 +47,9 @@ void sperr::SPECK1D_INT_ENC<T>::m_process_S(size_t idx1,
 
   if (sig == SigType::Dunno) {
     auto set_sig = m_decide_significance(set);
-    sig = set_sig.first;
-    if (sig == SigType::Sig) {
-      assert(set_sig.second >= 0);
-      if (set_sig.second < set.length - set.length / 2)
+    sig = set_sig ? SigType::Sig : SigType::Insig;
+    if (set_sig) {
+      if (*set_sig < set.length - set.length / 2)
         subset_sigs = {SigType::Sig, SigType::Dunno};
       else
         subset_sigs = {SigType::Insig, SigType::Sig};
@@ -138,9 +137,10 @@ void sperr::SPECK1D_INT_ENC<T>::m_code_S(size_t idx1,
 
 template <typename T>
 auto sperr::SPECK1D_INT_ENC<T>::m_decide_significance(const Set1D& set) const
-    -> std::pair<SigType, int64_t>
+    -> std::optional<size_t>
 {
   assert(set.length != 0);
+  auto result = std::optional<size_t>();
 
   const auto gtr = [thld = m_threshold](auto v) { return v >= thld; };
 
@@ -148,9 +148,9 @@ auto sperr::SPECK1D_INT_ENC<T>::m_decide_significance(const Set1D& set) const
   auto last = first + set.length;
   auto found = std::find_if(first, last, gtr);
   if (found != last)
-    return {SigType::Sig, std::distance(first, found)};
-  else
-    return {SigType::Insig, 0};
+    result = static_cast<size_t>(std::distance(first, found));
+
+  return result;
 }
 
 template class sperr::SPECK1D_INT_ENC<uint64_t>;

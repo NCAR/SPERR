@@ -3,6 +3,8 @@
 
 #include "SPECK1D_INT.h"
 
+#include <optional>
+
 namespace sperr {
 
 //
@@ -32,7 +34,7 @@ class SPECK1D_INT_ENC : public SPECK1D_INT<T> {
 
   // Decide if a set is significant or not.
   // If it is significant, also identify the point that makes it significant.
-  auto m_decide_significance(const Set1D&) const -> std::pair<SigType, int64_t>;
+  auto m_decide_significance(const Set1D&) const -> std::optional<size_t>;
 };
 
 };  // namespace sperr

@@ -13,7 +13,6 @@
 #include <limits>
 #include <memory>
 #include <string>
-#include <utility>  // std::pair
 #include <vector>
 
 #ifndef USE_VANILLA_CONFIG
