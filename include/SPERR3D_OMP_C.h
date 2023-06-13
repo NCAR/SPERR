@@ -26,7 +26,8 @@ class SPERR3D_OMP_C {
   template <typename T>
   auto compress(const T* buf, size_t buf_len) -> RTNType;
 
-  void append_encoded_bitstream(vec8_type& buf) const;
+  // Output: produce a vector containing the encoded bitstream.
+  auto get_encoded_bitstream() const -> vec8_type;
 
  private:
   dims_type m_dims = {0, 0, 0};        // Dimension of the entire volume

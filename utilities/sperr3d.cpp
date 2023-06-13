@@ -163,8 +163,7 @@ int main(int argc, char* argv[])
       input.shrink_to_fit();
     }
 
-    auto stream = sperr::vec8_type();
-    encoder->append_encoded_bitstream(stream);
+    auto stream = encoder->get_encoded_bitstream();
     if (!out_bitstream.empty()) {
       rtn = sperr::write_n_bytes(out_bitstream, stream.size(), stream.data());
       if (rtn != sperr::RTNType::Good) {

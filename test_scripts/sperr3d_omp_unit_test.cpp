@@ -11,7 +11,7 @@ using sperr::RTNType;
 //
 // Test constant fields.
 //
-TEST(speck3d_constant, one_chunk)
+TEST(sperr3d_constant, one_chunk)
 {
   auto input = sperr::read_whole_file<float>("../test_data/const32x20x16.float");
   const auto dims = sperr::dims_type{32, 20, 16};
@@ -24,8 +24,7 @@ TEST(speck3d_constant, one_chunk)
   encoder.set_dims_and_chunks(dims, dims);
   encoder.set_psnr(99.0);
   encoder.compress(input.data(), input.size());
-  auto stream1 = sperr::vec8_type();
-  encoder.append_encoded_bitstream(stream1);
+  auto stream1 = encoder.get_encoded_bitstream();
 
   // Use a decoder
   auto decoder = sperr::SPERR3D_OMP_D();
@@ -39,8 +38,7 @@ TEST(speck3d_constant, one_chunk)
   // Re-use the same objects, and test specifying PWE instead of PSNR.
   encoder.set_tolerance(1.0);
   encoder.compress(input.data(), input.size());
-  auto stream2 = sperr::vec8_type();
-  encoder.append_encoded_bitstream(stream2);
+  auto stream2 = encoder.get_encoded_bitstream();
 
   decoder.setup_decomp(stream2.data(), stream2.size());
   decoder.decompress(stream2.data());
@@ -49,7 +47,7 @@ TEST(speck3d_constant, one_chunk)
   EXPECT_EQ(stream2, stream1);
 }
 
-TEST(speck3d_constant, omp_chunks)
+TEST(sperr3d_constant, omp_chunks)
 {
   auto input = sperr::read_whole_file<float>("../test_data/const32x32x59.float");
   const auto dims = sperr::dims_type{32, 32, 59};
@@ -64,8 +62,7 @@ TEST(speck3d_constant, omp_chunks)
   encoder.set_psnr(99.0);
   encoder.set_num_threads(3);
   encoder.compress(inputd.data(), inputd.size());
-  auto stream = sperr::vec8_type();
-  encoder.append_encoded_bitstream(stream);
+  auto stream = encoder.get_encoded_bitstream();
 
   // Use a decoder
   auto decoder = sperr::SPERR3D_OMP_D();
@@ -81,7 +78,7 @@ TEST(speck3d_constant, omp_chunks)
 //
 // Test target PWE
 //
-TEST(speck3d_target_pwe, small_data_range)
+TEST(sperr3d_target_pwe, small_data_range)
 {
   auto input = sperr::read_whole_file<float>("../test_data/vorticity.128_128_41");
   const auto dims = sperr::dims_type{128, 128, 41};
@@ -95,8 +92,7 @@ TEST(speck3d_target_pwe, small_data_range)
   encoder.set_tolerance(tol);
   encoder.set_num_threads(4);
   encoder.compress(input.data(), input.size());
-  auto stream = sperr::vec8_type();
-  encoder.append_encoded_bitstream(stream);
+  auto stream = encoder.get_encoded_bitstream();
 
   // Use a decoder
   auto decoder = sperr::SPERR3D_OMP_D();
@@ -113,8 +109,7 @@ TEST(speck3d_target_pwe, small_data_range)
   tol = 6.7e-6;
   encoder.set_tolerance(tol);
   encoder.compress(input.data(), input.size());
-  stream.clear(); 
-  encoder.append_encoded_bitstream(stream);
+  stream = encoder.get_encoded_bitstream();
 
   decoder.setup_decomp(stream.data(), stream.size());
   decoder.decompress(stream.data());
@@ -123,7 +118,7 @@ TEST(speck3d_target_pwe, small_data_range)
     EXPECT_NEAR(input[i], output2[i], tol);
 }
 
-TEST(speck3d_target_pwe, big)
+TEST(sperr3d_target_pwe, big)
 {
   auto input = sperr::read_whole_file<float>("../test_data/wmag128.float");
   const auto dims = sperr::dims_type{128, 128, 128};
@@ -137,8 +132,7 @@ TEST(speck3d_target_pwe, big)
   encoder.set_tolerance(tol);
   encoder.set_num_threads(4);
   encoder.compress(input.data(), input.size());
-  auto stream = sperr::vec8_type();
-  encoder.append_encoded_bitstream(stream);
+  auto stream = encoder.get_encoded_bitstream();
 
   // Use a decoder
   auto decoder = sperr::SPERR3D_OMP_D();
@@ -155,8 +149,7 @@ TEST(speck3d_target_pwe, big)
   tol = 6.7e-1;
   encoder.set_tolerance(tol);
   encoder.compress(input.data(), input.size());
-  stream.clear(); 
-  encoder.append_encoded_bitstream(stream);
+  stream = encoder.get_encoded_bitstream();
 
   decoder.setup_decomp(stream.data(), stream.size());
   decoder.decompress(stream.data());
@@ -168,7 +161,7 @@ TEST(speck3d_target_pwe, big)
 //
 // Test target PSNR
 //
-TEST(speck3d_target_psnr, big)
+TEST(sperr3d_target_psnr, big)
 {
   auto input = sperr::read_whole_file<float>("../test_data/wmag128.float");
   const auto dims = sperr::dims_type{128, 128, 128};
@@ -184,8 +177,7 @@ TEST(speck3d_target_psnr, big)
   encoder.set_psnr(psnr);
   encoder.set_num_threads(4);
   encoder.compress(inputd.data(), inputd.size());
-  auto stream = sperr::vec8_type();
-  encoder.append_encoded_bitstream(stream);
+  auto stream = encoder.get_encoded_bitstream();
 
   // Use a decoder
   auto decoder = sperr::SPERR3D_OMP_D();
@@ -203,8 +195,7 @@ TEST(speck3d_target_psnr, big)
   psnr = 130.0;
   encoder.set_psnr(psnr);
   encoder.compress(input.data(), input.size());
-  stream.clear(); 
-  encoder.append_encoded_bitstream(stream);
+  stream = encoder.get_encoded_bitstream();
 
   decoder.setup_decomp(stream.data(), stream.size());
   decoder.decompress(stream.data());
@@ -214,7 +205,7 @@ TEST(speck3d_target_psnr, big)
   EXPECT_LT(stats[2], 134.3940);
 }
 
-TEST(speck3d_target_psnr, small_data_range)
+TEST(sperr3d_target_psnr, small_data_range)
 {
   auto input = sperr::read_whole_file<float>("../test_data/vorticity.128_128_41");
   const auto dims = sperr::dims_type{128, 128, 41};
@@ -230,8 +221,7 @@ TEST(speck3d_target_psnr, small_data_range)
   encoder.set_psnr(psnr);
   encoder.set_num_threads(3);
   encoder.compress(inputd.data(), inputd.size());
-  auto stream = sperr::vec8_type();
-  encoder.append_encoded_bitstream(stream);
+  auto stream = encoder.get_encoded_bitstream();
 
   // Use a decoder
   auto decoder = sperr::SPERR3D_OMP_D();
@@ -249,8 +239,7 @@ TEST(speck3d_target_psnr, small_data_range)
   psnr = 125.0;
   encoder.set_psnr(psnr);
   encoder.compress(input.data(), input.size());
-  stream.clear(); 
-  encoder.append_encoded_bitstream(stream);
+  stream  = encoder.get_encoded_bitstream();
 
   decoder.setup_decomp(stream.data(), stream.size());
   decoder.decompress(stream.data());
@@ -264,7 +253,7 @@ TEST(speck3d_target_psnr, small_data_range)
 //
 // Test fixed-size mode
 //
-TEST(speck3d_bit_rate, small)
+TEST(sperr3d_bit_rate, small)
 {
   speck_tester_omp tester("../test_data/wmag17.float", {17, 17, 17}, 1);
 
@@ -290,7 +279,7 @@ TEST(speck3d_bit_rate, small)
   EXPECT_LT(lmax, 13.0171);
 }
 
-TEST(speck3d_bit_rate, big)
+TEST(sperr3d_bit_rate, big)
 {
   speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 0);
 
@@ -326,7 +315,7 @@ TEST(speck3d_bit_rate, big)
   EXPECT_LT(lmax, 48.8490);
 }
 
-TEST(speck3d_bit_rate, narrow_data_range)
+TEST(sperr3d_bit_rate, narrow_data_range)
 {
   speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 2);
 

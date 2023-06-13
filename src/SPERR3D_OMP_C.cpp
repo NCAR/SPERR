@@ -113,22 +113,21 @@ auto sperr::SPERR3D_OMP_C::compress(const T* buf, size_t buf_len) -> RTNType
 template auto sperr::SPERR3D_OMP_C::compress(const float*, size_t) -> RTNType;
 template auto sperr::SPERR3D_OMP_C::compress(const double*, size_t) -> RTNType;
 
-void sperr::SPERR3D_OMP_C::append_encoded_bitstream(vec8_type& buf) const
+auto sperr::SPERR3D_OMP_C::get_encoded_bitstream() const -> vec8_type
 {
-  const auto orig_size = buf.size();
   auto header = m_generate_header();
-  auto new_size =
-      std::accumulate(m_encoded_streams.cbegin(), m_encoded_streams.cend(), header.size(),
-                      [](size_t a, const auto& b) { return a + b.size(); });
-  buf.resize(orig_size + new_size, 0);
+  auto header_size = header.size();
+  auto stream_size = std::accumulate(m_encoded_streams.cbegin(), m_encoded_streams.cend(), 0,
+                                     [](size_t a, const auto& b) { return a + b.size(); });
+  header.resize(header_size + stream_size);
 
-  auto itr = buf.begin() + orig_size;
-  std::copy(header.cbegin(), header.cend(), itr);
-  itr += header.size();
+  auto itr = header.begin() + header_size;
   for (const auto& s : m_encoded_streams) {
     std::copy(s.cbegin(), s.cend(), itr);
     itr += s.size();
   }
+
+  return header;
 }
 
 auto sperr::SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
