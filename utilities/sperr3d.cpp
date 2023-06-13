@@ -176,17 +176,18 @@ int main(int argc, char* argv[])
 
     // Need to do a decompression in the following cases.
     if (show_stats || !out_decomp_d.empty() || !out_decomp_f.empty()) {
-      auto decoder = sperr::SPERR3D_OMP_D();
-      decoder.set_num_threads(omp_num_threads);
-      decoder.setup_decomp(stream.data(), stream.size());
-      rtn = decoder.decompress(stream.data());
+      auto decoder = std::make_unique<sperr::SPERR3D_OMP_D>();
+      decoder->set_num_threads(omp_num_threads);
+      decoder->setup_decomp(stream.data(), stream.size());
+      rtn = decoder->decompress(stream.data());
       if (rtn != sperr::RTNType::Good) {
         std::cout << "Decompression failed!" << std::endl;
         return __LINE__;
       }
 
       // Output the decompressed volume in double precision.
-      const auto& outputd = decoder.view_decoded_data();
+      auto outputd = decoder->release_decoded_data();
+      decoder.reset();  // Free up more memory!
       if (!out_decomp_d.empty()) {
         rtn = sperr::write_n_bytes(out_decomp_d, outputd.size() * sizeof(double), outputd.data());
         if (rtn != sperr::RTNType::Good) {
