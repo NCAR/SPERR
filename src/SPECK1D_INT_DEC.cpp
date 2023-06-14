@@ -20,7 +20,7 @@ void sperr::SPECK1D_INT_DEC<T>::m_sorting_pass()
             m_process_P(i + j, dummy, true);
           }
         }
-      }
+      }  // Finish examine 64 bits.
     }
   }
   else {  // Very unlikely

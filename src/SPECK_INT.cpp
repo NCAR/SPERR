@@ -81,7 +81,7 @@ auto sperr::SPECK_INT<T>::get_stream_full_len(const void* buf) const -> uint64_t
 template <typename T>
 void sperr::SPECK_INT<T>::encode()
 {
-  m_bit_buffer.reserve(m_coeff_buf.size()); // A good starting point
+  m_bit_buffer.reserve(m_coeff_buf.size());  // A good starting point
   m_bit_buffer.rewind();
   m_total_bits = 0;
   m_initialize_lists();
@@ -270,7 +270,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_encode()
   // Second, mark newly found significant pixels in `m_LSP_mask`.
   //
   for (auto idx : m_LSP_new)
-    m_LSP_mask.write_bit(idx, true);
+    m_LSP_mask.write_true(idx);
   m_LSP_new.clear();
 }
 
@@ -307,7 +307,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
   // Second, mark newly found significant pixels in `m_LSP_mask`
   //
   for (auto idx : m_LSP_new)
-    m_LSP_mask.write_bit(idx, true);
+    m_LSP_mask.write_true(idx);
   m_LSP_new.clear();
 }
 

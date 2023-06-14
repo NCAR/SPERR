@@ -15,10 +15,12 @@ void sperr::SPECK1D_INT_ENC<T>::m_sorting_pass()
       const auto value = m_LIP_mask.read_long(i);
       if (value != 0) {
         for (size_t j = 0; j < 64; j++) {
-          size_t dummy = 0;
-          m_process_P(i + j, SigType::Dunno, dummy, true);
+          if ((value >> j) & uint64_t{1}) {
+            size_t dummy = 0;
+            m_process_P(i + j, SigType::Dunno, dummy, true);
+          }
         }
-      }
+      }  // Finish examine 64 bits.
     }
   }
   else {  // Very unlikely
