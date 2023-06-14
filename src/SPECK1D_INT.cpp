@@ -30,6 +30,7 @@ void sperr::SPECK1D_INT<T>::m_initialize_lists()
   std::for_each(m_LIS.begin(), m_LIS.end(), [](auto& list) { list.clear(); });
   m_LIP.clear();  // Costly mistake to forget to clean this list...
   m_LIP.reserve(m_coeff_buf.size() / 32);
+  m_LSP_new.clear();
 
   // Put in two sets, each representing a half of the long array.
   Set1D set;
