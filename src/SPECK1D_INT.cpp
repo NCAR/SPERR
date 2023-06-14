@@ -13,10 +13,6 @@ void sperr::SPECK1D_INT<T>::m_clean_LIS()
                              [](const auto& s) { return s.type == SetType::Garbage; });
     list.erase(it, list.end());
   }
-
-  // Let's also clean up m_LIP.
-  auto it = std::remove(m_LIP.begin(), m_LIP.end(), m_u64_garbage_val);
-  m_LIP.erase(it, m_LIP.end());
 }
 
 template <typename T>
@@ -28,9 +24,9 @@ void sperr::SPECK1D_INT<T>::m_initialize_lists()
   if (m_LIS.size() < num_of_lists)
     m_LIS.resize(num_of_lists);
   std::for_each(m_LIS.begin(), m_LIS.end(), [](auto& list) { list.clear(); });
-  m_LIP.clear();  // Costly mistake to forget to clean this list...
-  m_LIP.reserve(m_coeff_buf.size() / 32);
   m_LSP_new.clear();
+  m_LIP_mask.resize(m_coeff_buf.size());
+  m_LIP_mask.reset();
 
   // Put in two sets, each representing a half of the long array.
   Set1D set;

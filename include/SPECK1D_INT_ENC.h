@@ -16,7 +16,7 @@ class SPECK1D_INT_ENC : public SPECK1D_INT<T> {
   //
   // Bring members from parent classes to this derived class.
   //
-  using SPECK_INT<T>::m_LIP;
+  using SPECK_INT<T>::m_LIP_mask;
   using SPECK_INT<T>::m_LSP_new;
   using SPECK_INT<T>::m_threshold;
   using SPECK_INT<T>::m_coeff_buf;

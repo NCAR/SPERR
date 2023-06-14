@@ -10,17 +10,37 @@ void sperr::SPECK1D_INT_DEC<T>::m_sorting_pass()
 {
   // Since we have a separate representation of LIP, let's process that list first
   //
-  size_t dummy = 0;
-  for (size_t loc = 0; loc < m_LIP.size(); loc++)
-    m_process_P(loc, dummy, true);
+  if (m_LIP_mask.size() % 64 == 0) {
+    for (size_t i = 0; i < m_LIP_mask.size(); i += 64) {
+      const auto value = m_LIP_mask.read_long(i);
+      if (value != 0) {
+        for (size_t j = 0; j < 64; j++) {
+          if ((value >> j) & uint64_t{1}) {
+            size_t dummy = 0;
+            m_process_P(i + j, dummy, true);
+          }
+        }
+      }
+    }
+  }
+  else {  // Very unlikely
+    for (size_t i = 0; i < m_LIP_mask.size(); i++) {
+      if (m_LIP_mask.read_bit(i)) {
+        size_t dummy = 0;
+        m_process_P(i, dummy, true);
+      }
+    }
+  }
 
   // Then we process regular sets in LIS.
   //
   for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
     // From the end of m_LIS to its front
     size_t idx1 = m_LIS.size() - tmp;
-    for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++)
+    for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
+      size_t dummy = 0;
       m_process_S(idx1, idx2, dummy, true);
+    }
   }
 }
 
@@ -43,10 +63,9 @@ void sperr::SPECK1D_INT_DEC<T>::m_process_S(size_t idx1, size_t idx2, size_t& co
 }
 
 template <typename T>
-void sperr::SPECK1D_INT_DEC<T>::m_process_P(size_t loc, size_t& counter, bool read)
+void sperr::SPECK1D_INT_DEC<T>::m_process_P(size_t idx, size_t& counter, bool read)
 {
   bool is_sig = true;
-  const auto pixel_idx = m_LIP[loc];
 
   if (read) {
     is_sig = m_bit_buffer.rbit();
@@ -55,13 +74,12 @@ void sperr::SPECK1D_INT_DEC<T>::m_process_P(size_t loc, size_t& counter, bool re
 
   if (is_sig) {
     counter++;  // Let's increment the counter first!
-    m_sign_array[pixel_idx] = m_bit_buffer.rbit();
+    m_sign_array[idx] = m_bit_buffer.rbit();
     ++m_bit_idx;
 
-    m_coeff_buf[pixel_idx] = m_threshold;
-    m_LSP_new.push_back(pixel_idx);
-
-    m_LIP[loc] = m_u64_garbage_val;
+    m_coeff_buf[idx] = m_threshold;
+    m_LSP_new.push_back(idx);
+    m_LIP_mask.write_false(idx);
   }
 }
 
@@ -76,8 +94,8 @@ void sperr::SPECK1D_INT_DEC<T>::m_code_S(size_t idx1, size_t idx2)
   const auto& set0 = subsets[0];
   assert(set0.length != 0);
   if (set0.length == 1) {
-    m_LIP.push_back(set0.start);
-    m_process_P(m_LIP.size() - 1, sig_counter, read);
+    m_LIP_mask.write_true(set0.start);
+    m_process_P(set0.start, sig_counter, read);
   }
   else {
     const auto newidx1 = set0.part_level;
@@ -91,8 +109,8 @@ void sperr::SPECK1D_INT_DEC<T>::m_code_S(size_t idx1, size_t idx2)
   const auto& set1 = subsets[1];
   assert(set1.length != 0);
   if (set1.length == 1) {
-    m_LIP.push_back(set1.start);
-    m_process_P(m_LIP.size() - 1, sig_counter, read);
+    m_LIP_mask.write_true(set1.start);
+    m_process_P(set1.start, sig_counter, read);
   }
   else {
     const auto newidx1 = set1.part_level;

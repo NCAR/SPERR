@@ -71,11 +71,11 @@ class SPECK_INT {
   // Data members
   dims_type m_dims = {0, 0, 0};
   uint_type m_threshold = 0;
-  Bitmask m_LSP_mask;
+  Bitmask m_LSP_mask, m_LIP_mask;
   vecui_type m_coeff_buf;
   vecb_type m_sign_array;
   Bitstream m_bit_buffer;
-  std::vector<uint64_t> m_LIP, m_LSP_new;
+  std::vector<uint64_t> m_LSP_new;
 
   const uint64_t m_u64_garbage_val = std::numeric_limits<uint64_t>::max();
   const size_t m_header_size = 9;  // 9 bytes

@@ -23,10 +23,6 @@ void sperr::SPECK3D_INT<T>::m_clean_LIS()
                              [](const auto& s) { return s.type == SetType::Garbage; });
     list.erase(it, list.end());
   }
-
-  // Let's also clean up m_LIP.
-  auto it = std::remove(m_LIP.begin(), m_LIP.end(), m_u64_garbage_val);
-  m_LIP.erase(it, m_LIP.end());
 }
 
 template <typename T>
@@ -42,8 +38,8 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   if (m_LIS.size() < num_of_sizes)
     m_LIS.resize(num_of_sizes);
   std::for_each(m_LIS.begin(), m_LIS.end(), [](auto& list) { list.clear(); });
-  m_LIP.clear();
-  m_LIP.reserve(m_coeff_buf.size() / 4);
+  m_LIP_mask.resize(m_coeff_buf.size());
+  m_LIP_mask.reset();
 
   // Starting from a set representing the whole volume, identify the smaller
   // sets and put them in LIS accordingly.
