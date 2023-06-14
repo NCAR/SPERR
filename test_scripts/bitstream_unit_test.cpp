@@ -230,6 +230,16 @@ TEST(Bitmask, RandomReadWrite)
     m1.write_bit(i, ran);
     vec[i] = ran;
   }
+  for (size_t i = 1; i < N; i += 35) {
+    if (i % 2 == 0) { 
+      m1.write_true(i);
+      vec[i] = true;
+    }
+    else {
+      m1.write_false(i);
+      vec[i] = false;
+    }
+  }
   for (size_t i = 0; i < N; i++)
     EXPECT_EQ(m1.read_bit(i), vec[i]) << "at idx = " << i;
 }
