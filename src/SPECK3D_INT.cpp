@@ -35,10 +35,12 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   size_t num_of_sizes = std::accumulate(num_of_parts.cbegin(), num_of_parts.cend(), 1ul);
 
   // Initialize LIS
+  const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
+  assert(total_vals >= 0);
   if (m_LIS.size() < num_of_sizes)
     m_LIS.resize(num_of_sizes);
   std::for_each(m_LIS.begin(), m_LIS.end(), [](auto& list) { list.clear(); });
-  m_LIP_mask.resize(m_coeff_buf.size());
+  m_LIP_mask.resize(total_vals);
   m_LIP_mask.reset();
 
   // Starting from a set representing the whole volume, identify the smaller
@@ -91,8 +93,7 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   m_LIS[parts].insert(m_LIS[parts].begin(), big);
 
   m_LSP_new.clear();
-  m_LSP_new.reserve(m_coeff_buf.size() / 8);
-  m_bit_buffer.reserve(m_coeff_buf.size());  // a reasonable starting point
+  m_LSP_new.reserve(total_vals / 8);
 }
 
 template <typename T>
