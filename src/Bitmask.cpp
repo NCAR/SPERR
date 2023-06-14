@@ -58,13 +58,33 @@ void sperr::Bitmask::write_long(size_t idx, uint64_t value)
 void sperr::Bitmask::write_bit(size_t idx, bool bit)
 {
   const auto wstart = idx / 64;
+  const auto mask = uint64_t{1} << (idx % 64);
 
   auto word = m_buf[wstart];
-  const auto mask = uint64_t{1} << (idx % 64);
   if (bit)
     word |= mask;
   else
     word &= ~mask;
+  m_buf[wstart] = word;
+}
+
+void sperr::Bitmask::write_true(size_t idx)
+{
+  const auto wstart = idx / 64;
+  const auto mask = uint64_t{1} << (idx % 64);
+
+  auto word = m_buf[wstart];
+  word |= mask;
+  m_buf[wstart] = word;
+}
+
+void sperr::Bitmask::write_false(size_t idx)
+{
+  const auto wstart = idx / 64;
+  const auto mask = uint64_t{1} << (idx % 64);
+
+  auto word = m_buf[wstart];
+  word &= ~mask;
   m_buf[wstart] = word;
 }
 
