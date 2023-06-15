@@ -22,7 +22,6 @@ class SPECK3D_INT_DEC : public SPECK3D_INT<T> {
   using SPECK_INT<T>::m_coeff_buf;
   using SPECK_INT<T>::m_bit_buffer;
   using SPECK_INT<T>::m_sign_array;
-  using SPECK_INT<T>::m_u64_garbage_val;
   using SPECK3D_INT<T>::m_LIS;
   using SPECK3D_INT<T>::m_partition_S_XYZ;
 

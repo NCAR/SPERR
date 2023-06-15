@@ -77,11 +77,9 @@ class SPECK_INT {
   Bitstream m_bit_buffer;
   std::vector<uint64_t> m_LSP_new;
 
-  const uint64_t m_u64_garbage_val = std::numeric_limits<uint64_t>::max();
   const size_t m_header_size = 9;  // 9 bytes
-
-  uint64_t m_bit_idx = 0;     // current bit idx when decoding
-  uint64_t m_total_bits = 0;  // keeps track of useful bits in `m_bit_buffer`
+  uint64_t m_bit_idx = 0;          // current bit idx when decoding
+  uint64_t m_total_bits = 0;       // keeps track of useful bits in `m_bit_buffer`
   uint8_t m_num_bitplanes = 0;
 };
 
