@@ -137,7 +137,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_code_S(size_t idx1,
     if (subsets[i].is_empty())
       subset_sigs[i] = SigType::Garbage;  // SigType::Garbage is only used locally here.
   }
-  std::remove(subset_sigs.begin(), subset_sigs.end(), SigType::Garbage);
+  auto sig_end = std::remove(subset_sigs.begin(), subset_sigs.end(), SigType::Garbage);
   const auto set_end =
       std::remove_if(subsets.begin(), subsets.end(), [](auto& s) { return s.is_empty(); });
   const auto set_end_m1 = set_end - 1;
