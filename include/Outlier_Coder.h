@@ -1,9 +1,9 @@
 #ifndef OUTLIER_CODER_H
 #define OUTLIER_CODER_H
 
-#include "sperr_helper.h"
-#include "SPECK1D_INT_ENC.h"
 #include "SPECK1D_INT_DEC.h"
+#include "SPECK1D_INT_ENC.h"
+#include "sperr_helper.h"
 
 #include <variant>
 

@@ -61,7 +61,7 @@ enum class RTNType {
   CompModeUnknown,
   CustomFilterMissing,
   CustomFilterError,
-  FE_Invalid, // floating point exception: FE_INVALID
+  FE_Invalid,  // floating point exception: FE_INVALID
   Error
 };
 

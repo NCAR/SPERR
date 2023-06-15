@@ -14,14 +14,13 @@ class SPECK1D_INT_DEC : public SPECK1D_INT<T> {
   //
   // Bring members from parent classes to this derived class.
   //
-  using SPECK_INT<T>::m_LIP;
+  using SPECK_INT<T>::m_LIP_mask;
   using SPECK_INT<T>::m_LSP_new;
   using SPECK_INT<T>::m_bit_idx;
   using SPECK_INT<T>::m_threshold;
   using SPECK_INT<T>::m_coeff_buf;
   using SPECK_INT<T>::m_bit_buffer;
   using SPECK_INT<T>::m_sign_array;
-  using SPECK_INT<T>::m_u64_garbage_val;
   using SPECK1D_INT<T>::m_LIS;
   using SPECK1D_INT<T>::m_partition_set;
 

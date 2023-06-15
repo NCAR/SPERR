@@ -44,6 +44,8 @@ class Bitmask {
   //
   void write_long(size_t idx, uint64_t value);
   void write_bit(size_t idx, bool bit);
+  void write_true(size_t idx);   // This is faster than `write_bit(idx, true)`.
+  void write_false(size_t idx);  // This is faster than `write_bit(idx, false)`.
 
   // Functions for direct access of the underlying data buffer
   // Note: `use_bitstream()` reads the number of values (uint64_t type) that provide

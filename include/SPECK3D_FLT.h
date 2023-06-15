@@ -6,7 +6,6 @@
 namespace sperr {
 
 class SPECK3D_FLT : public SPECK_FLT {
-
  protected:
   void m_instantiate_encoder() override;
   void m_instantiate_decoder() override;

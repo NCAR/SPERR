@@ -53,9 +53,8 @@ class SPERR3D_OMP_D {
                        dims_type vol_dim,
                        const vecd_type& small_vol,
                        std::array<size_t, 6> chunk_info);
-
 };
 
-} // End of namespace sperr
+}  // End of namespace sperr
 
 #endif

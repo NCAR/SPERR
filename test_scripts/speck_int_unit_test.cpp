@@ -197,7 +197,7 @@ TEST(SPECK1D_INT, Random2)
   auto [input, input_signs] = ProduceRandomArray<uint16_t>(dims[0], 499.0, 2); 
 
   // Encode
-  auto encoder = sperr::SPECK3D_INT_ENC<uint16_t>();
+  auto encoder = sperr::SPECK1D_INT_ENC<uint16_t>();
   encoder.use_coeffs(input, input_signs);
   encoder.set_dims(dims);
   encoder.encode();
@@ -205,7 +205,7 @@ TEST(SPECK1D_INT, Random2)
   encoder.append_encoded_bitstream(bitstream);
 
   // Decode
-  auto decoder = sperr::SPECK3D_INT_DEC<uint16_t>();
+  auto decoder = sperr::SPECK1D_INT_DEC<uint16_t>();
   decoder.set_dims(dims);
   decoder.use_bitstream(bitstream.data(), bitstream.size());
   decoder.decode();
@@ -464,6 +464,5 @@ TEST(SPECK3D_INT, RandomRandom)
   EXPECT_EQ(input, output);
   EXPECT_EQ(input_signs, output_signs);
 }
-
 
 }  // namespace

@@ -38,12 +38,11 @@ class SPECK3D_INT : public SPECK_INT<T> {
   //
   // Bring members from the base class to this derived class.
   //
-  using SPECK_INT<T>::m_LIP;
+  using SPECK_INT<T>::m_LIP_mask;
   using SPECK_INT<T>::m_dims;
   using SPECK_INT<T>::m_LSP_new;
   using SPECK_INT<T>::m_coeff_buf;
   using SPECK_INT<T>::m_bit_buffer;
-  using SPECK_INT<T>::m_u64_garbage_val;
 
   void m_clean_LIS() override;
   void m_initialize_lists() override;
