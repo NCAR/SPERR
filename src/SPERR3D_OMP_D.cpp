@@ -44,25 +44,21 @@ auto sperr::SPERR3D_OMP_D::setup_decomp(const void* p, size_t total_len) -> RTNT
   const auto multi_chunk = b8[3];
 
   // Parse Step 3: Extract volume and chunk dimensions
+  uint32_t vdim[3];
+  std::memcpy(vdim, u8p + pos, sizeof(vdim));
+  pos += sizeof(vdim);
+  m_dims[0] = vdim[0];
+  m_dims[1] = vdim[1];
+  m_dims[2] = vdim[2];
+  m_chunk_dims = m_dims;
+
   if (multi_chunk) {
-    uint32_t vcdim[6];
+    uint16_t vcdim[3];
     std::memcpy(vcdim, u8p + pos, sizeof(vcdim));
     pos += sizeof(vcdim);
-    m_dims[0] = vcdim[0];
-    m_dims[1] = vcdim[1];
-    m_dims[2] = vcdim[2];
-    m_chunk_dims[0] = vcdim[3];
-    m_chunk_dims[1] = vcdim[4];
-    m_chunk_dims[2] = vcdim[5];
-  }
-  else {
-    uint32_t vdim[3];
-    std::memcpy(vdim, u8p + pos, sizeof(vdim));
-    pos += sizeof(vdim);
-    m_dims[0] = vdim[0];
-    m_dims[1] = vdim[1];
-    m_dims[2] = vdim[2];
-    m_chunk_dims = m_dims;
+    m_chunk_dims[0] = vcdim[0];
+    m_chunk_dims[1] = vcdim[1];
+    m_chunk_dims[2] = vcdim[2];
   }
 
   // Figure out how many chunks and their length

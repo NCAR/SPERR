@@ -46,7 +46,7 @@ class SPERR3D_OMP_C {
 #endif
 
   // Header size would be the magic number + num_chunks * 4
-  const size_t m_header_magic_nchunks = 26;
+  const size_t m_header_magic_nchunks = 20;
   const size_t m_header_magic_1chunk = 14;
 
   //

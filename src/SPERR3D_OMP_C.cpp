@@ -137,7 +137,8 @@ auto sperr::SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   // The header would contain the following information
   //  -- a version number                     (1 byte)
   //  -- 8 booleans                           (1 byte)
-  //  -- volume and/or chunk dimensions       (4 x 6 = 24 or 4 x 3 = 12 bytes)
+  //  -- volume dimensions                    (4 x 3 = 12 bytes)
+  //  -- (optional) chunk dimensions          (2 x 3 = 6 bytes)
   //  -- length of bitstream for each chunk   (4 x num_chunks)
   //
   auto chunk_idx = sperr::chunk_volume(m_dims, m_chunk_dims);
@@ -176,20 +177,19 @@ auto sperr::SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   header[loc] = sperr::pack_8_booleans(b8);
   loc += 1;
 
-  // Volume and chunk dimensions
+  // Volume dimensions
+  const uint32_t vdim[3] = {static_cast<uint32_t>(m_dims[0]), static_cast<uint32_t>(m_dims[1]),
+                            static_cast<uint32_t>(m_dims[2])};
+  std::memcpy(&header[loc], vdim, sizeof(vdim));
+  loc += sizeof(vdim);
+
+  // Chunk dimensions, if there are more than one chunk.
   if (num_chunks > 1) {
-    const uint32_t vcdim[6] = {
-        static_cast<uint32_t>(m_dims[0]),       static_cast<uint32_t>(m_dims[1]),
-        static_cast<uint32_t>(m_dims[2]),       static_cast<uint32_t>(m_chunk_dims[0]),
-        static_cast<uint32_t>(m_chunk_dims[1]), static_cast<uint32_t>(m_chunk_dims[2])};
+    const uint16_t vcdim[3] = {static_cast<uint16_t>(m_chunk_dims[0]),
+                               static_cast<uint16_t>(m_chunk_dims[1]),
+                               static_cast<uint16_t>(m_chunk_dims[2])};
     std::memcpy(&header[loc], vcdim, sizeof(vcdim));
     loc += sizeof(vcdim);
-  }
-  else {
-    const uint32_t vdim[3] = {static_cast<uint32_t>(m_dims[0]), static_cast<uint32_t>(m_dims[1]),
-                              static_cast<uint32_t>(m_dims[2])};
-    std::memcpy(&header[loc], vdim, sizeof(vdim));
-    loc += sizeof(vdim);
   }
 
   // Length of bitstream for each chunk.
