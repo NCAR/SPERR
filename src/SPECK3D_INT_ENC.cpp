@@ -10,25 +10,23 @@ void sperr::SPECK3D_INT_ENC<T>::m_sorting_pass()
 {
   // Since we have a separate representation of LIP, let's process that list first!
   //
-  if (m_LIP_mask.size() % 64 == 0) {
-    for (size_t i = 0; i < m_LIP_mask.size(); i += 64) {
-      const auto value = m_LIP_mask.read_long(i);
-      if (value != 0) {
-        for (size_t j = 0; j < 64; j++) {
-          if ((value >> j) & uint64_t{1}) {
-            size_t dummy = 0;
-            m_process_P(i + j, SigType::Dunno, dummy, true);
-          }
+  const auto bits_x64 = m_LIP_mask.size() - m_LIP_mask.size() % 64;
+
+  for (size_t i = 0; i < bits_x64; i += 64) {
+    const auto value = m_LIP_mask.read_long(i);
+    if (value != 0) {
+      for (size_t j = 0; j < 64; j++) {
+        if ((value >> j) & uint64_t{1}) {
+          size_t dummy = 0;
+          m_process_P(i + j, SigType::Dunno, dummy, true);
         }
-      }  // Finish examine 64 bits.
+      }
     }
   }
-  else {  // Very unlikely
-    for (size_t i = 0; i < m_LIP_mask.size(); i++) {
-      if (m_LIP_mask.read_bit(i)) {
-        size_t dummy = 0;
-        m_process_P(i, SigType::Dunno, dummy, true);
-      }
+  for (auto i = bits_x64; i < m_LIP_mask.size(); i++) {
+    if (m_LIP_mask.read_bit(i)) {
+      size_t dummy = 0;
+      m_process_P(i, SigType::Dunno, dummy, true);
     }
   }
 

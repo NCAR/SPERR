@@ -242,28 +242,25 @@ void sperr::SPECK_INT<T>::m_refinement_pass_encode()
   // First, process significant pixels previously found.
   //
   const auto tmp1 = std::array<uint_type, 2>{uint_type{0}, m_threshold};
+  const auto bits_x64 = m_LSP_mask.size() - m_LSP_mask.size() % 64;
 
-  if (m_LSP_mask.size() % 64 == 0) {
-    for (size_t i = 0; i < m_LSP_mask.size(); i += 64) {
-      const auto value = m_LSP_mask.read_long(i);
-      if (value != 0) {
-        for (size_t j = 0; j < 64; j++) {
-          if ((value >> j) & uint64_t{1}) {
-            const bool o1 = m_coeff_buf[i + j] >= m_threshold;
-            m_coeff_buf[i + j] -= tmp1[o1];
-            m_bit_buffer.wbit(o1);
-          }
+  for (size_t i = 0; i < bits_x64; i += 64) {
+    const auto value = m_LSP_mask.read_long(i);
+    if (value != 0) {
+      for (size_t j = 0; j < 64; j++) {
+        if ((value >> j) & uint64_t{1}) {
+          const bool o1 = m_coeff_buf[i + j] >= m_threshold;
+          m_coeff_buf[i + j] -= tmp1[o1];
+          m_bit_buffer.wbit(o1);
         }
       }
     }
   }
-  else {  // Very unlikely
-    for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-      if (m_LSP_mask.read_bit(i)) {
-        const bool o1 = m_coeff_buf[i] >= m_threshold;
-        m_coeff_buf[i] -= tmp1[o1];
-        m_bit_buffer.wbit(o1);
-      }
+  for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {
+    if (m_LSP_mask.read_bit(i)) {
+      const bool o1 = m_coeff_buf[i] >= m_threshold;
+      m_coeff_buf[i] -= tmp1[o1];
+      m_bit_buffer.wbit(o1);
     }
   }
 
@@ -280,26 +277,23 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
   // First, process significant pixels previously found.
   //
   const auto tmp = std::array<uint_type, 2>{uint_type{0}, m_threshold};
+  const auto bits_x64 = m_LSP_mask.size() - m_LSP_mask.size() % 64;
 
-  if (m_LSP_mask.size() % 64 == 0) {
-    for (size_t i = 0; i < m_LSP_mask.size(); i += 64) {
-      const auto value = m_LSP_mask.read_long(i);
-      if (value != 0) {
-        for (size_t j = 0; j < 64; j++) {
-          if ((value >> j) & uint64_t{1}) {
-            m_coeff_buf[i + j] += tmp[m_bit_buffer.rbit()];
-            ++m_bit_idx;
-          }
+  for (size_t i = 0; i < bits_x64; i += 64) {
+    const auto value = m_LSP_mask.read_long(i);
+    if (value != 0) {
+      for (size_t j = 0; j < 64; j++) {
+        if ((value >> j) & uint64_t{1}) {
+          m_coeff_buf[i + j] += tmp[m_bit_buffer.rbit()];
+          ++m_bit_idx;
         }
       }
     }
   }
-  else {  // Very unlikely
-    for (size_t i = 0; i < m_LSP_mask.size(); i++) {
-      if (m_LSP_mask.read_bit(i)) {
-        m_coeff_buf[i] += tmp[m_bit_buffer.rbit()];
-        ++m_bit_idx;
-      }
+  for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {
+    if (m_LSP_mask.read_bit(i)) {
+      m_coeff_buf[i] += tmp[m_bit_buffer.rbit()];
+      ++m_bit_idx;
     }
   }
   assert(m_bit_idx <= m_total_bits);
