@@ -178,7 +178,7 @@ endif()
 # Install utilities
 #
 if( BUILD_CLI_UTILITIES )
-  install( TARGETS show_version # mid-tread #compressor_3d decompressor_3d compressor_2d decompressor_2d header_parser 
+  install( TARGETS show_version sperr3d #compressor_3d decompressor_3d compressor_2d decompressor_2d header_parser 
            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
 endif()
 
