@@ -36,8 +36,8 @@ class SPECK2D_INT : public SPECK_INT<T> {
 
   void m_clean_LIS() override;
   auto m_partition_S(Set2D) const -> std::array<Set2D, 4>;
-  //auto m_partition_I() const -> std::array<Set2D, 3>;
-  //void m_initialize_lists() override;
+  auto m_partition_I() -> std::array<Set2D, 3>;
+  void m_initialize_lists() override;
 
   //
   // SPECK2D_INT specific data members
