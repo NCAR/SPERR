@@ -7,9 +7,6 @@ namespace sperr {
 
 class Set2D {
  public:
-  //
-  // Member data
-  //
   uint32_t start_x = 0;
   uint32_t start_y = 0;
   uint32_t length_x = 0;
@@ -18,9 +15,6 @@ class Set2D {
   SetType type = SetType::TypeS;
 
  public:
-  //
-  // Member functions
-  //
   auto is_pixel() const -> bool;
   auto is_empty() const -> bool;
 };
@@ -41,15 +35,15 @@ class SPECK2D_INT : public SPECK_INT<T> {
   using SPECK_INT<T>::m_bit_buffer;
 
   void m_clean_LIS() override;
-  void m_initialize_lists() override;
-  auto m_partition_S(const Set2D&) -> std::array<Set2D, 4>;
-  auto m_partition_I() -> std::array<Set2D, 3>;
+  auto m_partition_S(Set2D) const -> std::array<Set2D, 4>;
+  //auto m_partition_I() const -> std::array<Set2D, 3>;
+  //void m_initialize_lists() override;
 
   //
   // SPECK2D_INT specific data members
   //
   std::vector<std::vector<Set2D>> m_LIS;
-  Set2D m_I;
+  Set2D m_I = {0, 0, 0, 0, 0, SetType::TypeI};
 };
 
 };  // namespace sperr
