@@ -109,11 +109,6 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) const -> std::ar
   next_part_lev += split_z[1] > 0 ? 1 : 0;
 
   std::array<Set3D, 8> subsets;
-
-#pragma GCC unroll 8
-  for (auto& s : subsets)
-    s.part_level = next_part_lev;
-
   constexpr auto offsets = std::array<size_t, 3>{1, 2, 4};
 
   //
@@ -123,81 +118,89 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) const -> std::ar
   constexpr auto idx0 = 0 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
   auto& sub0 = subsets[idx0];
   sub0.start_x = set.start_x;
-  sub0.length_x = split_x[0];
   sub0.start_y = set.start_y;
-  sub0.length_y = split_y[0];
   sub0.start_z = set.start_z;
+  sub0.length_x = split_x[0];
+  sub0.length_y = split_y[0];
   sub0.length_z = split_z[0];
+  sub0.part_level = next_part_lev;
 
   // subset (1, 0, 0)
   constexpr auto idx1 = 1 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
   auto& sub1 = subsets[idx1];
   sub1.start_x = set.start_x + split_x[0];
-  sub1.length_x = split_x[1];
   sub1.start_y = set.start_y;
-  sub1.length_y = split_y[0];
   sub1.start_z = set.start_z;
+  sub1.length_x = split_x[1];
+  sub1.length_y = split_y[0];
   sub1.length_z = split_z[0];
+  sub1.part_level = next_part_lev;
 
   // subset (0, 1, 0)
   constexpr auto idx2 = 0 * offsets[0] + 1 * offsets[1] + 0 * offsets[2];
   auto& sub2 = subsets[idx2];
   sub2.start_x = set.start_x;
-  sub2.length_x = split_x[0];
   sub2.start_y = set.start_y + split_y[0];
-  sub2.length_y = split_y[1];
   sub2.start_z = set.start_z;
+  sub2.length_x = split_x[0];
+  sub2.length_y = split_y[1];
   sub2.length_z = split_z[0];
+  sub2.part_level = next_part_lev;
 
   // subset (1, 1, 0)
   constexpr auto idx3 = 1 * offsets[0] + 1 * offsets[1] + 0 * offsets[2];
   auto& sub3 = subsets[idx3];
   sub3.start_x = set.start_x + split_x[0];
-  sub3.length_x = split_x[1];
   sub3.start_y = set.start_y + split_y[0];
-  sub3.length_y = split_y[1];
   sub3.start_z = set.start_z;
+  sub3.length_x = split_x[1];
+  sub3.length_y = split_y[1];
   sub3.length_z = split_z[0];
+  sub3.part_level = next_part_lev;
 
   // subset (0, 0, 1)
   constexpr auto idx4 = 0 * offsets[0] + 0 * offsets[1] + 1 * offsets[2];
   auto& sub4 = subsets[idx4];
   sub4.start_x = set.start_x;
-  sub4.length_x = split_x[0];
   sub4.start_y = set.start_y;
-  sub4.length_y = split_y[0];
   sub4.start_z = set.start_z + split_z[0];
+  sub4.length_x = split_x[0];
+  sub4.length_y = split_y[0];
   sub4.length_z = split_z[1];
+  sub4.part_level = next_part_lev;
 
   // subset (1, 0, 1)
   constexpr auto idx5 = 1 * offsets[0] + 0 * offsets[1] + 1 * offsets[2];
   auto& sub5 = subsets[idx5];
   sub5.start_x = set.start_x + split_x[0];
-  sub5.length_x = split_x[1];
   sub5.start_y = set.start_y;
-  sub5.length_y = split_y[0];
   sub5.start_z = set.start_z + split_z[0];
+  sub5.length_x = split_x[1];
+  sub5.length_y = split_y[0];
   sub5.length_z = split_z[1];
+  sub5.part_level = next_part_lev;
 
   // subset (0, 1, 1)
   constexpr auto idx6 = 0 * offsets[0] + 1 * offsets[1] + 1 * offsets[2];
   auto& sub6 = subsets[idx6];
   sub6.start_x = set.start_x;
-  sub6.length_x = split_x[0];
   sub6.start_y = set.start_y + split_y[0];
-  sub6.length_y = split_y[1];
   sub6.start_z = set.start_z + split_z[0];
+  sub6.length_x = split_x[0];
+  sub6.length_y = split_y[1];
   sub6.length_z = split_z[1];
+  sub6.part_level = next_part_lev;
 
   // subset (1, 1, 1)
   constexpr auto idx7 = 1 * offsets[0] + 1 * offsets[1] + 1 * offsets[2];
   auto& sub7 = subsets[idx7];
   sub7.start_x = set.start_x + split_x[0];
-  sub7.length_x = split_x[1];
   sub7.start_y = set.start_y + split_y[0];
-  sub7.length_y = split_y[1];
   sub7.start_z = set.start_z + split_z[0];
+  sub7.length_x = split_x[1];
+  sub7.length_y = split_y[1];
   sub7.length_z = split_z[1];
+  sub7.part_level = next_part_lev;
 
   return subsets;
 }
@@ -227,40 +230,40 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XY(const Set3D& set) const -> std::arr
   size_t sub_i = 0 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
   auto& sub0 = subsets[sub_i];
   sub0.start_x = set.start_x;
-  sub0.length_x = split_x[0];
   sub0.start_y = set.start_y;
-  sub0.length_y = split_y[0];
   sub0.start_z = set.start_z;
+  sub0.length_x = split_x[0];
+  sub0.length_y = split_y[0];
   sub0.length_z = set.length_z;
 
   // subset (1, 0, 0)
   sub_i = 1 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
   auto& sub1 = subsets[sub_i];
   sub1.start_x = set.start_x + split_x[0];
-  sub1.length_x = split_x[1];
   sub1.start_y = set.start_y;
-  sub1.length_y = split_y[0];
   sub1.start_z = set.start_z;
+  sub1.length_x = split_x[1];
+  sub1.length_y = split_y[0];
   sub1.length_z = set.length_z;
 
   // subset (0, 1, 0)
   sub_i = 0 * offsets[0] + 1 * offsets[1] + 0 * offsets[2];
   auto& sub2 = subsets[sub_i];
   sub2.start_x = set.start_x;
-  sub2.length_x = split_x[0];
   sub2.start_y = set.start_y + split_y[0];
-  sub2.length_y = split_y[1];
   sub2.start_z = set.start_z;
+  sub2.length_x = split_x[0];
+  sub2.length_y = split_y[1];
   sub2.length_z = set.length_z;
 
   // subset (1, 1, 0)
   sub_i = 1 * offsets[0] + 1 * offsets[1] + 0 * offsets[2];
   auto& sub3 = subsets[sub_i];
   sub3.start_x = set.start_x + split_x[0];
-  sub3.length_x = split_x[1];
   sub3.start_y = set.start_y + split_y[0];
-  sub3.length_y = split_y[1];
   sub3.start_z = set.start_z;
+  sub3.length_x = split_x[1];
+  sub3.length_y = split_y[1];
   sub3.length_z = set.length_z;
 
   return subsets;
