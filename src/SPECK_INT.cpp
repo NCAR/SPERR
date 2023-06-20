@@ -89,6 +89,8 @@ void sperr::SPECK_INT<T>::encode()
   // Mark every coefficient as insignificant
   m_LSP_mask.resize(m_coeff_buf.size());
   m_LSP_mask.reset();
+  m_LSP_new.clear();
+  m_LSP_new.reserve(m_coeff_buf.size() / 16);
 
   // Treat it as a special case when all coeffs (m_coeff_buf) are zero.
   //    In such a case, we mark `m_num_bitplanes` as zero.
@@ -131,9 +133,12 @@ void sperr::SPECK_INT<T>::decode()
   m_coeff_buf.assign(coeff_len, uint_type{0});
   m_sign_array.assign(coeff_len, true);
 
-  // Mark every coefficient as insignificant
+  // Mark every coefficient as insignificant.
   m_LSP_mask.resize(coeff_len);
   m_LSP_mask.reset();
+  m_LSP_new.clear();
+  m_LSP_new.reserve(m_coeff_buf.size() / 16);
+
   m_bit_buffer.rewind();
   m_bit_idx = 0;
 

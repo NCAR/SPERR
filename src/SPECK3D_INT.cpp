@@ -36,7 +36,7 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
 
   // Initialize LIS
   const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
-  assert(total_vals >= 0);
+  assert(total_vals > 0);
   if (m_LIS.size() < num_of_sizes)
     m_LIS.resize(num_of_sizes);
   std::for_each(m_LIS.begin(), m_LIS.end(), [](auto& list) { list.clear(); });
@@ -91,9 +91,6 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   // it at the front of it's corresponding vector. One-time expense.
   const auto parts = big.part_level;
   m_LIS[parts].insert(m_LIS[parts].begin(), big);
-
-  m_LSP_new.clear();
-  m_LSP_new.reserve(total_vals / 8);
 }
 
 template <typename T>

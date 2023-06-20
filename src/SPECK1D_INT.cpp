@@ -24,7 +24,6 @@ void sperr::SPECK1D_INT<T>::m_initialize_lists()
   if (m_LIS.size() < num_of_lists)
     m_LIS.resize(num_of_lists);
   std::for_each(m_LIS.begin(), m_LIS.end(), [](auto& list) { list.clear(); });
-  m_LSP_new.clear();
   m_LIP_mask.resize(total_len);
   m_LIP_mask.reset();
 
