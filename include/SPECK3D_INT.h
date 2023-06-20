@@ -48,9 +48,9 @@ class SPECK3D_INT : public SPECK_INT<T> {
   void m_initialize_lists() override;
 
   // Divide a Set3D into 8, 4, or 2 smaller subsets.
-  auto m_partition_S_XYZ(const Set3D&) -> std::array<Set3D, 8>;
-  auto m_partition_S_XY(const Set3D&) -> std::array<Set3D, 4>;
-  auto m_partition_S_Z(const Set3D&) -> std::array<Set3D, 2>;
+  auto m_partition_S_XYZ(const Set3D&) const -> std::array<Set3D, 8>;
+  auto m_partition_S_XY(const Set3D&) const -> std::array<Set3D, 4>;
+  auto m_partition_S_Z(const Set3D&) const -> std::array<Set3D, 2>;
 
   //
   // SPECK3D_INT specific data members

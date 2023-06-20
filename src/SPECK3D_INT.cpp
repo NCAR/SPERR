@@ -97,7 +97,7 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
 }
 
 template <typename T>
-auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) -> std::array<Set3D, 8>
+auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) const -> std::array<Set3D, 8>
 {
   const auto split_x = std::array<uint32_t, 2>{set.length_x - set.length_x / 2, set.length_x / 2};
   const auto split_y = std::array<uint32_t, 2>{set.length_y - set.length_y / 2, set.length_y / 2};
@@ -203,7 +203,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) -> std::array<Se
 }
 
 template <typename T>
-auto sperr::SPECK3D_INT<T>::m_partition_S_XY(const Set3D& set) -> std::array<Set3D, 4>
+auto sperr::SPECK3D_INT<T>::m_partition_S_XY(const Set3D& set) const -> std::array<Set3D, 4>
 {
   std::array<Set3D, 4> subsets;
 
@@ -267,7 +267,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XY(const Set3D& set) -> std::array<Set
 }
 
 template <typename T>
-auto sperr::SPECK3D_INT<T>::m_partition_S_Z(const Set3D& set) -> std::array<Set3D, 2>
+auto sperr::SPECK3D_INT<T>::m_partition_S_Z(const Set3D& set) const -> std::array<Set3D, 2>
 {
   std::array<Set3D, 2> subsets;
 
