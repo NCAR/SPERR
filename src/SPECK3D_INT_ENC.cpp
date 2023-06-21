@@ -115,10 +115,10 @@ void sperr::SPECK3D_INT_ENC<T>::m_process_P(size_t idx, SigType sig, size_t& cou
 
   if (is_sig) {
     counter++;  // Let's increment the counter first!
-    m_bit_buffer.wbit(m_sign_array[idx]);
-
     assert(m_coeff_buf[idx] >= m_threshold);
     m_coeff_buf[idx] -= m_threshold;
+
+    m_bit_buffer.wbit(m_sign_array[idx]);
     m_LSP_new.push_back(idx);
     m_LIP_mask.write_false(idx);
   }
