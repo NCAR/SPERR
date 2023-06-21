@@ -1,5 +1,7 @@
 #include "SPECK2D_INT.h"
 
+#include <cassert>
+
 auto sperr::Set2D::is_pixel() const -> bool
 {
   return (length_x == 1 && length_y == 1);
@@ -31,11 +33,11 @@ auto sperr::SPECK2D_INT<T>::m_partition_S(Set2D set) const -> std::array<Set2D, 
 
   // Put generated subsets in the list the same order as they are in QccPack.
   auto& BR = subsets[0];  // Bottom right set
-  BR.part_level = set.part_level + 1;
   BR.start_x = set.start_x + approx_len_x;
   BR.start_y = set.start_y + approx_len_y;
   BR.length_x = detail_len_x;
   BR.length_y = detail_len_y;
+  BR.part_level = set.part_level + 1;
 
   auto& BL = subsets[1];  // Bottom left set
   BL.part_level = set.part_level + 1;
@@ -43,6 +45,7 @@ auto sperr::SPECK2D_INT<T>::m_partition_S(Set2D set) const -> std::array<Set2D, 
   BL.start_y = set.start_y + approx_len_y;
   BL.length_x = approx_len_x;
   BL.length_y = detail_len_y;
+  BL.part_level = set.part_level + 1;
 
   auto& TR = subsets[2];  // Top right set
   TR.part_level = set.part_level + 1;
@@ -50,6 +53,7 @@ auto sperr::SPECK2D_INT<T>::m_partition_S(Set2D set) const -> std::array<Set2D, 
   TR.start_y = set.start_y;
   TR.length_x = detail_len_x;
   TR.length_y = approx_len_y;
+  TR.part_level = set.part_level + 1;
 
   auto& TL = subsets[3];  // Top left set
   TL.part_level = set.part_level + 1;
@@ -57,6 +61,7 @@ auto sperr::SPECK2D_INT<T>::m_partition_S(Set2D set) const -> std::array<Set2D, 
   TL.start_y = set.start_y;
   TL.length_x = approx_len_x;
   TL.length_y = approx_len_y;
+  TL.part_level = set.part_level + 1;
 
   return subsets;
 }
@@ -70,30 +75,30 @@ auto sperr::SPECK2D_INT<T>::m_partition_I() -> std::array<Set2D, 3>
 
   // Specify the subsets following the same order in QccPack
   auto& BR = subsets[0];  // Bottom right
-  BR.part_level = m_I.part_level;
   BR.start_x = approx_len_x;
   BR.start_y = approx_len_y;
   BR.length_x = detail_len_x;
   BR.length_y = detail_len_y;
+  BR.part_level = m_I.part_level;
 
   auto& TR = subsets[1];  // Top right
-  TR.part_level = m_I.part_level;
   TR.start_x = approx_len_x;
   TR.start_y = 0;
   TR.length_x = detail_len_x;
   TR.length_y = approx_len_y;
+  TR.part_level = m_I.part_level;
 
   auto& BL = subsets[2];  // Bottom left
-  BL.part_level = m_I.part_level;
   BL.start_x = 0;
   BL.start_y = approx_len_y;
   BL.length_x = approx_len_x;
   BL.length_y = detail_len_y;
+  BL.part_level = m_I.part_level;
 
   // Also update m_I
-  m_I.part_level--;
   m_I.start_x += detail_len_x;
   m_I.start_y += detail_len_y;
+  m_I.part_level--;
 
   return subsets;
 }
@@ -101,34 +106,36 @@ auto sperr::SPECK2D_INT<T>::m_partition_I() -> std::array<Set2D, 3>
 template <typename T>
 void sperr::SPECK2D_INT<T>::m_initialize_lists()
 {
-#if 0
   // prepare m_LIS
-  const auto num_of_parts =
-      std::max(sperr::num_of_partitions(m_dims[0]), sperr::num_of_partitions(m_dims[1]));
-  if (m_LIS.size() < num_of_parts + 1)
-    m_LIS.resize(num_of_parts + 1);
+  auto num_of_parts = sperr::num_of_partitions(std::max(m_dims[0], m_dims[1])) + 1ul;
+  if (m_LIS.size() < num_of_parts)
+    m_LIS.resize(num_of_parts);
   for (auto& list : m_LIS)
     list.clear();
-  m_LIP.clear();
-  m_LIP.reserve(m_coeff_buf.size() / 4);
 
-  // prepare the root, S
-  auto S = m_produce_root();
-  m_LIS[S.part_level].emplace_back(S);
+  auto total_vals = m_dims[0] * m_dims[1];
+  assert(total_vals > 0);
+  m_LIP_mask.resize(total_vals);
+  m_LIP_mask.reset();
+
+  // Prepare the root (S), which is the smallest set after multiple levels of transforms.
+  // Note that `num_of_xforms` isn't the same as `num_of_parts`.
+  //
+  auto num_of_xforms = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  auto [approx_x, detail_x] = sperr::calc_approx_detail_len(m_dims[0], num_of_xforms);
+  auto [approx_y, detail_y] = sperr::calc_approx_detail_len(m_dims[1], num_of_xforms);
+  auto root = Set2D{0, 0, 0, 0, 0, SetType::TypeS};
+  root.length_x = approx_x;
+  root.length_y = approx_y;
+  root.part_level = num_of_xforms;
+  m_LIS[num_of_xforms].push_back(root);
 
   // prepare m_I
-  m_I.part_level = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  m_I.start_x = S.length_x;
-  m_I.start_y = S.length_y;
+  m_I.start_x = root.length_x;
+  m_I.start_y = root.length_y;
   m_I.length_x = m_dims[0];
   m_I.length_y = m_dims[1];
-
-  // clear lists and reserve space.
-  m_LSP_new.clear();
-  m_LSP_new.reserve(m_coeff_buf.size() / 8);
-  m_LSP_mask.reserve(m_coeff_buf.size());
-  m_bit_buffer.reserve(m_coeff_buf.size());
-#endif
+  m_I.part_level = num_of_xforms;
 }
 
 template class sperr::SPECK2D_INT<uint8_t>;
