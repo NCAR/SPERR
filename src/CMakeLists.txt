@@ -10,6 +10,7 @@ add_library( SPERR
              SPECK3D_INT_ENC.cpp
              SPECK3D_INT_DEC.cpp
              SPECK2D_INT.cpp
+             SPECK2D_INT_ENC.cpp
              SPECK1D_INT.cpp
              SPECK1D_INT_ENC.cpp
              SPECK1D_INT_DEC.cpp
@@ -56,6 +57,7 @@ include/SPECK3D_INT.h;\
 include/SPECK3D_INT_ENC.h;\
 include/SPECK3D_INT_DEC.h;\
 include/SPECK2D_INT.h;\
+include/SPECK2D_INT_ENC.h;\
 include/SPECK1D_INT.h;\
 include/SPECK1D_INT_ENC.h;\
 include/SPECK1D_INT_DEC.h;\
