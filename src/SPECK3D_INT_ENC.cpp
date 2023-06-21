@@ -185,9 +185,8 @@ auto sperr::SPECK3D_INT_ENC<T>::m_decide_significance(const Set3D& set) const
       auto last = first + set.length_x;
       auto found = std::find_if(first, last, gtr);
       if (found != last) {
-        const auto x = static_cast<uint32_t>(std::distance(first, found));
-        auto arr = std::array<uint32_t, 3>{x, y - set.start_y, z - set.start_z};
-        return std::optional<std::array<uint32_t, 3>>(arr);
+        auto x = static_cast<uint32_t>(std::distance(first, found));
+        return std::optional<std::array<uint32_t, 3>>({x, y - set.start_y, z - set.start_z});
       }
     }
   }
