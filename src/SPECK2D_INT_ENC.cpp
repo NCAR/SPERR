@@ -83,11 +83,12 @@ void sperr::SPECK2D_INT_ENC<T>::m_process_P(size_t idx, size_t& counter, bool ne
 template <typename T>
 void sperr::SPECK2D_INT_ENC<T>::m_process_I(bool need_decide)
 {
-  if (m_I.part_level > 0) {  // m_I is not empty yet
+  if (m_I.part_level > 0) {  // Only process m_I when it's not empty
     bool is_sig = true;
-    if (need_decide)
+    if (need_decide) {
       is_sig = m_decide_I_significance();
-    m_bit_buffer.wbit(is_sig);
+      m_bit_buffer.wbit(is_sig);
+    }
 
     if (is_sig)
       m_code_I();
@@ -123,6 +124,11 @@ void sperr::SPECK2D_INT_ENC<T>::m_code_S(size_t idx1, size_t idx2)
 template <typename T>
 void sperr::SPECK2D_INT_ENC<T>::m_code_I()
 {
+  // `m_code_I()` is the same in the encoder and decoder, but only calling
+  //    different `m_process_S()` and `m_process_I()`.
+  // I'm deciding to not make it a virtual function becaues `m_process_S()`
+  //    is called quite frequently, so not incur virtual function overhead there.
+  //
   auto subsets = m_partition_I();
 
   auto counter = size_t{0};
@@ -133,7 +139,6 @@ void sperr::SPECK2D_INT_ENC<T>::m_code_I()
       m_process_S(newidx1, m_LIS[newidx1].size() - 1, counter, true);
     }
   }
-
   m_process_I(counter != 0);
 }
 
