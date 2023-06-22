@@ -52,7 +52,6 @@ void sperr::SPECK_INT<T>::reset()
   m_LSP_mask.reset();
   m_LIP_mask.reset();
   m_LSP_new.clear();
-  m_bit_idx = 0;
   m_total_bits = 0;
   m_num_bitplanes = 0;
 
@@ -127,6 +126,7 @@ template <typename T>
 void sperr::SPECK_INT<T>::decode()
 {
   m_initialize_lists();
+  m_bit_buffer.rewind();
 
   // initialize coefficients to be zero, and sign array to be all positive
   const auto coeff_len = m_dims[0] * m_dims[1] * m_dims[2];
@@ -138,9 +138,6 @@ void sperr::SPECK_INT<T>::decode()
   m_LSP_mask.reset();
   m_LSP_new.clear();
   m_LSP_new.reserve(m_coeff_buf.size() / 16);
-
-  m_bit_buffer.rewind();
-  m_bit_idx = 0;
 
   // Handle the special case of all coeffs (m_coeff_buf) are zero by return now!
   //    This case is indicated by both `m_num_bitplanes` and `m_total_bits` equal zero.
@@ -162,7 +159,7 @@ void sperr::SPECK_INT<T>::decode()
     m_clean_LIS();
   }
 
-  assert(m_bit_idx == m_total_bits);
+  assert(m_bit_buffer.rtell() == m_total_bits);
 }
 
 template <typename T>
@@ -288,20 +285,16 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
     const auto value = m_LSP_mask.read_long(i);
     if (value != 0) {
       for (size_t j = 0; j < 64; j++) {
-        if ((value >> j) & uint64_t{1}) {
+        if ((value >> j) & uint64_t{1})
           m_coeff_buf[i + j] += tmp[m_bit_buffer.rbit()];
-          ++m_bit_idx;
-        }
       }
     }
   }
   for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {
-    if (m_LSP_mask.read_bit(i)) {
+    if (m_LSP_mask.read_bit(i))
       m_coeff_buf[i] += tmp[m_bit_buffer.rbit()];
-      ++m_bit_idx;
-    }
   }
-  assert(m_bit_idx <= m_total_bits);
+  assert(m_bit_buffer.rtell() <= m_total_bits);
 
   // Second, mark newly found significant pixels in `m_LSP_mask`
   //

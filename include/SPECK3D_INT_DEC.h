@@ -17,7 +17,6 @@ class SPECK3D_INT_DEC : public SPECK3D_INT<T> {
   using SPECK_INT<T>::m_LIP_mask;
   using SPECK_INT<T>::m_dims;
   using SPECK_INT<T>::m_LSP_new;
-  using SPECK_INT<T>::m_bit_idx;
   using SPECK_INT<T>::m_threshold;
   using SPECK_INT<T>::m_coeff_buf;
   using SPECK_INT<T>::m_bit_buffer;

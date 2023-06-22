@@ -48,10 +48,8 @@ void sperr::SPECK1D_INT_DEC<T>::m_process_S(size_t idx1, size_t idx2, size_t& co
   auto& set = m_LIS[idx1][idx2];
   bool is_sig = true;
 
-  if (read) {
+  if (read)
     is_sig = m_bit_buffer.rbit();
-    ++m_bit_idx;
-  }
 
   if (is_sig) {
     counter++;  // Let's increment the counter first!
@@ -65,15 +63,12 @@ void sperr::SPECK1D_INT_DEC<T>::m_process_P(size_t idx, size_t& counter, bool re
 {
   bool is_sig = true;
 
-  if (read) {
+  if (read)
     is_sig = m_bit_buffer.rbit();
-    ++m_bit_idx;
-  }
 
   if (is_sig) {
     counter++;  // Let's increment the counter first!
     m_sign_array[idx] = m_bit_buffer.rbit();
-    ++m_bit_idx;
 
     m_coeff_buf[idx] = m_threshold;
     m_LSP_new.push_back(idx);
