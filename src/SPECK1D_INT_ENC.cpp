@@ -60,7 +60,7 @@ void sperr::SPECK1D_INT_ENC<T>::m_process_S(size_t idx1,
   // 2) If sig is significant, then we directly proceed to `m_code_s()`, with its
   //    subsets' significance is unknown.
   // 3) if sig is insignificant, then this set is not processed.
-
+  //
   auto subset_sigs = std::array<SigType, 2>{SigType::Dunno, SigType::Dunno};
 
   if (sig == SigType::Dunno) {
