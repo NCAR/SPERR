@@ -1,15 +1,15 @@
-#ifndef SPECK2D_INT_ENC_H
-#define SPECK2D_INT_ENC_H
+#ifndef SPECK2D_INT_DEC_H
+#define SPECK2D_INT_DEC_H
 
 #include "SPECK2D_INT.h"
 
 namespace sperr {
 
 //
-// Main SPECK2D_INT_ENC class
+// Main SPECK2D_INT_DEC class
 //
 template <typename T>
-class SPECK2D_INT_ENC : public SPECK2D_INT<T> {
+class SPECK2D_INT_DEC : public SPECK2D_INT<T> {
  private:
   //
   // Bring members from parent classes to this derived class.
@@ -21,6 +21,7 @@ class SPECK2D_INT_ENC : public SPECK2D_INT<T> {
   using SPECK_INT<T>::m_coeff_buf;
   using SPECK_INT<T>::m_bit_buffer;
   using SPECK_INT<T>::m_sign_array;
+  using SPECK_INT<T>::m_total_bits;
   using SPECK2D_INT<T>::m_LIS;
   using SPECK2D_INT<T>::m_I;
   using SPECK2D_INT<T>::m_code_S;
@@ -29,9 +30,6 @@ class SPECK2D_INT_ENC : public SPECK2D_INT<T> {
   void m_process_S(size_t idx1, size_t idx2, size_t& counter, bool need_decide) override;
   void m_process_P(size_t idx, size_t& counter, bool need_decide) override;
   void m_process_I(bool need_decide) override;
-
-  auto m_decide_S_significance(Set2D) const -> bool;
-  auto m_decide_I_significance() const -> bool;
 };
 
 };  // namespace sperr
