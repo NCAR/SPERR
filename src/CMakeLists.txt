@@ -17,6 +17,7 @@ add_library( SPERR
              SPECK1D_INT_DEC.cpp
              SPECK_FLT.cpp
              SPECK3D_FLT.cpp
+             SPECK2D_FLT.cpp
              SPERR3D_OMP_C.cpp
              SPERR3D_OMP_D.cpp
              Outlier_Coder.cpp )
@@ -65,6 +66,7 @@ include/SPECK2D_INT_DEC.h;\
 include/SPECK1D_INT_DEC.h;\
 include/SPECK_FLT.h;\
 include/SPECK3D_FLT.h;\
+include/SPECK2D_FLT.h;\
 include/SPERR3D_OMP_C.h;\
 include/SPERR3D_OMP_D.h;\
 include/Outlier_Coder.h;")
