@@ -101,20 +101,13 @@ class SPECK_FLT {
   virtual void m_wavelet_xform() = 0;
   virtual void m_inverse_wavelet_xform() = 0;
 
-  // Quantization reads from `m_vals_d`, and writes to `m_vals_ui` and `m_sign_array`.
-  // Inverse quantization reads from `m_vals_ui` and `m_sign_array`, and writes to `m_vals_d`.
-  virtual auto m_quantize() -> RTNType = 0;
-  virtual auto m_inverse_quantize() -> RTNType = 0;
+  // This base class provides two midtread quantization implementations.
+  //    Quantization reads from `m_vals_d`, and writes to `m_vals_ui` and `m_sign_array`.
+  //    Inverse quantization reads from `m_vals_ui` and `m_sign_array`, and writes to `m_vals_d`.
+  auto m_midtread_quantize() -> RTNType;
+  void m_midtread_inv_quantize();
 
-  // MSE estimation is dependent on the quantization scheme in use.
-  virtual auto m_estimate_mse(double q) const -> double = 0;
-
-  // This base class provides two midtread quantization implementations, but derived classes
-  //   can have other quantization methods.
-  auto m_midtread_f2i() -> RTNType;
-  void m_midtread_i2f();
-
-  // Estimate MSE assuming midtread quantization strategy.
+  // Estimate MSE and q assuming midtread quantization strategy.
   auto m_estimate_mse_midtread(double q) const -> double;
   auto m_estimate_q() const -> double;
 };

@@ -36,7 +36,7 @@ class SPECK2D_INT : public SPECK_INT<T> {
 
   // The 2D case is different from 3D and 1D cases in that it doesn't implement the logic that
   //    infers the significance of subsets by where the significant point is. I.e., the decide
-  //    set significance functions return only true/false, but not the index of the first 
+  //    set significance functions return only true/false, but not the index of the first
   //    significant point. With this simplification, the m_process_S()/m_process_P()/m_process_I()
   //    functions have the same signature, so they can be virtual, and m_sorting_pass()/m_code_S/
   //    m_code_I() are really the same when encoding and decoding, so they can be implemented

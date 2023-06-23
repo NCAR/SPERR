@@ -12,11 +12,6 @@ class SPECK3D_FLT : public SPECK_FLT {
 
   void m_wavelet_xform() override;
   void m_inverse_wavelet_xform() override;
-
-  auto m_quantize() -> RTNType override;
-  auto m_inverse_quantize() -> RTNType override;
-
-  auto m_estimate_mse(double q) const -> double override;
 };
 
 };  // namespace sperr

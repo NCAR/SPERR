@@ -54,19 +54,3 @@ void sperr::SPECK3D_FLT::m_inverse_wavelet_xform()
   m_cdf.idwt3d();
 }
 
-auto sperr::SPECK3D_FLT::m_quantize() -> RTNType
-{
-  auto rtn = m_midtread_f2i();
-  return rtn;
-}
-
-auto sperr::SPECK3D_FLT::m_inverse_quantize() -> RTNType
-{
-  m_midtread_i2f();
-  return RTNType::Good;
-}
-
-auto sperr::SPECK3D_FLT::m_estimate_mse(double q) const -> double
-{
-  return m_estimate_mse_midtread(q);
-}

@@ -242,12 +242,12 @@ auto sperr::SPECK_FLT::m_estimate_q() const -> double
   const auto t_mse = (m_data_range * m_data_range) * std::pow(10.0, -m_quality / 10.0);
   const auto t_rmse = std::sqrt(t_mse);
   auto q = 2.0 * std::sqrt(t_mse * 3.0);
-  while (m_estimate_mse(q) > t_mse)
+  while (m_estimate_mse_midtread(q) > t_mse)
     q /= std::pow(2.0, 0.25);  // Four adjustments would effectively halve q.
   return q;
 }
 
-auto sperr::SPECK_FLT::m_midtread_f2i() -> RTNType
+auto sperr::SPECK_FLT::m_midtread_quantize() -> RTNType
 {
   // Make sure that the rounding mode is what we wanted.
   // Here are two methods of querying the current rounding mode; not sure
@@ -332,7 +332,7 @@ auto sperr::SPECK_FLT::m_midtread_f2i() -> RTNType
   return RTNType::Good;
 }
 
-void sperr::SPECK_FLT::m_midtread_i2f()
+void sperr::SPECK_FLT::m_midtread_inv_quantize()
 {
   assert(m_sign_array.size() == std::visit([](auto&& vec) { return vec.size(); }, m_vals_ui));
   assert(m_q > 0.0);
@@ -386,15 +386,13 @@ auto sperr::SPECK_FLT::compress() -> RTNType
     m_q = m_estimate_q();
 
   // Step 3: quantize floating-point coefficients to integers
-  auto rtn = m_quantize();
+  auto rtn = m_midtread_quantize();
   if (rtn != RTNType::Good)
     return rtn;
 
   // Side step for outlier coding: find out all the outliers, and encode them!
   if (m_is_pwe_mode) {
-    rtn = m_inverse_quantize();
-    if (rtn != RTNType::Good)
-      return rtn;
+    m_midtread_inv_quantize();
     rtn = m_cdf.take_data(std::move(m_vals_d), m_dims);
     if (rtn != RTNType::Good)
       return rtn;
@@ -481,12 +479,10 @@ auto sperr::SPECK_FLT::decompress() -> RTNType
   m_sign_array = std::visit([](auto&& dec) { return dec->release_signs(); }, m_decoder);
 
   // Step 2: Inverse quantization
-  auto rtn = m_inverse_quantize();
-  if (rtn != RTNType::Good)
-    return rtn;
+  m_midtread_inv_quantize();
 
   // Step 3: Inverse wavelet transform
-  rtn = m_cdf.take_data(std::move(m_vals_d), m_dims);
+  auto rtn = m_cdf.take_data(std::move(m_vals_d), m_dims);
   if (rtn != RTNType::Good)
     return rtn;
   m_inverse_wavelet_xform();
