@@ -3,7 +3,10 @@
 #include <cassert>
 
 template <typename T>
-void sperr::SPECK2D_INT_ENC<T>::m_process_S(size_t idx1, size_t idx2, size_t& counter, bool need_decide)
+void sperr::SPECK2D_INT_ENC<T>::m_process_S(size_t idx1,
+                                            size_t idx2,
+                                            size_t& counter,
+                                            bool need_decide)
 {
   auto& set = m_LIS[idx1][idx2];
   assert(!set.is_pixel());

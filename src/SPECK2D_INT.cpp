@@ -57,7 +57,7 @@ void sperr::SPECK2D_INT<T>::m_code_S(size_t idx1, size_t idx2)
 {
   auto set = m_LIS[idx1][idx2];
   auto subsets = m_partition_S(set);
-  const auto set_end = 
+  const auto set_end =
       std::remove_if(subsets.begin(), subsets.end(), [](auto s) { return s.is_empty(); });
   const auto set_end_m1 = set_end - 1;
 
@@ -97,7 +97,8 @@ template <typename T>
 void sperr::SPECK2D_INT<T>::m_clean_LIS()
 {
   for (auto& list : m_LIS) {
-    auto it = std::remove_if(list.begin(), list.end(), [](auto& s) { return s.type == SetType::Garbage; });
+    auto it = std::remove_if(list.begin(), list.end(),
+                             [](auto& s) { return s.type == SetType::Garbage; });
     list.erase(it, list.end());
   }
 }
