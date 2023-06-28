@@ -1,5 +1,5 @@
-#include "SPERR3D_OMP_C.h"
-#include "SPERR3D_OMP_D.h"
+#include "SPECK2D_FLT.h"
+#include "SPECK2D_FLT.h"
 
 #include "CLI/App.hpp"
 #include "CLI/Config.hpp"
@@ -13,12 +13,12 @@
 int main(int argc, char* argv[])
 {
   // Parse command line options
-  CLI::App app("3D SPERR compression and decompression\n");
+  CLI::App app("2D SPERR compression and decompression\n");
 
   // Input specification
   auto input_file = std::string();
   app.add_option("filename", input_file,
-                 "A data volume to be compressed, or\n"
+                 "A data slice to be compressed, or\n"
                  "a bitstream to be decompressed.")
       ->check(CLI::ExistingFile);
 
@@ -33,24 +33,18 @@ int main(int argc, char* argv[])
                    ->excludes(cptr)
                    ->group("Execution settings");
 
-  auto omp_num_threads = size_t{0};  // meaning to use the maximum number of threads.
-#ifdef USE_OMP
-  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default (or 0) to use all.")
-      ->group("Execution settings");
-#endif
-
   //
   // Input properties
   //
   auto ftype = size_t{0};
   app.add_option("--ftype", ftype, "Specify the input float type in bits. Must be 32 or 64.")
-      ->group("Input properties (for compression)");
+      ->group("Input properties");
 
-  auto dims = std::array<size_t, 3>{0, 0, 0};
-  app.add_option("--dims", dims,
-                 "Dimensions of the input volume. E.g., `--dims 128 128 128`\n"
+  auto dim2d = std::array<uint16_t, 2>{0, 0};
+  app.add_option("--dims", dim2d,
+                 "Dimensions of the input slice. E.g., `--dims 128 128`\n"
                  "(The fastest-varying dimension appears first.)")
-      ->group("Input properties (for compression)");
+      ->group("Input properties");
 
   //
   // Output settings
@@ -60,27 +54,21 @@ int main(int argc, char* argv[])
       ->group("Output settings");
 
   auto o_decomp_f32 = std::string();
-  app.add_option("--o_decomp_f32", o_decomp_f32, "Output decompressed volume in f32 precision.")
+  app.add_option("--o_decomp_f", o_decomp_f32, "Output decompressed slice in f32 precision.")
       ->group("Output settings");
 
   auto o_decomp_f64 = std::string();
-  app.add_option("--o_decomp_f64", o_decomp_f64, "Output decompressed volume in f64 precision.")
+  app.add_option("--o_decomp_d", o_decomp_f64, "Output decompressed slice in f64 precision.")
       ->group("Output settings");
 
   auto print_stats = bool{false};
-  app.add_flag("--print_stats", print_stats, "Print statistics measuring the compression quality.")
+  app.add_flag("--print_stats", print_stats, "Show statistics measuring the compression quality.")
       ->needs(cptr)
       ->group("Output settings");
 
   //
   // Compression settings
   //
-  auto chunks = std::array<size_t, 3>{256, 256, 256};
-  app.add_option("--chunks", chunks,
-                 "Dimensions of the preferred chunk size. Default: 256 256 256\n"
-                 "(Volume dims don't need to be divisible by these chunk dims.)")
-      ->group("Compression settings");
-
   auto pwe = sperr::max_d;
   auto* pwe_ptr = app.add_option("--pwe", pwe, "Maximum point-wise error (PWE) tolerance.")
                       ->group("Compression settings");
@@ -116,8 +104,8 @@ int main(int argc, char* argv[])
     std::cout << "Is this compressing (-c) or decompressing (-d) ?" << std::endl;
     return __LINE__;
   }
-  if (cflag && dims == std::array{0ul, 0ul, 0ul}) {
-    std::cout << "What's the dimensions of this 3D volume (--dims) ?" << std::endl;
+  if (cflag && dim2d == std::array{uint16_t{0}, uint16_t{0}}) {
+    std::cout << "What's the dimensions of this 2D slice (--dims) ?" << std::endl;
     return __LINE__;
   }
   if (cflag && ftype != 32 && ftype != 64) {
@@ -140,6 +128,7 @@ int main(int argc, char* argv[])
   //
   // Really starting the real work!
   //
+  const auto dims = sperr::dims_type{dim2d[0], dim2d[1], 1ul};
   auto input = sperr::read_whole_file<uint8_t>(input_file);
   if (cflag) {
     const auto total_vals = dims[0] * dims[1] * dims[2];
@@ -148,23 +137,16 @@ int main(int argc, char* argv[])
       std::cout << "Input file size wrong!" << std::endl;
       return __LINE__;
     }
-    auto encoder = std::make_unique<sperr::SPERR3D_OMP_C>();
-    encoder->set_dims_and_chunks(dims, chunks);
-    encoder->set_num_threads(omp_num_threads);
+    auto encoder = std::make_unique<sperr::SPECK2D_FLT>();
+    encoder->set_dims(dims);
+    if (ftype == 32)
+      encoder->copy_data(reinterpret_cast<const float*>(input.data()), total_vals);
+    else
+      encoder->copy_data(reinterpret_cast<const double*>(input.data()), total_vals);
     if (pwe != sperr::max_d)
       encoder->set_tolerance(pwe);
     else if (psnr != sperr::max_d)
       encoder->set_psnr(psnr);
-
-    auto rtn = sperr::RTNType::Good;
-    if (ftype == 32)
-      rtn = encoder->compress(reinterpret_cast<const float*>(input.data()), total_vals);
-    else
-      rtn = encoder->compress(reinterpret_cast<const double*>(input.data()), total_vals);
-    if (rtn != sperr::RTNType::Good) {
-      std::cout << "Compression failed!" << std::endl;
-      return __LINE__;
-    }
 
     // If not calculating stats, we can free up some memory now!
     if (!print_stats) {
@@ -172,7 +154,18 @@ int main(int argc, char* argv[])
       input.shrink_to_fit();
     }
 
-    auto stream = encoder->get_encoded_bitstream();
+    auto rtn = encoder->compress();
+    if (rtn != sperr::RTNType::Good) {
+      std::cout << "Compression failed!" << std::endl;
+      return __LINE__;
+    }
+
+    //
+    // The slice dimension is saved as two uint16_t values, 4 bytes in total.
+    //
+    auto stream = sperr::vec8_type(4);
+    std::memcpy(stream.data(), dim2d.data(), sizeof(dim2d));
+    encoder->append_encoded_bitstream(stream);
     if (!o_bitstream.empty()) {
       rtn = sperr::write_n_bytes(o_bitstream, stream.size(), stream.data());
       if (rtn != sperr::RTNType::Good) {
@@ -182,18 +175,20 @@ int main(int argc, char* argv[])
     }
     encoder.reset();  // Free up some more memory.
 
+    //
     // Need to do a decompression in the following cases.
+    //
     if (print_stats || !o_decomp_f64.empty() || !o_decomp_f32.empty()) {
-      auto decoder = std::make_unique<sperr::SPERR3D_OMP_D>();
-      decoder->set_num_threads(omp_num_threads);
-      decoder->setup_decomp(stream.data(), stream.size());
-      rtn = decoder->decompress(stream.data());
+      auto decoder = std::make_unique<sperr::SPECK2D_FLT>();
+      decoder->set_dims(dims);
+      decoder->use_bitstream(stream.data(), stream.size());
+      rtn = decoder->decompress();
       if (rtn != sperr::RTNType::Good) {
         std::cout << "Decompression failed!" << std::endl;
         return __LINE__;
       }
 
-      // Output the decompressed volume in double precision.
+      // If specified, output the decompressed slice in double precision.
       auto outputd = decoder->release_decoded_data();
       decoder.reset();  // Free up more memory!
       if (!o_decomp_f64.empty()) {
@@ -205,7 +200,7 @@ int main(int argc, char* argv[])
         o_decomp_f64.clear();
       }
 
-      // Output the decompressed volume in single precision.
+      // If specified, output the decompressed slice in single precision.
       auto outputf = sperr::vecf_type(total_vals);
       std::copy(outputd.cbegin(), outputd.cend(), outputf.begin());
       if (!o_decomp_f32.empty()) {
@@ -223,8 +218,8 @@ int main(int argc, char* argv[])
         double rmse, linfy, psnr, min, max, sigma;
         if (ftype == 32) {
           const float* inputf = reinterpret_cast<const float*>(input.data());
-          auto stats = sperr::calc_stats(inputf, outputf.data(), total_vals, omp_num_threads);
-          auto mean_var = sperr::calc_mean_var(inputf, total_vals, omp_num_threads);
+          auto stats = sperr::calc_stats(inputf, outputf.data(), total_vals);
+          auto mean_var = sperr::calc_mean_var(inputf, total_vals);
           rmse = stats[0];
           linfy = stats[1];
           psnr = stats[2];
@@ -234,8 +229,8 @@ int main(int argc, char* argv[])
         }
         else {
           const double* inputd = reinterpret_cast<const double*>(input.data());
-          auto stats = sperr::calc_stats(inputd, outputd.data(), total_vals, omp_num_threads);
-          auto mean_var = sperr::calc_mean_var(inputd, total_vals, omp_num_threads);
+          auto stats = sperr::calc_stats(inputd, outputd.data(), total_vals);
+          auto mean_var = sperr::calc_mean_var(inputd, total_vals);
           rmse = stats[0];
           linfy = stats[1];
           psnr = stats[2];
