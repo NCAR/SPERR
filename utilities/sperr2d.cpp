@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
                        ->group("Compression settings");
 
   auto bpp = sperr::max_d;
-  auto* bpp_ptr = app.add_option("--bpp", bpp, "Target bit-per-pixel (BPP) to achieve.")
+  auto* bpp_ptr = app.add_option("--bpp", bpp, "Target bit-per-pixel (bpp) to achieve.")
                       ->check(CLI::Range(0.0, 64.0))
                       ->excludes(pwe_ptr)
                       ->excludes(psnr_ptr)
@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
   //
   auto first_bpp = sperr::max_d;
   app.add_option("--first_bpp", first_bpp,
-                 "Decompression using partial data, up to a certain BPP.\n"
+                 "Decompression using partial data, up to a certain bpp.\n"
                  "By default, decompression uses all data in the bitstream.")
       ->needs(dptr)
       ->group("Decompression settings");
@@ -161,9 +161,10 @@ int main(int argc, char* argv[])
     }
 
     //
-    // The slice dimension is saved as two uint16_t values, 4 bytes in total.
+    // The slice dimension is saved as a header of two uint16_t values, 4 bytes in total.
     //
-    auto stream = sperr::vec8_type(4);
+    const auto header_len = 4ul;
+    auto stream = sperr::vec8_type(header_len);
     std::memcpy(stream.data(), dim2d.data(), sizeof(dim2d));
     encoder->append_encoded_bitstream(stream);
     if (!o_bitstream.empty()) {
@@ -181,7 +182,8 @@ int main(int argc, char* argv[])
     if (print_stats || !o_decomp_f64.empty() || !o_decomp_f32.empty()) {
       auto decoder = std::make_unique<sperr::SPECK2D_FLT>();
       decoder->set_dims(dims);
-      decoder->use_bitstream(stream.data(), stream.size());
+      // !! Remember the header thing !!
+      decoder->use_bitstream(stream.data() + header_len, stream.size() - header_len);
       rtn = decoder->decompress();
       if (rtn != sperr::RTNType::Good) {
         std::cout << "Decompression failed!" << std::endl;
@@ -239,12 +241,12 @@ int main(int argc, char* argv[])
           sigma = std::sqrt(mean_var[1]);
         }
         std::printf("Input range = (%.2e, %.2e), L-Infty = %.2e\n", min, max, linfy);
-        std::printf("Bitrate = %.2fBPP, PSNR = %.2fdB, Accuracy Gain = %.2f\n", bpp, psnr,
+        std::printf("Bitrate = %.2fbpp, PSNR = %.2fdB, Accuracy Gain = %.2f\n", bpp, psnr,
                     std::log2(sigma / rmse) - bpp);
         print_stats = false;
       }
 
-      assert(o_decomp_f32.empty() && o_decomp_f64.empty() && print_stats);
+      assert(o_decomp_f32.empty() && o_decomp_f64.empty() && !print_stats);
     }
   }
   //
