@@ -159,13 +159,13 @@ auto sperr::SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   size_t loc = 1;
 
   // 8 booleans:
-  // bool[0]  : unused
+  // bool[0]  : if this bitstream is a portion of another complete bitstream (progressive access).
   // bool[1]  : if this bitstream is for 3D (true) or 2D (false) data.
   // bool[2]  : if the original data is float (true) or double (false).
   // bool[3]  : if there are multiple chunks (true) or a single chunk (false).
   // bool[4-7]: unused
   //
-  const auto b8 = std::array<bool, 8>{false,  // unused
+  const auto b8 = std::array<bool, 8>{false,  // not a portion
                                       true,   // 3D
                                       m_orig_is_float,
                                       (num_chunks > 1),
