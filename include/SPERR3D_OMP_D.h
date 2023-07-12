@@ -34,8 +34,16 @@ class SPERR3D_OMP_D {
 
 #ifdef USE_OMP
   size_t m_num_threads = 1;
+
+  // It turns out that the object of `SPECK3D_FLT` is not copy-constructible, so it's
+  //    a little difficult to work with a container (std::vector<>), so we ask the
+  //    container to store pointers (which are trivially constructible) instead.
+  //
   std::vector<std::unique_ptr<SPECK3D_FLT>> m_decompressors;
 #else
+  // This single instance of decompressor doesn't need to be allocated on the heap;
+  //    rather, it's just to keep consistency with the USE_OMP case.
+  //
   std::unique_ptr<SPECK3D_FLT> m_decompressor;
 #endif
 
