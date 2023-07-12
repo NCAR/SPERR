@@ -96,7 +96,6 @@ endif()
 #
 add_subdirectory( src )
 
-
 #
 # Build command line utilities
 #
@@ -108,6 +107,7 @@ if( BUILD_CLI_UTILITIES )
   # Control internal options of CLI11
   #
   set( CLI11_PRECOMPILED ON CACHE INTERNAL "Save precompiled CLI11")
+  set( CLI11_SINGLE_FILE OFF CACHE INTERNAL "Don't use single file CLI11")
   FetchContent_Declare( cli11
     GIT_REPOSITORY https://github.com/CLIUtils/CLI11
     GIT_TAG        291c58789c031208f08f4f261a858b5b7083e8e2 # v2.3.2
@@ -122,8 +122,6 @@ endif()
 # Fetch Google Test: https://google.github.io/googletest/quickstart-cmake.html
 #
 if( BUILD_UNIT_TESTS )
-  option( USE_OLDER_GTEST "Force using an older version of GoogleTest (1.10.0)" OFF )
-
   # Control internal options of GoogleTest
   #
   set( INSTALL_GTEST OFF CACHE INTERNAL "Not install GoogleTest")
@@ -132,21 +130,15 @@ if( BUILD_UNIT_TESTS )
   # Let's use the new mechanism to incorporate GoogleTest
   #
   include(FetchContent)
-  if( USE_OLDER_GTEST )
-    message (STATUS "Fetching GoogleTest Framework Version 1.10.0")
+  if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.24")
+    message (STATUS "Fetching the latest GoogleTest Framework, CMake version >= 3.24")
     FetchContent_Declare( googletest
-      URL https://github.com/google/googletest/archive/refs/tags/release-1.10.0.zip )
+      URL https://github.com/google/googletest/archive/refs/heads/main.zip
+      DOWNLOAD_EXTRACT_TIMESTAMP NEW )
   else()
-    if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.24")
-      message (STATUS "Fetching the latest GoogleTest Framework, CMake version >= 3.24")
-      FetchContent_Declare( googletest
-        URL https://github.com/google/googletest/archive/refs/heads/main.zip
-        DOWNLOAD_EXTRACT_TIMESTAMP NEW )
-    else()
-      message (STATUS "Fetching the latest GoogleTest Framework, CMake version < 3.24")
-      FetchContent_Declare( googletest
-        URL https://github.com/google/googletest/archive/refs/heads/main.zip )
-    endif()
+    message (STATUS "Fetching the latest GoogleTest Framework, CMake version < 3.24")
+    FetchContent_Declare( googletest
+      URL https://github.com/google/googletest/archive/refs/heads/main.zip )
   endif()
 
   # Prevent overriding the parent project's compiler/linker settings on Windows
