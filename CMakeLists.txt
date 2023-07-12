@@ -104,6 +104,10 @@ if( BUILD_CLI_UTILITIES )
   # Download and build CLI11
   #
   include(FetchContent)
+
+  # Control internal options of CLI11
+  #
+  set( CLI11_PRECOMPILED ON CACHE INTERNAL "Save precompiled CLI11")
   FetchContent_Declare( cli11
     GIT_REPOSITORY https://github.com/CLIUtils/CLI11
     GIT_TAG        291c58789c031208f08f4f261a858b5b7083e8e2 # v2.3.2
