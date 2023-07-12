@@ -35,7 +35,8 @@ int main(int argc, char* argv[])
 
   auto omp_num_threads = size_t{0};  // meaning to use the maximum number of threads.
 #ifdef USE_OMP
-  app.add_option("--omp", omp_num_threads, "Number of OpenMP threads to use. Default (or 0) to use all.")
+  app.add_option("--omp", omp_num_threads,
+                 "Number of OpenMP threads to use. Default (or 0) to use all.")
       ->group("Execution settings");
 #endif
 
@@ -133,7 +134,8 @@ int main(int argc, char* argv[])
     return __LINE__;
   }
   if (dflag && o_decomp_f32.empty() && o_decomp_f64.empty()) {
-    std::cout << "Where to output the decompressed file (--o_decomp_f32, --o_decomp_f64) ?" << std::endl;
+    std::cout << "Where to output the decompressed file (--o_decomp_f32, --o_decomp_f64) ?"
+              << std::endl;
     return __LINE__;
   }
 
@@ -257,6 +259,40 @@ int main(int argc, char* argv[])
   //
   else {
     assert(dflag);
+    auto decoder = std::make_unique<sperr::SPERR3D_OMP_D>();
+    decoder->set_num_threads(omp_num_threads);
+    decoder->setup_decomp(input.data(), input.size());
+    auto rtn = decoder->decompress(input.data());
+    if (rtn != sperr::RTNType::Good) {
+      std::cout << "Decompression failed!" << std::endl;
+      return __LINE__;
+    }
+
+    // Output the decompressed volume in double precision.
+    auto outputd = decoder->release_decoded_data();
+    decoder.reset();  // Free up memory!
+    if (!o_decomp_f64.empty()) {
+      rtn = sperr::write_n_bytes(o_decomp_f64, outputd.size() * sizeof(double), outputd.data());
+      if (rtn != sperr::RTNType::Good) {
+        std::cout << "Writing decompressed data failed: " << o_decomp_f64 << std::endl;
+        return __LINE__;
+      }
+      o_decomp_f64.clear();
+    }
+
+    // Output the decompressed volume in single precision.
+    if (!o_decomp_f32.empty()) {
+      auto outputf = sperr::vecf_type(outputd.size());
+      std::copy(outputd.cbegin(), outputd.cend(), outputf.begin());
+      rtn = sperr::write_n_bytes(o_decomp_f32, outputf.size() * sizeof(float), outputf.data());
+      if (rtn != sperr::RTNType::Good) {
+        std::cout << "Writing decompressed data failed: " << o_decomp_f32 << std::endl;
+        return __LINE__;
+      }
+      o_decomp_f32.clear();
+    }
+
+    assert(o_decomp_f32.empty() && o_decomp_f64.empty());
   }
 
   return 0;

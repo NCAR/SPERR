@@ -1,5 +1,4 @@
 #include "SPECK2D_FLT.h"
-#include "SPECK2D_FLT.h"
 
 #include "CLI/App.hpp"
 #include "CLI/Config.hpp"
@@ -40,7 +39,7 @@ int main(int argc, char* argv[])
   app.add_option("--ftype", ftype, "Specify the input float type in bits. Must be 32 or 64.")
       ->group("Input properties");
 
-  auto dim2d = std::array<uint16_t, 2>{0, 0};
+  auto dim2d = std::array<uint32_t, 2>{0, 0};
   app.add_option("--dims", dim2d,
                  "Dimensions of the input slice. E.g., `--dims 128 128`\n"
                  "(The fastest-varying dimension appears first.)")
@@ -104,7 +103,7 @@ int main(int argc, char* argv[])
     std::cout << "Is this compressing (-c) or decompressing (-d) ?" << std::endl;
     return __LINE__;
   }
-  if (cflag && dim2d == std::array{uint16_t{0}, uint16_t{0}}) {
+  if (cflag && dim2d == std::array{uint32_t{0}, uint32_t{0}}) {
     std::cout << "What's the dimensions of this 2D slice (--dims) ?" << std::endl;
     return __LINE__;
   }
@@ -121,16 +120,19 @@ int main(int argc, char* argv[])
     return __LINE__;
   }
   if (dflag && o_decomp_f32.empty() && o_decomp_f64.empty()) {
-    std::cout << "Where to output the decompressed file (--o_decomp_f32, --o_decomp_f64) ?" << std::endl;
+    std::cout << "Where to output the decompressed file (--o_decomp_f32, --o_decomp_f64) ?"
+              << std::endl;
     return __LINE__;
   }
 
   //
   // Really starting the real work!
+  // Note: the slice dimension is saved as a header of two uint32_t values, 8 bytes in total.
   //
-  const auto dims = sperr::dims_type{dim2d[0], dim2d[1], 1ul};
+  const auto header_len = 8ul;
   auto input = sperr::read_whole_file<uint8_t>(input_file);
   if (cflag) {
+    const auto dims = sperr::dims_type{dim2d[0], dim2d[1], 1ul};
     const auto total_vals = dims[0] * dims[1] * dims[2];
     if ((ftype == 32 && (total_vals * 4 != input.size())) ||
         (ftype == 64 && (total_vals * 8 != input.size()))) {
@@ -160,10 +162,7 @@ int main(int argc, char* argv[])
       return __LINE__;
     }
 
-    //
-    // The slice dimension is saved as a header of two uint16_t values, 4 bytes in total.
-    //
-    const auto header_len = 4ul;
+    // Assemble the output bitstream.
     auto stream = sperr::vec8_type(header_len);
     std::memcpy(stream.data(), dim2d.data(), sizeof(dim2d));
     encoder->append_encoded_bitstream(stream);
@@ -254,6 +253,43 @@ int main(int argc, char* argv[])
   //
   else {
     assert(dflag);
+    // First, retrieve the slice dimension from the header.
+    std::memcpy(dim2d.data(), input.data(), sizeof(dim2d));
+    const auto dims = sperr::dims_type{dim2d[0], dim2d[1], 1ul};
+    auto decoder = std::make_unique<sperr::SPECK2D_FLT>();
+    decoder->set_dims(dims);
+    decoder->use_bitstream(input.data() + header_len, input.size() - header_len);
+    auto rtn = decoder->decompress();
+    if (rtn != sperr::RTNType::Good) {
+      std::cout << "Decompression failed!" << std::endl;
+      return __LINE__;
+    }
+
+    // If specified, output the decompressed slice in double precision.
+    auto outputd = decoder->release_decoded_data();
+    decoder.reset();  // Free up some memory!
+    if (!o_decomp_f64.empty()) {
+      rtn = sperr::write_n_bytes(o_decomp_f64, outputd.size() * sizeof(double), outputd.data());
+      if (rtn != sperr::RTNType::Good) {
+        std::cout << "Writing decompressed data failed: " << o_decomp_f64 << std::endl;
+        return __LINE__;
+      }
+      o_decomp_f64.clear();
+    }
+
+    // If specified, output the decompressed slice in single precision.
+    if (!o_decomp_f32.empty()) {
+      auto outputf = sperr::vecf_type(outputd.size());
+      std::copy(outputd.cbegin(), outputd.cend(), outputf.begin());
+      rtn = sperr::write_n_bytes(o_decomp_f32, outputf.size() * sizeof(float), outputf.data());
+      if (rtn != sperr::RTNType::Good) {
+        std::cout << "Writing decompressed data failed: " << o_decomp_f32 << std::endl;
+        return __LINE__;
+      }
+      o_decomp_f32.clear();
+    }
+
+    assert(o_decomp_f32.empty() && o_decomp_f64.empty());
   }
 
   return 0;

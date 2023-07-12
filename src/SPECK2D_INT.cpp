@@ -1,5 +1,6 @@
 #include "SPECK2D_INT.h"
 
+#include <algorithm>
 #include <cassert>
 
 auto sperr::Set2D::is_pixel() const -> bool

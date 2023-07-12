@@ -1,5 +1,6 @@
 #include "SPECK2D_INT_ENC.h"
 
+#include <algorithm>
 #include <cassert>
 
 template <typename T>
