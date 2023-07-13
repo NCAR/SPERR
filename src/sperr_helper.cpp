@@ -248,6 +248,44 @@ auto sperr::write_n_bytes(std::string filename, size_t n_bytes, const void* buff
     return RTNType::Good;
 }
 
+auto sperr::read_sections(std::string filename, const std::vector<size_t>& sections, vec8_type& dst)
+    -> RTNType
+{
+  // Calculate the farthest file location to be read.
+  size_t far = 0;
+  for (size_t i = 0; i < sections.size() / 2; i++)
+    far = std::max(far, sections[i * 2] + sections[i * 2 + 1]);
+
+  // Prepare to read the file.
+  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename.data(), "rb"),
+                                                        &std::fclose);
+  if (!fp)
+    return RTNType::IOError;
+
+  // Retrieve the file length in bytes.
+  std::fseek(fp.get(), 0, SEEK_END);
+  const size_t file_len = std::ftell(fp.get());
+  if (file_len < far)
+    return RTNType::BitstreamWrongLen;
+
+  // Calculate the resulting size of `dst`, and allocate enough memory.
+  auto dst_pos = dst.size();  // keep track of the current position to write section data.
+  auto total_len = dst.size();
+  for (size_t i = 0; i < sections.size() / 2; i++)
+    total_len += sections[i * 2 + 1];
+  dst.resize(total_len);
+
+  // Read in sections of the file!
+  for (size_t i = 0; i < sections.size() / 2; i++) {
+    std::fseek(fp.get(), sections[i * 2], SEEK_SET);
+    auto nread = std::fread(dst.data() + dst_pos, 1, sections[i * 2 + 1], fp.get());
+    assert(nread == sections[i * 2 + 1]);
+    dst_pos += nread;
+  }
+
+  return RTNType::Good;
+}
+
 template <typename T>
 auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_nthreads)
     -> std::array<T, 5>

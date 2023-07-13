@@ -94,8 +94,7 @@ auto calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<size_t, 2
 // provided by others, and others most likely provide it by raw pointers.
 // Note 2: these two methods only work on little endian machines.
 // Note 3: the caller should have already allocated enough space for `dest`.
-auto pack_booleans(vec8_type& dest, const std::vector<bool>& src, size_t dest_offset = 0)
-    -> RTNType;
+auto pack_booleans(vec8_type& dst, const std::vector<bool>& src, size_t dest_offset = 0) -> RTNType;
 auto unpack_booleans(std::vector<bool>& dest,
                      const void* src,
                      size_t src_len,
@@ -109,12 +108,14 @@ auto unpack_8_booleans(uint8_t) -> std::array<bool, 8>;
 
 // Read from and write to a file
 // Note: not using references for `filename` to allow a c-style string literal to be passed in.
-// Upon success, it returns a vector of size `n_bytes`.
-// Otherwise, it returns an empty vector.
 auto write_n_bytes(std::string filename, size_t n_bytes, const void* buffer) -> RTNType;
 auto read_n_bytes(std::string filename, size_t n_bytes) -> vec8_type;
 template <typename T>
 auto read_whole_file(std::string filename) -> vec_type<T>;
+
+// Read sections of a file, and append those sections to the end of `dst`.
+// The sections are defined by pairs of offsets and lengths, both in number of bytes.
+auto read_sections(std::string, const std::vector<size_t>& sections, vec8_type& dst) -> RTNType;
 
 // Calculate a suite of statistics.
 // Note that arr1 is considered as the ground truth array, so it's the range of

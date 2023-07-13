@@ -187,4 +187,38 @@ TEST(sperr_helper, domain_decomposition)
   EXPECT_EQ(chunks[7], chunk);
 }
 
+TEST(sperr_helper, read_sections)
+{
+  // Create an array, and write to disk.
+  auto vec = std::vector<uint8_t>(256, 0);
+  std::iota(vec.begin(), vec.end(), 0);
+  sperr::write_n_bytes("test.tmp", 256, vec.data());
+  auto buf = sperr::vec8_type();
+
+  // Create a section that exceeds the file size.
+  auto secs = std::vector<size_t>(2, 0);
+  secs.insert(secs.end(), {200, 56});
+  secs.insert(secs.end(), {101, 156});
+  auto rtn = sperr::read_sections("test.tmp", secs, buf);
+  EXPECT_EQ(rtn, sperr::RTNType::BitstreamWrongLen);
+
+  // Pop out the offending section requests.
+  secs.pop_back();
+  secs.pop_back();
+  rtn = sperr::read_sections("test.tmp", secs, buf);
+  EXPECT_EQ(rtn, sperr::RTNType::Good);
+
+  // Add another section, and try reading them.
+  secs.insert(secs.end(), {30, 5});
+  buf.assign(10, 1);
+  sperr::read_sections("test.tmp", secs, buf);
+  EXPECT_EQ(buf.size(), 71);
+  for (size_t i = 0; i < 10; i++) // First 10 elements should remain the same.
+    EXPECT_EQ(buf[i], 1);
+  for (size_t i = 0; i < 56; i++) // Next 56 elements should start from 200.
+    EXPECT_EQ(buf[i + 10], i + 200);
+  for (size_t i = 0; i < 5; i++)  // Next 5 elements should start from 30.
+    EXPECT_EQ(buf[i + 66], i + 30);
+}
+
 }  // namespace
