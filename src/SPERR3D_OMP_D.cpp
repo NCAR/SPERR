@@ -98,43 +98,6 @@ auto sperr::SPERR3D_OMP_D::setup_decomp(const void* p, size_t total_len) -> RTNT
   return RTNType::Good;
 }
 
-auto sperr::SPERR3D_OMP_D::get_header_len(std::array<uint8_t, 20> magic) const -> size_t
-{
-  // The header definition is in SPERR3D_OMP_D.cpp::m_generate_header().
-
-  // Step 1: decode the 8 booleans, and decide if there are multiple chunks.
-  const auto b8 = sperr::unpack_8_booleans(magic[1]);
-  const auto multi_chunk = b8[3];
-
-  // Step 2: Extract volume and chunk dimensions
-  size_t pos = 2;
-  uint32_t int3[3] = {0, 0, 0};
-  std::memcpy(int3, magic.data() + pos, sizeof(int3));
-  pos += sizeof(int3);
-  dims_type vdim = {int3[0], int3[1], int3[2]};
-  dims_type cdim = {int3[0], int3[1], int3[2]};
-  if (multi_chunk) {
-    uint16_t short3[3] = {0, 0, 0};
-    std::memcpy(short3, magic.data() + pos, sizeof(short3));
-    pos += sizeof(short3);
-    cdim[0] = short3[0];
-    cdim[1] = short3[1];
-    cdim[2] = short3[2];
-  }
-
-  // Step 3: figure out how many chunks are there, and the header length.
-  auto chunks = sperr::chunk_volume(m_dims, m_chunk_dims);
-  const auto num_chunks = chunks.size();
-  assert((multi_chunk && num_chunks > 1) || (!multi_chunk && num_chunks == 1));
-  size_t header_len = num_chunks * 4;
-  if (multi_chunk)
-    header_len += m_header_magic_nchunks;
-  else
-    header_len += m_header_magic_1chunk;
-
-  return header_len;
-}
-
 auto sperr::SPERR3D_OMP_D::decompress(const void* p) -> RTNType
 {
   if (p == nullptr || m_bitstream_ptr == nullptr)
