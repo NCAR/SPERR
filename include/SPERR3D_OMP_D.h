@@ -28,6 +28,22 @@ class SPERR3D_OMP_D {
 
   auto get_dims() const -> sperr::dims_type;
 
+  // Read the first 20 bytes of a bitstream, and determine the total length of the header.
+  //    Note: Need 20 bytes because it's the larger of the header magic number (`read_sections`).
+  //
+  auto get_header_len(std::array<uint8_t, 20>) const -> size_t;
+
+  // A special use case facilitating progressive access:
+  //    reading in the header of a complete bitstream (produced by `get_encoded_bitstream()` here
+  //    and provide a new header as well as a list of sections of the bitstream to read in so
+  //    a portion of the complete bitstream can be used for decoding.
+  // Note 1: This list of sections will be input to `sperr::read_sections()`.
+  // Note 2: This function also produces a header that should be input to `sperr::read_sections()`.
+  // Note 3: The length of the stream should be at least what's determined by `get_header_len()`.
+  //
+  auto progressive_sections(const void* stream, double bpp) const
+      -> std::pair<vec8_type, std::vector<size_t>>;
+
  private:
   sperr::dims_type m_dims = {0, 0, 0};        // Dimension of the entire volume
   sperr::dims_type m_chunk_dims = {0, 0, 0};  // Preferred dimensions for a chunk
