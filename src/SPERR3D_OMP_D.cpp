@@ -32,7 +32,7 @@ auto sperr::SPERR3D_OMP_D::setup_decomp(const void* p, size_t total_len) -> RTNT
   const uint8_t* const u8p = static_cast<const uint8_t*>(p);
 
   // Parse Step 1: Major version number need to match
-  uint8_t ver = *u8p;
+  uint8_t ver = u8p[0];
   if (ver != static_cast<uint8_t>(SPERR_VERSION_MAJOR))
     return RTNType::VersionMismatch;
   size_t pos = 1;

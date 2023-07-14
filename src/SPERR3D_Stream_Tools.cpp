@@ -44,7 +44,7 @@ void sperr::SPERR3D_Stream_Tools::populate_stream_info(const void* p)
   const uint8_t* const u8p = static_cast<const uint8_t*>(p);
 
   // Step 1: major version number
-  major_version = *u8p;
+  major_version = u8p[0];
   size_t pos = 1;
 
   // Step 2: unpack 8 booleans.

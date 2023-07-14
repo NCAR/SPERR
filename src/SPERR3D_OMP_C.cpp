@@ -116,6 +116,7 @@ template auto sperr::SPERR3D_OMP_C::compress(const double*, size_t) -> RTNType;
 auto sperr::SPERR3D_OMP_C::get_encoded_bitstream() const -> vec8_type
 {
   auto header = m_generate_header();
+  assert(!header.empty());
   auto header_size = header.size();
   auto stream_size = std::accumulate(m_encoded_streams.cbegin(), m_encoded_streams.cend(), 0lu,
                                      [](size_t a, const auto& b) { return a + b.size(); });
