@@ -157,7 +157,7 @@ auto sperr::SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
 
   // Version number
   header[0] = static_cast<uint8_t>(SPERR_VERSION_MAJOR);
-  size_t loc = 1;
+  size_t pos = 1;
 
   // 8 booleans:
   // bool[0]  : if this bitstream is a portion of another complete bitstream (progressive access).
@@ -175,32 +175,31 @@ auto sperr::SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
                                       false,   // unused
                                       false};  // unused
 
-  header[loc] = sperr::pack_8_booleans(b8);
-  loc += 1;
+  header[pos++] = sperr::pack_8_booleans(b8);
 
   // Volume dimensions
   const uint32_t vdim[3] = {static_cast<uint32_t>(m_dims[0]), static_cast<uint32_t>(m_dims[1]),
                             static_cast<uint32_t>(m_dims[2])};
-  std::memcpy(&header[loc], vdim, sizeof(vdim));
-  loc += sizeof(vdim);
+  std::memcpy(&header[pos], vdim, sizeof(vdim));
+  pos += sizeof(vdim);
 
   // Chunk dimensions, if there are more than one chunk.
   if (num_chunks > 1) {
     const uint16_t vcdim[3] = {static_cast<uint16_t>(m_chunk_dims[0]),
                                static_cast<uint16_t>(m_chunk_dims[1]),
                                static_cast<uint16_t>(m_chunk_dims[2])};
-    std::memcpy(&header[loc], vcdim, sizeof(vcdim));
-    loc += sizeof(vcdim);
+    std::memcpy(&header[pos], vcdim, sizeof(vcdim));
+    pos += sizeof(vcdim);
   }
 
   // Length of bitstream for each chunk.
   for (const auto& stream : m_encoded_streams) {
     assert(stream.size() <= uint64_t{std::numeric_limits<uint32_t>::max()});
     uint32_t len = stream.size();
-    std::memcpy(&header[loc], &len, sizeof(len));
-    loc += sizeof(len);
+    std::memcpy(&header[pos], &len, sizeof(len));
+    pos += sizeof(len);
   }
-  assert(loc == header_size);
+  assert(pos == header_size);
 
   return header;
 }

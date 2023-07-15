@@ -6,7 +6,7 @@
 namespace sperr {
 
 //
-// The header definition is in SPERR3D_OMP_D.cpp::m_generate_header().
+// The 3D SPERR header definition is in SPERR3D_OMP_C.cpp::m_generate_header().
 //
 
 class SPERR3D_Stream_Tools {
@@ -33,16 +33,9 @@ class SPERR3D_Stream_Tools {
   // populate the information listed above.
   void populate_stream_info(const void*);
 
-  // A special use case facilitating progressive access:
-  //    reading in the header of a complete bitstream (produced by `get_encoded_bitstream()` here
-  //    and provide a new header as well as a list of sections of the bitstream to read in so
-  //    a portion of the complete bitstream can be used for decoding.
-  // Note 1: This list of sections will be input to `sperr::read_sections()`.
-  // Note 2: This function also produces a header that should be input to `sperr::read_sections()`.
-  // Note 3: `stream` should be at least as long as what's determined by `get_header_len()`.
+  // Function that reads in portions of a bitstream to facilitate progressive access.
   //
-  //auto progressive_sections(const void* stream, double bpp) const
-  //    -> std::pair<vec8_type, std::vector<size_t>>;
+  auto progressive_read(std::string filename, double bpp) -> vec8_type;
 
  private:
   const size_t m_header_magic_nchunks = 20; 
