@@ -51,7 +51,7 @@ void sperr::SPERR3D_Stream_Tools::populate_stream_info(const void* p)
   const auto b8 = sperr::unpack_8_booleans(u8p[pos]);
   pos++;
   is_portion = b8[0];
-  assert(b8[1] == false);  // This is a 3D bitstream.
+  is_3D = b8[1];
   is_float = b8[2];
   multi_chunk = b8[3];
 
@@ -91,7 +91,7 @@ void sperr::SPERR3D_Stream_Tools::populate_stream_info(const void* p)
   chunk_offsets[1] = chunk_len[0];
   for (size_t i = 1; i < num_chunks; i++) {
     chunk_offsets[i * 2] = chunk_offsets[i * 2 - 2] + chunk_offsets[i * 2 - 1];
-    chunk_offsets[i * 2 + 1] = chunk_len[1]; 
+    chunk_offsets[i * 2 + 1] = chunk_len[i]; 
   }
 }
 

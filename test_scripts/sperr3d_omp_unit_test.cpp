@@ -30,7 +30,8 @@ TEST(sperr3d_constant, one_chunk)
 
   // Use a decoder
   auto decoder = sperr::SPERR3D_OMP_D();
-  decoder.setup_decomp(stream1.data(), stream1.size());
+  rtn = decoder.setup_decomp(stream1.data(), stream1.size());
+  EXPECT_EQ(rtn, RTNType::Good);
   decoder.decompress(stream1.data());
   auto& output = decoder.view_decoded_data();
   auto output_dims = decoder.get_dims();

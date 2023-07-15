@@ -14,6 +14,7 @@ class SPERR3D_Stream_Tools {
   // Info directly stored in the header
   uint8_t major_version = 0;
   bool is_portion = false;
+  bool is_3D = false;
   bool is_float = false;
   bool multi_chunk = false;
   dims_type vol_dims = {0, 0, 0}; 
