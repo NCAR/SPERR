@@ -355,4 +355,4 @@ TEST(sperr3d_bit_rate, narrow_data_range)
 }
 #endif
 
-}  // namespace
+}  // anonymous namespace
