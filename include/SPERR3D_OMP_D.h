@@ -42,7 +42,7 @@ class SPERR3D_OMP_D {
   std::vector<std::unique_ptr<SPECK3D_FLT>> m_decompressors;
 #else
   // This single instance of decompressor doesn't need to be allocated on the heap;
-  //    rather, it's just to keep consistency with the USE_OMP case.
+  // rather, it's just to keep consistency with the USE_OMP case.
   //
   std::unique_ptr<SPECK3D_FLT> m_decompressor;
 #endif

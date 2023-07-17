@@ -14,6 +14,7 @@ using sperr::RTNType;
 TEST(sperr3d_constant, one_chunk)
 {
   auto input = sperr::read_whole_file<float>("../test_data/const32x20x16.float");
+  assert(!input.empty());
   const auto dims = sperr::dims_type{32, 20, 16};
   const auto total_len = dims[0] * dims[1] * dims[2];
   auto inputd = sperr::vecd_type(total_len);
@@ -23,12 +24,14 @@ TEST(sperr3d_constant, one_chunk)
   auto encoder = sperr::SPERR3D_OMP_C();
   encoder.set_dims_and_chunks(dims, dims);
   encoder.set_psnr(99.0);
-  encoder.compress(input.data(), input.size());
+  auto rtn = encoder.compress(input.data(), input.size());
+  EXPECT_EQ(rtn, RTNType::Good);
   auto stream1 = encoder.get_encoded_bitstream();
 
   // Use a decoder
   auto decoder = sperr::SPERR3D_OMP_D();
-  decoder.setup_decomp(stream1.data(), stream1.size());
+  rtn = decoder.setup_decomp(stream1.data(), stream1.size());
+  EXPECT_EQ(rtn, RTNType::Good);
   decoder.decompress(stream1.data());
   auto& output = decoder.view_decoded_data();
   auto output_dims = decoder.get_dims();
@@ -352,4 +355,4 @@ TEST(sperr3d_bit_rate, narrow_data_range)
 }
 #endif
 
-}  // namespace
+}  // anonymous namespace
