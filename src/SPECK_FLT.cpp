@@ -102,14 +102,13 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
 
 void sperr::SPECK_FLT::append_encoded_bitstream(vec8_type& buf) const
 {
-  auto orig_size = buf.size();
-  buf.resize(orig_size + m_condi_bitstream.size());
-  std::copy(m_condi_bitstream.cbegin(), m_condi_bitstream.cend(), buf.begin() + orig_size);
+  // Append conditioner bitstream no matter what.
+  std::copy(m_condi_bitstream.cbegin(), m_condi_bitstream.cend(), std::back_inserter(buf));
 
   if (!m_conditioner.is_constant(m_condi_bitstream[0])) {
     // Allocate space and store the m_q value in use.
     assert(m_q > 0.0);
-    orig_size = buf.size();
+    auto orig_size = buf.size();
     buf.resize(orig_size + sizeof(m_q));
     std::memcpy(buf.data() + orig_size, &m_q, sizeof(m_q));
 

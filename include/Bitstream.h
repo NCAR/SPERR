@@ -26,7 +26,7 @@
  *      be big enough to hold the number of bits specified.
  *   6. get_bitstream() and write_bitstream() need to be supplied a number of bits because
  *      a Bitstream itself will lose track of how many useful bits are there after flush().
- *   7. Unlike a std vector, a bitstream does NOT have an equivalent concept of size.
+ *   7. Unlike a std vector, a bitstream does NOT have an equivalent concept of "size."
  *      Thus, capacity change brought by `reserve()` can be immediately read/written.
  */
 
