@@ -36,17 +36,19 @@ class SPECK_INT {
 
   void set_dims(dims_type);
 
-  // Retrieve info of a SPECK bitstream from its header
-  // Note that `speck_int_get_num_bitplanes()` is provided as a free-standing helper function.
+  // Note: `speck_int_get_num_bitplanes()` is provided as a free-standing helper function (above).
   //
+  // Retrieve the number of useful bits of a SPECK bitstream from its header.
   auto get_speck_bits(const void*) const -> uint64_t;
+  // Retrieve the number of bytes of a SPECK bitstream from its header.
   auto get_stream_full_len(const void*) const -> uint64_t;
 
   // Actions
   void encode();
   void decode();
 
-  // Clear bit buffer and other data structures.
+  // Set the state of internal data structures to the initial state.
+  // It doesn't, however, release acquired resources.
   void reset();
 
   // Input

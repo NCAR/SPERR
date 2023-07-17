@@ -125,6 +125,9 @@ auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, double 
       chunk_offsets_new[i * 2 + 1] = chunk_offsets[i * 2 + 1];
   }
 
+  // TODO: if the requested bytes are less than the header length, then include the header at least.
+  //       If the requested bytes include outlier correction, then don't include outlier correction at all.
+
   // Calculate the total length of the new bitstream, and read it from disk!
   auto total_len_new = header.size();
   for (size_t i = 0; i < chunks.size(); i++)
