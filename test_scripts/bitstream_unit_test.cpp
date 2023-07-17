@@ -206,6 +206,49 @@ TEST(Bitstream, CompactStream)
     EXPECT_EQ(s1.rbit(), s2.rbit());
 }
 
+TEST(Bitstream, Reserve)
+{
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<unsigned int> distrib1(0, 1);
+
+  // Reserve on an empty stream.
+  auto s1 = Stream();
+  s1.reserve(30);
+  for (size_t i = 0; i < s1.capacity(); i++)
+    EXPECT_EQ(s1.rbit(), false);
+
+  // Reserve on a stream that's been written.
+  auto s2 = Stream();
+  s1.rewind();
+  for (size_t i = 0; i < 30; i++) {
+    auto bit = distrib1(gen);
+    s1.wbit(bit);
+    s2.wbit(bit);
+  }
+  s1.flush();   s2.flush();
+  s1.reserve(100);
+  s1.rewind();  s2.rewind();
+  for (size_t i = 0; i < 30; i++)
+    EXPECT_EQ(s1.rbit(), s2.rbit());
+  for (size_t i = 30; i < s1.capacity(); i++)
+    EXPECT_EQ(s1.rbit(), false);
+
+  // Reserve on a stream that's from parsing another bitstream.
+  s1.wseek(30);
+  for (size_t i = 0; i < 41; i++)
+    s1.wbit(distrib1(gen));
+  s1.flush();
+  auto buf = s1.get_bitstream(71);
+  s2.parse_bitstream(buf.data(), 71);
+  s1.rewind();  s2.rewind();
+  for (size_t i = 0; i < 71; i++)
+    EXPECT_EQ(s1.rbit(), s2.rbit());
+  s2.reserve(150);
+  for (size_t i = 71; i < s2.capacity(); i++)
+    EXPECT_EQ(s2.rbit(), false);
+}
+
 TEST(Bitmask, RandomReadWrite)
 {
   const size_t N = 192;
