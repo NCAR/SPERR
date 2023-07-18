@@ -26,7 +26,7 @@ class SPERR3D_Stream_Tools {
   std::vector<size_t> chunk_offsets;
 
   // Read the first 20 bytes of a bitstream, and determine the total length of the header.
-  // Need 20 bytes because it's the larger of the header magic number.
+  // Need 20 bytes because it's the larger of the header magic number (in multi-chunk case).
   auto get_header_len(std::array<uint8_t, 20>) const -> size_t;
 
   // Read a bitstream that's at least as long as what's determined by `get_header_len()`, and
