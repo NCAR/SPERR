@@ -119,14 +119,13 @@ auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, double 
   for (size_t i = 0; i < chunks.size(); i++) {
     auto nvals = chunks[i][1] * chunks[i][3] * chunks[i][5];
     request_len = static_cast<size_t>(std::ceil(double(nvals)) * bpp);
+    // Should be as least as long as a conditioner header, which is 17, defined in Conditioner.h.
+    request_len = std::max(17, request_len);
     if (request_len < chunk_offsets[i * 2 + 1])
       chunk_offsets_new[i * 2 + 1] = request_len;
     else
       chunk_offsets_new[i * 2 + 1] = chunk_offsets[i * 2 + 1];
   }
-
-  // TODO: if the requested bytes are less than the header length, then include the header at least.
-  //       If the requested bytes include outlier correction, then don't include outlier correction at all.
 
   // Calculate the total length of the new bitstream, and read it from disk!
   auto total_len_new = header.size();

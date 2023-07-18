@@ -47,7 +47,7 @@ class SPECK_FLT {
   // General configuration and info.
   //
   // Note that if configured via `set_psnr()`, then there's no outlier correction performed.
-  //    If configured via `set_tolerance()`, then outlier correction is also performed.
+  // If configured via `set_tolerance()`, then outlier correction is also performed.
   void set_psnr(double psnr);
   void set_tolerance(double tol);
   void set_dims(dims_type);

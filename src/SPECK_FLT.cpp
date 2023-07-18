@@ -56,14 +56,14 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
       return RTNType::BitstreamWrongLen;
   }
 
-  // Bitstream parser 2: extract m_q in use.
+  // Bitstream parser 2: extract `m_q` in use.
   size_t pos = condi_size;
   std::memcpy(&m_q, ptr + pos, sizeof(m_q));
   pos += sizeof(m_q);
   assert(m_q > 0.0);
 
   // Bitstream parser 3: extract SPECK stream from it.
-  // Based on the number of bitplanes, decide on an integer length to use, and then
+  //    Based on the number of bitplanes, decide on an integer length to use, and then
   //    instantiate the proper decoder, and ask the decoder to parse the SPECK stream.
   const uint8_t* const speck_p = ptr + pos;
   const auto num_bitplanes = speck_int_get_num_bitplanes(speck_p);
@@ -463,14 +463,14 @@ auto sperr::SPECK_FLT::decompress() -> RTNType
   m_sign_array.clear();
 
   // `m_condi_bitstream` might be indicating a constant field, so let's see if that's
-  //    the case, and if it is, we don't need to go through wavelet and speck stuff anymore.
+  // the case, and if it is, we don't need to go through wavelet and speck stuff anymore.
   if (m_conditioner.is_constant(m_condi_bitstream[0])) {
     auto rtn = m_conditioner.inverse_condition(m_vals_d, m_dims, m_condi_bitstream);
     return rtn;
   }
 
   // Step 1: Integer SPECK decode.
-  //    Note: the decoder has already parsed the bitstream in function `use_bitstream()`.
+  // Note: the decoder has already parsed the bitstream in function `use_bitstream()`.
   assert(m_q > 0.0);
   std::visit([&dims = m_dims](auto&& decoder) { decoder->set_dims(dims); }, m_decoder);
   std::visit([](auto&& decoder) { decoder->decode(); }, m_decoder);

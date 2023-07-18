@@ -40,7 +40,7 @@ class SPECK_INT {
   //
   // Retrieve the number of useful bits of a SPECK bitstream from its header.
   auto get_speck_bits(const void*) const -> uint64_t;
-  // Retrieve the number of bytes of a SPECK bitstream from its header.
+  // Retrieve the number of bytes of a SPECK bitstream (including header) from its header.
   auto get_stream_full_len(const void*) const -> uint64_t;
 
   // Actions
