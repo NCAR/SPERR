@@ -29,7 +29,6 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   // So let's clean up everything at the very beginning of this routine.
   m_vals_d.clear();
   m_sign_array.clear();
-  m_condi_bitstream.clear();
   std::visit([](auto&& vec) { vec.clear(); }, m_vals_ui);
   m_q = 0.0;
   m_has_outlier = false;
@@ -39,32 +38,29 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   const auto* const ptr = static_cast<const uint8_t*>(p);
 
   // Bitstream parser 1: extract conditioner stream
-  const auto condi_size = m_conditioner.header_size(ptr);
-  if (condi_size > len)
+  if (len < m_condi_bitstream.size())
     return RTNType::BitstreamWrongLen;
-  m_condi_bitstream.resize(condi_size);
-  std::copy(ptr, ptr + condi_size, m_condi_bitstream.begin());
+  std::copy(ptr, ptr + m_condi_bitstream.size(), m_condi_bitstream.begin());
 
   // `m_condi_bitstream` might be indicating that the field is a constant field.
   //    In that case, there will be no more speck or sperr streams.
   //    Let's detect that case here and return early if it is true.
   //    It will be up to the decompress() routine to restore the actual constant field.
   if (m_conditioner.is_constant(m_condi_bitstream[0])) {
-    if (condi_size == len)
+    if (len == m_condi_bitstream.size())
       return RTNType::Good;
     else
       return RTNType::BitstreamWrongLen;
   }
+  else {
+    m_q = m_conditioner.retrieve_q(m_condi_bitstream);
+    assert(m_q > 0.0);
+  }
 
-  // Bitstream parser 2: extract m_q in use.
-  size_t pos = condi_size;
-  std::memcpy(&m_q, ptr + pos, sizeof(m_q));
-  pos += sizeof(m_q);
-  assert(m_q > 0.0);
-
-  // Bitstream parser 3: extract SPECK stream from it.
-  // Based on the number of bitplanes, decide on an integer length to use, and then
+  // Bitstream parser 2: extract SPECK stream from it.
+  //    Based on the number of bitplanes, decide on an integer length to use, and then
   //    instantiate the proper decoder, and ask the decoder to parse the SPECK stream.
+  size_t pos = m_condi_bitstream.size();
   const uint8_t* const speck_p = ptr + pos;
   const auto num_bitplanes = speck_int_get_num_bitplanes(speck_p);
   if (num_bitplanes <= 8)
@@ -85,7 +81,7 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   std::visit([speck_p, speck_len](auto&& dec) { return dec->use_bitstream(speck_p, speck_len); },
              m_decoder);
 
-  // Bitstream parser 4: extract Outlier Coder stream if there's any.
+  // Bitstream parser 3: extract Outlier Coder stream if there's any.
   if (pos < len) {
     m_has_outlier = true;
     const uint8_t* const out_p = ptr + pos;
@@ -102,17 +98,10 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
 
 void sperr::SPECK_FLT::append_encoded_bitstream(vec8_type& buf) const
 {
-  auto orig_size = buf.size();
-  buf.resize(orig_size + m_condi_bitstream.size());
-  std::copy(m_condi_bitstream.cbegin(), m_condi_bitstream.cend(), buf.begin() + orig_size);
+  // Append `m_condi_bitstream` no matter what.
+  std::copy(m_condi_bitstream.cbegin(), m_condi_bitstream.cend(), std::back_inserter(buf));
 
   if (!m_conditioner.is_constant(m_condi_bitstream[0])) {
-    // Allocate space and store the m_q value in use.
-    assert(m_q > 0.0);
-    orig_size = buf.size();
-    buf.resize(orig_size + sizeof(m_q));
-    std::memcpy(buf.data() + orig_size, &m_q, sizeof(m_q));
-
     // Append SPECK_INT bitstream.
     std::visit([&buf](auto&& enc) { enc->append_encoded_bitstream(buf); }, m_encoder);
 
@@ -354,7 +343,6 @@ auto sperr::SPECK_FLT::compress() -> RTNType
   if (m_vals_d.empty() || m_vals_d.size() != total_vals)
     return RTNType::Error;
 
-  m_condi_bitstream.clear();
   m_has_outlier = false;
 
   // Step 1: data goes through the conditioner
@@ -364,7 +352,7 @@ auto sperr::SPECK_FLT::compress() -> RTNType
   if (m_conditioner.is_constant(m_condi_bitstream[0]))
     return RTNType::Good;
 
-  // Side step for outlier coding, or m_q calculation based on PSNR.
+  // Side step for outlier coding, or `m_q` calculation based on PSNR.
   if (m_is_pwe_mode) {
     m_vals_orig.resize(total_vals);
     std::copy(m_vals_d.cbegin(), m_vals_d.cend(), m_vals_orig.begin());
@@ -379,11 +367,13 @@ auto sperr::SPECK_FLT::compress() -> RTNType
   m_wavelet_xform();
   m_vals_d = m_cdf.release_data();
 
-  // Calculate `m_q`
+  // Calculate `m_q`, and store it as part of `m_condi_stream`.
   if (m_is_pwe_mode)
     m_q = m_quality * 1.5;
   else
     m_q = m_estimate_q();
+  assert(m_q > 0.0);
+  m_conditioner.save_q(m_condi_bitstream, m_q);
 
   // Step 3: quantize floating-point coefficients to integers
   auto rtn = m_midtread_quantize();
@@ -456,22 +446,19 @@ auto sperr::SPECK_FLT::compress() -> RTNType
 
 auto sperr::SPECK_FLT::decompress() -> RTNType
 {
-  if (m_condi_bitstream.empty())
-    return RTNType::Error;
-
   m_vals_d.clear();
   std::visit([](auto&& vec) { vec.clear(); }, m_vals_ui);
   m_sign_array.clear();
 
   // `m_condi_bitstream` might be indicating a constant field, so let's see if that's
-  //    the case, and if it is, we don't need to go through wavelet and speck stuff anymore.
+  // the case, and if it is, we don't need to go through wavelet and speck stuff anymore.
   if (m_conditioner.is_constant(m_condi_bitstream[0])) {
     auto rtn = m_conditioner.inverse_condition(m_vals_d, m_dims, m_condi_bitstream);
     return rtn;
   }
 
   // Step 1: Integer SPECK decode.
-  //    Note: the decoder has already parsed the bitstream in function `use_bitstream()`.
+  // Note: the decoder has already parsed the bitstream in function `use_bitstream()`.
   assert(m_q > 0.0);
   std::visit([&dims = m_dims](auto&& decoder) { decoder->set_dims(dims); }, m_decoder);
   std::visit([](auto&& decoder) { decoder->decode(); }, m_decoder);

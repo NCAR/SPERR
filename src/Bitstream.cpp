@@ -33,7 +33,7 @@ void sperr::Bitstream::reserve(size_t nbits)
       num_longs++;
 
     const auto dist = std::distance(m_buf.begin(), m_itr);
-    m_buf.resize(num_longs, 0);
+    m_buf.resize(std::max(num_longs, m_buf.capacity()), 0); // Make sure to have all 0's!
     m_itr = m_buf.begin() + dist;
   }
 }
@@ -164,6 +164,8 @@ auto sperr::Bitstream::get_bitstream(size_t num_bits) const -> std::vector<std::
 
 void sperr::Bitstream::parse_bitstream(const void* p, size_t num_bits)
 {
+  // Clear before reserving space to make sure that `reserve()` will write zero to all memory.
+  m_buf.clear();
   this->reserve(num_bits);
 
   const auto num_longs = num_bits / 64;

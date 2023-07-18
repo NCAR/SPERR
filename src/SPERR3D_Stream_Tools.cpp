@@ -1,5 +1,6 @@
 #include "SPERR3D_Stream_Tools.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstring>
@@ -119,6 +120,8 @@ auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, double 
   for (size_t i = 0; i < chunks.size(); i++) {
     auto nvals = chunks[i][1] * chunks[i][3] * chunks[i][5];
     request_len = static_cast<size_t>(std::ceil(double(nvals)) * bpp);
+    // TODO: request_len should be long enough to include the recording of SPECK bitstream too.
+    request_len = std::max(17ul, request_len);
     if (request_len < chunk_offsets[i * 2 + 1])
       chunk_offsets_new[i * 2 + 1] = request_len;
     else
