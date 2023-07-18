@@ -7,14 +7,14 @@
 
 #include "Conditioner.h"
 
-auto sperr::Conditioner::condition(vecd_type& buf, dims_type dims) -> vec8_type
+auto sperr::Conditioner::condition(vecd_type& buf, dims_type dims) -> condi_type
 {
   // The order of performing condition operations:
   // 1. Test constant. If it's a constant field, return immediately.
   // 2. Subtract mean;
 
   assert(!buf.empty());
-  auto meta = meta_type();
+  auto meta = std::array<bool, 8>();
   m_reset_meta(meta);
 
   // Operation 1
@@ -27,7 +27,7 @@ auto sperr::Conditioner::condition(vecd_type& buf, dims_type dims) -> vec8_type
     // Assemble a header of the following info and ordering:
     // meta   nval  val
     //
-    auto header = vec8_type(m_constant_field_header_size);
+    auto header = condi_type();
     header[0] = sperr::pack_8_booleans(meta);
     size_t pos = 1;
     std::memcpy(header.data() + pos, &nval, sizeof(nval));
@@ -44,33 +44,29 @@ auto sperr::Conditioner::condition(vecd_type& buf, dims_type dims) -> vec8_type
   std::for_each(buf.begin(), buf.end(), [mean](auto& v) { v -= mean; });
 
   // Assemble a header of the following info order:
-  // meta   mean
+  // meta   mean  (empty)
   //
-  auto header = vec8_type(m_min_header_size);
+  auto header = condi_type();
   header[0] = sperr::pack_8_booleans(meta);
   size_t pos = 1;
   std::memcpy(header.data() + pos, &mean, sizeof(mean));
   pos += sizeof(mean);
+  while (pos < header.size())
+    header[pos++] = 0;
 
   return header;
 }
 
-auto sperr::Conditioner::inverse_condition(vecd_type& buf, dims_type dims, const vec8_type& header)
+auto sperr::Conditioner::inverse_condition(vecd_type& buf, dims_type dims, condi_type header)
     -> RTNType
 {
-  if (header.size() < m_min_header_size)
-    return RTNType::BitstreamWrongLen;
-
-  // unpack header
+  // unpack meta bit fields
   auto meta = sperr::unpack_8_booleans(header[0]);
   size_t pos = 1;
 
   // Operation 1: if this is a constant field?
   //
   if (meta[m_constant_field_idx]) {
-    if (header.size() != m_constant_field_header_size)
-      return RTNType::BitstreamWrongLen;
-
     uint64_t nval = 0;
     double val = 0.0;
     std::memcpy(&nval, header.data() + pos, sizeof(nval));
@@ -98,14 +94,17 @@ auto sperr::Conditioner::is_constant(uint8_t byte) const -> bool
   return b8[m_constant_field_idx];
 }
 
-auto sperr::Conditioner::header_size(const void* header) const -> size_t
+void sperr::Conditioner::save_q(condi_type& header, double q) const
 {
-  const auto* ptr = static_cast<const uint8_t*>(header);
-  auto b8 = sperr::unpack_8_booleans(ptr[0]);
-  if (b8[m_constant_field_idx])
-    return m_constant_field_header_size;
-  else
-    return m_min_header_size;
+  std::memcpy(header.data() + m_q_pos, &q, sizeof(q));
+}
+
+auto sperr::Conditioner::retrieve_q(condi_type header) const -> double
+{
+  assert(!is_constant(header[0]));
+  double q = 0.0;
+  std::memcpy(&q, header.data() + m_q_pos, sizeof(q));
+  return q;
 }
 
 auto sperr::Conditioner::m_calc_mean(const vecd_type& buf) -> double
@@ -154,7 +153,7 @@ void sperr::Conditioner::m_adjust_strides(size_t len)
   m_num_strides = num;
 }
 
-void sperr::Conditioner::m_reset_meta(meta_type& meta) const
+void sperr::Conditioner::m_reset_meta(std::array<bool, 8>& meta) const
 {
   meta = {true,    // subtract mean
           false,   // unused
