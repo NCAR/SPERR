@@ -3,12 +3,9 @@
 
 //
 // Applies conditioning operations to an array of data.
-// Any data is subject to an "subtract mean" operation, but can also undergo
-// operations provided by a custom filter.
-// Finally, the Conditioner also detects constant fields.
+// It also detects constant fields.
 //
 
-#include "Base_Filter.h"
 #include "sperr_helper.h"
 
 namespace sperr {
@@ -19,19 +16,16 @@ class Conditioner {
   auto inverse_condition(vecd_type& buf, dims_type, const vec8_type& header) -> RTNType;
 
   auto is_constant(uint8_t) const -> bool;
-  auto has_custom_filter(uint8_t) const -> bool;
   auto header_size(const void*) const -> size_t;
 
  private:
   using meta_type = std::array<bool, 8>;
-  const uint8_t m_custom_filter_idx = 1;
   const uint8_t m_constant_field_idx = 7;
   const uint8_t m_min_header_size = 9;              // when there's only a mean value saved.
   const uint8_t m_constant_field_header_size = 17;  // when recording a constant field.
 
   const size_t m_default_num_strides = 2048;
 
-  Base_Filter m_filter;
   vecd_type m_stride_buf;
 
   // Buffers passed in here are guaranteed to have correct lengths and conditions.
