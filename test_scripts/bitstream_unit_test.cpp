@@ -249,6 +249,23 @@ TEST(Bitstream, Reserve)
     EXPECT_EQ(s2.rbit(), false);
 }
 
+TEST(Bitmask, CountTrue)
+{
+  auto m1 = Mask(64);
+  for (size_t i = 0; i < 5; i++)
+    m1.write_true(i * 4);
+  EXPECT_EQ(m1.count_true(), 5);
+
+  m1.reset();
+  m1.resize(110);
+  for (size_t i = 0; i < 20; i++)
+    m1.write_true(i * 5);
+  EXPECT_EQ(m1.count_true(), 20);
+
+  m1.resize(60);
+  EXPECT_EQ(m1.count_true(), 12);
+}
+
 TEST(Bitmask, RandomReadWrite)
 {
   const size_t N = 192;
