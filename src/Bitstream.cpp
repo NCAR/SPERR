@@ -33,7 +33,11 @@ void sperr::Bitstream::reserve(size_t nbits)
       num_longs++;
 
     const auto dist = std::distance(m_buf.begin(), m_itr);
-    m_buf.resize(std::max(num_longs, m_buf.capacity()), 0); // Make sure to have all 0's!
+
+    // Need to make sure that new memory locations are written 0.
+    m_buf.resize(num_longs, 0); // trigger a memroy allocation.
+    m_buf.resize(m_buf.capacity(), 0);
+
     m_itr = m_buf.begin() + dist;
   }
 }
@@ -101,9 +105,9 @@ void sperr::Bitstream::wbit(bool bit)
 {
   m_buffer += uint64_t{bit} << m_bits;
   if (++m_bits == 64) {
-    if (m_itr == m_buf.end()) {  // allocate memory if necessary
+    if (m_itr == m_buf.end()) {  // allocate memory if necessary.
       const auto dist = m_buf.size();
-      m_buf.push_back(0);
+      m_buf.push_back(0); // trigger a memory allocation.
       m_buf.resize(m_buf.capacity());
       m_itr = m_buf.begin() + dist;
     }
@@ -116,10 +120,10 @@ void sperr::Bitstream::wbit(bool bit)
 
 void sperr::Bitstream::flush()
 {
-  if (m_bits) {  // only flush when there are remaining bits
+  if (m_bits) {  // only flush when there are remaining bits.
     if (m_itr == m_buf.end()) {
       const auto dist = m_buf.size();
-      m_buf.push_back(0);
+      m_buf.push_back(0); // trigger a memory allocation.
       m_buf.resize(m_buf.capacity());
       m_itr = m_buf.begin() + dist;
     }
