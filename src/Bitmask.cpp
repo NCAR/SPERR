@@ -24,7 +24,7 @@ void sperr::Bitmask::resize(size_t nbits)
   auto num_longs = nbits / 64;
   if (nbits % 64 != 0)
     num_longs++;
-  m_buf.resize(num_longs, 0);
+  m_buf.resize(num_longs);
   m_num_bits = nbits;
 }
 
