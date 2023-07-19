@@ -58,7 +58,7 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   }
 
   // Bitstream parser 2.1: based on the number of bitplanes, decide on an integer length to use,
-  // instantiate the proper decoder. It will be the decoder who parses the SPECK bitstream.
+  // and instantiate the proper decoder. It will be the decoder who parses the SPECK bitstream.
   size_t pos = m_condi_bitstream.size();
   const uint8_t* const speck_p = ptr + pos;
   const auto num_bitplanes = speck_int_get_num_bitplanes(speck_p);

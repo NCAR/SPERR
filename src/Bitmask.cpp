@@ -24,18 +24,8 @@ void sperr::Bitmask::resize(size_t nbits)
   auto num_longs = nbits / 64;
   if (nbits % 64 != 0)
     num_longs++;
-  m_buf.resize(num_longs);
+  m_buf.resize(num_longs, 0);
   m_num_bits = nbits;
-}
-
-void sperr::Bitmask::reset()
-{
-  std::fill(m_buf.begin(), m_buf.end(), 0);
-}
-
-void sperr::Bitmask::reset_true()
-{
-  std::fill(m_buf.begin(), m_buf.end(), std::numeric_limits<uint64_t>::max());
 }
 
 auto sperr::Bitmask::read_long(size_t idx) const -> uint64_t
@@ -48,6 +38,26 @@ auto sperr::Bitmask::read_bit(size_t idx) const -> bool
   auto word = m_buf[idx / 64];
   word &= uint64_t{1} << (idx % 64);
   return (word != 0);
+}
+
+auto sperr::Bitmask::count_true() const -> size_t
+{
+  size_t counter = 0;
+  if (m_buf.empty())
+    return counter;
+
+  // Note that unused bits in the last long are not guaranteed to be all 0's.
+  for (size_t i = 0; i < m_buf.size() - 1; i++) {
+    const auto val = m_buf[i];
+    if (val != 0) {
+      for (size_t j = 0; j < 64; j++)
+        counter += ((val >> j) & uint64_t{1});
+    }
+  }
+  for (size_t i = (m_buf.size() - 1) * 64; i < m_num_bits; i++)
+    counter += this->read_bit(i);
+
+  return counter;
 }
 
 void sperr::Bitmask::write_long(size_t idx, uint64_t value)
@@ -86,6 +96,16 @@ void sperr::Bitmask::write_false(size_t idx)
   auto word = m_buf[wstart];
   word &= ~mask;
   m_buf[wstart] = word;
+}
+
+void sperr::Bitmask::reset()
+{
+  std::fill(m_buf.begin(), m_buf.end(), 0);
+}
+
+void sperr::Bitmask::reset_true()
+{
+  std::fill(m_buf.begin(), m_buf.end(), std::numeric_limits<uint64_t>::max());
 }
 
 auto sperr::Bitmask::view_buffer() const -> const std::vector<uint64_t>&

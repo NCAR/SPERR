@@ -28,17 +28,16 @@ class Bitmask {
   //
   Bitmask(size_t nbits = 0);  // How many bits does it hold initially?
 
-  // Functions for both read and write
+  // Size related functions
   //
   auto size() const -> size_t;  // Num. of useful bits in this mask.
   void resize(size_t nbits);    // Resize to hold n bits.
-  void reset();                 // Set the current bitmask to be all 0's.
-  void reset_true();            // Set the current bitmask to be all 1's.
 
   // Functions for read
   //
   auto read_long(size_t idx) const -> uint64_t;
   auto read_bit(size_t idx) const -> bool;
+  auto count_true() const -> size_t;  // How many 1's in this mask?
 
   // Functions for write
   //
@@ -46,6 +45,8 @@ class Bitmask {
   void write_bit(size_t idx, bool bit);
   void write_true(size_t idx);   // This is faster than `write_bit(idx, true)`.
   void write_false(size_t idx);  // This is faster than `write_bit(idx, false)`.
+  void reset();                  // Set the current bitmask to be all 0's.
+  void reset_true();             // Set the current bitmask to be all 1's.
 
   // Functions for direct access of the underlying data buffer
   // Note: `use_bitstream()` reads the number of values (uint64_t type) that provide
