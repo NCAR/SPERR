@@ -68,7 +68,8 @@ class SPECK_INT {
   virtual void m_sorting_pass() = 0;
   virtual void m_initialize_lists() = 0;
   void m_refinement_pass_encode();
-  void m_refinement_pass_decode();
+  void m_refinement_pass_decode_complete();
+  auto m_refinement_pass_decode_partial() -> RTNType;
 
   // Data members
   dims_type m_dims = {0, 0, 0};
