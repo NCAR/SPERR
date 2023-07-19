@@ -78,6 +78,21 @@ auto sperr::SPECK_INT<T>::get_stream_full_len(const void* buf) const -> uint64_t
 }
 
 template <typename T>
+void sperr::SPECK_INT<T>::use_bitstream(const void* p, size_t len)
+{
+  // Header definition: 9 bytes in total:
+  // num_bitplanes (uint8_t), num_useful_bits (uint64_t)
+
+  // Step 1: extract num_bitplanes and num_useful_bits
+  const auto* const p8 = static_cast<const uint8_t*>(p);
+  std::memcpy(&m_num_bitplanes, p8, sizeof(m_num_bitplanes));
+  std::memcpy(&m_total_bits, p8 + sizeof(m_num_bitplanes), sizeof(m_total_bits));
+
+  // Step 2: unpack bits
+  m_bit_buffer.parse_bitstream(p8 + m_header_size, m_total_bits);
+}
+
+template <typename T>
 void sperr::SPECK_INT<T>::encode()
 {
   m_bit_buffer.reserve(m_coeff_buf.size());  // A good starting point
@@ -117,7 +132,7 @@ void sperr::SPECK_INT<T>::encode()
     m_clean_LIS();
   }
 
-  // Flush the bitstream, and record the total number of bits
+  // Record the total number of bits produced, and flush the stream.
   m_total_bits = m_bit_buffer.wtell();
   m_bit_buffer.flush();
 }
@@ -140,7 +155,7 @@ void sperr::SPECK_INT<T>::decode()
   m_LSP_new.reserve(m_coeff_buf.size() / 16);
 
   // Handle the special case of all coeffs (m_coeff_buf) are zero by return now!
-  //    This case is indicated by both `m_num_bitplanes` and `m_total_bits` equal zero.
+  // This case is indicated by both `m_num_bitplanes` and `m_total_bits` equal zero.
   if (m_num_bitplanes == 0) {
     assert(m_total_bits == 0);
     return;
@@ -170,21 +185,6 @@ auto sperr::SPECK_INT<T>::use_coeffs(vecui_type coeffs, vecb_type signs) -> RTNT
   m_coeff_buf = std::move(coeffs);
   m_sign_array = std::move(signs);
   return RTNType::Good;
-}
-
-template <typename T>
-void sperr::SPECK_INT<T>::use_bitstream(const void* p, size_t len)
-{
-  // Header definition: 9 bytes in total:
-  // num_bitplanes (uint8_t), num_useful_bits (uint64_t)
-
-  // Step 1: extract num_bitplanes and num_useful_bits
-  const auto* const p8 = static_cast<const uint8_t*>(p);
-  std::memcpy(&m_num_bitplanes, p8, sizeof(m_num_bitplanes));
-  std::memcpy(&m_total_bits, p8 + sizeof(m_num_bitplanes), sizeof(m_total_bits));
-
-  // Step 2: unpack bits
-  m_bit_buffer.parse_bitstream(p8 + m_header_size, m_total_bits);
 }
 
 template <typename T>

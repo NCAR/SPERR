@@ -75,6 +75,12 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   m_instantiate_decoder();
 
   // Bitstream parser 2.2: extract and parse SPECK stream.
+  //    A situation to be considered here is that the speck bitstream is only partially available
+  //    as the result of progressive access. In that case, the available speck stream is simply
+  //    shorter than what the header reports.
+
+
+
   const auto speck_len =
       std::visit([speck_p](auto&& dec) { return dec->get_stream_full_len(speck_p); }, m_decoder);
   assert(pos <= len);

@@ -80,7 +80,8 @@ class SPECK_INT {
   std::vector<uint64_t> m_LSP_new;
 
   const size_t m_header_size = 9;  // 9 bytes
-  uint64_t m_total_bits = 0;       // keep the number of useful bits in `m_bit_buffer` after a flush
+  uint64_t m_total_bits = 0;       // The number of bits of a complete SPECK stream.
+  uint64_t m_avail_bits = 0;       // Decoding only. `m_avail_bits` <= `m_total_bits`
   uint8_t m_num_bitplanes = 0;
 };
 
