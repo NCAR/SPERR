@@ -33,13 +33,15 @@ void sperr::Bitstream::reserve(size_t nbits)
       num_longs++;
 
     const auto dist = std::distance(m_buf.begin(), m_itr);
-
-    // Need to make sure that new memory locations are written 0.
-    m_buf.resize(num_longs, 0); // trigger a memroy allocation.
-    m_buf.resize(m_buf.capacity(), 0);
-
+    m_buf.resize(num_longs);         // trigger a memroy allocation.
+    m_buf.resize(m_buf.capacity());  // be able to make use of all available capacity.
     m_itr = m_buf.begin() + dist;
   }
+}
+
+void sperr::Bitstream::reset()
+{
+  std::fill(m_buf.begin(), m_buf.end(), 0);
 }
 
 // Functions for read
@@ -107,8 +109,8 @@ void sperr::Bitstream::wbit(bool bit)
   if (++m_bits == 64) {
     if (m_itr == m_buf.end()) {  // allocate memory if necessary.
       const auto dist = m_buf.size();
-      m_buf.push_back(0); // trigger a memory allocation.
-      m_buf.resize(m_buf.capacity());
+      m_buf.push_back(0);              // trigger a memory allocation.
+      m_buf.resize(m_buf.capacity());  // be able to make use of all available capacity.
       m_itr = m_buf.begin() + dist;
     }
     *m_itr = m_buffer;
@@ -120,11 +122,11 @@ void sperr::Bitstream::wbit(bool bit)
 
 void sperr::Bitstream::flush()
 {
-  if (m_bits) {  // only flush when there are remaining bits.
+  if (m_bits) {  // only really flush when there are remaining bits.
     if (m_itr == m_buf.end()) {
       const auto dist = m_buf.size();
-      m_buf.push_back(0); // trigger a memory allocation.
-      m_buf.resize(m_buf.capacity());
+      m_buf.push_back(0);              // trigger a memory allocation.
+      m_buf.resize(m_buf.capacity());  // be able to make use of all available capacity.
       m_itr = m_buf.begin() + dist;
     }
     *m_itr = m_buffer;
@@ -168,8 +170,6 @@ auto sperr::Bitstream::get_bitstream(size_t num_bits) const -> std::vector<std::
 
 void sperr::Bitstream::parse_bitstream(const void* p, size_t num_bits)
 {
-  // Clear before reserving space to make sure that `reserve()` will write zero to all memory.
-  m_buf.clear();
   this->reserve(num_bits);
 
   const auto num_longs = num_bits / 64;
