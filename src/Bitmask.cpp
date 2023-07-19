@@ -54,8 +54,9 @@ auto sperr::Bitmask::count_true() const -> size_t
         counter += ((val >> j) & uint64_t{1});
     }
   }
-  for (size_t i = (m_buf.size() - 1) * 64; i < m_num_bits; i++)
-    counter += this->read_bit(i);
+  const auto val = m_buf.back();
+  for (size_t j = 0; j < m_num_bits - (m_buf.size() - 1) * 64; j++)
+    counter += ((val >> j) & uint64_t{1});
 
   return counter;
 }
