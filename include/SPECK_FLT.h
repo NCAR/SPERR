@@ -93,7 +93,7 @@ class SPECK_FLT {
   void m_instantiate_int_vec();
 
   // Derived classes instantiate the correct `m_encoder` and `m_decoder` depending on
-  //   3D/2D/1D classes, and on the integer length in use.
+  // 3D/2D/1D classes, and on the integer length in use.
   virtual void m_instantiate_encoder() = 0;
   virtual void m_instantiate_decoder() = 0;
 
