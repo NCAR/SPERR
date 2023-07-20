@@ -60,6 +60,8 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   // Bitstream parser 2.1: based on the number of bitplanes, decide on an integer length to use,
   // and instantiate the proper decoder. It will be the decoder who parses the SPECK bitstream.
   size_t pos = m_condi_bitstream.size();
+  size_t remaining_len = len - pos;
+  assert(remaining_len >= SPECK_INT<uint8_t>::header_size);
   const uint8_t* const speck_p = ptr + pos;
   const auto num_bitplanes = speck_int_get_num_bitplanes(speck_p);
   if (num_bitplanes <= 8)
@@ -78,15 +80,13 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   //    A situation to be considered here is that the speck bitstream is only partially available
   //    as the result of progressive access. In that case, the available speck stream is simply
   //    shorter than what the header reports.
-
-
-
-  const auto speck_len =
+  auto speck_suppose_len =
       std::visit([speck_p](auto&& dec) { return dec->get_stream_full_len(speck_p); }, m_decoder);
-  assert(pos <= len);
+  auto speck_len = std::min(speck_suppose_len, remaining_len);
   std::visit([speck_p, speck_len](auto&& dec) { return dec->use_bitstream(speck_p, speck_len); },
              m_decoder);
   pos += speck_len;
+  assert(pos <= len);
 
   // Bitstream parser 3: extract Outlier Coder stream if there's any.
   if (pos < len) {

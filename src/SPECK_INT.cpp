@@ -74,7 +74,7 @@ auto sperr::SPECK_INT<T>::get_stream_full_len(const void* buf) const -> uint64_t
   auto num_bits = get_speck_bits(buf);
   while (num_bits % 8 != 0)
     ++num_bits;
-  return (m_header_size + num_bits / 8);
+  return (header_size + num_bits / 8);
 }
 
 template <typename T>
@@ -84,7 +84,7 @@ void sperr::SPECK_INT<T>::use_bitstream(const void* p, size_t len)
   // num_bitplanes (uint8_t), num_useful_bits (uint64_t)
 
   // Step 1: extract num_bitplanes and num_useful_bits
-  assert(len >= m_header_size);
+  assert(len >= header_size);
   const auto* const p8 = static_cast<const uint8_t*>(p);
   std::memcpy(&m_num_bitplanes, p8, sizeof(m_num_bitplanes));
   std::memcpy(&m_total_bits, p8 + sizeof(m_num_bitplanes), sizeof(m_total_bits));
@@ -93,16 +93,16 @@ void sperr::SPECK_INT<T>::use_bitstream(const void* p, size_t len)
   //    Note that the bitstream passed in might not be of its original length as a result of
   //    progressive access. In that case, we parse available bits, and pad 0's to make the
   //    bitstream still have `m_total_bits`.
-  m_avail_bits = (len - m_header_size) * 8;
+  m_avail_bits = (len - header_size) * 8;
   if (m_avail_bits < m_total_bits) {
     m_bit_buffer.reserve(m_total_bits);
     m_bit_buffer.reset();
-    m_bit_buffer.parse_bitstream(p8 + m_header_size, m_avail_bits);
+    m_bit_buffer.parse_bitstream(p8 + header_size, m_avail_bits);
   }
   else {
     assert(m_avail_bits - m_total_bits < 64);
     m_avail_bits = m_total_bits;
-    m_bit_buffer.parse_bitstream(p8 + m_header_size, m_total_bits);
+    m_bit_buffer.parse_bitstream(p8 + header_size, m_total_bits);
   }
 
   // After parsing an incoming bitstream, m_avail_bits <= m_total_bits.
@@ -256,7 +256,7 @@ void sperr::SPECK_INT<T>::append_encoded_bitstream(vec8_type& buffer) const
   uint64_t bit_in_byte = m_total_bits / 8;
   if (m_total_bits % 8 != 0)
     ++bit_in_byte;
-  const auto app_size = m_header_size + bit_in_byte;
+  const auto app_size = header_size + bit_in_byte;
 
   const auto orig_size = buffer.size();
   buffer.resize(orig_size + app_size);
@@ -270,7 +270,7 @@ void sperr::SPECK_INT<T>::append_encoded_bitstream(vec8_type& buffer) const
   pos += sizeof(m_total_bits);
 
   // Step 3: assemble `m_bit_buffer` into bytes
-  m_bit_buffer.write_bitstream(ptr + m_header_size, m_total_bits);
+  m_bit_buffer.write_bitstream(ptr + header_size, m_total_bits);
 }
 
 template <typename T>

@@ -31,6 +31,8 @@ class SPECK_INT {
   SPECK_INT();
   virtual ~SPECK_INT() = default;
 
+  static const size_t header_size = 9;  // 9 bytes
+
   // The length (1, 2, 4, 8) of the integer type in use
   auto integer_len() const -> size_t;
 
@@ -80,7 +82,6 @@ class SPECK_INT {
   Bitstream m_bit_buffer;
   std::vector<uint64_t> m_LSP_new;
 
-  const size_t m_header_size = 9;  // 9 bytes
   uint64_t m_total_bits = 0;       // The number of bits of a complete SPECK stream.
   uint64_t m_avail_bits = 0;       // Decoding only. `m_avail_bits` <= `m_total_bits`
   uint8_t m_num_bitplanes = 0;
