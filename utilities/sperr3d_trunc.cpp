@@ -1,3 +1,4 @@
+#include "SPERR3D_OMP_D.h"
 #include "SPERR3D_Stream_Tools.h"
 
 #include "CLI/App.hpp"
@@ -12,13 +13,13 @@
 int main(int argc, char* argv[])
 {
   // Parse command line options
-  CLI::App app("Truncate a SPERR3D bitstream to a specific bit-per-point (BPP).\n"
-                "Optionally, it can also evaluate the compression quality after truncation.\n");
+  CLI::App app(
+      "Truncate a SPERR3D bitstream to a specific bit-per-point (BPP).\n"
+      "Optionally, it can also evaluate the compression quality after truncation.\n");
 
   // Input specification
   auto input_file = std::string();
-  app.add_option("filename", input_file,
-                 "A SPERR3D bitstream to be truncated.\n")
+  app.add_option("filename", input_file, "A SPERR3D bitstream to be truncated.\n")
       ->check(CLI::ExistingFile);
 
   //
@@ -26,7 +27,8 @@ int main(int argc, char* argv[])
   //
   auto bpp = sperr::max_d;
   app.add_option("--bpp", bpp, "Target bit-per-pixel (BPP) to truncate to.")
-      ->required()->group("Truncation settings");
+      ->required()
+      ->group("Truncation settings");
 
   auto omp_num_threads = size_t{0};  // meaning to use the maximum number of threads.
 #ifdef USE_OMP
@@ -38,9 +40,22 @@ int main(int argc, char* argv[])
   //
   // Output settings
   //
-  auto o_file = std::string();
-  app.add_option("-o", o_file, "Output truncated bitstream.")
-      ->group("Output settings");
+  auto out_file = std::string();
+  app.add_option("-o", out_file, "Output truncated bitstream.")->group("Output settings");
+
+  //
+  // Input settings
+  //
+  auto orig32_file = std::string();
+  app.add_option("--orig32", orig32_file,
+                 "Original raw data in 32-bit precision to calculate\n"
+                 "compression quality using the truncated bitstream.")
+      ->group("Input settings");
+  auto orig64_file = std::string();
+  app.add_option("--orig64", orig64_file,
+                 "Original raw data in 64-bit precision to calculate\n"
+                 "compression quality using the truncated bitstream.")
+      ->group("Input settings");
 
   CLI11_PARSE(app, argc, argv);
 
@@ -49,6 +64,10 @@ int main(int argc, char* argv[])
   //
   if (bpp <= 0.0) {
     std::cout << "Target BPP value should be positive!" << std::endl;
+    return __LINE__;
+  }
+  if (!orig32_file.empty() && !orig64_file.empty()) {
+    std::cout << "Is the original data in 32 or 64 bit precision?" << std::endl;
     return __LINE__;
   }
 
@@ -63,12 +82,65 @@ int main(int argc, char* argv[])
   }
   auto total_vals = tool.vol_dims[0] * tool.vol_dims[1] * tool.vol_dims[2];
   auto real_bpp = stream_trunc.size() * 8.0 / double(total_vals);
-  std::cout << "Truncation resulting BPP = " << real_bpp << std::endl;
+  std::printf("Truncation resulting BPP = %.2f\n", real_bpp);
 
-  if (!o_file.empty()) {
-    auto rtn = sperr::write_n_bytes(o_file, stream_trunc.size(), stream_trunc.data());
+  if (!out_file.empty()) {
+    auto rtn = sperr::write_n_bytes(out_file, stream_trunc.size(), stream_trunc.data());
     if (rtn != sperr::RTNType::Good)
       return __LINE__;
+  }
+
+  //
+  // Decompress the truncated bitstream and evaluate compression quality.
+  //
+  if (!orig32_file.empty() || !orig64_file.empty()) {
+    auto decoder = std::make_unique<sperr::SPERR3D_OMP_D>();
+    decoder->set_num_threads(omp_num_threads);
+    decoder->setup_decomp(stream_trunc.data(), stream_trunc.size());
+    auto rtn = decoder->decompress(stream_trunc.data());
+    if (rtn != sperr::RTNType::Good) {
+      std::cout << "Decompression failed!" << std::endl;
+      return __LINE__;
+    }
+    auto outputd = decoder->release_decoded_data();
+    decoder.reset();
+
+    double linfy = 0.0, psnr = 0.0, rmse = 0.0, sigma = 0.0;
+
+    if (!orig64_file.empty()) {
+      auto orig = sperr::read_whole_file<double>(orig64_file);
+      if (orig.empty()) {
+        std::cout << "Read original data failed: " << orig64_file << std::endl;
+        return __LINE__;
+      }
+      auto stats = sperr::calc_stats(orig.data(), outputd.data(), total_vals, omp_num_threads);
+      auto mean_var = sperr::calc_mean_var(orig.data(), total_vals, omp_num_threads);
+      rmse = stats[0];
+      linfy = stats[1];
+      psnr = stats[2];
+      sigma = std::sqrt(mean_var[1]);
+    }
+    else {
+      auto outputf = std::vector<float>(total_vals);
+      std::copy(outputd.begin(), outputd.end(), outputf.begin());
+      outputd.clear();
+      outputd.shrink_to_fit();
+
+      auto orig = sperr::read_whole_file<float>(orig32_file);
+      if (orig.empty()) {
+        std::cout << "Read original data failed: " << orig32_file << std::endl;
+        return __LINE__;
+      }
+      auto stats = sperr::calc_stats(orig.data(), outputf.data(), total_vals, omp_num_threads);
+      auto mean_var = sperr::calc_mean_var(orig.data(), total_vals, omp_num_threads);
+      rmse = stats[0];
+      linfy = stats[1];
+      psnr = stats[2];
+      sigma = std::sqrt(mean_var[1]);
+    }
+
+    std::printf("PSNR = %.2fdB, L-Infty = %.2e, Accuracy Gain = %.2f\n", psnr, linfy,
+                std::log2(sigma / rmse) - real_bpp);
   }
 
   return 0;
