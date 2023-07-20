@@ -89,16 +89,23 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   assert(pos <= len);
 
   // Bitstream parser 3: extract Outlier Coder stream if there's any.
+  //    Also note the situation where only partial of the outlier coding bitstream is available.
+  //    In that case, we simply discard the remaining bitstream.
+  m_has_outlier = false;
   if (pos < len) {
-    m_has_outlier = true;
     const uint8_t* const out_p = ptr + pos;
-    assert(m_out_coder.get_stream_full_len(out_p) == len - pos);
-    auto rtn = m_out_coder.use_bitstream(out_p, len - pos);
-    if (rtn != RTNType::Good)
-      return rtn;
+    remaining_len = len - pos;
+    if (remaining_len >= SPECK_INT<uint8_t>::header_size) {
+      auto suppose_len = m_out_coder.get_stream_full_len(out_p);
+      assert(suppose_len >= remaining_len);
+      if (remaining_len == suppose_len) {
+        auto rtn = m_out_coder.use_bitstream(out_p, suppose_len);
+        if (rtn != RTNType::Good)
+          return rtn;
+        m_has_outlier = true;
+      }
+    }
   }
-  else
-    m_has_outlier = false;
 
   return RTNType::Good;
 }
