@@ -78,7 +78,7 @@ TEST(stream_tools, regular_1chunk)
   for (size_t i = 2; i < tools.header_len - 4; i++) // Exclude the last 4 bytes (chunk len).
     EXPECT_EQ(part[i], stream[i]);
 
-  // The header of each chunk (first 17 bytes) should also remain the same.
+  // The header of each chunk (first 26 bytes) should also remain the same.
   //    To know offsets of each chunk of the new portioned bitstream, we use another
   //    stream tool to parse it.
   auto tools_part = sperr::SPERR3D_Stream_Tools();
@@ -115,7 +115,7 @@ TEST(stream_tools, regular_nchunks)
   EXPECT_EQ(part[0], stream[0]);
   EXPECT_EQ(part[1], stream[1] + 128);
 
-  // The header of each chunk (first 17 bytes) should also remain the same.
+  // The header of each chunk (first 26 bytes) should also remain the same.
   //    To know offsets of each chunk of the new portioned bitstream, we use another
   //    stream tool to parse it.
   auto tools_part = sperr::SPERR3D_Stream_Tools();
@@ -125,8 +125,8 @@ TEST(stream_tools, regular_nchunks)
   for (size_t i = 0; i < tools.chunk_offsets.size() / 2; i++) {
     auto orig_start = tools.chunk_offsets[i * 2];
     auto part_start = tools_part.chunk_offsets[i * 2];
-    // We actually test first 20 bytes. There must be 20 bytes there because of the 5.5bpp request.
-    for (size_t j = 0; j < 20; j++)
+    // We actually test first 30 bytes. There must be 30 bytes there because of the 5.5bpp request.
+    for (size_t j = 0; j < 30; j++)
       EXPECT_EQ(stream[orig_start + j], part[part_start + j]);
   }
 }
