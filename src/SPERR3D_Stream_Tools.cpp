@@ -109,8 +109,8 @@ auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, double 
   // If the complete bitstream is less than what's requested, return the complete bitstream!
   const auto total_vals = vol_dims[0] * vol_dims[1] * vol_dims[2];
   auto request_len = static_cast<size_t>(std::ceil(double(total_vals) * bpp / 8.0));
-  if (request_len <= this->stream_len) {
-    auto complete_stream = sperr::read_n_bytes(filename, header_len);
+  if (this->stream_len <= request_len) {
+    auto complete_stream = sperr::read_n_bytes(filename, this->stream_len);
     return complete_stream;
   }
 
@@ -119,8 +119,8 @@ auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, double 
   auto chunk_offsets_new = chunk_offsets;
   for (size_t i = 0; i < chunks.size(); i++) {
     auto nvals = chunks[i][1] * chunks[i][3] * chunks[i][5];
-    request_len = static_cast<size_t>(std::ceil(double(nvals)) * bpp);
-    // `request_len. should be long enough to include the Conditioner bitstream (17 bytes) and
+    request_len = static_cast<size_t>(std::ceil(double(nvals) * bpp / 8.0));
+    // `request_len` should be long enough to include the Conditioner bitstream (17 bytes) and
     // the header of a SPECK_INT stream (9 bytes). Totalling 26 bytes.
     request_len = std::max(26ul, request_len);
     if (request_len < chunk_offsets[i * 2 + 1])
