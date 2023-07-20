@@ -84,16 +84,6 @@ int main(int argc, char* argv[])
                       ->excludes(psnr_ptr)
                       ->group("Compression settings");
 
-  //
-  // Decompression settings
-  //
-  auto first_bpp = sperr::max_d;
-  app.add_option("--first_bpp", first_bpp,
-                 "Decompression using partial data, up to a certain bpp.\n"
-                 "By default, decompression uses all data in the bitstream.")
-      ->needs(dptr)
-      ->group("Decompression settings");
-
   CLI11_PARSE(app, argc, argv);
 
   //

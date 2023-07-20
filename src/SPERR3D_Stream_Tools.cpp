@@ -108,7 +108,7 @@ auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, double 
 
   // If the complete bitstream is less than what's requested, return the complete bitstream!
   const auto total_vals = vol_dims[0] * vol_dims[1] * vol_dims[2];
-  auto request_len = static_cast<size_t>(std::ceil(double(total_vals) * bpp));
+  auto request_len = static_cast<size_t>(std::ceil(double(total_vals) * bpp / 8.0));
   if (request_len <= this->stream_len) {
     auto complete_stream = sperr::read_n_bytes(filename, header_len);
     return complete_stream;
