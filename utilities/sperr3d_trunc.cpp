@@ -19,14 +19,14 @@ int main(int argc, char* argv[])
 
   // Input specification
   auto input_file = std::string();
-  app.add_option("filename", input_file, "A SPERR3D bitstream to be truncated.\n")
+  app.add_option("filename", input_file, "The original SPERR3D bitstream to be truncated.\n")
       ->check(CLI::ExistingFile);
 
   //
   // Truncation settings
   //
-  auto bpp = sperr::max_d;
-  app.add_option("--bpp", bpp, "Target bit-per-pixel (BPP) to truncate to.")
+  auto pct = uint32_t{0};
+  app.add_option("--pct", pct, "Percentage (1--100) of the original bitstream to truncate.")
       ->required()
       ->group("Truncation settings");
 
@@ -41,20 +41,20 @@ int main(int argc, char* argv[])
   // Output settings
   //
   auto out_file = std::string();
-  app.add_option("-o", out_file, "Output truncated bitstream.")->group("Output settings");
+  app.add_option("-o", out_file, "Write out the truncated bitstream.")->group("Output settings");
 
   //
   // Input settings
   //
   auto orig32_file = std::string();
   app.add_option("--orig32", orig32_file,
-                 "Original raw data in 32-bit precision to calculate\n"
-                 "compression quality using the truncated bitstream.")
+                 "Original raw data in 32-bit precision to calculate compression\n"
+                 "quality using the truncated bitstream.")
       ->group("Input settings");
   auto orig64_file = std::string();
   app.add_option("--orig64", orig64_file,
-                 "Original raw data in 64-bit precision to calculate\n"
-                 "compression quality using the truncated bitstream.")
+                 "Original raw data in 64-bit precision to calculate compression\n"
+                 "quality using the truncated bitstream.")
       ->group("Input settings");
 
   CLI11_PARSE(app, argc, argv);
@@ -62,10 +62,6 @@ int main(int argc, char* argv[])
   //
   // A little sanity check
   //
-  if (bpp <= 0.0) {
-    std::cout << "Target BPP value should be positive!" << std::endl;
-    return __LINE__;
-  }
   if (!orig32_file.empty() && !orig64_file.empty()) {
     std::cout << "Is the original data in 32 or 64 bit precision?" << std::endl;
     return __LINE__;
@@ -75,7 +71,7 @@ int main(int argc, char* argv[])
   // Really starting the real work!
   //
   auto tool = sperr::SPERR3D_Stream_Tools();
-  auto stream_trunc = tool.progressive_read(input_file, bpp);
+  auto stream_trunc = tool.progressive_read(input_file, pct);
   if (stream_trunc.empty()) {
     std::cout << "Error while truncating bitstream " << input_file << std::endl;
     return __LINE__;

@@ -1,4 +1,5 @@
 #include "SPERR3D_Stream_Tools.h"
+#include "Conditioner.h"
 
 #include <algorithm>
 #include <cassert>
@@ -92,11 +93,11 @@ void sperr::SPERR3D_Stream_Tools::populate_stream_info(const void* p)
   chunk_offsets[1] = chunk_len[0];
   for (size_t i = 1; i < num_chunks; i++) {
     chunk_offsets[i * 2] = chunk_offsets[i * 2 - 2] + chunk_offsets[i * 2 - 1];
-    chunk_offsets[i * 2 + 1] = chunk_len[i]; 
+    chunk_offsets[i * 2 + 1] = chunk_len[i];
   }
 }
 
-auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, double bpp) -> vec8_type
+auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, uint32_t pct) -> vec8_type
 {
   // Gather info of the current bitstream.
   auto vec20 = sperr::read_n_bytes(filename, 20);
@@ -107,39 +108,61 @@ auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, double 
   this->populate_stream_info(header.data());
 
   // If the complete bitstream is less than what's requested, return the complete bitstream!
-  const auto total_vals = vol_dims[0] * vol_dims[1] * vol_dims[2];
-  auto request_len = static_cast<size_t>(std::ceil(double(total_vals) * bpp / 8.0));
-  if (this->stream_len <= request_len) {
+  if (pct == 0 || pct >= 100) {
     auto complete_stream = sperr::read_n_bytes(filename, this->stream_len);
     return complete_stream;
   }
 
-  // Calculate how many bytes to allocate to each chunk.
-  const auto chunks = sperr::chunk_volume(this->vol_dims, this->chunk_dims);
+  // Calculate how many bytes to allocate to each chunk. There is a consideration:
+  // a truncated chunk should always be as long as a Conditioner bitstream (17 bytes).
+  auto condi_array = sperr::condi_type();  // temporary use
+  assert(chunk_offsets.size() % 2 == 0);
+  auto nchunks = chunk_offsets.size() / 2;
   auto chunk_offsets_new = chunk_offsets;
-  for (size_t i = 0; i < chunks.size(); i++) {
-    auto nvals = chunks[i][1] * chunks[i][3] * chunks[i][5];
-    request_len = static_cast<size_t>(std::ceil(double(nvals) * bpp / 8.0));
-    // `request_len` should be long enough to include the Conditioner bitstream (17 bytes) and
-    // the header of a SPECK_INT stream (9 bytes). Totalling 26 bytes.
-    request_len = std::max(26ul, request_len);
-    if (request_len < chunk_offsets[i * 2 + 1])
-      chunk_offsets_new[i * 2 + 1] = request_len;
-    else
-      chunk_offsets_new[i * 2 + 1] = chunk_offsets[i * 2 + 1];
+  for (size_t i = 0; i < nchunks; i++) {
+    auto chunk_orig_len = chunk_offsets[i * 2 + 1];
+    auto request_len = static_cast<size_t>(double(pct) / 100.0 * double(chunk_orig_len));
+    request_len = std::max(condi_array.size(), request_len);
+    chunk_offsets_new[i * 2 + 1] = request_len;
   }
 
   // Calculate the total length of the new bitstream, and read it from disk!
   auto total_len_new = header.size();
-  for (size_t i = 0; i < chunks.size(); i++)
+  for (size_t i = 0; i < nchunks; i++)
     total_len_new += chunk_offsets_new[i * 2 + 1];
   auto stream_new = vec8_type();
   stream_new.reserve(total_len_new);
-  stream_new.resize(header.size(), 0);  // Occupy the space for a new header.
+  stream_new.resize(header.size());  // Occupy the space for a new header.
   auto rtn = sperr::read_sections(filename, chunk_offsets_new, stream_new);
   if (rtn != RTNType::Good) {
     vec20.clear();  // Just reuse an old variable.
     return vec20;
+  }
+
+  // Need to verify each chunk: if the chunk is not constant, then it should also include
+  //    the SPECK stream header (9 bytes), so that chunk should have 26 bytes at least.
+  //    If it doesn't, we go back to the disk and read again!
+  //    Note: this situation should happen VERY rarely though!
+  auto conditioner = sperr::Conditioner();
+  bool reread = false;
+  for (size_t i = 1; i < nchunks; i++)
+    chunk_offsets_new[i * 2] = chunk_offsets_new[i * 2 - 2] + chunk_offsets_new[i * 2 - 1];
+  for (size_t i = 0; i < nchunks; i++) {
+    auto byte = stream_new[chunk_offsets_new[i * 2]];
+    if (!conditioner.is_constant(byte) && chunk_offsets_new[i * 2 + 1] < 26) {
+      chunk_offsets_new[i * 2 + 1] = 26;
+      reread = true;
+    }
+  }
+  if (reread) {
+    for (size_t i = 0; i < nchunks; i++)
+      chunk_offsets_new[i * 2] = chunk_offsets[i * 2];
+    stream_new.resize(header.size());
+    auto rtn = sperr::read_sections(filename, chunk_offsets_new, stream_new);
+    if (rtn != RTNType::Good) {
+      vec20.clear();  // Just reuse an old variable.
+      return vec20;
+    }
   }
 
   // Finally, create a proper new header.
@@ -147,19 +170,21 @@ auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, double 
   stream_new[0] = static_cast<uint8_t>(SPERR_VERSION_MAJOR);
   size_t pos = 1;
   auto b8 = sperr::unpack_8_booleans(header[pos]);
-  b8[0] = true; // This is a portion of another complete bitstream.
+  b8[0] = true;  // Recording that this is a portion of another complete bitstream.
   stream_new[pos++] = sperr::pack_8_booleans(b8);
   // Copy over the volume and chunk dimensions.
   if (multi_chunk) {
-    std::copy(header.begin() + pos, header.begin() + m_header_magic_nchunks, stream_new.begin() + pos);
+    std::copy(header.begin() + pos, header.begin() + m_header_magic_nchunks,
+              stream_new.begin() + pos);
     pos = m_header_magic_nchunks;
   }
   else {
-    std::copy(header.begin() + pos, header.begin() + m_header_magic_1chunk, stream_new.begin() + pos);
+    std::copy(header.begin() + pos, header.begin() + m_header_magic_1chunk,
+              stream_new.begin() + pos);
     pos = m_header_magic_1chunk;
   }
   // Record the length of bitstreams for each chunk.
-  for (size_t i = 0; i < chunks.size(); i++) {
+  for (size_t i = 0; i < nchunks; i++) {
     uint32_t len = chunk_offsets_new[i * 2 + 1];
     std::memcpy(&stream_new[pos], &len, sizeof(len));
     pos += sizeof(len);
@@ -168,4 +193,3 @@ auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, double 
 
   return stream_new;
 }
-

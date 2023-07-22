@@ -34,7 +34,7 @@ class SPERR3D_Stream_Tools {
   void populate_stream_info(const void*);
 
   // Function that reads in portions of a bitstream to facilitate progressive access.
-  auto progressive_read(std::string filename, double bpp) -> vec8_type;
+  auto progressive_read(std::string filename, uint32_t pct) -> vec8_type;
 
  private:
   const size_t m_header_magic_nchunks = 20; 

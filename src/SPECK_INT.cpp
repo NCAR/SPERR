@@ -185,6 +185,10 @@ void sperr::SPECK_INT<T>::decode()
 
   // Marching over bitplanes.
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
+
+    if (m_bit_buffer.rtell() >= m_avail_bits)
+      break;
+
     m_sorting_pass();
 
     if (m_avail_bits != m_total_bits) { // `m_bit_buffer` has only partial bitstream.
