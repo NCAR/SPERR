@@ -96,7 +96,7 @@ void sperr::SPECK_INT<T>::use_bitstream(const void* p, size_t len)
   m_avail_bits = (len - header_size) * 8;
   if (m_avail_bits < m_total_bits) {
     m_bit_buffer.reserve(m_total_bits);
-    m_bit_buffer.reset();
+    m_bit_buffer.reset(); // Set buffer to contain all 0's.
     m_bit_buffer.parse_bitstream(p8 + header_size, m_avail_bits);
   }
   else {
