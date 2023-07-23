@@ -1,5 +1,6 @@
 #include "SPERR3D_Stream_Tools.h"
 #include "Conditioner.h"
+#include "SPECK_INT.h"
 
 #include <algorithm>
 #include <cassert>
@@ -143,14 +144,15 @@ auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, uint32_
   //    the SPECK stream header (9 bytes), so that chunk should have 26 bytes at least.
   //    If it doesn't, we go back to the disk and read again!
   //    Note: this situation should happen VERY rarely though!
+  const auto chunk_min = condi_array.size() + SPECK_INT<uint8_t>::header_size;  // 26
   auto conditioner = sperr::Conditioner();
   bool reread = false;
   for (size_t i = 1; i < nchunks; i++)
     chunk_offsets_new[i * 2] = chunk_offsets_new[i * 2 - 2] + chunk_offsets_new[i * 2 - 1];
   for (size_t i = 0; i < nchunks; i++) {
     auto byte = stream_new[chunk_offsets_new[i * 2]];
-    if (!conditioner.is_constant(byte) && chunk_offsets_new[i * 2 + 1] < 26) {
-      chunk_offsets_new[i * 2 + 1] = 26;
+    if (!conditioner.is_constant(byte) && chunk_offsets_new[i * 2 + 1] < chunk_min) {
+      chunk_offsets_new[i * 2 + 1] = chunk_min;
       reread = true;
     }
   }

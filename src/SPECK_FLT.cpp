@@ -82,7 +82,7 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   //    shorter than what the header reports.
   auto speck_suppose_len =
       std::visit([speck_p](auto&& dec) { return dec->get_stream_full_len(speck_p); }, m_decoder);
-  auto speck_len = std::min(speck_suppose_len, remaining_len);
+  auto speck_len = std::min(size_t{speck_suppose_len}, remaining_len);
   std::visit([speck_p, speck_len](auto&& dec) { return dec->use_bitstream(speck_p, speck_len); },
              m_decoder);
   pos += speck_len;
