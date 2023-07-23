@@ -53,4 +53,3 @@ void sperr::SPECK2D_FLT::m_inverse_wavelet_xform()
 {
   m_cdf.idwt2d();
 }
-

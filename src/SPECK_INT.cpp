@@ -96,7 +96,7 @@ void sperr::SPECK_INT<T>::use_bitstream(const void* p, size_t len)
   m_avail_bits = (len - header_size) * 8;
   if (m_avail_bits < m_total_bits) {
     m_bit_buffer.reserve(m_total_bits);
-    m_bit_buffer.reset(); // Set buffer to contain all 0's.
+    m_bit_buffer.reset();  // Set buffer to contain all 0's.
     m_bit_buffer.parse_bitstream(p8 + header_size, m_avail_bits);
   }
   else {
@@ -185,10 +185,9 @@ void sperr::SPECK_INT<T>::decode()
 
   // Marching over bitplanes.
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
-
     m_sorting_pass();
 
-    if (m_avail_bits != m_total_bits) { // `m_bit_buffer` has only partial bitstream.
+    if (m_avail_bits != m_total_bits) {  // `m_bit_buffer` has only partial bitstream.
       if (m_bit_buffer.rtell() >= m_avail_bits)
         break;
 
@@ -197,7 +196,7 @@ void sperr::SPECK_INT<T>::decode()
       if (rtn == RTNType::BitBudgetMet)
         break;
     }
-    else { // `m_bit_buffer` has the complete bitstream.
+    else {  // `m_bit_buffer` has the complete bitstream.
       m_refinement_pass_decode_complete();
     }
 
