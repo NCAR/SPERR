@@ -74,7 +74,38 @@ auto sperr::SPECK_INT<T>::get_stream_full_len(const void* buf) const -> uint64_t
   auto num_bits = get_speck_bits(buf);
   while (num_bits % 8 != 0)
     ++num_bits;
-  return (m_header_size + num_bits / 8);
+  return (header_size + num_bits / 8);
+}
+
+template <typename T>
+void sperr::SPECK_INT<T>::use_bitstream(const void* p, size_t len)
+{
+  // Header definition: 9 bytes in total:
+  // num_bitplanes (uint8_t), num_useful_bits (uint64_t)
+
+  // Step 1: extract num_bitplanes and num_useful_bits
+  assert(len >= header_size);
+  const auto* const p8 = static_cast<const uint8_t*>(p);
+  std::memcpy(&m_num_bitplanes, p8, sizeof(m_num_bitplanes));
+  std::memcpy(&m_total_bits, p8 + sizeof(m_num_bitplanes), sizeof(m_total_bits));
+
+  // Step 2: unpack bits.
+  //    Note that the bitstream passed in might not be of its original length as a result of
+  //    progressive access. In that case, we parse available bits, and pad 0's to make the
+  //    bitstream still have `m_total_bits`.
+  m_avail_bits = (len - header_size) * 8;
+  if (m_avail_bits < m_total_bits) {
+    m_bit_buffer.reserve(m_total_bits);
+    m_bit_buffer.reset();  // Set buffer to contain all 0's.
+    m_bit_buffer.parse_bitstream(p8 + header_size, m_avail_bits);
+  }
+  else {
+    assert(m_avail_bits - m_total_bits < 64);
+    m_avail_bits = m_total_bits;
+    m_bit_buffer.parse_bitstream(p8 + header_size, m_total_bits);
+  }
+
+  // After parsing an incoming bitstream, m_avail_bits <= m_total_bits.
 }
 
 template <typename T>
@@ -109,6 +140,7 @@ void sperr::SPECK_INT<T>::encode()
     m_num_bitplanes++;
   }
 
+  // Marching over bitplanes.
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
     m_sorting_pass();
     m_refinement_pass_encode();
@@ -117,7 +149,7 @@ void sperr::SPECK_INT<T>::encode()
     m_clean_LIS();
   }
 
-  // Flush the bitstream, and record the total number of bits
+  // Record the total number of bits produced, and flush the stream.
   m_total_bits = m_bit_buffer.wtell();
   m_bit_buffer.flush();
 }
@@ -140,26 +172,44 @@ void sperr::SPECK_INT<T>::decode()
   m_LSP_new.reserve(m_coeff_buf.size() / 16);
 
   // Handle the special case of all coeffs (m_coeff_buf) are zero by return now!
-  //    This case is indicated by both `m_num_bitplanes` and `m_total_bits` equal zero.
+  // This case is indicated by both `m_num_bitplanes` and `m_total_bits` equal zero.
   if (m_num_bitplanes == 0) {
     assert(m_total_bits == 0);
     return;
   }
 
-  // Restore the biggest `m_threshold`
+  // Restore the biggest `m_threshold`.
   m_threshold = 1;
   for (uint8_t i = 1; i < m_num_bitplanes; i++)
     m_threshold *= uint_type{2};
 
+  // Marching over bitplanes.
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
     m_sorting_pass();
-    m_refinement_pass_decode();
+
+    if (m_avail_bits != m_total_bits) {  // `m_bit_buffer` has only partial bitstream.
+      if (m_bit_buffer.rtell() >= m_avail_bits)
+        break;
+
+      auto rtn = m_refinement_pass_decode_partial();
+      assert(m_bit_buffer.rtell() <= m_avail_bits);
+      if (rtn == RTNType::BitBudgetMet)
+        break;
+    }
+    else {  // `m_bit_buffer` has the complete bitstream.
+      m_refinement_pass_decode_complete();
+    }
 
     m_threshold /= uint_type{2};
     m_clean_LIS();
   }
 
-  assert(m_bit_buffer.rtell() == m_total_bits);
+  if (m_avail_bits == m_total_bits)
+    assert(m_bit_buffer.rtell() == m_total_bits);
+  else {
+    assert(m_bit_buffer.rtell() >= m_avail_bits);
+    assert(m_bit_buffer.rtell() < m_total_bits);
+  }
 }
 
 template <typename T>
@@ -170,21 +220,6 @@ auto sperr::SPECK_INT<T>::use_coeffs(vecui_type coeffs, vecb_type signs) -> RTNT
   m_coeff_buf = std::move(coeffs);
   m_sign_array = std::move(signs);
   return RTNType::Good;
-}
-
-template <typename T>
-void sperr::SPECK_INT<T>::use_bitstream(const void* p, size_t len)
-{
-  // Header definition: 9 bytes in total:
-  // num_bitplanes (uint8_t), num_useful_bits (uint64_t)
-
-  // Step 1: extract num_bitplanes and num_useful_bits
-  const auto* const p8 = static_cast<const uint8_t*>(p);
-  std::memcpy(&m_num_bitplanes, p8, sizeof(m_num_bitplanes));
-  std::memcpy(&m_total_bits, p8 + sizeof(m_num_bitplanes), sizeof(m_total_bits));
-
-  // Step 2: unpack bits
-  m_bit_buffer.parse_bitstream(p8 + m_header_size, m_total_bits);
 }
 
 template <typename T>
@@ -221,7 +256,7 @@ void sperr::SPECK_INT<T>::append_encoded_bitstream(vec8_type& buffer) const
   uint64_t bit_in_byte = m_total_bits / 8;
   if (m_total_bits % 8 != 0)
     ++bit_in_byte;
-  const auto app_size = m_header_size + bit_in_byte;
+  const auto app_size = header_size + bit_in_byte;
 
   const auto orig_size = buffer.size();
   buffer.resize(orig_size + app_size);
@@ -235,7 +270,7 @@ void sperr::SPECK_INT<T>::append_encoded_bitstream(vec8_type& buffer) const
   pos += sizeof(m_total_bits);
 
   // Step 3: assemble `m_bit_buffer` into bytes
-  m_bit_buffer.write_bitstream(ptr + m_header_size, m_total_bits);
+  m_bit_buffer.write_bitstream(ptr + header_size, m_total_bits);
 }
 
 template <typename T>
@@ -274,7 +309,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_encode()
 }
 
 template <typename T>
-void sperr::SPECK_INT<T>::m_refinement_pass_decode()
+void sperr::SPECK_INT<T>::m_refinement_pass_decode_complete()
 {
   // First, process significant pixels previously found.
   //
@@ -301,6 +336,44 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
   for (auto idx : m_LSP_new)
     m_LSP_mask.write_true(idx);
   m_LSP_new.clear();
+}
+
+template <typename T>
+auto sperr::SPECK_INT<T>::m_refinement_pass_decode_partial() -> RTNType
+{
+  // First, process significant pixels previously found.
+  //
+  const auto tmp = std::array<uint_type, 2>{uint_type{0}, m_threshold};
+  const auto bits_x64 = m_LSP_mask.size() - m_LSP_mask.size() % 64;
+  assert(m_bit_buffer.rtell() < m_avail_bits);
+
+  for (size_t i = 0; i < bits_x64; i += 64) {
+    const auto value = m_LSP_mask.read_long(i);
+    if (value != 0) {
+      for (size_t j = 0; j < 64; j++) {
+        if ((value >> j) & uint64_t{1}) {
+          m_coeff_buf[i + j] += tmp[m_bit_buffer.rbit()];
+          if (m_bit_buffer.rtell() == m_avail_bits)
+            return RTNType::BitBudgetMet;
+        }
+      }
+    }
+  }
+  for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {
+    if (m_LSP_mask.read_bit(i)) {
+      m_coeff_buf[i] += tmp[m_bit_buffer.rbit()];
+      if (m_bit_buffer.rtell() == m_avail_bits)
+        return RTNType::BitBudgetMet;
+    }
+  }
+
+  // Second, mark newly found significant pixels in `m_LSP_mask`
+  //
+  for (auto idx : m_LSP_new)
+    m_LSP_mask.write_true(idx);
+  m_LSP_new.clear();
+
+  return RTNType::Good;
 }
 
 template class sperr::SPECK_INT<uint64_t>;

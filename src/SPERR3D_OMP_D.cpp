@@ -91,8 +91,8 @@ auto sperr::SPERR3D_OMP_D::decompress(const void* p) -> RTNType
 
     // Setup decompressor parameters, and decompress!
     decompressor->set_dims({chunks[i][1], chunks[i][3], chunks[i][5]});
-    chunk_rtn[i * 2] = decompressor->use_bitstream(m_bitstream_ptr + m_offsets[i * 2],
-                                                   m_offsets[i * 2 + 1]);
+    chunk_rtn[i * 2] =
+        decompressor->use_bitstream(m_bitstream_ptr + m_offsets[i * 2], m_offsets[i * 2 + 1]);
     chunk_rtn[i * 2 + 1] = decompressor->decompress();
     const auto& small_vol = decompressor->view_decoded_data();
     m_scatter_chunk(m_vol_buf, m_dims, small_vol, chunks[i]);

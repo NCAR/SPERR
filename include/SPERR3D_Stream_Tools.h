@@ -17,7 +17,7 @@ class SPERR3D_Stream_Tools {
   bool is_3D = false;
   bool is_float = false;
   bool multi_chunk = false;
-  dims_type vol_dims = {0, 0, 0}; 
+  dims_type vol_dims = {0, 0, 0};
   dims_type chunk_dims = {0, 0, 0};
 
   // Info calculated from above
@@ -26,7 +26,7 @@ class SPERR3D_Stream_Tools {
   std::vector<size_t> chunk_offsets;
 
   // Read the first 20 bytes of a bitstream, and determine the total length of the header.
-  // Need 20 bytes because it's the larger of the header magic number.
+  // Need 20 bytes because it's the larger of the header magic number (in multi-chunk case).
   auto get_header_len(std::array<uint8_t, 20>) const -> size_t;
 
   // Read a bitstream that's at least as long as what's determined by `get_header_len()`, and
@@ -34,14 +34,13 @@ class SPERR3D_Stream_Tools {
   void populate_stream_info(const void*);
 
   // Function that reads in portions of a bitstream to facilitate progressive access.
-  //
-  auto progressive_read(std::string filename, double bpp) -> vec8_type;
+  auto progressive_read(std::string filename, uint32_t pct) -> vec8_type;
 
  private:
-  const size_t m_header_magic_nchunks = 20; 
-  const size_t m_header_magic_1chunk = 14; 
+  const size_t m_header_magic_nchunks = 20;
+  const size_t m_header_magic_1chunk = 14;
 };
 
-} // End of namespace sperr
+}  // End of namespace sperr
 
 #endif

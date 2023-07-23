@@ -263,15 +263,14 @@ TEST(Bitmask, CountTrue)
   EXPECT_EQ(m1.count_true(), 20);
 
   m1.resize(60);
-  EXPECT_EQ(m1.count_true(), 12);
+  EXPECT_EQ(m1.count_true(), 12); // 0, 5, ..., 55
 
   m1.resize(192);
-  EXPECT_EQ(m1.count_true(), 13);
+  EXPECT_EQ(m1.count_true(), 13); // 0, 5, ..., 55, 60
 
-  m1.reset();
   for (size_t i = 0; i < 23; i++)
     m1.write_true(i * 7);
-  EXPECT_EQ(m1.count_true(), 23);
+  EXPECT_EQ(m1.count_true(), 34); // 13 + 23 minus positions 0, 35.
 }
 
 TEST(Bitmask, RandomReadWrite)

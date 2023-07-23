@@ -57,10 +57,11 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
     assert(m_q > 0.0);
   }
 
-  // Bitstream parser 2: extract SPECK stream from it.
-  //    Based on the number of bitplanes, decide on an integer length to use, and then
-  //    instantiate the proper decoder, and ask the decoder to parse the SPECK stream.
-  size_t pos = m_condi_bitstream.size();
+  // Bitstream parser 2.1: based on the number of bitplanes, decide on an integer length to use,
+  // and instantiate the proper decoder. It will be the decoder who parses the SPECK bitstream.
+  auto pos = m_condi_bitstream.size();
+  auto remaining_len = len - pos;
+  assert(remaining_len >= SPECK_INT<uint8_t>::header_size);
   const uint8_t* const speck_p = ptr + pos;
   const auto num_bitplanes = speck_int_get_num_bitplanes(speck_p);
   if (num_bitplanes <= 8)
@@ -74,24 +75,37 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
 
   m_instantiate_int_vec();
   m_instantiate_decoder();
-  const auto speck_len =
+
+  // Bitstream parser 2.2: extract and parse SPECK stream.
+  //    A situation to be considered here is that the speck bitstream is only partially available
+  //    as the result of progressive access. In that case, the available speck stream is simply
+  //    shorter than what the header reports.
+  auto speck_suppose_len =
       std::visit([speck_p](auto&& dec) { return dec->get_stream_full_len(speck_p); }, m_decoder);
-  pos += speck_len;
-  assert(pos <= len);
+  auto speck_len = std::min(size_t{speck_suppose_len}, remaining_len);
   std::visit([speck_p, speck_len](auto&& dec) { return dec->use_bitstream(speck_p, speck_len); },
              m_decoder);
+  pos += speck_len;
+  assert(pos <= len);
 
   // Bitstream parser 3: extract Outlier Coder stream if there's any.
+  //    Also note the situation where only partial of the outlier coding bitstream is available.
+  //    In that case, we simply discard the remaining bitstream.
+  m_has_outlier = false;
   if (pos < len) {
-    m_has_outlier = true;
     const uint8_t* const out_p = ptr + pos;
-    assert(m_out_coder.get_stream_full_len(out_p) == len - pos);
-    auto rtn = m_out_coder.use_bitstream(out_p, len - pos);
-    if (rtn != RTNType::Good)
-      return rtn;
+    remaining_len = len - pos;
+    if (remaining_len >= SPECK_INT<uint8_t>::header_size) {
+      auto suppose_len = m_out_coder.get_stream_full_len(out_p);
+      assert(suppose_len >= remaining_len);
+      if (remaining_len == suppose_len) {
+        auto rtn = m_out_coder.use_bitstream(out_p, suppose_len);
+        if (rtn != RTNType::Good)
+          return rtn;
+        m_has_outlier = true;
+      }
+    }
   }
-  else
-    m_has_outlier = false;
 
   return RTNType::Good;
 }

@@ -47,7 +47,7 @@ class Bitstream {
   void rewind();
   auto capacity() const -> size_t;
   void reserve(size_t nbits);
-  void reset(); // Reset the bitstream to be all 0's.
+  void reset();  // Reset the bitstream to be all 0's.
 
   // Functions for read
   //
