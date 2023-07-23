@@ -32,3 +32,15 @@ Finally, a collection of canonical scientific data sets is available at [SDRBenc
 
 SPERR also provides programming [API in C++ and C](https://github.com/NCAR/SPERR/wiki#sperr-c-api).
 
+## Publication
+
+If SPERR benefits your work, please kindly cite [this](https://ieeexplore.ieee.org/document/10177487) publication:
+```Tex
+@INPROCEEDINGS{10177487,
+  author={Li, Shaomeng and Lindstrom, Peter and Clyne, John},
+  booktitle={2023 IEEE International Parallel and Distributed Processing Symposium (IPDPS)}, 
+  title={Lossy Scientific Data Compression With SPERR}, 
+  year={2023},
+  pages={1007-1017},
+  doi={10.1109/IPDPS54959.2023.00104}}
+```
