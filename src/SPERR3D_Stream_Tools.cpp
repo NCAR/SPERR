@@ -172,7 +172,7 @@ auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, uint32_
   stream_new[0] = static_cast<uint8_t>(SPERR_VERSION_MAJOR);
   size_t pos = 1;
   auto b8 = sperr::unpack_8_booleans(header[pos]);
-  b8[0] = true;  // Recording that this is a portion of another complete bitstream.
+  b8[0] = true;  // Record that this is a portion of another complete bitstream.
   stream_new[pos++] = sperr::pack_8_booleans(b8);
   // Copy over the volume and chunk dimensions.
   if (multi_chunk) {

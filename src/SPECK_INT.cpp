@@ -186,9 +186,6 @@ void sperr::SPECK_INT<T>::decode()
   // Marching over bitplanes.
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
 
-    if (m_bit_buffer.rtell() >= m_avail_bits)
-      break;
-
     m_sorting_pass();
 
     if (m_avail_bits != m_total_bits) { // `m_bit_buffer` has only partial bitstream.
@@ -349,6 +346,7 @@ auto sperr::SPECK_INT<T>::m_refinement_pass_decode_partial() -> RTNType
   //
   const auto tmp = std::array<uint_type, 2>{uint_type{0}, m_threshold};
   const auto bits_x64 = m_LSP_mask.size() - m_LSP_mask.size() % 64;
+  assert(m_bit_buffer.rtell() < m_avail_bits);
 
   for (size_t i = 0; i < bits_x64; i += 64) {
     const auto value = m_LSP_mask.read_long(i);
@@ -369,7 +367,6 @@ auto sperr::SPECK_INT<T>::m_refinement_pass_decode_partial() -> RTNType
         return RTNType::BitBudgetMet;
     }
   }
-  assert(m_bit_buffer.rtell() < m_avail_bits);
 
   // Second, mark newly found significant pixels in `m_LSP_mask`
   //

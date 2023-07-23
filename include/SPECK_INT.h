@@ -82,8 +82,8 @@ class SPECK_INT {
   Bitstream m_bit_buffer;
   std::vector<uint64_t> m_LSP_new;
 
-  uint64_t m_total_bits = 0;       // The number of bits of a complete SPECK stream.
-  uint64_t m_avail_bits = 0;       // Decoding only. `m_avail_bits` <= `m_total_bits`
+  uint64_t m_total_bits = 0;  // The number of bits of a complete SPECK stream.
+  uint64_t m_avail_bits = 0;  // Decoding only. `m_avail_bits` <= `m_total_bits`
   uint8_t m_num_bitplanes = 0;
 };
 
