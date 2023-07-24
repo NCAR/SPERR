@@ -100,6 +100,8 @@ int main(int argc, char* argv[])
     }
     auto outputd = decoder->release_decoded_data();
     decoder.reset();
+    stream_trunc.clear();
+    stream_trunc.shrink_to_fit();
 
     double linfy = 0.0, psnr = 0.0, rmse = 0.0, sigma = 0.0;
 
