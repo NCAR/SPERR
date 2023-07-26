@@ -153,6 +153,16 @@ void sperr::SPECK_FLT::set_tolerance(double tol)
   m_has_outlier = false;
 }
 
+void sperr::SPECK_FLT::set_bitrate(double bpp)
+{
+  assert(bpp > 0.0);
+  m_quality = bpp;
+  m_mode = CompMode::Rate;
+
+  m_q = 0.0;  // The real m_q needs to be calculated later.
+  m_has_outlier = false;
+}
+
 void sperr::SPECK_FLT::set_dims(dims_type dims)
 {
   m_dims = dims;
@@ -232,14 +242,14 @@ auto sperr::SPECK_FLT::m_estimate_mse_midtread(double q) const -> double
   return mse;
 }
 
-auto sperr::SPECK_FLT::m_estimate_q(double data_range) const -> double
+auto sperr::SPECK_FLT::m_estimate_q(double param) const -> double
 {
   switch (m_mode) {
     case CompMode::PSNR : {
       // Note: based on Peter's estimation method, to achieved the target PSNR, the terminal
       //       quantization threshold should be (2.0 * sqrt(3.0) * rmse).
-      assert(data_range > 0.0);
-      const auto t_mse = (data_range * data_range) * std::pow(10.0, -m_quality / 10.0);
+      assert(param > 0.0);
+      const auto t_mse = (param * param) * std::pow(10.0, -m_quality / 10.0);
       const auto t_rmse = std::sqrt(t_mse);
       auto q = 2.0 * std::sqrt(t_mse * 3.0);
       while (m_estimate_mse_midtread(q) > t_mse)
@@ -248,6 +258,15 @@ auto sperr::SPECK_FLT::m_estimate_q(double data_range) const -> double
     }
     case CompMode::PWE :
       return m_quality * 1.5;
+    case CompMode::Rate: {
+      // The biggest double value that sill has a precision of 1 is 0x1p53,
+      //    or 9007199254740992, approx. 9e15.  Given the largest wavelet coefficient `param`,
+      //    we set `m_q` so that the quantized integer is 0x1p53.  `utilities/double_prec.cpp` file
+      //    experiments with double precision at 0x1p53, and more discussion can be found at:
+      //    https://randomascii.wordpress.com/2012/01/11/tricks-with-the-floating-point-format/
+      assert(param > 0.0);
+      return param / 0x1p53;
+    }
     default :
       return 0.0;
   }
@@ -372,8 +391,8 @@ auto sperr::SPECK_FLT::compress() -> RTNType
   if (m_conditioner.is_constant(m_condi_bitstream[0]))
     return RTNType::Good;
 
-  // Side step for outlier coding, or `m_q` calculation based on PSNR.
-  auto data_range = 0.0;
+  // Collect information for different compression modes.
+  auto param_q = 0.0; // assist estimating `m_q`.
   switch (m_mode) {
     case CompMode::PWE :
       m_vals_orig.resize(total_vals);
@@ -381,10 +400,9 @@ auto sperr::SPECK_FLT::compress() -> RTNType
       break;
     case CompMode::PSNR : {
       auto [min, max] = std::minmax_element(m_vals_d.cbegin(), m_vals_d.cend());
-      data_range = *max - *min;
+      param_q = *max - *min;
       break;
     }
-    //default :
   }
 
   // Step 2: wavelet transform
@@ -392,12 +410,17 @@ auto sperr::SPECK_FLT::compress() -> RTNType
   m_wavelet_xform();
   m_vals_d = m_cdf.release_data();
 
-  // Calculate `m_q`, and store it as part of `m_condi_stream`.
-  m_q = m_estimate_q(data_range);
+  // Estimate `m_q`, and store it as part of `m_condi_stream`.
+  if (m_mode == CompMode::Rate) {
+    param_q = *std::max_element(m_vals_d.cbegin(), m_vals_d.cend(),
+                                [](auto a, auto b) { return std::abs(a) < std::abs(b); });
+  }
+  m_q = m_estimate_q(param_q);
   assert(m_q > 0.0);
   m_conditioner.save_q(m_condi_bitstream, m_q);
 
   // Step 3: quantize floating-point coefficients to integers
+  // This step also establishes the integer length used by the encoder/decoder.
   auto rtn = m_midtread_quantize();
   if (rtn != RTNType::Good)
     return rtn;
