@@ -1,0 +1,54 @@
+#include <cstdlib>
+#include <cstdio>
+#include <cstdint>
+#include <cmath>
+#include <string>
+#include <iostream>
+#include <limits>
+
+union Double_t {
+  Double_t(double val) : f(val) {}
+  Double_t(int64_t val) : i(val) {}
+
+  bool Negative() const { return (i >> 63) != 0; }
+  int64_t RawMantissa() const { return i & ( (int64_t(i) << 52) - 1); }
+  int64_t RawExponent() const { return (i >> 52) & 0x7FF; }
+
+  int64_t i;
+  double f;
+
+  struct
+  { // Bitfields for exploration. Do not use in production code.
+    uint64_t mantissa : 52;
+    uint64_t exponent : 11;
+    uint64_t sign : 1;
+  } parts;
+};
+
+int main(int argc, char* argv[])
+{
+  // The last double value that still has precision as good as int.
+  // The next double value is 2.0 bigger.
+  Double_t num(0x1p53); // same storage as 4845873199050653696
+
+  // Comment out the line below, then you'll notice that it's impossible to
+  // increment by 1.0 on the double value!
+  num.i--;
+
+  std::printf("Float value,    hex-int,            "
+              "dec-int,            sign, exponent, mantissa\n");
+  std::printf("%1.8e, 0x%08llx, %lld,  %d, %d, 0x%06llx\n", num.f, num.i, num.i,
+            num.parts.sign, num.parts.exponent, num.parts.mantissa);
+
+  double d1 = num.f;
+  num.i += 1;
+  double d2 = num.f;
+  std::cout << "after increment by 1, d2 - d1 = " << d2 - d1 << std::endl;
+  num.i -= 2;
+  d2 = num.f;
+  std::cout << "after decrement by 1, d2 - d1 = " << d2 - d1 << std::endl;
+
+  //std::cout << std::lrint(num.f) << std::endl;
+  //std::cout << std::numeric_limits<int32_t>::max() << std::endl;
+  //std::cout << std::numeric_limits<int64_t>::max() << std::endl;
+}
