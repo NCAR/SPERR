@@ -23,11 +23,6 @@ namespace sperr {
 
 using std::size_t;  // Seems most appropriate
 
-// Shortcut for the maximum values
-constexpr auto max_size = std::numeric_limits<size_t>::max();
-constexpr auto max_d = std::numeric_limits<double>::max();
-constexpr auto max_f = std::numeric_limits<float>::max();
-
 //
 // A few shortcuts
 //
@@ -48,6 +43,8 @@ enum class SetType : unsigned char { TypeS, TypeI, Garbage };
 
 enum class UINTType : unsigned char { UINT8, UINT16, UINT32, UINT64 };
 
+enum class CompMode : unsigned char { PSNR, PWE, Rate, Unknown };
+
 // Return Type
 enum class RTNType {
   Good = 0,
@@ -64,9 +61,6 @@ enum class RTNType {
   FE_Invalid,  // floating point exception: FE_INVALID
   Error
 };
-
-// Compression Mode
-enum class CompMode { FixedSize, FixedPSNR, FixedPWE, Unknown };
 
 //
 // Helper functions

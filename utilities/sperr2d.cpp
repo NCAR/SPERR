@@ -68,16 +68,16 @@ int main(int argc, char* argv[])
   //
   // Compression settings
   //
-  auto pwe = sperr::max_d;
+  auto pwe = 0.0;
   auto* pwe_ptr = app.add_option("--pwe", pwe, "Maximum point-wise error (PWE) tolerance.")
                       ->group("Compression settings");
 
-  auto psnr = sperr::max_d;
+  auto psnr = 0.0;
   auto* psnr_ptr = app.add_option("--psnr", psnr, "Target PSNR to achieve.")
                        ->excludes(pwe_ptr)
                        ->group("Compression settings");
 
-  auto bpp = sperr::max_d;
+  auto bpp = 0.0;
   auto* bpp_ptr = app.add_option("--bpp", bpp, "Target bit-per-pixel (bpp) to achieve.")
                       ->check(CLI::Range(0.0, 64.0))
                       ->excludes(pwe_ptr)
@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
     std::cout << "What's the floating-type precision (--ftype) ?" << std::endl;
     return __LINE__;
   }
-  if (cflag && pwe == sperr::max_d && psnr == sperr::max_d && bpp == sperr::max_d) {
+  if (cflag && pwe == 0.0 && psnr == 0.0 && bpp == 0.0) {
     std::cout << "What's the compression quality (--psnr, --pwe, --bpp) ?" << std::endl;
     return __LINE__;
   }
@@ -135,9 +135,9 @@ int main(int argc, char* argv[])
       encoder->copy_data(reinterpret_cast<const float*>(input.data()), total_vals);
     else
       encoder->copy_data(reinterpret_cast<const double*>(input.data()), total_vals);
-    if (pwe != sperr::max_d)
+    if (pwe != 0.0)
       encoder->set_tolerance(pwe);
-    else if (psnr != sperr::max_d)
+    else if (psnr != 0.0)
       encoder->set_psnr(psnr);
 
     // If not calculating stats, we can free up some memory now!

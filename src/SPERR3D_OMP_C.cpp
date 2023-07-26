@@ -31,14 +31,14 @@ void sperr::SPERR3D_OMP_C::set_dims_and_chunks(dims_type vol_dims, dims_type chu
 void sperr::SPERR3D_OMP_C::set_psnr(double psnr)
 {
   assert(psnr > 0.0);
-  m_comp_mode = CompMode::FixedPSNR;
+  m_mode = CompMode::PSNR;
   m_quality = psnr;
 }
 
 void sperr::SPERR3D_OMP_C::set_tolerance(double pwe)
 {
   assert(pwe > 0.0);
-  m_comp_mode = CompMode::FixedPWE;
+  m_mode = CompMode::PWE;
   m_quality = pwe;
 }
 
@@ -51,7 +51,7 @@ auto sperr::SPERR3D_OMP_C::compress(const T* buf, size_t buf_len) -> RTNType
   else
     m_orig_is_float = false;
 
-  if (m_comp_mode == sperr::CompMode::Unknown)
+  if (m_mode == sperr::CompMode::Unknown)
     return RTNType::CompModeUnknown;
   if (buf_len != m_dims[0] * m_dims[1] * m_dims[2])
     return RTNType::VectorWrongLen;
@@ -88,9 +88,9 @@ auto sperr::SPERR3D_OMP_C::compress(const T* buf, size_t buf_len) -> RTNType
     assert(!chunk.empty());
     compressor->take_data(std::move(chunk));
     compressor->set_dims({chunk_idx[i][1], chunk_idx[i][3], chunk_idx[i][5]});
-    if (m_comp_mode == CompMode::FixedPSNR)
+    if (m_mode == CompMode::PSNR)
       compressor->set_psnr(m_quality);
-    else if (m_comp_mode == CompMode::FixedPWE)
+    else if (m_mode == CompMode::PWE)
       compressor->set_tolerance(m_quality);
     chunk_rtn[i] = compressor->compress();
 

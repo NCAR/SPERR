@@ -32,8 +32,6 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
   std::visit([](auto&& vec) { vec.clear(); }, m_vals_ui);
   m_q = 0.0;
   m_has_outlier = false;
-  m_quality = 0.0;        // doesn't matter in decompression
-  m_is_pwe_mode = false;  // doesn't matter in decompression
 
   const auto* const ptr = static_cast<const uint8_t*>(p);
 
@@ -139,10 +137,9 @@ void sperr::SPECK_FLT::set_psnr(double psnr)
 {
   assert(psnr > 0.0);
   m_quality = psnr;
-  m_is_pwe_mode = false;
+  m_mode = CompMode::PSNR;
 
-  m_q = 0.0;  // The real m_q needs to be calculated later
-  m_data_range = 0.0;
+  m_q = 0.0;  // The real m_q needs to be calculated later.
   m_has_outlier = false;
 }
 
@@ -150,11 +147,10 @@ void sperr::SPECK_FLT::set_tolerance(double tol)
 {
   assert(tol > 0.0);
   m_quality = tol;
-  m_is_pwe_mode = true;
+  m_mode = CompMode::PWE;
 
-  m_q = 0.0;  // Though `m_q` is simple in this case, calculate it the same place as in PSNR mode.
+  m_q = 0.0;  // The real m_q needs to be calculated later.
   m_has_outlier = false;
-  m_data_range = 0.0;
 }
 
 void sperr::SPECK_FLT::set_dims(dims_type dims)
@@ -236,18 +232,25 @@ auto sperr::SPECK_FLT::m_estimate_mse_midtread(double q) const -> double
   return mse;
 }
 
-auto sperr::SPECK_FLT::m_estimate_q() const -> double
+auto sperr::SPECK_FLT::m_estimate_q(double data_range) const -> double
 {
-  // Note: based on Peter's estimation method, to achieved the target PSNR, the terminal
-  //       quantization threshold should be (2.0 * sqrt(3.0) * rmse).
-  assert(m_data_range > 0.0);
-  assert(!m_is_pwe_mode);
-  const auto t_mse = (m_data_range * m_data_range) * std::pow(10.0, -m_quality / 10.0);
-  const auto t_rmse = std::sqrt(t_mse);
-  auto q = 2.0 * std::sqrt(t_mse * 3.0);
-  while (m_estimate_mse_midtread(q) > t_mse)
-    q /= std::pow(2.0, 0.25);  // Four adjustments would effectively halve q.
-  return q;
+  switch (m_mode) {
+    case CompMode::PSNR : {
+      // Note: based on Peter's estimation method, to achieved the target PSNR, the terminal
+      //       quantization threshold should be (2.0 * sqrt(3.0) * rmse).
+      assert(data_range > 0.0);
+      const auto t_mse = (data_range * data_range) * std::pow(10.0, -m_quality / 10.0);
+      const auto t_rmse = std::sqrt(t_mse);
+      auto q = 2.0 * std::sqrt(t_mse * 3.0);
+      while (m_estimate_mse_midtread(q) > t_mse)
+        q /= std::pow(2.0, 0.25);  // Four adjustments would effectively halve q.
+      return q;
+    }
+    case CompMode::PWE :
+      return m_quality * 1.5;
+    default :
+      return 0.0;
+  }
 }
 
 auto sperr::SPECK_FLT::m_midtread_quantize() -> RTNType
@@ -357,6 +360,9 @@ auto sperr::SPECK_FLT::compress() -> RTNType
   if (m_vals_d.empty() || m_vals_d.size() != total_vals)
     return RTNType::Error;
 
+  if (m_mode == sperr::CompMode::Unknown)
+    return RTNType::CompModeUnknown;
+
   m_has_outlier = false;
 
   // Step 1: data goes through the conditioner
@@ -367,13 +373,18 @@ auto sperr::SPECK_FLT::compress() -> RTNType
     return RTNType::Good;
 
   // Side step for outlier coding, or `m_q` calculation based on PSNR.
-  if (m_is_pwe_mode) {
-    m_vals_orig.resize(total_vals);
-    std::copy(m_vals_d.cbegin(), m_vals_d.cend(), m_vals_orig.begin());
-  }
-  else {
-    auto [min, max] = std::minmax_element(m_vals_d.cbegin(), m_vals_d.cend());
-    m_data_range = *max - *min;
+  auto data_range = 0.0;
+  switch (m_mode) {
+    case CompMode::PWE :
+      m_vals_orig.resize(total_vals);
+      std::copy(m_vals_d.cbegin(), m_vals_d.cend(), m_vals_orig.begin());
+      break;
+    case CompMode::PSNR : {
+      auto [min, max] = std::minmax_element(m_vals_d.cbegin(), m_vals_d.cend());
+      data_range = *max - *min;
+      break;
+    }
+    //default :
   }
 
   // Step 2: wavelet transform
@@ -382,10 +393,7 @@ auto sperr::SPECK_FLT::compress() -> RTNType
   m_vals_d = m_cdf.release_data();
 
   // Calculate `m_q`, and store it as part of `m_condi_stream`.
-  if (m_is_pwe_mode)
-    m_q = m_quality * 1.5;
-  else
-    m_q = m_estimate_q();
+  m_q = m_estimate_q(data_range);
   assert(m_q > 0.0);
   m_conditioner.save_q(m_condi_bitstream, m_q);
 
@@ -395,7 +403,7 @@ auto sperr::SPECK_FLT::compress() -> RTNType
     return rtn;
 
   // Side step for outlier coding: find out all the outliers, and encode them!
-  if (m_is_pwe_mode) {
+  if (m_mode == CompMode::PWE) {
     m_midtread_inv_quantize();
     rtn = m_cdf.take_data(std::move(m_vals_d), m_dims);
     if (rtn != RTNType::Good)

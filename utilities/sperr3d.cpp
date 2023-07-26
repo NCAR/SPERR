@@ -82,16 +82,16 @@ int main(int argc, char* argv[])
                  "(Volume dims don't need to be divisible by these chunk dims.)")
       ->group("Compression settings");
 
-  auto pwe = sperr::max_d;
+  auto pwe = 0.0;
   auto* pwe_ptr = app.add_option("--pwe", pwe, "Maximum point-wise error (PWE) tolerance.")
                       ->group("Compression settings");
 
-  auto psnr = sperr::max_d;
+  auto psnr = 0.0;
   auto* psnr_ptr = app.add_option("--psnr", psnr, "Target PSNR to achieve.")
                        ->excludes(pwe_ptr)
                        ->group("Compression settings");
 
-  auto bpp = sperr::max_d;
+  auto bpp = 0.0;
   auto* bpp_ptr = app.add_option("--bpp", bpp, "Target bit-per-pixel (bpp) to achieve.")
                       ->check(CLI::Range(0.0, 64.0))
                       ->excludes(pwe_ptr)
@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
     std::cout << "What's the floating-type precision (--ftype) ?" << std::endl;
     return __LINE__;
   }
-  if (cflag && pwe == sperr::max_d && psnr == sperr::max_d && bpp == sperr::max_d) {
+  if (cflag && pwe == 0.0 && psnr == 0.0 && bpp == 0.0) {
     std::cout << "What's the compression quality (--psnr, --pwe, --bpp) ?" << std::endl;
     return __LINE__;
   }
@@ -143,9 +143,9 @@ int main(int argc, char* argv[])
     auto encoder = std::make_unique<sperr::SPERR3D_OMP_C>();
     encoder->set_dims_and_chunks(dims, chunks);
     encoder->set_num_threads(omp_num_threads);
-    if (pwe != sperr::max_d)
+    if (pwe != 0.0)
       encoder->set_tolerance(pwe);
-    else if (psnr != sperr::max_d)
+    else if (psnr != 0.0)
       encoder->set_psnr(psnr);
 
     auto rtn = sperr::RTNType::Good;

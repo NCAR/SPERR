@@ -83,11 +83,10 @@ class SPECK_FLT {
                std::vector<uint64_t>>
       m_vals_ui;
 
-  double m_q = 0.0;            // encoding and decoding
-  bool m_has_outlier = false;  // encoding (PWE mode) and decoding
-  double m_data_range = 0.0;   // encoding only, PSNR mode only
-  double m_quality = 0.0;      // encoding only, quality target.
-  bool m_is_pwe_mode = false;  // encoding only. PWE mode = true, PSNR mode = false
+  double m_q = 0.0;                     // encoding and decoding
+  bool m_has_outlier = false;           // encoding (PWE mode) and decoding
+  double m_quality = 0.0;               // encoding only, represent either PSNR, PWE, or BPP.
+  CompMode m_mode = CompMode::Unknown;  // encoding only
 
   // Instantiate `m_vals_ui` based on the chosen integer length.
   void m_instantiate_int_vec();
@@ -107,9 +106,11 @@ class SPECK_FLT {
   auto m_midtread_quantize() -> RTNType;
   void m_midtread_inv_quantize();
 
-  // Estimate MSE and q assuming midtread quantization strategy.
+  // Estimate MSE assuming midtread quantization strategy.
   auto m_estimate_mse_midtread(double q) const -> double;
-  auto m_estimate_q() const -> double;
+
+  // Would require the input of `data_range` only in CompMode::PSNR mode.
+  auto m_estimate_q(double data_range = 0.0) const -> double;
 };
 
 };  // namespace sperr
