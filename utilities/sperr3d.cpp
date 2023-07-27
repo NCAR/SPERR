@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
     std::cout << "What's the compression quality (--psnr, --pwe, --bpp) ?" << std::endl;
     return __LINE__;
   }
-  if (cflag && (pwe <= 0.0 || psnr <= 0.0)) {
+  if (cflag && (pwe < 0.0 || psnr < 0.0)) {
     std::cout << "Compression quality (--psnr, --pwe) must be positive!" << std::endl;
     return __LINE__;
   }
@@ -147,6 +147,8 @@ int main(int argc, char* argv[])
       encoder->set_tolerance(pwe);
     else if (psnr != 0.0)
       encoder->set_psnr(psnr);
+    else if (bpp != 0.0)
+      encoder->set_bitrate(bpp);
 
     auto rtn = sperr::RTNType::Good;
     if (ftype == 32)

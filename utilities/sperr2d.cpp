@@ -109,10 +109,6 @@ int main(int argc, char* argv[])
     std::cout << "Compression quality (--psnr, --pwe) must be positive!" << std::endl;
     return __LINE__;
   }
-  if (cflag && bpp > 64.0) {
-    std::cout << "Bitrate (--bpp) should not be greater than 64.0!" << std::endl;
-    return __LINE__;
-  }
   if (dflag && o_decomp_f32.empty() && o_decomp_f64.empty()) {
     std::cout << "Where to output the decompressed file (--o_decomp_f32, --o_decomp_f64) ?"
               << std::endl;
