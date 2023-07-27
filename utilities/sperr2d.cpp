@@ -235,7 +235,7 @@ int main(int argc, char* argv[])
           sigma = std::sqrt(mean_var[1]);
         }
         std::printf("Input range = (%.2e, %.2e), L-Infty = %.2e\n", min, max, linfy);
-        std::printf("Bitrate = %.2fbpp, PSNR = %.2fdB, Accuracy Gain = %.2f\n", bpp, psnr,
+        std::printf("Bitrate = %.2f, PSNR = %.2fdB, Accuracy Gain = %.2f\n", bpp, psnr,
                     std::log2(sigma / rmse) - bpp);
         print_stats = false;
       }
