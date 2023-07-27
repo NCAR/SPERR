@@ -105,8 +105,12 @@ int main(int argc, char* argv[])
     std::cout << "What's the compression quality (--psnr, --pwe, --bpp) ?" << std::endl;
     return __LINE__;
   }
-  if (cflag && (pwe <= 0.0 || psnr <= 0.0)) {
+  if (cflag && (pwe < 0.0 || psnr < 0.0)) {
     std::cout << "Compression quality (--psnr, --pwe) must be positive!" << std::endl;
+    return __LINE__;
+  }
+  if (cflag && bpp > 64.0) {
+    std::cout << "Bitrate (--bpp) should not be greater than 64.0!" << std::endl;
     return __LINE__;
   }
   if (dflag && o_decomp_f32.empty() && o_decomp_f64.empty()) {
@@ -135,10 +139,15 @@ int main(int argc, char* argv[])
       encoder->copy_data(reinterpret_cast<const float*>(input.data()), total_vals);
     else
       encoder->copy_data(reinterpret_cast<const double*>(input.data()), total_vals);
+
     if (pwe != 0.0)
       encoder->set_tolerance(pwe);
     else if (psnr != 0.0)
       encoder->set_psnr(psnr);
+    else {
+      assert(bpp != 0.0);
+      encoder->set_bitrate(bpp);
+    }
 
     // If not calculating stats, we can free up some memory now!
     if (!print_stats) {

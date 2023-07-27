@@ -247,7 +247,7 @@ auto sperr::SPECK_FLT::m_estimate_q(double param) const -> double
   switch (m_mode) {
     case CompMode::PSNR : {
       // Note: based on Peter's estimation method, to achieved the target PSNR, the terminal
-      //       quantization threshold should be (2.0 * sqrt(3.0) * rmse).
+      // quantization threshold should be (2.0 * sqrt(3.0) * rmse).
       assert(param > 0.0);
       const auto t_mse = (param * param) * std::pow(10.0, -m_quality / 10.0);
       const auto t_rmse = std::sqrt(t_mse);
