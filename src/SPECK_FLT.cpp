@@ -399,6 +399,7 @@ auto sperr::SPECK_FLT::compress() -> RTNType
       std::copy(m_vals_d.cbegin(), m_vals_d.cend(), m_vals_orig.begin());
       break;
     case CompMode::PSNR : {
+      // In fixed-rate mode, `param_q` is the data range.
       auto [min, max] = std::minmax_element(m_vals_d.cbegin(), m_vals_d.cend());
       param_q = *max - *min;
       break;
@@ -410,10 +411,12 @@ auto sperr::SPECK_FLT::compress() -> RTNType
   m_wavelet_xform();
   m_vals_d = m_cdf.release_data();
 
-  // Estimate `m_q`, and store it as part of `m_condi_stream`.
+  // Step 2.1: Estimate `m_q`, and store it as part of `m_condi_stream`.
   if (m_mode == CompMode::Rate) {
-    param_q = *std::max_element(m_vals_d.cbegin(), m_vals_d.cend(),
+    // In fixed-rate mode, `param_q` is the wavelet coefficient of the largest magnitude.
+    auto itr = std::max_element(m_vals_d.cbegin(), m_vals_d.cend(),
                                 [](auto a, auto b) { return std::abs(a) < std::abs(b); });
+    param_q = std::abs(*itr);
   }
   m_q = m_estimate_q(param_q);
   assert(m_q > 0.0);
