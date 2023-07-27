@@ -42,20 +42,15 @@ void sperr::SPECK_INT<T>::set_dims(dims_type dims)
 }
 
 template <typename T>
-void sperr::SPECK_INT<T>::reset()
+void sperr::SPECK_INT<T>::set_budget(size_t bud)
 {
-  m_dims = {0, 0, 0};
-  m_threshold = 0;
-  m_coeff_buf.clear();
-  m_sign_array.clear();
-  m_bit_buffer.rewind();
-  m_LSP_mask.reset();
-  m_LIP_mask.reset();
-  m_LSP_new.clear();
-  m_total_bits = 0;
-  m_num_bitplanes = 0;
-
-  m_clean_LIS();
+  if (bud == 0)
+    m_budget = std::numeric_limits<size_t>::max();
+  else {
+    while (bud % 8 != 0)
+      bud++;
+    m_budget = bud;
+  }
 }
 
 template <typename T>
@@ -143,7 +138,12 @@ void sperr::SPECK_INT<T>::encode()
   // Marching over bitplanes.
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
     m_sorting_pass();
+    if (m_bit_buffer.wtell() >= m_budget)
+      break;
+
     m_refinement_pass_encode();
+    if (m_bit_buffer.wtell() >= m_budget)
+      break;
 
     m_threshold /= uint_type{2};
     m_clean_LIS();
@@ -185,12 +185,13 @@ void sperr::SPECK_INT<T>::decode()
 
   // Marching over bitplanes.
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
+
     m_sorting_pass();
+    if (m_bit_buffer.rtell() >= m_avail_bits)
+      break;
 
     if (m_avail_bits != m_total_bits) {  // `m_bit_buffer` has only partial bitstream.
-      if (m_bit_buffer.rtell() >= m_avail_bits)
-        break;
-
+      assert(m_avail_bits < m_total_bits);
       auto rtn = m_refinement_pass_decode_partial();
       assert(m_bit_buffer.rtell() <= m_avail_bits);
       if (rtn == RTNType::BitBudgetMet)
@@ -198,6 +199,8 @@ void sperr::SPECK_INT<T>::decode()
     }
     else {  // `m_bit_buffer` has the complete bitstream.
       m_refinement_pass_decode_complete();
+      if (m_bit_buffer.rtell() >= m_avail_bits)
+        break;
     }
 
     m_threshold /= uint_type{2};
@@ -251,6 +254,17 @@ void sperr::SPECK_INT<T>::append_encoded_bitstream(vec8_type& buffer) const
 {
   // Header definition: 9 bytes in total:
   // num_bitplanes (uint8_t), num_useful_bits (uint64_t)
+  //
+
+  // Note that `m_total_bits` and `m_budget` can have 3 comparison outcomes:
+  //  1. `m_total_bits < m_budget` no matter whether m_budget is the maximum size_t or not.
+  //      In this case, we record all `m_total_bits` bits.
+  //  2. `m_total_bits > m_budget`: in this case, we record the value of `m_total_bits` in
+  //      the header but only pack `m_budget` bits to the bitstream, creating an equivalence
+  //      of truncating the first `m_budget` bits from a bitstream of length `m_total_bits`.
+  //  3. `m_total_bits == m_budget`: this case is very unlikely, but if it happens, that's when
+  //      `m_budget` happens to be exactly met after a sorting or refinement pass.
+  //      In this case, we can also record all `m_total_bits` bits.
 
   // Step 1: calculate size and allocate space for the encoded bitstream
   uint64_t bit_in_byte = m_total_bits / 8;
