@@ -185,7 +185,6 @@ void sperr::SPECK_INT<T>::decode()
 
   // Marching over bitplanes.
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
-
     m_sorting_pass();
     if (m_bit_buffer.rtell() >= m_avail_bits)
       break;
@@ -252,10 +251,6 @@ auto sperr::SPECK_INT<T>::view_signs() const -> const vecb_type&
 template <typename T>
 void sperr::SPECK_INT<T>::append_encoded_bitstream(vec8_type& buffer) const
 {
-  // Header definition: 9 bytes in total:
-  // num_bitplanes (uint8_t), num_useful_bits (uint64_t)
-  //
-
   // Note that `m_total_bits` and `m_budget` can have 3 comparison outcomes:
   //  1. `m_total_bits < m_budget` no matter whether m_budget is the maximum size_t or not.
   //      In this case, we record all `m_total_bits` bits.
@@ -267,8 +262,13 @@ void sperr::SPECK_INT<T>::append_encoded_bitstream(vec8_type& buffer) const
   //      In this case, we can also record all `m_total_bits` bits.
 
   // Step 1: calculate size and allocate space for the encoded bitstream
-  uint64_t bit_in_byte = m_total_bits / 8;
-  if (m_total_bits % 8 != 0)
+  //
+  // Header definition: 9 bytes in total:
+  // num_bitplanes (uint8_t), num_useful_bits (uint64_t)
+  //
+  auto bits_to_pack = std::min(m_budget, m_total_bits);
+  uint64_t bit_in_byte = bits_to_pack / 8;
+  if (bits_to_pack % 8 != 0)
     ++bit_in_byte;
   const auto app_size = header_size + bit_in_byte;
 
@@ -283,8 +283,8 @@ void sperr::SPECK_INT<T>::append_encoded_bitstream(vec8_type& buffer) const
   std::memcpy(ptr + pos, &m_total_bits, sizeof(m_total_bits));
   pos += sizeof(m_total_bits);
 
-  // Step 3: assemble `m_bit_buffer` into bytes
-  m_bit_buffer.write_bitstream(ptr + header_size, m_total_bits);
+  // Step 3: assemble `bits_to_pack` many bits into bytes
+  m_bit_buffer.write_bitstream(ptr + header_size, bits_to_pack);
 }
 
 template <typename T>

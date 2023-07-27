@@ -455,6 +455,10 @@ auto sperr::SPECK_FLT::compress() -> RTNType
 
   // Step 4: Integer SPECK encoding
   m_instantiate_encoder();
+  if (m_mode == CompMode::Rate) {
+    size_t total_bits = static_cast<size_t>(m_quality * double(total_vals));
+    std::visit([total_bits](auto&& encoder) { encoder->set_budget(total_bits); }, m_encoder);
+  }
   std::visit([&dims = m_dims](auto&& encoder) { encoder->set_dims(dims); }, m_encoder);
   switch (m_uint_flag) {
     case UINTType::UINT8:
