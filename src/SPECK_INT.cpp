@@ -267,7 +267,7 @@ void sperr::SPECK_INT<T>::append_encoded_bitstream(vec8_type& buffer) const
   // Header definition: 9 bytes in total:
   // num_bitplanes (uint8_t), num_useful_bits (uint64_t)
   //
-  auto bits_to_pack = std::min(m_budget, m_total_bits);
+  auto bits_to_pack = std::min(m_budget, size_t{m_total_bits});
   uint64_t bit_in_byte = bits_to_pack / 8;
   if (bits_to_pack % 8 != 0)
     ++bit_in_byte;

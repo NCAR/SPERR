@@ -402,6 +402,8 @@ auto sperr::SPECK_FLT::compress() -> RTNType
       param_q = *max - *min;
       break;
     }
+    default :
+      ; // So the compiler doesn't complain missing switch cases.
   }
 
   // Step 2: wavelet transform

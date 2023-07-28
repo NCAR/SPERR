@@ -105,6 +105,8 @@ auto sperr::SPERR3D_OMP_C::compress(const T* buf, size_t buf_len) -> RTNType
       case CompMode::Rate:
         compressor->set_bitrate(m_quality);
         break;
+      default :
+        ; // So the compiler doesn't complain about missing cases.
     }
     chunk_rtn[i] = compressor->compress();
 
