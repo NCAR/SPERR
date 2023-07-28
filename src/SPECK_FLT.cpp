@@ -245,7 +245,7 @@ auto sperr::SPECK_FLT::m_estimate_mse_midtread(double q) const -> double
 auto sperr::SPECK_FLT::m_estimate_q(double param) const -> double
 {
   switch (m_mode) {
-    case CompMode::PSNR : {
+    case CompMode::PSNR: {
       // Note: based on Peter's estimation method, to achieved the target PSNR, the terminal
       // quantization threshold should be (2.0 * sqrt(3.0) * rmse).
       const auto t_mse = (param * param) * std::pow(10.0, -m_quality / 10.0);
@@ -255,7 +255,7 @@ auto sperr::SPECK_FLT::m_estimate_q(double param) const -> double
         q /= std::pow(2.0, 0.25);  // Four adjustments would effectively halve q.
       return q;
     }
-    case CompMode::PWE :
+    case CompMode::PWE:
       return m_quality * 1.5;
     case CompMode::Rate:
       // The biggest double (odd) value that sill has a precision of 1 is 0x1.fffffffffffffp52.
@@ -265,7 +265,7 @@ auto sperr::SPECK_FLT::m_estimate_q(double param) const -> double
       //    and more discussion can be found at:
       //    https://randomascii.wordpress.com/2012/01/11/tricks-with-the-floating-point-format/
       return param / 0x1.fffffffffffffp52;
-    default :
+    default:
       return 0.0;
   }
 }
@@ -390,20 +390,19 @@ auto sperr::SPECK_FLT::compress() -> RTNType
     return RTNType::Good;
 
   // Collect information for different compression modes.
-  auto param_q = 0.0; // assist estimating `m_q`.
+  auto param_q = 0.0;  // assist estimating `m_q`.
   switch (m_mode) {
-    case CompMode::PWE :
+    case CompMode::PWE:
       m_vals_orig.resize(total_vals);
       std::copy(m_vals_d.cbegin(), m_vals_d.cend(), m_vals_orig.begin());
       break;
-    case CompMode::PSNR : {
+    case CompMode::PSNR: {
       // In fixed-rate mode, `param_q` is the data range.
       auto [min, max] = std::minmax_element(m_vals_d.cbegin(), m_vals_d.cend());
       param_q = *max - *min;
       break;
     }
-    default :
-      ; // So the compiler doesn't complain missing switch cases.
+    default:;  // So the compiler doesn't complain missing switch cases.
   }
 
   // Step 2: wavelet transform

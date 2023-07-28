@@ -96,7 +96,7 @@ auto sperr::SPERR3D_OMP_C::compress(const T* buf, size_t buf_len) -> RTNType
     compressor->take_data(std::move(chunk));
     compressor->set_dims({chunk_idx[i][1], chunk_idx[i][3], chunk_idx[i][5]});
     switch (m_mode) {
-      case CompMode::PSNR :
+      case CompMode::PSNR:
         compressor->set_psnr(m_quality);
         break;
       case CompMode::PWE:
@@ -105,8 +105,7 @@ auto sperr::SPERR3D_OMP_C::compress(const T* buf, size_t buf_len) -> RTNType
       case CompMode::Rate:
         compressor->set_bitrate(m_quality);
         break;
-      default :
-        ; // So the compiler doesn't complain about missing cases.
+      default:;  // So the compiler doesn't complain about missing cases.
     }
     chunk_rtn[i] = compressor->compress();
 
