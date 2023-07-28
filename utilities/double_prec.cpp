@@ -29,11 +29,11 @@ int main(int argc, char* argv[])
 {
   // The last double value that still has precision as good as int.
   // The next double value is 2.0 bigger.
-  Double_t num(0x1p53);
+  Double_t num(0x1.fffffffffffffp52);
 
   // Comment out the line below, then you'll notice that it's impossible to
   // increment by 1.0 on the double value!
-  num.i--;
+  //num.i++;
 
   std::printf("Float value,    int value,        storage in hex,     "
               "storage in dec,     sign, exponent, mantissa\n");
