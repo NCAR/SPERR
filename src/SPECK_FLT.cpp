@@ -248,7 +248,6 @@ auto sperr::SPECK_FLT::m_estimate_q(double param) const -> double
     case CompMode::PSNR : {
       // Note: based on Peter's estimation method, to achieved the target PSNR, the terminal
       // quantization threshold should be (2.0 * sqrt(3.0) * rmse).
-      assert(param > 0.0);
       const auto t_mse = (param * param) * std::pow(10.0, -m_quality / 10.0);
       const auto t_rmse = std::sqrt(t_mse);
       auto q = 2.0 * std::sqrt(t_mse * 3.0);
@@ -258,16 +257,14 @@ auto sperr::SPECK_FLT::m_estimate_q(double param) const -> double
     }
     case CompMode::PWE :
       return m_quality * 1.5;
-    case CompMode::Rate: {
+    case CompMode::Rate:
       // The biggest double (odd) value that sill has a precision of 1 is 0x1.fffffffffffffp52.
       //    In decimal it's 9007199254740991.0, or approx. 9e15. Given the largest wavelet
       //    coefficient, we set `m_q` so that the quantized integer is this 0x1p53 - 1.0.  File
       //    `utilities/double_prec.cpp` experiments with double precision approaching here,
       //    and more discussion can be found at:
       //    https://randomascii.wordpress.com/2012/01/11/tricks-with-the-floating-point-format/
-      assert(param > 0.0);
       return param / 0x1.fffffffffffffp52;
-    }
     default :
       return 0.0;
   }

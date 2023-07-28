@@ -138,11 +138,11 @@ void sperr::SPECK_INT<T>::encode()
   // Marching over bitplanes.
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
     m_sorting_pass();
-    if (m_bit_buffer.wtell() >= m_budget)
+    if (m_bit_buffer.wtell() >= m_budget)  // Takes place only when fixed-rate compression.
       break;
 
     m_refinement_pass_encode();
-    if (m_bit_buffer.wtell() >= m_budget)
+    if (m_bit_buffer.wtell() >= m_budget)  // Takes place only when fixed-rate compression.
       break;
 
     m_threshold /= uint_type{2};
@@ -186,19 +186,20 @@ void sperr::SPECK_INT<T>::decode()
   // Marching over bitplanes.
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
     m_sorting_pass();
-    if (m_bit_buffer.rtell() >= m_avail_bits)
-      break;
+    if (m_bit_buffer.rtell() >= m_avail_bits)  // Can happen either in fixed-rate mode, or only
+      break;                                   // a partial bitstream is available.
 
-    if (m_avail_bits != m_total_bits) {  // `m_bit_buffer` has only partial bitstream.
-      assert(m_avail_bits < m_total_bits);
+    if (m_avail_bits != m_total_bits) {     // Can happen either in fixed-rate mode, or only
+      assert(m_avail_bits < m_total_bits);  // a partial bitstream is available.
       auto rtn = m_refinement_pass_decode_partial();
       assert(m_bit_buffer.rtell() <= m_avail_bits);
       if (rtn == RTNType::BitBudgetMet)
         break;
     }
-    else {  // `m_bit_buffer` has the complete bitstream.
+    else {  // Can happen in all three compression modes with the full bitstream, though
+            // very unlikely for fixed-rate compression.
       m_refinement_pass_decode_complete();
-      if (m_bit_buffer.rtell() >= m_avail_bits)
+      if (m_bit_buffer.rtell() >= m_total_bits)
         break;
     }
 
@@ -210,7 +211,7 @@ void sperr::SPECK_INT<T>::decode()
     assert(m_bit_buffer.rtell() == m_total_bits);
   else {
     assert(m_bit_buffer.rtell() >= m_avail_bits);
-    assert(m_bit_buffer.rtell() < m_total_bits);
+    assert(m_bit_buffer.rtell() <= m_total_bits);
   }
 }
 

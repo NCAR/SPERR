@@ -147,8 +147,10 @@ int main(int argc, char* argv[])
       encoder->set_tolerance(pwe);
     else if (psnr != 0.0)
       encoder->set_psnr(psnr);
-    else if (bpp != 0.0)
+    else {
+      assert(bpp != 0.0);
       encoder->set_bitrate(bpp);
+    }
 
     auto rtn = sperr::RTNType::Good;
     if (ftype == 32)
