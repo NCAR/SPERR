@@ -42,6 +42,13 @@ void sperr::SPERR3D_OMP_C::set_tolerance(double pwe)
   m_quality = pwe;
 }
 
+void sperr::SPERR3D_OMP_C::set_bitrate(double bpp)
+{
+  assert(bpp > 0.0);
+  m_mode = CompMode::Rate;
+  m_quality = bpp;
+}
+
 template <typename T>
 auto sperr::SPERR3D_OMP_C::compress(const T* buf, size_t buf_len) -> RTNType
 {
@@ -88,10 +95,18 @@ auto sperr::SPERR3D_OMP_C::compress(const T* buf, size_t buf_len) -> RTNType
     assert(!chunk.empty());
     compressor->take_data(std::move(chunk));
     compressor->set_dims({chunk_idx[i][1], chunk_idx[i][3], chunk_idx[i][5]});
-    if (m_mode == CompMode::PSNR)
-      compressor->set_psnr(m_quality);
-    else if (m_mode == CompMode::PWE)
-      compressor->set_tolerance(m_quality);
+    switch (m_mode) {
+      case CompMode::PSNR:
+        compressor->set_psnr(m_quality);
+        break;
+      case CompMode::PWE:
+        compressor->set_tolerance(m_quality);
+        break;
+      case CompMode::Rate:
+        compressor->set_bitrate(m_quality);
+        break;
+      default:;  // So the compiler doesn't complain about missing cases.
+    }
     chunk_rtn[i] = compressor->compress();
 
     // Save bitstream for each chunk in `m_encoded_stream`.

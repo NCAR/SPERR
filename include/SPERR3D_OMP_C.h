@@ -19,8 +19,10 @@ class SPERR3D_OMP_C {
   // Note on `chunk_dims`: it's a preferred value, but when the volume dimension is not
   //    divisible by chunk dimensions, the actual chunk dimension will change.
   void set_dims_and_chunks(dims_type vol_dims, dims_type chunk_dims);
+
   void set_psnr(double);
   void set_tolerance(double);
+  void set_bitrate(double);
 
   // Apply compression on a volume pointed to by `buf`.
   template <typename T>

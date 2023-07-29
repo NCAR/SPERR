@@ -137,7 +137,7 @@ int main(int argc, char* argv[])
       sigma = std::sqrt(mean_var[1]);
     }
 
-    std::printf("PSNR = %.2fdB, L-Infty = %.2e, Accuracy Gain = %.2f\n", psnr, linfy,
+    std::printf("PSNR = %.2f, L-Infty = %.2e, Accuracy Gain = %.2f\n", psnr, linfy,
                 std::log2(sigma / rmse) - real_bpp);
   }
 

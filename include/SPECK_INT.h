@@ -36,6 +36,9 @@ class SPECK_INT {
   // The length (1, 2, 4, 8) of the integer type in use
   auto integer_len() const -> size_t;
 
+  // Optional: set a bit budget (num. of bits) for encoding, which is the maximum value of
+  // type size_t by default. Passing in zero here resets it to the maximum of size_t.
+  void set_budget(size_t);
   void set_dims(dims_type);
 
   // Note: `speck_int_get_num_bitplanes()` is provided as a free-standing helper function (above).
@@ -48,10 +51,6 @@ class SPECK_INT {
   // Actions
   void encode();
   void decode();
-
-  // Set the state of internal data structures to the initial state.
-  // It doesn't, however, release acquired resources.
-  void reset();
 
   // Input
   auto use_coeffs(vecui_type coeffs, vecb_type signs) -> RTNType;
@@ -85,6 +84,7 @@ class SPECK_INT {
   uint64_t m_total_bits = 0;  // The number of bits of a complete SPECK stream.
   uint64_t m_avail_bits = 0;  // Decoding only. `m_avail_bits` <= `m_total_bits`
   uint8_t m_num_bitplanes = 0;
+  size_t m_budget = std::numeric_limits<size_t>::max();
 };
 
 };  // namespace sperr

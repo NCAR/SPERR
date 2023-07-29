@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
     std::cout << "What's the compression quality (--psnr, --pwe, --bpp) ?" << std::endl;
     return __LINE__;
   }
-  if (cflag && (pwe <= 0.0 || psnr <= 0.0)) {
+  if (cflag && (pwe < 0.0 || psnr < 0.0)) {
     std::cout << "Compression quality (--psnr, --pwe) must be positive!" << std::endl;
     return __LINE__;
   }
@@ -147,6 +147,10 @@ int main(int argc, char* argv[])
       encoder->set_tolerance(pwe);
     else if (psnr != 0.0)
       encoder->set_psnr(psnr);
+    else {
+      assert(bpp != 0.0);
+      encoder->set_bitrate(bpp);
+    }
 
     auto rtn = sperr::RTNType::Good;
     if (ftype == 32)
@@ -236,7 +240,7 @@ int main(int argc, char* argv[])
           sigma = std::sqrt(mean_var[1]);
         }
         std::printf("Input range = (%.2e, %.2e), L-Infty = %.2e\n", min, max, linfy);
-        std::printf("Bitrate = %.2fbpp, PSNR = %.2fdB, Accuracy Gain = %.2f\n", bpp, psnr,
+        std::printf("Bitrate = %.2f, PSNR = %.2fdB, Accuracy Gain = %.2f\n", bpp, psnr,
                     std::log2(sigma / rmse) - bpp);
         print_stats = false;
       }

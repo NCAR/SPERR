@@ -46,10 +46,9 @@ class SPECK_FLT {
   //
   // General configuration and info.
   //
-  // Note that if configured via `set_psnr()`, then there's no outlier correction performed.
-  // If configured via `set_tolerance()`, then outlier correction is also performed.
   void set_psnr(double psnr);
   void set_tolerance(double tol);
+  void set_bitrate(double bpp);
   void set_dims(dims_type);
   auto integer_len() const -> size_t;
 
@@ -64,7 +63,6 @@ class SPECK_FLT {
   dims_type m_dims = {0, 0, 0};
   vecd_type m_vals_d;
   vecb_type m_sign_array;
-  vecd_type m_vals_orig;  // encoding only
   condi_type m_condi_bitstream;
 
   CDF97 m_cdf;
@@ -86,6 +84,7 @@ class SPECK_FLT {
   double m_q = 0.0;                     // encoding and decoding
   bool m_has_outlier = false;           // encoding (PWE mode) and decoding
   double m_quality = 0.0;               // encoding only, represent either PSNR, PWE, or BPP.
+  vecd_type m_vals_orig;                // encoding only (PWE mode)
   CompMode m_mode = CompMode::Unknown;  // encoding only
 
   // Instantiate `m_vals_ui` based on the chosen integer length.
@@ -109,8 +108,11 @@ class SPECK_FLT {
   // Estimate MSE assuming midtread quantization strategy.
   auto m_estimate_mse_midtread(double q) const -> double;
 
-  // Would require the input of `data_range` only in CompMode::PSNR mode.
-  auto m_estimate_q(double data_range = 0.0) const -> double;
+  // The meaning of the input parameter differs depending on the compression mode:
+  //    - PWE:  it's not used, can be anything;
+  //    - PSNR: it must be the data range of the original input;
+  //    - Rate: it must be the biggest magnitude of transformed wavelet coefficients.
+  auto m_estimate_q(double) const -> double;
 };
 
 };  // namespace sperr
