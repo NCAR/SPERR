@@ -138,11 +138,11 @@ void sperr::SPECK_INT<T>::encode()
   // Marching over bitplanes.
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
     m_sorting_pass();
-    if (m_bit_buffer.wtell() >= m_budget)  // Takes place only when fixed-rate compression.
+    if (m_bit_buffer.wtell() >= m_budget)  // Happens only when fixed-rate compression.
       break;
 
     m_refinement_pass_encode();
-    if (m_bit_buffer.wtell() >= m_budget)  // Takes place only when fixed-rate compression.
+    if (m_bit_buffer.wtell() >= m_budget)  // Happens only when fixed-rate compression.
       break;
 
     m_threshold /= uint_type{2};
@@ -186,18 +186,18 @@ void sperr::SPECK_INT<T>::decode()
   // Marching over bitplanes.
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
     m_sorting_pass();
-    if (m_bit_buffer.rtell() >= m_avail_bits)  // Can happen either in fixed-rate mode, or only
-      break;                                   // a partial bitstream is available.
+    if (m_bit_buffer.rtell() >= m_avail_bits)  // Happens when a partial bitstream is available,
+      break;                                   // because of progressive decoding or fixed-rate.
 
-    if (m_avail_bits != m_total_bits) {     // Can happen either in fixed-rate mode, or only
-      assert(m_avail_bits < m_total_bits);  // a partial bitstream is available.
+    if (m_avail_bits != m_total_bits) {     // Happens when a partial bitstream is available,
+      assert(m_avail_bits < m_total_bits);  // because of progressive decoding or fixed-rate mode.
       auto rtn = m_refinement_pass_decode_partial();
       assert(m_bit_buffer.rtell() <= m_avail_bits);
       if (rtn == RTNType::BitBudgetMet)
         break;
     }
-    else {  // Can happen in all three compression modes with the full bitstream, though
-            // very unlikely for fixed-rate compression.
+    else {  // Happens when the full bitstream is available in fixed-PWE or PSNR,
+            // and *VERY* unlikely but possible in fixed-rate compression.
       m_refinement_pass_decode_complete();
       if (m_bit_buffer.rtell() >= m_total_bits)
         break;
