@@ -189,19 +189,9 @@ void sperr::SPECK_INT<T>::decode()
     if (m_bit_buffer.rtell() >= m_avail_bits)  // Happens when a partial bitstream is available,
       break;                                   // because of progressive decoding or fixed-rate.
 
-    if (m_avail_bits != m_total_bits) {     // Happens when a partial bitstream is available,
-      assert(m_avail_bits < m_total_bits);  // because of progressive decoding or fixed-rate mode.
-      auto rtn = m_refinement_pass_decode_partial();
-      assert(m_bit_buffer.rtell() <= m_avail_bits);
-      if (rtn == RTNType::BitBudgetMet)
-        break;
-    }
-    else {  // Happens when the full bitstream is available in fixed-PWE or PSNR,
-            // and *VERY* unlikely but possible in fixed-rate compression.
-      m_refinement_pass_decode_complete();
-      if (m_bit_buffer.rtell() >= m_total_bits)
-        break;
-    }
+    m_refinement_pass_decode();
+    if (m_bit_buffer.rtell() >= m_total_bits)  // Happens when a partial bitstream is available,
+      break;                                   // because of progressive decoding or fixed-rate.
 
     m_threshold /= uint_type{2};
     m_clean_LIS();
@@ -254,13 +244,13 @@ void sperr::SPECK_INT<T>::append_encoded_bitstream(vec8_type& buffer) const
 {
   // Note that `m_total_bits` and `m_budget` can have 3 comparison outcomes:
   //  1. `m_total_bits < m_budget` no matter whether m_budget is the maximum size_t or not.
-  //      In this case, we record all `m_total_bits` bits.
+  //      In this case, we record all `m_total_bits` bits (simple).
   //  2. `m_total_bits > m_budget`: in this case, we record the value of `m_total_bits` in
   //      the header but only pack `m_budget` bits to the bitstream, creating an equivalence
   //      of truncating the first `m_budget` bits from a bitstream of length `m_total_bits`.
   //  3. `m_total_bits == m_budget`: this case is very unlikely, but if it happens, that's when
   //      `m_budget` happens to be exactly met after a sorting or refinement pass.
-  //      In this case, we can also record all `m_total_bits` bits.
+  //      In this case, we can also record all `m_total_bits` bits, same as outcome 1.
 
   // Step 1: calculate size and allocate space for the encoded bitstream
   //
@@ -296,7 +286,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_encode()
   const auto tmp1 = std::array<uint_type, 2>{uint_type{0}, m_threshold};
   const auto bits_x64 = m_LSP_mask.size() - m_LSP_mask.size() % 64;
 
-  for (size_t i = 0; i < bits_x64; i += 64) { // Evaluate 64 bits at a time.
+  for (size_t i = 0; i < bits_x64; i += 64) {  // Evaluate 64 bits at a time.
     const auto value = m_LSP_mask.read_long(i);
     if (value != 0) {
       for (size_t j = 0; j < 64; j++) {
@@ -308,7 +298,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_encode()
       }
     }
   }
-  for (auto i = bits_x64; i < m_LSP_mask.size(); i++) { // Evaluate the remaining bits.
+  for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {  // Evaluate the remaining bits.
     if (m_LSP_mask.read_bit(i)) {
       const bool o1 = m_coeff_buf[i] >= m_threshold;
       m_coeff_buf[i] -= tmp1[o1];
@@ -324,14 +314,14 @@ void sperr::SPECK_INT<T>::m_refinement_pass_encode()
 }
 
 template <typename T>
-void sperr::SPECK_INT<T>::m_refinement_pass_decode_complete()
+void sperr::SPECK_INT<T>::m_refinement_pass_decode()
 {
   // First, process significant pixels previously found.
   //
   const auto tmp = std::array<uint_type, 2>{uint_type{0}, m_threshold};
   const auto bits_x64 = m_LSP_mask.size() - m_LSP_mask.size() % 64;
 
-  for (size_t i = 0; i < bits_x64; i += 64) { // Evaluate 64 bits at a time.
+  for (size_t i = 0; i < bits_x64; i += 64) {  // Evaluate 64 bits at a time.
     const auto value = m_LSP_mask.read_long(i);
     if (value != 0) {
       for (size_t j = 0; j < 64; j++) {
@@ -340,7 +330,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode_complete()
       }
     }
   }
-  for (auto i = bits_x64; i < m_LSP_mask.size(); i++) { // Evaluate the remaining bits.
+  for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {  // Evaluate the remaining bits.
     if (m_LSP_mask.read_bit(i))
       m_coeff_buf[i] += tmp[m_bit_buffer.rbit()];
   }
@@ -351,44 +341,6 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode_complete()
   for (auto idx : m_LSP_new)
     m_LSP_mask.write_true(idx);
   m_LSP_new.clear();
-}
-
-template <typename T>
-auto sperr::SPECK_INT<T>::m_refinement_pass_decode_partial() -> RTNType
-{
-  // First, process significant pixels previously found.
-  //
-  const auto tmp = std::array<uint_type, 2>{uint_type{0}, m_threshold};
-  const auto bits_x64 = m_LSP_mask.size() - m_LSP_mask.size() % 64;
-  assert(m_bit_buffer.rtell() < m_avail_bits);
-
-  for (size_t i = 0; i < bits_x64; i += 64) {
-    const auto value = m_LSP_mask.read_long(i);
-    if (value != 0) {
-      for (size_t j = 0; j < 64; j++) {
-        if ((value >> j) & uint64_t{1}) {
-          m_coeff_buf[i + j] += tmp[m_bit_buffer.rbit()];
-          if (m_bit_buffer.rtell() == m_avail_bits)
-            return RTNType::BitBudgetMet;
-        }
-      }
-    }
-  }
-  for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {
-    if (m_LSP_mask.read_bit(i)) {
-      m_coeff_buf[i] += tmp[m_bit_buffer.rbit()];
-      if (m_bit_buffer.rtell() == m_avail_bits)
-        return RTNType::BitBudgetMet;
-    }
-  }
-
-  // Second, mark newly found significant pixels in `m_LSP_mask`
-  //
-  for (auto idx : m_LSP_new)
-    m_LSP_mask.write_true(idx);
-  m_LSP_new.clear();
-
-  return RTNType::Good;
 }
 
 template class sperr::SPECK_INT<uint64_t>;
