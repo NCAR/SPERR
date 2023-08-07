@@ -12,10 +12,8 @@ void sperr::SPECK2D_INT_DEC<T>::m_process_S(size_t idx1,
   assert(!set.is_pixel());
   bool is_sig = true;
 
-  if (need_decide) {
-    assert(m_bit_buffer.rtell() < m_total_bits);
+  if (need_decide)
     is_sig = m_bit_buffer.rbit();
-  }
 
   if (is_sig) {
     counter++;
@@ -29,10 +27,8 @@ void sperr::SPECK2D_INT_DEC<T>::m_process_P(size_t idx, size_t& counter, bool ne
 {
   bool is_sig = true;
 
-  if (need_decide) {
-    assert(m_bit_buffer.rtell() < m_total_bits);
+  if (need_decide)
     is_sig = m_bit_buffer.rbit();
-  }
 
   if (is_sig) {
     counter++;
@@ -49,10 +45,8 @@ void sperr::SPECK2D_INT_DEC<T>::m_process_I(bool need_decide)
 {
   if (m_I.part_level > 0) {  // Only process `m_I` when it's not empty.
     bool is_sig = true;
-    if (need_decide) {
-      assert(m_bit_buffer.rtell() < m_total_bits);
+    if (need_decide)
       is_sig = m_bit_buffer.rbit();
-    }
     if (is_sig)
       m_code_I();
   }
