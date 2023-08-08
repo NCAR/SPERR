@@ -57,6 +57,7 @@ class SPECK_INT {
   void use_bitstream(const void* p, size_t len);
 
   // Output
+  auto encoded_bitstream_len() const -> size_t;
   void append_encoded_bitstream(vec8_type& buf) const;
   auto release_coeffs() -> vecui_type&&;
   auto release_signs() -> vecb_type&&;

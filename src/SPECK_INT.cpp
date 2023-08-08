@@ -240,7 +240,7 @@ auto sperr::SPECK_INT<T>::view_signs() const -> const vecb_type&
 }
 
 template <typename T>
-void sperr::SPECK_INT<T>::append_encoded_bitstream(vec8_type& buffer) const
+auto sperr::SPECK_INT<T>::encoded_bitstream_len() const -> size_t
 {
   // Note that `m_total_bits` and `m_budget` can have 3 comparison outcomes:
   //  1. `m_total_bits < m_budget` no matter whether m_budget is the maximum size_t or not.
@@ -251,18 +251,23 @@ void sperr::SPECK_INT<T>::append_encoded_bitstream(vec8_type& buffer) const
   //  3. `m_total_bits == m_budget`: this case is very unlikely, but if it happens, that's when
   //      `m_budget` happens to be exactly met after a sorting or refinement pass.
   //      In this case, we can also record all `m_total_bits` bits, same as outcome 1.
+  //
+  auto bits_to_pack = std::min(m_budget, size_t{m_total_bits});
+  auto bit_in_byte = bits_to_pack / size_t{8};
+  if (bits_to_pack % 8 != 0)
+    ++bit_in_byte;
+  return (header_size + bit_in_byte);
+}
 
+template <typename T>
+void sperr::SPECK_INT<T>::append_encoded_bitstream(vec8_type& buffer) const
+{
   // Step 1: calculate size and allocate space for the encoded bitstream
   //
   // Header definition: 9 bytes in total:
   // num_bitplanes (uint8_t), num_useful_bits (uint64_t)
   //
-  auto bits_to_pack = std::min(m_budget, size_t{m_total_bits});
-  uint64_t bit_in_byte = bits_to_pack / 8;
-  if (bits_to_pack % 8 != 0)
-    ++bit_in_byte;
-  const auto app_size = header_size + bit_in_byte;
-
+  const auto app_size = this->encoded_bitstream_len();
   const auto orig_size = buffer.size();
   buffer.resize(orig_size + app_size);
   auto* const ptr = buffer.data() + orig_size;
@@ -274,7 +279,9 @@ void sperr::SPECK_INT<T>::append_encoded_bitstream(vec8_type& buffer) const
   std::memcpy(ptr + pos, &m_total_bits, sizeof(m_total_bits));
   pos += sizeof(m_total_bits);
 
-  // Step 3: assemble `bits_to_pack` many bits into bytes
+  // Step 3: assemble the right amount of bits into bytes.
+  // See discussion on the number of bits to pack in function `encoded_bitstream_len()`.
+  auto bits_to_pack = std::min(m_budget, size_t{m_total_bits});
   m_bit_buffer.write_bitstream(ptr + header_size, bits_to_pack);
 }
 
