@@ -318,22 +318,50 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
 {
   // First, process significant pixels previously found.
   //
-  const auto tmp = std::array<uint_type, 2>{uint_type{0}, m_threshold};
   const auto bits_x64 = m_LSP_mask.size() - m_LSP_mask.size() % 64;
 
-  for (size_t i = 0; i < bits_x64; i += 64) {  // Evaluate 64 bits at a time.
-    const auto value = m_LSP_mask.read_long(i);
-    if (value != 0) {
+  if (m_threshold >= uint_type{2}) {
+    const auto half_t = m_threshold / uint_type{2};
+    for (size_t i = 0; i < bits_x64; i += 64) {  // Evaluate 64 bits at a time.
+      const auto value = m_LSP_mask.read_long(i);
+      if (value != 0) {
+        for (size_t j = 0; j < 64; j++) {
+          if ((value >> j) & uint64_t{1}) {
+            if (m_bit_buffer.rbit())
+              m_coeff_buf[i + j] += half_t;
+            else
+              m_coeff_buf[i + j] -= half_t;
+          }
+        }
+      }
+    }
+    for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {  // Evaluate the remaining bits.
+      if (m_LSP_mask.read_bit(i)) {
+        if (m_bit_buffer.rbit())
+          m_coeff_buf[i] += half_t;
+        else
+          m_coeff_buf[i] -= half_t;
+      }
+    }
+  }       // Finish the case where `m_threshold >= 2`.
+  else {  // Start the case where `m_threshold == 1`.
+    for (size_t i = 0; i < bits_x64; i += 64) {
+      const auto value = m_LSP_mask.read_long(i);
       for (size_t j = 0; j < 64; j++) {
-        if ((value >> j) & uint64_t{1})
-          m_coeff_buf[i + j] += tmp[m_bit_buffer.rbit()];
+        if ((value >> j) & uint64_t{1}) {
+          if (!m_bit_buffer.rbit())
+            --(m_coeff_buf[i + j]);
+        }
+      }
+    }
+    for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {
+      if (m_LSP_mask.read_bit(i)) {
+        if (!m_bit_buffer.rbit())
+          --(m_coeff_buf[i]);
       }
     }
   }
-  for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {  // Evaluate the remaining bits.
-    if (m_LSP_mask.read_bit(i))
-      m_coeff_buf[i] += tmp[m_bit_buffer.rbit()];
-  }
+
   assert(m_bit_buffer.rtell() <= m_total_bits);
 
   // Second, mark newly found significant pixels in `m_LSP_mask`
