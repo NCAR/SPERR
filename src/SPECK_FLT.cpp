@@ -511,10 +511,11 @@ FIXED_RATE_HIGH_PREC_LABEL:
   //    so quantiztion is done with a higher precision.
   //    Btw I know that GOTO should be used very sparsely and with great caution. I think this
   //    is one place where it's making the code most clean and not introducing additional risks.
+  //
   if (m_mode == CompMode::Rate && high_prec == false) {
     auto target = static_cast<size_t>(m_quality * double(total_vals));
     assert(m_encoder.index() == 2);
-    auto actual = std::get<2>(m_encoder)->encoded_bitstream_len();
+    auto actual = std::get<2>(m_encoder)->encoded_bitstream_len() * size_t{8};
     if (actual < target) {
       high_prec = true;
       goto FIXED_RATE_HIGH_PREC_LABEL;
