@@ -258,10 +258,10 @@ auto sperr::SPECK_FLT::m_estimate_q(double param) const -> double
     case CompMode::PWE:
       return m_quality * 1.5;
     case CompMode::Rate:
-      // The biggest double (odd) value that sill has a precision of 1 is 0x1.fffffffffffffp52.
+      // The biggest (odd) double value that sill has a precision of 1 is 0x1.fffffffffffffp52.
       //    In decimal it's 9007199254740991.0, or approx. 9e15. Given the largest wavelet
-      //    coefficient, we set `m_q` so that the quantized integer is this 0x1p53 - 1.0.  File
-      //    `utilities/double_prec.cpp` experiments with double precision approaching here,
+      //    coefficient, we set `m_q` so that the quantized integer is this 0x1.fffffffffffffp52.
+      //    File `utilities/double_prec.cpp` experiments with double precision approaching here,
       //    and more discussion can be found at:
       //    https://randomascii.wordpress.com/2012/01/11/tricks-with-the-floating-point-format/
       return param / 0x1.fffffffffffffp52;
