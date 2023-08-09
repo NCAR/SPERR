@@ -190,7 +190,7 @@ void sperr::SPECK_INT<T>::decode()
       break;                                   // because of progressive decoding or fixed-rate.
 
     m_refinement_pass_decode();
-    if (m_bit_buffer.rtell() >= m_total_bits)  // Happens when a partial bitstream is available,
+    if (m_bit_buffer.rtell() >= m_avail_bits)  // Happens when a partial bitstream is available,
       break;                                   // because of progressive decoding or fixed-rate.
 
     m_threshold /= uint_type{2};
@@ -324,12 +324,20 @@ template <typename T>
 void sperr::SPECK_INT<T>::m_refinement_pass_decode()
 {
   // First, process significant pixels previously found.
+  //    All the conditions here are a little annoying, but I don't have a better solution now.
+  //    Here's a documentation of their purposes.
+  // 1) The decoding scheme (reconstructing values at the middle of an interval) requires
+  //    different treatment when `m_threshold` is 1 or not.
+  // 2) We make use of the internal representation of `m_LSP_mask` and evaluate 64 bits at time.
+  //    This requires evaluating any remaining bits not divisible by 64.
+  // 3) During progressive or fixed-rate decoding, we need to evaluate if the bitstream is
+  //    exhausted after every read. We test it no matter what decoding mode we're in though.
   //
-  const auto bits_x64 = m_LSP_mask.size() - m_LSP_mask.size() % 64;
-
-  if (m_threshold >= uint_type{2}) {
+  auto read_pos = m_bit_buffer.rtell();  // Avoid repeated calls to rtell().
+  const auto bits_x64 = m_LSP_mask.size() - m_LSP_mask.size() % 64;  // <-- Point 2
+  if (m_threshold >= uint_type{2}) {                                 // <-- Point 1
     const auto half_t = m_threshold / uint_type{2};
-    for (size_t i = 0; i < bits_x64; i += 64) {  // Evaluate 64 bits at a time.
+    for (size_t i = 0; i < bits_x64; i += 64) {  // <-- Point 2
       const auto value = m_LSP_mask.read_long(i);
       if (value != 0) {
         for (size_t j = 0; j < 64; j++) {
@@ -338,16 +346,20 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
               m_coeff_buf[i + j] += half_t;
             else
               m_coeff_buf[i + j] -= half_t;
+            if (++read_pos == m_avail_bits)  // <-- Point 3
+              return;
           }
         }
       }
     }
-    for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {  // Evaluate the remaining bits.
+    for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {  // <-- Point 2
       if (m_LSP_mask.read_bit(i)) {
         if (m_bit_buffer.rbit())
           m_coeff_buf[i] += half_t;
         else
           m_coeff_buf[i] -= half_t;
+        if (++read_pos == m_avail_bits)  // <-- Point 3
+          return;
       }
     }
   }       // Finish the case where `m_threshold >= 2`.
@@ -358,6 +370,8 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
         if ((value >> j) & uint64_t{1}) {
           if (!m_bit_buffer.rbit())
             --(m_coeff_buf[i + j]);
+          if (++read_pos == m_avail_bits)
+            return;
         }
       }
     }
@@ -365,6 +379,8 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
       if (m_LSP_mask.read_bit(i)) {
         if (!m_bit_buffer.rbit())
           --(m_coeff_buf[i]);
+        if (++read_pos == m_avail_bits)
+          return;
       }
     }
   }

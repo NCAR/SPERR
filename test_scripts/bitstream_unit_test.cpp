@@ -263,7 +263,7 @@ TEST(Bitmask, CountTrue)
   EXPECT_EQ(m1.count_true(), 20);
 
   m1.resize(60);
-  EXPECT_EQ(m1.count_true(), 12); // 0, 5, ..., 55
+  EXPECT_EQ(m1.count_true(), 12); // 0, 5, ..., 50, 55
 
   m1.resize(192);
   EXPECT_EQ(m1.count_true(), 13); // 0, 5, ..., 55, 60
