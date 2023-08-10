@@ -318,8 +318,6 @@ TEST(SPECK2D_FLT, TargetPSNR)
   EXPECT_GT(stats[2], psnr - 0.16); // Another example of not exactly reaching the target PSNR.
 }
 
-#if 0
-// Note: Fixed rate compression yields obviously worse results right now; need more investigation.
 TEST(SPECK2D_FLT, TargetBPP)
 {
   auto inputf = sperr::read_whole_file<float>("../test_data/vorticity.512_512");
@@ -353,12 +351,12 @@ TEST(SPECK2D_FLT, TargetBPP)
   std::printf("bpp = %.2f, PSNR = %.4f, PWE = %.4e\n", 8.0 * bitstream.size() / total_vals,
               stats[2], stats[1]);
 #endif
-  EXPECT_GT(stats[2], 67.3756);
-  EXPECT_LT(stats[1], 2.9784e-6);
+  EXPECT_GT(stats[2], 71.43);
+  EXPECT_LT(stats[1], 2.048e-06);
 
   // Test a another bitrate
   //
-  bpp = 3.1;
+  bpp = 2.0;
   encoder.set_bitrate(bpp);
   encoder.copy_data(inputd.data(), total_vals);
   rtn = encoder.compress();
@@ -377,9 +375,8 @@ TEST(SPECK2D_FLT, TargetBPP)
   std::printf("bpp = %.2f, PSNR = %.4f, PWE = %.4e\n", 8.0 * bitstream.size() / total_vals,
               stats[2], stats[1]);
 #endif
-  EXPECT_GT(stats[2], 62.5555);
-  EXPECT_LT(stats[1], 6.2064e-6);
+  EXPECT_GT(stats[2], 59.6859);
+  EXPECT_LT(stats[1], 8.173e-06);
 }
-#endif
 
 }  // namespace
