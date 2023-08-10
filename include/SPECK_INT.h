@@ -57,6 +57,7 @@ class SPECK_INT {
   void use_bitstream(const void* p, size_t len);
 
   // Output
+  auto encoded_bitstream_len() const -> size_t;
   void append_encoded_bitstream(vec8_type& buf) const;
   auto release_coeffs() -> vecui_type&&;
   auto release_signs() -> vecb_type&&;
@@ -69,8 +70,7 @@ class SPECK_INT {
   virtual void m_sorting_pass() = 0;
   virtual void m_initialize_lists() = 0;
   void m_refinement_pass_encode();
-  void m_refinement_pass_decode_complete();
-  auto m_refinement_pass_decode_partial() -> RTNType;
+  void m_refinement_pass_decode();
 
   // Data members
   dims_type m_dims = {0, 0, 0};

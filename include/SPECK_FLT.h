@@ -108,11 +108,12 @@ class SPECK_FLT {
   // Estimate MSE assuming midtread quantization strategy.
   auto m_estimate_mse_midtread(double q) const -> double;
 
-  // The meaning of the input parameter differs depending on the compression mode:
-  //    - PWE:  it's not used, can be anything;
-  //    - PSNR: it must be the data range of the original input;
-  //    - Rate: it must be the biggest magnitude of transformed wavelet coefficients.
-  auto m_estimate_q(double) const -> double;
+  // The meaning of inputs `param` and `high_prec` differ depending on the compression mode:
+  //    - PWE:  no input is used; they can be anything;
+  //    - PSNR: `param` must be the data range of the original input; `high_prec` is not used;
+  //    - Rate: `param` must be the biggest magnitude of transformed wavelet coefficients;
+  //            `high_prec` should be false at first, and true if not enough bits are produced.
+  auto m_estimate_q(double param, bool high_prec) const -> double;
 };
 
 };  // namespace sperr

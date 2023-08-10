@@ -252,107 +252,52 @@ TEST(sperr3d_target_psnr, small_data_range)
   EXPECT_LT(stats[2], 126.0385);
 }
 
-#if 0
 //
 // Test fixed-size mode
 //
-TEST(sperr3d_bit_rate, small)
-{
-  speck_tester_omp tester("../test_data/wmag17.float", {17, 17, 17}, 1);
-
-  const auto tar_psnr = std::numeric_limits<double>::max();
-  const auto pwe = 0.0;
-
-  tester.execute(4.0, tar_psnr, pwe);
-  auto psnr = tester.get_psnr();
-  auto lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 52.903);
-  EXPECT_LT(lmax, 1.8526);
-
-  tester.execute(2.0, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 41.281158);
-  EXPECT_LT(lmax, 6.4132);
-
-  tester.execute(1.0, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_FLOAT_EQ(psnr, 34.645767);
-  EXPECT_LT(lmax, 13.0171);
-}
-
 TEST(sperr3d_bit_rate, big)
 {
-  speck_tester_omp tester("../test_data/wmag128.float", {128, 128, 128}, 0);
+  auto input = sperr::read_whole_file<float>("../test_data/wmag128.float");
+  const auto dims = sperr::dims_type{128, 128, 128};
+  const auto chunks = sperr::dims_type{64, 64, 64};
+  const auto total_len = dims[0] * dims[1] * dims[2];
+  auto inputd = sperr::vecd_type(total_len);
+  std::copy(input.begin(), input.end(), inputd.begin());
 
-  const auto tar_psnr = std::numeric_limits<double>::max();
-  const auto pwe = 0.0;
+  // Use an encoder
+  double bpp = 2.0;
+  auto encoder = sperr::SPERR3D_OMP_C();
+  encoder.set_dims_and_chunks(dims, chunks);
+  encoder.set_bitrate(bpp);
+  encoder.set_num_threads(4);
+  encoder.compress(inputd.data(), inputd.size());
+  auto stream = encoder.get_encoded_bitstream();
 
-  tester.execute(2.0, tar_psnr, pwe);
-  auto psnr = tester.get_psnr();
-  auto lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 53.8102);
-  EXPECT_LT(psnr, 53.8103);
-  EXPECT_LT(lmax, 9.6954);
+  // Use a decoder
+  auto decoder = sperr::SPERR3D_OMP_D();
+  decoder.set_num_threads(0);
+  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.decompress(stream.data());
+  auto output_dims = decoder.get_dims();
+  EXPECT_EQ(output_dims, dims);
+  const auto& output = decoder.view_decoded_data();
+  auto stats = sperr::calc_stats(inputd.data(), output.data(), total_len, 4);
+  EXPECT_GT(stats[2], 53.7622);
+  EXPECT_LT(stats[2], 89.7623);
+  EXPECT_LT(stats[1], 9.6434);
 
-  tester.execute(1.0, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 47.2219);
-  EXPECT_LT(psnr, 47.2220);
-  EXPECT_LT(lmax, 16.3006);
-
-  tester.execute(0.5, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 42.6877);
-  EXPECT_LT(psnr, 42.6878);
-  EXPECT_LT(lmax, 27.5579);
-
-  tester.execute(0.25, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 39.2763);
-  EXPECT_LT(psnr, 39.2764);
-  EXPECT_LT(lmax, 48.8490);
+  // Test a new bitrate
+  bpp = 1.0;
+  encoder.set_bitrate(bpp);
+  encoder.compress(input.data(), input.size());
+  stream  = encoder.get_encoded_bitstream();
+  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.decompress(stream.data());
+  const auto& output2 = decoder.view_decoded_data();
+  stats = sperr::calc_stats(inputd.data(), output2.data(), total_len, 4);
+  EXPECT_GT(stats[2], 47.1467);
+  EXPECT_LT(stats[2], 47.1468);
+  EXPECT_LT(stats[1], 22.3381);
 }
-
-TEST(sperr3d_bit_rate, narrow_data_range)
-{
-  speck_tester_omp tester("../test_data/vorticity.128_128_41", {128, 128, 41}, 2);
-
-  const auto tar_psnr = std::numeric_limits<double>::max();
-  const auto pwe = 0.0;
-
-  tester.execute(4.0, tar_psnr, pwe);
-  auto psnr = tester.get_psnr();
-  auto lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 67.7939);
-  EXPECT_LT(psnr, 67.7940);
-  EXPECT_LT(lmax, 1.17879e-06);
-
-  tester.execute(2.0, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 55.7831);
-  EXPECT_LT(psnr, 55.7832);
-  EXPECT_LT(lmax, 4.71049e-06);
-
-  tester.execute(0.8, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 47.2464);
-  EXPECT_LT(psnr, 47.2465);
-  EXPECT_LT(lmax, 1.74502e-05);
-
-  tester.execute(0.4, tar_psnr, pwe);
-  psnr = tester.get_psnr();
-  lmax = tester.get_lmax();
-  EXPECT_GT(psnr, 43.1739);
-  EXPECT_LT(psnr, 43.1740);
-  EXPECT_LT(lmax, 3.34412e-05);
-}
-#endif
 
 }  // anonymous namespace

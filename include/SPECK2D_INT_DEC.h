@@ -21,7 +21,6 @@ class SPECK2D_INT_DEC : public SPECK2D_INT<T> {
   using SPECK_INT<T>::m_coeff_buf;
   using SPECK_INT<T>::m_bit_buffer;
   using SPECK_INT<T>::m_sign_array;
-  using SPECK_INT<T>::m_total_bits;
   using SPECK2D_INT<T>::m_LIS;
   using SPECK2D_INT<T>::m_I;
   using SPECK2D_INT<T>::m_code_S;

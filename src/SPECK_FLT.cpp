@@ -242,7 +242,7 @@ auto sperr::SPECK_FLT::m_estimate_mse_midtread(double q) const -> double
   return mse;
 }
 
-auto sperr::SPECK_FLT::m_estimate_q(double param) const -> double
+auto sperr::SPECK_FLT::m_estimate_q(double param, bool high_prec) const -> double
 {
   switch (m_mode) {
     case CompMode::PSNR: {
@@ -258,13 +258,25 @@ auto sperr::SPECK_FLT::m_estimate_q(double param) const -> double
     case CompMode::PWE:
       return m_quality * 1.5;
     case CompMode::Rate:
-      // The biggest double (odd) value that sill has a precision of 1 is 0x1.fffffffffffffp52.
-      //    In decimal it's 9007199254740991.0, or approx. 9e15. Given the largest wavelet
-      //    coefficient, we set `m_q` so that the quantized integer is this 0x1p53 - 1.0.  File
-      //    `utilities/double_prec.cpp` experiments with double precision approaching here,
+      // This should be the most frequent case, where a `q` is calculated to results in making
+      //    full use of the biggest integer represented by uint32_t (4294967295, or 4e9).
+      //    It is the consideration of performance as well as numeric stability to not use
+      //    a super small q when possible.
+      //
+      if (!high_prec) {
+        return param / static_cast<double>(std::numeric_limits<uint32_t>::max());
+      }
+      // This case is less frequent, and it occurs when a rather high bitrate is requested.
+      //    Here, we want to have the quantized values no bigger than the biggest (odd) int value
+      //    representable by double AND sill has a precision of 1.0. Turns out that this value is
+      //    0x1.fffffffffffffp52, or in decimal 9007199254740991.0, or 9e15.
+      //    File `utilities/double_prec.cpp` experiments with double precision approaching here,
       //    and more discussion can be found at:
       //    https://randomascii.wordpress.com/2012/01/11/tricks-with-the-floating-point-format/
-      return param / 0x1.fffffffffffffp52;
+      //
+      else {
+        return param / 0x1.fffffffffffffp52;
+      }
     default:
       return 0.0;
   }
@@ -417,17 +429,20 @@ auto sperr::SPECK_FLT::compress() -> RTNType
                                 [](auto a, auto b) { return std::abs(a) < std::abs(b); });
     param_q = std::abs(*itr);
   }
-  m_q = m_estimate_q(param_q);
+
+  bool high_prec = false;
+FIXED_RATE_HIGH_PREC_LABEL:
+  m_q = m_estimate_q(param_q, high_prec);
   assert(m_q > 0.0);
   m_conditioner.save_q(m_condi_bitstream, m_q);
 
-  // Step 3: quantize floating-point coefficients to integers
+  // Step 3: quantize floating-point coefficients to integers.
   // This step also establishes the integer length used by the encoder/decoder.
   auto rtn = m_midtread_quantize();
   if (rtn != RTNType::Good)
     return rtn;
 
-  // Side step for outlier coding: find out all the outliers, and encode them!
+  // CompMode::PWE only: perform outlier coding: find out all the outliers, and encode them!
   if (m_mode == CompMode::PWE) {
     m_midtread_inv_quantize();
     rtn = m_cdf.take_data(std::move(m_vals_d), m_dims);
@@ -458,8 +473,8 @@ auto sperr::SPECK_FLT::compress() -> RTNType
   // Step 4: Integer SPECK encoding
   m_instantiate_encoder();
   if (m_mode == CompMode::Rate) {
-    size_t total_bits = static_cast<size_t>(m_quality * double(total_vals));
-    std::visit([total_bits](auto&& encoder) { encoder->set_budget(total_bits); }, m_encoder);
+    auto budget = static_cast<size_t>(m_quality * double(total_vals));  // total num of bits
+    std::visit([budget](auto&& encoder) { encoder->set_budget(budget); }, m_encoder);
   }
   std::visit([&dims = m_dims](auto&& encoder) { encoder->set_dims(dims); }, m_encoder);
   switch (m_uint_flag) {
@@ -491,6 +506,21 @@ auto sperr::SPECK_FLT::compress() -> RTNType
     return rtn;
 
   std::visit([](auto&& encoder) { encoder->encode(); }, m_encoder);
+
+  // In CompMode::Rate mode, we see if there's enough bits produced. If not, we adjust `m_q`
+  //    so quantiztion is done with a higher precision.
+  //    Btw I know that GOTO should be used very sparsely and with great caution. I think this
+  //    is one place where it's making the code most clean and not introducing additional risks.
+  //
+  if (m_mode == CompMode::Rate && high_prec == false) {
+    assert(m_encoder.index() == 2);
+    auto budget = static_cast<size_t>(m_quality * double(total_vals));
+    auto actual = std::get<2>(m_encoder)->encoded_bitstream_len() * size_t{8};
+    if (actual < budget) {
+      high_prec = true;
+      goto FIXED_RATE_HIGH_PREC_LABEL;
+    }
+  }
 
   return RTNType::Good;
 }
