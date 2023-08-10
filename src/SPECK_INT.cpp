@@ -385,7 +385,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
     }
   }
 
-  assert(m_bit_buffer.rtell() <= m_total_bits);
+  assert(m_bit_buffer.rtell() <= m_avail_bits);
 
   // Second, mark newly found significant pixels in `m_LSP_mask`
   //

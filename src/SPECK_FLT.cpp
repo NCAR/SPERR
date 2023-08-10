@@ -266,9 +266,9 @@ auto sperr::SPECK_FLT::m_estimate_q(double param, bool high_prec) const -> doubl
       if (!high_prec) {
         return param / static_cast<double>(std::numeric_limits<uint32_t>::max());
       }
-      // This case is less frequent, and should only occur when a pretty high bitrate is requested.
+      // This case is less frequent, and it occurs when a rather high bitrate is requested.
       //    Here, we want to have the quantized values no bigger than the biggest (odd) int value
-      //    representable by double and sill has a precision of 1.0. Turns out that this value is
+      //    representable by double AND sill has a precision of 1.0. Turns out that this value is
       //    0x1.fffffffffffffp52, or in decimal 9007199254740991.0, or 9e15.
       //    File `utilities/double_prec.cpp` experiments with double precision approaching here,
       //    and more discussion can be found at:
@@ -473,8 +473,8 @@ FIXED_RATE_HIGH_PREC_LABEL:
   // Step 4: Integer SPECK encoding
   m_instantiate_encoder();
   if (m_mode == CompMode::Rate) {
-    auto total_bits = static_cast<size_t>(m_quality * double(total_vals));
-    std::visit([total_bits](auto&& encoder) { encoder->set_budget(total_bits); }, m_encoder);
+    auto budget = static_cast<size_t>(m_quality * double(total_vals));  // total num of bits
+    std::visit([budget](auto&& encoder) { encoder->set_budget(budget); }, m_encoder);
   }
   std::visit([&dims = m_dims](auto&& encoder) { encoder->set_dims(dims); }, m_encoder);
   switch (m_uint_flag) {
@@ -513,10 +513,10 @@ FIXED_RATE_HIGH_PREC_LABEL:
   //    is one place where it's making the code most clean and not introducing additional risks.
   //
   if (m_mode == CompMode::Rate && high_prec == false) {
-    auto target = static_cast<size_t>(m_quality * double(total_vals));
     assert(m_encoder.index() == 2);
+    auto budget = static_cast<size_t>(m_quality * double(total_vals));
     auto actual = std::get<2>(m_encoder)->encoded_bitstream_len() * size_t{8};
-    if (actual < target) {
+    if (actual < budget) {
       high_prec = true;
       goto FIXED_RATE_HIGH_PREC_LABEL;
     }
