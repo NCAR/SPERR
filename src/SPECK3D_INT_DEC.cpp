@@ -71,7 +71,6 @@ void sperr::SPECK3D_INT_DEC<T>::m_process_P(size_t idx, size_t& counter, bool re
     counter++;  // Let's increment the counter first!
     m_sign_array[idx] = m_bit_buffer.rbit();
 
-    m_coeff_buf[idx] = m_threshold + m_threshold / T{2};
     m_LSP_new.push_back(idx);
     m_LIP_mask.write_false(idx);
   }

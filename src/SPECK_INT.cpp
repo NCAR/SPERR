@@ -197,6 +197,17 @@ void sperr::SPECK_INT<T>::decode()
     m_clean_LIS();
   }
 
+  // The majority of newly identified significant points are initialized by the refinement pass.
+  //    However, if the loop breaks after executing the sorting pass, then it leaves newly
+  //    identified significant points from this iteration not initialized. We detect this case and
+  //    initialize them here. The initialization strategy is the same as in the refinement pass.
+  //
+  if (!m_LSP_new.empty()) {
+    const auto init_val = m_threshold + m_threshold - m_threshold / uint_type{2} - uint_type{1};
+    for (auto idx : m_LSP_new)
+      m_coeff_buf[idx] = init_val;
+  }
+
   if (m_avail_bits == m_total_bits)
     assert(m_bit_buffer.rtell() == m_total_bits);
   else {
@@ -323,8 +334,8 @@ void sperr::SPECK_INT<T>::m_refinement_pass_encode()
 template <typename T>
 void sperr::SPECK_INT<T>::m_refinement_pass_decode()
 {
-  // First, process significant pixels previously found.
-  //    All the conditions here are a little annoying, but I don't have a better solution now.
+  // First, process significant points previously found.
+  //    All these nested conditions are a little annoying, but I don't have a better solution now.
   //    Here's a documentation of their purposes.
   // 1) The decoding scheme (reconstructing values at the middle of an interval) requires
   //    different treatment when `m_threshold` is 1 or not.
@@ -332,6 +343,8 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
   //    This requires evaluating any remaining bits not divisible by 64.
   // 3) During progressive or fixed-rate decoding, we need to evaluate if the bitstream is
   //    exhausted after every read. We test it no matter what decoding mode we're in though.
+  // 4) goto is used again. Here's it's used to jump out of a nested loop, which is an endorsed
+  //    usage of it: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Res-goto
   //
   auto read_pos = m_bit_buffer.rtell();  // Avoid repeated calls to rtell().
   const auto bits_x64 = m_LSP_mask.size() - m_LSP_mask.size() % 64;  // <-- Point 2
@@ -346,8 +359,8 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
               m_coeff_buf[i + j] += half_t;
             else
               m_coeff_buf[i + j] -= half_t;
-            if (++read_pos == m_avail_bits)  // <-- Point 3
-              return;
+            if (++read_pos == m_avail_bits)              // <-- Point 3
+              goto INITIALIZE_NEWLY_FOUND_POINTS_LABEL;  // <-- Point 4
           }
         }
       }
@@ -358,8 +371,8 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
           m_coeff_buf[i] += half_t;
         else
           m_coeff_buf[i] -= half_t;
-        if (++read_pos == m_avail_bits)  // <-- Point 3
-          return;
+        if (++read_pos == m_avail_bits)              // <-- Point 3
+          goto INITIALIZE_NEWLY_FOUND_POINTS_LABEL;  // <-- Point 4
       }
     }
   }       // Finish the case where `m_threshold >= 2`.
@@ -368,27 +381,37 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
       const auto value = m_LSP_mask.read_long(i);
       for (size_t j = 0; j < 64; j++) {
         if ((value >> j) & uint64_t{1}) {
-          if (!m_bit_buffer.rbit())
-            --(m_coeff_buf[i + j]);
+          if (m_bit_buffer.rbit())
+            ++(m_coeff_buf[i + j]);
           if (++read_pos == m_avail_bits)
-            return;
+            goto INITIALIZE_NEWLY_FOUND_POINTS_LABEL;
         }
       }
     }
     for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask.read_bit(i)) {
-        if (!m_bit_buffer.rbit())
-          --(m_coeff_buf[i]);
+        if (m_bit_buffer.rbit())
+          ++(m_coeff_buf[i]);
         if (++read_pos == m_avail_bits)
-          return;
+          goto INITIALIZE_NEWLY_FOUND_POINTS_LABEL;
       }
     }
   }
-
   assert(m_bit_buffer.rtell() <= m_avail_bits);
 
-  // Second, mark newly found significant pixels in `m_LSP_mask`
+  // Second, initialize newly found significant points. Here I aim to initialize the reconstructed
+  //    value at the middle of the interval specified by `m_threshold`. Note that given the integer
+  //    nature of these coefficients, there are actually two values equally "in the middle."
+  //    For example, with `m_threshold == 4`, the interval is [4, 8), and both 5 and 6 are "in the
+  //    middle." I choose the smaller one (5 in this example) here. My experiments show that 
+  //    choosing the smaller value rather than the bigger one does not hurt, and sometimes bring a
+  //    little extra PSNR gain (<0.5). Also note that the formula calculating `init_val`
+  //    makes sure that when `m_threshold == 1`, significant points are initialized as 1.
   //
+INITIALIZE_NEWLY_FOUND_POINTS_LABEL:
+  const auto init_val = m_threshold + m_threshold - m_threshold / uint_type{2} - uint_type{1};
+  for (auto idx : m_LSP_new)
+    m_coeff_buf[idx] = init_val;
   for (auto idx : m_LSP_new)
     m_LSP_mask.write_true(idx);
   m_LSP_new.clear();
