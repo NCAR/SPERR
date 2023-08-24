@@ -45,7 +45,7 @@ class CDF97 {
 
  private:
   using itd_type = vecd_type::iterator;
-  using citd_type = vecd_type::iterator;
+  using citd_type = vecd_type::const_iterator;
 
   //
   // Private methods helping DWT.

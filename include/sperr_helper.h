@@ -45,7 +45,6 @@ enum class UINTType : unsigned char { UINT8, UINT16, UINT32, UINT64 };
 
 enum class CompMode : unsigned char { PSNR, PWE, Rate, Unknown };
 
-// Return Type
 enum class RTNType {
   Good = 0,
   VectorWrongLen,

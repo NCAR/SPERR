@@ -102,6 +102,9 @@ void sperr::CDF97::dwt3d()
                                                 sperr::num_of_xforms(m_dims[2])};
   // clang-format on
 
+  // Note: if some dimensions can do 5 levels of transforms and some can do 6, we use
+  //       dyanic scheme and do 5 levels on all of them. I.e., the benefit of dyanic
+  //       transforms exceeds one extra level of transform.
   if (num_xforms[0] >= 5 && num_xforms[1] >= 5 && num_xforms[2] >= 5) {
     m_dwt3d_dyadic();
   }
