@@ -176,17 +176,14 @@ auto sperr::SPECK3D_INT_ENC<T>::m_decide_significance(const Set3D& set) const
 
   const size_t slice_size = m_dims[0] * m_dims[1];
 
-  const auto gtr = [thld = m_threshold](auto v) { return v >= thld; };
-
   for (auto z = set.start_z; z < (set.start_z + set.length_z); z++) {
-    const size_t slice_offset = z * slice_size;
+    const size_t slice_offset = size_t{z} * slice_size;
     for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
-      auto first = m_coeff_buf.cbegin() + (slice_offset + y * m_dims[0] + set.start_x);
-      auto last = first + set.length_x;
-      auto found = std::find_if(first, last, gtr);
-      if (found != last) {
-        auto x = static_cast<uint32_t>(std::distance(first, found));
-        return std::optional<std::array<uint32_t, 3>>({x, y - set.start_y, z - set.start_z});
+      const auto col_offset = slice_offset + size_t{y} * m_dims[0];
+      for (auto x = set.start_x; x < (set.start_x + set.length_x); x++) {
+        auto idx = col_offset + size_t{x};
+        if (m_coeff_buf[idx] >= m_threshold)
+          return std::optional<std::array<uint32_t, 3>>({x - set.start_x, y - set.start_y, z - set.start_z});
       }
     }
   }
