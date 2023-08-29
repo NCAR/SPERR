@@ -39,11 +39,7 @@ class SPECK3D_INT_ENC : public SPECK3D_INT<T> {
   void m_process_P(size_t idx, size_t& counter, bool output);
   void m_code_S(size_t idx1, size_t idx2);
 
-  // Decide if a set is significant or not.
-  // If it is significant, also identify the point that makes it significant.
-  auto m_decide_significance(const Set3D&) const -> std::optional<std::array<uint32_t, 3>>;
-
-  // Data structures and functions testing morton data layout.
+  // Data structures and functions for morton data layout.
   // Note: `m_morton_valid` was initialized to be false in `SPECk3D_INT::m_initialize_lists()`.
   vecui_type m_morton_buf;
   void m_construct_morton_buf();
