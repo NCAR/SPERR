@@ -6,14 +6,45 @@
 #include <numeric>
 
 template <typename T>
+void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(const Set3D& set)
+{
+  switch (set.num_elem()) {
+    case 0:
+      break;
+    case 1: {
+      auto idx = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
+      m_morton_buf[set.morton_offset] = m_coeff_buf[idx];
+      break;
+    }
+    default: {
+      auto subsets = m_partition_S_XYZ(set);
+      for (auto& sub : subsets)
+        m_deposit_set(sub);
+    }
+  }
+}
+
+template <typename T>
 void sperr::SPECK3D_INT_ENC<T>::m_construct_morton_buf()
 {
+  m_morton_buf.resize(m_dims[0] * m_dims[1] * m_dims[2]);
+
+  // The same traversing order as in `m_sorting_pass()`
+  size_t morton_offset = 0;
+  for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
+    auto idx1 = m_LIS.size() - tmp;
+    for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
+      auto& set = m_LIS[idx1][idx2];
+      set.morton_offset = morton_offset;
+      m_deposit_set(set);
+      morton_offset += set.num_elem();
+    }
+  }
 }
 
 template <typename T>
 void sperr::SPECK3D_INT_ENC<T>::m_sorting_pass()
 {
-  // Experiment with morton curves.
   if (!m_morton_valid) {
     m_construct_morton_buf();
     m_morton_valid = true;
@@ -29,7 +60,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_sorting_pass()
       for (size_t j = 0; j < 64; j++) {
         if ((value >> j) & uint64_t{1}) {
           size_t dummy = 0;
-          m_process_P(i + j, SigType::Dunno, dummy, true);
+          m_process_P(i + j, dummy, true);
         }
       }
     }
@@ -37,18 +68,18 @@ void sperr::SPECK3D_INT_ENC<T>::m_sorting_pass()
   for (auto i = bits_x64; i < m_LIP_mask.size(); i++) {
     if (m_LIP_mask.read_bit(i)) {
       size_t dummy = 0;
-      m_process_P(i, SigType::Dunno, dummy, true);
+      m_process_P(i, dummy, true);
     }
   }
 
   // Then we process regular sets in LIS.
+  // (From the end of m_LIS to its front.)
   //
   for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
-    // From the end of m_LIS to its front
-    size_t idx1 = m_LIS.size() - tmp;
+    auto idx1 = m_LIS.size() - tmp;
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
       size_t dummy = 0;
-      m_process_S(idx1, idx2, SigType::Dunno, dummy, true);
+      m_process_S(idx1, idx2, dummy, true);
     }
   }
 }
@@ -56,73 +87,37 @@ void sperr::SPECK3D_INT_ENC<T>::m_sorting_pass()
 template <typename T>
 void sperr::SPECK3D_INT_ENC<T>::m_process_S(size_t idx1,
                                             size_t idx2,
-                                            SigType sig,
                                             size_t& counter,
                                             bool output)
 {
-  // Significance type cannot be NewlySig!
-  assert(sig != SigType::NewlySig);
-
   auto& set = m_LIS[idx1][idx2];
+  auto is_sig = true;
 
-  // Strategy to decide the significance of this set;
-  // 1) If sig == dunno, then find the significance of this set. We do it in a
-  //    way that some of its 8 subsets' significance become known as well.
-  // 2) If sig is significant, then we directly proceed to `m_code_s()`, with its
-  //    subsets' significance is unknown.
-  // 3) if sig is insignificant, then this set is not processed.
-
-  std::array<SigType, 8> subset_sigs;
-  subset_sigs.fill(SigType::Dunno);
-
-  if (sig == SigType::Dunno) {
-    auto set_sig = m_decide_significance(set);
-    sig = set_sig ? SigType::Sig : SigType::Insig;
-    if (set_sig) {
-      // Try to deduce the significance of some of its subsets.
-      // Step 1: which one of the 8 subsets makes it significant?
-      //         (Refer to m_partition_S_XYZ() for subset ordering.)
-      auto xyz = *set_sig;
-      size_t sub_i = 0;
-      sub_i += (xyz[0] < (set.length_x - set.length_x / 2)) ? 0 : 1;
-      sub_i += (xyz[1] < (set.length_y - set.length_y / 2)) ? 0 : 2;
-      sub_i += (xyz[2] < (set.length_z - set.length_z / 2)) ? 0 : 4;
-      subset_sigs[sub_i] = SigType::Sig;
-
-      // Step 2: if it's the 5th, 6th, 7th, or 8th subset significant, then
-      //         the first four subsets must be insignificant. Again, this is
-      //         based on the ordering of subsets.
-      // In a cube there is 30% - 40% chance this condition meets.
-      if (sub_i >= 4) {
-        for (size_t i = 0; i < 4; i++)
-          subset_sigs[i] = SigType::Insig;
-      }
-    }
+  // If need to output, it means the current set has unknown significance.
+  if (output) {
+    auto first = m_morton_buf.cbegin() + set.morton_offset;
+    auto last = first + set.num_elem();
+    auto found = std::find_if(first, last, [thld = m_threshold](auto v) { return v >= thld; });
+    is_sig = (found != last);
+    m_bit_buffer.wbit(is_sig);
   }
 
-  if (output)
-    m_bit_buffer.wbit(sig == SigType::Sig);
-
-  if (sig == SigType::Sig) {
+  if (is_sig) {
     counter++;  // Let's increment the counter first!
-    m_code_S(idx1, idx2, subset_sigs);
+    m_code_S(idx1, idx2);
     set.type = SetType::Garbage;  // this current set is gonna be discarded.
   }
 }
 
 template <typename T>
-void sperr::SPECK3D_INT_ENC<T>::m_process_P(size_t idx, SigType sig, size_t& counter, bool output)
+void sperr::SPECK3D_INT_ENC<T>::m_process_P(size_t idx, size_t& counter, bool output)
 {
-  // Decide the significance of this pixel
-  assert(sig != SigType::NewlySig);
-  bool is_sig = false;
-  if (sig == SigType::Dunno)
-    is_sig = (m_coeff_buf[idx] >= m_threshold);
-  else
-    is_sig = (sig == SigType::Sig);
+  bool is_sig = true;
 
-  if (output)
+  if (output) {
+    is_sig = (m_coeff_buf[idx] >= m_threshold);
     m_bit_buffer.wbit(is_sig);
+  }
 
   if (is_sig) {
     counter++;  // Let's increment the counter first!
@@ -136,46 +131,35 @@ void sperr::SPECK3D_INT_ENC<T>::m_process_P(size_t idx, SigType sig, size_t& cou
 }
 
 template <typename T>
-void sperr::SPECK3D_INT_ENC<T>::m_code_S(size_t idx1,
-                                         size_t idx2,
-                                         std::array<SigType, 8> subset_sigs)
+void sperr::SPECK3D_INT_ENC<T>::m_code_S(size_t idx1, size_t idx2)
 {
   auto subsets = m_partition_S_XYZ(m_LIS[idx1][idx2]);
 
   // Since some subsets could be empty, let's put empty sets at the end.
   //
-  for (size_t i = 0; i < subsets.size(); i++) {
-    if (subsets[i].is_empty())
-      subset_sigs[i] = SigType::Garbage;  // SigType::Garbage is only used locally here.
-  }
-  auto sig_end = std::remove(subset_sigs.begin(), subset_sigs.end(), SigType::Garbage);
   const auto set_end =
       std::remove_if(subsets.begin(), subsets.end(), [](auto& s) { return s.is_empty(); });
   const auto set_end_m1 = set_end - 1;
 
-  auto sig_it = subset_sigs.begin();
   size_t sig_counter = 0;
   for (auto it = subsets.begin(); it != set_end; ++it) {
     // If we're looking at the last subset, and no prior subset is found to be
     // significant, then we know that this last one *is* significant.
     bool output = true;
-    if (it == set_end_m1 && sig_counter == 0) {
+    if (it == set_end_m1 && sig_counter == 0)
       output = false;
-      *sig_it = SigType::Sig;
-    }
 
     if (it->is_pixel()) {
       auto idx = it->start_z * m_dims[0] * m_dims[1] + it->start_y * m_dims[0] + it->start_x;
       m_LIP_mask.write_true(idx);
-      m_process_P(idx, *sig_it, sig_counter, output);
+      m_process_P(idx, sig_counter, output);
     }
     else {
       const auto newidx1 = it->part_level;
       m_LIS[newidx1].emplace_back(*it);
       const auto newidx2 = m_LIS[newidx1].size() - 1;
-      m_process_S(newidx1, newidx2, *sig_it, sig_counter, output);
+      m_process_S(newidx1, newidx2, sig_counter, output);
     }
-    ++sig_it;
   }
 }
 

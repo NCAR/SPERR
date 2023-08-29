@@ -35,9 +35,9 @@ class SPECK3D_INT_ENC : public SPECK3D_INT<T> {
 
   void m_sorting_pass() override;
 
-  void m_process_S(size_t idx1, size_t idx2, SigType, size_t& counter, bool output);
-  void m_process_P(size_t idx, SigType, size_t& counter, bool output);
-  void m_code_S(size_t idx1, size_t idx2, std::array<SigType, 8>);
+  void m_process_S(size_t idx1, size_t idx2, size_t& counter, bool output);
+  void m_process_P(size_t idx, size_t& counter, bool output);
+  void m_code_S(size_t idx1, size_t idx2);
 
   // Decide if a set is significant or not.
   // If it is significant, also identify the point that makes it significant.
@@ -47,6 +47,7 @@ class SPECK3D_INT_ENC : public SPECK3D_INT<T> {
   // Note: `m_morton_valid` was initialized to be false in `SPECk3D_INT::m_initialize_lists()`.
   vecui_type m_morton_buf;
   void m_construct_morton_buf();
+  void m_deposit_set(const Set3D&);
 };
 
 };  // namespace sperr

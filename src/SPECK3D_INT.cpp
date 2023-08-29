@@ -5,21 +5,6 @@
 #include <cstring>
 #include <numeric>
 
-auto sperr::Set3D::is_pixel() const -> bool
-{
-  return (length_x == 1 && length_y == 1 && length_z == 1);
-}
-
-auto sperr::Set3D::is_empty() const -> bool
-{
-  return (length_z == 0 || length_y == 0 || length_x == 0);
-}
-
-auto sperr::Set3D::num_elem() const -> size_t
-{
-  return (size_t{length_x} * size_t{length_y} * size_t{length_z});
-}
-
 template <typename T>
 void sperr::SPECK3D_INT<T>::m_clean_LIS()
 {
@@ -49,7 +34,7 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   m_LIP_mask.reset();
 
   // Starting from a set representing the whole volume, identify the smaller
-  // sets and put them in LIS accordingly.
+  // subsets and put them in the LIS accordingly.
   Set3D big;
   big.length_x =
       static_cast<uint32_t>(m_dims[0]);  // Truncate 64-bit int to 32-bit, but should be OK.
@@ -138,6 +123,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) const -> std::ar
   sub0.length_x = split_x[0];
   sub0.length_y = split_y[0];
   sub0.length_z = split_z[0];
+  sub0.morton_offset = set.morton_offset;
   sub0.part_level = next_part_lev;
 
   // subset (1, 0, 0)
@@ -149,6 +135,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) const -> std::ar
   sub1.length_x = split_x[1];
   sub1.length_y = split_y[0];
   sub1.length_z = split_z[0];
+  sub1.morton_offset = sub0.morton_offset + sub0.num_elem();
   sub1.part_level = next_part_lev;
 
   // subset (0, 1, 0)
@@ -160,6 +147,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) const -> std::ar
   sub2.length_x = split_x[0];
   sub2.length_y = split_y[1];
   sub2.length_z = split_z[0];
+  sub2.morton_offset = sub1.morton_offset + sub1.num_elem();
   sub2.part_level = next_part_lev;
 
   // subset (1, 1, 0)
@@ -171,6 +159,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) const -> std::ar
   sub3.length_x = split_x[1];
   sub3.length_y = split_y[1];
   sub3.length_z = split_z[0];
+  sub3.morton_offset = sub2.morton_offset + sub2.num_elem();
   sub3.part_level = next_part_lev;
 
   // subset (0, 0, 1)
@@ -182,6 +171,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) const -> std::ar
   sub4.length_x = split_x[0];
   sub4.length_y = split_y[0];
   sub4.length_z = split_z[1];
+  sub4.morton_offset = sub3.morton_offset + sub3.num_elem();
   sub4.part_level = next_part_lev;
 
   // subset (1, 0, 1)
@@ -193,6 +183,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) const -> std::ar
   sub5.length_x = split_x[1];
   sub5.length_y = split_y[0];
   sub5.length_z = split_z[1];
+  sub5.morton_offset = sub4.morton_offset + sub4.num_elem();
   sub5.part_level = next_part_lev;
 
   // subset (0, 1, 1)
@@ -204,6 +195,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) const -> std::ar
   sub6.length_x = split_x[0];
   sub6.length_y = split_y[1];
   sub6.length_z = split_z[1];
+  sub6.morton_offset = sub5.morton_offset + sub5.num_elem();
   sub6.part_level = next_part_lev;
 
   // subset (1, 1, 1)
@@ -215,6 +207,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) const -> std::ar
   sub7.length_x = split_x[1];
   sub7.length_y = split_y[1];
   sub7.length_z = split_z[1];
+  sub7.morton_offset = sub6.morton_offset + sub6.num_elem();
   sub7.part_level = next_part_lev;
 
   return subsets;
@@ -223,11 +216,12 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) const -> std::ar
 template <typename T>
 auto sperr::SPECK3D_INT<T>::m_partition_S_XY(const Set3D& set) const -> std::array<Set3D, 4>
 {
-  std::array<Set3D, 4> subsets;
+  // This partition scheme is only used during initialization; no need to calculate morton offset.
 
   const auto split_x = std::array<uint32_t, 2>{set.length_x - set.length_x / 2, set.length_x / 2};
   const auto split_y = std::array<uint32_t, 2>{set.length_y - set.length_y / 2, set.length_y / 2};
 
+  std::array<Set3D, 4> subsets;
   for (auto& s : subsets) {
     s.part_level = set.part_level;
     if (split_x[1] > 0)
@@ -238,7 +232,6 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XY(const Set3D& set) const -> std::arr
 
   const auto offsets = std::array<size_t, 3>{1, 2, 4};
 
-  //
   // The actual figuring out where it starts/ends part...
   //
   // subset (0, 0, 0)
@@ -287,10 +280,11 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XY(const Set3D& set) const -> std::arr
 template <typename T>
 auto sperr::SPECK3D_INT<T>::m_partition_S_Z(const Set3D& set) const -> std::array<Set3D, 2>
 {
-  std::array<Set3D, 2> subsets;
+  // This partition scheme is only used during initialization; no need to calculate morton offset.
 
   const auto split_z = std::array<uint32_t, 2>{set.length_z - set.length_z / 2, set.length_z / 2};
 
+  std::array<Set3D, 2> subsets;
   for (auto& s : subsets) {
     s.part_level = set.part_level;
     if (split_z[1] > 0)

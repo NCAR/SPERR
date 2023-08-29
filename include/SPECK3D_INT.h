@@ -27,11 +27,20 @@ class Set3D {
 
  public:
   //
-  // Member functions
+  // Member functions (intended to be inline)
   //
-  auto is_pixel() const -> bool;
-  auto is_empty() const -> bool;
-  auto num_elem() const -> size_t;
+  auto is_pixel() const -> bool
+  {
+    return (length_x == 1 && length_y == 1 && length_z == 1);
+  }
+  auto is_empty() const -> bool
+  {
+    return (length_z == 0 || length_y == 0 || length_x == 0);
+  }
+  auto num_elem() const -> size_t
+  {
+    return (size_t{length_x} * size_t{length_y} * size_t{length_z});
+  }
 };
 
 //
