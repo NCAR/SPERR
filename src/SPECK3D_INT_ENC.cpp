@@ -6,8 +6,19 @@
 #include <numeric>
 
 template <typename T>
+void sperr::SPECK3D_INT_ENC<T>::m_construct_morton_buf()
+{
+}
+
+template <typename T>
 void sperr::SPECK3D_INT_ENC<T>::m_sorting_pass()
 {
+  // Experiment with morton curves.
+  if (!m_morton_valid) {
+    m_construct_morton_buf();
+    m_morton_valid = true;
+  }
+
   // Since we have a separate representation of LIP, let's process that list first!
   //
   const auto bits_x64 = m_LIP_mask.size() - m_LIP_mask.size() % 64;

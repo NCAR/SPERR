@@ -15,6 +15,11 @@ auto sperr::Set3D::is_empty() const -> bool
   return (length_z == 0 || length_y == 0 || length_x == 0);
 }
 
+auto sperr::Set3D::num_elem() const -> size_t
+{
+  return (size_t{length_x} * size_t{length_y} * size_t{length_z});
+}
+
 template <typename T>
 void sperr::SPECK3D_INT<T>::m_clean_LIS()
 {
@@ -53,37 +58,47 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   big.length_z =
       static_cast<uint32_t>(m_dims[2]);  // Truncate 64-bit int to 32-bit, but should be OK.
 
-  const auto num_of_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  const auto num_of_xforms_z = sperr::num_of_xforms(m_dims[2]);
-  size_t xf = 0;
+  const auto num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  const auto num_xforms_z = sperr::num_of_xforms(m_dims[2]);
 
-  while (xf < num_of_xforms_xy && xf < num_of_xforms_z) {
-    auto subsets = m_partition_S_XYZ(big);
-    big = subsets[0];  // Reference `m_partition_S_XYZ()` for subset ordering
-    // Also put the rest subsets in appropriate positions in `m_LIS`.
-    std::for_each(std::next(subsets.cbegin()), subsets.cend(),
-                  [&](const auto& s) { m_LIS[s.part_level].emplace_back(s); });
-    xf++;
-  }
-
-  // One of these two conditions could happen if num_of_xforms_xy != num_of_xforms_z
-  if (xf < num_of_xforms_xy) {
-    while (xf < num_of_xforms_xy) {
-      auto subsets = m_partition_S_XY(big);
+  // Same logic as the choice of dyadic/wavelet_packet transform in CDF97.cpp.
+  if ((num_xforms_xy == num_xforms_z) || (num_xforms_xy >= 5 && num_xforms_xy >= 5)) {
+    auto num_xforms = std::min(num_xforms_xy, num_xforms_z);
+    for (size_t i = 0; i < num_xforms; i++) {
+      auto subsets = m_partition_S_XYZ(big);
       big = subsets[0];
-      // Also put the rest subsets in appropriate positions in `m_LIS`.
+      std::for_each(std::next(subsets.cbegin()), subsets.cend(),
+                    [&](const auto& s) { m_LIS[s.part_level].emplace_back(s); });
+    }
+  }
+  else {
+    size_t xf = 0;
+    while (xf < num_xforms_xy && xf < num_xforms_z) {
+      auto subsets = m_partition_S_XYZ(big);
+      big = subsets[0];
       std::for_each(std::next(subsets.cbegin()), subsets.cend(),
                     [&](const auto& s) { m_LIS[s.part_level].emplace_back(s); });
       xf++;
     }
-  }
-  else if (xf < num_of_xforms_z) {
-    while (xf < num_of_xforms_z) {
-      auto subsets = m_partition_S_Z(big);
-      big = subsets[0];
-      const auto parts = subsets[1].part_level;
-      m_LIS[parts].emplace_back(subsets[1]);
-      xf++;
+
+    // One of these two conditions will happen.
+    if (xf < num_xforms_xy) {
+      while (xf < num_xforms_xy) {
+        auto subsets = m_partition_S_XY(big);
+        big = subsets[0];
+        std::for_each(std::next(subsets.cbegin()), subsets.cend(),
+                      [&](const auto& s) { m_LIS[s.part_level].emplace_back(s); });
+        xf++;
+      }
+    }
+    else if (xf < num_xforms_z) {
+      while (xf < num_xforms_z) {
+        auto subsets = m_partition_S_Z(big);
+        big = subsets[0];
+        const auto parts = subsets[1].part_level;
+        m_LIS[parts].emplace_back(subsets[1]);
+        xf++;
+      }
     }
   }
 
@@ -91,6 +106,9 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   // it at the front of it's corresponding vector. One-time expense.
   const auto parts = big.part_level;
   m_LIS[parts].insert(m_LIS[parts].begin(), big);
+
+  // Experiment with morton curves.
+  m_morton_valid = false;
 }
 
 template <typename T>

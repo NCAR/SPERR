@@ -16,7 +16,11 @@ class Set3D {
   uint32_t length_x = 0;
   uint32_t length_y = 0;
   uint32_t length_z = 0;
-  // which partition level is this set at (starting from zero, in all 3 directions).
+
+  // What's the offset of this set in a morton organized storage?
+  uint64_t morton_offset = 0;
+
+  // Which partition level is this set at (starting from zero, in all 3 directions).
   // This data member is the sum of all 3 partition levels.
   uint16_t part_level = 0;
   SetType type = SetType::TypeS;  // Only used to indicate garbage status
@@ -27,6 +31,7 @@ class Set3D {
   //
   auto is_pixel() const -> bool;
   auto is_empty() const -> bool;
+  auto num_elem() const -> size_t;
 };
 
 //
@@ -56,6 +61,9 @@ class SPECK3D_INT : public SPECK_INT<T> {
   // SPECK3D_INT specific data members
   //
   std::vector<std::vector<Set3D>> m_LIS;
+
+  // Experiment with morton curves.
+  bool m_morton_valid = false;
 };
 
 };  // namespace sperr

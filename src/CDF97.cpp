@@ -91,48 +91,28 @@ void sperr::CDF97::idwt2d()
 
 void sperr::CDF97::dwt3d()
 {
-  // Strategy to choose "dyadic" or "wavelet packet" 3D transform:
-  // 1) IF all 3 axes have 5 or more levels of transforms, THEN use dyadic;
-  // 2) ELSE IF XY and Z have different levels, THEN use wavelet packets;
-  // 3) ELSE use dyadic.
-  //
-  // clang-format off
-  const auto num_xforms = std::array<size_t, 3>{sperr::num_of_xforms(m_dims[0]),
-                                                sperr::num_of_xforms(m_dims[1]),
-                                                sperr::num_of_xforms(m_dims[2])};
-  // clang-format on
+  auto num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  auto num_xforms_z = sperr::num_of_xforms(m_dims[2]);
 
   // Note: if some dimensions can do 5 levels of transforms and some can do 6, we use
   //       dyanic scheme and do 5 levels on all of them. I.e., the benefit of dyanic
   //       transforms exceeds one extra level of transform.
-  if (num_xforms[0] >= 5 && num_xforms[1] >= 5 && num_xforms[2] >= 5) {
+  //
+  if ((num_xforms_xy == num_xforms_z) || (num_xforms_xy >= 5 && num_xforms_xy >= 5))
     m_dwt3d_dyadic();
-  }
-  else if (std::min(num_xforms[0], num_xforms[1]) != num_xforms[2]) {
+  else
     m_dwt3d_wavelet_packet();
-  }
-  else {
-    m_dwt3d_dyadic();
-  }
 }
 
 void sperr::CDF97::idwt3d()
 {
-  // clang-format off
-  const auto num_xforms = std::array<size_t, 3>{sperr::num_of_xforms(m_dims[0]),
-                                                sperr::num_of_xforms(m_dims[1]),
-                                                sperr::num_of_xforms(m_dims[2])};
-  // clang-format on
+  auto num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  auto num_xforms_z = sperr::num_of_xforms(m_dims[2]);
 
-  if (num_xforms[0] >= 5 && num_xforms[1] >= 5 && num_xforms[2] >= 5) {
+  if ((num_xforms_xy == num_xforms_z) || (num_xforms_xy >= 5 && num_xforms_xy >= 5))
     m_idwt3d_dyadic();
-  }
-  else if (std::min(num_xforms[0], num_xforms[1]) != num_xforms[2]) {
+  else
     m_idwt3d_wavelet_packet();
-  }
-  else {
-    m_idwt3d_dyadic();
-  }
 }
 
 void sperr::CDF97::m_dwt3d_wavelet_packet()
