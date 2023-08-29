@@ -16,6 +16,24 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(const Set3D& set)
       m_morton_buf[set.morton_offset] = m_coeff_buf[idx];
       break;
     }
+    case 2: {
+      // We directly deposit the 2 elements in `set` instead of performing another partition.
+      //
+      // Deposit the 1st element.
+      auto idx = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
+      m_morton_buf[set.morton_offset] = m_coeff_buf[idx];
+
+      // Deposit the 2nd element.
+      if (set.length_x == 2)
+        idx++;
+      else if (set.length_y == 2)
+        idx += m_dims[0];
+      else
+        idx += m_dims[0] * m_dims[1];
+      m_morton_buf[set.morton_offset + 1] = m_coeff_buf[idx];
+
+      break;
+    }
     default: {
       auto subsets = m_partition_S_XYZ(set);
       for (auto& sub : subsets)
@@ -85,10 +103,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_sorting_pass()
 }
 
 template <typename T>
-void sperr::SPECK3D_INT_ENC<T>::m_process_S(size_t idx1,
-                                            size_t idx2,
-                                            size_t& counter,
-                                            bool output)
+void sperr::SPECK3D_INT_ENC<T>::m_process_S(size_t idx1, size_t idx2, size_t& counter, bool output)
 {
   auto& set = m_LIS[idx1][idx2];
   auto is_sig = true;
@@ -96,7 +111,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_process_S(size_t idx1,
   // If need to output, it means the current set has unknown significance.
   if (output) {
     auto first = m_morton_buf.cbegin() + set.morton_offset;
-    auto last = first + set.num_elem();
+    auto last = m_morton_buf.cbegin() + set.morton_offset + set.num_elem();
     auto found = std::find_if(first, last, [thld = m_threshold](auto v) { return v >= thld; });
     is_sig = (found != last);
     m_bit_buffer.wbit(is_sig);
