@@ -112,8 +112,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_process_S(size_t idx1, size_t idx2, size_t& co
   if (output) {
     auto first = m_morton_buf.cbegin() + set.morton_offset;
     auto last = m_morton_buf.cbegin() + set.morton_offset + set.num_elem();
-    auto found = std::find_if(first, last, [thld = m_threshold](auto v) { return v >= thld; });
-    is_sig = (found != last);
+    is_sig = std::any_of(first, last, [thld = m_threshold](auto v) { return v >= thld; });
     m_bit_buffer.wbit(is_sig);
   }
 

@@ -34,14 +34,12 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   m_LIP_mask.reset();
 
   // Starting from a set representing the whole volume, identify the smaller
-  // subsets and put them in the LIS accordingly.
+  //    subsets and put them in the LIS accordingly.
+  //    Note that it truncates 64-bit ints to 16-bit ints here, but should be OK.
   Set3D big;
-  big.length_x =
-      static_cast<uint32_t>(m_dims[0]);  // Truncate 64-bit int to 32-bit, but should be OK.
-  big.length_y =
-      static_cast<uint32_t>(m_dims[1]);  // Truncate 64-bit int to 32-bit, but should be OK.
-  big.length_z =
-      static_cast<uint32_t>(m_dims[2]);  // Truncate 64-bit int to 32-bit, but should be OK.
+  big.length_x = static_cast<uint16_t>(m_dims[0]);  
+  big.length_y = static_cast<uint16_t>(m_dims[1]);
+  big.length_z = static_cast<uint16_t>(m_dims[2]);
 
   const auto num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
   const auto num_xforms_z = sperr::num_of_xforms(m_dims[2]);
@@ -99,14 +97,19 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
 template <typename T>
 auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) const -> std::array<Set3D, 8>
 {
-  const auto split_x = std::array<uint32_t, 2>{set.length_x - set.length_x / 2, set.length_x / 2};
-  const auto split_y = std::array<uint32_t, 2>{set.length_y - set.length_y / 2, set.length_y / 2};
-  const auto split_z = std::array<uint32_t, 2>{set.length_z - set.length_z / 2, set.length_z / 2};
+  // Integer promotion rules (https://en.cppreference.com/w/c/language/conversion) say that types
+  //    shorter than `int` are implicitly promoted to be `int` to perform calculations, so just
+  //    keep them as `int` here because they'll involve in calculations later.
+  //
+  const auto split_x = std::array<int, 2>{set.length_x - set.length_x / 2, set.length_x / 2};
+  const auto split_y = std::array<int, 2>{set.length_y - set.length_y / 2, set.length_y / 2};
+  const auto split_z = std::array<int, 2>{set.length_z - set.length_z / 2, set.length_z / 2};
 
   auto next_part_lev = set.part_level;
-  next_part_lev += split_x[1] > 0 ? 1 : 0;
-  next_part_lev += split_y[1] > 0 ? 1 : 0;
-  next_part_lev += split_z[1] > 0 ? 1 : 0;
+  const auto tmp = std::array<uint16_t, 2>{0, 1};
+  next_part_lev += tmp[split_x[1] != 0];
+  next_part_lev += tmp[split_y[1] != 0];
+  next_part_lev += tmp[split_z[1] != 0];
 
   std::array<Set3D, 8> subsets;
   constexpr auto offsets = std::array<size_t, 3>{1, 2, 4};
@@ -218,8 +221,8 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XY(const Set3D& set) const -> std::arr
 {
   // This partition scheme is only used during initialization; no need to calculate morton offset.
 
-  const auto split_x = std::array<uint32_t, 2>{set.length_x - set.length_x / 2, set.length_x / 2};
-  const auto split_y = std::array<uint32_t, 2>{set.length_y - set.length_y / 2, set.length_y / 2};
+  const auto split_x = std::array<int, 2>{set.length_x - set.length_x / 2, set.length_x / 2};
+  const auto split_y = std::array<int, 2>{set.length_y - set.length_y / 2, set.length_y / 2};
 
   std::array<Set3D, 4> subsets;
   for (auto& s : subsets) {
@@ -282,7 +285,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_Z(const Set3D& set) const -> std::arra
 {
   // This partition scheme is only used during initialization; no need to calculate morton offset.
 
-  const auto split_z = std::array<uint32_t, 2>{set.length_z - set.length_z / 2, set.length_z / 2};
+  const auto split_z = std::array<int, 2>{set.length_z - set.length_z / 2, set.length_z / 2};
 
   std::array<Set3D, 2> subsets;
   for (auto& s : subsets) {

@@ -10,12 +10,12 @@ class Set3D {
   //
   // Member data
   //
-  uint32_t start_x = 0;
-  uint32_t start_y = 0;
-  uint32_t start_z = 0;
-  uint32_t length_x = 0;
-  uint32_t length_y = 0;
-  uint32_t length_z = 0;
+  uint16_t start_x = 0;
+  uint16_t start_y = 0;
+  uint16_t start_z = 0;
+  uint16_t length_x = 0;
+  uint16_t length_y = 0;
+  uint16_t length_z = 0;
 
   // What's the offset of this set in a morton organized storage?
   uint64_t morton_offset = 0;
