@@ -39,18 +39,12 @@ class Set3D {
   {
     std::memcpy(m_morton.data(), &val, sizeof(m_morton));
   }
-  auto is_pixel() const -> bool
-  {
-    return (length_x == 1 && length_y == 1 && length_z == 1);
-  }
   auto is_empty() const -> bool
   {
     return (length_z == 0 || length_y == 0 || length_x == 0);
   }
   void make_empty()
   {
-    length_x = 0;
-    length_y = 0;
     length_z = 0;
   }
   auto num_elem() const -> size_t

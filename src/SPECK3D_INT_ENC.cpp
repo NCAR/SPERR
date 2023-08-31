@@ -164,7 +164,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_code_S(size_t idx1, size_t idx2)
     if (it == set_end_m1 && sig_counter == 0)
       output = false;
 
-    if (it->is_pixel()) {
+    if (it->num_elem() == 1) {
       auto idx = it->start_z * m_dims[0] * m_dims[1] + it->start_y * m_dims[0] + it->start_x;
       m_LIP_mask.write_true(idx);
       m_process_P(idx, sig_counter, output);
