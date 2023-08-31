@@ -116,6 +116,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set, uint16_t lev) co
   auto subsets = std::tuple<std::array<Set3D, 8>, uint16_t>();
   std::get<1>(subsets) = lev; 
   constexpr auto offsets = std::array<size_t, 3>{1, 2, 4};
+  auto morton_offset = set.get_morton();
 
   //
   // The actual figuring out where it starts/ends part...
@@ -123,7 +124,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set, uint16_t lev) co
   // subset (0, 0, 0)
   constexpr auto idx0 = 0 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
   auto& sub0 = std::get<0>(subsets)[idx0];
-  sub0.set_morton(set.get_morton());
+  sub0.set_morton(morton_offset);
   sub0.start_x = set.start_x;
   sub0.start_y = set.start_y;
   sub0.start_z = set.start_z;
@@ -134,7 +135,8 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set, uint16_t lev) co
   // subset (1, 0, 0)
   constexpr auto idx1 = 1 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
   auto& sub1 = std::get<0>(subsets)[idx1];
-  sub1.set_morton(sub0.get_morton() + sub0.num_elem());
+  morton_offset += sub0.num_elem();
+  sub1.set_morton(morton_offset);
   sub1.start_x = set.start_x + split_x[0];
   sub1.start_y = set.start_y;
   sub1.start_z = set.start_z;
@@ -145,7 +147,8 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set, uint16_t lev) co
   // subset (0, 1, 0)
   constexpr auto idx2 = 0 * offsets[0] + 1 * offsets[1] + 0 * offsets[2];
   auto& sub2 = std::get<0>(subsets)[idx2];
-  sub2.set_morton(sub1.get_morton() + sub1.num_elem());
+  morton_offset += sub1.num_elem();
+  sub2.set_morton(morton_offset);
   sub2.start_x = set.start_x;
   sub2.start_y = set.start_y + split_y[0];
   sub2.start_z = set.start_z;
@@ -156,7 +159,8 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set, uint16_t lev) co
   // subset (1, 1, 0)
   constexpr auto idx3 = 1 * offsets[0] + 1 * offsets[1] + 0 * offsets[2];
   auto& sub3 = std::get<0>(subsets)[idx3];
-  sub3.set_morton(sub2.get_morton() + sub2.num_elem());
+  morton_offset += sub2.num_elem();
+  sub3.set_morton(morton_offset);
   sub3.start_x = set.start_x + split_x[0];
   sub3.start_y = set.start_y + split_y[0];
   sub3.start_z = set.start_z;
@@ -167,7 +171,8 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set, uint16_t lev) co
   // subset (0, 0, 1)
   constexpr auto idx4 = 0 * offsets[0] + 0 * offsets[1] + 1 * offsets[2];
   auto& sub4 = std::get<0>(subsets)[idx4];
-  sub4.set_morton(sub3.get_morton() + sub3.num_elem());
+  morton_offset += sub3.num_elem();
+  sub4.set_morton(morton_offset);
   sub4.start_x = set.start_x;
   sub4.start_y = set.start_y;
   sub4.start_z = set.start_z + split_z[0];
@@ -178,7 +183,8 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set, uint16_t lev) co
   // subset (1, 0, 1)
   constexpr auto idx5 = 1 * offsets[0] + 0 * offsets[1] + 1 * offsets[2];
   auto& sub5 = std::get<0>(subsets)[idx5];
-  sub5.set_morton(sub4.get_morton() + sub4.num_elem());
+  morton_offset += sub4.num_elem();
+  sub5.set_morton(morton_offset);
   sub5.start_x = set.start_x + split_x[0];
   sub5.start_y = set.start_y;
   sub5.start_z = set.start_z + split_z[0];
@@ -189,7 +195,8 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set, uint16_t lev) co
   // subset (0, 1, 1)
   constexpr auto idx6 = 0 * offsets[0] + 1 * offsets[1] + 1 * offsets[2];
   auto& sub6 = std::get<0>(subsets)[idx6];
-  sub6.set_morton(sub5.get_morton() + sub5.num_elem());
+  morton_offset += sub5.num_elem();
+  sub6.set_morton(morton_offset);
   sub6.start_x = set.start_x;
   sub6.start_y = set.start_y + split_y[0];
   sub6.start_z = set.start_z + split_z[0];
@@ -200,7 +207,8 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set, uint16_t lev) co
   // subset (1, 1, 1)
   constexpr auto idx7 = 1 * offsets[0] + 1 * offsets[1] + 1 * offsets[2];
   auto& sub7 = std::get<0>(subsets)[idx7];
-  sub7.set_morton(sub6.get_morton() + sub6.num_elem());
+  morton_offset += sub6.num_elem();
+  sub7.set_morton(morton_offset);
   sub7.start_x = set.start_x + split_x[0];
   sub7.start_y = set.start_y + split_y[0];
   sub7.start_z = set.start_z + split_z[0];
