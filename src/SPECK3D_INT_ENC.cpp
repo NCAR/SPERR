@@ -13,7 +13,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(const Set3D& set)
       break;
     case 1: {
       auto idx = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
-      m_morton_buf[set.morton_offset] = m_coeff_buf[idx];
+      m_morton_buf[set.get_morton()] = m_coeff_buf[idx];
       break;
     }
     case 2: {
@@ -21,7 +21,8 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(const Set3D& set)
       //
       // Deposit the 1st element.
       auto idx = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
-      m_morton_buf[set.morton_offset] = m_coeff_buf[idx];
+      auto idx_morton = set.get_morton();
+      m_morton_buf[idx_morton] = m_coeff_buf[idx];
 
       // Deposit the 2nd element.
       if (set.length_x == 2)
@@ -30,7 +31,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(const Set3D& set)
         idx += m_dims[0];
       else
         idx += m_dims[0] * m_dims[1];
-      m_morton_buf[set.morton_offset + 1] = m_coeff_buf[idx];
+      m_morton_buf[idx_morton + 1] = m_coeff_buf[idx];
 
       break;
     }
@@ -53,7 +54,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_construct_morton_buf()
     auto idx1 = m_LIS.size() - tmp;
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
       auto& set = m_LIS[idx1][idx2];
-      set.morton_offset = morton_offset;
+      set.set_morton(morton_offset);
       m_deposit_set(set);
       morton_offset += set.num_elem();
     }
@@ -110,16 +111,16 @@ void sperr::SPECK3D_INT_ENC<T>::m_process_S(size_t idx1, size_t idx2, size_t& co
 
   // If need to output, it means the current set has unknown significance.
   if (output) {
-    auto first = m_morton_buf.cbegin() + set.morton_offset;
-    auto last = m_morton_buf.cbegin() + set.morton_offset + set.num_elem();
+    auto first = m_morton_buf.cbegin() + set.get_morton();
+    auto last = m_morton_buf.cbegin() + set.get_morton() + set.num_elem();
     is_sig = std::any_of(first, last, [thld = m_threshold](auto v) { return v >= thld; });
     m_bit_buffer.wbit(is_sig);
   }
 
   if (is_sig) {
-    counter++;  // Let's increment the counter first!
+    counter++;
     m_code_S(idx1, idx2);
-    set.type = SetType::Garbage;  // this current set is gonna be discarded.
+    set.make_empty();  // this current set is gonna be discarded.
   }
 }
 
@@ -169,7 +170,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_code_S(size_t idx1, size_t idx2)
       m_process_P(idx, sig_counter, output);
     }
     else {
-      const auto newidx1 = it->part_level;
+      const size_t newidx1 = it->part_level;
       m_LIS[newidx1].emplace_back(*it);
       const auto newidx2 = m_LIS[newidx1].size() - 1;
       m_process_S(newidx1, newidx2, sig_counter, output);

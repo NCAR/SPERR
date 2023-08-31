@@ -3,13 +3,17 @@
 
 #include "SPECK_INT.h"
 
+#include <cstring>  // std::memcpy
+
 namespace sperr {
 
 class Set3D {
+ private:
+  // The first 6 bytes of the morton offset in uint64_t. Because each set dimension is
+  // stored using 16-bit integers, these 48 bits are big enough too!
+  std::array<uint8_t, 6> m_morton = {0, 0, 0, 0, 0, 0};
+
  public:
-  //
-  // Member data
-  //
   uint16_t start_x = 0;
   uint16_t start_y = 0;
   uint16_t start_z = 0;
@@ -17,18 +21,24 @@ class Set3D {
   uint16_t length_y = 0;
   uint16_t length_z = 0;
 
-  // What's the offset of this set in a morton organized storage?
-  uint64_t morton_offset = 0;
-
   // Which partition level is this set at (starting from zero, in all 3 directions).
   // This data member is the sum of all 3 partition levels.
-  uint16_t part_level = 0;
-  SetType type = SetType::TypeS;  // Only used to indicate garbage status
+  uint8_t part_level = 0;
 
  public:
   //
   // Member functions (intended to be inline)
   //
+  auto get_morton() const -> uint64_t
+  {
+    auto tmp = uint64_t{0};
+    std::memcpy(&tmp, m_morton.data(), sizeof(m_morton));
+    return tmp;
+  }
+  void set_morton(uint64_t val)
+  {
+    std::memcpy(m_morton.data(), &val, sizeof(m_morton));
+  }
   auto is_pixel() const -> bool
   {
     return (length_x == 1 && length_y == 1 && length_z == 1);
@@ -36,6 +46,12 @@ class Set3D {
   auto is_empty() const -> bool
   {
     return (length_z == 0 || length_y == 0 || length_x == 0);
+  }
+  void make_empty()
+  {
+    length_x = 0;
+    length_y = 0;
+    length_z = 0;
   }
   auto num_elem() const -> size_t
   {

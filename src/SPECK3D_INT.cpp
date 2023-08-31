@@ -9,8 +9,7 @@ template <typename T>
 void sperr::SPECK3D_INT<T>::m_clean_LIS()
 {
   for (auto& list : m_LIS) {
-    auto it = std::remove_if(list.begin(), list.end(),
-                             [](const auto& s) { return s.type == SetType::Garbage; });
+    auto it = std::remove_if(list.begin(), list.end(), [](const auto& s) { return s.is_empty(); });
     list.erase(it, list.end());
   }
 }
@@ -90,7 +89,7 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   const auto parts = big.part_level;
   m_LIS[parts].insert(m_LIS[parts].begin(), big);
 
-  // Experiment with morton curves.
+  // The morton curves are not constructed yet!
   m_morton_valid = false;
 }
 
@@ -106,7 +105,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) const -> std::ar
   const auto split_z = std::array<int, 2>{set.length_z - set.length_z / 2, set.length_z / 2};
 
   auto next_part_lev = set.part_level;
-  const auto tmp = std::array<uint16_t, 2>{0, 1};
+  const auto tmp = std::array<uint8_t, 2>{0, 1};
   next_part_lev += tmp[split_x[1] != 0];
   next_part_lev += tmp[split_y[1] != 0];
   next_part_lev += tmp[split_z[1] != 0];
@@ -120,97 +119,97 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set) const -> std::ar
   // subset (0, 0, 0)
   constexpr auto idx0 = 0 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
   auto& sub0 = subsets[idx0];
+  sub0.set_morton(set.get_morton());
   sub0.start_x = set.start_x;
   sub0.start_y = set.start_y;
   sub0.start_z = set.start_z;
   sub0.length_x = split_x[0];
   sub0.length_y = split_y[0];
   sub0.length_z = split_z[0];
-  sub0.morton_offset = set.morton_offset;
   sub0.part_level = next_part_lev;
 
   // subset (1, 0, 0)
   constexpr auto idx1 = 1 * offsets[0] + 0 * offsets[1] + 0 * offsets[2];
   auto& sub1 = subsets[idx1];
+  sub1.set_morton(sub0.get_morton() + sub0.num_elem());
   sub1.start_x = set.start_x + split_x[0];
   sub1.start_y = set.start_y;
   sub1.start_z = set.start_z;
   sub1.length_x = split_x[1];
   sub1.length_y = split_y[0];
   sub1.length_z = split_z[0];
-  sub1.morton_offset = sub0.morton_offset + sub0.num_elem();
   sub1.part_level = next_part_lev;
 
   // subset (0, 1, 0)
   constexpr auto idx2 = 0 * offsets[0] + 1 * offsets[1] + 0 * offsets[2];
   auto& sub2 = subsets[idx2];
+  sub2.set_morton(sub1.get_morton() + sub1.num_elem());
   sub2.start_x = set.start_x;
   sub2.start_y = set.start_y + split_y[0];
   sub2.start_z = set.start_z;
   sub2.length_x = split_x[0];
   sub2.length_y = split_y[1];
   sub2.length_z = split_z[0];
-  sub2.morton_offset = sub1.morton_offset + sub1.num_elem();
   sub2.part_level = next_part_lev;
 
   // subset (1, 1, 0)
   constexpr auto idx3 = 1 * offsets[0] + 1 * offsets[1] + 0 * offsets[2];
   auto& sub3 = subsets[idx3];
+  sub3.set_morton(sub2.get_morton() + sub2.num_elem());
   sub3.start_x = set.start_x + split_x[0];
   sub3.start_y = set.start_y + split_y[0];
   sub3.start_z = set.start_z;
   sub3.length_x = split_x[1];
   sub3.length_y = split_y[1];
   sub3.length_z = split_z[0];
-  sub3.morton_offset = sub2.morton_offset + sub2.num_elem();
   sub3.part_level = next_part_lev;
 
   // subset (0, 0, 1)
   constexpr auto idx4 = 0 * offsets[0] + 0 * offsets[1] + 1 * offsets[2];
   auto& sub4 = subsets[idx4];
+  sub4.set_morton(sub3.get_morton() + sub3.num_elem());
   sub4.start_x = set.start_x;
   sub4.start_y = set.start_y;
   sub4.start_z = set.start_z + split_z[0];
   sub4.length_x = split_x[0];
   sub4.length_y = split_y[0];
   sub4.length_z = split_z[1];
-  sub4.morton_offset = sub3.morton_offset + sub3.num_elem();
   sub4.part_level = next_part_lev;
 
   // subset (1, 0, 1)
   constexpr auto idx5 = 1 * offsets[0] + 0 * offsets[1] + 1 * offsets[2];
   auto& sub5 = subsets[idx5];
+  sub5.set_morton(sub4.get_morton() + sub4.num_elem());
   sub5.start_x = set.start_x + split_x[0];
   sub5.start_y = set.start_y;
   sub5.start_z = set.start_z + split_z[0];
   sub5.length_x = split_x[1];
   sub5.length_y = split_y[0];
   sub5.length_z = split_z[1];
-  sub5.morton_offset = sub4.morton_offset + sub4.num_elem();
   sub5.part_level = next_part_lev;
 
   // subset (0, 1, 1)
   constexpr auto idx6 = 0 * offsets[0] + 1 * offsets[1] + 1 * offsets[2];
   auto& sub6 = subsets[idx6];
+  sub6.set_morton(sub5.get_morton() + sub5.num_elem());
   sub6.start_x = set.start_x;
   sub6.start_y = set.start_y + split_y[0];
   sub6.start_z = set.start_z + split_z[0];
   sub6.length_x = split_x[0];
   sub6.length_y = split_y[1];
   sub6.length_z = split_z[1];
-  sub6.morton_offset = sub5.morton_offset + sub5.num_elem();
   sub6.part_level = next_part_lev;
 
   // subset (1, 1, 1)
   constexpr auto idx7 = 1 * offsets[0] + 1 * offsets[1] + 1 * offsets[2];
   auto& sub7 = subsets[idx7];
+  sub7.set_morton(sub6.get_morton() + sub6.num_elem());
   sub7.start_x = set.start_x + split_x[0];
   sub7.start_y = set.start_y + split_y[0];
   sub7.start_z = set.start_z + split_z[0];
   sub7.length_x = split_x[1];
   sub7.length_y = split_y[1];
   sub7.length_z = split_z[1];
-  sub7.morton_offset = sub6.morton_offset + sub6.num_elem();
   sub7.part_level = next_part_lev;
 
   return subsets;

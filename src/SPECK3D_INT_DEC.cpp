@@ -53,9 +53,9 @@ void sperr::SPECK3D_INT_DEC<T>::m_process_S(size_t idx1, size_t idx2, size_t& co
     is_sig = m_bit_buffer.rbit();
 
   if (is_sig) {
-    counter++;  // Let's increment the counter first!
+    counter++;
     m_code_S(idx1, idx2);
-    set.type = SetType::Garbage;  // this current set is gonna be discarded.
+    set.make_empty();  // this current set is gonna be discarded.
   }
 }
 
@@ -98,7 +98,7 @@ void sperr::SPECK3D_INT_DEC<T>::m_code_S(size_t idx1, size_t idx2)
       m_process_P(idx, sig_counter, read);
     }
     else {
-      const auto newidx1 = it->part_level;
+      const size_t newidx1 = it->part_level;
       m_LIS[newidx1].emplace_back(*it);
       const auto newidx2 = m_LIS[newidx1].size() - 1;
       m_process_S(newidx1, newidx2, sig_counter, read);
