@@ -79,7 +79,7 @@ void sperr::SPECK3D_INT_DEC<T>::m_process_P(size_t idx, size_t& counter, bool re
 template <typename T>
 void sperr::SPECK3D_INT_DEC<T>::m_code_S(size_t idx1, size_t idx2)
 {
-  auto subsets = m_partition_S_XYZ(m_LIS[idx1][idx2]);
+  auto [subsets, next_lev] = m_partition_S_XYZ(m_LIS[idx1][idx2], uint16_t(idx1));
   const auto set_end =
       std::remove_if(subsets.begin(), subsets.end(), [](auto& s) { return s.is_empty(); });
   const auto set_end_m1 = set_end - 1;
@@ -98,10 +98,9 @@ void sperr::SPECK3D_INT_DEC<T>::m_code_S(size_t idx1, size_t idx2)
       m_process_P(idx, sig_counter, read);
     }
     else {
-      const size_t newidx1 = it->part_level;
-      m_LIS[newidx1].emplace_back(*it);
-      const auto newidx2 = m_LIS[newidx1].size() - 1;
-      m_process_S(newidx1, newidx2, sig_counter, read);
+      m_LIS[next_lev].emplace_back(*it);
+      const auto newidx2 = m_LIS[next_lev].size() - 1;
+      m_process_S(next_lev, newidx2, sig_counter, read);
     }
   }
 }

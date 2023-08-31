@@ -4,6 +4,7 @@
 #include "SPECK_INT.h"
 
 #include <cstring>  // std::memcpy
+#include <tuple>
 
 namespace sperr {
 
@@ -14,16 +15,15 @@ class Set3D {
   std::array<uint8_t, 6> m_morton = {0, 0, 0, 0, 0, 0};
 
  public:
+  //
+  // Publicly accessible public data members.
+  //
   uint16_t start_x = 0;
   uint16_t start_y = 0;
   uint16_t start_z = 0;
   uint16_t length_x = 0;
   uint16_t length_y = 0;
   uint16_t length_z = 0;
-
-  // Which partition level is this set at (starting from zero, in all 3 directions).
-  // This data member is the sum of all 3 partition levels.
-  uint8_t part_level = 0;
 
  public:
   //
@@ -78,9 +78,9 @@ class SPECK3D_INT : public SPECK_INT<T> {
   void m_initialize_lists() override;
 
   // Divide a Set3D into 8, 4, or 2 smaller subsets.
-  auto m_partition_S_XYZ(const Set3D&) const -> std::array<Set3D, 8>;
-  auto m_partition_S_XY(const Set3D&) const -> std::array<Set3D, 4>;
-  auto m_partition_S_Z(const Set3D&) const -> std::array<Set3D, 2>;
+  auto m_partition_S_XYZ(const Set3D&, uint16_t) const -> std::tuple<std::array<Set3D, 8>, uint16_t>;
+  auto m_partition_S_XY(const Set3D&, uint16_t) const -> std::tuple<std::array<Set3D, 4>, uint16_t>;
+  auto m_partition_S_Z(const Set3D&, uint16_t) const -> std::tuple<std::array<Set3D, 2>, uint16_t>;
 
   //
   // SPECK3D_INT specific data members

@@ -36,7 +36,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(const Set3D& set)
       break;
     }
     default: {
-      auto subsets = m_partition_S_XYZ(set);
+      auto [subsets, lev] = m_partition_S_XYZ(set, 0);
       for (auto& sub : subsets)
         m_deposit_set(sub);
     }
@@ -148,7 +148,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_process_P(size_t idx, size_t& counter, bool ou
 template <typename T>
 void sperr::SPECK3D_INT_ENC<T>::m_code_S(size_t idx1, size_t idx2)
 {
-  auto subsets = m_partition_S_XYZ(m_LIS[idx1][idx2]);
+  auto [subsets, next_lev] = m_partition_S_XYZ(m_LIS[idx1][idx2], uint16_t(idx1));
 
   // Since some subsets could be empty, let's put empty sets at the end.
   //
@@ -170,10 +170,9 @@ void sperr::SPECK3D_INT_ENC<T>::m_code_S(size_t idx1, size_t idx2)
       m_process_P(idx, sig_counter, output);
     }
     else {
-      const size_t newidx1 = it->part_level;
-      m_LIS[newidx1].emplace_back(*it);
-      const auto newidx2 = m_LIS[newidx1].size() - 1;
-      m_process_S(newidx1, newidx2, sig_counter, output);
+      m_LIS[next_lev].emplace_back(*it);
+      const auto newidx2 = m_LIS[next_lev].size() - 1;
+      m_process_S(next_lev, newidx2, sig_counter, output);
     }
   }
 }
