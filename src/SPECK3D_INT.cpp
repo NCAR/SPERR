@@ -36,7 +36,7 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   //    subsets and put them in the LIS accordingly.
   //    Note that it truncates 64-bit ints to 16-bit ints here, but should be OK.
   Set3D big;
-  big.length_x = static_cast<uint16_t>(m_dims[0]);  
+  big.length_x = static_cast<uint16_t>(m_dims[0]);
   big.length_y = static_cast<uint16_t>(m_dims[1]);
   big.length_z = static_cast<uint16_t>(m_dims[2]);
 
@@ -97,7 +97,7 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
 }
 
 template <typename T>
-auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set, uint16_t lev) const 
+auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(Set3D set, uint16_t lev) const
     -> std::tuple<std::array<Set3D, 8>, uint16_t>
 {
   // Integer promotion rules (https://en.cppreference.com/w/c/language/conversion) say that types
@@ -114,7 +114,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set, uint16_t lev) co
   lev += tmp[split_z[1] != 0];
 
   auto subsets = std::tuple<std::array<Set3D, 8>, uint16_t>();
-  std::get<1>(subsets) = lev; 
+  std::get<1>(subsets) = lev;
   constexpr auto offsets = std::array<size_t, 3>{1, 2, 4};
   auto morton_offset = set.get_morton();
 
@@ -220,8 +220,8 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(const Set3D& set, uint16_t lev) co
 }
 
 template <typename T>
-auto sperr::SPECK3D_INT<T>::m_partition_S_XY(const Set3D& set, uint16_t lev) const 
-      -> std::tuple<std::array<Set3D, 4>, uint16_t>
+auto sperr::SPECK3D_INT<T>::m_partition_S_XY(Set3D set, uint16_t lev) const
+    -> std::tuple<std::array<Set3D, 4>, uint16_t>
 {
   // This partition scheme is only used during initialization; no need to calculate morton offset.
 
@@ -282,8 +282,8 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XY(const Set3D& set, uint16_t lev) con
 }
 
 template <typename T>
-auto sperr::SPECK3D_INT<T>::m_partition_S_Z(const Set3D& set, uint16_t lev) const 
-      -> std::tuple<std::array<Set3D, 2>, uint16_t>
+auto sperr::SPECK3D_INT<T>::m_partition_S_Z(Set3D set, uint16_t lev) const
+    -> std::tuple<std::array<Set3D, 2>, uint16_t>
 {
   // This partition scheme is only used during initialization; no need to calculate morton offset.
 

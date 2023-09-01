@@ -35,18 +35,9 @@ class Set3D {
     std::memcpy(&tmp, m_morton.data(), sizeof(m_morton));
     return tmp;
   }
-  void set_morton(uint64_t val)
-  {
-    std::memcpy(m_morton.data(), &val, sizeof(m_morton));
-  }
-  auto is_empty() const -> bool
-  {
-    return (length_z == 0 || length_y == 0 || length_x == 0);
-  }
-  void make_empty()
-  {
-    length_z = 0;
-  }
+  void set_morton(uint64_t val) { std::memcpy(m_morton.data(), &val, sizeof(m_morton)); }
+  auto is_empty() const -> bool { return (length_z == 0 || length_y == 0 || length_x == 0); }
+  void make_empty() { length_z = 0; }
   auto num_elem() const -> size_t
   {
     return (size_t{length_x} * size_t{length_y} * size_t{length_z});
@@ -72,9 +63,9 @@ class SPECK3D_INT : public SPECK_INT<T> {
   void m_initialize_lists() override;
 
   // Divide a Set3D into 8, 4, or 2 smaller subsets.
-  auto m_partition_S_XYZ(const Set3D&, uint16_t) const -> std::tuple<std::array<Set3D, 8>, uint16_t>;
-  auto m_partition_S_XY(const Set3D&, uint16_t) const -> std::tuple<std::array<Set3D, 4>, uint16_t>;
-  auto m_partition_S_Z(const Set3D&, uint16_t) const -> std::tuple<std::array<Set3D, 2>, uint16_t>;
+  auto m_partition_S_XYZ(Set3D, uint16_t) const -> std::tuple<std::array<Set3D, 8>, uint16_t>;
+  auto m_partition_S_XY(Set3D, uint16_t) const -> std::tuple<std::array<Set3D, 4>, uint16_t>;
+  auto m_partition_S_Z(Set3D, uint16_t) const -> std::tuple<std::array<Set3D, 2>, uint16_t>;
 
   //
   // SPECK3D_INT specific data members
