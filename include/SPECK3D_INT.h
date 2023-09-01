@@ -38,10 +38,7 @@ class Set3D {
   void set_morton(uint64_t val) { std::memcpy(m_morton.data(), &val, sizeof(m_morton)); }
   auto is_empty() const -> bool { return (length_z == 0 || length_y == 0 || length_x == 0); }
   void make_empty() { length_z = 0; }
-  auto num_elem() const -> size_t
-  {
-    return (size_t{length_x} * size_t{length_y} * size_t{length_z});
-  }
+  auto num_elem() const -> size_t { return (size_t{length_x} * length_y * length_z); }
 };
 
 //
