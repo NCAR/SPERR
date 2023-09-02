@@ -31,18 +31,14 @@ class SPECK3D_INT_ENC : public SPECK3D_INT<T> {
   using SPECK_INT<T>::m_sign_array;
   using SPECK3D_INT<T>::m_LIS;
   using SPECK3D_INT<T>::m_partition_S_XYZ;
-  using SPECK3D_INT<T>::m_morton_valid;
+  using SPECK3D_INT<T>::m_code_S;
 
-  void m_sorting_pass() override;
-
-  void m_process_S(size_t idx1, size_t idx2, size_t& counter, bool output);
-  void m_process_P(size_t idx, size_t& counter, bool output);
-  void m_code_S(size_t idx1, size_t idx2);
+  void m_process_S(size_t idx1, size_t idx2, size_t& counter, bool output) override;
+  void m_process_P(size_t idx, size_t& counter, bool output) override;
+  void m_additional_initialization() override;
 
   // Data structures and functions for morton data layout.
-  // Note: `m_morton_valid` was initialized to be false in `SPECk3D_INT::m_initialize_lists()`.
   vecui_type m_morton_buf;
-  void m_construct_morton_buf();
   void m_deposit_set(const Set3D&);
 };
 

@@ -56,10 +56,15 @@ class SPECK3D_INT : public SPECK_INT<T> {
   using SPECK_INT<T>::m_coeff_buf;
   using SPECK_INT<T>::m_bit_buffer;
 
-  void m_clean_LIS() override;
   void m_initialize_lists() override;
+  void m_sorting_pass() override;
+  void m_clean_LIS() override;
 
-  // Divide a Set3D into 8, 4, or 2 smaller subsets.
+  virtual void m_process_S(size_t idx1, size_t idx2, size_t& counter, bool) = 0;
+  virtual void m_process_P(size_t idx, size_t& counter, bool) = 0;
+  virtual void m_additional_initialization() = 0;
+
+  void m_code_S(size_t idx1, size_t idx2);
   auto m_partition_S_XYZ(Set3D, uint16_t) const -> std::tuple<std::array<Set3D, 8>, uint16_t>;
   auto m_partition_S_XY(Set3D, uint16_t) const -> std::tuple<std::array<Set3D, 4>, uint16_t>;
   auto m_partition_S_Z(Set3D, uint16_t) const -> std::tuple<std::array<Set3D, 2>, uint16_t>;
@@ -68,9 +73,6 @@ class SPECK3D_INT : public SPECK_INT<T> {
   // SPECK3D_INT specific data members
   //
   std::vector<std::vector<Set3D>> m_LIS;
-
-  // Experiment with morton curves.
-  bool m_morton_valid = false;
 };
 
 };  // namespace sperr

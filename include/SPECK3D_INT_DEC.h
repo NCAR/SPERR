@@ -21,12 +21,12 @@ class SPECK3D_INT_DEC : public SPECK3D_INT<T> {
   using SPECK_INT<T>::m_sign_array;
   using SPECK3D_INT<T>::m_LIS;
   using SPECK3D_INT<T>::m_partition_S_XYZ;
+  using SPECK3D_INT<T>::m_code_S;
+  ;
 
-  void m_sorting_pass() override;
-
-  void m_process_S(size_t idx1, size_t idx2, size_t& counter, bool);
-  void m_process_P(size_t idx, size_t& counter, bool);
-  void m_code_S(size_t idx1, size_t idx2);
+  void m_process_S(size_t idx1, size_t idx2, size_t& counter, bool read) override;
+  void m_process_P(size_t idx, size_t& counter, bool read) override;
+  void m_additional_initialization() override{};  // empty function
 };
 
 };  // namespace sperr

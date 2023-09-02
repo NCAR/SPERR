@@ -92,8 +92,75 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   // it at the front of it's corresponding vector. One-time expense.
   m_LIS[curr_lev].insert(m_LIS[curr_lev].begin(), big);
 
-  // The morton curves are not constructed yet!
-  m_morton_valid = false;
+  // Encoder and decoder might have different additional tasks.
+  m_additional_initialization();
+}
+
+template <typename T>
+void sperr::SPECK3D_INT<T>::m_sorting_pass()
+{
+  // Since we have a separate representation of LIP, let's process that list first!
+  //
+  const auto bits_x64 = m_LIP_mask.size() - m_LIP_mask.size() % 64;
+
+  for (size_t i = 0; i < bits_x64; i += 64) {
+    const auto value = m_LIP_mask.read_long(i);
+    if (value != 0) {
+      for (size_t j = 0; j < 64; j++) {
+        if ((value >> j) & uint64_t{1}) {
+          size_t dummy = 0;
+          m_process_P(i + j, dummy, true);
+        }
+      }
+    }
+  }
+  for (auto i = bits_x64; i < m_LIP_mask.size(); i++) {
+    if (m_LIP_mask.read_bit(i)) {
+      size_t dummy = 0;
+      m_process_P(i, dummy, true);
+    }
+  }
+
+  // Then we process regular sets in LIS.
+  //
+  for (size_t tmp = 1; tmp <= m_LIS.size(); tmp++) {
+    auto idx1 = m_LIS.size() - tmp;
+    for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
+      size_t dummy = 0;
+      m_process_S(idx1, idx2, dummy, true);
+    }
+  }
+}
+
+template <typename T>
+void sperr::SPECK3D_INT<T>::m_code_S(size_t idx1, size_t idx2)
+{
+  auto [subsets, next_lev] = m_partition_S_XYZ(m_LIS[idx1][idx2], uint16_t(idx1));
+
+  // Since some subsets could be empty, let's put empty sets at the end.
+  const auto set_end =
+      std::remove_if(subsets.begin(), subsets.end(), [](auto& s) { return s.is_empty(); });
+  const auto set_end_m1 = set_end - 1;
+
+  size_t sig_counter = 0;
+  for (auto it = subsets.begin(); it != set_end; ++it) {
+    // If we're looking at the last subset, and no prior subset is found to be
+    // significant, then we know that this last one *is* significant.
+    bool need_decide = true;
+    if (it == set_end_m1 && sig_counter == 0)
+      need_decide = false;
+
+    if (it->num_elem() == 1) {
+      auto idx = it->start_z * m_dims[0] * m_dims[1] + it->start_y * m_dims[0] + it->start_x;
+      m_LIP_mask.write_true(idx);
+      m_process_P(idx, sig_counter, need_decide);
+    }
+    else {
+      m_LIS[next_lev].emplace_back(*it);
+      const auto newidx2 = m_LIS[next_lev].size() - 1;
+      m_process_S(next_lev, newidx2, sig_counter, need_decide);
+    }
+  }
 }
 
 template <typename T>
