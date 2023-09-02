@@ -15,14 +15,11 @@ class SPECK3D_INT_DEC : public SPECK3D_INT<T> {
   // Bring members from parent classes to this derived class.
   //
   using SPECK_INT<T>::m_LIP_mask;
-  using SPECK_INT<T>::m_dims;
   using SPECK_INT<T>::m_LSP_new;
   using SPECK_INT<T>::m_bit_buffer;
   using SPECK_INT<T>::m_sign_array;
   using SPECK3D_INT<T>::m_LIS;
-  using SPECK3D_INT<T>::m_partition_S_XYZ;
   using SPECK3D_INT<T>::m_code_S;
-  ;
 
   void m_process_S(size_t idx1, size_t idx2, size_t& counter, bool read) override;
   void m_process_P(size_t idx, size_t& counter, bool read) override;
