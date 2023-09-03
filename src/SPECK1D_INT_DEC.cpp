@@ -54,7 +54,7 @@ void sperr::SPECK1D_INT_DEC<T>::m_process_S(size_t idx1, size_t idx2, size_t& co
   if (is_sig) {
     counter++;  // Let's increment the counter first!
     m_code_S(idx1, idx2);
-    set.length = 0;  // this current set is gonna be discarded.
+    set.set_length(0);  // this current set is gonna be discarded.
   }
 }
 
@@ -84,13 +84,13 @@ void sperr::SPECK1D_INT_DEC<T>::m_code_S(size_t idx1, size_t idx2)
 
   // Process the 1st subset
   const auto& set0 = subsets[0];
-  assert(set0.length != 0);
-  if (set0.length == 1) {
-    m_LIP_mask.write_true(set0.start);
-    m_process_P(set0.start, sig_counter, read);
+  assert(set0.get_length() != 0);
+  if (set0.get_length() == 1) {
+    m_LIP_mask.write_true(set0.get_start());
+    m_process_P(set0.get_start(), sig_counter, read);
   }
   else {
-    const auto newidx1 = set0.part_level;
+    const auto newidx1 = set0.get_level();
     m_LIS[newidx1].push_back(set0);
     m_process_S(newidx1, m_LIS[newidx1].size() - 1, sig_counter, read);
   }
@@ -99,13 +99,13 @@ void sperr::SPECK1D_INT_DEC<T>::m_code_S(size_t idx1, size_t idx2)
   if (sig_counter == 0)
     read = false;
   const auto& set1 = subsets[1];
-  assert(set1.length != 0);
-  if (set1.length == 1) {
-    m_LIP_mask.write_true(set1.start);
-    m_process_P(set1.start, sig_counter, read);
+  assert(set1.get_length() != 0);
+  if (set1.get_length() == 1) {
+    m_LIP_mask.write_true(set1.get_start());
+    m_process_P(set1.get_start(), sig_counter, read);
   }
   else {
-    const auto newidx1 = set1.part_level;
+    const auto newidx1 = set1.get_level();
     m_LIS[newidx1].push_back(set1);
     m_process_S(newidx1, m_LIS[newidx1].size() - 1, sig_counter, read);
   }

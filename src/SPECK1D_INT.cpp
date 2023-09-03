@@ -10,7 +10,7 @@ void sperr::SPECK1D_INT<T>::m_clean_LIS()
 {
   for (auto& list : m_LIS) {
     auto it = std::remove_if(list.begin(), list.end(),
-                             [](const auto& s) { return s.length == 0; });
+                             [](const auto& s) { return s.get_length() == 0; });
     list.erase(it, list.end());
   }
 }
@@ -29,26 +29,30 @@ void sperr::SPECK1D_INT<T>::m_initialize_lists()
 
   // Put in two sets, each representing a half of the long array.
   Set1D set;
-  set.length = total_len;  // Set represents the whole 1D array.
+  set.set_length(total_len);  // Set represents the whole 1D array.
   auto sets = m_partition_set(set);
-  m_LIS[sets[0].part_level].emplace_back(sets[0]);
-  m_LIS[sets[1].part_level].emplace_back(sets[1]);
+  m_LIS[sets[0].get_level()].emplace_back(sets[0]);
+  m_LIS[sets[1].get_level()].emplace_back(sets[1]);
 }
 
 template <typename T>
 auto sperr::SPECK1D_INT<T>::m_partition_set(const Set1D& set) const -> std::array<Set1D, 2>
 {
+  const auto start = set.get_start();
+  const auto length = set.get_length();
+  const auto level = set.get_level();
   std::array<Set1D, 2> subsets;
+
   // Prepare the 1st set
   auto& set1 = subsets[0];
-  set1.start = set.start;
-  set1.length = set.length - set.length / 2;
-  set1.part_level = set.part_level + 1;
+  set1.set_start(start);
+  set1.set_length(length - length / 2);
+  set1.set_level(level + 1);
   // Prepare the 2nd set
   auto& set2 = subsets[1];
-  set2.start = set.start + set1.length;
-  set2.length = set.length / 2;
-  set2.part_level = set.part_level + 1;
+  set2.set_start(start + length - length / 2);
+  set2.set_length(length / 2);
+  set2.set_level(level + 1);
 
   return subsets;
 }

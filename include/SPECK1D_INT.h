@@ -3,13 +3,40 @@
 
 #include "SPECK_INT.h"
 
+#include <cstring>  // std::memcpy()
+
 namespace sperr {
 
 class Set1D {
+  // In an effort to reduce the object size of Set1D, I choose to store only the first 7 bytes of
+  //    both the `start` and `length` information of a Set1D. Using another 2 bytes to store the
+  //    `part_level` info, this object fits in 16 bytes nicely.
+  //
+ private:
+  std::array<uint8_t, 16> m_16 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
  public:
-  uint64_t start = 0;
-  uint64_t length = 0;
-  uint16_t part_level = 0;
+  void set_start(uint64_t val) { std::memcpy(m_16.data(), &val, 7); };
+  void set_length(uint64_t val) { std::memcpy(m_16.data() + 7, &val, 7); };
+  void set_level(uint16_t val) { std::memcpy(m_16.data() + 14, &val, 2); };
+  auto get_start() const -> uint64_t
+  {
+    auto val = uint64_t{0};
+    std::memcpy(&val, m_16.data(), 7);
+    return val;
+  }
+  auto get_length() const -> uint64_t
+  {
+    auto val = uint64_t{0};
+    std::memcpy(&val, m_16.data() + 7, 7);
+    return val;
+  }
+  auto get_level() const -> uint16_t
+  {
+    auto val = uint16_t{0};
+    std::memcpy(&val, m_16.data() + 14, 2);
+    return val;
+  }
 };
 
 //

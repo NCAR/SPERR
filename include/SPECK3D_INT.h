@@ -3,7 +3,7 @@
 
 #include "SPECK_INT.h"
 
-#include <cstring>  // std::memcpy
+#include <cstring>  // std::memcpy()
 #include <tuple>
 
 namespace sperr {
