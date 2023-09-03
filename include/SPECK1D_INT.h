@@ -10,7 +10,6 @@ class Set1D {
   uint64_t start = 0;
   uint64_t length = 0;
   uint16_t part_level = 0;
-  SetType type = SetType::TypeS;  // Only used to indicate garbage status
 };
 
 //

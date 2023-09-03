@@ -10,7 +10,7 @@ void sperr::SPECK1D_INT<T>::m_clean_LIS()
 {
   for (auto& list : m_LIS) {
     auto it = std::remove_if(list.begin(), list.end(),
-                             [](const auto& s) { return s.type == SetType::Garbage; });
+                             [](const auto& s) { return s.length == 0; });
     list.erase(it, list.end());
   }
 }

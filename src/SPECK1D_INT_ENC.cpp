@@ -80,7 +80,7 @@ void sperr::SPECK1D_INT_ENC<T>::m_process_S(size_t idx1,
   if (sig == SigType::Sig) {
     counter++;  // Let's increment the counter first!
     m_code_S(idx1, idx2, subset_sigs);
-    set.type = SetType::Garbage;  // this current set is gonna be discarded.
+    set.length = 0;  // this current set is gonna be discarded.
   }
 }
 
