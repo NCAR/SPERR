@@ -21,7 +21,7 @@ void sperr::SPECK2D_INT_ENC<T>::m_process_S(size_t idx1,
   if (is_sig) {
     counter++;
     m_code_S(idx1, idx2);
-    set.type = SetType::Garbage;
+    set.make_empty();
   }
 }
 
@@ -60,7 +60,7 @@ void sperr::SPECK2D_INT_ENC<T>::m_process_I(bool need_decide)
 }
 
 template <typename T>
-auto sperr::SPECK2D_INT_ENC<T>::m_decide_S_significance(Set2D set) const -> bool
+auto sperr::SPECK2D_INT_ENC<T>::m_decide_S_significance(const Set2D& set) const -> bool
 {
   assert(!set.is_empty());
 

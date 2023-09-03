@@ -27,6 +27,11 @@ class SPECK1D_INT : public SPECK_INT<T> {
   using SPECK_INT<T>::m_dims;
   using SPECK_INT<T>::m_coeff_buf;
 
+  // The 1D case is different from 3D and 2D cases in that it implements additional logic that
+  //    infers the significance of subsets by where the significant point is. With this
+  //    consideration, functions such as m_process_S() and m_process_P() have different signatures
+  //    during decoding/encoding, so they're implemented in their respective subclasses.
+  //
   void m_clean_LIS() override;
   void m_initialize_lists() override;
   auto m_partition_set(const Set1D&) const -> std::array<Set1D, 2>;
