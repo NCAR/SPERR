@@ -60,7 +60,7 @@ class SPECK1D_INT : public SPECK_INT<T> {
   //
   void m_clean_LIS() override;
   void m_initialize_lists() override;
-  auto m_partition_set(const Set1D&) const -> std::array<Set1D, 2>;
+  auto m_partition_set(Set1D) const -> std::array<Set1D, 2>;
 
   //
   // SPECK1D_INT specific data members

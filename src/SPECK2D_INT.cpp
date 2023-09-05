@@ -95,7 +95,7 @@ void sperr::SPECK2D_INT<T>::m_clean_LIS()
 }
 
 template <typename T>
-auto sperr::SPECK2D_INT<T>::m_partition_S(const Set2D& set) const -> std::array<Set2D, 4>
+auto sperr::SPECK2D_INT<T>::m_partition_S(Set2D set) const -> std::array<Set2D, 4>
 {
   auto subsets = std::array<Set2D, 4>();
 

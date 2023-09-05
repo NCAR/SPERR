@@ -43,7 +43,7 @@ class SPECK2D_INT : public SPECK_INT<T> {
   virtual void m_process_I(bool need_decide) = 0;
 
   void m_clean_LIS() override;
-  auto m_partition_S(const Set2D&) const -> std::array<Set2D, 4>;
+  auto m_partition_S(Set2D) const -> std::array<Set2D, 4>;
   auto m_partition_I() -> std::array<Set2D, 3>;
   void m_initialize_lists() override;
 

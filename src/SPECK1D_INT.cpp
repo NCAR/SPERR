@@ -36,7 +36,7 @@ void sperr::SPECK1D_INT<T>::m_initialize_lists()
 }
 
 template <typename T>
-auto sperr::SPECK1D_INT<T>::m_partition_set(const Set1D& set) const -> std::array<Set1D, 2>
+auto sperr::SPECK1D_INT<T>::m_partition_set(Set1D set) const -> std::array<Set1D, 2>
 {
   const auto start = set.get_start();
   const auto length = set.get_length();
