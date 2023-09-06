@@ -6,7 +6,7 @@
 #include <numeric>
 
 template <typename T>
-void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(const Set3D& set)
+void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
 {
   switch (set.num_elem()) {
     case 0:

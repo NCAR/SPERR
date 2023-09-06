@@ -39,7 +39,7 @@ class SPECK3D_INT_ENC : public SPECK3D_INT<T> {
 
   // Data structures and functions for morton data layout.
   vecui_type m_morton_buf;
-  void m_deposit_set(const Set3D&);
+  void m_deposit_set(Set3D);
 };
 
 };  // namespace sperr

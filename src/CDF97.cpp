@@ -342,8 +342,7 @@ void sperr::CDF97::m_idwt1d_one_level(itd_type array, size_t array_len)
 void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_xy)
 {
   // Note: here we call low-level functions (Qcc*()) instead of
-  // m_dwt1d_one_level() because we want to have only one even/odd test outside of
-  // the loop.
+  // m_dwt1d_one_level() because we want to have only one even/odd test at the outer loop.
 
   const size_t max_len = std::max(len_xy[0], len_xy[1]);
   const auto beg = m_qcc_buf.begin();
