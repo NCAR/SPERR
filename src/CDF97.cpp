@@ -306,12 +306,7 @@ void sperr::CDF97::m_idwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t
 void sperr::CDF97::m_dwt1d_one_level(itd_type array, size_t array_len)
 {
   std::copy(array, array + array_len, m_qcc_buf.begin());
-#if __cplusplus >= 202002L
-  if (array_len % 2 == 0) [[likely]]  // Even length
-#else
-  if (array_len % 2 == 0)   // Even length
-#endif
-  {
+  if (array_len % 2 == 0) {
     this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf.data(), array_len);
     m_gather_even(m_qcc_buf.begin(), m_qcc_buf.begin() + array_len, array);
   }
@@ -323,12 +318,7 @@ void sperr::CDF97::m_dwt1d_one_level(itd_type array, size_t array_len)
 
 void sperr::CDF97::m_idwt1d_one_level(itd_type array, size_t array_len)
 {
-#if __cplusplus >= 202002L
-  if (array_len % 2 == 0) [[likely]]  // Even length
-#else
-  if (array_len % 2 == 0)   // Even length
-#endif
-  {
+  if (array_len % 2 == 0) {
     m_scatter_even(array, array + array_len, m_qcc_buf.begin());
     this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf.data(), array_len);
   }
@@ -349,12 +339,7 @@ void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_x
   const auto beg2 = beg + max_len;
 
   // First, perform DWT along X for every row
-#if __cplusplus >= 202002L
-  if (len_xy[0] % 2 == 0) [[likely]]  // Even Length
-#else
-  if (len_xy[0] % 2 == 0)   // Even Length
-#endif
-  {
+  if (len_xy[0] % 2 == 0) {
     for (size_t i = 0; i < len_xy[1]; i++) {
       auto pos = plane + i * m_dims[0];
       std::copy(pos, pos + len_xy[0], beg);
@@ -379,12 +364,7 @@ void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_x
   // on an X86 linux machine using gcc, clang, and pgi. Again the difference is
   // either indistinguishable, or the current implementation has a slight edge.
 
-#if __cplusplus >= 202002L
-  if (len_xy[1] % 2 == 0) [[likely]]  // Even length
-#else
-  if (len_xy[1] % 2 == 0)   // Even length
-#endif
-  {
+  if (len_xy[1] % 2 == 0) {
     for (size_t x = 0; x < len_xy[0]; x++) {
       for (size_t y = 0; y < len_xy[1]; y++)
         m_qcc_buf[y] = *(plane + y * m_dims[0] + x);
@@ -414,12 +394,7 @@ void sperr::CDF97::m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_
   const auto beg2 = beg + max_len;     // Second half of the buffer
 
   // First, perform IDWT along Y for every column
-#if __cplusplus >= 202002L
-  if (len_xy[1] % 2 == 0) [[likely]]  // Even length
-#else
-  if (len_xy[1] % 2 == 0)   // Even length
-#endif
-  {
+  if (len_xy[1] % 2 == 0) {
     for (size_t x = 0; x < len_xy[0]; x++) {
       for (size_t y = 0; y < len_xy[1]; y++)
         m_qcc_buf[y] = *(plane + y * m_dims[0] + x);
@@ -442,12 +417,7 @@ void sperr::CDF97::m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_
   }
 
   // Second, perform IDWT along X for every row
-#if __cplusplus >= 202002L
-  if (len_xy[0] % 2 == 0) [[likely]]  // Even length
-#else
-  if (len_xy[0] % 2 == 0)   // Even length
-#endif
-  {
+  if (len_xy[0] % 2 == 0) {
     for (size_t i = 0; i < len_xy[1]; i++) {
       auto pos = plane + i * m_dims[0];
       m_scatter_even(pos, pos + len_xy[0], beg);
@@ -484,12 +454,7 @@ void sperr::CDF97::m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz
   // 3) gather coefficients from `m_qcc_buf` to the second half of `m_qcc_buf`
   // 4) put the Z column back to their locations as a Z column.
 
-#if __cplusplus >= 202002L
-  if (len_xyz[2] % 2 == 0) [[likely]]  // Even length
-#else
-  if (len_xyz[2] % 2 == 0)  // Even length
-#endif
-  {
+  if (len_xyz[2] % 2 == 0) {  // Even length
     for (size_t y = 0; y < len_xyz[1]; y++) {
       for (size_t x = 0; x < len_xyz[0]; x++) {
         const size_t xy_offset = y * m_dims[0] + x;
@@ -506,8 +471,7 @@ void sperr::CDF97::m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz
       }
     }
   }
-  else  // Odd length
-  {
+  else {  // Odd length
     for (size_t y = 0; y < len_xyz[1]; y++) {
       for (size_t x = 0; x < len_xyz[0]; x++) {
         const size_t xy_offset = y * m_dims[0] + x;
@@ -538,12 +502,7 @@ void sperr::CDF97::m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xy
   // 3) use appropriate even/odd Qcc*** function to transform it
   // 4) put the Z column back to their locations as a Z column.
 
-#if __cplusplus >= 202002L
-  if (len_xyz[2] % 2 == 0) [[likely]]
-#else
-  if (len_xyz[2] % 2 == 0)
-#endif
-  {
+  if (len_xyz[2] % 2 == 0) {
     for (size_t y = 0; y < len_xyz[1]; y++) {
       for (size_t x = 0; x < len_xyz[0]; x++) {
         const size_t xy_offset = y * m_dims[0] + x;
@@ -560,8 +519,7 @@ void sperr::CDF97::m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xy
       }
     }
   }
-  else  // Odd length
-  {
+  else {
     for (size_t y = 0; y < len_xyz[1]; y++) {
       for (size_t x = 0; x < len_xyz[0]; x++) {
         const size_t xy_offset = y * m_dims[0] + x;
