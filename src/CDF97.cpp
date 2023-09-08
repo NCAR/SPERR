@@ -609,99 +609,106 @@ void sperr::CDF97::m_scatter_odd(citd_type begin, citd_type end, itd_type dest) 
 //
 void sperr::CDF97::QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length)
 {
-  for (size_t index = 1; index < signal_length - 2; index += 2)
-    signal[index] += ALPHA * (signal[index - 1] + signal[index + 1]);
+  for (size_t i = 1; i < signal_length - 2; i += 2)
+    signal[i] += ALPHA * (signal[i - 1] + signal[i + 1]);
+
   signal[signal_length - 1] += 2.0 * ALPHA * signal[signal_length - 2];
 
   signal[0] += 2.0 * BETA * signal[1];
-  for (size_t index = 2; index < signal_length; index += 2)
-    signal[index] += BETA * (signal[index + 1] + signal[index - 1]);
 
-  for (size_t index = 1; index < signal_length - 2; index += 2)
-    signal[index] += GAMMA * (signal[index - 1] + signal[index + 1]);
+  for (size_t i = 2; i < signal_length; i += 2)
+    signal[i] += BETA * (signal[i + 1] + signal[i - 1]);
+
+  for (size_t i = 1; i < signal_length - 2; i += 2)
+    signal[i] += GAMMA * (signal[i - 1] + signal[i + 1]);
+
   signal[signal_length - 1] += 2.0 * GAMMA * signal[signal_length - 2];
 
   signal[0] = EPSILON * (signal[0] + 2.0 * DELTA * signal[1]);
-  for (size_t index = 2; index < signal_length; index += 2)
-    signal[index] = EPSILON * (signal[index] + DELTA * (signal[index + 1] + signal[index - 1]));
 
-  for (size_t index = 1; index < signal_length; index += 2)
-    signal[index] *= -INV_EPSILON;
+  for (size_t i = 2; i < signal_length; i += 2)
+    signal[i] = EPSILON * (signal[i] + DELTA * (signal[i + 1] + signal[i - 1]));
+
+  for (size_t i = 1; i < signal_length; i += 2)
+    signal[i] *= -INV_EPSILON;
 }
 
 void sperr::CDF97::QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length)
 {
-  for (size_t index = 1; index < signal_length; index += 2)
-    signal[index] *= (-EPSILON);
+  for (size_t i = 1; i < signal_length; i += 2)
+    signal[i] *= (-EPSILON);
 
   signal[0] = signal[0] * INV_EPSILON - 2.0 * DELTA * signal[1];
 
-  for (size_t index = 2; index < signal_length; index += 2)
-    signal[index] = signal[index] * INV_EPSILON - DELTA * (signal[index + 1] + signal[index - 1]);
+  for (size_t i = 2; i < signal_length; i += 2)
+    signal[i] = signal[i] * INV_EPSILON - DELTA * (signal[i + 1] + signal[i - 1]);
 
-  for (size_t index = 1; index < signal_length - 2; index += 2)
-    signal[index] -= GAMMA * (signal[index - 1] + signal[index + 1]);
+  for (size_t i = 1; i < signal_length - 2; i += 2)
+    signal[i] -= GAMMA * (signal[i - 1] + signal[i + 1]);
+
   signal[signal_length - 1] -= 2.0 * GAMMA * signal[signal_length - 2];
 
   signal[0] -= 2.0 * BETA * signal[1];
-  for (size_t index = 2; index < signal_length; index += 2)
-    signal[index] -= BETA * (signal[index + 1] + signal[index - 1]);
 
-  for (size_t index = 1; index < signal_length - 2; index += 2)
-    signal[index] -= ALPHA * (signal[index - 1] + signal[index + 1]);
+  for (size_t i = 2; i < signal_length; i += 2)
+    signal[i] -= BETA * (signal[i + 1] + signal[i - 1]);
+
+  for (size_t i = 1; i < signal_length - 2; i += 2)
+    signal[i] -= ALPHA * (signal[i - 1] + signal[i + 1]);
+
   signal[signal_length - 1] -= 2.0 * ALPHA * signal[signal_length - 2];
 }
 
 void sperr::CDF97::QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length)
 {
-  for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] *= (-EPSILON);
+  for (size_t i = 1; i < signal_length - 1; i += 2)
+    signal[i] *= (-EPSILON);
 
   signal[0] = signal[0] * INV_EPSILON - 2.0 * DELTA * signal[1];
 
-  for (size_t index = 2; index < signal_length - 2; index += 2)
-    signal[index] = signal[index] * INV_EPSILON - DELTA * (signal[index + 1] + signal[index - 1]);
+  for (size_t i = 2; i < signal_length - 2; i += 2)
+    signal[i] = signal[i] * INV_EPSILON - DELTA * (signal[i + 1] + signal[i - 1]);
 
   signal[signal_length - 1] =
       signal[signal_length - 1] * INV_EPSILON - 2.0 * DELTA * signal[signal_length - 2];
 
-  for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] -= GAMMA * (signal[index - 1] + signal[index + 1]);
+  for (size_t i = 1; i < signal_length - 1; i += 2)
+    signal[i] -= GAMMA * (signal[i - 1] + signal[i + 1]);
 
   signal[0] -= 2.0 * BETA * signal[1];
 
-  for (size_t index = 2; index < signal_length - 2; index += 2)
-    signal[index] -= BETA * (signal[index + 1] + signal[index - 1]);
+  for (size_t i = 2; i < signal_length - 2; i += 2)
+    signal[i] -= BETA * (signal[i + 1] + signal[i - 1]);
 
   signal[signal_length - 1] -= 2.0 * BETA * signal[signal_length - 2];
 
-  for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] -= ALPHA * (signal[index - 1] + signal[index + 1]);
+  for (size_t i = 1; i < signal_length - 1; i += 2)
+    signal[i] -= ALPHA * (signal[i - 1] + signal[i + 1]);
 }
 
 void sperr::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length)
 {
-  for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] += ALPHA * (signal[index - 1] + signal[index + 1]);
+  for (size_t i = 1; i < signal_length - 1; i += 2)
+    signal[i] += ALPHA * (signal[i - 1] + signal[i + 1]);
 
   signal[0] += 2.0 * BETA * signal[1];
 
-  for (size_t index = 2; index < signal_length - 2; index += 2)
-    signal[index] += BETA * (signal[index + 1] + signal[index - 1]);
+  for (size_t i = 2; i < signal_length - 2; i += 2)
+    signal[i] += BETA * (signal[i + 1] + signal[i - 1]);
 
   signal[signal_length - 1] += 2.0 * BETA * signal[signal_length - 2];
 
-  for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] += GAMMA * (signal[index - 1] + signal[index + 1]);
+  for (size_t i = 1; i < signal_length - 1; i += 2)
+    signal[i] += GAMMA * (signal[i - 1] + signal[i + 1]);
 
   signal[0] = EPSILON * (signal[0] + 2.0 * DELTA * signal[1]);
 
-  for (size_t index = 2; index < signal_length - 2; index += 2)
-    signal[index] = EPSILON * (signal[index] + DELTA * (signal[index + 1] + signal[index - 1]));
+  for (size_t i = 2; i < signal_length - 2; i += 2)
+    signal[i] = EPSILON * (signal[i] + DELTA * (signal[i + 1] + signal[i - 1]));
 
   signal[signal_length - 1] =
       EPSILON * (signal[signal_length - 1] + 2.0 * DELTA * signal[signal_length - 2]);
 
-  for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] *= (-INV_EPSILON);
+  for (size_t i = 1; i < signal_length - 1; i += 2)
+    signal[i] *= (-INV_EPSILON);
 }
