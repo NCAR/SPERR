@@ -88,8 +88,7 @@ template <typename T>
 void sperr::SPECK2D_INT<T>::m_clean_LIS()
 {
   for (auto& list : m_LIS) {
-    auto it = std::remove_if(list.begin(), list.end(),
-                             [](auto& s) { return s.is_empty(); });
+    auto it = std::remove_if(list.begin(), list.end(), [](auto& s) { return s.is_empty(); });
     list.erase(it, list.end());
   }
 }
