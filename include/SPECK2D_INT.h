@@ -12,11 +12,11 @@ class Set2D {
   uint32_t length_x = 0;
   uint32_t length_y = 0;
   uint16_t part_level = 0;
-  SetType type = SetType::TypeS;
 
  public:
-  auto is_pixel() const -> bool;
-  auto is_empty() const -> bool;
+  auto is_pixel() const -> bool { return (size_t{length_x} * length_y == 1); };
+  auto is_empty() const -> bool { return (size_t{length_x} * length_y == 0); };
+  void make_empty() { length_x = 0; };
 };
 
 //
@@ -34,14 +34,6 @@ class SPECK2D_INT : public SPECK_INT<T> {
   using SPECK_INT<T>::m_coeff_buf;
   using SPECK_INT<T>::m_bit_buffer;
 
-  // The 2D case is different from 3D and 1D cases in that it doesn't implement the logic that
-  //    infers the significance of subsets by where the significant point is. I.e., the decide
-  //    set significance functions return only true/false, but not the index of the first
-  //    significant point. With this simplification, the m_process_S()/m_process_P()/m_process_I()
-  //    functions have the same signature, so they can be virtual, and m_sorting_pass()/m_code_S/
-  //    m_code_I() are really the same when encoding and decoding, so they can be implemented
-  //    here instead of in SPECK2D_INT_ENC/SPECK2D_INT_DEC.
-  //
   void m_sorting_pass() override;
   void m_code_S(size_t idx1, size_t idx2);
   void m_code_I();
@@ -59,7 +51,7 @@ class SPECK2D_INT : public SPECK_INT<T> {
   // SPECK2D_INT specific data members
   //
   std::vector<std::vector<Set2D>> m_LIS;
-  Set2D m_I = {0, 0, 0, 0, 0, SetType::TypeI};
+  Set2D m_I;
 };
 
 };  // namespace sperr

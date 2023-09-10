@@ -30,7 +30,7 @@ class SPECK2D_INT_ENC : public SPECK2D_INT<T> {
   void m_process_P(size_t idx, size_t& counter, bool need_decide) override;
   void m_process_I(bool need_decide) override;
 
-  auto m_decide_S_significance(Set2D) const -> bool;
+  auto m_decide_S_significance(const Set2D&) const -> bool;
   auto m_decide_I_significance() const -> bool;
 };
 

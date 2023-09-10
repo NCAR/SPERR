@@ -403,7 +403,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
   //    value at the middle of the interval specified by `m_threshold`. Note that given the integer
   //    nature of these coefficients, there are actually two values equally "in the middle."
   //    For example, with `m_threshold == 4`, the interval is [4, 8), and both 5 and 6 are "in the
-  //    middle." I choose the smaller one (5 in this example) here. My experiments show that 
+  //    middle." I choose the smaller one (5 in this example) here. My experiments show that
   //    choosing the smaller value rather than the bigger one does not hurt, and sometimes bring a
   //    little extra PSNR gain (<0.5). Also note that the formula calculating `init_val`
   //    makes sure that when `m_threshold == 1`, significant points are initialized as 1.

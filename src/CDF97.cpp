@@ -91,48 +91,28 @@ void sperr::CDF97::idwt2d()
 
 void sperr::CDF97::dwt3d()
 {
-  // Strategy to choose "dyadic" or "wavelet packet" 3D transform:
-  // 1) IF all 3 axes have 5 or more levels of transforms, THEN use dyadic;
-  // 2) ELSE IF XY and Z have different levels, THEN use wavelet packets;
-  // 3) ELSE use dyadic.
-  //
-  // clang-format off
-  const auto num_xforms = std::array<size_t, 3>{sperr::num_of_xforms(m_dims[0]),
-                                                sperr::num_of_xforms(m_dims[1]),
-                                                sperr::num_of_xforms(m_dims[2])};
-  // clang-format on
+  auto num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  auto num_xforms_z = sperr::num_of_xforms(m_dims[2]);
 
   // Note: if some dimensions can do 5 levels of transforms and some can do 6, we use
   //       dyanic scheme and do 5 levels on all of them. I.e., the benefit of dyanic
   //       transforms exceeds one extra level of transform.
-  if (num_xforms[0] >= 5 && num_xforms[1] >= 5 && num_xforms[2] >= 5) {
+  //
+  if ((num_xforms_xy == num_xforms_z) || (num_xforms_xy >= 5 && num_xforms_xy >= 5))
     m_dwt3d_dyadic();
-  }
-  else if (std::min(num_xforms[0], num_xforms[1]) != num_xforms[2]) {
+  else
     m_dwt3d_wavelet_packet();
-  }
-  else {
-    m_dwt3d_dyadic();
-  }
 }
 
 void sperr::CDF97::idwt3d()
 {
-  // clang-format off
-  const auto num_xforms = std::array<size_t, 3>{sperr::num_of_xforms(m_dims[0]),
-                                                sperr::num_of_xforms(m_dims[1]),
-                                                sperr::num_of_xforms(m_dims[2])};
-  // clang-format on
+  auto num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  auto num_xforms_z = sperr::num_of_xforms(m_dims[2]);
 
-  if (num_xforms[0] >= 5 && num_xforms[1] >= 5 && num_xforms[2] >= 5) {
+  if ((num_xforms_xy == num_xforms_z) || (num_xforms_xy >= 5 && num_xforms_xy >= 5))
     m_idwt3d_dyadic();
-  }
-  else if (std::min(num_xforms[0], num_xforms[1]) != num_xforms[2]) {
+  else
     m_idwt3d_wavelet_packet();
-  }
-  else {
-    m_idwt3d_dyadic();
-  }
 }
 
 void sperr::CDF97::m_dwt3d_wavelet_packet()
@@ -326,12 +306,7 @@ void sperr::CDF97::m_idwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t
 void sperr::CDF97::m_dwt1d_one_level(itd_type array, size_t array_len)
 {
   std::copy(array, array + array_len, m_qcc_buf.begin());
-#if __cplusplus >= 202002L
-  if (array_len % 2 == 0) [[likely]]  // Even length
-#else
-  if (array_len % 2 == 0)   // Even length
-#endif
-  {
+  if (array_len % 2 == 0) {
     this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf.data(), array_len);
     m_gather_even(m_qcc_buf.begin(), m_qcc_buf.begin() + array_len, array);
   }
@@ -343,12 +318,7 @@ void sperr::CDF97::m_dwt1d_one_level(itd_type array, size_t array_len)
 
 void sperr::CDF97::m_idwt1d_one_level(itd_type array, size_t array_len)
 {
-#if __cplusplus >= 202002L
-  if (array_len % 2 == 0) [[likely]]  // Even length
-#else
-  if (array_len % 2 == 0)   // Even length
-#endif
-  {
+  if (array_len % 2 == 0) {
     m_scatter_even(array, array + array_len, m_qcc_buf.begin());
     this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf.data(), array_len);
   }
@@ -362,20 +332,14 @@ void sperr::CDF97::m_idwt1d_one_level(itd_type array, size_t array_len)
 void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_xy)
 {
   // Note: here we call low-level functions (Qcc*()) instead of
-  // m_dwt1d_one_level() because we want to have only one even/odd test outside of
-  // the loop.
+  // m_dwt1d_one_level() because we want to have only one even/odd test at the outer loop.
 
   const size_t max_len = std::max(len_xy[0], len_xy[1]);
   const auto beg = m_qcc_buf.begin();
   const auto beg2 = beg + max_len;
 
   // First, perform DWT along X for every row
-#if __cplusplus >= 202002L
-  if (len_xy[0] % 2 == 0) [[likely]]  // Even Length
-#else
-  if (len_xy[0] % 2 == 0)   // Even Length
-#endif
-  {
+  if (len_xy[0] % 2 == 0) {
     for (size_t i = 0; i < len_xy[1]; i++) {
       auto pos = plane + i * m_dims[0];
       std::copy(pos, pos + len_xy[0], beg);
@@ -400,12 +364,7 @@ void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_x
   // on an X86 linux machine using gcc, clang, and pgi. Again the difference is
   // either indistinguishable, or the current implementation has a slight edge.
 
-#if __cplusplus >= 202002L
-  if (len_xy[1] % 2 == 0) [[likely]]  // Even length
-#else
-  if (len_xy[1] % 2 == 0)   // Even length
-#endif
-  {
+  if (len_xy[1] % 2 == 0) {
     for (size_t x = 0; x < len_xy[0]; x++) {
       for (size_t y = 0; y < len_xy[1]; y++)
         m_qcc_buf[y] = *(plane + y * m_dims[0] + x);
@@ -435,12 +394,7 @@ void sperr::CDF97::m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_
   const auto beg2 = beg + max_len;     // Second half of the buffer
 
   // First, perform IDWT along Y for every column
-#if __cplusplus >= 202002L
-  if (len_xy[1] % 2 == 0) [[likely]]  // Even length
-#else
-  if (len_xy[1] % 2 == 0)   // Even length
-#endif
-  {
+  if (len_xy[1] % 2 == 0) {
     for (size_t x = 0; x < len_xy[0]; x++) {
       for (size_t y = 0; y < len_xy[1]; y++)
         m_qcc_buf[y] = *(plane + y * m_dims[0] + x);
@@ -463,12 +417,7 @@ void sperr::CDF97::m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_
   }
 
   // Second, perform IDWT along X for every row
-#if __cplusplus >= 202002L
-  if (len_xy[0] % 2 == 0) [[likely]]  // Even length
-#else
-  if (len_xy[0] % 2 == 0)   // Even length
-#endif
-  {
+  if (len_xy[0] % 2 == 0) {
     for (size_t i = 0; i < len_xy[1]; i++) {
       auto pos = plane + i * m_dims[0];
       m_scatter_even(pos, pos + len_xy[0], beg);
@@ -505,12 +454,7 @@ void sperr::CDF97::m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz
   // 3) gather coefficients from `m_qcc_buf` to the second half of `m_qcc_buf`
   // 4) put the Z column back to their locations as a Z column.
 
-#if __cplusplus >= 202002L
-  if (len_xyz[2] % 2 == 0) [[likely]]  // Even length
-#else
-  if (len_xyz[2] % 2 == 0)  // Even length
-#endif
-  {
+  if (len_xyz[2] % 2 == 0) {  // Even length
     for (size_t y = 0; y < len_xyz[1]; y++) {
       for (size_t x = 0; x < len_xyz[0]; x++) {
         const size_t xy_offset = y * m_dims[0] + x;
@@ -527,8 +471,7 @@ void sperr::CDF97::m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz
       }
     }
   }
-  else  // Odd length
-  {
+  else {  // Odd length
     for (size_t y = 0; y < len_xyz[1]; y++) {
       for (size_t x = 0; x < len_xyz[0]; x++) {
         const size_t xy_offset = y * m_dims[0] + x;
@@ -559,12 +502,7 @@ void sperr::CDF97::m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xy
   // 3) use appropriate even/odd Qcc*** function to transform it
   // 4) put the Z column back to their locations as a Z column.
 
-#if __cplusplus >= 202002L
-  if (len_xyz[2] % 2 == 0) [[likely]]
-#else
-  if (len_xyz[2] % 2 == 0)
-#endif
-  {
+  if (len_xyz[2] % 2 == 0) {
     for (size_t y = 0; y < len_xyz[1]; y++) {
       for (size_t x = 0; x < len_xyz[0]; x++) {
         const size_t xy_offset = y * m_dims[0] + x;
@@ -581,8 +519,7 @@ void sperr::CDF97::m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xy
       }
     }
   }
-  else  // Odd length
-  {
+  else {
     for (size_t y = 0; y < len_xyz[1]; y++) {
       for (size_t x = 0; x < len_xyz[0]; x++) {
         const size_t xy_offset = y * m_dims[0] + x;
@@ -672,99 +609,106 @@ void sperr::CDF97::m_scatter_odd(citd_type begin, citd_type end, itd_type dest) 
 //
 void sperr::CDF97::QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length)
 {
-  for (size_t index = 1; index < signal_length - 2; index += 2)
-    signal[index] += ALPHA * (signal[index - 1] + signal[index + 1]);
+  for (size_t i = 1; i < signal_length - 2; i += 2)
+    signal[i] += ALPHA * (signal[i - 1] + signal[i + 1]);
+
   signal[signal_length - 1] += 2.0 * ALPHA * signal[signal_length - 2];
 
   signal[0] += 2.0 * BETA * signal[1];
-  for (size_t index = 2; index < signal_length; index += 2)
-    signal[index] += BETA * (signal[index + 1] + signal[index - 1]);
 
-  for (size_t index = 1; index < signal_length - 2; index += 2)
-    signal[index] += GAMMA * (signal[index - 1] + signal[index + 1]);
+  for (size_t i = 2; i < signal_length; i += 2)
+    signal[i] += BETA * (signal[i + 1] + signal[i - 1]);
+
+  for (size_t i = 1; i < signal_length - 2; i += 2)
+    signal[i] += GAMMA * (signal[i - 1] + signal[i + 1]);
+
   signal[signal_length - 1] += 2.0 * GAMMA * signal[signal_length - 2];
 
   signal[0] = EPSILON * (signal[0] + 2.0 * DELTA * signal[1]);
-  for (size_t index = 2; index < signal_length; index += 2)
-    signal[index] = EPSILON * (signal[index] + DELTA * (signal[index + 1] + signal[index - 1]));
 
-  for (size_t index = 1; index < signal_length; index += 2)
-    signal[index] *= -INV_EPSILON;
+  for (size_t i = 2; i < signal_length; i += 2)
+    signal[i] = EPSILON * (signal[i] + DELTA * (signal[i + 1] + signal[i - 1]));
+
+  for (size_t i = 1; i < signal_length; i += 2)
+    signal[i] *= -INV_EPSILON;
 }
 
 void sperr::CDF97::QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length)
 {
-  for (size_t index = 1; index < signal_length; index += 2)
-    signal[index] *= (-EPSILON);
+  for (size_t i = 1; i < signal_length; i += 2)
+    signal[i] *= (-EPSILON);
 
   signal[0] = signal[0] * INV_EPSILON - 2.0 * DELTA * signal[1];
 
-  for (size_t index = 2; index < signal_length; index += 2)
-    signal[index] = signal[index] * INV_EPSILON - DELTA * (signal[index + 1] + signal[index - 1]);
+  for (size_t i = 2; i < signal_length; i += 2)
+    signal[i] = signal[i] * INV_EPSILON - DELTA * (signal[i + 1] + signal[i - 1]);
 
-  for (size_t index = 1; index < signal_length - 2; index += 2)
-    signal[index] -= GAMMA * (signal[index - 1] + signal[index + 1]);
+  for (size_t i = 1; i < signal_length - 2; i += 2)
+    signal[i] -= GAMMA * (signal[i - 1] + signal[i + 1]);
+
   signal[signal_length - 1] -= 2.0 * GAMMA * signal[signal_length - 2];
 
   signal[0] -= 2.0 * BETA * signal[1];
-  for (size_t index = 2; index < signal_length; index += 2)
-    signal[index] -= BETA * (signal[index + 1] + signal[index - 1]);
 
-  for (size_t index = 1; index < signal_length - 2; index += 2)
-    signal[index] -= ALPHA * (signal[index - 1] + signal[index + 1]);
+  for (size_t i = 2; i < signal_length; i += 2)
+    signal[i] -= BETA * (signal[i + 1] + signal[i - 1]);
+
+  for (size_t i = 1; i < signal_length - 2; i += 2)
+    signal[i] -= ALPHA * (signal[i - 1] + signal[i + 1]);
+
   signal[signal_length - 1] -= 2.0 * ALPHA * signal[signal_length - 2];
 }
 
 void sperr::CDF97::QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length)
 {
-  for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] *= (-EPSILON);
+  for (size_t i = 1; i < signal_length - 1; i += 2)
+    signal[i] *= (-EPSILON);
 
   signal[0] = signal[0] * INV_EPSILON - 2.0 * DELTA * signal[1];
 
-  for (size_t index = 2; index < signal_length - 2; index += 2)
-    signal[index] = signal[index] * INV_EPSILON - DELTA * (signal[index + 1] + signal[index - 1]);
+  for (size_t i = 2; i < signal_length - 2; i += 2)
+    signal[i] = signal[i] * INV_EPSILON - DELTA * (signal[i + 1] + signal[i - 1]);
 
   signal[signal_length - 1] =
       signal[signal_length - 1] * INV_EPSILON - 2.0 * DELTA * signal[signal_length - 2];
 
-  for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] -= GAMMA * (signal[index - 1] + signal[index + 1]);
+  for (size_t i = 1; i < signal_length - 1; i += 2)
+    signal[i] -= GAMMA * (signal[i - 1] + signal[i + 1]);
 
   signal[0] -= 2.0 * BETA * signal[1];
 
-  for (size_t index = 2; index < signal_length - 2; index += 2)
-    signal[index] -= BETA * (signal[index + 1] + signal[index - 1]);
+  for (size_t i = 2; i < signal_length - 2; i += 2)
+    signal[i] -= BETA * (signal[i + 1] + signal[i - 1]);
 
   signal[signal_length - 1] -= 2.0 * BETA * signal[signal_length - 2];
 
-  for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] -= ALPHA * (signal[index - 1] + signal[index + 1]);
+  for (size_t i = 1; i < signal_length - 1; i += 2)
+    signal[i] -= ALPHA * (signal[i - 1] + signal[i + 1]);
 }
 
 void sperr::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length)
 {
-  for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] += ALPHA * (signal[index - 1] + signal[index + 1]);
+  for (size_t i = 1; i < signal_length - 1; i += 2)
+    signal[i] += ALPHA * (signal[i - 1] + signal[i + 1]);
 
   signal[0] += 2.0 * BETA * signal[1];
 
-  for (size_t index = 2; index < signal_length - 2; index += 2)
-    signal[index] += BETA * (signal[index + 1] + signal[index - 1]);
+  for (size_t i = 2; i < signal_length - 2; i += 2)
+    signal[i] += BETA * (signal[i + 1] + signal[i - 1]);
 
   signal[signal_length - 1] += 2.0 * BETA * signal[signal_length - 2];
 
-  for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] += GAMMA * (signal[index - 1] + signal[index + 1]);
+  for (size_t i = 1; i < signal_length - 1; i += 2)
+    signal[i] += GAMMA * (signal[i - 1] + signal[i + 1]);
 
   signal[0] = EPSILON * (signal[0] + 2.0 * DELTA * signal[1]);
 
-  for (size_t index = 2; index < signal_length - 2; index += 2)
-    signal[index] = EPSILON * (signal[index] + DELTA * (signal[index + 1] + signal[index - 1]));
+  for (size_t i = 2; i < signal_length - 2; i += 2)
+    signal[i] = EPSILON * (signal[i] + DELTA * (signal[i + 1] + signal[i - 1]));
 
   signal[signal_length - 1] =
       EPSILON * (signal[signal_length - 1] + 2.0 * DELTA * signal[signal_length - 2]);
 
-  for (size_t index = 1; index < signal_length - 1; index += 2)
-    signal[index] *= (-INV_EPSILON);
+  for (size_t i = 1; i < signal_length - 1; i += 2)
+    signal[i] *= (-INV_EPSILON);
 }

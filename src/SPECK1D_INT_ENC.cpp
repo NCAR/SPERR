@@ -67,7 +67,7 @@ void sperr::SPECK1D_INT_ENC<T>::m_process_S(size_t idx1,
     auto set_sig = m_decide_significance(set);
     sig = set_sig ? SigType::Sig : SigType::Insig;
     if (set_sig) {
-      if (*set_sig < set.length - set.length / 2)
+      if (*set_sig < set.get_length() - set.get_length() / 2)
         subset_sigs = {SigType::Sig, SigType::Dunno};
       else
         subset_sigs = {SigType::Insig, SigType::Sig};
@@ -80,7 +80,7 @@ void sperr::SPECK1D_INT_ENC<T>::m_process_S(size_t idx1,
   if (sig == SigType::Sig) {
     counter++;  // Let's increment the counter first!
     m_code_S(idx1, idx2, subset_sigs);
-    set.type = SetType::Garbage;  // this current set is gonna be discarded.
+    set.set_length(0);  // this current set is gonna be discarded.
   }
 }
 
@@ -120,13 +120,13 @@ void sperr::SPECK1D_INT_ENC<T>::m_code_S(size_t idx1,
 
   // Process the 1st subset
   const auto& set0 = subsets[0];
-  assert(set0.length != 0);
-  if (set0.length == 1) {
-    m_LIP_mask.write_true(set0.start);
-    m_process_P(set0.start, subset_sigs[0], sig_counter, output);
+  assert(set0.get_length() != 0);
+  if (set0.get_length() == 1) {
+    m_LIP_mask.write_true(set0.get_start());
+    m_process_P(set0.get_start(), subset_sigs[0], sig_counter, output);
   }
   else {
-    const auto newidx1 = set0.part_level;
+    const auto newidx1 = set0.get_level();
     m_LIS[newidx1].emplace_back(set0);
     const auto newidx2 = m_LIS[newidx1].size() - 1;
     m_process_S(newidx1, newidx2, subset_sigs[0], sig_counter, output);
@@ -138,13 +138,13 @@ void sperr::SPECK1D_INT_ENC<T>::m_code_S(size_t idx1,
     subset_sigs[1] = SigType::Sig;
   }
   const auto& set1 = subsets[1];
-  assert(set1.length != 0);
-  if (set1.length == 1) {
-    m_LIP_mask.write_true(set1.start);
-    m_process_P(set1.start, subset_sigs[1], sig_counter, output);
+  assert(set1.get_length() != 0);
+  if (set1.get_length() == 1) {
+    m_LIP_mask.write_true(set1.get_start());
+    m_process_P(set1.get_start(), subset_sigs[1], sig_counter, output);
   }
   else {
-    const auto newidx1 = set1.part_level;
+    const auto newidx1 = set1.get_level();
     m_LIS[newidx1].emplace_back(set1);
     const auto newidx2 = m_LIS[newidx1].size() - 1;
     m_process_S(newidx1, newidx2, subset_sigs[1], sig_counter, output);
@@ -155,13 +155,13 @@ template <typename T>
 auto sperr::SPECK1D_INT_ENC<T>::m_decide_significance(const Set1D& set) const
     -> std::optional<size_t>
 {
-  assert(set.length != 0);
+  assert(set.get_length() != 0);
   auto result = std::optional<size_t>();
 
   const auto gtr = [thld = m_threshold](auto v) { return v >= thld; };
 
-  auto first = m_coeff_buf.cbegin() + set.start;
-  auto last = first + set.length;
+  auto first = m_coeff_buf.cbegin() + set.get_start();
+  auto last = first + set.get_length();
   auto found = std::find_if(first, last, gtr);
   if (found != last)
     result = static_cast<size_t>(std::distance(first, found));

@@ -3,16 +3,6 @@
 #include <algorithm>
 #include <cassert>
 
-auto sperr::Set2D::is_pixel() const -> bool
-{
-  return (length_x == 1 && length_y == 1);
-}
-
-auto sperr::Set2D::is_empty() const -> bool
-{
-  return (length_x == 0 || length_y == 0);
-}
-
 template <typename T>
 void sperr::SPECK2D_INT<T>::m_sorting_pass()
 {
@@ -98,8 +88,7 @@ template <typename T>
 void sperr::SPECK2D_INT<T>::m_clean_LIS()
 {
   for (auto& list : m_LIS) {
-    auto it = std::remove_if(list.begin(), list.end(),
-                             [](auto& s) { return s.type == SetType::Garbage; });
+    auto it = std::remove_if(list.begin(), list.end(), [](auto& s) { return s.is_empty(); });
     list.erase(it, list.end());
   }
 }
@@ -123,7 +112,6 @@ auto sperr::SPECK2D_INT<T>::m_partition_S(Set2D set) const -> std::array<Set2D, 
   BR.part_level = set.part_level + 1;
 
   auto& BL = subsets[1];  // Bottom left set
-  BL.part_level = set.part_level + 1;
   BL.start_x = set.start_x;
   BL.start_y = set.start_y + approx_len_y;
   BL.length_x = approx_len_x;
@@ -131,7 +119,6 @@ auto sperr::SPECK2D_INT<T>::m_partition_S(Set2D set) const -> std::array<Set2D, 
   BL.part_level = set.part_level + 1;
 
   auto& TR = subsets[2];  // Top right set
-  TR.part_level = set.part_level + 1;
   TR.start_x = set.start_x + approx_len_x;
   TR.start_y = set.start_y;
   TR.length_x = detail_len_x;
@@ -139,7 +126,6 @@ auto sperr::SPECK2D_INT<T>::m_partition_S(Set2D set) const -> std::array<Set2D, 
   TR.part_level = set.part_level + 1;
 
   auto& TL = subsets[3];  // Top left set
-  TL.part_level = set.part_level + 1;
   TL.start_x = set.start_x;
   TL.start_y = set.start_y;
   TL.length_x = approx_len_x;
@@ -207,7 +193,7 @@ void sperr::SPECK2D_INT<T>::m_initialize_lists()
   auto num_of_xforms = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
   auto [approx_x, detail_x] = sperr::calc_approx_detail_len(m_dims[0], num_of_xforms);
   auto [approx_y, detail_y] = sperr::calc_approx_detail_len(m_dims[1], num_of_xforms);
-  auto root = Set2D{0, 0, 0, 0, 0, SetType::TypeS};
+  auto root = Set2D();
   root.length_x = approx_x;
   root.length_y = approx_y;
   root.part_level = num_of_xforms;
