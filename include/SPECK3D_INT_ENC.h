@@ -34,7 +34,8 @@ class SPECK3D_INT_ENC : public SPECK3D_INT<T> {
   using SPECK3D_INT<T>::m_code_S;
 
   void m_process_S(size_t idx1, size_t idx2, size_t& counter, bool output) override;
-  void m_process_P(size_t idx, size_t& counter, bool output) override;
+  void m_process_P(size_t idx, size_t morton, size_t& counter, bool output) override;
+  void m_process_P_lite(size_t idx) override;
   void m_additional_initialization() override;
 
   // Data structures and functions for morton data layout.

@@ -36,8 +36,7 @@ class Set3D {
     return tmp;
   }
   void set_morton(uint64_t val) { std::memcpy(m_morton.data(), &val, sizeof(m_morton)); }
-  auto is_empty() const -> bool { return (length_z == 0 || length_y == 0 || length_x == 0); }
-  void make_empty() { length_z = 0; }
+  void make_empty() { length_x = 0; }
   auto num_elem() const -> size_t { return (size_t{length_x} * length_y * length_z); }
 };
 
@@ -61,7 +60,8 @@ class SPECK3D_INT : public SPECK_INT<T> {
   void m_clean_LIS() override;
 
   virtual void m_process_S(size_t idx1, size_t idx2, size_t& counter, bool) = 0;
-  virtual void m_process_P(size_t idx, size_t& counter, bool) = 0;
+  virtual void m_process_P(size_t i, size_t m, size_t& c, bool) = 0;  // Called by `m_code_S()`.
+  virtual void m_process_P_lite(size_t idx) = 0;  // Called by `m_sorting_pass()` directly.
   virtual void m_additional_initialization() = 0;
 
   void m_code_S(size_t idx1, size_t idx2);

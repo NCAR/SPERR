@@ -9,7 +9,7 @@ template <typename T>
 void sperr::SPECK3D_INT<T>::m_clean_LIS()
 {
   for (auto& list : m_LIS) {
-    auto it = std::remove_if(list.begin(), list.end(), [](const auto& s) { return s.is_empty(); });
+    auto it = std::remove_if(list.begin(), list.end(), [](const auto& s) { return s.num_elem() == 0; });
     list.erase(it, list.end());
   }
 }
@@ -109,7 +109,7 @@ void sperr::SPECK3D_INT<T>::m_sorting_pass()
       for (size_t j = 0; j < 64; j++) {
         if ((value >> j) & uint64_t{1}) {
           size_t dummy = 0;
-          m_process_P(i + j, dummy, true);
+          m_process_P_lite(i + j);
         }
       }
     }
@@ -117,7 +117,7 @@ void sperr::SPECK3D_INT<T>::m_sorting_pass()
   for (auto i = bits_x64; i < m_LIP_mask.size(); i++) {
     if (m_LIP_mask.read_bit(i)) {
       size_t dummy = 0;
-      m_process_P(i, dummy, true);
+      m_process_P_lite(i);
     }
   }
 
@@ -139,7 +139,7 @@ void sperr::SPECK3D_INT<T>::m_code_S(size_t idx1, size_t idx2)
 
   // Since some subsets could be empty, let's put empty sets at the end.
   const auto set_end =
-      std::remove_if(subsets.begin(), subsets.end(), [](auto& s) { return s.is_empty(); });
+      std::remove_if(subsets.begin(), subsets.end(), [](auto& s) { return s.num_elem() == 0; });
   const auto set_end_m1 = set_end - 1;
 
   size_t sig_counter = 0;
@@ -153,7 +153,7 @@ void sperr::SPECK3D_INT<T>::m_code_S(size_t idx1, size_t idx2)
     if (it->num_elem() == 1) {
       auto idx = it->start_z * m_dims[0] * m_dims[1] + it->start_y * m_dims[0] + it->start_x;
       m_LIP_mask.write_true(idx);
-      m_process_P(idx, sig_counter, need_decide);
+      m_process_P(idx, it->get_morton(), sig_counter, need_decide);
     }
     else {
       m_LIS[next_lev].emplace_back(*it);

@@ -85,17 +85,34 @@ void sperr::SPECK3D_INT_ENC<T>::m_process_S(size_t idx1, size_t idx2, size_t& co
 }
 
 template <typename T>
-void sperr::SPECK3D_INT_ENC<T>::m_process_P(size_t idx, size_t& counter, bool output)
+void sperr::SPECK3D_INT_ENC<T>::m_process_P(size_t idx, size_t morton, size_t& counter, bool output)
 {
   bool is_sig = true;
 
   if (output) {
-    is_sig = (m_coeff_buf[idx] >= m_threshold);
+    assert(m_coeff_buf[idx] == m_morton_buf[morton]);
+    is_sig = (m_morton_buf[morton] >= m_threshold);
     m_bit_buffer.wbit(is_sig);
   }
 
   if (is_sig) {
     counter++;  // Let's increment the counter first!
+    assert(m_coeff_buf[idx] >= m_threshold);
+    m_coeff_buf[idx] -= m_threshold;
+
+    m_bit_buffer.wbit(m_sign_array[idx]);
+    m_LSP_new.push_back(idx);
+    m_LIP_mask.write_false(idx);
+  }
+}
+
+template <typename T>
+void sperr::SPECK3D_INT_ENC<T>::m_process_P_lite(size_t idx)
+{
+  auto is_sig = (m_coeff_buf[idx] >= m_threshold);
+  m_bit_buffer.wbit(is_sig);
+
+  if (is_sig) {
     assert(m_coeff_buf[idx] >= m_threshold);
     m_coeff_buf[idx] -= m_threshold;
 
