@@ -28,13 +28,13 @@ class Conditioner {
   const size_t m_constant_field_idx = 7;
   const size_t m_default_num_strides = 2048;
 
+  // Calculation is carried out by strides, which should be a divisor of the input data size.
+  size_t m_num_strides = m_default_num_strides;
+
   vecd_type m_stride_buf;
 
   // Buffers passed in here are guaranteed to have correct lengths and conditions.
   auto m_calc_mean(const vecd_type& buf) -> double;
-
-  // Calculation is carried out by strides, which should be a divisor of the input data size.
-  size_t m_num_strides = m_default_num_strides;
 
   // Adjust the value of `m_num_strides` so it'll be a divisor of `len`.
   void m_adjust_strides(size_t len);

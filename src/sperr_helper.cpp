@@ -47,8 +47,7 @@ auto sperr::calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<si
 
 // Good solution to deal with bools and unsigned chars
 // https://stackoverflow.com/questions/8461126/how-to-create-a-byte-out-of-8-bool-values-and-vice-versa
-auto sperr::pack_booleans(std::vector<uint8_t>& dest, const std::vector<bool>& src, size_t offset)
-    -> RTNType
+auto sperr::pack_booleans(vec8_type& dest, const std::vector<bool>& src, size_t offset) -> RTNType
 {
   // `src` has to have a size of multiples of 8.
   if (src.size() % 8 != 0)
@@ -165,7 +164,7 @@ auto sperr::pack_8_booleans(std::array<bool, 8> src) -> uint8_t
   // It turns out that C++ doesn't specify bool to be one byte,
   // so to be safe we copy the content of src to array of uint8_t.
   auto bytes = std::array<uint8_t, 8>();
-  std::copy(src.begin(), src.end(), bytes.begin());
+  std::copy(src.cbegin(), src.cend(), bytes.begin());
   const uint64_t magic = 0x8040201008040201;
   uint64_t t = 0;
   std::memcpy(&t, bytes.data(), 8);
@@ -183,13 +182,13 @@ auto sperr::unpack_8_booleans(uint8_t src) -> std::array<bool, 8>
   auto bytes = std::array<uint8_t, 8>();
   std::memcpy(bytes.data(), &t, 8);
   auto b8 = std::array<bool, 8>();
-  std::copy(bytes.begin(), bytes.end(), b8.begin());
+  std::copy(bytes.cbegin(), bytes.cend(), b8.begin());
   return b8;
 }
 
-auto sperr::read_n_bytes(std::string filename, size_t n_bytes) -> std::vector<uint8_t>
+auto sperr::read_n_bytes(std::string filename, size_t n_bytes) -> vec8_type
 {
-  auto buf = std::vector<uint8_t>();
+  auto buf = vec8_type();
 
   std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename.data(), "rb"),
                                                         &std::fclose);
@@ -210,9 +209,9 @@ auto sperr::read_n_bytes(std::string filename, size_t n_bytes) -> std::vector<ui
 }
 
 template <typename T>
-auto sperr::read_whole_file(std::string filename) -> std::vector<T>
+auto sperr::read_whole_file(std::string filename) -> vec_type<T>
 {
-  std::vector<T> buf;
+  vec_type<T> buf;
 
   std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename.data(), "rb"),
                                                         &std::fclose);
@@ -231,9 +230,9 @@ auto sperr::read_whole_file(std::string filename) -> std::vector<T>
 
   return buf;
 }
-template auto sperr::read_whole_file(std::string) -> std::vector<float>;
-template auto sperr::read_whole_file(std::string) -> std::vector<double>;
-template auto sperr::read_whole_file(std::string) -> std::vector<uint8_t>;
+template auto sperr::read_whole_file(std::string) -> vecf_type;
+template auto sperr::read_whole_file(std::string) -> vecd_type;
+template auto sperr::read_whole_file(std::string) -> vec8_type;
 
 auto sperr::write_n_bytes(std::string filename, size_t n_bytes, const void* buffer) -> RTNType
 {
@@ -322,8 +321,8 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
     return {rmse, linfty, psnr, arr1min, arr1max};
   }
 
-  auto sum_vec = std::vector<T>(num_of_strides + 1);
-  auto linfty_vec = std::vector<T>(num_of_strides + 1);
+  auto sum_vec = vec_type<T>(num_of_strides + 1);
+  auto linfty_vec = vec_type<T>(num_of_strides + 1);
 
 //
 // Calculate diff summation and l-infty of each stride
@@ -361,7 +360,7 @@ auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_
   //
   // Now calculate linfty
   //
-  linfty = *(std::max_element(linfty_vec.begin(), linfty_vec.end()));
+  linfty = *(std::max_element(linfty_vec.cbegin(), linfty_vec.cend()));
 
   //
   // Now calculate rmse and psnr
@@ -521,7 +520,7 @@ auto sperr::calc_mean_var(const T* arr, size_t len, size_t omp_nthreads) -> std:
 
   const size_t stride_size = 16'384;
   const size_t num_strides = len / stride_size;
-  auto tmp_buf = std::vector<T>(num_strides + 1);
+  auto tmp_buf = vec_type<T>(num_strides + 1);
 
   // First, calculate the mean of this array.
 #pragma omp parallel for num_threads(omp_nthreads)

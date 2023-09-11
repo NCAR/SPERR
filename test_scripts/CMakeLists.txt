@@ -1,6 +1,13 @@
 add_executable(        sperr_helper sperr_helper_unit_test.cpp )
 target_link_libraries( sperr_helper PUBLIC SPERR gtest_main )
+add_executable(        sperr_helper sperr_helper_unit_test.cpp )
+target_link_libraries( sperr_helper PUBLIC SPERR gtest_main )
 
+add_executable(        bitstream bitstream_unit_test.cpp )
+target_link_libraries( bitstream PUBLIC SPERR gtest_main )
+
+add_executable(        dwt dwt_unit_test.cpp )
+target_link_libraries( dwt PUBLIC SPERR gtest_main )
 add_executable(        bitstream bitstream_unit_test.cpp )
 target_link_libraries( bitstream PUBLIC SPERR gtest_main )
 

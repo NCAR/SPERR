@@ -51,10 +51,7 @@ enum class RTNType {
   BitBudgetMet,
   VersionMismatch,
   SliceVolumeMismatch,
-  SetBPPBeforeDims,
   CompModeUnknown,
-  CustomFilterMissing,
-  CustomFilterError,
   FE_Invalid,  // floating point exception: FE_INVALID
   Error
 };

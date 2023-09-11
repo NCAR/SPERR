@@ -39,10 +39,10 @@ mark_as_advanced(FORCE SPERR_PREFER_RPATH)
 
 if(USE_OMP)
   find_package(OpenMP REQUIRED)
-  if( OpenMP_CXX_FOUND AND OpenMP_CXX_FLAGS )
-      message(STATUS "OpenMP found! (${OpenMP_CXX_LIB_NAMES} ${OpenMP_CXX_VERSION}: ${OpenMP_CXX_FLAGS})")
+  if (OpenMP_CXX_FOUND)
+    message(STATUS "OpenMP found! (${OpenMP_CXX_LIB_NAMES}-${OpenMP_CXX_VERSION}: ${OpenMP_CXX_FLAGS})")
   else()
-      message(FATAL_ERROR "OpenMP NOT found! Try turning it off!")
+    message(FATAL_ERROR "OpenMP NOT found! Try turning it off!")
   endif()
 endif()
 
