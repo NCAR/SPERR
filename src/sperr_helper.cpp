@@ -211,7 +211,7 @@ auto sperr::read_n_bytes(std::string filename, size_t n_bytes) -> vec8_type
 template <typename T>
 auto sperr::read_whole_file(std::string filename) -> vec_type<T>
 {
-  vec_type<T> buf;
+  auto buf = vec_type<T>();
 
   std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename.data(), "rb"),
                                                         &std::fclose);

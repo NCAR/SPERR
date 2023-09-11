@@ -42,7 +42,7 @@ if(USE_OMP)
   if (OpenMP_CXX_FOUND)
     message(STATUS "OpenMP found! (${OpenMP_CXX_LIB_NAMES}-${OpenMP_CXX_VERSION}: ${OpenMP_CXX_FLAGS})")
   else()
-    message(FATAL_ERROR "OpenMP NOT found! Try turning it off!")
+    message(FATAL_ERROR "OpenMP NOT found! Try turning it off to continue configuring SPERR!")
   endif()
 endif()
 
