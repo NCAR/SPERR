@@ -24,7 +24,6 @@ class Conditioner {
   auto retrieve_q(condi_type header) const -> double;
 
  private:
-  const size_t m_q_pos = 9;
   const size_t m_constant_field_idx = 7;
   const size_t m_default_num_strides = 2048;
 
@@ -38,9 +37,6 @@ class Conditioner {
 
   // Adjust the value of `m_num_strides` so it'll be a divisor of `len`.
   void m_adjust_strides(size_t len);
-
-  // Reset meta data field; see the cpp file for detail.
-  void m_reset_meta(std::array<bool, 8>&) const;
 };
 
 };  // namespace sperr

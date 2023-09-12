@@ -14,8 +14,14 @@ auto sperr::Conditioner::condition(vecd_type& buf, dims_type dims) -> condi_type
   // 2. Subtract mean;
 
   assert(!buf.empty());
-  auto meta = std::array<bool, 8>();
-  m_reset_meta(meta);
+  auto meta = std::array<bool, 8>{true,    // subtract mean
+                                  false,   // unused
+                                  false,   // unused
+                                  false,   // unused
+                                  false,   // unused
+                                  false,   // unused
+                                  false,   // unused
+                                  false};  // [7]: is this a constant field?
 
   // Operation 1
   //
@@ -96,14 +102,16 @@ auto sperr::Conditioner::is_constant(uint8_t byte) const -> bool
 
 void sperr::Conditioner::save_q(condi_type& header, double q) const
 {
-  std::memcpy(header.data() + m_q_pos, &q, sizeof(q));
+  // Save at position 9, the same as in `retrieve_q()`.
+  std::memcpy(header.data() + 9, &q, sizeof(q));
 }
 
 auto sperr::Conditioner::retrieve_q(condi_type header) const -> double
 {
   assert(!is_constant(header[0]));
   double q = 0.0;
-  std::memcpy(&q, header.data() + m_q_pos, sizeof(q));
+  // Retrieve at position 9, the same as in `save_q()`.
+  std::memcpy(&q, header.data() + 9, sizeof(q));
   return q;
 }
 
@@ -151,16 +159,4 @@ void sperr::Conditioner::m_adjust_strides(size_t len)
   }
 
   m_num_strides = num;
-}
-
-void sperr::Conditioner::m_reset_meta(std::array<bool, 8>& meta) const
-{
-  meta = {true,    // subtract mean
-          false,   // unused
-          false,   // unused
-          false,   // unused
-          false,   // unused
-          false,   // unused
-          false,   // unused
-          false};  // [7]: is this a constant field?
 }

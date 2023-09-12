@@ -3,13 +3,11 @@
      ^-- num_bitplanes (1 byte) + num_useful_bits (8 bytes)
 
 2. Conditioner
-   Booleans (1 byte) + mean (8 bytes) + [custom filter]
+   Booleans (1 byte) + mean (8 bytes) + m_q (8 bytes)
      ^-- Is this a constant field?
-     ^-- Is there a custom filter?
-         (Answering yes to either question will result in a longer conditioner bitstream.)
 
 3. SPECK_FLT
-   Conditioner Stream + m_q (8 byte) + SPECK_INT Stream + Outlier_Coder Stream
+   Conditioner Stream + SPECK_INT Stream + Outlier_Coder Stream
 
 4. Outlier Coder
-   Just the SPECK_INT Stream (no header)
+   Just the SPECK_INT Stream
