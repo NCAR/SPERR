@@ -45,7 +45,7 @@ auto sperr::SPERR3D_Stream_Tools::get_header_len(std::array<uint8_t, 20> magic) 
 
 void sperr::SPERR3D_Stream_Tools::populate_stream_info(const void* p)
 {
-  const uint8_t* const u8p = static_cast<const uint8_t*>(p);
+  const auto* const u8p = static_cast<const uint8_t*>(p);
 
   // Step 1: major version number
   major_version = u8p[0];
@@ -86,7 +86,7 @@ void sperr::SPERR3D_Stream_Tools::populate_stream_info(const void* p)
   else
     header_len = m_header_magic_1chunk + num_chunks * 4;
 
-  const uint32_t* chunk_len = reinterpret_cast<const uint32_t*>(u8p + pos);
+  const auto* chunk_len = reinterpret_cast<const uint32_t*>(u8p + pos);
   stream_len = std::accumulate(chunk_len, chunk_len + num_chunks, header_len);
 
   chunk_offsets.resize(num_chunks * 2);

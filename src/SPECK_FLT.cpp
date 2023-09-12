@@ -249,7 +249,6 @@ auto sperr::SPECK_FLT::m_estimate_q(double param, bool high_prec) const -> doubl
       // Note: based on Peter's estimation method, to achieved the target PSNR, the terminal
       // quantization threshold should be (2.0 * sqrt(3.0) * rmse).
       const auto t_mse = (param * param) * std::pow(10.0, -m_quality / 10.0);
-      const auto t_rmse = std::sqrt(t_mse);
       auto q = 2.0 * std::sqrt(t_mse * 3.0);
       while (m_estimate_mse_midtread(q) > t_mse)
         q /= std::pow(2.0, 0.25);  // Four adjustments would effectively halve q.
