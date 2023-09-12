@@ -108,18 +108,14 @@ void sperr::SPECK3D_INT<T>::m_sorting_pass()
     const auto value = m_LIP_mask.read_long(i);
     if (value != 0) {
       for (size_t j = 0; j < 64; j++) {
-        if ((value >> j) & uint64_t{1}) {
-          size_t dummy = 0;
+        if ((value >> j) & uint64_t{1})
           m_process_P_lite(i + j);
-        }
       }
     }
   }
   for (auto i = bits_x64; i < m_LIP_mask.size(); i++) {
-    if (m_LIP_mask.read_bit(i)) {
-      size_t dummy = 0;
+    if (m_LIP_mask.read_bit(i))
       m_process_P_lite(i);
-    }
   }
 
   // Then we process regular sets in LIS.
