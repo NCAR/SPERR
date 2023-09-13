@@ -7,58 +7,70 @@
 #ifndef SPERR3D_OMP_C_H
 #define SPERR3D_OMP_C_H
 
-#include "SPERR3D_Compressor.h"
+#include "SPECK3D_FLT.h"
 
-using sperr::RTNType;
+namespace sperr {
 
 class SPERR3D_OMP_C {
  public:
   // If 0 is passed in, the maximal number of threads will be used.
   void set_num_threads(size_t);
 
-  // Upon receiving incoming data, a chunking scheme is decided, and the volume
-  // is divided and kept in separate chunks.
+  // Note on `chunk_dims`: it's a preferred value, but when the volume dimension is not
+  //    divisible by chunk dimensions, the actual chunk dimension will change.
+  void set_dims_and_chunks(dims_type vol_dims, dims_type chunk_dims);
+
+  void set_psnr(double);
+  void set_tolerance(double);
+  void set_bitrate(double);
+
+  // Apply compression on a volume pointed to by `buf`.
   template <typename T>
-  auto copy_data(const T*, size_t len, sperr::dims_type vol_dims, sperr::dims_type chunk_dims)
-      -> RTNType;
+  auto compress(const T* buf, size_t buf_len) -> RTNType;
 
-  // Return 1) the number of outliers, and 2) the num of bytes to encode them.
-  auto get_outlier_stats() const -> std::pair<size_t, size_t>;
-
-  auto set_target_bpp(double) -> RTNType;
-  void set_target_psnr(double);
-  void set_target_pwe(double);
-
-  auto compress() -> RTNType;
-
-  // Provide a copy of the encoded bitstream to the caller.
-  auto get_encoded_bitstream() const -> sperr::vec8_type;
+  // Output: produce a vector containing the encoded bitstream.
+  auto get_encoded_bitstream() const -> vec8_type;
 
  private:
-  sperr::dims_type m_dims = {0, 0, 0};        // Dimension of the entire volume
-  sperr::dims_type m_chunk_dims = {0, 0, 0};  // Preferred dimensions for a chunk
+  dims_type m_dims = {0, 0, 0};        // Dimension of the entire volume
+  dims_type m_chunk_dims = {0, 0, 0};  // Preferred dimensions for a chunk
+  bool m_orig_is_float = true;         // The original input precision is saved in header.
+  double m_quality = 0.0;
+  CompMode m_mode = CompMode::Unknown;
+
+  std::vector<vec8_type> m_encoded_streams;
+
+#ifdef USE_OMP
   size_t m_num_threads = 1;
 
-  std::vector<sperr::vecd_type> m_chunk_buffers;
-  std::vector<sperr::vec8_type> m_encoded_streams;
-  sperr::vec8_type m_total_stream;
+  // It turns out that the object of `SPECK3D_FLT` is not copy-constructible, so it's
+  //    a little difficult to work with a container (std::vector<>), so we ask the
+  //    container to store pointers (which are trivially constructible) instead.
+  //
+  std::vector<std::unique_ptr<SPECK3D_FLT>> m_compressors;
+#else
+  // This single instance of compressor doesn't need to be allocated on the heap;
+  //    rather, it's just to keep consistency with the USE_OMP case.
+  //
+  std::unique_ptr<SPECK3D_FLT> m_compressor;
+#endif
 
   // Header size would be the magic number + num_chunks * 4
-  const size_t m_header_magic_nchunks = 26;
+  const size_t m_header_magic_nchunks = 20;
   const size_t m_header_magic_1chunk = 14;
-
-  size_t m_bit_budget = 0;  // Total bit budget, including headers etc.
-  double m_target_psnr = sperr::max_d;
-  double m_target_pwe = 0.0;
-  bool m_orig_is_float = true;  // Is the original input float (true) or double (false)?
-
-  // Outlier stats include 1) the number of outliers, and 2) the num of bytes used to encode them.
-  std::vector<std::pair<size_t, size_t>> m_outlier_stats;
 
   //
   // Private methods
   //
-  auto m_generate_header() const -> sperr::vec8_type;
+  auto m_generate_header() const -> vec8_type;
+
+  // Gather a chunk from a bigger volume.
+  // If the requested chunk lives outside of the volume, whole or part,
+  //    this function returns an empty vector.
+  template <typename T>
+  auto m_gather_chunk(const T* vol, dims_type vol_dim, std::array<size_t, 6> chunk) -> vecd_type;
 };
+
+}  // End of namespace sperr
 
 #endif
