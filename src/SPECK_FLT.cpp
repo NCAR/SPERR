@@ -529,7 +529,7 @@ auto sperr::SPECK_FLT::decompress() -> RTNType
   // Step 1: Integer SPECK decode.
   // Note: the decoder has already parsed the bitstream in function `use_bitstream()`.
   assert(m_q > 0.0);
-  std::visit([&dims = m_dims](auto&& decoder) { decoder->set_dims(dims); }, m_decoder);
+  std::visit([dims = m_dims](auto&& decoder) { decoder->set_dims(dims); }, m_decoder);
   std::visit([](auto&& decoder) { decoder->decode(); }, m_decoder);
   std::visit([&vec = m_vals_ui](auto&& dec) { vec = dec->release_coeffs(); }, m_decoder);
   m_sign_array = std::visit([](auto&& dec) { return dec->release_signs(); }, m_decoder);
