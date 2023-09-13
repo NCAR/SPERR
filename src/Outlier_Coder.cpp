@@ -160,19 +160,28 @@ void sperr::Outlier_Coder::m_instantiate_uvec_coders(UINTType type)
         m_decoder.emplace<0>();
       break;
     case UINTType::UINT16:
-      m_vals_ui.emplace<1>();
-      m_encoder.emplace<1>();
-      m_decoder.emplace<1>();
+      if (m_vals_ui.index() != 1)
+        m_vals_ui.emplace<1>();
+      if (m_encoder.index() != 1)
+        m_encoder.emplace<1>();
+      if (m_decoder.index() != 1)
+        m_decoder.emplace<1>();
       break;
     case UINTType::UINT32:
-      m_vals_ui.emplace<2>();
-      m_encoder.emplace<2>();
-      m_decoder.emplace<2>();
+      if (m_vals_ui.index() != 2)
+        m_vals_ui.emplace<2>();
+      if (m_encoder.index() != 2)
+        m_encoder.emplace<2>();
+      if (m_decoder.index() != 2)
+        m_decoder.emplace<2>();
       break;
     default:
-      m_vals_ui.emplace<3>();
-      m_encoder.emplace<3>();
-      m_decoder.emplace<3>();
+      if (m_vals_ui.index() != 3)
+        m_vals_ui.emplace<3>();
+      if (m_encoder.index() != 3)
+        m_encoder.emplace<3>();
+      if (m_decoder.index() != 3)
+        m_decoder.emplace<3>();
   }
 }
 
