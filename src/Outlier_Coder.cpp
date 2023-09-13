@@ -182,21 +182,16 @@ void sperr::Outlier_Coder::m_quantize()
   m_sign_array.resize(m_total_len);
   m_sign_array.reset_true();
 
-  // For performance reasons, avoid using std::visit() for `m_vals_ui.index() == 0` case.
-  if (m_vals_ui.index() == 0) {
-    for (auto out : m_LOS) {
-      auto ll = std::llrint(out.err / m_tol);
-      m_sign_array.wbit(out.pos, (out.err >= 0));
-      std::get<0>(m_vals_ui)[out.pos] = static_cast<uint8_t>(std::abs(ll));
-    }
-  }
-  else {
-    for (auto out : m_LOS) {
-      auto ll = std::llrint(out.err / m_tol);
-      m_sign_array.wbit(out.pos, (out.err >= 0));
-      std::visit([out, ll](auto&& vec) { vec[out.pos] = std::abs(ll); }, m_vals_ui);
-    }
-  }
+  std::visit(
+      [&los = m_LOS, &signs = m_sign_array, tol = m_tol](auto&& vec) {
+        auto inv = 1.0 / tol;
+        for (auto out : los) {
+          auto ll = std::llrint(out.err * inv);
+          signs.wbit(out.pos, ll >= 0);
+          vec[out.pos] = std::abs(ll);
+        }
+      },
+      m_vals_ui);
 }
 
 void sperr::Outlier_Coder::m_inverse_quantize()
@@ -204,28 +199,20 @@ void sperr::Outlier_Coder::m_inverse_quantize()
   m_LOS.clear();
 
   // First, bring all non-zero integer correctors to `m_LOS`.
-  // For performance reasons, avoid using std::visit() for `m_vals_ui.index() == 0` case.
-  if (m_vals_ui.index() == 0) {
-    const auto& ui = std::get<0>(m_vals_ui);
-    for (size_t i = 0; i < ui.size(); i++)
-      if (ui[i] != 0) {
-        if (ui[i] == 1)
-          m_LOS.emplace_back(i, double(ui[i]) + 0.1);
-        else
-          m_LOS.emplace_back(i, double(ui[i]) - 0.25);
-      }
-  }
-  else {
-    for (size_t i = 0; i < m_total_len; i++) {
-      auto ui = std::visit([i](auto&& vec) { return uint64_t{vec[i]}; }, m_vals_ui);
-      if (ui != 0) {
-        if (ui == 1)
-          m_LOS.emplace_back(i, double(ui) + 0.1);
-        else
-          m_LOS.emplace_back(i, double(ui) - 0.25);
-      }
-    }
-  }
+  std::visit(
+      [&los = m_LOS](auto&& vec) {
+        for (size_t i = 0; i < vec.size(); i++)
+          switch (vec[i]) {
+            case 0:
+              break;
+            case 1:
+              los.emplace_back(i, 1.1);
+              break;
+            default:
+              los.emplace_back(i, static_cast<double>(vec[i]) - 0.25);
+          }
+      },
+      m_vals_ui);
 
   // Second, restore the floating-point correctors.
   const auto tmp = std::array<double, 2>{-1.0, 1.0};
