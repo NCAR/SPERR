@@ -258,7 +258,7 @@ auto sperr::SPECK_FLT::m_estimate_q(double param, bool high_prec) const -> doubl
       return m_quality * 1.5;
     case CompMode::Rate:
       // This should be the most frequent case, where a `q` is calculated to results in making
-      //    full use of the biggest integer represented by uint32_t (4294967295, or 4e9).
+      //    full use of the biggest integer represented by uint32_t (4294967295, or ~4e9).
       //    It is the consideration of performance as well as numeric stability to not use
       //    a super small q when possible.
       //
@@ -310,58 +310,35 @@ auto sperr::SPECK_FLT::m_midtread_quantize() -> RTNType
     m_uint_flag = UINTType::UINT64;
 
   m_instantiate_int_vec();
+
   const auto total_vals = m_vals_d.size();
   std::visit([total_vals](auto&& vec) { vec.resize(total_vals); }, m_vals_ui);
   m_sign_array.resize(total_vals);
 
-  // The following switch{} block functions the same as the following:
-  //
-  //    for (size_t i = 0; i < total_vals; i++) {
-  //      auto ll = std::llrint(m_vals_d[i] / m_q);
-  //      m_sign_array[i] = (ll >= 0);
-  //      std::visit([i, ll](auto&& vec) { vec[i] = (std::abs(ll)); }, m_vals_ui);
-  //    }
-  //
-  // but it's just not very efficient to put std::visit() inside of a pretty big loop,
-  // so we use the switch block.
+  std::visit(
+      [&vals_d = m_vals_d, &signs = m_sign_array, q = m_q](auto&& vec) {
+        auto inv = 1.0 / q;
+        auto bits_x64 = vals_d.size() - vals_d.size() % 64;
 
-  switch (m_uint_flag) {
-    case UINTType::UINT8: {
-      auto& vec = std::get<0>(m_vals_ui);
-      for (size_t i = 0; i < total_vals; i++) {
-        auto ll = std::llrint(m_vals_d[i] / m_q);
-        m_sign_array.wbit(i, (ll >= 0));
-        vec[i] = static_cast<uint8_t>(std::abs(ll));
-      }
-      break;
-    }
-    case UINTType::UINT16: {
-      auto& vec = std::get<1>(m_vals_ui);
-      for (size_t i = 0; i < total_vals; i++) {
-        auto ll = std::llrint(m_vals_d[i] / m_q);
-        m_sign_array.wbit(i, (ll >= 0));
-        vec[i] = static_cast<uint16_t>(std::abs(ll));
-      }
-      break;
-    }
-    case UINTType::UINT32: {
-      auto& vec = std::get<2>(m_vals_ui);
-      for (size_t i = 0; i < total_vals; i++) {
-        auto ll = std::llrint(m_vals_d[i] / m_q);
-        m_sign_array.wbit(i, (ll >= 0));
-        vec[i] = static_cast<uint32_t>(std::abs(ll));
-      }
-      break;
-    }
-    default: {
-      auto& vec = std::get<3>(m_vals_ui);
-      for (size_t i = 0; i < total_vals; i++) {
-        auto ll = std::llrint(m_vals_d[i] / m_q);
-        m_sign_array.wbit(i, (ll >= 0));
-        vec[i] = static_cast<uint64_t>(std::abs(ll));
-      }
-    }
-  }
+        // Process 64 values at a time.
+        for (size_t i = 0; i < bits_x64; i += 64) {
+          auto bits64 = uint64_t{0};
+          for (size_t j = 0; j < 64; j++) {
+            auto ll = std::llrint(vals_d[i + j] * inv);
+            bits64 += uint64_t{ll >= 0} << j;
+            vec[i + j] = std::abs(ll);
+          }
+          signs.wlong(i, bits64);
+        }
+
+        // Process the remaining bits.
+        for (size_t i = bits_x64; i < vals_d.size(); i++) {
+          auto ll = std::llrint(vals_d[i] * inv);
+          signs.wbit(i, (ll >= 0));
+          vec[i] = std::abs(ll);
+        }
+      },
+      m_vals_ui);
 
   return RTNType::Good;
 }
@@ -376,19 +353,27 @@ void sperr::SPECK_FLT::m_midtread_inv_quantize()
 
   std::visit(
       [&vals_d = m_vals_d, &signs = m_sign_array, q = m_q, tmpd](auto&& vec) {
-        for (size_t i = 0; i < vals_d.size(); i++)
-          vals_d[i] = q * static_cast<double>(vec[i]) * tmpd[signs.rbit(i)];
+        auto bits_x64 = vals_d.size() - vals_d.size() % 64;
 
-        // std::transform(
-        //     vec.cbegin(), vec.cend(), signs.cbegin(), vals_d.begin(),
-        //     [tmpd, q](auto i, auto b) { return (q * static_cast<double>(i) * tmpd[b]); });
+        // Process 64 values at a time.
+        for (size_t i = 0; i < bits_x64; i += 64) {
+          const auto bits64 = signs.rlong(i);
+          for (size_t j = 0; j < 64; j++) {
+            auto bit = (bits64 >> j) & uint64_t{1};
+            vals_d[i + j] = q * static_cast<double>(vec[i + j]) * tmpd[bit];
+          }
+        }
+
+        // Process the remaining bits.
+        for (size_t i = bits_x64; i < vals_d.size(); i++)
+          vals_d[i] = q * static_cast<double>(vec[i]) * tmpd[signs.rbit(i)];
       },
       m_vals_ui);
 }
 
 auto sperr::SPECK_FLT::compress() -> RTNType
 {
-  const auto total_vals = uint64_t(m_dims[0]) * m_dims[1] * m_dims[2];
+  const auto total_vals = size_t(m_dims[0]) * m_dims[1] * m_dims[2];
   if (m_vals_d.empty() || m_vals_d.size() != total_vals)
     return RTNType::Error;
 
