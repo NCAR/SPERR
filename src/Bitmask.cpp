@@ -24,16 +24,16 @@ void sperr::Bitmask::resize(size_t nbits)
   auto num_longs = nbits / 64;
   if (nbits % 64 != 0)
     num_longs++;
-  m_buf.resize(num_longs);
+  m_buf.resize(num_longs, 0);
   m_num_bits = nbits;
 }
 
-auto sperr::Bitmask::read_long(size_t idx) const -> uint64_t
+auto sperr::Bitmask::rlong(size_t idx) const -> uint64_t
 {
   return m_buf[idx / 64];
 }
 
-auto sperr::Bitmask::read_bit(size_t idx) const -> bool
+auto sperr::Bitmask::rbit(size_t idx) const -> bool
 {
   auto word = m_buf[idx / 64];
   word &= uint64_t{1} << (idx % 64);
@@ -63,12 +63,12 @@ auto sperr::Bitmask::count_true() const -> size_t
   return counter;
 }
 
-void sperr::Bitmask::write_long(size_t idx, uint64_t value)
+void sperr::Bitmask::wlong(size_t idx, uint64_t value)
 {
   m_buf[idx / 64] = value;
 }
 
-void sperr::Bitmask::write_bit(size_t idx, bool bit)
+void sperr::Bitmask::wbit(size_t idx, bool bit)
 {
   const auto wstart = idx / 64;
   const auto mask = uint64_t{1} << (idx % 64);
@@ -81,7 +81,7 @@ void sperr::Bitmask::write_bit(size_t idx, bool bit)
   m_buf[wstart] = word;
 }
 
-void sperr::Bitmask::write_true(size_t idx)
+void sperr::Bitmask::wtrue(size_t idx)
 {
   const auto wstart = idx / 64;
   const auto mask = uint64_t{1} << (idx % 64);
@@ -91,7 +91,7 @@ void sperr::Bitmask::write_true(size_t idx)
   m_buf[wstart] = word;
 }
 
-void sperr::Bitmask::write_false(size_t idx)
+void sperr::Bitmask::wfalse(size_t idx)
 {
   const auto wstart = idx / 64;
   const auto mask = uint64_t{1} << (idx % 64);

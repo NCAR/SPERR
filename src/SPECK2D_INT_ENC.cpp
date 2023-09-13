@@ -38,9 +38,9 @@ void sperr::SPECK2D_INT_ENC<T>::m_process_P(size_t idx, size_t& counter, bool ne
   if (is_sig) {
     counter++;
     m_coeff_buf[idx] -= m_threshold;
-    m_bit_buffer.wbit(m_sign_array[idx]);
+    m_bit_buffer.wbit(m_sign_array.rbit(idx));
     m_LSP_new.push_back(idx);
-    m_LIP_mask.write_false(idx);
+    m_LIP_mask.wfalse(idx);
   }
 }
 

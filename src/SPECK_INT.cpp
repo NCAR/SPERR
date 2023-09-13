@@ -163,7 +163,8 @@ void sperr::SPECK_INT<T>::decode()
   // initialize coefficients to be zero, and sign array to be all positive
   const auto coeff_len = m_dims[0] * m_dims[1] * m_dims[2];
   m_coeff_buf.assign(coeff_len, uint_type{0});
-  m_sign_array.assign(coeff_len, true);
+  m_sign_array.resize(coeff_len);
+  m_sign_array.reset_true();
 
   // Mark every coefficient as insignificant.
   m_LSP_mask.resize(coeff_len);
@@ -217,7 +218,7 @@ void sperr::SPECK_INT<T>::decode()
 }
 
 template <typename T>
-auto sperr::SPECK_INT<T>::use_coeffs(vecui_type coeffs, vecb_type signs) -> RTNType
+auto sperr::SPECK_INT<T>::use_coeffs(vecui_type coeffs, Bitmask signs) -> RTNType
 {
   if (coeffs.size() != signs.size())
     return RTNType::Error;
@@ -233,7 +234,7 @@ auto sperr::SPECK_INT<T>::release_coeffs() -> vecui_type&&
 }
 
 template <typename T>
-auto sperr::SPECK_INT<T>::release_signs() -> vecb_type&&
+auto sperr::SPECK_INT<T>::release_signs() -> Bitmask&&
 {
   return std::move(m_sign_array);
 }
@@ -245,7 +246,7 @@ auto sperr::SPECK_INT<T>::view_coeffs() const -> const vecui_type&
 }
 
 template <typename T>
-auto sperr::SPECK_INT<T>::view_signs() const -> const vecb_type&
+auto sperr::SPECK_INT<T>::view_signs() const -> const Bitmask&
 {
   return m_sign_array;
 }
@@ -305,7 +306,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_encode()
   const auto bits_x64 = m_LSP_mask.size() - m_LSP_mask.size() % 64;
 
   for (size_t i = 0; i < bits_x64; i += 64) {  // Evaluate 64 bits at a time.
-    const auto value = m_LSP_mask.read_long(i);
+    const auto value = m_LSP_mask.rlong(i);
     if (value != 0) {
       for (size_t j = 0; j < 64; j++) {
         if ((value >> j) & uint64_t{1}) {
@@ -317,7 +318,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_encode()
     }
   }
   for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {  // Evaluate the remaining bits.
-    if (m_LSP_mask.read_bit(i)) {
+    if (m_LSP_mask.rbit(i)) {
       const bool o1 = m_coeff_buf[i] >= m_threshold;
       m_coeff_buf[i] -= tmp1[o1];
       m_bit_buffer.wbit(o1);
@@ -327,7 +328,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_encode()
   // Second, mark newly found significant pixels in `m_LSP_mask`.
   //
   for (auto idx : m_LSP_new)
-    m_LSP_mask.write_true(idx);
+    m_LSP_mask.wtrue(idx);
   m_LSP_new.clear();
 }
 
@@ -351,7 +352,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
   if (m_threshold >= uint_type{2}) {                                 // <-- Point 1
     const auto half_t = m_threshold / uint_type{2};
     for (size_t i = 0; i < bits_x64; i += 64) {  // <-- Point 2
-      const auto value = m_LSP_mask.read_long(i);
+      const auto value = m_LSP_mask.rlong(i);
       if (value != 0) {
         for (size_t j = 0; j < 64; j++) {
           if ((value >> j) & uint64_t{1}) {
@@ -366,7 +367,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
       }
     }
     for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {  // <-- Point 2
-      if (m_LSP_mask.read_bit(i)) {
+      if (m_LSP_mask.rbit(i)) {
         if (m_bit_buffer.rbit())
           m_coeff_buf[i] += half_t;
         else
@@ -378,7 +379,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
   }       // Finish the case where `m_threshold >= 2`.
   else {  // Start the case where `m_threshold == 1`.
     for (size_t i = 0; i < bits_x64; i += 64) {
-      const auto value = m_LSP_mask.read_long(i);
+      const auto value = m_LSP_mask.rlong(i);
       for (size_t j = 0; j < 64; j++) {
         if ((value >> j) & uint64_t{1}) {
           if (m_bit_buffer.rbit())
@@ -389,7 +390,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
       }
     }
     for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {
-      if (m_LSP_mask.read_bit(i)) {
+      if (m_LSP_mask.rbit(i)) {
         if (m_bit_buffer.rbit())
           ++(m_coeff_buf[i]);
         if (++read_pos == m_avail_bits)
@@ -413,7 +414,7 @@ INITIALIZE_NEWLY_FOUND_POINTS_LABEL:
   for (auto idx : m_LSP_new)
     m_coeff_buf[idx] = init_val;
   for (auto idx : m_LSP_new)
-    m_LSP_mask.write_true(idx);
+    m_LSP_mask.wtrue(idx);
   m_LSP_new.clear();
 }
 

@@ -53,16 +53,16 @@ class SPECK_INT {
   void decode();
 
   // Input
-  auto use_coeffs(vecui_type coeffs, vecb_type signs) -> RTNType;
+  auto use_coeffs(vecui_type coeffs, Bitmask signs) -> RTNType;
   void use_bitstream(const void* p, size_t len);
 
   // Output
   auto encoded_bitstream_len() const -> size_t;
   void append_encoded_bitstream(vec8_type& buf) const;
   auto release_coeffs() -> vecui_type&&;
-  auto release_signs() -> vecb_type&&;
+  auto release_signs() -> Bitmask&&;
   auto view_coeffs() const -> const vecui_type&;
-  auto view_signs() const -> const vecb_type&;
+  auto view_signs() const -> const Bitmask&;
 
  protected:
   // Core SPECK procedures
@@ -75,9 +75,8 @@ class SPECK_INT {
   // Data members
   dims_type m_dims = {0, 0, 0};
   uint_type m_threshold = 0;
-  Bitmask m_LSP_mask, m_LIP_mask;
+  Bitmask m_LSP_mask, m_LIP_mask, m_sign_array;
   vecui_type m_coeff_buf;
-  vecb_type m_sign_array;
   Bitstream m_bit_buffer;
   std::vector<uint64_t> m_LSP_new;
 

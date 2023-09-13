@@ -253,13 +253,13 @@ TEST(Bitmask, CountTrue)
 {
   auto m1 = Mask(64);
   for (size_t i = 0; i < 5; i++)
-    m1.write_true(i * 4);
+    m1.wtrue(i * 4);
   EXPECT_EQ(m1.count_true(), 5);
 
   m1.reset();
   m1.resize(110);
   for (size_t i = 0; i < 20; i++)
-    m1.write_true(i * 5);
+    m1.wtrue(i * 5);
   EXPECT_EQ(m1.count_true(), 20);
 
   m1.resize(60);
@@ -269,7 +269,7 @@ TEST(Bitmask, CountTrue)
   EXPECT_EQ(m1.count_true(), 13); // 0, 5, ..., 55, 60
 
   for (size_t i = 0; i < 23; i++)
-    m1.write_true(i * 7);
+    m1.wtrue(i * 7);
   EXPECT_EQ(m1.count_true(), 34); // 13 + 23 minus positions 0, 35.
 }
 
@@ -278,73 +278,79 @@ TEST(Bitmask, RandomReadWrite)
   const size_t N = 192;
   auto m1 = Mask(N);
   EXPECT_EQ(m1.size(), N);
-  m1.write_long(0, 928798ul);
-  m1.write_long(64, 9845932ul);
-  m1.write_long(128, 77719821ul);
-  EXPECT_EQ(m1.read_long(1), 928798ul);
-  EXPECT_EQ(m1.read_long(65), 9845932ul);
-  EXPECT_EQ(m1.read_long(129), 77719821ul);
+  m1.wlong(0, 928798ul);
+  m1.wlong(64, 9845932ul);
+  m1.wlong(128, 77719821ul);
+  EXPECT_EQ(m1.rlong(1), 928798ul);
+  EXPECT_EQ(m1.rlong(65), 9845932ul);
+  EXPECT_EQ(m1.rlong(129), 77719821ul);
 
   auto vec = std::vector<bool>();
   for (size_t i = 0; i < N; i++)
-    vec.push_back(m1.read_bit(i));
+    vec.push_back(m1.rbit(i));
 
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution<unsigned int> distrib(0, 1);
   for (size_t i = 30; i < N - 20; i++) {
     bool ran = distrib(gen);
-    m1.write_bit(i, ran);
+    m1.wbit(i, ran);
     vec[i] = ran;
   }
   for (size_t i = 1; i < N; i += 35) {
     if (i % 2 == 0) { 
-      m1.write_true(i);
+      m1.wtrue(i);
       vec[i] = true;
     }
     else {
-      m1.write_false(i);
+      m1.wfalse(i);
       vec[i] = false;
     }
   }
   for (size_t i = 0; i < N; i++)
-    EXPECT_EQ(m1.read_bit(i), vec[i]) << "at idx = " << i;
+    EXPECT_EQ(m1.rbit(i), vec[i]) << "at idx = " << i;
 }
 
-#if __cplusplus >= 202002L
 TEST(Bitmask, BufferTransfer)
 {
   auto src = Mask(60);
-  src.write_long(0, 78344ul);
+  src.wlong(0, 78344ul);
   auto buf = src.view_buffer();
 
   auto dst = Mask(60);
   dst.use_bitstream(buf.data());
-  EXPECT_EQ(src, dst);
+  EXPECT_EQ(src.size(), dst.size());
+  for (size_t i = 0; i < src.size(); i++)
+    EXPECT_EQ(src.rbit(i), dst.rbit(i));
 
   src.resize(120);
-  src.write_long(100, 19837ul);
+  src.wlong(100, 19837ul);
   buf = src.view_buffer();
 
   dst.resize(120);
   dst.use_bitstream(buf.data());
-  EXPECT_EQ(src, dst);
+  EXPECT_EQ(src.size(), dst.size());
+  for (size_t i = 0; i < src.size(); i++)
+    EXPECT_EQ(src.rbit(i), dst.rbit(i));
 
   src.resize(128);
   buf = src.view_buffer();
 
   dst.resize(128);
   dst.use_bitstream(buf.data());
-  EXPECT_EQ(src, dst);
+  EXPECT_EQ(src.size(), dst.size());
+  for (size_t i = 0; i < src.size(); i++)
+    EXPECT_EQ(src.rbit(i), dst.rbit(i));
 
   src.resize(150);
-  src.write_long(130, 19837ul);
+  src.wlong(130, 19837ul);
   buf = src.view_buffer();
 
   dst.resize(150);
   dst.use_bitstream(buf.data());
-  EXPECT_EQ(src, dst);
+  EXPECT_EQ(src.size(), dst.size());
+  for (size_t i = 0; i < src.size(); i++)
+    EXPECT_EQ(src.rbit(i), dst.rbit(i));
 }
-#endif
 
 }  // namespace

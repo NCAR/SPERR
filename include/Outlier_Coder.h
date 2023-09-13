@@ -45,7 +45,7 @@ class Outlier_Coder {
  private:
   size_t m_total_len = 0;
   double m_tol = 0.0;
-  vecb_type m_sign_array;
+  Bitmask m_sign_array;
   std::vector<Outlier> m_LOS;
 
   std::variant<SPECK1D_INT_ENC<uint8_t>,

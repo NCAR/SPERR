@@ -105,7 +105,7 @@ void sperr::SPECK3D_INT<T>::m_sorting_pass()
   const auto bits_x64 = m_LIP_mask.size() - m_LIP_mask.size() % 64;
 
   for (size_t i = 0; i < bits_x64; i += 64) {
-    const auto value = m_LIP_mask.read_long(i);
+    const auto value = m_LIP_mask.rlong(i);
     if (value != 0) {
       for (size_t j = 0; j < 64; j++) {
         if ((value >> j) & uint64_t{1})
@@ -114,7 +114,7 @@ void sperr::SPECK3D_INT<T>::m_sorting_pass()
     }
   }
   for (auto i = bits_x64; i < m_LIP_mask.size(); i++) {
-    if (m_LIP_mask.read_bit(i))
+    if (m_LIP_mask.rbit(i))
       m_process_P_lite(i);
   }
 
@@ -149,7 +149,7 @@ void sperr::SPECK3D_INT<T>::m_code_S(size_t idx1, size_t idx2)
 
     if (it->num_elem() == 1) {
       auto idx = it->start_z * m_dims[0] * m_dims[1] + it->start_y * m_dims[0] + it->start_x;
-      m_LIP_mask.write_true(idx);
+      m_LIP_mask.wtrue(idx);
       m_process_P(idx, it->get_morton(), sig_counter, need_decide);
     }
     else {

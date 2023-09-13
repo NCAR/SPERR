@@ -28,7 +28,7 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
 {
   // So let's clean up everything at the very beginning of this routine.
   m_vals_d.clear();
-  m_sign_array.clear();
+  m_sign_array.resize(0);
   std::visit([](auto&& vec) { vec.clear(); }, m_vals_ui);
   m_q = 0.0;
   m_has_outlier = false;
@@ -330,7 +330,7 @@ auto sperr::SPECK_FLT::m_midtread_quantize() -> RTNType
       auto& vec = std::get<0>(m_vals_ui);
       for (size_t i = 0; i < total_vals; i++) {
         auto ll = std::llrint(m_vals_d[i] / m_q);
-        m_sign_array[i] = (ll >= 0);
+        m_sign_array.wbit(i, (ll >= 0));
         vec[i] = static_cast<uint8_t>(std::abs(ll));
       }
       break;
@@ -339,7 +339,7 @@ auto sperr::SPECK_FLT::m_midtread_quantize() -> RTNType
       auto& vec = std::get<1>(m_vals_ui);
       for (size_t i = 0; i < total_vals; i++) {
         auto ll = std::llrint(m_vals_d[i] / m_q);
-        m_sign_array[i] = (ll >= 0);
+        m_sign_array.wbit(i, (ll >= 0));
         vec[i] = static_cast<uint16_t>(std::abs(ll));
       }
       break;
@@ -348,7 +348,7 @@ auto sperr::SPECK_FLT::m_midtread_quantize() -> RTNType
       auto& vec = std::get<2>(m_vals_ui);
       for (size_t i = 0; i < total_vals; i++) {
         auto ll = std::llrint(m_vals_d[i] / m_q);
-        m_sign_array[i] = (ll >= 0);
+        m_sign_array.wbit(i, (ll >= 0));
         vec[i] = static_cast<uint32_t>(std::abs(ll));
       }
       break;
@@ -357,7 +357,7 @@ auto sperr::SPECK_FLT::m_midtread_quantize() -> RTNType
       auto& vec = std::get<3>(m_vals_ui);
       for (size_t i = 0; i < total_vals; i++) {
         auto ll = std::llrint(m_vals_d[i] / m_q);
-        m_sign_array[i] = (ll >= 0);
+        m_sign_array.wbit(i, (ll >= 0));
         vec[i] = static_cast<uint64_t>(std::abs(ll));
       }
     }
@@ -373,11 +373,15 @@ void sperr::SPECK_FLT::m_midtread_inv_quantize()
 
   const auto tmpd = std::array<double, 2>{-1.0, 1.0};
   m_vals_d.resize(m_sign_array.size());
+
   std::visit(
       [&vals_d = m_vals_d, &signs = m_sign_array, q = m_q, tmpd](auto&& vec) {
-        std::transform(
-            vec.cbegin(), vec.cend(), signs.cbegin(), vals_d.begin(),
-            [tmpd, q](auto i, auto b) { return (q * static_cast<double>(i) * tmpd[b]); });
+        for (size_t i = 0; i < vals_d.size(); i++)
+          vals_d[i] = q * static_cast<double>(vec[i]) * tmpd[signs.rbit(i)];
+
+        // std::transform(
+        //     vec.cbegin(), vec.cend(), signs.cbegin(), vals_d.begin(),
+        //     [tmpd, q](auto i, auto b) { return (q * static_cast<double>(i) * tmpd[b]); });
       },
       m_vals_ui);
 }
@@ -528,7 +532,7 @@ auto sperr::SPECK_FLT::decompress() -> RTNType
 {
   m_vals_d.clear();
   std::visit([](auto&& vec) { vec.clear(); }, m_vals_ui);
-  m_sign_array.clear();
+  m_sign_array.resize(0);
 
   // `m_condi_bitstream` might be indicating a constant field, so let's see if that's
   // the case, and if it is, we don't need to go through wavelet and speck stuff anymore.

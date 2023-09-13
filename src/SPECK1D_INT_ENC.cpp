@@ -13,7 +13,7 @@ void sperr::SPECK1D_INT_ENC<T>::m_sorting_pass()
   const auto bits_x64 = m_LIP_mask.size() - m_LIP_mask.size() % 64;
 
   for (size_t i = 0; i < bits_x64; i += 64) {
-    const auto value = m_LIP_mask.read_long(i);
+    const auto value = m_LIP_mask.rlong(i);
     if (value != 0) {
       for (size_t j = 0; j < 64; j++) {
         if ((value >> j) & uint64_t{1}) {
@@ -24,7 +24,7 @@ void sperr::SPECK1D_INT_ENC<T>::m_sorting_pass()
     }
   }
   for (auto i = bits_x64; i < m_LIP_mask.size(); i++) {
-    if (m_LIP_mask.read_bit(i)) {
+    if (m_LIP_mask.rbit(i)) {
       size_t dummy = 0;
       m_process_P(i, SigType::Dunno, dummy, true);
     }
@@ -100,12 +100,12 @@ void sperr::SPECK1D_INT_ENC<T>::m_process_P(size_t idx, SigType sig, size_t& cou
 
   if (is_sig) {
     counter++;  // Let's increment the counter first!
-    m_bit_buffer.wbit(m_sign_array[idx]);
+    m_bit_buffer.wbit(m_sign_array.rbit(idx));
 
     assert(m_coeff_buf[idx] >= m_threshold);
     m_coeff_buf[idx] -= m_threshold;
     m_LSP_new.push_back(idx);
-    m_LIP_mask.write_false(idx);
+    m_LIP_mask.wfalse(idx);
   }
 }
 
@@ -122,7 +122,7 @@ void sperr::SPECK1D_INT_ENC<T>::m_code_S(size_t idx1,
   const auto& set0 = subsets[0];
   assert(set0.get_length() != 0);
   if (set0.get_length() == 1) {
-    m_LIP_mask.write_true(set0.get_start());
+    m_LIP_mask.wtrue(set0.get_start());
     m_process_P(set0.get_start(), subset_sigs[0], sig_counter, output);
   }
   else {
@@ -140,7 +140,7 @@ void sperr::SPECK1D_INT_ENC<T>::m_code_S(size_t idx1,
   const auto& set1 = subsets[1];
   assert(set1.get_length() != 0);
   if (set1.get_length() == 1) {
-    m_LIP_mask.write_true(set1.get_start());
+    m_LIP_mask.wtrue(set1.get_start());
     m_process_P(set1.get_start(), subset_sigs[1], sig_counter, output);
   }
   else {

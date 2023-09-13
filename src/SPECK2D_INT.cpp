@@ -11,7 +11,7 @@ void sperr::SPECK2D_INT<T>::m_sorting_pass()
   const auto bits_x64 = m_LIP_mask.size() - m_LIP_mask.size() % 64;
 
   for (size_t i = 0; i < bits_x64; i += 64) {
-    const auto value = m_LIP_mask.read_long(i);
+    const auto value = m_LIP_mask.rlong(i);
     if (value != 0) {
       for (size_t j = 0; j < 64; j++) {
         if ((value >> j) & uint64_t{1}) {
@@ -22,7 +22,7 @@ void sperr::SPECK2D_INT<T>::m_sorting_pass()
     }
   }
   for (auto i = bits_x64; i < m_LIP_mask.size(); i++) {
-    if (m_LIP_mask.read_bit(i)) {
+    if (m_LIP_mask.rbit(i)) {
       size_t dummy = 0;
       m_process_P(i, dummy, true);
     }
@@ -57,7 +57,7 @@ void sperr::SPECK2D_INT<T>::m_code_S(size_t idx1, size_t idx2)
     auto need_decide = (it != set_end_m1) || (counter != 0);
     if (it->is_pixel()) {
       auto pixel_idx = it->start_y * m_dims[0] + it->start_x;
-      m_LIP_mask.write_true(pixel_idx);
+      m_LIP_mask.wtrue(pixel_idx);
       m_process_P(pixel_idx, counter, need_decide);
     }
     else {

@@ -58,7 +58,7 @@ auto sperr::Outlier_Coder::use_bitstream(const void* p, size_t len) -> RTNType
     m_instantiate_uvec_coders(UINTType::UINT64);
 
   // Clean up data structures.
-  m_sign_array.clear();
+  m_sign_array.resize(0);
   m_LOS.clear();
   std::visit([](auto&& vec) { vec.clear(); }, m_vals_ui);
 
@@ -179,20 +179,21 @@ void sperr::Outlier_Coder::m_instantiate_uvec_coders(UINTType type)
 void sperr::Outlier_Coder::m_quantize()
 {
   std::visit([len = m_total_len](auto&& vec) { vec.assign(len, 0); }, m_vals_ui);
-  m_sign_array.assign(m_total_len, true);
+  m_sign_array.resize(m_total_len);
+  m_sign_array.reset_true();
 
   // For performance reasons, avoid using std::visit() for `m_vals_ui.index() == 0` case.
   if (m_vals_ui.index() == 0) {
     for (auto out : m_LOS) {
       auto ll = std::llrint(out.err / m_tol);
-      m_sign_array[out.pos] = out.err >= 0;
+      m_sign_array.wbit(out.pos, (out.err >= 0));
       std::get<0>(m_vals_ui)[out.pos] = static_cast<uint8_t>(std::abs(ll));
     }
   }
   else {
     for (auto out : m_LOS) {
       auto ll = std::llrint(out.err / m_tol);
-      m_sign_array[out.pos] = out.err >= 0;
+      m_sign_array.wbit(out.pos, (out.err >= 0));
       std::visit([out, ll](auto&& vec) { vec[out.pos] = std::abs(ll); }, m_vals_ui);
     }
   }
@@ -230,7 +231,7 @@ void sperr::Outlier_Coder::m_inverse_quantize()
   const auto tmp = std::array<double, 2>{-1.0, 1.0};
   std::transform(m_LOS.cbegin(), m_LOS.cend(), m_LOS.begin(),
                  [q = m_tol, &signs = m_sign_array, tmp](auto los) {
-                   auto b = signs[los.pos];
+                   auto b = signs.rbit(los.pos);
                    los.err *= (q * tmp[b]);
                    return los;
                  });

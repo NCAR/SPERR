@@ -28,7 +28,6 @@ using std::size_t;  // Seems most appropriate
 //
 template <typename T>
 using vec_type = std::vector<T>;
-using vecb_type = vec_type<bool>;
 using vecd_type = vec_type<double>;
 using vecf_type = vec_type<float>;
 using vec8_type = vec_type<uint8_t>;

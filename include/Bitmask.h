@@ -6,10 +6,10 @@
  *   and writes, e.g., reading and writing 64 bits at a tiem.
  *   For heavy use of streaming reads and writes, please use the Bitstream class instead.
  *
- * Methods read_long(idx) and write_long(idx, value) are used for bulk reads and writes of
+ * Methods rlong(idx) and wlong(idx, value) are used for bulk reads and writes of
  *   64 bits. The idx parameter is the position of bits, specifying where the long integer is
- *   read or written. As a result, read_long(0) and read_long(63) will return the same integer,
- *   and write_long(64, val) and write_long(127, val) will write val to the same location.
+ *   read or written. As a result, rlong(0) and rlong(63) will return the same integer,
+ *   and wlong(64, val) and wlong(127, val) will write val to the same location.
  *
  * Bitmask does not automatically adjust its size. The size of a Bitmask is initialized
  *   at construction time, and is only changed by users calling the resize() method.
@@ -35,18 +35,18 @@ class Bitmask {
 
   // Functions for read
   //
-  auto read_long(size_t idx) const -> uint64_t;
-  auto read_bit(size_t idx) const -> bool;
+  auto rlong(size_t idx) const -> uint64_t;  // `idx` of the bit, not the long.
+  auto rbit(size_t idx) const -> bool;
   auto count_true() const -> size_t;  // How many 1's in this mask?
 
   // Functions for write
   //
-  void write_long(size_t idx, uint64_t value);
-  void write_bit(size_t idx, bool bit);
-  void write_true(size_t idx);   // This is faster than `write_bit(idx, true)`.
-  void write_false(size_t idx);  // This is faster than `write_bit(idx, false)`.
-  void reset();                  // Set the current bitmask to be all 0's.
-  void reset_true();             // Set the current bitmask to be all 1's.
+  void wlong(size_t idx, uint64_t value);  // `idx` of the bit, not the long.
+  void wbit(size_t idx, bool bit);
+  void wtrue(size_t idx);   // This is faster than `wbit(idx, true)`.
+  void wfalse(size_t idx);  // This is faster than `wbit(idx, false)`.
+  void reset();             // Set the current bitmask to be all 0's.
+  void reset_true();        // Set the current bitmask to be all 1's.
 
   // Functions for direct access of the underlying data buffer
   // Note: `use_bitstream()` reads the number of values (uint64_t type) that provide
@@ -54,12 +54,6 @@ class Bitmask {
   //
   auto view_buffer() const -> const std::vector<uint64_t>&;
   void use_bitstream(const void* p);
-
-  // Compare if two Bitmasks are identical.
-  //
-#if __cplusplus >= 202002L
-  auto operator==(const Bitmask& rhs) const -> bool = default;
-#endif
 
  private:
   std::vector<uint64_t> m_buf;
