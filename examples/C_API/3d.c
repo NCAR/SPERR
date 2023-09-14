@@ -38,7 +38,7 @@ int main(int argc, char** argv)
   const size_t dimx = (size_t)atol(argv[2]);
   const size_t dimy = (size_t)atol(argv[3]);
   const size_t dimz = (size_t)atol(argv[4]);
-  const int32_t mode = (int32_t)atoi(argv[5]);
+  const int mode = (int)atoi(argv[5]);
   const double quality = atof(argv[6]);
   int is_float = 1;
   if (argc == 8)
@@ -63,8 +63,9 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  /* Let's use all the OpenMP threads. */
-  const int32_t nthreads = 0;
+  /* Let's use all the OpenMP threads, or in case that SPERR isn't compiled with 
+     OpenMP, then this value doesn't do anything. */
+  const int nthreads = 0;
 
   /* Compress `inbuf` and put the compressed bitstream in `bitstream` */
   void* bitstream = NULL; /* Will be free'd later */
@@ -100,13 +101,14 @@ int main(int argc, char** argv)
   }
 
   /* Write the decompressed buffer to disk */
-  f = fopen("./output.capi", "w");
+  f = fopen("./output.data", "w");
   assert(f != NULL);
   if (is_float)
     fwrite(outbuf, sizeof(float), out_dimx * out_dimy * out_dimz, f);
   else
     fwrite(outbuf, sizeof(double), out_dimx * out_dimy * out_dimz, f);
   fclose(f);
+  f = NULL;
 
   /* Clean up */
   free(outbuf);

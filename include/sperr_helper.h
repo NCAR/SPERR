@@ -131,22 +131,6 @@ auto kahan_summation(const T*, size_t) -> T;
 // Note 2: this function works on degraded 2D or 1D volumes too.
 auto chunk_volume(dims_type vol_dim, dims_type chunk_dim) -> std::vector<std::array<size_t, 6>>;
 
-// Structure that holds information extracted from SPERR headers.
-// This structure is returned by helper function `parse_header()`.
-struct HeaderInfo {
-  uint8_t version_major = 0;
-  bool is_3d = false;
-  bool orig_is_float = false;
-
-  // This is the dimension of a 3D volume (NX, NY, NZ) or a 2D slice (NX, NY, 1).
-  dims_type vol_dims = {0, 0, 0};
-
-  // If the bitstream represents a 3D volume, this field holds the dimension of chunks.
-  // For 2D slices, this field holds undefined values.
-  dims_type chunk_dims = {0, 0, 0};
-};
-auto parse_header(const void*) -> HeaderInfo;
-
 // Calculate the mean and variance of a given array.
 // In case of arrays of size zero, it will return {NaN, NaN}.
 // In case of `omp_nthreads == 0`, it will use all available OpenMP threads.

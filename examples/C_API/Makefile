@@ -12,7 +12,7 @@ else
   SPERR_LIBDIR=/home/shaomeng/Git/SPERR/install/lib
 endif
 
-FLAGS = -O3
+FLAGS = -g
 
 all: 2d.out 3d.out
 

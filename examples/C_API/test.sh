@@ -18,102 +18,144 @@ fi
 # generate C executables
 make 2d.out 3d.out
 
-CAPI=output.capi
-CPPAPI=output.cppapi
+CSTREAM=output.stream
+CDECOMP=output.data
+CPPSTREAM=cpp.stream
+CPPDECOMP=cpp.data
 
 #
 # test 2D BPP
 #
 FILE=./test_data/lena512.float 
-./2d.out $FILE 512 512 1 2.5
-./bin/compressor_2d --dims 512 512 --out_bitstream output.stream --bpp 2.5 $FILE
-./bin/decompressor_2d -o $CPPAPI output.stream
+Q=2.5
+./2d.out $FILE 512 512 1 $Q
+./bin/sperr2d -c --ftype 32 --dims 512 512 --o_bitstream $CPPSTREAM --o_decomp_f $CPPDECOMP --bpp $Q $FILE
 
-if diff $CAPI $CPPAPI; then
-  echo "--> C and C++ utilities produce the same result on test data $FILE"
+if diff $CSTREAM $CPPSTREAM; then
+  echo "--> C and C++ utilities produce the same bitstream on 2D test data $FILE"
 else
-  echo "--> C and C++ utilities produce different results on test data $FILE"
+  echo "--> C and C++ utilities produce different bitstream on 2D test data $FILE"
   exit 1
 fi
-rm -f $CAPI $CPPAPI
+if diff $CDECOMP $CPPDECOMP; then
+  echo "--> C and C++ utilities produce the same decompressed file on $FILE"
+else
+  echo "--> C and C++ utilities produce different decompressed file on $FILE"
+  exit 1
+fi
+rm -f $CSTREAM $CPPSTREAM $CDECOMP $CPPDECOMP
 
 #
 # test 2D PSNR
 #
-FILE=./test_data/lena512.float 
-./2d.out $FILE 512 512 2 95.0
-./bin/compressor_2d --dims 512 512 --out_bitstream output.stream --psnr 95.0 $FILE
-./bin/decompressor_2d -o $CPPAPI output.stream
+FILE=./test_data/999x999.float 
+Q=90.0
+./2d.out $FILE 999 999 2 $Q
+./bin/sperr2d -c --ftype 32 --dims 999 999 --o_bitstream $CPPSTREAM --o_decomp_f $CPPDECOMP --psnr $Q $FILE
 
-if diff $CAPI $CPPAPI; then
-  echo "--> C and C++ utilities produce the same result on test data $FILE"
+if diff $CSTREAM $CPPSTREAM; then
+  echo "--> C and C++ utilities produce the same bitstream on 2D test data $FILE"
 else
-  echo "--> C and C++ utilities produce different results on test data $FILE"
+  echo "--> C and C++ utilities produce different bitstream on 2D test data $FILE"
   exit 1
 fi
-rm -f $CAPI $CPPAPI
+if diff $CDECOMP $CPPDECOMP; then
+  echo "--> C and C++ utilities produce the same decompressed file on $FILE"
+else
+  echo "--> C and C++ utilities produce different decompressed file on $FILE"
+  exit 1
+fi
+rm -f $CSTREAM $CPPSTREAM $CDECOMP $CPPDECOMP
+
 
 #
 # test 2D PWE
 #
-FILE=./test_data/lena512.float 
-./2d.out $FILE 512 512 3 0.5
-./bin/compressor_2d --dims 512 512 --out_bitstream output.stream --pwe 0.5 $FILE
-./bin/decompressor_2d -o $CPPAPI output.stream
+FILE=./test_data/vorticity.512_512
+Q=1e-8
+./2d.out $FILE 512 512 3 $Q
+./bin/sperr2d -c --ftype 32 --dims 512 512 --o_bitstream $CPPSTREAM --o_decomp_f $CPPDECOMP --pwe $Q $FILE
 
-if diff $CAPI $CPPAPI; then
-  echo "--> C and C++ utilities produce the same result on test data $FILE"
+if diff $CSTREAM $CPPSTREAM; then
+  echo "--> C and C++ utilities produce the same bitstream on 2D test data $FILE"
 else
-  echo "--> C and C++ utilities produce different results on test data $FILE"
+  echo "--> C and C++ utilities produce different bitstream on 2D test data $FILE"
   exit 1
 fi
-rm -f $CAPI $CPPAPI
+if diff $CDECOMP $CPPDECOMP; then
+  echo "--> C and C++ utilities produce the same decompressed file on $FILE"
+else
+  echo "--> C and C++ utilities produce different decompressed file on $FILE"
+  exit 1
+fi
+rm -f $CSTREAM $CPPSTREAM $CDECOMP $CPPDECOMP
 
 
 #
 # test 3D BPP
 #
 FILE=./test_data/density_128x128x256.d64
-./3d.out $FILE 128 128 256 1 2.5 -d
-./bin/compressor_3d --dims 128 128 256 -d --out_bitstream output.stream --bpp 2.5 $FILE
-./bin/decompressor_3d -o $CPPAPI -d output.stream
+Q=2.6
+./3d.out $FILE 128 128 256 1 $Q -d
+./bin/sperr3d -c --ftype 64 --dims 128 128 256 --o_bitstream $CPPSTREAM --o_decomp_f64 $CPPDECOMP --bpp $Q $FILE
 
-if diff $CAPI $CPPAPI; then
-  echo "--> C and C++ utilities produce the same result on test data $FILE"
+if diff $CSTREAM $CPPSTREAM; then
+  echo "--> C and C++ utilities produce the same bitstream on 3D test data $FILE"
 else
-  echo "--> C and C++ utilities produce different results on test data $FILE"
+  echo "--> C and C++ utilities produce different bitstream on 3D test data $FILE"
   exit 1
 fi
-rm -f $CAPI $CPPAPI
+if diff $CDECOMP $CPPDECOMP; then
+  echo "--> C and C++ utilities produce the same decompressed file on $FILE"
+else
+  echo "--> C and C++ utilities produce different decompressed file on $FILE"
+  exit 1
+fi
+rm -f $CSTREAM $CPPSTREAM $CDECOMP $CPPDECOMP
+
 
 #
 # test 3D PSNR
 #
 FILE=./test_data/density_128x128x256.d64
-./3d.out $FILE 128 128 256 2 102.5 -d
-./bin/compressor_3d --dims 128 128 256 -d --out_bitstream output.stream --psnr 102.5 $FILE
-./bin/decompressor_3d -o $CPPAPI -d output.stream
+Q=102.5
+./3d.out $FILE 128 128 256 2 $Q -d
+./bin/sperr3d -c --ftype 64 --dims 128 128 256 --o_bitstream $CPPSTREAM --o_decomp_f64 $CPPDECOMP --psnr $Q $FILE
 
-if diff $CAPI $CPPAPI; then
-  echo "--> C and C++ utilities produce the same result on test data $FILE"
+if diff $CSTREAM $CPPSTREAM; then
+  echo "--> C and C++ utilities produce the same bitstream on 3D test data $FILE"
 else
-  echo "--> C and C++ utilities produce different results on test data $FILE"
+  echo "--> C and C++ utilities produce different bitstream on 3D test data $FILE"
   exit 1
 fi
-rm -f $CAPI $CPPAPI
+if diff $CDECOMP $CPPDECOMP; then
+  echo "--> C and C++ utilities produce the same decompressed file on $FILE"
+else
+  echo "--> C and C++ utilities produce different decompressed file on $FILE"
+  exit 1
+fi
+rm -f $CSTREAM $CPPSTREAM $CDECOMP $CPPDECOMP
+
 
 #
 # test 3D PWE
 #
 FILE=./test_data/density_128x128x256.d64
-./3d.out $FILE 128 128 256 3 2.5e-5 -d
-./bin/compressor_3d --dims 128 128 256 -d --out_bitstream output.stream --pwe 2.5e-5 $FILE
-./bin/decompressor_3d -o $CPPAPI -d output.stream
+Q=4e-5
+./3d.out $FILE 128 128 256 3 $Q -d
+./bin/sperr3d -c --ftype 64 --dims 128 128 256 --o_bitstream $CPPSTREAM --o_decomp_f64 $CPPDECOMP --pwe $Q $FILE
 
-if diff $CAPI $CPPAPI; then
-  echo "--> C and C++ utilities produce the same result on test data $FILE"
+if diff $CSTREAM $CPPSTREAM; then
+  echo "--> C and C++ utilities produce the same bitstream on 3D test data $FILE"
 else
-  echo "--> C and C++ utilities produce different results on test data $FILE"
+  echo "--> C and C++ utilities produce different bitstream on 3D test data $FILE"
   exit 1
 fi
-rm -f $CAPI $CPPAPI
+if diff $CDECOMP $CPPDECOMP; then
+  echo "--> C and C++ utilities produce the same decompressed file on $FILE"
+else
+  echo "--> C and C++ utilities produce different decompressed file on $FILE"
+  exit 1
+fi
+rm -f $CSTREAM $CPPSTREAM $CDECOMP $CPPDECOMP
+

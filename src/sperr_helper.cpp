@@ -448,60 +448,6 @@ auto sperr::chunk_volume(dims_type vol_dim, dims_type chunk_dim)
   return chunks;
 }
 
-auto sperr::parse_header(const void* ptr) -> HeaderInfo
-{
-  const auto* u8p = static_cast<const uint8_t*>(ptr);
-  size_t loc = 0;
-  auto header = HeaderInfo();
-
-  // Parse version numbers
-  header.version_major = *u8p;
-  loc++;
-
-  // Parse 8 booleans
-  const auto b8 = sperr::unpack_8_booleans(u8p[loc]);
-  loc++;
-
-  header.is_3d = b8[1];
-  header.orig_is_float = b8[2];
-
-  // Parse the dimension info.
-  if (header.is_3d) {
-    if (b8[3]) {  // there are multiple chunks!
-      uint32_t vcdim[6];
-      std::memcpy(vcdim, u8p + loc, sizeof(vcdim));
-
-      header.vol_dims[0] = vcdim[0];
-      header.vol_dims[1] = vcdim[1];
-      header.vol_dims[2] = vcdim[2];
-      header.chunk_dims[0] = vcdim[3];
-      header.chunk_dims[1] = vcdim[4];
-      header.chunk_dims[2] = vcdim[5];
-    }
-    else {
-      uint32_t vdim[3];
-      std::memcpy(vdim, u8p + loc, sizeof(vdim));
-
-      header.vol_dims[0] = vdim[0];
-      header.vol_dims[1] = vdim[1];
-      header.vol_dims[2] = vdim[2];
-      header.chunk_dims[0] = vdim[0];
-      header.chunk_dims[1] = vdim[1];
-      header.chunk_dims[2] = vdim[2];
-    }
-  }
-  else {
-    uint32_t dims[2];
-    std::memcpy(dims, u8p + loc, sizeof(dims));
-
-    header.vol_dims[0] = dims[0];
-    header.vol_dims[1] = dims[1];
-    header.vol_dims[2] = 1;
-  }
-
-  return header;
-}
-
 template <typename T>
 auto sperr::calc_mean_var(const T* arr, size_t len, size_t omp_nthreads) -> std::array<T, 2>
 {

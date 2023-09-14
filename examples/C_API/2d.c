@@ -37,7 +37,7 @@ int main(int argc, char** argv)
   const char* filename = argv[1];
   const size_t dimx = (size_t)atol(argv[2]);
   const size_t dimy = (size_t)atol(argv[3]);
-  const int32_t mode = (int32_t)atoi(argv[4]);
+  const int mode = (int)atoi(argv[4]);
   const double quality = atof(argv[5]);
   int is_float = 1;
   if (argc == 7)
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
   }
 
   /* Write the decompressed buffer to disk */
-  f = fopen("./output.capi", "w");
+  f = fopen("./output.data", "w");
   assert(f != NULL);
   if (is_float)
     fwrite(outbuf, sizeof(float), out_dimx * out_dimy, f);
