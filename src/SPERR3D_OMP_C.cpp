@@ -193,17 +193,17 @@ auto sperr::SPERR3D_OMP_C::m_generate_header() const -> sperr::vec8_type
   header[pos++] = sperr::pack_8_booleans(b8);
 
   // Volume dimensions
-  const uint32_t vdim[3] = {static_cast<uint32_t>(m_dims[0]), static_cast<uint32_t>(m_dims[1]),
-                            static_cast<uint32_t>(m_dims[2])};
-  std::memcpy(&header[pos], vdim, sizeof(vdim));
+  const auto vdim = std::array{static_cast<uint32_t>(m_dims[0]), static_cast<uint32_t>(m_dims[1]),
+                               static_cast<uint32_t>(m_dims[2])};
+  std::memcpy(&header[pos], vdim.data(), sizeof(vdim));
   pos += sizeof(vdim);
 
   // Chunk dimensions, if there are more than one chunk.
   if (num_chunks > 1) {
-    const uint16_t vcdim[3] = {static_cast<uint16_t>(m_chunk_dims[0]),
-                               static_cast<uint16_t>(m_chunk_dims[1]),
-                               static_cast<uint16_t>(m_chunk_dims[2])};
-    std::memcpy(&header[pos], vcdim, sizeof(vcdim));
+    auto vcdim =
+        std::array{static_cast<uint16_t>(m_chunk_dims[0]), static_cast<uint16_t>(m_chunk_dims[1]),
+                   static_cast<uint16_t>(m_chunk_dims[2])};
+    std::memcpy(&header[pos], vcdim.data(), sizeof(vcdim));
     pos += sizeof(vcdim);
   }
 

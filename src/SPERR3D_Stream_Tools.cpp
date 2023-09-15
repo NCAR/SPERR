@@ -114,57 +114,35 @@ auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, uint32_
     return complete_stream;
   }
 
-  // Calculate how many bytes to allocate to each chunk. There is a consideration:
-  // a truncated chunk should always be as long as a Conditioner bitstream (17 bytes).
-  auto condi_array = sperr::condi_type();  // temporary use
+  // Calculate how many bytes to allocate to each chunk, with `m_progressive_min_chunk_bytes`
+  //    being the minimal length. The only exception is that when the chunk itself has less
+  //    bytes, e.g., when it's a constant chunk.
   assert(chunk_offsets.size() % 2 == 0);
   auto nchunks = chunk_offsets.size() / 2;
   auto chunk_offsets_new = chunk_offsets;
+
   for (size_t i = 0; i < nchunks; i++) {
-    auto chunk_orig_len = chunk_offsets[i * 2 + 1];
-    auto request_len = static_cast<size_t>(double(pct) / 100.0 * double(chunk_orig_len));
-    request_len = std::max(condi_array.size(), request_len);
-    chunk_offsets_new[i * 2 + 1] = request_len;
+    auto orig_len = chunk_offsets[i * 2 + 1];
+    // Only touch the value stored at `chunk_offsets_new[i * 2 + 1]` if it's bigger than
+    // the minimal number of bytes to keep.
+    if (orig_len > m_progressive_min_chunk_bytes) {
+      auto request_len = static_cast<size_t>(double(pct) / 100.0 * double(orig_len));
+      request_len = std::max(m_progressive_min_chunk_bytes, request_len);
+      chunk_offsets_new[i * 2 + 1] = request_len;
+    }
   }
 
   // Calculate the total length of the new bitstream, and read it from disk!
-  auto total_len_new = header.size();
+  auto total_len_new = header_len;
   for (size_t i = 0; i < nchunks; i++)
     total_len_new += chunk_offsets_new[i * 2 + 1];
   auto stream_new = vec8_type();
   stream_new.reserve(total_len_new);
-  stream_new.resize(header.size());  // Occupy the space for a new header.
+  stream_new.resize(header_len);  // Occupy the space for a new header.
   auto rtn = sperr::read_sections(filename, chunk_offsets_new, stream_new);
   if (rtn != RTNType::Good) {
-    vec20.clear();  // Just reuse an old variable.
-    return vec20;
-  }
-
-  // Need to verify each chunk: if the chunk is not constant, then it should also include
-  //    the SPECK stream header (9 bytes), so that chunk should have 26 bytes at least.
-  //    If it doesn't, we go back to the disk and read again!
-  //    Note: this situation should happen VERY rarely though!
-  const auto chunk_min = condi_array.size() + SPECK_INT<uint8_t>::header_size;  // 26
-  auto conditioner = sperr::Conditioner();
-  bool reread = false;
-  for (size_t i = 1; i < nchunks; i++)
-    chunk_offsets_new[i * 2] = chunk_offsets_new[i * 2 - 2] + chunk_offsets_new[i * 2 - 1];
-  for (size_t i = 0; i < nchunks; i++) {
-    auto byte = stream_new[chunk_offsets_new[i * 2]];
-    if (!conditioner.is_constant(byte) && chunk_offsets_new[i * 2 + 1] < chunk_min) {
-      chunk_offsets_new[i * 2 + 1] = chunk_min;
-      reread = true;
-    }
-  }
-  if (reread) {
-    for (size_t i = 0; i < nchunks; i++)
-      chunk_offsets_new[i * 2] = chunk_offsets[i * 2];
-    stream_new.resize(header.size());
-    auto rtn = sperr::read_sections(filename, chunk_offsets_new, stream_new);
-    if (rtn != RTNType::Good) {
-      vec20.clear();  // Just reuse an old variable.
-      return vec20;
-    }
+    stream_new.clear();
+    return stream_new;
   }
 
   // Finally, create a proper new header.

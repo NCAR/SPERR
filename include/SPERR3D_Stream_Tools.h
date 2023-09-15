@@ -39,6 +39,10 @@ class SPERR3D_Stream_Tools {
  private:
   const size_t m_header_magic_nchunks = 20;
   const size_t m_header_magic_1chunk = 14;
+
+  // To simplify logic with progressive read, we set a minimum number of bytes to read from
+  // a chunk, unless the chunk doesn't have that many bytes (e.g., a constant chunk).
+  const size_t m_progressive_min_chunk_bytes = 64;
 };
 
 }  // End of namespace sperr
