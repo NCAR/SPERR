@@ -73,10 +73,10 @@ auto sperr::SPERR3D_OMP_C::compress(const T* buf, size_t buf_len) -> RTNType
 
 #ifdef USE_OMP
   m_compressors.resize(m_num_threads);
-  std::for_each(m_compressors.begin(), m_compressors.end(), [](auto& p) {
+  for (auto& p : m_compressors) {
     if (p == nullptr)
       p = std::make_unique<SPECK3D_FLT>();
-  });
+  }
 #else
   if (m_compressor == nullptr)
     m_compressor = std::make_unique<SPECK3D_FLT>();

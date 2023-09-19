@@ -219,6 +219,15 @@ TEST(sperr_helper, read_sections)
     EXPECT_EQ(buf[i + 10], i + 200);
   for (size_t i = 0; i < 5; i++)  // Next 5 elements should start from 30.
     EXPECT_EQ(buf[i + 66], i + 30);
+
+  // Test the extract version too. Read and extract should give the same results.
+  buf.clear();
+  sperr::read_sections("test.tmp", secs, buf);
+  auto full_input = sperr::read_whole_file<uint8_t>("test.tmp");
+  auto buf2 = sperr::vec8_type();
+  auto rtn2 = sperr::extract_sections(full_input.data(), full_input.size(), secs, buf2);
+  EXPECT_EQ(rtn, sperr::RTNType::Good);
+  EXPECT_EQ(buf, buf2);
 }
 
 }  // namespace

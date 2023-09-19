@@ -285,6 +285,34 @@ auto sperr::read_sections(std::string filename, const std::vector<size_t>& secti
   return RTNType::Good;
 }
 
+auto sperr::extract_sections(const void* buf,
+                             size_t buf_len,
+                             const std::vector<size_t>& sections,
+                             vec8_type& dst) -> RTNType
+{
+  // Calculate the farthest file location to be read.
+  size_t far = 0;
+  for (size_t i = 0; i < sections.size() / 2; i++)
+    far = std::max(far, sections[i * 2] + sections[i * 2 + 1]);
+  if (buf_len < far)
+    return RTNType::BitstreamWrongLen;
+
+  // Calculate the resulting size of `dst`, and allocate enough memory.
+  auto total_len = dst.size();
+  for (size_t i = 0; i < sections.size() / 2; i++)
+    total_len += sections[i * 2 + 1];
+  dst.reserve(total_len);
+
+  // Extract sections of the buffer!
+  for (size_t i = 0; i < sections.size() / 2; i++) {
+    const auto* beg = static_cast<const uint8_t*>(buf) + sections[i * 2];
+    const auto* end = beg + sections[i * 2 + 1];
+    std::copy(beg, end, std::back_inserter(dst));
+  }
+
+  return RTNType::Good;
+}
+
 template <typename T>
 auto sperr::calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_nthreads)
     -> std::array<T, 5>

@@ -145,7 +145,7 @@ auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, uint32_
     return stream_new;
   }
 
-  // Finally, create a proper new header.
+  // Finally, create a new header.
   //
   stream_new[0] = static_cast<uint8_t>(SPERR_VERSION_MAJOR);
   size_t pos = 1;
