@@ -233,12 +233,7 @@ void sperr::CDF97::m_idwt3d_wavelet_packet()
 
 void sperr::CDF97::m_dwt3d_dyadic()
 {
-  // clang-format off
-  const auto xforms = std::array<size_t, 3>{sperr::num_of_xforms(m_dims[0]),
-                                            sperr::num_of_xforms(m_dims[1]),
-                                            sperr::num_of_xforms(m_dims[2])};
-  const auto num_xforms = *std::min_element(xforms.cbegin(), xforms.cend());
-  // clang-format on
+  const auto num_xforms = sperr::num_of_xforms(*std::min_element(m_dims.cbegin(), m_dims.cend()));
 
   for (size_t lev = 0; lev < num_xforms; lev++) {
     auto app_x = sperr::calc_approx_detail_len(m_dims[0], lev);
@@ -250,12 +245,7 @@ void sperr::CDF97::m_dwt3d_dyadic()
 
 void sperr::CDF97::m_idwt3d_dyadic()
 {
-  // clang-format off
-  const auto xforms = std::array<size_t, 3>{sperr::num_of_xforms(m_dims[0]),
-                                            sperr::num_of_xforms(m_dims[1]),
-                                            sperr::num_of_xforms(m_dims[2])};
-  const auto num_xforms = *std::min_element(xforms.cbegin(), xforms.cend());
-  // clang-format on
+  const auto num_xforms = sperr::num_of_xforms(*std::min_element(m_dims.cbegin(), m_dims.cend()));
 
   for (size_t lev = num_xforms; lev > 0; lev--) {
     auto app_x = sperr::calc_approx_detail_len(m_dims[0], lev - 1);
