@@ -37,7 +37,7 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
 
   // Bitstream parser 1: extract conditioner stream
   if (len < m_condi_bitstream.size())
-    return RTNType::BitstreamWrongLen;
+    return RTNType::WrongLength;
   std::copy(ptr, ptr + m_condi_bitstream.size(), m_condi_bitstream.begin());
 
   // `m_condi_bitstream` might be indicating that the field is a constant field.
@@ -48,7 +48,7 @@ auto sperr::SPECK_FLT::use_bitstream(const void* p, size_t len) -> RTNType
     if (len == m_condi_bitstream.size())
       return RTNType::Good;
     else
-      return RTNType::BitstreamWrongLen;
+      return RTNType::WrongLength;
   }
   else {
     m_q = m_conditioner.retrieve_q(m_condi_bitstream);

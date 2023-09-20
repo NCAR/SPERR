@@ -60,7 +60,7 @@ TEST(stream_tools, constant_nchunks)
 //
 TEST(stream_tools, regular_1chunk)
 {
-  // Produce a bigstream to disk
+  // Produce a bitstream to disk
   auto filename = std::string("./test.tmp");
   auto input = sperr::read_whole_file<float>("../test_data/vorticity.128_128_41");
   assert(!input.empty());
@@ -73,31 +73,30 @@ TEST(stream_tools, regular_1chunk)
 
   // Test progressive read!
   auto tools = sperr::SPERR3D_Stream_Tools();
+  auto header = tools.get_stream_header(stream.data());
   auto part = tools.progressive_read(filename, 50);
 
   // Header should (mostly) remain the same.
   EXPECT_EQ(part[0], stream[0]);
   EXPECT_EQ(part[1], stream[1] + 128);
-  for (size_t i = 2; i < tools.header_len - 4; i++) // Exclude the last 4 bytes (chunk len).
+  for (size_t i = 2; i < header.header_len - 4; i++) // Exclude the last 4 bytes (chunk len).
     EXPECT_EQ(part[i], stream[i]);
 
-  // The remaining bytes of each chunk should also remain the same. To know offsets of each chunk
-  //    in the new portioned bitstream, we use another stream tool to parse it.
-  auto tools2 = sperr::SPERR3D_Stream_Tools();
-  tools2.populate_stream_info(part.data());
-  EXPECT_EQ(tools.chunk_offsets.size(), tools2.chunk_offsets.size());
+  // The remaining bytes of each chunk should also remain the same.
+  auto header2 = tools.get_stream_header(part.data());
+  EXPECT_EQ(header.chunk_offsets.size(), header2.chunk_offsets.size());
 
-  for (size_t i = 0; i < tools.chunk_offsets.size() / 2; i++) {
-    auto orig_start = tools.chunk_offsets[i * 2];
-    auto part_start = tools2.chunk_offsets[i * 2];
-    for (size_t j = 0; j < tools2.chunk_offsets[i * 2 + 1]; j++)
+  for (size_t i = 0; i < header.chunk_offsets.size() / 2; i++) {
+    auto orig_start = header.chunk_offsets[i * 2];
+    auto part_start = header2.chunk_offsets[i * 2];
+    for (size_t j = 0; j < header2.chunk_offsets[i * 2 + 1]; j++)
       EXPECT_EQ(stream[orig_start + j], part[part_start + j]);
   }
 }
 
 TEST(stream_tools, regular_nchunks)
 {
-  // Produce a bigstream to disk
+  // Produce a bitstream to disk
   auto filename = std::string("./test.tmp");
   auto input = sperr::read_whole_file<float>("../test_data/vorticity.128_128_41");
   assert(!input.empty());
@@ -110,29 +109,28 @@ TEST(stream_tools, regular_nchunks)
 
   // Test progressive read!
   auto tools = sperr::SPERR3D_Stream_Tools();
+  auto header = tools.get_stream_header(stream.data());
   auto part = tools.progressive_read(filename, 35);
 
   // Header should (mostly) remain the same.
   EXPECT_EQ(part[0], stream[0]);
   EXPECT_EQ(part[1], stream[1] + 128);
 
-  // The remaining bytes should also remain the same. To know offsets of each chunk in the 
-  //    new portioned bitstream, we use another stream tool to parse it.
-  auto tools2 = sperr::SPERR3D_Stream_Tools();
-  tools2.populate_stream_info(part.data());
-  EXPECT_EQ(tools.chunk_offsets.size(), tools2.chunk_offsets.size());
+  // The remaining bytes should also remain the same.
+  auto header2 = tools.get_stream_header(part.data());
+  EXPECT_EQ(header.chunk_offsets.size(), header2.chunk_offsets.size());
 
-  for (size_t i = 0; i < tools.chunk_offsets.size() / 2; i++) {
-    auto orig_start = tools.chunk_offsets[i * 2];
-    auto part_start = tools2.chunk_offsets[i * 2];
-    for (size_t j = 0; j < tools2.chunk_offsets[i * 2 + 1]; j++)
+  for (size_t i = 0; i < header.chunk_offsets.size() / 2; i++) {
+    auto orig_start = header.chunk_offsets[i * 2];
+    auto part_start = header2.chunk_offsets[i * 2];
+    for (size_t j = 0; j < header2.chunk_offsets[i * 2 + 1]; j++)
       EXPECT_EQ(stream[orig_start + j], part[part_start + j]);
   }
 }
 
 TEST(stream_tools, min_chunk_len)
 {
-  // Produce a bigstream to disk
+  // Produce a bitstream to disk
   auto filename = std::string("./test.tmp");
   auto input = sperr::read_whole_file<float>("../test_data/wmag17.float");
   assert(!input.empty());
@@ -144,24 +142,23 @@ TEST(stream_tools, min_chunk_len)
   sperr::write_n_bytes(filename, stream.size(), stream.data());
 
   // Test progressive read! The requested 1% of bytes results in every chunk to have ~10 bytes,
-  // which would be changed to 26 bytes eventually, and not resulting in failed assertions.
+  // which would be changed to 64 bytes eventually, and not resulting in failed assertions.
   auto tools = sperr::SPERR3D_Stream_Tools();
+  auto header = tools.get_stream_header(stream.data());
   auto part = tools.progressive_read(filename, 1);
 
   // Header should (mostly) remain the same.
   EXPECT_EQ(part[0], stream[0]);
   EXPECT_EQ(part[1], stream[1] + 128);
 
-  // The header of each chunk (first 26 bytes) should also remain the same. To know offsets of
-  //    each chunk in the new portioned bitstream, we use another stream tool to parse it.
-  auto tools2 = sperr::SPERR3D_Stream_Tools();
-  tools2.populate_stream_info(part.data());
-  EXPECT_EQ(tools.chunk_offsets.size(), tools2.chunk_offsets.size());
+  // The header of each chunk (first 64 bytes) should also remain the same.
+  auto header2 = tools.get_stream_header(part.data());
+  EXPECT_EQ(header.chunk_offsets.size(), header2.chunk_offsets.size());
 
-  for (size_t i = 0; i < tools.chunk_offsets.size() / 2; i++) {
-    auto orig_start = tools.chunk_offsets[i * 2];
-    auto part_start = tools2.chunk_offsets[i * 2];
-    for (size_t j = 0; j < tools2.chunk_offsets[i * 2 + 1]; j++)
+  for (size_t i = 0; i < header.chunk_offsets.size() / 2; i++) {
+    auto orig_start = header.chunk_offsets[i * 2];
+    auto part_start = header2.chunk_offsets[i * 2];
+    for (size_t j = 0; j < header2.chunk_offsets[i * 2 + 1]; j++)
       EXPECT_EQ(stream[orig_start + j], part[part_start + j]);
   }
 }

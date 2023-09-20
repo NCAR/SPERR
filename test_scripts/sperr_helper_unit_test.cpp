@@ -200,7 +200,7 @@ TEST(sperr_helper, read_sections)
   secs.insert(secs.end(), {200, 56});
   secs.insert(secs.end(), {101, 156});
   auto rtn = sperr::read_sections("test.tmp", secs, buf);
-  EXPECT_EQ(rtn, sperr::RTNType::BitstreamWrongLen);
+  EXPECT_EQ(rtn, sperr::RTNType::WrongLength);
 
   // Pop out the offending section requests.
   secs.pop_back();

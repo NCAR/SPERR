@@ -61,7 +61,7 @@ auto sperr::SPERR3D_OMP_C::compress(const T* buf, size_t buf_len) -> RTNType
   if (m_mode == sperr::CompMode::Unknown)
     return RTNType::CompModeUnknown;
   if (buf_len != m_dims[0] * m_dims[1] * m_dims[2])
-    return RTNType::VectorWrongLen;
+    return RTNType::WrongLength;
 
   // First, calculate dimensions of individual chunk indices.
   const auto chunk_idx = sperr::chunk_volume(m_dims, m_chunk_dims);

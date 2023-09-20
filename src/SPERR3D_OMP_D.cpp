@@ -27,20 +27,20 @@ auto sperr::SPERR3D_OMP_D::setup_decomp(const void* p, size_t total_len) -> RTNT
   //    will be provided when the decompress() method is called.
   //
   auto tools = SPERR3D_Stream_Tools();
-  tools.populate_stream_info(p);
+  auto header = tools.get_stream_header(p);
 
   // Verify some info.
-  if (tools.major_version != static_cast<uint8_t>(SPERR_VERSION_MAJOR))
+  if (header.major_version != static_cast<uint8_t>(SPERR_VERSION_MAJOR))
     return RTNType::VersionMismatch;
-  if (!tools.is_3D)
+  if (!header.is_3D)
     return RTNType::SliceVolumeMismatch;
-  if (tools.stream_len != total_len)
-    return RTNType::BitstreamWrongLen;
+  if (header.stream_len != total_len)
+    return RTNType::WrongLength;
 
   // Collect essential info.
-  m_dims = tools.vol_dims;
-  m_chunk_dims = tools.chunk_dims;
-  m_offsets = std::move(tools.chunk_offsets);
+  m_dims = header.vol_dims;
+  m_chunk_dims = header.chunk_dims;
+  m_offsets = std::move(header.chunk_offsets);
 
   // Finally, we keep a copy of the bitstream pointer
   m_bitstream_ptr = static_cast<const uint8_t*>(p);

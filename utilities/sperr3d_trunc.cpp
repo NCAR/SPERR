@@ -76,7 +76,8 @@ int main(int argc, char* argv[])
     std::cout << "Error while truncating bitstream " << input_file << std::endl;
     return __LINE__;
   }
-  auto total_vals = tool.vol_dims[0] * tool.vol_dims[1] * tool.vol_dims[2];
+  auto header = tool.get_stream_header(stream_trunc.data());
+  auto total_vals = header.vol_dims[0] * header.vol_dims[1] * header.vol_dims[2];
   auto real_bpp = stream_trunc.size() * 8.0 / double(total_vals);
   std::printf("Truncation resulting BPP = %.2f\n", real_bpp);
 

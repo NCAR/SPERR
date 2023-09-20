@@ -10,7 +10,7 @@ auto sperr::CDF97::copy_data(const T* data, size_t len, dims_type dims) -> RTNTy
 {
   static_assert(std::is_floating_point<T>::value, "!! Only floating point values are supported !!");
   if (len != dims[0] * dims[1] * dims[2])
-    return RTNType::VectorWrongLen;
+    return RTNType::WrongLength;
 
   m_data_buf.resize(len);
   std::copy(data, data + len, m_data_buf.begin());
@@ -33,7 +33,7 @@ template auto sperr::CDF97::copy_data(const double*, size_t, dims_type) -> RTNTy
 auto sperr::CDF97::take_data(vecd_type&& buf, dims_type dims) -> RTNType
 {
   if (buf.size() != dims[0] * dims[1] * dims[2])
-    return RTNType::VectorWrongLen;
+    return RTNType::WrongLength;
 
   m_data_buf = std::move(buf);
   m_dims = dims;

@@ -8,9 +8,7 @@ namespace sperr {
 //
 // The 3D SPERR header definition is in SPERR3D_OMP_C.cpp::m_generate_header().
 //
-
-class SPERR3D_Stream_Tools {
- public:
+struct SPERR3D_Header {
   // Info directly stored in the header
   uint8_t major_version = 0;
   bool is_portion = false;
@@ -24,17 +22,20 @@ class SPERR3D_Stream_Tools {
   size_t header_len = 0;
   size_t stream_len = 0;
   std::vector<size_t> chunk_offsets;
+};
 
+class SPERR3D_Stream_Tools {
+ public:
   // Read the first 20 bytes of a bitstream, and determine the total length of the header.
   // Need 20 bytes because it's the larger of the header magic number (in multi-chunk case).
   auto get_header_len(std::array<uint8_t, 20>) const -> size_t;
 
   // Read a bitstream that's at least as long as what's determined by `get_header_len()`, and
-  // populate the information listed above.
-  void populate_stream_info(const void*);
+  // return an object of `SPERR3D_Stream_Header`.
+  auto get_stream_header(const void*) const -> SPERR3D_Header;
 
   // Function that reads in portions of a bitstream to facilitate progressive access.
-  auto progressive_read(std::string filename, uint32_t pct) -> vec8_type;
+  auto progressive_read(std::string filename, unsigned pct) -> vec8_type;
 
  private:
   const size_t m_header_magic_nchunks = 20;
@@ -43,6 +44,12 @@ class SPERR3D_Stream_Tools {
   // To simplify logic with progressive read, we set a minimum number of bytes to read from
   // a chunk, unless the chunk doesn't have that many bytes (e.g., a constant chunk).
   const size_t m_progressive_min_chunk_bytes = 64;
+
+  // Given the header of a bitstream and a desired percentage to truncate, return an
+  //    updated header and a list of {offset, len} to access.
+  //    Note: this function assumes that the header is complete.
+  auto m_progressive_helper(const void* header_buf, size_t buf_len, unsigned pct) const
+      -> std::tuple<vec8_type, std::vector<size_t>>;
 };
 
 }  // End of namespace sperr

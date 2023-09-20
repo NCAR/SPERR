@@ -51,7 +51,7 @@ auto sperr::pack_booleans(vec8_type& dest, const std::vector<bool>& src, size_t 
 {
   // `src` has to have a size of multiples of 8.
   if (src.size() % 8 != 0)
-    return RTNType::BitstreamWrongLen;
+    return RTNType::WrongLength;
 
   // `dest` should have enough space, as the API specifies.
   assert(dest.size() >= offset + src.size() / 8);
@@ -101,7 +101,7 @@ auto sperr::unpack_booleans(std::vector<bool>& dest,
     return RTNType::Error;
 
   if (src_len < src_offset)
-    return RTNType::BitstreamWrongLen;
+    return RTNType::WrongLength;
 
   const size_t num_of_bytes = src_len - src_offset;
 
@@ -265,7 +265,7 @@ auto sperr::read_sections(std::string filename, const std::vector<size_t>& secti
   std::fseek(fp.get(), 0, SEEK_END);
   const size_t file_len = std::ftell(fp.get());
   if (file_len < far)
-    return RTNType::BitstreamWrongLen;
+    return RTNType::WrongLength;
 
   // Calculate the resulting size of `dst`, and allocate enough memory.
   auto dst_pos = dst.size();  // keep track of the current position to write section data.
@@ -295,7 +295,7 @@ auto sperr::extract_sections(const void* buf,
   for (size_t i = 0; i < sections.size() / 2; i++)
     far = std::max(far, sections[i * 2] + sections[i * 2 + 1]);
   if (buf_len < far)
-    return RTNType::BitstreamWrongLen;
+    return RTNType::WrongLength;
 
   // Calculate the resulting size of `dst`, and allocate enough memory.
   auto total_len = dst.size();

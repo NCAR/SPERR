@@ -44,8 +44,7 @@ enum class CompMode : unsigned char { PSNR, PWE, Rate, Unknown };
 
 enum class RTNType {
   Good = 0,
-  VectorWrongLen,
-  BitstreamWrongLen,
+  WrongLength,
   IOError,
   BitBudgetMet,
   VersionMismatch,
