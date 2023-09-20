@@ -6,6 +6,8 @@
 #include "SPERR3D_OMP_C.h"
 #include "SPERR3D_OMP_D.h"
 
+#include "SPERR3D_Stream_Tools.h"
+
 int C_API::sperr_comp_2d(const void* src,
                          int is_float,
                          size_t dimx,
@@ -231,4 +233,26 @@ int C_API::sperr_decomp_3d(const void* src,
   }
 
   return 0;
+}
+
+int C_API::sperr_trunc_3d(const void* src,
+                          size_t src_len,
+                          unsigned pct,
+                          void** dst,
+                          size_t* dst_len)
+{
+  if (*dst != NULL)
+    return 1;
+
+  auto tools = sperr::SPERR3D_Stream_Tools();
+  auto trunc = tools.progressive_truncate(src, src_len, pct);
+  if (trunc.empty())
+    return -1;
+  else {
+    auto* buf = (uint8_t*)std::malloc(trunc.size());
+    std::copy(trunc.cbegin(), trunc.cend(), buf);
+    *dst = buf;
+    *dst_len = trunc.size();
+    return 0;
+  }
 }

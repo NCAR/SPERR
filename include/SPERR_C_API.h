@@ -37,11 +37,11 @@ extern "C" {
  *   mode == 3 --> fixed point-wise error (PWE)
  *
  * Return value meanings:
- * 0: success
- * 1: `dst` is not pointing to a NULL pointer!
- * 2: `mode` isn't valid
- * 3: `is_float` value not supported
- *-1: other error
+ *  0: success
+ *  1: `dst` is not pointing to a NULL pointer!
+ *  2: `mode` isn't valid
+ *  3: `is_float` value not supported
+ * -1: other error
  */
 int sperr_comp_2d(
     const void* src,  /* Input: buffer that contains a 2D slice */
@@ -57,9 +57,9 @@ int sperr_comp_2d(
  * Decompress a 2D SPERR-compressed buffer.
  *
  * Return value meanings:
- * 0: success
- * 1: `dst` not pointing to a NULL pointer!
- * 2: `output_float` value not supported
+ *  0: success
+ *  1: `dst` not pointing to a NULL pointer!
+ *  2: `output_float` value not supported
  * -1: other error
  */
 int sperr_decomp_2d(
@@ -77,11 +77,11 @@ int sperr_decomp_2d(
  *   mode == 3 --> fixed point-wise error (PWE)
  *
  * Return value meanings:
- * 0: success
- * 1: `dst` is not pointing to a NULL pointer!
- * 2: `mode` or `quality` isn't valid
- * 3: `is_float` value not supported
- *-1: other error
+ *  0: success
+ *  1: `dst` is not pointing to a NULL pointer!
+ *  2: `mode` or `quality` isn't valid
+ *  3: `is_float` value not supported
+ * -1: other error
  */
 int sperr_comp_3d(
     const void* src,  /* Input: buffer that contains a 3D volume */
@@ -102,9 +102,9 @@ int sperr_comp_3d(
  * Decompress a 3D SPERR-compressed buffer.
  *
  * Return value meanings:
- * 0: success
- * 1: `dst` not pointing to a NULL pointer!
- * 2: `output_float` value not supported
+ *  0: success
+ *  1: `dst` is not pointing to a NULL pointer!
+ *  2: `output_float` value not supported
  * -1: other error
  */
 int sperr_decomp_3d(
@@ -116,6 +116,21 @@ int sperr_decomp_3d(
     size_t* dimy,     /* Output: Y dimension */
     size_t* dimz,     /* Output: Z (slowest-varying) dimension */
     void** dst);      /* Output: buffer for the output 3D slice, allocated by this function */
+
+/*
+ * Truncate a 3D SPERR-compressed bitstream to a percentage of its original length.
+ *
+ * Return value meanings:
+ *  0: success
+ *  1: `dst` is not pointing to a NULL pointer!
+ * -1: other error
+ */
+int sperr_trunc_3d(
+    const void* src,  /* Input: buffer that contains a compressed bitstream */
+    size_t src_len,   /* Input: length of the input bitstream in byte */
+    unsigned pct,     /* Input: percentage of the bitstream to keep (0 <= pct <= 100) */
+    void** dst,       /* Output: buffer for the truncated bitstream, allocated by this function */
+    size_t* dst_len); /* Output: length of `dst` in byte */
 
 #ifdef __cplusplus
 } /* end of extern "C" */

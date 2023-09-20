@@ -104,14 +104,15 @@ auto sperr::SPERR3D_Stream_Tools::get_stream_header(const void* p) const -> SPER
   return header;
 }
 
-auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, unsigned pct) -> vec8_type
+auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, unsigned pct) const
+    -> vec8_type
 {
   // Read the header of this bitstream.
   auto vec20 = sperr::read_n_bytes(filename, 20);
   if (vec20.empty())
     return vec20;
   auto arr20 = std::array<uint8_t, 20>();
-  std::copy(vec20.begin(), vec20.end(), arr20.begin());
+  std::copy(vec20.cbegin(), vec20.cend(), arr20.begin());
   const auto header_len = this->get_header_len(arr20);
   const auto header_buf = sperr::read_n_bytes(filename, header_len);
   if (header_buf.empty())
@@ -132,7 +133,7 @@ auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, unsigne
 
 auto sperr::SPERR3D_Stream_Tools::progressive_truncate(const void* stream,
                                                        size_t stream_len,
-                                                       unsigned pct) -> vec8_type
+                                                       unsigned pct) const -> vec8_type
 {
   const auto* u8p = static_cast<const uint8_t*>(stream);
 
