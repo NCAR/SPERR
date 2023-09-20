@@ -118,11 +118,36 @@ auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, unsigne
     return header_buf;
 
   // Get the new header and chunk offsets to read.
-  auto [header_new, chunk_offsets] = m_progressive_helper(header_buf.data(), header_buf.size(), pct);
+  auto [header_new, chunk_offsets] =
+      m_progressive_helper(header_buf.data(), header_buf.size(), pct);
 
   // Read portions of the bitstream from disk!
   auto stream_new = std::move(header_new);
   auto rtn = sperr::read_sections(filename, chunk_offsets, stream_new);
+  if (rtn != RTNType::Good)
+    stream_new.clear();
+
+  return stream_new;
+}
+
+auto sperr::SPERR3D_Stream_Tools::progressive_truncate(const void* stream,
+                                                       size_t stream_len,
+                                                       unsigned pct) -> vec8_type
+{
+  const auto* u8p = static_cast<const uint8_t*>(stream);
+
+  // Get the header length of this bitstream.
+  assert(stream_len >= 20);
+  auto arr20 = std::array<uint8_t, 20>();
+  std::copy(u8p, u8p + 20, arr20.begin());
+  const auto header_len = this->get_header_len(arr20);
+
+  // Get the new header and chunk offsets to truncate.
+  auto [header_new, chunk_offsets] = m_progressive_helper(stream, header_len, pct);
+
+  // Truncate portions of the bitstream!
+  auto stream_new = std::move(header_new);
+  auto rtn = sperr::extract_sections(stream, stream_len, chunk_offsets, stream_new);
   if (rtn != RTNType::Good)
     stream_new.clear();
 
@@ -198,4 +223,3 @@ auto sperr::SPERR3D_Stream_Tools::m_progressive_helper(const void* header_buf,
 
   return rtn_val;
 }
-

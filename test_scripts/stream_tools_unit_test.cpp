@@ -23,10 +23,14 @@ TEST(stream_tools, constant_1chunk)
 
   // Test progressive read!
   auto tools = sperr::SPERR3D_Stream_Tools();
-  auto part = tools.progressive_read(filename, 100); // also populates data fields inside of `tools`
+  auto part = tools.progressive_read(filename, 100);
 
   // The returned bitstream should remain the same.
   EXPECT_EQ(part, stream);
+
+  // If truncate from memory, the result should remain the same.
+  auto trunc = tools.progressive_truncate(stream.data(), stream.size(), 100);
+  EXPECT_EQ(trunc, stream);
 }
 
 TEST(stream_tools, constant_nchunks)
@@ -44,7 +48,7 @@ TEST(stream_tools, constant_nchunks)
 
   // Test progressive read!
   auto tools = sperr::SPERR3D_Stream_Tools();
-  auto part = tools.progressive_read(filename, 50); // also populates data fields inside of `tools`.
+  auto part = tools.progressive_read(filename, 50);
 
   // The returned bitstream should still remain the same, except than one bit, because
   // each chunk is so small that it's still kept in whole.
@@ -53,6 +57,10 @@ TEST(stream_tools, constant_nchunks)
   EXPECT_EQ(part[1], stream[1] + 128);
   for (size_t i = 2; i < part.size(); i++)
     EXPECT_EQ(part[i], stream[i]);
+
+  // If truncate from memory, the result should remain the same.
+  auto trunc = tools.progressive_truncate(stream.data(), stream.size(), 50);
+  EXPECT_EQ(trunc, part);
 }
 
 //
@@ -92,6 +100,10 @@ TEST(stream_tools, regular_1chunk)
     for (size_t j = 0; j < header2.chunk_offsets[i * 2 + 1]; j++)
       EXPECT_EQ(stream[orig_start + j], part[part_start + j]);
   }
+
+  // If truncate from memory, the result should remain the same.
+  auto trunc = tools.progressive_truncate(stream.data(), stream.size(), 50);
+  EXPECT_EQ(trunc, part);
 }
 
 TEST(stream_tools, regular_nchunks)
@@ -126,6 +138,10 @@ TEST(stream_tools, regular_nchunks)
     for (size_t j = 0; j < header2.chunk_offsets[i * 2 + 1]; j++)
       EXPECT_EQ(stream[orig_start + j], part[part_start + j]);
   }
+
+  // If truncate from memory, the result should remain the same.
+  auto trunc = tools.progressive_truncate(stream.data(), stream.size(), 35);
+  EXPECT_EQ(trunc, part);
 }
 
 TEST(stream_tools, min_chunk_len)
@@ -161,6 +177,10 @@ TEST(stream_tools, min_chunk_len)
     for (size_t j = 0; j < header2.chunk_offsets[i * 2 + 1]; j++)
       EXPECT_EQ(stream[orig_start + j], part[part_start + j]);
   }
+
+  // If truncate from memory, the result should remain the same.
+  auto trunc = tools.progressive_truncate(stream.data(), stream.size(), 1);
+  EXPECT_EQ(trunc, part);
 }
 
 } // anonymous namespace
