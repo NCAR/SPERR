@@ -1,8 +1,8 @@
 
 UNAME = $(shell uname)
 ifeq (${UNAME}, Darwin)
-  CXX = g++-11
-  CC = gcc-11
+  CXX = clang++
+  CC = clang
   SPERR_INCDIR=/Users/shaomeng/Git/SPERR/install/include
   SPERR_LIBDIR=/Users/shaomeng/Git/SPERR/install/lib
 else
@@ -12,7 +12,7 @@ else
   SPERR_LIBDIR=/home/shaomeng/Git/SPERR/install/lib
 endif
 
-FLAGS = -g
+FLAGS = -g -O3
 
 all: 2d.out 3d.out
 
