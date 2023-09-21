@@ -24,7 +24,7 @@ The name of SPERR stands for **SP**eck with **ERR**or bounding.
 
 SPERR documentation is hosted on Github [Wiki](https://github.com/NCAR/SPERR/wiki) pages. To get started, one might want to
 [build SPERR from source](https://github.com/NCAR/SPERR/wiki/Build-SPERR-From-Source) and explore compression and decompression
-utilities for [3D](https://github.com/NCAR/SPERR/wiki/CLI:-3D-Compression-and-Decompression-Utilities) and [2D](https://github.com/NCAR/SPERR/wiki/CLI:-2D-Compression-and-Decompression-Utilities) inputs.
+utilities for [3D and 2D](https://github.com/NCAR/SPERR/wiki/CLI%3A-3D-and-2D-Compression-and-Decompression-Utilities) inputs.
 One may also want to pull a [docker image](https://hub.docker.com/r/shaomeng/sperr-docker)
 which contains SPERR in a complete development environment, or use [spack](https://spack.io/) to install SPERR by one command `spack install sperr`.
 Finally, a collection of canonical scientific data sets is available at [SDRBench](https://sdrbench.github.io/) for testing and evaluation purposes.
@@ -33,7 +33,7 @@ SPERR also provides programming [API in C++ and C](https://github.com/NCAR/SPERR
 
 ## Publication
 
-If SPERR benefits your work, please kindly cite [this](https://ieeexplore.ieee.org/document/10177487) publication:
+If SPERR benefits your work, please kindly cite [this publication](https://ieeexplore.ieee.org/document/10177487):
 ```Tex
 @INPROCEEDINGS{10177487,
   author={Li, Shaomeng and Lindstrom, Peter and Clyne, John},
