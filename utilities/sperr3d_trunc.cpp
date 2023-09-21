@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 {
   // Parse command line options
   CLI::App app(
-      "Truncate a SPERR3D bitstream to a specific bit-per-point (BPP).\n"
+      "Truncate a SPERR3D bitstream to keep a percentage of its original length.\n"
       "Optionally, it can also evaluate the compression quality after truncation.\n");
 
   // Input specification

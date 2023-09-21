@@ -119,6 +119,10 @@ int sperr_decomp_3d(
 
 /*
  * Truncate a 3D SPERR-compressed bitstream to a percentage of its original length.
+ *    Note on `src_len`: it does not to be the full length of the original bitstream, rather,
+ *    it can be just long enough for the requested truncation:
+ *  - one chunk: (full_bitstream_length * percent + 64) bytes.
+ *  - multiple chunks: probably easier to just use the full bitstream length.
  *
  * Return value meanings:
  *  0: success
@@ -128,7 +132,7 @@ int sperr_decomp_3d(
 int sperr_trunc_3d(
     const void* src,  /* Input: buffer that contains a compressed bitstream */
     size_t src_len,   /* Input: length of the input bitstream in byte */
-    unsigned pct,     /* Input: percentage of the bitstream to keep (0 <= pct <= 100) */
+    unsigned pct,     /* Input: percentage of the bitstream to keep (1 <= pct <= 100) */
     void** dst,       /* Output: buffer for the truncated bitstream, allocated by this function */
     size_t* dst_len); /* Output: length of `dst` in byte */
 

@@ -38,6 +38,10 @@ class SPERR3D_Stream_Tools {
   auto progressive_read(std::string filename, unsigned pct) const -> vec8_type;
 
   // Function that truncates a bitstream to facilitate progressive access.
+  //    Note on `stream_len`: it does not to be the full length of the original bitstream, rather,
+  //    it can be just long enough for the requested truncation:
+  //  - one chunk: (full_bitstream_length * percent + 64) bytes.
+  //  - multiple chunks: probably easier to just use the full bitstream length.
   auto progressive_truncate(const void* stream, size_t stream_len, unsigned pct) const -> vec8_type;
 
  private:
