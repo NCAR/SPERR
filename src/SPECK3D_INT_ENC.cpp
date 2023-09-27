@@ -43,11 +43,10 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
         m_morton_buf[idx_morton] = m_coeff_buf[id];
 
         // Element (1, 0, 0)
-        auto id2 = id + 1;
-        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+        m_morton_buf[++idx_morton] = m_coeff_buf[id + 1];
 
         // Element (0, 1, 0)
-        id2 = id + m_dims[0];
+        auto id2 = id + m_dims[0];
         m_morton_buf[++idx_morton] = m_coeff_buf[id2];
 
         // Element (1, 1, 0)
@@ -62,11 +61,10 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
         m_morton_buf[idx_morton] = m_coeff_buf[id];
 
         // Element (1, 0, 0)
-        auto id2 = id + 1;
-        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
-        id2 = id + m_dims[0] * m_dims[1];
+        m_morton_buf[++idx_morton] = m_coeff_buf[id + 1];
 
         // Element (0, 0, 1)
+        auto id2 = id + m_dims[0] * m_dims[1];
         m_morton_buf[++idx_morton] = m_coeff_buf[id2];
 
         // Element (1, 0, 1)
@@ -105,11 +103,10 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
         m_morton_buf[idx_morton] = m_coeff_buf[id];
 
         // Element (1, 0, 0)
-        auto id2 = id + 1;
-        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+        m_morton_buf[++idx_morton] = m_coeff_buf[id + 1];
 
         // Element (0, 1, 0)
-        id2 = id + m_dims[0];
+        auto id2 = id + m_dims[0];
         m_morton_buf[++idx_morton] = m_coeff_buf[id2];
 
         // Element (1, 1, 0)
