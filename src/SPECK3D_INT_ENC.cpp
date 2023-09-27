@@ -10,37 +10,138 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
 {
   switch (set.num_elem()) {
     case 0:
-      break;
+      return;
     case 1: {
-      auto idx = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
-      m_morton_buf[set.get_morton()] = m_coeff_buf[idx];
-      break;
+      auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
+      m_morton_buf[set.get_morton()] = m_coeff_buf[id];
+      return;
     }
     case 2: {
       // We directly deposit the 2 elements in `set` instead of performing another partition.
       //
       // Deposit the 1st element.
-      auto idx = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
+      auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
       auto idx_morton = set.get_morton();
-      m_morton_buf[idx_morton] = m_coeff_buf[idx];
+      m_morton_buf[idx_morton] = m_coeff_buf[id];
 
       // Deposit the 2nd element.
       if (set.length_x == 2)
-        idx++;
+        id++;
       else if (set.length_y == 2)
-        idx += m_dims[0];
+        id += m_dims[0];
       else
-        idx += m_dims[0] * m_dims[1];
-      m_morton_buf[idx_morton + 1] = m_coeff_buf[idx];
+        id += m_dims[0] * m_dims[1];
+      m_morton_buf[++idx_morton] = m_coeff_buf[id];
 
-      break;
+      return;
     }
-    default: {
-      auto [subsets, lev] = m_partition_S_XYZ(set, 0);
-      for (auto& sub : subsets)
-        m_deposit_set(sub);
+    case 4: {
+      if (set.length_x == 2 && set.length_y == 2) {
+        // Element (0, 0, 0)
+        const auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
+        auto idx_morton = set.get_morton();
+        m_morton_buf[idx_morton] = m_coeff_buf[id];
+
+        // Element (1, 0, 0)
+        auto id2 = id + 1;
+        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+
+        // Element (0, 1, 0)
+        id2 = id + m_dims[0];
+        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+
+        // Element (1, 1, 0)
+        m_morton_buf[++idx_morton] = m_coeff_buf[++id2];
+
+        return;
+      }
+      else if (set.length_x == 2 && set.length_z == 2) {
+        // Element (0, 0, 0)
+        const auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
+        auto idx_morton = set.get_morton();
+        m_morton_buf[idx_morton] = m_coeff_buf[id];
+
+        // Element (1, 0, 0)
+        auto id2 = id + 1;
+        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+        id2 = id + m_dims[0] * m_dims[1];
+
+        // Element (0, 0, 1)
+        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+
+        // Element (1, 0, 1)
+        m_morton_buf[++idx_morton] = m_coeff_buf[++id2];
+
+        return;
+      }
+      else if (set.length_y == 2 && set.length_z == 2) {
+        // Element (0, 0, 0)
+        const auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
+        auto idx_morton = set.get_morton();
+        m_morton_buf[idx_morton] = m_coeff_buf[id];
+
+        // Element (0, 1, 0)
+        auto id2 = id + m_dims[0];
+        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+
+        // Element (0, 0, 1)
+        id2 = id + m_dims[0] * m_dims[1];
+        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+
+        // Element (0, 1, 1)
+        id2 += m_dims[0];
+        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+
+        return;
+      }
+      else
+        break;  // Fall back to the recursive case.
     }
+    case 8: {
+      if (set.length_x == 2 && set.length_y == 2) {
+        // Element (0, 0, 0)
+        const auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
+        auto idx_morton = set.get_morton();
+        m_morton_buf[idx_morton] = m_coeff_buf[id];
+
+        // Element (1, 0, 0)
+        auto id2 = id + 1;
+        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+
+        // Element (0, 1, 0)
+        id2 = id + m_dims[0];
+        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+
+        // Element (1, 1, 0)
+        m_morton_buf[++idx_morton] = m_coeff_buf[++id2];
+
+        // Element (0, 0, 1)
+        id2 = id + m_dims[0] * m_dims[1];
+        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+
+        // Element (1, 0, 1)
+        m_morton_buf[++idx_morton] = m_coeff_buf[++id2];
+
+        // Element (0, 1, 1)
+        id2 = id + m_dims[0] * (m_dims[1] + 1);
+        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+
+        // Element (1, 1, 1)
+        m_morton_buf[++idx_morton] = m_coeff_buf[++id2];
+
+        return;
+      }
+      else
+        break;  // Fall back to the recursive case.
+    }
+    default:
+      break;  // Fall back to the recursive case.
   }
+
+  // The recursive case.
+  auto [subsets, lev] = m_partition_S_XYZ(set, 0);
+  for (auto& sub : subsets)
+    m_deposit_set(sub);
 }
 
 template <typename T>
