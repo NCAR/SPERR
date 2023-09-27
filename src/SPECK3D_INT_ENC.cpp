@@ -36,10 +36,11 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
       return;
     }
     case 4: {
+      const auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
+      auto idx_morton = set.get_morton();
+
       if (set.length_x == 2 && set.length_y == 2) {
         // Element (0, 0, 0)
-        const auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
-        auto idx_morton = set.get_morton();
         m_morton_buf[idx_morton] = m_coeff_buf[id];
 
         // Element (1, 0, 0)
@@ -56,8 +57,6 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
       }
       else if (set.length_x == 2 && set.length_z == 2) {
         // Element (0, 0, 0)
-        const auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
-        auto idx_morton = set.get_morton();
         m_morton_buf[idx_morton] = m_coeff_buf[id];
 
         // Element (1, 0, 0)
@@ -74,8 +73,6 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
       }
       else if (set.length_y == 2 && set.length_z == 2) {
         // Element (0, 0, 0)
-        const auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
-        auto idx_morton = set.get_morton();
         m_morton_buf[idx_morton] = m_coeff_buf[id];
 
         // Element (0, 1, 0)
