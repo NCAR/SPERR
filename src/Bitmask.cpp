@@ -122,8 +122,8 @@ void sperr::Bitmask::use_bitstream(const void* p)
   std::copy(pu64, pu64 + m_buf.size(), m_buf.begin());
 }
 
-#if defined __cpp_lib_three_way_comparison && defined __cpp_impl_three_way_comparison 
-auto sperr::Bitmask::operator<=> (const Bitmask& rhs) const noexcept
+#if defined __cpp_lib_three_way_comparison && defined __cpp_impl_three_way_comparison
+auto sperr::Bitmask::operator<=>(const Bitmask& rhs) const noexcept
 {
   auto cmp = m_num_bits <=> rhs.m_num_bits;
   if (cmp != 0)
@@ -149,7 +149,7 @@ auto sperr::Bitmask::operator<=> (const Bitmask& rhs) const noexcept
     return mylast <=> rhslast;
   }
 }
-auto sperr::Bitmask::operator== (const Bitmask& rhs) const noexcept
+auto sperr::Bitmask::operator==(const Bitmask& rhs) const noexcept -> bool
 {
   return (operator<=>(rhs) == 0);
 }
