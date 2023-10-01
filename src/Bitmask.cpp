@@ -121,3 +121,36 @@ void sperr::Bitmask::use_bitstream(const void* p)
   const auto* pu64 = static_cast<const uint64_t*>(p);
   std::copy(pu64, pu64 + m_buf.size(), m_buf.begin());
 }
+
+#if defined __cpp_lib_three_way_comparison && defined __cpp_impl_three_way_comparison 
+auto sperr::Bitmask::operator<=> (const Bitmask& rhs) const noexcept
+{
+  auto cmp = m_num_bits <=> rhs.m_num_bits;
+  if (cmp != 0)
+    return cmp;
+
+  if (m_num_bits % 64 == 0)
+    return m_buf <=> rhs.m_buf;
+  else {
+    // Compare each fully used long.
+    for (size_t i = 0; i < m_buf.size() - 1; i++) {
+      cmp = m_buf[i] <=> rhs.m_buf[i];
+      if (cmp != 0)
+        return cmp;
+    }
+    // Compare the last partially used long.
+    auto mylast = m_buf.back();
+    auto rhslast = rhs.m_buf.back();
+    for (size_t i = m_num_bits % 64; i < 64; i++) {
+      auto mask = uint64_t{1} << i;
+      mylast &= ~mask;
+      rhslast &= ~mask;
+    }
+    return mylast <=> rhslast;
+  }
+}
+auto sperr::Bitmask::operator== (const Bitmask& rhs) const noexcept
+{
+  return (operator<=>(rhs) == 0);
+}
+#endif
