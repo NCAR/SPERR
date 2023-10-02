@@ -43,6 +43,10 @@ class CDF97 {
   void idwt1d();
   void idwt3d();
 
+  // Peter Lindstrom's scheme
+  void dwt1d_pl();
+  void idwt1d_pl();
+
  private:
   using itd_type = vecd_type::iterator;
   using citd_type = vecd_type::const_iterator;
@@ -109,11 +113,9 @@ class CDF97 {
   vecd_type m_data_buf;          // Holds the entire input data.
   dims_type m_dims = {0, 0, 0};  // Dimension of the data volume
 
-  // Temporary buffers that are big enough for any (1D column * 2) or any 2D
-  // slice. Note: `m_qcc_buf` should be used by m_***_one_level() functions and
-  // should not be used by higher-level functions. `m_slice_buf` is only used by
-  // wavelet-packet transforms.
-  vecd_type m_qcc_buf;
+  // Temporary buffers that are big enough for any (1D column * 2) or any 2D slice.
+  // Note: `m_slice_buf` is only used by wavelet-packet transforms.
+  vecd_type m_col_buf;
   vecd_type m_slice_buf;
 
   //
@@ -149,7 +151,49 @@ class CDF97 {
   // const double DELTA   =  0.44350482244527;
   // const double EPSILON =  1.14960430535816;
   //
-};
+
+  //
+  // Peter's method that reduces large coefficients on the boundary.
+  //
+  const std::array<double, 6> m_lift = {
+      -1.586134342059923558,    // 1st w-lift
+      -0.05298011857296141462,  // 1st s-lift
+      0.8829110755309332959,    // 2nd w-lift
+      0.4435068520439711521,    // 2nd s-lift
+      1.2301741049140007292,    // w-scale
+      0.81289306611596105003    // s-scale = 1 / w-scale
+  };
+
+  const std::array<double, 9> m_blift = {
+      -1.586134342059923558,    // 1st w-lift
+      -0.05298011857296141462,  // 1st s-lift
+      0.8829110755309332959,    // 2nd w-lift
+      1.0796367753748872,       // 2nd s-lift
+      -0.9206964196560029,      // w-scale
+      -17.37814947295878,       // s-scale
+      -0.13081031898599063,     // special weight for n-3
+      10.978432345068303,       // special weight for n-2
+      -10.956291035467812       // special w-scale for n-1
+  };
+
+  // Perform one level of wavelet transform with improved boundary handling.
+  // Return: number of scaling coefficients (for next level)
+  size_t m_forward(const double* src,  // input values
+                   ptrdiff_t sstride,  // input stride
+                   double* dst,        // output coefficients (can be the same as src)
+                   ptrdiff_t dstride,  // output stride
+                   size_t n            // input length
+  );
+
+  // Perform one level of inverse wavelet transform with improved boundary handling.
+  bool m_inverse(const double* src,  // input coefficients
+                 ptrdiff_t sstride,  // input stride
+                 double* dst,        // output values (can be the same as src)
+                 ptrdiff_t dstride,  // output stride
+                 size_t n            // output length (number of function values)
+  );
+
+};  // class CDF97
 
 };  // namespace sperr
 

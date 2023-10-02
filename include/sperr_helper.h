@@ -59,6 +59,7 @@ enum class RTNType {
 //
 // Given a certain length, how many transforms to be performed?
 auto num_of_xforms(size_t len) -> size_t;
+auto num_of_xforms_pl(size_t len) -> size_t;
 
 // How many partition operation could we perform given a length?
 // Length 0 and 1 can do 0 partitions; len=2 can do 1; len=3 can do 2, len=4 can

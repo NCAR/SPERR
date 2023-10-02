@@ -18,8 +18,8 @@ auto sperr::CDF97::copy_data(const T* data, size_t len, dims_type dims) -> RTNTy
   m_dims = dims;
 
   auto max_col = std::max(std::max(dims[0], dims[1]), dims[2]);
-  if (max_col * 2 > m_qcc_buf.size())
-    m_qcc_buf.resize(std::max(m_qcc_buf.size(), max_col) * 2);
+  if (max_col * 2 > m_col_buf.size())
+    m_col_buf.resize(std::max(m_col_buf.size(), max_col) * 2);
 
   auto max_slice = std::max(std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2]);
   if (max_slice > m_slice_buf.size())
@@ -39,8 +39,8 @@ auto sperr::CDF97::take_data(vecd_type&& buf, dims_type dims) -> RTNType
   m_dims = dims;
 
   auto max_col = std::max(std::max(dims[0], dims[1]), dims[2]);
-  if (max_col * 2 > m_qcc_buf.size())
-    m_qcc_buf.resize(std::max(m_qcc_buf.size(), max_col) * 2);
+  if (max_col * 2 > m_col_buf.size())
+    m_col_buf.resize(std::max(m_col_buf.size(), max_col) * 2);
 
   auto max_slice = std::max(std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2]);
   if (max_slice > m_slice_buf.size())
@@ -63,6 +63,31 @@ auto sperr::CDF97::release_data() -> vecd_type&&
 auto sperr::CDF97::get_dims() const -> std::array<size_t, 3>
 {
   return m_dims;
+}
+
+void sperr::CDF97::dwt1d_pl()
+{
+  auto n = m_dims[0];
+  auto levels = sperr::num_of_xforms_pl(n);
+  while (levels--)
+    n = m_forward(m_data_buf.data(), 1, m_data_buf.data(), 1, n);
+}
+
+void sperr::CDF97::idwt1d_pl()
+{
+  auto n = m_dims[0];
+  auto levels = sperr::num_of_xforms_pl(n);
+
+  // compute number of scaling functions on each level
+  assert(levels <= 6);
+  auto count = std::array<size_t, 7>{n, 0, 0, 0, 0, 0, 0};
+  for (size_t i = 1; i <= levels; i++)
+    count[i] = (count[i - 1] + 6) / 2;
+
+  while (levels--) {
+    auto rtn = m_inverse(m_data_buf.data(), 1, m_data_buf.data(), 1, count[levels]);
+    assert(rtn);
+  }
 }
 
 void sperr::CDF97::dwt1d()
@@ -295,28 +320,28 @@ void sperr::CDF97::m_idwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t
 
 void sperr::CDF97::m_dwt1d_one_level(itd_type array, size_t array_len)
 {
-  std::copy(array, array + array_len, m_qcc_buf.begin());
+  std::copy(array, array + array_len, m_col_buf.begin());
   if (array_len % 2 == 0) {
-    this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf.data(), array_len);
-    m_gather_even(m_qcc_buf.cbegin(), m_qcc_buf.cbegin() + array_len, array);
+    this->QccWAVCDF97AnalysisSymmetricEvenEven(m_col_buf.data(), array_len);
+    m_gather_even(m_col_buf.cbegin(), m_col_buf.cbegin() + array_len, array);
   }
   else {
-    this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf.data(), array_len);
-    m_gather_odd(m_qcc_buf.cbegin(), m_qcc_buf.cbegin() + array_len, array);
+    this->QccWAVCDF97AnalysisSymmetricOddEven(m_col_buf.data(), array_len);
+    m_gather_odd(m_col_buf.cbegin(), m_col_buf.cbegin() + array_len, array);
   }
 }
 
 void sperr::CDF97::m_idwt1d_one_level(itd_type array, size_t array_len)
 {
   if (array_len % 2 == 0) {
-    m_scatter_even(array, array + array_len, m_qcc_buf.begin());
-    this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf.data(), array_len);
+    m_scatter_even(array, array + array_len, m_col_buf.begin());
+    this->QccWAVCDF97SynthesisSymmetricEvenEven(m_col_buf.data(), array_len);
   }
   else {
-    m_scatter_odd(array, array + array_len, m_qcc_buf.begin());
-    this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf.data(), array_len);
+    m_scatter_odd(array, array + array_len, m_col_buf.begin());
+    this->QccWAVCDF97SynthesisSymmetricOddEven(m_col_buf.data(), array_len);
   }
-  std::copy(m_qcc_buf.cbegin(), m_qcc_buf.cbegin() + array_len, array);
+  std::copy(m_col_buf.cbegin(), m_col_buf.cbegin() + array_len, array);
 }
 
 void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_xy)
@@ -325,7 +350,7 @@ void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_x
   // m_dwt1d_one_level() because we want to have only one even/odd test at the outer loop.
 
   const size_t max_len = std::max(len_xy[0], len_xy[1]);
-  const auto beg = m_qcc_buf.begin();
+  const auto beg = m_col_buf.begin();
   const auto beg2 = beg + max_len;
 
   // First, perform DWT along X for every row
@@ -333,7 +358,7 @@ void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_x
     for (size_t i = 0; i < len_xy[1]; i++) {
       auto pos = plane + i * m_dims[0];
       std::copy(pos, pos + len_xy[0], beg);
-      this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf.data(), len_xy[0]);
+      this->QccWAVCDF97AnalysisSymmetricEvenEven(m_col_buf.data(), len_xy[0]);
       m_gather_even(beg, beg + len_xy[0], pos);
     }
   }
@@ -342,7 +367,7 @@ void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_x
     for (size_t i = 0; i < len_xy[1]; i++) {
       auto pos = plane + i * m_dims[0];
       std::copy(pos, pos + len_xy[0], beg);
-      this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf.data(), len_xy[0]);
+      this->QccWAVCDF97AnalysisSymmetricOddEven(m_col_buf.data(), len_xy[0]);
       m_gather_odd(beg, beg + len_xy[0], pos);
     }
   }
@@ -357,8 +382,8 @@ void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_x
   if (len_xy[1] % 2 == 0) {
     for (size_t x = 0; x < len_xy[0]; x++) {
       for (size_t y = 0; y < len_xy[1]; y++)
-        m_qcc_buf[y] = *(plane + y * m_dims[0] + x);
-      this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf.data(), len_xy[1]);
+        m_col_buf[y] = *(plane + y * m_dims[0] + x);
+      this->QccWAVCDF97AnalysisSymmetricEvenEven(m_col_buf.data(), len_xy[1]);
       m_gather_even(beg, beg + len_xy[1], beg2);
       for (size_t y = 0; y < len_xy[1]; y++)
         *(plane + y * m_dims[0] + x) = *(beg2 + y);
@@ -368,8 +393,8 @@ void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_x
   {
     for (size_t x = 0; x < len_xy[0]; x++) {
       for (size_t y = 0; y < len_xy[1]; y++)
-        m_qcc_buf[y] = *(plane + y * m_dims[0] + x);
-      this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf.data(), len_xy[1]);
+        m_col_buf[y] = *(plane + y * m_dims[0] + x);
+      this->QccWAVCDF97AnalysisSymmetricOddEven(m_col_buf.data(), len_xy[1]);
       m_gather_odd(beg, beg + len_xy[1], beg2);
       for (size_t y = 0; y < len_xy[1]; y++)
         *(plane + y * m_dims[0] + x) = *(beg2 + y);
@@ -380,16 +405,16 @@ void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_x
 void sperr::CDF97::m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_xy)
 {
   const size_t max_len = std::max(len_xy[0], len_xy[1]);
-  const auto beg = m_qcc_buf.begin();  // First half of the buffer
+  const auto beg = m_col_buf.begin();  // First half of the buffer
   const auto beg2 = beg + max_len;     // Second half of the buffer
 
   // First, perform IDWT along Y for every column
   if (len_xy[1] % 2 == 0) {
     for (size_t x = 0; x < len_xy[0]; x++) {
       for (size_t y = 0; y < len_xy[1]; y++)
-        m_qcc_buf[y] = *(plane + y * m_dims[0] + x);
+        m_col_buf[y] = *(plane + y * m_dims[0] + x);
       m_scatter_even(beg, beg + len_xy[1], beg2);
-      this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf.data() + max_len, len_xy[1]);
+      this->QccWAVCDF97SynthesisSymmetricEvenEven(m_col_buf.data() + max_len, len_xy[1]);
       for (size_t y = 0; y < len_xy[1]; y++)
         *(plane + y * m_dims[0] + x) = *(beg2 + y);
     }
@@ -398,9 +423,9 @@ void sperr::CDF97::m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_
   {
     for (size_t x = 0; x < len_xy[0]; x++) {
       for (size_t y = 0; y < len_xy[1]; y++)
-        m_qcc_buf[y] = *(plane + y * m_dims[0] + x);
+        m_col_buf[y] = *(plane + y * m_dims[0] + x);
       m_scatter_odd(beg, beg + len_xy[1], beg2);
-      this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf.data() + max_len, len_xy[1]);
+      this->QccWAVCDF97SynthesisSymmetricOddEven(m_col_buf.data() + max_len, len_xy[1]);
       for (size_t y = 0; y < len_xy[1]; y++)
         *(plane + y * m_dims[0] + x) = *(beg2 + y);
     }
@@ -411,7 +436,7 @@ void sperr::CDF97::m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_
     for (size_t i = 0; i < len_xy[1]; i++) {
       auto pos = plane + i * m_dims[0];
       m_scatter_even(pos, pos + len_xy[0], beg);
-      this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf.data(), len_xy[0]);
+      this->QccWAVCDF97SynthesisSymmetricEvenEven(m_col_buf.data(), len_xy[0]);
       std::copy(beg, beg + len_xy[0], pos);
     }
   }
@@ -420,7 +445,7 @@ void sperr::CDF97::m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_
     for (size_t i = 0; i < len_xy[1]; i++) {
       auto pos = plane + i * m_dims[0];
       m_scatter_odd(pos, pos + len_xy[0], beg);
-      this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf.data(), len_xy[0]);
+      this->QccWAVCDF97SynthesisSymmetricOddEven(m_col_buf.data(), len_xy[0]);
       std::copy(beg, beg + len_xy[0], pos);
     }
   }
@@ -435,13 +460,13 @@ void sperr::CDF97::m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz
     m_dwt2d_one_level(vol + offset, {len_xyz[0], len_xyz[1]});
   }
 
-  const auto beg = m_qcc_buf.begin();  // First half of the buffer
+  const auto beg = m_col_buf.begin();  // First half of the buffer
   const auto beg2 = beg + len_xyz[2];  // Second half of the buffer
 
   // Second, do one level of transform on all Z columns.  Strategy:
-  // 1) extract a Z column to buffer space `m_qcc_buf`
+  // 1) extract a Z column to buffer space `m_col_buf`
   // 2) use appropriate even/odd Qcc*** function to transform it
-  // 3) gather coefficients from `m_qcc_buf` to the second half of `m_qcc_buf`
+  // 3) gather coefficients from `m_col_buf` to the second half of `m_col_buf`
   // 4) put the Z column back to their locations as a Z column.
 
   if (len_xyz[2] % 2 == 0) {  // Even length
@@ -450,9 +475,9 @@ void sperr::CDF97::m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz
         const size_t xy_offset = y * m_dims[0] + x;
         // Step 1
         for (size_t z = 0; z < len_xyz[2]; z++)
-          m_qcc_buf[z] = m_data_buf[z * plane_size_xy + xy_offset];
+          m_col_buf[z] = m_data_buf[z * plane_size_xy + xy_offset];
         // Step 2
-        this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf.data(), len_xyz[2]);
+        this->QccWAVCDF97AnalysisSymmetricEvenEven(m_col_buf.data(), len_xyz[2]);
         // Step 3
         m_gather_even(beg, beg2, beg2);
         // Step 4
@@ -467,9 +492,9 @@ void sperr::CDF97::m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz
         const size_t xy_offset = y * m_dims[0] + x;
         // Step 1
         for (size_t z = 0; z < len_xyz[2]; z++)
-          m_qcc_buf[z] = m_data_buf[z * plane_size_xy + xy_offset];
+          m_col_buf[z] = m_data_buf[z * plane_size_xy + xy_offset];
         // Step 2
-        this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf.data(), len_xyz[2]);
+        this->QccWAVCDF97AnalysisSymmetricOddEven(m_col_buf.data(), len_xyz[2]);
         // Step 3
         m_gather_odd(beg, beg2, beg2);
         // Step 4
@@ -483,12 +508,12 @@ void sperr::CDF97::m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz
 void sperr::CDF97::m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz)
 {
   const size_t plane_size_xy = m_dims[0] * m_dims[1];
-  const auto beg = m_qcc_buf.begin();  // First half of the buffer
+  const auto beg = m_col_buf.begin();  // First half of the buffer
   const auto beg2 = beg + len_xyz[2];  // Second half of the buffer
 
   // First, do one level of inverse transform on all Z columns.  Strategy:
-  // 1) extract a Z column to buffer space `m_qcc_buf`
-  // 2) scatter coefficients from `m_qcc_buf` to the second half of `m_qcc_buf`
+  // 1) extract a Z column to buffer space `m_col_buf`
+  // 2) scatter coefficients from `m_col_buf` to the second half of `m_col_buf`
   // 3) use appropriate even/odd Qcc*** function to transform it
   // 4) put the Z column back to their locations as a Z column.
 
@@ -498,11 +523,11 @@ void sperr::CDF97::m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xy
         const size_t xy_offset = y * m_dims[0] + x;
         // Step 1
         for (size_t z = 0; z < len_xyz[2]; z++)
-          m_qcc_buf[z] = m_data_buf[z * plane_size_xy + xy_offset];
+          m_col_buf[z] = m_data_buf[z * plane_size_xy + xy_offset];
         // Step 2
         m_scatter_even(beg, beg2, beg2);
         // Step 3
-        this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf.data() + len_xyz[2], len_xyz[2]);
+        this->QccWAVCDF97SynthesisSymmetricEvenEven(m_col_buf.data() + len_xyz[2], len_xyz[2]);
         // Step 4
         for (size_t z = 0; z < len_xyz[2]; z++)
           m_data_buf[z * plane_size_xy + xy_offset] = *(beg2 + z);
@@ -515,11 +540,11 @@ void sperr::CDF97::m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xy
         const size_t xy_offset = y * m_dims[0] + x;
         // Step 1
         for (size_t z = 0; z < len_xyz[2]; z++)
-          m_qcc_buf[z] = m_data_buf[z * plane_size_xy + xy_offset];
+          m_col_buf[z] = m_data_buf[z * plane_size_xy + xy_offset];
         // Step 2
         m_scatter_odd(beg, beg2, beg2);
         // Step 3
-        this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf.data() + len_xyz[2], len_xyz[2]);
+        this->QccWAVCDF97SynthesisSymmetricOddEven(m_col_buf.data() + len_xyz[2], len_xyz[2]);
         // Step 4
         for (size_t z = 0; z < len_xyz[2]; z++)
           m_data_buf[z * plane_size_xy + xy_offset] = *(beg2 + z);
@@ -701,4 +726,204 @@ void sperr::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t si
 
   for (size_t i = 1; i < signal_length - 1; i += 2)
     signal[i] *= (-INV_EPSILON);
+}
+
+size_t sperr::CDF97::m_forward(const double* src,
+                               ptrdiff_t sstride,
+                               double* dst,
+                               ptrdiff_t dstride,
+                               size_t n)
+{
+  if (n < 9)
+    return 0;
+
+  const int even = (n & 1u) ? 0 : 1;
+  const size_t m = n - 1 - even;  // index of last scaling coefficient
+
+  // copy input to scratch space
+  const double* p = src;
+  double* q = m_col_buf.data();
+  for (size_t i = 0; i < n; i++) {
+    q[i] = *p;
+    p += sstride;
+  }
+
+  // first w-lift (predict) pass
+  for (size_t i = 1; i < n - 1; i += 2)
+    q[i] += m_lift[0] * (q[i - 1] + q[i + 1]);
+  if (even)
+    q[n - 1] += m_lift[0] * q[n - 2];
+
+  // first s-lift (update) pass
+  for (size_t i = 1; i < n - 1; i += 2) {
+    double w = m_lift[1] * q[i];
+    q[i - 1] += w;
+    q[i + 1] += w;
+  }
+
+  // second w-lift (predict) pass
+  for (size_t i = 2; i < n - 2; i += 2) {
+    double s = m_lift[2] * q[i];
+    q[i - 1] += s;
+    q[i + 1] += s;
+  }
+  if (even)
+    q[n - 1] += m_lift[2] * q[n - 2];
+
+  // second s-lift (update) pass
+  q[0] += m_blift[3] * q[1];
+  for (size_t i = 3; i < n - 3; i += 2) {
+    double w = m_lift[3] * q[i];
+    q[i - 1] += w;
+    q[i + 1] += w;
+  }
+  q[m] += m_blift[3] * q[m - 1];
+
+  // right boundary special case for even n
+  if (even) {
+    q[n - 1] += m_blift[6] * q[n - 3];
+    q[n - 1] += m_blift[7] * q[n - 2];
+  }
+
+  // w-lift scale pass
+  q[1] *= m_blift[4];
+  for (size_t i = 3; i < n - 3; i += 2)
+    q[i] *= m_lift[4];
+  q[m - 1] *= m_blift[4];
+  if (even)
+    q[n - 1] *= m_blift[8];
+
+  // s-lift scale pass
+  q[0] *= m_blift[5];
+  for (size_t i = 2; i < n - 2; i += 2)
+    q[i] *= m_lift[5];
+  q[m] *= m_blift[5];
+
+  // copy scaling coefficients to destination
+  p = q;
+  q = dst;
+  *q = p[0];
+  q += dstride;
+  *q = p[1];
+  q += dstride;
+  for (size_t i = 2; i < n - 2; i += 2) {
+    *q = p[i];
+    q += dstride;
+  }
+  if (even) {
+    *q = p[n - 3];
+    q += dstride;
+  }
+  *q = p[n - 2];
+  q += dstride;
+  *q = p[n - 1];
+  q += dstride;
+
+  // append wavelet coefficients to destination
+  for (size_t i = 3; i < n - 3; i += 2) {
+    *q = p[i];
+    q += dstride;
+  }
+
+  return (n + 6) / 2;
+}
+
+bool sperr::CDF97::m_inverse(const double* src,
+                             ptrdiff_t sstride,
+                             double* dst,
+                             ptrdiff_t dstride,
+                             size_t n)
+{
+  if (n < 9)
+    return false;
+
+  const int even = n & 1u ? 0 : 1;
+  const size_t m = n - 1 - even;  // index of last scaling coefficient
+
+  // copy scaling coefficients from source
+  const double* p = src;
+  double* q = m_col_buf.data();
+  q[0] = *p;
+  p += sstride;
+  q[1] = *p;
+  p += sstride;
+  for (size_t i = 2; i < n - 2; i += 2) {
+    q[i] = *p;
+    p += sstride;
+  }
+  if (even) {
+    q[n - 3] = *p;
+    p += sstride;
+  }
+  q[n - 2] = *p;
+  p += sstride;
+  q[n - 1] = *p;
+  p += sstride;
+
+  // copy wavelet coefficients from source
+  for (size_t i = 3; i < n - 3; i += 2) {
+    q[i] = *p;
+    p += sstride;
+  }
+
+  // s-lift scale pass
+  q[0] /= m_blift[5];
+  for (size_t i = 2; i < n - 2; i += 2)
+    q[i] /= m_lift[5];
+  q[m] /= m_blift[5];
+
+  // w-lift scale pass
+  q[1] /= m_blift[4];
+  for (size_t i = 3; i < n - 3; i += 2)
+    q[i] /= m_lift[4];
+  q[m - 1] /= m_blift[4];
+  if (even)
+    q[n - 1] /= m_blift[8];
+
+  // right boundary special case for even n
+  if (even) {
+    q[n - 1] -= m_blift[6] * q[n - 3];
+    q[n - 1] -= m_blift[7] * q[n - 2];
+  }
+
+  // second s-lift (update) pass
+  q[0] -= m_blift[3] * q[1];
+  for (size_t i = 3; i < n - 3; i += 2) {
+    double w = m_lift[3] * q[i];
+    q[i - 1] -= w;
+    q[i + 1] -= w;
+  }
+  q[m] -= m_blift[3] * q[m - 1];
+
+  // second w-lift (predict) pass
+  for (size_t i = 2; i < n - 2; i += 2) {
+    double s = m_lift[2] * q[i];
+    q[i - 1] -= s;
+    q[i + 1] -= s;
+  }
+  if (even)
+    q[n - 1] -= m_lift[2] * q[n - 2];
+
+  // first s-lift (update) pass
+  for (size_t i = 1; i < n - 1; i += 2) {
+    double w = m_lift[1] * q[i];
+    q[i - 1] -= w;
+    q[i + 1] -= w;
+  }
+
+  // first w-lift (predict) pass
+  for (size_t i = 1; i < n - 1; i += 2)
+    q[i] -= m_lift[0] * (q[i - 1] + q[i + 1]);
+  if (even)
+    q[n - 1] -= m_lift[0] * q[n - 2];
+
+  // copy values to destination
+  p = q;
+  q = dst;
+  for (size_t i = 0; i < n; i++) {
+    *q = p[i];
+    q += dstride;
+  }
+
+  return true;
 }

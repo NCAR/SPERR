@@ -22,6 +22,24 @@ auto sperr::num_of_xforms(size_t len) -> size_t
   return std::min(num, size_t{6});
 }
 
+auto sperr::num_of_xforms_pl(size_t len) -> size_t
+{
+  if (len >= 102)
+    return 6;
+  else if (len >= 54)
+    return 5;
+  else if (len >= 30)
+    return 4;
+  else if (len >= 18)
+    return 3;
+  else if (len >= 12)
+    return 2;
+  else if (len >= 9)
+    return 1;
+  else
+    return 0;
+}
+
 auto sperr::num_of_partitions(size_t len) -> size_t
 {
   size_t num_of_parts = 0;  // Num. of partitions we can do
