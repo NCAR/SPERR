@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 
-#include "Bitstream.h"
 #include "Bitmask.h"
+#include "Bitstream.h"
 
 #include <random>
 #include <vector>
@@ -132,20 +132,24 @@ TEST(Bitstream, RandomWriteRead)
 
   // Make random writes on word boundaries
   s1.wseek(63);
-  s1.wbit(true);   vec[63] = true;
+  s1.wbit(true);
+  vec[63] = true;
   s1.wseek(127);
-  s1.wbit(false);  vec[127] = false;
+  s1.wbit(false);
+  vec[127] = false;
   s1.wseek(191);
-  s1.wbit(true);   vec[191] = true;
+  s1.wbit(true);
+  vec[191] = true;
   s1.wseek(255);
-  s1.wbit(false);  vec[255] = false;
+  s1.wbit(false);
+  vec[255] = false;
   s1.rewind();
   for (size_t i = 0; i < N; i++)
     EXPECT_EQ(s1.rbit(), vec[i]) << " at idx = " << i;
-  
+
   // Make random reads
   std::uniform_int_distribution<unsigned int> distrib2(0, N - 1);
-  for (size_t i = 0; i < 100 ; i++) {
+  for (size_t i = 0; i < 100; i++) {
     const auto pos = distrib2(gen);
     s1.rseek(pos);
     EXPECT_EQ(s1.rbit(), vec[pos]) << " at idx = " << i;
@@ -226,9 +230,11 @@ TEST(Bitstream, Reserve)
     s1.wbit(bit);
     s2.wbit(bit);
   }
-  s1.flush();   s2.flush();
+  s1.flush();
+  s2.flush();
   s1.reserve(100);
-  s1.rewind();  s2.rewind();
+  s1.rewind();
+  s2.rewind();
   for (size_t i = 0; i < 30; i++)
     EXPECT_EQ(s1.rbit(), s2.rbit());
   for (size_t i = 30; i < s1.capacity(); i++)
@@ -241,7 +247,8 @@ TEST(Bitstream, Reserve)
   s1.flush();
   auto buf = s1.get_bitstream(71);
   s2.parse_bitstream(buf.data(), 71);
-  s1.rewind();  s2.rewind();
+  s1.rewind();
+  s2.rewind();
   for (size_t i = 0; i < 71; i++)
     EXPECT_EQ(s1.rbit(), s2.rbit());
   s2.reserve(150);
@@ -263,14 +270,14 @@ TEST(Bitmask, CountTrue)
   EXPECT_EQ(m1.count_true(), 20);
 
   m1.resize(60);
-  EXPECT_EQ(m1.count_true(), 12); // 0, 5, ..., 50, 55
+  EXPECT_EQ(m1.count_true(), 12);  // 0, 5, ..., 50, 55
 
   m1.resize(192);
-  EXPECT_EQ(m1.count_true(), 13); // 0, 5, ..., 55, 60
+  EXPECT_EQ(m1.count_true(), 13);  // 0, 5, ..., 55, 60
 
   for (size_t i = 0; i < 23; i++)
     m1.wtrue(i * 7);
-  EXPECT_EQ(m1.count_true(), 34); // 13 + 23 minus positions 0, 35.
+  EXPECT_EQ(m1.count_true(), 34);  // 13 + 23 minus positions 0, 35.
 }
 
 TEST(Bitmask, RandomReadWrite)
@@ -298,7 +305,7 @@ TEST(Bitmask, RandomReadWrite)
     vec[i] = ran;
   }
   for (size_t i = 1; i < N; i += 35) {
-    if (i % 2 == 0) { 
+    if (i % 2 == 0) {
       m1.wtrue(i);
       vec[i] = true;
     }
@@ -352,5 +359,27 @@ TEST(Bitmask, BufferTransfer)
   for (size_t i = 0; i < src.size(); i++)
     EXPECT_EQ(src.rbit(i), dst.rbit(i));
 }
+
+#if defined __cpp_lib_three_way_comparison && defined __cpp_impl_three_way_comparison
+TEST(Bitmask, spaceship)
+{
+  auto src = Mask(60);
+  auto dst = Mask(90);
+  EXPECT_NE(src, dst);
+  src.resize(90);
+  EXPECT_EQ(src, dst);
+
+  dst.wlong(64, std::numeric_limits<uint64_t>::max());
+  EXPECT_NE(src, dst);
+
+  for (size_t i = 64; i < 90; i++) {
+    src.wbit(i, i % 3 == 0);
+    dst.wbit(i, i % 3 == 0);
+  }
+  EXPECT_EQ(src.rlong(63), dst.rlong(63));
+  EXPECT_NE(src.rlong(64), dst.rlong(64));
+  EXPECT_EQ(src, dst);
+}
+#endif
 
 }  // namespace

@@ -55,6 +55,11 @@ class Bitmask {
   auto view_buffer() const -> const std::vector<uint64_t>&;
   void use_bitstream(const void* p);
 
+#if defined __cpp_lib_three_way_comparison && defined __cpp_impl_three_way_comparison
+  auto operator<=>(const Bitmask& rhs) const noexcept;
+  auto operator==(const Bitmask& rhs) const noexcept -> bool;
+#endif
+
  private:
   std::vector<uint64_t> m_buf;
   size_t m_num_bits = 0;
