@@ -9,7 +9,7 @@ namespace sperr {
 // Main SPECK2D_INT_DEC class
 //
 template <typename T>
-class SPECK2D_INT_DEC : public SPECK2D_INT<T> {
+class SPECK2D_INT_DEC final : public SPECK2D_INT<T> {
  private:
   //
   // Bring members from parent classes to this derived class.
@@ -24,9 +24,9 @@ class SPECK2D_INT_DEC : public SPECK2D_INT<T> {
   using SPECK2D_INT<T>::m_code_S;
   using SPECK2D_INT<T>::m_code_I;
 
-  void m_process_S(size_t idx1, size_t idx2, size_t& counter, bool need_decide) override;
-  void m_process_P(size_t idx, size_t& counter, bool need_decide) override;
-  void m_process_I(bool need_decide) override;
+  void m_process_S(size_t idx1, size_t idx2, size_t& counter, bool need_decide) final override;
+  void m_process_P(size_t idx, size_t& counter, bool need_decide) final override;
+  void m_process_I(bool need_decide) final override;
 };
 
 };  // namespace sperr
