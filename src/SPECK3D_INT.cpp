@@ -137,16 +137,13 @@ void sperr::SPECK3D_INT<T>::m_code_S(size_t idx1, size_t idx2)
   // Since some subsets could be empty, let's put empty sets at the end.
   const auto set_end =
       std::remove_if(subsets.begin(), subsets.end(), [](auto& s) { return s.num_elem() == 0; });
-  const auto set_end_m1 = set_end - 1;
 
+  // Counter for the number of discovered significant sets.
+  //    If no significant subset is found yet, and we're already looking at the last subset,
+  //    then we know that this last subset IS significant.
   size_t sig_counter = 0;
   for (auto it = subsets.begin(); it != set_end; ++it) {
-    // If we're looking at the last subset, and no prior subset is found to be
-    // significant, then we know that this last one *is* significant.
-    bool need_decide = true;
-    if (it == set_end_m1 && sig_counter == 0)
-      need_decide = false;
-
+    bool need_decide = (sig_counter != 0 || it + 1 != set_end);
     if (it->num_elem() == 1) {
       auto idx = it->start_z * m_dims[0] * m_dims[1] + it->start_y * m_dims[0] + it->start_x;
       m_LIP_mask.wtrue(idx);

@@ -34,7 +34,10 @@ class SPECK2D_INT : public SPECK_INT<T> {
   using SPECK_INT<T>::m_coeff_buf;
   using SPECK_INT<T>::m_bit_buffer;
 
-  void m_sorting_pass() override;
+  void m_sorting_pass() final override;
+  void m_clean_LIS() final override;
+  void m_initialize_lists() final override;
+
   void m_code_S(size_t idx1, size_t idx2);
   void m_code_I();
 
@@ -42,10 +45,8 @@ class SPECK2D_INT : public SPECK_INT<T> {
   virtual void m_process_P(size_t idx, size_t& counter, bool need_decide) = 0;
   virtual void m_process_I(bool need_decide) = 0;
 
-  void m_clean_LIS() override;
   auto m_partition_S(Set2D) const -> std::array<Set2D, 4>;
   auto m_partition_I() -> std::array<Set2D, 3>;
-  void m_initialize_lists() override;
 
   //
   // SPECK2D_INT specific data members

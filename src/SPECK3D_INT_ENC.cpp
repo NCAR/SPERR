@@ -21,8 +21,8 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
       //
       // Deposit the 1st element.
       auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
-      auto idx_morton = set.get_morton();
-      m_morton_buf[idx_morton] = m_coeff_buf[id];
+      auto morton_id = set.get_morton();
+      m_morton_buf[morton_id] = m_coeff_buf[id];
 
       // Deposit the 2nd element.
       if (set.length_x == 2)
@@ -31,61 +31,61 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
         id += m_dims[0];
       else
         id += m_dims[0] * m_dims[1];
-      m_morton_buf[++idx_morton] = m_coeff_buf[id];
+      m_morton_buf[++morton_id] = m_coeff_buf[id];
 
       return;
     }
     case 4: {
       const auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
-      auto idx_morton = set.get_morton();
+      auto morton_id = set.get_morton();
 
       if (set.length_x == 2 && set.length_y == 2) {
         // Element (0, 0, 0)
-        m_morton_buf[idx_morton] = m_coeff_buf[id];
+        m_morton_buf[morton_id] = m_coeff_buf[id];
 
         // Element (1, 0, 0)
-        m_morton_buf[++idx_morton] = m_coeff_buf[id + 1];
+        m_morton_buf[++morton_id] = m_coeff_buf[id + 1];
 
         // Element (0, 1, 0)
         auto id2 = id + m_dims[0];
-        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+        m_morton_buf[++morton_id] = m_coeff_buf[id2];
 
         // Element (1, 1, 0)
-        m_morton_buf[++idx_morton] = m_coeff_buf[++id2];
+        m_morton_buf[++morton_id] = m_coeff_buf[++id2];
 
         return;
       }
       else if (set.length_x == 2 && set.length_z == 2) {
         // Element (0, 0, 0)
-        m_morton_buf[idx_morton] = m_coeff_buf[id];
+        m_morton_buf[morton_id] = m_coeff_buf[id];
 
         // Element (1, 0, 0)
-        m_morton_buf[++idx_morton] = m_coeff_buf[id + 1];
+        m_morton_buf[++morton_id] = m_coeff_buf[id + 1];
 
         // Element (0, 0, 1)
         auto id2 = id + m_dims[0] * m_dims[1];
-        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+        m_morton_buf[++morton_id] = m_coeff_buf[id2];
 
         // Element (1, 0, 1)
-        m_morton_buf[++idx_morton] = m_coeff_buf[++id2];
+        m_morton_buf[++morton_id] = m_coeff_buf[++id2];
 
         return;
       }
       else if (set.length_y == 2 && set.length_z == 2) {
         // Element (0, 0, 0)
-        m_morton_buf[idx_morton] = m_coeff_buf[id];
+        m_morton_buf[morton_id] = m_coeff_buf[id];
 
         // Element (0, 1, 0)
         auto id2 = id + m_dims[0];
-        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+        m_morton_buf[++morton_id] = m_coeff_buf[id2];
 
         // Element (0, 0, 1)
         id2 = id + m_dims[0] * m_dims[1];
-        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+        m_morton_buf[++morton_id] = m_coeff_buf[id2];
 
         // Element (0, 1, 1)
         id2 += m_dims[0];
-        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+        m_morton_buf[++morton_id] = m_coeff_buf[id2];
 
         return;
       }
@@ -96,32 +96,32 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
       if (set.length_x == 2 && set.length_y == 2) {
         // Element (0, 0, 0)
         const auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
-        auto idx_morton = set.get_morton();
-        m_morton_buf[idx_morton] = m_coeff_buf[id];
+        auto morton_id = set.get_morton();
+        m_morton_buf[morton_id] = m_coeff_buf[id];
 
         // Element (1, 0, 0)
-        m_morton_buf[++idx_morton] = m_coeff_buf[id + 1];
+        m_morton_buf[++morton_id] = m_coeff_buf[id + 1];
 
         // Element (0, 1, 0)
         auto id2 = id + m_dims[0];
-        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+        m_morton_buf[++morton_id] = m_coeff_buf[id2];
 
         // Element (1, 1, 0)
-        m_morton_buf[++idx_morton] = m_coeff_buf[++id2];
+        m_morton_buf[++morton_id] = m_coeff_buf[++id2];
 
         // Element (0, 0, 1)
         id2 = id + m_dims[0] * m_dims[1];
-        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+        m_morton_buf[++morton_id] = m_coeff_buf[id2];
 
         // Element (1, 0, 1)
-        m_morton_buf[++idx_morton] = m_coeff_buf[++id2];
+        m_morton_buf[++morton_id] = m_coeff_buf[++id2];
 
         // Element (0, 1, 1)
         id2 = id + m_dims[0] * (m_dims[1] + 1);
-        m_morton_buf[++idx_morton] = m_coeff_buf[id2];
+        m_morton_buf[++morton_id] = m_coeff_buf[id2];
 
         // Element (1, 1, 1)
-        m_morton_buf[++idx_morton] = m_coeff_buf[++id2];
+        m_morton_buf[++morton_id] = m_coeff_buf[++id2];
 
         return;
       }

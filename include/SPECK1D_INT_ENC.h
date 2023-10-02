@@ -11,7 +11,7 @@ namespace sperr {
 // Main SPECK1D_INT_ENC class
 //
 template <typename T>
-class SPECK1D_INT_ENC : public SPECK1D_INT<T> {
+class SPECK1D_INT_ENC final : public SPECK1D_INT<T> {
  private:
   //
   // Bring members from parent classes to this derived class.
@@ -25,7 +25,7 @@ class SPECK1D_INT_ENC : public SPECK1D_INT<T> {
   using SPECK1D_INT<T>::m_LIS;
   using SPECK1D_INT<T>::m_partition_set;
 
-  void m_sorting_pass() override;
+  void m_sorting_pass() final override;
 
   void m_process_S(size_t idx1, size_t idx2, SigType, size_t& counter, bool output);
   void m_process_P(size_t idx, SigType, size_t& counter, bool output);
