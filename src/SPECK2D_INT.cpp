@@ -50,11 +50,10 @@ void sperr::SPECK2D_INT<T>::m_code_S(size_t idx1, size_t idx2)
   auto subsets = m_partition_S(set);
   const auto set_end =
       std::remove_if(subsets.begin(), subsets.end(), [](auto s) { return s.is_empty(); });
-  const auto set_end_m1 = set_end - 1;
 
   auto counter = size_t{0};
   for (auto it = subsets.begin(); it != set_end; ++it) {
-    auto need_decide = (it != set_end_m1) || (counter != 0);
+    auto need_decide = (counter != 0) || (it + 1 != set_end);
     if (it->is_pixel()) {
       auto pixel_idx = it->start_y * m_dims[0] + it->start_x;
       m_LIP_mask.wtrue(pixel_idx);
