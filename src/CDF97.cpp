@@ -65,28 +65,101 @@ auto sperr::CDF97::get_dims() const -> std::array<size_t, 3>
   return m_dims;
 }
 
-void sperr::CDF97::dwt1d_pl()
+void sperr::CDF97::dwt1d_pl(double* start_p, ptrdiff_t stride)
 {
+  // If not specified, use the beginning of `m_data_buf`.
+  if (start_p == nullptr) {
+    assert(!m_data_buf.empty());
+    start_p = m_data_buf.data();
+  }
   auto n = m_dims[0];
   auto levels = sperr::num_of_xforms_pl(n);
+
   while (levels--)
-    n = m_forward(m_data_buf.data(), 1, m_data_buf.data(), 1, n);
+    n = m_fwd_pl(start_p, stride, start_p, stride, n);
 }
 
-void sperr::CDF97::idwt1d_pl()
+void sperr::CDF97::idwt1d_pl(double* start_p, ptrdiff_t stride)
 {
-  auto n = m_dims[0];
-  auto levels = sperr::num_of_xforms_pl(n);
+  // If not specified, use the beginning of `m_data_buf`.
+  if (start_p == nullptr)
+    start_p = m_data_buf.data();
+  auto levels = sperr::num_of_xforms_pl(m_dims[0]);
 
-  // compute number of scaling functions on each level
+  // Compute number of scaling coefficients on each level.
   assert(levels <= 6);
-  auto count = std::array<size_t, 7>{n, 0, 0, 0, 0, 0, 0};
+  auto count = std::array<size_t, 7>{m_dims[0], 0, 0, 0, 0, 0, 0};
   for (size_t i = 1; i <= levels; i++)
     count[i] = (count[i - 1] + 6) / 2;
 
   while (levels--) {
-    auto rtn = m_inverse(m_data_buf.data(), 1, m_data_buf.data(), 1, count[levels]);
+    auto rtn = m_inv_pl(start_p, stride, start_p, stride, count[levels]);
     assert(rtn);
+  }
+}
+
+void sperr::CDF97::dwt2d_xy_pl(double* start_p)
+{
+  // If not specified, use the beginning of `m_data_buf`.
+  if (start_p == nullptr) {
+    assert(!m_data_buf.empty());
+    start_p = m_data_buf.data();
+  }
+  auto levels = sperr::num_of_xforms_pl(std::min(m_dims[0], m_dims[1]));
+  auto nx = m_dims[0];
+  auto ny = m_dims[1];
+
+  while (levels--) {
+    auto nx2 = nx;
+    auto ny2 = ny;
+    // Transform every row.
+    for (size_t i = 0; i < ny; i++) {
+      auto* p = start_p + i * m_dims[0];
+      nx2 = m_fwd_pl(p, 1, p, 1, nx);
+    }
+    // Transform every column.
+    for (size_t i = 0; i < nx; i++) {
+      auto* p = start_p + i;
+      ny2 = m_fwd_pl(p, m_dims[0], p, m_dims[0], ny);
+    }
+    nx = nx2;
+    ny = ny2;
+  }
+}
+
+void sperr::CDF97::idwt2d_xy_pl(double* start_p)
+{
+  // If not specified, use the beginning of `m_data_buf`.
+  if (start_p == nullptr) {
+    assert(!m_data_buf.empty());
+    start_p = m_data_buf.data();
+  }
+  auto levels = sperr::num_of_xforms_pl(std::min(m_dims[0], m_dims[1]));
+
+  // Compute number of scaling coefficients on each level.
+  assert(levels <= 6);
+  auto count_x = std::array<size_t, 7>{m_dims[0], 0, 0, 0, 0, 0, 0};
+  auto count_y = std::array<size_t, 7>{m_dims[1], 0, 0, 0, 0, 0, 0};
+  for (size_t i = 1; i <= levels; i++) {
+    count_x[i] = (count_x[i - 1] + 6) / 2;
+    count_y[i] = (count_y[i - 1] + 6) / 2;
+  }
+
+  while (levels--) {
+    auto nx = count_x[levels];
+    auto ny = count_y[levels];
+    // Transform every column.
+    for (size_t i = 0; i < nx; i++) {
+      auto* p = start_p + i;
+      auto rtn = m_inv_pl(p, m_dims[0], p, m_dims[0], ny);
+      assert(rtn);
+    }
+    // Transform every row.
+    for (size_t i = 0; i < ny; i++) {
+      auto* p = start_p + i * m_dims[0];
+      auto rtn = m_inv_pl(p, 1, p, 1, nx);
+      assert(rtn);
+    }
   }
 }
 
@@ -728,11 +801,11 @@ void sperr::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t si
     signal[i] *= (-INV_EPSILON);
 }
 
-size_t sperr::CDF97::m_forward(const double* src,
-                               ptrdiff_t sstride,
-                               double* dst,
-                               ptrdiff_t dstride,
-                               size_t n)
+size_t sperr::CDF97::m_fwd_pl(const double* src,
+                              ptrdiff_t sstride,
+                              double* dst,
+                              ptrdiff_t dstride,
+                              size_t n)
 {
   if (n < 9)
     return 0;
@@ -828,11 +901,11 @@ size_t sperr::CDF97::m_forward(const double* src,
   return (n + 6) / 2;
 }
 
-bool sperr::CDF97::m_inverse(const double* src,
-                             ptrdiff_t sstride,
-                             double* dst,
-                             ptrdiff_t dstride,
-                             size_t n)
+bool sperr::CDF97::m_inv_pl(const double* src,
+                            ptrdiff_t sstride,
+                            double* dst,
+                            ptrdiff_t dstride,
+                            size_t n)
 {
   if (n < 9)
     return false;

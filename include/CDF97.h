@@ -44,8 +44,10 @@ class CDF97 {
   void idwt3d();
 
   // Peter Lindstrom's scheme
-  void dwt1d_pl();
-  void idwt1d_pl();
+  void dwt1d_pl(double* = nullptr, ptrdiff_t = 1);
+  void idwt1d_pl(double* = nullptr, ptrdiff_t = 1);
+  void dwt2d_xy_pl(double* = nullptr);
+  void idwt2d_xy_pl(double* = nullptr);
 
  private:
   using itd_type = vecd_type::iterator;
@@ -178,19 +180,19 @@ class CDF97 {
 
   // Perform one level of wavelet transform with improved boundary handling.
   // Return: number of scaling coefficients (for next level)
-  size_t m_forward(const double* src,  // input values
-                   ptrdiff_t sstride,  // input stride
-                   double* dst,        // output coefficients (can be the same as src)
-                   ptrdiff_t dstride,  // output stride
-                   size_t n            // input length
+  size_t m_fwd_pl(const double* src,  // input values
+                  ptrdiff_t sstride,  // input stride
+                  double* dst,        // output coefficients (can be the same as src)
+                  ptrdiff_t dstride,  // output stride
+                  size_t n            // input length
   );
 
   // Perform one level of inverse wavelet transform with improved boundary handling.
-  bool m_inverse(const double* src,  // input coefficients
-                 ptrdiff_t sstride,  // input stride
-                 double* dst,        // output values (can be the same as src)
-                 ptrdiff_t dstride,  // output stride
-                 size_t n            // output length (number of function values)
+  bool m_inv_pl(const double* src,  // input coefficients
+                ptrdiff_t sstride,  // input stride
+                double* dst,        // output values (can be the same as src)
+                ptrdiff_t dstride,  // output stride
+                size_t n            // input length (number of function values)
   );
 
 };  // class CDF97
