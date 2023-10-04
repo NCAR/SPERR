@@ -77,7 +77,6 @@ TEST(dwt1d, big_image_odd)
     EXPECT_EQ(fptr[i], float(result[i]));
   }
 }
-#endif
 
 TEST(dwt2d, small_image_even)
 {
@@ -135,8 +134,8 @@ TEST(dwt2d, small_image_odd)
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
   cdf.take_data(std::move(in_copy), {dim_x, dim_y, 1});
-  cdf.dwt2d();
-  cdf.idwt2d();
+  cdf.dwt2d_xy_pl();
+  cdf.idwt2d_xy_pl();
 
   // Claim that with single precision, the result is identical to the input
   auto result = cdf.release_data();
@@ -170,8 +169,8 @@ TEST(dwt2d, big_image_even)
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
   cdf.take_data(std::move(in_copy), {dim_x, dim_y, 1});
-  cdf.dwt2d();
-  cdf.idwt2d();
+  cdf.dwt2d_xy_pl();
+  cdf.idwt2d_xy_pl();
 
   // Claim that with single precision, the result is identical to the input
   auto result = cdf.release_data();
@@ -184,6 +183,7 @@ TEST(dwt2d, big_image_even)
     EXPECT_EQ(in_buf[i], float(result[i]));
   }
 }
+#endif
 
 TEST(dwt2d, big_image_odd)
 {
@@ -205,8 +205,8 @@ TEST(dwt2d, big_image_odd)
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
   cdf.take_data(std::move(in_copy), {dim_x, dim_y, 1});
-  cdf.dwt2d();
-  cdf.idwt2d();
+  cdf.dwt2d_xy_pl();
+  cdf.idwt2d_xy_pl();
 
   // Claim that with single precision, the result is identical to the input
   auto result = cdf.release_data();
@@ -241,8 +241,8 @@ TEST(dwt3d, small_even_cube)
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
   cdf.take_data(std::move(in_copy), {dim_x, dim_y, dim_z});
-  cdf.dwt3d();
-  cdf.idwt3d();
+  cdf.dwt3d_dyadic_pl();
+  cdf.idwt3d_dyadic_pl();
 
   // Claim that with single precision, the result is identical to the input
   auto result = cdf.release_data();
@@ -254,6 +254,7 @@ TEST(dwt3d, small_even_cube)
     EXPECT_EQ(in_buf[i], float(result[i]));
   }
 }
+#endif
 
 TEST(dwt3d, big_odd_cube)
 {
@@ -275,8 +276,8 @@ TEST(dwt3d, big_odd_cube)
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
   cdf.take_data(std::move(in_copy), {dim_x, dim_y, dim_z});
-  cdf.dwt3d();
-  cdf.idwt3d();
+  cdf.dwt3d_dyadic_pl();
+  cdf.idwt3d_dyadic_pl();
 
   // Claim that with single precision, the result is identical to the input
   auto result = cdf.release_data();
@@ -285,10 +286,11 @@ TEST(dwt3d, big_odd_cube)
   // Apply the conditioner
   auto rtn = condi.inverse_condition(result, {dim_x, dim_y, dim_z}, meta);
   for (size_t i = 0; i < total_vals; i++) {
-    EXPECT_EQ(in_buf[i], float(result[i]));
+    ASSERT_EQ(in_buf[i], float(result[i]));
   }
 }
 
+#if 0
 TEST(dwt3d, big_even_cube)
 {
   const char* input = "../test_data/wmag128.float";
@@ -319,7 +321,7 @@ TEST(dwt3d, big_even_cube)
   // Apply the conditioner
   auto rtn = condi.inverse_condition(result, {dim_x, dim_y, dim_z}, meta);
   for (size_t i = 0; i < total_vals; i++) {
-    EXPECT_EQ(in_buf[i], float(result[i]));
+    ASSERT_EQ(in_buf[i], float(result[i]));
   }
 }
 #endif

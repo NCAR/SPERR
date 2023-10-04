@@ -44,10 +44,12 @@ class CDF97 {
   void idwt3d();
 
   // Peter Lindstrom's scheme
-  void dwt1d_pl(double* = nullptr, ptrdiff_t = 1);
-  void idwt1d_pl(double* = nullptr, ptrdiff_t = 1);
-  void dwt2d_xy_pl(double* = nullptr);
-  void idwt2d_xy_pl(double* = nullptr);
+  void dwt1d_pl(double* start = nullptr, ptrdiff_t stride = 1);
+  void idwt1d_pl(double* start = nullptr, ptrdiff_t stride = 1);
+  void dwt2d_xy_pl(double* start = nullptr);   // `start` points to the origin of an XY plane.
+  void idwt2d_xy_pl(double* start = nullptr);  // `start` points to the origin of an XY plane.
+  void dwt3d_dyadic_pl();
+  void idwt3d_dyadic_pl();
 
  private:
   using itd_type = vecd_type::iterator;

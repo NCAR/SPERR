@@ -24,11 +24,11 @@ auto sperr::num_of_xforms(size_t len) -> size_t
 
 auto sperr::num_of_xforms_pl(size_t len) -> size_t
 {
-  if (len >= 102)
-    return 6;
-  else if (len >= 54)
-    return 5;
-  else if (len >= 30)
+  // if (len >= 102)
+  //   return 6;
+  // else if (len >= 54)
+  //   return 5;
+  if (len >= 30)
     return 4;
   else if (len >= 18)
     return 3;

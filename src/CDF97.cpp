@@ -65,6 +65,9 @@ auto sperr::CDF97::get_dims() const -> std::array<size_t, 3>
   return m_dims;
 }
 
+//
+// Start Peter Lindstrom's wavelet scheme.
+//
 void sperr::CDF97::dwt1d_pl(double* start_p, ptrdiff_t stride)
 {
   // If not specified, use the beginning of `m_data_buf`.
@@ -74,6 +77,8 @@ void sperr::CDF97::dwt1d_pl(double* start_p, ptrdiff_t stride)
   }
   auto n = m_dims[0];
   auto levels = sperr::num_of_xforms_pl(n);
+  if (levels == 0)
+    return;
 
   while (levels--)
     n = m_fwd_pl(start_p, stride, start_p, stride, n);
@@ -82,9 +87,13 @@ void sperr::CDF97::dwt1d_pl(double* start_p, ptrdiff_t stride)
 void sperr::CDF97::idwt1d_pl(double* start_p, ptrdiff_t stride)
 {
   // If not specified, use the beginning of `m_data_buf`.
-  if (start_p == nullptr)
+  if (start_p == nullptr) {
+    assert(!m_data_buf.empty());
     start_p = m_data_buf.data();
+  }
   auto levels = sperr::num_of_xforms_pl(m_dims[0]);
+  if (levels == 0)
+    return;
 
   // Compute number of scaling coefficients on each level.
   assert(levels <= 6);
@@ -106,12 +115,12 @@ void sperr::CDF97::dwt2d_xy_pl(double* start_p)
     start_p = m_data_buf.data();
   }
   auto levels = sperr::num_of_xforms_pl(std::min(m_dims[0], m_dims[1]));
-  auto nx = m_dims[0];
-  auto ny = m_dims[1];
+  auto [nx, ny] = std::array{m_dims[0], m_dims[1]};
+  if (levels == 0)
+    return;
 
   while (levels--) {
-    auto nx2 = nx;
-    auto ny2 = ny;
+    auto [nx2, ny2] = std::array{nx, ny};
     // Transform every row.
     for (size_t i = 0; i < ny; i++) {
       auto* p = start_p + i * m_dims[0];
@@ -122,8 +131,7 @@ void sperr::CDF97::dwt2d_xy_pl(double* start_p)
       auto* p = start_p + i;
       ny2 = m_fwd_pl(p, m_dims[0], p, m_dims[0], ny);
     }
-    nx = nx2;
-    ny = ny2;
+    std::tie(nx, ny) = {nx2, ny2};
   }
 }
 
@@ -135,6 +143,8 @@ void sperr::CDF97::idwt2d_xy_pl(double* start_p)
     start_p = m_data_buf.data();
   }
   auto levels = sperr::num_of_xforms_pl(std::min(m_dims[0], m_dims[1]));
+  if (levels == 0)
+    return;
 
   // Compute number of scaling coefficients on each level.
   assert(levels <= 6);
@@ -146,8 +156,8 @@ void sperr::CDF97::idwt2d_xy_pl(double* start_p)
   }
 
   while (levels--) {
-    auto nx = count_x[levels];
-    auto ny = count_y[levels];
+    const auto nx = count_x[levels];
+    const auto ny = count_y[levels];
     // Transform every column.
     for (size_t i = 0; i < nx; i++) {
       auto* p = start_p + i;
@@ -162,6 +172,99 @@ void sperr::CDF97::idwt2d_xy_pl(double* start_p)
     }
   }
 }
+
+void sperr::CDF97::dwt3d_dyadic_pl()
+{
+  auto levels = sperr::num_of_xforms_pl(*std::min_element(m_dims.begin(), m_dims.end()));
+  auto [nx, ny, nz] = m_dims;
+  if (levels == 0)
+    return;
+
+  while (levels--) {
+    auto [nx2, ny2, nz2] = std::array{nx, ny, nz};
+    // Transform every row.
+    for (size_t z = 0; z < nz; z++) {
+      const auto offset_z = z * m_dims[0] * m_dims[1];
+      for (size_t y = 0; y < ny; y++) {
+        auto* p = m_data_buf.data() + offset_z + y * m_dims[0];
+        nx2 = m_fwd_pl(p, 1, p, 1, nx);
+      }
+    }
+    // Transform every column.
+    for (size_t z = 0; z < nz; z++) {
+      const auto offset_z = z * m_dims[0] * m_dims[1];
+      for (size_t x = 0; x < nx; x++) {
+        auto* p = m_data_buf.data() + offset_z + x;
+        ny2 = m_fwd_pl(p, m_dims[0], p, m_dims[0], ny);
+      }
+    }
+    // Transform every 1D array along the Z axis.
+    for (size_t y = 0; y < ny; y++) {
+      const auto offset_y = y * m_dims[0];
+      const auto stride = m_dims[0] * m_dims[1];
+      for (size_t x = 0; x < nx; x++) {
+        auto* p = m_data_buf.data() + offset_y + x;
+        nz2 = m_fwd_pl(p, stride, p, stride, nz);
+      }
+    }
+    std::tie(nx, ny, nz) = {nx2, ny2, nz2};
+  }
+}
+
+void sperr::CDF97::idwt3d_dyadic_pl()
+{
+  auto levels = sperr::num_of_xforms_pl(*std::min_element(m_dims.begin(), m_dims.end()));
+  if (levels == 0)
+    return;
+
+  // Compute number of scaling coefficients on each level.
+  assert(levels <= 6);
+  auto count_x = std::array<size_t, 7>{m_dims[0], 0, 0, 0, 0, 0, 0};
+  auto count_y = std::array<size_t, 7>{m_dims[1], 0, 0, 0, 0, 0, 0};
+  auto count_z = std::array<size_t, 7>{m_dims[2], 0, 0, 0, 0, 0, 0};
+  for (size_t i = 1; i <= levels; i++) {
+    count_x[i] = (count_x[i - 1] + 6) / 2;
+    count_y[i] = (count_y[i - 1] + 6) / 2;
+    count_z[i] = (count_z[i - 1] + 6) / 2;
+  }
+
+  while (levels--) {
+    const auto nx = count_x[levels];
+    const auto ny = count_y[levels];
+    const auto nz = count_z[levels];
+    // Transform every 1D array along the Z axis.
+    for (size_t y = 0; y < ny; y++) {
+      const auto offset_y = y * m_dims[0];
+      const auto stride = m_dims[0] * m_dims[1];
+      for (size_t x = 0; x < nx; x++) {
+        auto* p = m_data_buf.data() + offset_y + x;
+        auto rtn = m_inv_pl(p, stride, p, stride, nz);
+        assert(rtn);
+      }
+    }
+    // Transform every column.
+    for (size_t z = 0; z < nz; z++) {
+      const auto offset_z = z * m_dims[0] * m_dims[1];
+      for (size_t x = 0; x < nx; x++) {
+        auto* p = m_data_buf.data() + offset_z + x;
+        auto rtn = m_inv_pl(p, m_dims[0], p, m_dims[0], ny);
+        assert(rtn);
+      }
+    }
+    // Transform every row.
+    for (size_t z = 0; z < nz; z++) {
+      const auto offset_z = z * m_dims[0] * m_dims[1];
+      for (size_t y = 0; y < ny; y++) {
+        auto* p = m_data_buf.data() + offset_z + y * m_dims[0];
+        auto rtn = m_inv_pl(p, 1, p, 1, nx);
+        assert(rtn);
+      }
+    }
+  }
+}
+//
+// Finish Peter Lindstrom's wavelet scheme.
+//
 
 void sperr::CDF97::dwt1d()
 {
