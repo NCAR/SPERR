@@ -5,7 +5,6 @@
 
 namespace {
 
-#if 0
 TEST(dwt1d, big_image_even)
 {
   const char* input = "../test_data/128x128.float";
@@ -183,7 +182,6 @@ TEST(dwt2d, big_image_even)
     EXPECT_EQ(in_buf[i], float(result[i]));
   }
 }
-#endif
 
 TEST(dwt2d, big_image_odd)
 {
@@ -216,11 +214,12 @@ TEST(dwt2d, big_image_odd)
   auto rtn = condi.inverse_condition(result, {dim_x, dim_y, 1}, meta);
 
   for (size_t i = 0; i < total_vals; i++) {
-    EXPECT_EQ(in_buf[i], float(result[i]));
+    auto x = i % dim_x;
+    auto y = i / dim_x;
+    EXPECT_EQ(in_buf[i], float(result[i])) << " at (x, y) = (" << x << ", " << y << ")";
   }
 }
 
-#if 0
 TEST(dwt3d, small_even_cube)
 {
   const char* input = "../test_data/wmag16.float";
@@ -254,7 +253,6 @@ TEST(dwt3d, small_even_cube)
     EXPECT_EQ(in_buf[i], float(result[i]));
   }
 }
-#endif
 
 TEST(dwt3d, big_odd_cube)
 {
@@ -286,11 +284,14 @@ TEST(dwt3d, big_odd_cube)
   // Apply the conditioner
   auto rtn = condi.inverse_condition(result, {dim_x, dim_y, dim_z}, meta);
   for (size_t i = 0; i < total_vals; i++) {
-    ASSERT_EQ(in_buf[i], float(result[i]));
+    auto x = i % dim_x;
+    auto z = i / (dim_x * dim_y);
+    auto y = (i - z * dim_x * dim_y) / dim_x;
+    ASSERT_EQ(in_buf[i], float(result[i])) << "at (x, y, z) = ("
+                                           << x << ", " << y << ", " << z << ")";
   }
 }
 
-#if 0
 TEST(dwt3d, big_even_cube)
 {
   const char* input = "../test_data/wmag128.float";
@@ -324,6 +325,5 @@ TEST(dwt3d, big_even_cube)
     ASSERT_EQ(in_buf[i], float(result[i]));
   }
 }
-#endif
 
 }  // namespace
