@@ -271,11 +271,21 @@ TEST(dwt3d, big_odd_cube)
   auto condi = sperr::Conditioner();
   auto meta = condi.condition(in_copy, {dim_x, dim_y, dim_z});
 
+  auto [min, max] = std::minmax_element(in_copy.begin(), in_copy.end());
+  std::cout << "Input min max: " << *min << ",  " << *max << std::endl;
+
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
   cdf.take_data(std::move(in_copy), {dim_x, dim_y, dim_z});
   cdf.dwt3d_dyadic_pl();
+  //cdf.dwt3d();
+
+  const auto& coeffs = cdf.view_data();
+  auto [min2, max2] = std::minmax_element(coeffs.cbegin(), coeffs.cend());
+  std::cout << "Coefficient min max: " << *min2 << ",  " << *max2 << std::endl;
+
   cdf.idwt3d_dyadic_pl();
+  //cdf.idwt3d();
 
   // Claim that with single precision, the result is identical to the input
   auto result = cdf.release_data();
@@ -312,8 +322,13 @@ TEST(dwt3d, big_even_cube)
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
   cdf.take_data(std::move(in_copy), {dim_x, dim_y, dim_z});
-  cdf.dwt3d();
-  cdf.idwt3d();
+  cdf.dwt3d_dyadic_pl();
+
+  const auto& coeffs = cdf.view_data();
+  auto [min2, max2] = std::minmax_element(coeffs.cbegin(), coeffs.cend());
+  std::cout << "Coefficient min max: " << *min2 << ",  " << *max2 << std::endl;
+
+  cdf.idwt3d_dyadic_pl();
 
   // Claim that with single precision, the result is identical to the input
   auto result = cdf.release_data();
