@@ -72,7 +72,8 @@ int sperr_comp_2d(
  */
 int sperr_decomp_2d(
     const void* src,  /* Input: buffer that contains a compressed bitstream AND no header! *
-                       *  I.e., bitstream produced by sperr_comp_2d() with out_inc_header = 0 */
+                       *  I.e., a bitstream produced by sperr_comp_2d() with out_inc_header = 0,
+                       *  or with out_inc_header = 1 and its first 10 bytes are stipped. */
     size_t src_len,   /* Input: length of the input bitstream in byte */
     int output_float, /* Input: output data type: 1 == float, 0 == double */
     size_t dimx,      /* Input: X (fast-varying) dimension */

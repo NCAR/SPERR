@@ -85,8 +85,9 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  /* Decompress `bitstream` and put the decompressed slice in `outbuf` */
-  /* Note that here we need to remove the header before passing the buffer to sperr_decomp_2d(). */
+  /* Decompress `bitstream` and put the decompressed slice in `outbuf`                */
+  /* Note that here we need to strip off the 10-byte header before passing the buffer *
+   * to sperr_decomp_2d().                                                            */
   const size_t header_len = 10;
   const uint8_t* start = (const uint8_t*)(bitstream) + header_len;
   void* outbuf = NULL; /* Will be free'd later */
