@@ -27,16 +27,11 @@ int C_API::sperr_comp_2d(const void* src,
   // The actual encoding steps are just the same as in `utilities/sperr2d.cpp`.
   auto encoder = std::make_unique<sperr::SPECK2D_FLT>();
   encoder->set_dims({dimx, dimy, 1});
-  switch (is_float) {
-    case 0:  // double
-      encoder->copy_data(static_cast<const double*>(src), dimx * dimy);
-      break;
-    case 1:  // float
-      encoder->copy_data(static_cast<const float*>(src), dimx * dimy);
-      break;
-    default:
-      return 3;
-  }
+  if (is_float)
+    encoder->copy_data(static_cast<const float*>(src), dimx * dimy);
+  else
+    encoder->copy_data(static_cast<const double*>(src), dimx * dimy);
+
   switch (mode) {
     case 1:  // fixed bitrate
       encoder->set_bitrate(quality);
@@ -123,21 +118,15 @@ int C_API::sperr_decomp_2d(const void* src,
   decoder.reset();
 
   // Provide decompressed data to `dst`.
-  switch (output_float) {
-    case 0: {  // double
-      auto* buf = (double*)std::malloc(outputd.size() * sizeof(double));
-      std::copy(outputd.cbegin(), outputd.cend(), buf);
-      *dst = buf;
-      break;
-    }
-    case 1: {  // float
-      auto* buf = (float*)std::malloc(outputd.size() * sizeof(float));
-      std::copy(outputd.cbegin(), outputd.cend(), buf);
-      *dst = buf;
-      break;
-    }
-    default:
-      return 2;
+  if (output_float) {
+    auto* buf = (float*)std::malloc(outputd.size() * sizeof(float));
+    std::copy(outputd.cbegin(), outputd.cend(), buf);
+    *dst = buf;
+  }
+  else {  // double
+    auto* buf = (double*)std::malloc(outputd.size() * sizeof(double));
+    std::copy(outputd.cbegin(), outputd.cend(), buf);
+    *dst = buf;
   }
 
   return 0;
@@ -206,16 +195,10 @@ int C_API::sperr_comp_3d(const void* src,
       return 2;
   }
   auto rtn = sperr::RTNType::Good;
-  switch (is_float) {
-    case 0:  // double
-      rtn = encoder->compress(static_cast<const double*>(src), total_vals);
-      break;
-    case 1:  // float
-      rtn = encoder->compress(static_cast<const float*>(src), total_vals);
-      break;
-    default:
-      rtn = sperr::RTNType::Error;
-  }
+  if (is_float)
+    rtn = encoder->compress(static_cast<const float*>(src), total_vals);
+  else  // double
+    rtn = encoder->compress(static_cast<const double*>(src), total_vals);
   if (rtn != sperr::RTNType::Good)
     return -1;
 
@@ -260,21 +243,15 @@ int C_API::sperr_decomp_3d(const void* src,
   *dimx = dims[0];
   *dimy = dims[1];
   *dimz = dims[2];
-  switch (output_float) {
-    case 0: {  // double
-      auto* buf = (double*)std::malloc(outputd.size() * sizeof(double));
-      std::copy(outputd.cbegin(), outputd.cend(), buf);
-      *dst = buf;
-      break;
-    }
-    case 1: {  // float
-      auto* buf = (float*)std::malloc(outputd.size() * sizeof(float));
-      std::copy(outputd.cbegin(), outputd.cend(), buf);
-      *dst = buf;
-      break;
-    }
-    default:
-      return 2;
+  if (output_float) {
+    auto* buf = (float*)std::malloc(outputd.size() * sizeof(float));
+    std::copy(outputd.cbegin(), outputd.cend(), buf);
+    *dst = buf;
+  }
+  else {  // double
+    auto* buf = (double*)std::malloc(outputd.size() * sizeof(double));
+    std::copy(outputd.cbegin(), outputd.cend(), buf);
+    *dst = buf;
   }
 
   return 0;
