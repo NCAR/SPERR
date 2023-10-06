@@ -63,6 +63,9 @@ int sperr_comp_2d(
 
 /*
  * Decompress a 2D SPERR-compressed buffer that is produced by sperr_comp_2d().
+ *  Note that this bitstream shoult NOT contain a header. i.e., a bitstream produced by
+ *  sperr_comp_2d() with `out_inc_header = 0`, or with `out_inc_header = 1 ` and has its
+ *  first 10 bytes stipped.
  *
  * Return value meanings:
  *  0: success
@@ -70,9 +73,7 @@ int sperr_comp_2d(
  * -1: other error
  */
 int sperr_decomp_2d(
-    const void* src,  /* Input: buffer that contains a compressed bitstream AND no header! *
-                       *  I.e., a bitstream produced by sperr_comp_2d() with out_inc_header = 0,
-                       *  or with out_inc_header = 1 and its first 10 bytes are stipped. */
+    const void* src,  /* Input: buffer that contains a compressed bitstream AND no header! */
     size_t src_len,   /* Input: length of the input bitstream in byte */
     int output_float, /* Input: output data type: 1 == float, 0 == double */
     size_t dimx,      /* Input: X (fast-varying) dimension */
