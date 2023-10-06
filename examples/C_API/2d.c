@@ -86,8 +86,11 @@ int main(int argc, char** argv)
   }
 
   /* Decompress `bitstream` and put the decompressed slice in `outbuf` */
+  /* Note that here we need to remove the header before passing the buffer to sperr_decomp_2d(). */
+  const size_t header_len = 10;
+  const uint8_t* start = (const uint8_t*)(bitstream) + header_len;
   void* outbuf = NULL; /* Will be free'd later */
-  rtn = sperr_decomp_2d(bitstream, stream_len, is_float, out_dimx, out_dimy, &outbuf);
+  rtn = sperr_decomp_2d(start, stream_len - header_len, is_float, out_dimx, out_dimy, &outbuf);
   if (rtn != 0) {
     printf("Decompression error with code %d\n", rtn);
     return 1;
