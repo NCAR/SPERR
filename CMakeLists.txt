@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 3.14)
 
-project(SPERR VERSION 0.7.0 DESCRIPTION "Lossy Scientific Compression with SPERR")
+project(SPERR VERSION 0.7.1 DESCRIPTION "Lossy Scientific Compression with SPERR")
 
 #
 # specify the C++ standard
@@ -12,7 +12,6 @@ project(SPERR VERSION 0.7.0 DESCRIPTION "Lossy Scientific Compression with SPERR
 set(CMAKE_CXX_STANDARD 20)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
-    # Set the possible values of build type for cmake-gui
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo")
 endif()
 
