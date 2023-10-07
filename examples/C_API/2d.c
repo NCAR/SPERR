@@ -57,10 +57,11 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  /* Compress `inbuf` and put the compressed bitstream in `bitstream` */
+  /* Compress `inbuf` and put the compressed bitstream in `bitstream` *
+   * Note that we specify to include a header in the output bitstream. */
   void* bitstream = NULL; /* Will be free'd later */
   size_t stream_len = 0;
-  int rtn = sperr_comp_2d(inbuf, is_float, dimx, dimy, mode, quality, &bitstream, &stream_len);
+  int rtn = sperr_comp_2d(inbuf, is_float, dimx, dimy, mode, quality, 1, &bitstream, &stream_len);
   if (rtn != 0) {
     printf("Compression error with code %d\n", rtn);
     return rtn;
@@ -73,17 +74,26 @@ int main(int argc, char** argv)
   fclose(f);
   f = NULL;
 
-  /* Decompress `bitstream` and put the decompressed slice in `outbuf` */
-  void* outbuf = NULL; /* Will be free'd later */
+  /* Extract header information from the bitstream. */
   size_t out_dimx = 0;
   size_t out_dimy = 0;
-  rtn = sperr_decomp_2d(bitstream, stream_len, is_float, &out_dimx, &out_dimy, &outbuf);
-  if (rtn != 0) {
-    printf("Decompression error with code %d\n", rtn);
+  size_t out_dimz = 0;
+  int out_is_float = 0;
+  sperr_parse_header(bitstream, &out_dimx, &out_dimy, &out_dimz, &out_is_float);
+  if (out_dimx != dimx || out_dimy != dimy || out_dimz != 1 || out_is_float != is_float ) {
+    printf("Parse header wrong!\n");
     return 1;
   }
-  if (out_dimx != dimx || out_dimy != dimy) {
-    printf("Decompression dimensions wrong!\n");
+
+  /* Decompress `bitstream` and put the decompressed slice in `outbuf`                */
+  /* Note that here we need to strip off the 10-byte header before passing the buffer *
+   * to sperr_decomp_2d().                                                            */
+  const size_t header_len = 10;
+  const uint8_t* start = (const uint8_t*)(bitstream) + header_len;
+  void* outbuf = NULL; /* Will be free'd later */
+  rtn = sperr_decomp_2d(start, stream_len - header_len, is_float, out_dimx, out_dimy, &outbuf);
+  if (rtn != 0) {
+    printf("Decompression error with code %d\n", rtn);
     return 1;
   }
 

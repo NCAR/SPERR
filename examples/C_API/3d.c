@@ -84,20 +84,24 @@ int main(int argc, char** argv)
   fclose(f);
   f = NULL;
 
-  /* Decompress `bitstream` and put the decompressed volume in `outbuf` */
-  void* outbuf = NULL; /* Will be free'd later */
+  /* Also test the sperr_parse_header() function */
   size_t out_dimx = 0;
   size_t out_dimy = 0;
   size_t out_dimz = 0;
+  int out_is_float = 0;
+  sperr_parse_header(bitstream, &out_dimx, &out_dimy, &out_dimz, &out_is_float);
+  if (out_dimx != dimx || out_dimy != dimy || out_dimz != dimz || out_is_float != is_float ) {
+    printf("Parse header wrong!\n");
+    return 1;
+  }
+
+  /* Decompress `bitstream` and put the decompressed volume in `outbuf` */
+  void* outbuf = NULL; /* Will be free'd later */
   rtn = sperr_decomp_3d(bitstream, stream_len, is_float, nthreads, &out_dimx, &out_dimy, &out_dimz,
                         &outbuf);
   if (rtn != 0) {
     printf("Decompression error with code %d\n", rtn);
     return rtn;
-  }
-  if (out_dimx != dimx || out_dimy != dimy || out_dimz != dimz) {
-    printf("Decompression dimensions wrong!\n");
-    return 1;
   }
 
   /* Write the decompressed buffer to disk */

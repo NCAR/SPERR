@@ -32,43 +32,64 @@ extern "C" {
 
 /*
  * Compress a a 2D slice targetting different quality controls (modes):
- *   mode == 1 --> fixed bit-per-pixel (BPP)
- *   mode == 2 --> fixed peak signal-to-noise ratio (PSNR)
- *   mode == 3 --> fixed point-wise error (PWE)
+ *    mode == 1 --> fixed bit-per-pixel (BPP)
+ *    mode == 2 --> fixed peak signal-to-noise ratio (PSNR)
+ *    mode == 3 --> fixed point-wise error (PWE)
+ *
+ *    The output bitstream can *optionally* include a header field which contains information:
+ *    1) the input slice dimension,
+ *    2) if the input data is in single or double precision, and
+ *    3) a flag indicating that it is a 2D slice (not 3D or 1D).
+ *    This header field is 10 bytes in size, and is perfectly fine to be not included if the
+ *    information above is known, for example, in the case where a large number of same-sized 2D
+ *    slices are to be processed.
  *
  * Return value meanings:
  *  0: success
  *  1: `dst` is not pointing to a NULL pointer!
- *  2: `mode` isn't valid
- *  3: `is_float` value not supported
+ *  2: one or more of the parameters are not supported.
  * -1: other error
  */
 int sperr_comp_2d(
-    const void* src,  /* Input: buffer that contains a 2D slice */
-    int is_float,     /* Input: input buffer type: 1 == float, 0 == double */
-    size_t dimx,      /* Input: X (fastest-varying) dimension */
-    size_t dimy,      /* Input: Y (slowest-varying) dimension */
-    int mode,         /* Input: compression mode to use */
-    double quality,   /* Input: target quality */
-    void** dst,       /* Output: buffer for the output bitstream, allocated by this function */
-    size_t* dst_len); /* Output: length of `dst` in byte */
+    const void* src,    /* Input: buffer that contains a 2D slice */
+    int is_float,       /* Input: input buffer type: 1 == float, 0 == double */
+    size_t dimx,        /* Input: X (fastest-varying) dimension */
+    size_t dimy,        /* Input: Y (slowest-varying) dimension */
+    int mode,           /* Input: compression mode to use */
+    double quality,     /* Input: target quality */
+    int out_inc_header, /* Input: include a header in the output bitstream? 1 == yes, 0 == no */
+    void** dst,         /* Output: buffer for the output bitstream, allocated by this function */
+    size_t* dst_len);   /* Output: length of `dst` in byte */
 
 /*
- * Decompress a 2D SPERR-compressed buffer.
+ * Decompress a 2D SPERR-compressed buffer that is produced by sperr_comp_2d().
+ *  Note that this bitstream shoult NOT contain a header. I.e., a bitstream produced by
+ *  sperr_comp_2d() with `out_inc_header = 0`, or with `out_inc_header = 1` and has its
+ *  first 10 bytes stipped.
  *
  * Return value meanings:
  *  0: success
  *  1: `dst` not pointing to a NULL pointer!
- *  2: `output_float` value not supported
  * -1: other error
  */
 int sperr_decomp_2d(
-    const void* src,  /* Input: buffer that contains a compressed bitstream */
+    const void* src,  /* Input: buffer that contains a compressed bitstream AND no header! */
     size_t src_len,   /* Input: length of the input bitstream in byte */
     int output_float, /* Input: output data type: 1 == float, 0 == double */
-    size_t* dimx,     /* Output: X (fast-varying) dimension */
-    size_t* dimy,     /* Output: Y (slowest-varying) dimension */
+    size_t dimx,      /* Input: X (fast-varying) dimension */
+    size_t dimy,      /* Input: Y (slowest-varying) dimension */
     void** dst);      /* Output: buffer for the output 2D slice, allocated by this function */
+
+/*
+ * Parse the header of a bitstream and extract various information. The bitstream can be produced
+ * by sperr_comp_3d(), or by sperr_comp_2d() with the `out_inc_header` option on.
+ */
+void sperr_parse_header(
+    const void* src, /* Input: a SPERR bitstream */
+    size_t* dimx,    /* Output: X dimension length */
+    size_t* dimy,    /* Output: Y dimension length */
+    size_t* dimz,    /* Output: Z dimension length (2D slices will have dimz == 1) */
+    int* is_float);  /* Output: if the original input is in float (1) or double (0) precision */
 
 /*
  * Compress a a 3D volume targetting different quality controls (modes):
@@ -79,8 +100,7 @@ int sperr_decomp_2d(
  * Return value meanings:
  *  0: success
  *  1: `dst` is not pointing to a NULL pointer!
- *  2: `mode` or `quality` isn't valid
- *  3: `is_float` value not supported
+ *  2: one or more parameters isn't valid.
  * -1: other error
  */
 int sperr_comp_3d(
@@ -99,12 +119,11 @@ int sperr_comp_3d(
     size_t* dst_len); /* Output: length of `dst` in byte */
 
 /*
- * Decompress a 3D SPERR-compressed buffer.
+ * Decompress a 3D SPERR-compressed buffer that is produced by sperr_comp_3d().
  *
  * Return value meanings:
  *  0: success
  *  1: `dst` is not pointing to a NULL pointer!
- *  2: `output_float` value not supported
  * -1: other error
  */
 int sperr_decomp_3d(

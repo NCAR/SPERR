@@ -117,9 +117,9 @@ int main(int argc, char* argv[])
 
   //
   // Really starting the real work!
-  // Note: the slice dimension is saved as a header of two uint32_t values, 8 bytes in total.
+  // Note: the header has the same format as in SPERR3D_OMP_C.
   //
-  const auto header_len = 8ul;
+  const auto header_len = 10ul;
   auto input = sperr::read_whole_file<uint8_t>(input_file);
   if (cflag) {
     const auto dims = sperr::dims_type{dim2d[0], dim2d[1], 1ul};
@@ -159,7 +159,17 @@ int main(int argc, char* argv[])
 
     // Assemble the output bitstream.
     auto stream = sperr::vec8_type(header_len);
-    std::memcpy(stream.data(), dim2d.data(), sizeof(dim2d));
+    stream[0] = static_cast<uint8_t>(SPERR_VERSION_MAJOR);
+    const auto b8 = std::array{false,  // not a portion
+                               false,  // 2D
+                               ftype == 32,
+                               false,   // unused
+                               false,   // unused
+                               false,   // unused
+                               false,   // unused
+                               false};  // unused
+    stream[1] = sperr::pack_8_booleans(b8);
+    std::memcpy(stream.data() + 2, dim2d.data(), sizeof(dim2d));
     encoder->append_encoded_bitstream(stream);
     if (!o_bitstream.empty()) {
       rtn = sperr::write_n_bytes(o_bitstream, stream.size(), stream.data());

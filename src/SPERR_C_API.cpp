@@ -14,6 +14,7 @@ int C_API::sperr_comp_2d(const void* src,
                          size_t dimy,
                          int mode,
                          double quality,
+                         int out_inc_header,
                          void** dst,
                          size_t* dst_len)
 {
@@ -26,16 +27,11 @@ int C_API::sperr_comp_2d(const void* src,
   // The actual encoding steps are just the same as in `utilities/sperr2d.cpp`.
   auto encoder = std::make_unique<sperr::SPECK2D_FLT>();
   encoder->set_dims({dimx, dimy, 1});
-  switch (is_float) {
-    case 0:  // double
-      encoder->copy_data(static_cast<const double*>(src), dimx * dimy);
-      break;
-    case 1:  // float
-      encoder->copy_data(static_cast<const float*>(src), dimx * dimy);
-      break;
-    default:
-      return 3;
-  }
+  if (is_float)
+    encoder->copy_data(static_cast<const float*>(src), dimx * dimy);
+  else
+    encoder->copy_data(static_cast<const double*>(src), dimx * dimy);
+
   switch (mode) {
     case 1:  // fixed bitrate
       encoder->set_bitrate(quality);
@@ -53,17 +49,47 @@ int C_API::sperr_comp_2d(const void* src,
   if (rtn != sperr::RTNType::Good)
     return -1;
 
-  // Assemble the output bitstream.
   auto stream = sperr::vec8_type();
+  if (out_inc_header) {  // Assemble a header that's the same as the header in SPERR3D_OMP_C().
+    // The header would contain the following information
+    //  -- a version number                     (1 byte)
+    //  -- 8 booleans                           (1 byte)
+    //  -- slice dimensions                     (4 x 2 = 8 bytes)
+    //
+
+    // Version number
+    stream.resize(10);
+    stream[0] = static_cast<uint8_t>(SPERR_VERSION_MAJOR);
+
+    // 8 booleans:
+    // bool[0]  : if this bitstream is a portion of another complete bitstream (progressive access).
+    // bool[1]  : if this bitstream is for 3D (true) or 2D (false) data.
+    // bool[2]  : if the original data is float (true) or double (false).
+    // bool[3-7]: unused
+    //
+    const auto b8 = std::array{false,  // not a portion
+                               false,  // 2D
+                               bool(is_float),
+                               false,   // unused
+                               false,   // unused
+                               false,   // unused
+                               false,   // unused
+                               false};  // unused
+    stream[1] = sperr::pack_8_booleans(b8);
+
+    // Slice dimension
+    auto dims = std::array{static_cast<uint32_t>(dimx), static_cast<uint32_t>(dimy)};
+    std::memcpy(stream.data() + 2, dims.data(), sizeof(dims));
+  }
+
+  // Append the actual SPERR bitstream.
   encoder->append_encoded_bitstream(stream);
   encoder.reset();  // Free up some memory.
 
-  // Note: prepend two uint32_t values to record slice dimensions.
-  auto dims = std::array{static_cast<uint32_t>(dimx), static_cast<uint32_t>(dimy)};
-  *dst_len = stream.size() + sizeof(dims);
+  // Allocate buffer and copy over the content of stream.
+  *dst_len = stream.size();
   auto* buf = (uint8_t*)std::malloc(*dst_len);
-  std::memcpy(buf, &dims, sizeof(dims));
-  std::copy(stream.cbegin(), stream.cend(), buf + sizeof(dims));
+  std::copy(stream.cbegin(), stream.cend(), buf);
   *dst = buf;
 
   return 0;
@@ -72,51 +98,59 @@ int C_API::sperr_comp_2d(const void* src,
 int C_API::sperr_decomp_2d(const void* src,
                            size_t src_len,
                            int output_float,
-                           size_t* dimx,
-                           size_t* dimy,
+                           size_t dimx,
+                           size_t dimy,
                            void** dst)
 {
   // Examine if `dst` is pointing to a NULL pointer
   if (*dst != NULL)
     return 1;
 
-  // Extract the slice dimensions.
-  auto dims = std::array<uint32_t, 2>();
-  std::memcpy(dims.data(), src, sizeof(dims));
-  *dimx = dims[0];
-  *dimy = dims[1];
-
   // Use a decoder, similar steps as in `utilities/sperr2d.cpp`.
   auto decoder = std::make_unique<sperr::SPECK2D_FLT>();
-  decoder->set_dims({*dimx, *dimy, 1});
-  const auto* srcp = static_cast<const uint8_t*>(src);
-  decoder->use_bitstream(srcp + sizeof(dims), src_len - sizeof(dims));
+  decoder->set_dims({dimx, dimy, 1});
+  decoder->use_bitstream(src, src_len);
   auto rtn = decoder->decompress();
   if (rtn != sperr::RTNType::Good)
     return -1;
   auto outputd = decoder->release_decoded_data();
-  assert(outputd.size() == size_t{dims[0]} * dims[1]);
+  assert(outputd.size() == size_t{dimx} * dimy);
   decoder.reset();
 
   // Provide decompressed data to `dst`.
-  switch (output_float) {
-    case 0: {  // double
-      auto* buf = (double*)std::malloc(outputd.size() * sizeof(double));
-      std::copy(outputd.cbegin(), outputd.cend(), buf);
-      *dst = buf;
-      break;
-    }
-    case 1: {  // float
-      auto* buf = (float*)std::malloc(outputd.size() * sizeof(float));
-      std::copy(outputd.cbegin(), outputd.cend(), buf);
-      *dst = buf;
-      break;
-    }
-    default:
-      return 2;
+  if (output_float) {
+    auto* buf = (float*)std::malloc(outputd.size() * sizeof(float));
+    std::copy(outputd.cbegin(), outputd.cend(), buf);
+    *dst = buf;
+  }
+  else {  // double
+    auto* buf = (double*)std::malloc(outputd.size() * sizeof(double));
+    std::copy(outputd.cbegin(), outputd.cend(), buf);
+    *dst = buf;
   }
 
   return 0;
+}
+
+void C_API::sperr_parse_header(const void* src,
+                               size_t* dimx,
+                               size_t* dimy,
+                               size_t* dimz,
+                               int* is_float)
+{
+  const auto* srcp = static_cast<const uint8_t*>(src);
+  const auto b8 = sperr::unpack_8_booleans(srcp[1]);
+  auto is_3d = b8[1];
+  *is_float = int(b8[2]);
+
+  auto dims = std::array<uint32_t, 3>{1, 1, 1};
+  if (is_3d)
+    std::memcpy(dims.data(), srcp + 2, sizeof(dims));
+  else
+    std::memcpy(dims.data(), srcp + 2, sizeof(uint32_t) * 2);
+  *dimx = dims[0];
+  *dimy = dims[1];
+  *dimz = dims[2];
 }
 
 int C_API::sperr_comp_3d(const void* src,
@@ -161,16 +195,10 @@ int C_API::sperr_comp_3d(const void* src,
       return 2;
   }
   auto rtn = sperr::RTNType::Good;
-  switch (is_float) {
-    case 0:  // double
-      rtn = encoder->compress(static_cast<const double*>(src), total_vals);
-      break;
-    case 1:  // float
-      rtn = encoder->compress(static_cast<const float*>(src), total_vals);
-      break;
-    default:
-      rtn = sperr::RTNType::Error;
-  }
+  if (is_float)
+    rtn = encoder->compress(static_cast<const float*>(src), total_vals);
+  else  // double
+    rtn = encoder->compress(static_cast<const double*>(src), total_vals);
   if (rtn != sperr::RTNType::Good)
     return -1;
 
@@ -215,21 +243,15 @@ int C_API::sperr_decomp_3d(const void* src,
   *dimx = dims[0];
   *dimy = dims[1];
   *dimz = dims[2];
-  switch (output_float) {
-    case 0: {  // double
-      auto* buf = (double*)std::malloc(outputd.size() * sizeof(double));
-      std::copy(outputd.cbegin(), outputd.cend(), buf);
-      *dst = buf;
-      break;
-    }
-    case 1: {  // float
-      auto* buf = (float*)std::malloc(outputd.size() * sizeof(float));
-      std::copy(outputd.cbegin(), outputd.cend(), buf);
-      *dst = buf;
-      break;
-    }
-    default:
-      return 2;
+  if (output_float) {
+    auto* buf = (float*)std::malloc(outputd.size() * sizeof(float));
+    std::copy(outputd.cbegin(), outputd.cend(), buf);
+    *dst = buf;
+  }
+  else {  // double
+    auto* buf = (double*)std::malloc(outputd.size() * sizeof(double));
+    std::copy(outputd.cbegin(), outputd.cend(), buf);
+    *dst = buf;
   }
 
   return 0;
