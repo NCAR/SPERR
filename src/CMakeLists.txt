@@ -4,6 +4,7 @@ add_library( SPERR
              Bitmask.cpp
              Conditioner.cpp
              CDF97.cpp
+             CDF97_PL.cpp
              SPECK_INT.cpp
              SPECK3D_INT.cpp
              SPECK2D_INT.cpp
@@ -54,6 +55,7 @@ include/Bitstream.h;\
 include/Bitmask.h;\
 include/Conditioner.h;\
 include/CDF97.h;\
+include/CDF97_PL.h;\
 include/SPECK_INT.h;\
 include/SPECK3D_INT.h;\
 include/SPECK2D_INT.h;\
