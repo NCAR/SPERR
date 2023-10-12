@@ -43,14 +43,6 @@ class CDF97 {
   void idwt1d();
   void idwt3d();
 
-  // Peter Lindstrom's scheme
-  void dwt1d_pl(double* start = nullptr, ptrdiff_t stride = 1);
-  void idwt1d_pl(double* start = nullptr, ptrdiff_t stride = 1);
-  void dwt2d_xy_pl(double* start = nullptr);   // `start` points to the origin of an XY plane.
-  void idwt2d_xy_pl(double* start = nullptr);  // `start` points to the origin of an XY plane.
-  void dwt3d_dyadic_pl();
-  void idwt3d_dyadic_pl();
-
  private:
   using itd_type = vecd_type::iterator;
   using citd_type = vecd_type::const_iterator;
@@ -155,47 +147,6 @@ class CDF97 {
   // const double DELTA   =  0.44350482244527;
   // const double EPSILON =  1.14960430535816;
   //
-
-  //
-  // Peter's method that reduces large coefficients on the boundary.
-  //
-  const std::array<double, 6> m_lift = {
-      -1.586134342059923558,    // 1st w-lift
-      -0.05298011857296141462,  // 1st s-lift
-      0.8829110755309332959,    // 2nd w-lift
-      0.4435068520439711521,    // 2nd s-lift
-      1.2301741049140007292,    // w-scale
-      0.81289306611596105003    // s-scale = 1 / w-scale
-  };
-
-  const std::array<double, 9> m_blift = {
-      -1.586134342059923558,    // 1st w-lift
-      -0.05298011857296141462,  // 1st s-lift
-      0.8829110755309332959,    // 2nd w-lift
-      1.0796367753748872,       // 2nd s-lift
-      -0.9206964196560029,      // w-scale
-      -17.37814947295878,       // s-scale
-      -0.13081031898599063,     // special weight for n-3
-      10.978432345068303,       // special weight for n-2
-      -10.956291035467812       // special w-scale for n-1
-  };
-
-  // Perform one level of wavelet transform with improved boundary handling.
-  // Return: number of scaling coefficients (for next level)
-  size_t m_fwd_pl(const double* src,  // input values
-                  ptrdiff_t sstride,  // input stride
-                  double* dst,        // output coefficients (can be the same as src)
-                  ptrdiff_t dstride,  // output stride
-                  size_t n            // input length
-  );
-
-  // Perform one level of inverse wavelet transform with improved boundary handling.
-  bool m_inv_pl(const double* src,  // input coefficients
-                ptrdiff_t sstride,  // input stride
-                double* dst,        // output values (can be the same as src)
-                ptrdiff_t dstride,  // output stride
-                size_t n            // input length (number of function values)
-  );
 
 };  // class CDF97
 
