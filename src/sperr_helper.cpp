@@ -196,11 +196,14 @@ auto sperr::read_n_bytes(std::string filename, size_t n_bytes) -> vec8_type
   if (!fp)
     return buf;
 
-  std::fseek(fp.get(), 0, SEEK_END);
+  // POSIX systems require the size of a file to be specified, so
+  // one can fseek to the end of the file.
+  auto sk = std::fseek(fp.get(), 0, SEEK_END);
+  assert(sk == 0);
   if (std::ftell(fp.get()) < n_bytes)
     return buf;
 
-  std::fseek(fp.get(), 0, SEEK_SET);
+  std::rewind(fp.get());
   buf.resize(n_bytes);
   if (std::fread(buf.data(), 1, n_bytes, fp.get()) != n_bytes)
     buf.clear();
@@ -218,12 +221,17 @@ auto sperr::read_whole_file(std::string filename) -> vec_type<T>
   if (!fp)
     return buf;
 
-  std::fseek(fp.get(), 0, SEEK_END);
+  // POSIX systems require the size of a file to be specified, so
+  // one can fseek to the end of the file.
+  auto sk = std::fseek(fp.get(), 0, SEEK_END);
+  assert(sk == 0);
   const size_t file_size = std::ftell(fp.get());
-  const size_t num_vals = file_size / sizeof(T);
-  std::fseek(fp.get(), 0, SEEK_SET);
+  if (file_size % sizeof(T) != 0)
+    return buf;
 
+  const size_t num_vals = file_size / sizeof(T);
   buf.resize(num_vals);
+  std::rewind(fp.get());
   size_t nread = std::fread(buf.data(), sizeof(T), num_vals, fp.get());
   if (nread != num_vals)
     buf.clear();
@@ -262,7 +270,10 @@ auto sperr::read_sections(std::string filename, const std::vector<size_t>& secti
     return RTNType::IOError;
 
   // Retrieve the file length in bytes.
-  std::fseek(fp.get(), 0, SEEK_END);
+  //    P.S. POSIX systems require the size of a file to be specified, so
+  //    one can fseek to the end of the file.
+  auto sk = std::fseek(fp.get(), 0, SEEK_END);
+  assert(sk == 0);
   const size_t file_len = std::ftell(fp.get());
   if (file_len < far)
     return RTNType::WrongLength;
@@ -276,7 +287,8 @@ auto sperr::read_sections(std::string filename, const std::vector<size_t>& secti
 
   // Read in sections of the file!
   for (size_t i = 0; i < sections.size() / 2; i++) {
-    std::fseek(fp.get(), sections[i * 2], SEEK_SET);
+    sk = std::fseek(fp.get(), sections[i * 2], SEEK_SET);
+    assert(sk == 0);
     auto nread = std::fread(dst.data() + dst_pos, 1, sections[i * 2 + 1], fp.get());
     assert(nread == sections[i * 2 + 1]);
     dst_pos += nread;
