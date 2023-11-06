@@ -397,12 +397,12 @@ auto sperr::SPECK_FLT::compress() -> RTNType
       std::copy(m_vals_d.cbegin(), m_vals_d.cend(), m_vals_orig.begin());
       break;
     case CompMode::PSNR: {
-      // In fixed-rate mode, `param_q` is the data range.
+      // In PSNR mode, `param_q` is the data range.
       auto [min, max] = std::minmax_element(m_vals_d.cbegin(), m_vals_d.cend());
       param_q = *max - *min;
       break;
     }
-    default:;  // So the compiler doesn't complain missing switch cases.
+    default:;  // So the compiler doesn't complain about missing switch cases.
   }
 
   // Step 2: wavelet transform

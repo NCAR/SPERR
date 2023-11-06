@@ -42,3 +42,4 @@ If SPERR benefits your work, please kindly cite [this publication](https://ieeex
   pages={1007-1017},
   doi={10.1109/IPDPS54959.2023.00104}}
 ```
+(Author's copy is available [here](https://vast.ucar.edu/pdfs/SPERR_IPDPS.pdf).)
