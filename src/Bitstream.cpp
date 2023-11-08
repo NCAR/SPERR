@@ -109,8 +109,7 @@ void sperr::Bitstream::wbit(bool bit)
   if (++m_bits == 64) {
     if (m_itr == m_buf.end()) {  // allocate memory if necessary.
       const auto dist = m_buf.size();
-      m_buf.push_back(0);              // trigger a memory allocation.
-      m_buf.resize(m_buf.capacity());  // be able to make use of all available capacity.
+      m_buf.resize(std::max(size_t{1}, dist) * 2 - dist / 2);  // use a growth factor of 1.5
       m_itr = m_buf.begin() + dist;
     }
     *m_itr = m_buffer;
@@ -125,8 +124,7 @@ void sperr::Bitstream::flush()
   if (m_bits) {  // only really flush when there are remaining bits.
     if (m_itr == m_buf.end()) {
       const auto dist = m_buf.size();
-      m_buf.push_back(0);              // trigger a memory allocation.
-      m_buf.resize(m_buf.capacity());  // be able to make use of all available capacity.
+      m_buf.resize(std::max(size_t{1}, dist) * 2 - dist / 2);  // use a growth factor of 1.5
       m_itr = m_buf.begin() + dist;
     }
     *m_itr = m_buffer;

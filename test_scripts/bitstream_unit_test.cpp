@@ -81,7 +81,7 @@ TEST(Bitstream, MemoryAllocation1)
   EXPECT_EQ(s1.wtell(), 129);
   EXPECT_EQ(s1.capacity(), 128);
   s1.flush();
-  EXPECT_EQ(s1.capacity(), 256);
+  EXPECT_EQ(s1.capacity(), 192);
   s1.rewind();
   for (size_t i = 0; i < vec.size(); i++)
     EXPECT_EQ(s1.rbit(), vec[i]) << "at idx = " << i;
