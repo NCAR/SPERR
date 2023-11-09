@@ -41,14 +41,11 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   big.length_y = static_cast<uint16_t>(m_dims[1]);
   big.length_z = static_cast<uint16_t>(m_dims[2]);
 
-  const auto num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  const auto num_xforms_z = sperr::num_of_xforms(m_dims[2]);
   auto curr_lev = uint16_t{0};
 
-  // Same logic as the choice of dyadic/wavelet_packet transform in CDF97.cpp.
-  if ((num_xforms_xy == num_xforms_z) || (num_xforms_xy >= 5 && num_xforms_xy >= 5)) {
-    auto num_xforms = std::min(num_xforms_xy, num_xforms_z);
-    for (size_t i = 0; i < num_xforms; i++) {
+  const auto use_dyadic = sperr::can_use_dyadic(m_dims);
+  if (use_dyadic) {
+    for (size_t i = 0; i < *use_dyadic; i++) {
       auto [subsets, next_lev] = m_partition_S_XYZ(big, curr_lev);
       big = subsets[0];
       for (auto it = std::next(subsets.cbegin()); it != subsets.cend(); ++it)
@@ -57,6 +54,8 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
     }
   }
   else {
+    const auto num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+    const auto num_xforms_z = sperr::num_of_xforms(m_dims[2]);
     size_t xf = 0;
     while (xf < num_xforms_xy && xf < num_xforms_z) {
       auto [subsets, next_lev] = m_partition_S_XYZ(big, curr_lev);

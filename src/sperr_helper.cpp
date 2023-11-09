@@ -22,6 +22,21 @@ auto sperr::num_of_xforms(size_t len) -> size_t
   return std::min(num, size_t{6});
 }
 
+auto sperr::can_use_dyadic(dims_type dims) -> std::optional<size_t>
+{
+  auto num_xforms_xy = sperr::num_of_xforms(std::min(dims[0], dims[1]));
+  auto num_xforms_z = sperr::num_of_xforms(dims[2]);
+
+  // Note: if some dimensions can do 5 levels of transforms and some can do 6, we use
+  //       dyanic scheme and do 5 levels on all of them. I.e., the benefit of dyanic
+  //       transforms exceeds one extra level of transform.
+  //
+  if ((num_xforms_xy == num_xforms_z) || (num_xforms_xy >= 5 && num_xforms_xy >= 5))
+    return std::optional<size_t>{std::min(num_xforms_xy, num_xforms_z)};
+  else
+    return {};
+}
+
 auto sperr::num_of_partitions(size_t len) -> size_t
 {
   size_t num_of_parts = 0;  // Num. of partitions we can do

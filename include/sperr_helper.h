@@ -14,6 +14,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <optional>
 
 #ifndef USE_VANILLA_CONFIG
 #include "SperrConfig.h"
@@ -59,6 +60,12 @@ enum class RTNType {
 //
 // Given a certain length, how many transforms to be performed?
 auto num_of_xforms(size_t len) -> size_t;
+
+// Given a 3D dimension, tell if it can use dyadic decomposition.
+//    I.e., will the dimension result in the same levels of wavelet decomposition in 3 directions.
+//    If dyadic decomposition can be used, it returns the number of decomposition levels.
+//    Otherwise, it returns an empty optional.
+auto can_use_dyadic(dims_type) -> std::optional<size_t>;
 
 // How many partition operation could we perform given a length?
 // Length 0 and 1 can do 0 partitions; len=2 can do 1; len=3 can do 2, len=4 can

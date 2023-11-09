@@ -91,14 +91,7 @@ void sperr::CDF97::idwt2d()
 
 void sperr::CDF97::dwt3d()
 {
-  auto num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  auto num_xforms_z = sperr::num_of_xforms(m_dims[2]);
-
-  // Note: if some dimensions can do 5 levels of transforms and some can do 6, we use
-  //       dyanic scheme and do 5 levels on all of them. I.e., the benefit of dyanic
-  //       transforms exceeds one extra level of transform.
-  //
-  if ((num_xforms_xy == num_xforms_z) || (num_xforms_xy >= 5 && num_xforms_xy >= 5))
+  if (sperr::can_use_dyadic(m_dims))
     m_dwt3d_dyadic();
   else
     m_dwt3d_wavelet_packet();
@@ -106,10 +99,7 @@ void sperr::CDF97::dwt3d()
 
 void sperr::CDF97::idwt3d()
 {
-  auto num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  auto num_xforms_z = sperr::num_of_xforms(m_dims[2]);
-
-  if ((num_xforms_xy == num_xforms_z) || (num_xforms_xy >= 5 && num_xforms_xy >= 5))
+  if (sperr::can_use_dyadic(m_dims))
     m_idwt3d_dyadic();
   else
     m_idwt3d_wavelet_packet();
