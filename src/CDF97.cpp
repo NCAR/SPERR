@@ -99,8 +99,9 @@ void sperr::CDF97::dwt3d()
 
 void sperr::CDF97::idwt3d()
 {
-  if (sperr::can_use_dyadic(m_dims))
-    m_idwt3d_dyadic();
+  auto use_dyadic = sperr::can_use_dyadic(m_dims);
+  if (use_dyadic)
+    m_idwt3d_dyadic(*use_dyadic);
   else
     m_idwt3d_wavelet_packet();
 }
@@ -169,7 +170,6 @@ void sperr::CDF97::m_idwt3d_wavelet_packet()
   // First, inverse transform each plane
   //
   auto num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-
   for (size_t i = 0; i < m_dims[2]; i++) {
     const size_t offset = plane_size_xy * i;
     m_idwt2d(m_data_buf.begin() + offset, {m_dims[0], m_dims[1]}, num_xforms_xy);
@@ -197,7 +197,6 @@ void sperr::CDF97::m_idwt3d_wavelet_packet()
   // Process one XZ slice at a time
   //
   const auto num_xforms_z = sperr::num_of_xforms(m_dims[2]);
-
   for (size_t y = 0; y < m_dims[1]; y++) {
     const auto y_offset = y * m_dims[0];
 
@@ -223,9 +222,9 @@ void sperr::CDF97::m_idwt3d_wavelet_packet()
 
 void sperr::CDF97::m_dwt3d_dyadic()
 {
-  const auto num_xforms = sperr::num_of_xforms(*std::min_element(m_dims.cbegin(), m_dims.cend()));
-
-  for (size_t lev = 0; lev < num_xforms; lev++) {
+  auto dyadic = sperr::can_use_dyadic(m_dims);
+  assert(dyadic.has_value());
+  for (size_t lev = 0; lev < *dyadic; lev++) {
     auto app_x = sperr::calc_approx_detail_len(m_dims[0], lev);
     auto app_y = sperr::calc_approx_detail_len(m_dims[1], lev);
     auto app_z = sperr::calc_approx_detail_len(m_dims[2], lev);
@@ -233,10 +232,8 @@ void sperr::CDF97::m_dwt3d_dyadic()
   }
 }
 
-void sperr::CDF97::m_idwt3d_dyadic()
+void sperr::CDF97::m_idwt3d_dyadic(size_t num_xforms)
 {
-  const auto num_xforms = sperr::num_of_xforms(*std::min_element(m_dims.cbegin(), m_dims.cend()));
-
   for (size_t lev = num_xforms; lev > 0; lev--) {
     auto app_x = sperr::calc_approx_detail_len(m_dims[0], lev - 1);
     auto app_y = sperr::calc_approx_detail_len(m_dims[1], lev - 1);

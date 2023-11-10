@@ -32,7 +32,7 @@ auto sperr::can_use_dyadic(dims_type dims) -> std::optional<size_t>
   //       transforms exceeds one extra level of transform.
   //
   if ((num_xforms_xy == num_xforms_z) || (num_xforms_xy >= 5 && num_xforms_xy >= 5))
-    return std::optional<size_t>{std::min(num_xforms_xy, num_xforms_z)};
+    return std::min(num_xforms_xy, num_xforms_z);
   else
     return {};
 }

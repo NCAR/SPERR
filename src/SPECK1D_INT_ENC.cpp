@@ -164,9 +164,9 @@ auto sperr::SPECK1D_INT_ENC<T>::m_decide_significance(const Set1D& set) const
   auto last = first + set.get_length();
   auto found = std::find_if(first, last, gtr);
   if (found != last)
-    result = static_cast<size_t>(std::distance(first, found));
-
-  return result;
+    return static_cast<size_t>(std::distance(first, found));
+  else
+    return {};
 }
 
 template class sperr::SPECK1D_INT_ENC<uint64_t>;

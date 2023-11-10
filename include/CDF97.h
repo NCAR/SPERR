@@ -35,13 +35,19 @@ class CDF97 {
   auto release_data() -> vecd_type&&;
   auto get_dims() const -> std::array<size_t, 3>;  // In 2D case, the 3rd value equals 1.
 
+  //
   // Action items
+  //
   void dwt1d();
   void dwt2d();
   void dwt3d();
   void idwt2d();
   void idwt1d();
   void idwt3d();
+
+  //
+  // Multi-resolution reconstruction
+  //
 
  private:
   using itd_type = vecd_type::iterator;
@@ -93,7 +99,7 @@ class CDF97 {
   void m_dwt3d_wavelet_packet();
   void m_idwt3d_wavelet_packet();
   void m_dwt3d_dyadic();
-  void m_idwt3d_dyadic();
+  void m_idwt3d_dyadic(size_t num_xforms);
 
   //
   // Methods from QccPack, so keep their original names, interface, and the use of raw pointers.
