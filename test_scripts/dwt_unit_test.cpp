@@ -321,6 +321,30 @@ TEST(dwt3d, big_even_cube)
 }
 #endif
 
+TEST(dwt2d, lod)
+{
+  // Very basic case
+  auto dims = sperr::dims_type{64, 64, 1};
+  auto buf = std::vector<double>(dims[0] * dims[1], 3.14);
+  auto cdf = sperr::CDF97();
+  cdf.take_data(std::move(buf), dims);
+  auto lod = cdf.available_resolutions();
+  EXPECT_EQ(lod.size(), 5);
+  EXPECT_EQ(lod[0], (sperr::dims_type{4, 4, 1}));
+  EXPECT_EQ(lod[2], (sperr::dims_type{16, 16, 1}));
+  EXPECT_EQ(lod[4], dims);
+
+  // 2D is simpler, because it's always dyadic!
+  dims = sperr::dims_type{80, 200, 1};
+  buf = std::vector<double>(dims[0] * dims[1], 3.14);
+  cdf.take_data(std::move(buf), dims);
+  lod = cdf.available_resolutions();
+  EXPECT_EQ(lod.size(), 5);
+  EXPECT_EQ(lod[0], (sperr::dims_type{5, 13, 1}));
+  EXPECT_EQ(lod[2], (sperr::dims_type{20, 50, 1}));
+  EXPECT_EQ(lod[4], dims);
+}
+
 TEST(dwt3d, lod)
 {
   // Very basic case
@@ -332,7 +356,7 @@ TEST(dwt3d, lod)
   EXPECT_EQ(lod.size(), 5);
   EXPECT_EQ(lod[0], (sperr::dims_type{4, 4, 4}));
   EXPECT_EQ(lod[2], (sperr::dims_type{16, 16, 16}));
-  EXPECT_EQ(lod[4], (sperr::dims_type{64, 64, 64}));
+  EXPECT_EQ(lod[4], dims);
 
   // XY has 5 levels, and Z has 6 levels, the overall is 5 levels.
   dims = {128, 128, 256};

@@ -79,14 +79,14 @@ void sperr::CDF97::idwt1d()
 
 void sperr::CDF97::dwt2d()
 {
-  size_t num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  m_dwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, num_xforms_xy);
+  size_t xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  m_dwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, xy);
 }
 
 void sperr::CDF97::idwt2d()
 {
-  size_t num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  m_idwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, num_xforms_xy);
+  size_t xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  m_idwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, xy);
 }
 
 void sperr::CDF97::dwt3d()
@@ -111,7 +111,7 @@ auto sperr::CDF97::available_resolutions() const -> std::vector<dims_type>
 {
   auto resolutions = std::vector<dims_type>();
 
-  if (m_dims[0] > 1 && m_dims[1] > 1 && m_dims[2] > 1) {  // 3D
+  if (m_dims[2] > 1) {  // 3D. Assume that there's no 1D use case that requires multi-resolution.
     const auto dyadic = sperr::can_use_dyadic(m_dims);
     if (dyadic) {
       resolutions.reserve(*dyadic + 1);
@@ -121,17 +121,21 @@ auto sperr::CDF97::available_resolutions() const -> std::vector<dims_type>
         auto [z, zd] = sperr::calc_approx_detail_len(m_dims[2], lev);
         resolutions.push_back({x, y, z});
       }
-      resolutions.push_back(m_dims);
     }
-    else
-      resolutions.push_back(m_dims);
   }
-  else if (m_dims[0] > 1 && m_dims[1] > 1 && m_dims[2] == 1) { // 2D
+  else {  // 2D
+    size_t xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+    resolutions.reserve(xy + 1);
+    for (size_t lev = xy; lev > 0; lev--) {
+      auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev);
+      auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev);
+      resolutions.push_back({x, y, 1});
+    }
+  }
 
-  }
-  else {  // 1D
-
-  }
+  // In every case, the last available resolution is the native resolution, even for a
+  // wavelet-packet decomposed 3D volume, which doesn't have any coarsened resolutions.
+  resolutions.push_back(m_dims);
 
   return resolutions;
 }
@@ -277,34 +281,34 @@ void sperr::CDF97::m_idwt3d_dyadic(size_t num_xforms)
 void sperr::CDF97::m_dwt1d(itd_type array, size_t array_len, size_t num_of_lev)
 {
   for (size_t lev = 0; lev < num_of_lev; lev++) {
-    auto [apx, nnm] = sperr::calc_approx_detail_len(array_len, lev);
-    m_dwt1d_one_level(array, apx);
+    auto [x, xd] = sperr::calc_approx_detail_len(array_len, lev);
+    m_dwt1d_one_level(array, x);
   }
 }
 
 void sperr::CDF97::m_idwt1d(itd_type array, size_t array_len, size_t num_of_lev)
 {
   for (size_t lev = num_of_lev; lev > 0; lev--) {
-    auto [apx, nnm] = sperr::calc_approx_detail_len(array_len, lev - 1);
-    m_idwt1d_one_level(array, apx);
+    auto [x, xd] = sperr::calc_approx_detail_len(array_len, lev - 1);
+    m_idwt1d_one_level(array, x);
   }
 }
 
 void sperr::CDF97::m_dwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t num_of_lev)
 {
   for (size_t lev = 0; lev < num_of_lev; lev++) {
-    auto approx_x = sperr::calc_approx_detail_len(len_xy[0], lev);
-    auto approx_y = sperr::calc_approx_detail_len(len_xy[1], lev);
-    m_dwt2d_one_level(plane, {approx_x[0], approx_y[0]});
+    auto [x, xd] = sperr::calc_approx_detail_len(len_xy[0], lev);
+    auto [y, yd] = sperr::calc_approx_detail_len(len_xy[1], lev);
+    m_dwt2d_one_level(plane, {x, y});
   }
 }
 
 void sperr::CDF97::m_idwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t num_of_lev)
 {
   for (size_t lev = num_of_lev; lev > 0; lev--) {
-    auto approx_x = sperr::calc_approx_detail_len(len_xy[0], lev - 1);
-    auto approx_y = sperr::calc_approx_detail_len(len_xy[1], lev - 1);
-    m_idwt2d_one_level(plane, {approx_x[0], approx_y[0]});
+    auto [x, xd] = sperr::calc_approx_detail_len(len_xy[0], lev - 1);
+    auto [y, yd] = sperr::calc_approx_detail_len(len_xy[1], lev - 1);
+    m_idwt2d_one_level(plane, {x, y});
   }
 }
 
