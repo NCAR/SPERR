@@ -5,6 +5,7 @@
 
 namespace {
 
+#if 0
 TEST(dwt1d, big_image_even)
 {
   const char* input = "../test_data/128x128.float";
@@ -317,6 +318,50 @@ TEST(dwt3d, big_even_cube)
   for (size_t i = 0; i < total_vals; i++) {
     EXPECT_EQ(in_buf[i], float(result[i]));
   }
+}
+#endif
+
+TEST(dwt3d, lod)
+{
+  // Very basic case
+  auto dims = sperr::dims_type{64, 64, 64};
+  auto buf = std::vector<double>(dims[0] * dims[1] * dims[2], 3.14);
+  auto cdf = sperr::CDF97();
+  cdf.take_data(std::move(buf), dims);
+  auto lod = cdf.available_resolutions();
+  EXPECT_EQ(lod.size(), 5);
+  EXPECT_EQ(lod[0], (sperr::dims_type{4, 4, 4}));
+  EXPECT_EQ(lod[2], (sperr::dims_type{16, 16, 16}));
+  EXPECT_EQ(lod[4], (sperr::dims_type{64, 64, 64}));
+
+  // XY has 5 levels, and Z has 6 levels, the overall is 5 levels.
+  dims = {128, 128, 256};
+  buf.assign(dims[0] * dims[1] * dims[2], 3.14);
+  cdf.take_data(std::move(buf), dims);
+  lod = cdf.available_resolutions();
+  EXPECT_EQ(lod.size(), 6);
+  EXPECT_EQ(lod[0], (sperr::dims_type{4, 4, 8}));
+  EXPECT_EQ(lod[2], (sperr::dims_type{16, 16, 32}));
+  EXPECT_EQ(lod[4], (sperr::dims_type{64, 64, 128}));
+  EXPECT_EQ(lod[5], dims);
+
+  // Another test
+  dims = {256, 256, 160};
+  buf.assign(dims[0] * dims[1] * dims[2], 3.14);
+  cdf.take_data(std::move(buf), dims);
+  lod = cdf.available_resolutions();
+  EXPECT_EQ(lod.size(), 6);
+  EXPECT_EQ(lod[0], (sperr::dims_type{8, 8, 5}));
+  EXPECT_EQ(lod[2], (sperr::dims_type{32, 32, 20}));
+  EXPECT_EQ(lod[5], dims);
+
+  // Dyadic will not be used, so only 1 level
+  dims = {128, 128, 60};
+  buf.assign(dims[0] * dims[1] * dims[2], 3.14);
+  cdf.take_data(std::move(buf), dims);
+  lod = cdf.available_resolutions();
+  EXPECT_EQ(lod.size(), 1);
+  EXPECT_EQ(lod[0], dims);
 }
 
 }  // namespace

@@ -91,19 +91,49 @@ void sperr::CDF97::idwt2d()
 
 void sperr::CDF97::dwt3d()
 {
-  if (sperr::can_use_dyadic(m_dims))
-    m_dwt3d_dyadic();
+  auto dyadic = sperr::can_use_dyadic(m_dims);
+  if (dyadic)
+    m_dwt3d_dyadic(*dyadic);
   else
     m_dwt3d_wavelet_packet();
 }
 
 void sperr::CDF97::idwt3d()
 {
-  auto use_dyadic = sperr::can_use_dyadic(m_dims);
-  if (use_dyadic)
-    m_idwt3d_dyadic(*use_dyadic);
+  auto dyadic = sperr::can_use_dyadic(m_dims);
+  if (dyadic)
+    m_idwt3d_dyadic(*dyadic);
   else
     m_idwt3d_wavelet_packet();
+}
+
+auto sperr::CDF97::available_resolutions() const -> std::vector<dims_type>
+{
+  auto resolutions = std::vector<dims_type>();
+
+  if (m_dims[0] > 1 && m_dims[1] > 1 && m_dims[2] > 1) {  // 3D
+    const auto dyadic = sperr::can_use_dyadic(m_dims);
+    if (dyadic) {
+      resolutions.reserve(*dyadic + 1);
+      for (size_t lev = *dyadic; lev > 0; lev--) {
+        auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev);
+        auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev);
+        auto [z, zd] = sperr::calc_approx_detail_len(m_dims[2], lev);
+        resolutions.push_back({x, y, z});
+      }
+      resolutions.push_back(m_dims);
+    }
+    else
+      resolutions.push_back(m_dims);
+  }
+  else if (m_dims[0] > 1 && m_dims[1] > 1 && m_dims[2] == 1) { // 2D
+
+  }
+  else {  // 1D
+
+  }
+
+  return resolutions;
 }
 
 void sperr::CDF97::m_dwt3d_wavelet_packet()
@@ -220,25 +250,23 @@ void sperr::CDF97::m_idwt3d_wavelet_packet()
   }
 }
 
-void sperr::CDF97::m_dwt3d_dyadic()
+void sperr::CDF97::m_dwt3d_dyadic(size_t num_xforms)
 {
-  auto dyadic = sperr::can_use_dyadic(m_dims);
-  assert(dyadic.has_value());
-  for (size_t lev = 0; lev < *dyadic; lev++) {
-    auto app_x = sperr::calc_approx_detail_len(m_dims[0], lev);
-    auto app_y = sperr::calc_approx_detail_len(m_dims[1], lev);
-    auto app_z = sperr::calc_approx_detail_len(m_dims[2], lev);
-    m_dwt3d_one_level(m_data_buf.begin(), {app_x[0], app_y[0], app_z[0]});
+  for (size_t lev = 0; lev < num_xforms; lev++) {
+    auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev);
+    auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev);
+    auto [z, zd] = sperr::calc_approx_detail_len(m_dims[2], lev);
+    m_dwt3d_one_level(m_data_buf.begin(), {x, y, z});
   }
 }
 
 void sperr::CDF97::m_idwt3d_dyadic(size_t num_xforms)
 {
   for (size_t lev = num_xforms; lev > 0; lev--) {
-    auto app_x = sperr::calc_approx_detail_len(m_dims[0], lev - 1);
-    auto app_y = sperr::calc_approx_detail_len(m_dims[1], lev - 1);
-    auto app_z = sperr::calc_approx_detail_len(m_dims[2], lev - 1);
-    m_idwt3d_one_level(m_data_buf.begin(), {app_x[0], app_y[0], app_z[0]});
+    auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev - 1);
+    auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev - 1);
+    auto [z, zd] = sperr::calc_approx_detail_len(m_dims[2], lev - 1);
+    m_idwt3d_one_level(m_data_buf.begin(), {x, y, z});
   }
 }
 

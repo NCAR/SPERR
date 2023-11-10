@@ -43,9 +43,9 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
 
   auto curr_lev = uint16_t{0};
 
-  const auto use_dyadic = sperr::can_use_dyadic(m_dims);
-  if (use_dyadic) {
-    for (size_t i = 0; i < *use_dyadic; i++) {
+  const auto dyadic = sperr::can_use_dyadic(m_dims);
+  if (dyadic) {
+    for (size_t i = 0; i < *dyadic; i++) {
       auto [subsets, next_lev] = m_partition_S_XYZ(big, curr_lev);
       big = subsets[0];
       for (auto it = std::next(subsets.cbegin()); it != subsets.cend(); ++it)

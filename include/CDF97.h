@@ -48,6 +48,7 @@ class CDF97 {
   //
   // Multi-resolution reconstruction
   //
+  auto available_resolutions() const -> std::vector<dims_type>;
 
  private:
   using itd_type = vecd_type::iterator;
@@ -98,7 +99,7 @@ class CDF97 {
   // They should be invoked by the `dwt3d()` and `idwt3d()` public methods, not users, though.
   void m_dwt3d_wavelet_packet();
   void m_idwt3d_wavelet_packet();
-  void m_dwt3d_dyadic();
+  void m_dwt3d_dyadic(size_t num_xforms);
   void m_idwt3d_dyadic(size_t num_xforms);
 
   //
