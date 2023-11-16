@@ -220,33 +220,33 @@ int main(int argc, char* argv[])
 
       // Calculate statistics.
       if (print_stats) {
-        const double bpp = stream.size() * 8.0 / total_vals;
-        double rmse, linfy, psnr, min, max, sigma;
+        const double print_bpp = stream.size() * 8.0 / total_vals;
+        double rmse, linfy, print_psnr, min, max, sigma;
         if (ftype == 32) {
           const float* inputf = reinterpret_cast<const float*>(input.data());
           auto stats = sperr::calc_stats(inputf, outputf.data(), total_vals);
-          auto mean_var = sperr::calc_mean_var(inputf, total_vals);
           rmse = stats[0];
           linfy = stats[1];
-          psnr = stats[2];
+          print_psnr = stats[2];
           min = stats[3];
           max = stats[4];
+          auto mean_var = sperr::calc_mean_var(inputf, total_vals);
           sigma = std::sqrt(mean_var[1]);
         }
         else {
           const double* inputd = reinterpret_cast<const double*>(input.data());
           auto stats = sperr::calc_stats(inputd, outputd.data(), total_vals);
-          auto mean_var = sperr::calc_mean_var(inputd, total_vals);
           rmse = stats[0];
           linfy = stats[1];
-          psnr = stats[2];
+          print_psnr = stats[2];
           min = stats[3];
           max = stats[4];
+          auto mean_var = sperr::calc_mean_var(inputd, total_vals);
           sigma = std::sqrt(mean_var[1]);
         }
         std::printf("Input range = (%.2e, %.2e), L-Infty = %.2e\n", min, max, linfy);
-        std::printf("Bitrate = %.2f, PSNR = %.2fdB, Accuracy Gain = %.2f\n", bpp, psnr,
-                    std::log2(sigma / rmse) - bpp);
+        std::printf("Bitrate = %.2f, PSNR = %.2fdB, Accuracy Gain = %.2f\n", print_bpp, print_psnr,
+                    std::log2(sigma / rmse) - print_bpp);
         print_stats = false;
       }
 
