@@ -9,7 +9,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
-#include <tuple>
 
 int main(int argc, char* argv[])
 {
@@ -231,8 +230,12 @@ int main(int argc, char* argv[])
         }
         else {
           const double* inputd = reinterpret_cast<const double*>(input.data());
-          std::tie(rmse, linfy, print_psnr, min, max) =
-              sperr::calc_stats(inputd, outputd.data(), total_vals, omp_num_threads);
+          auto stats = sperr::calc_stats(inputd, outputd.data(), total_vals, omp_num_threads);
+          rmse = stats[0];
+          linfy = stats[1];
+          print_psnr = stats[2];
+          min = stats[3];
+          max = stats[4];
           auto mean_var = sperr::calc_mean_var(inputd, total_vals, omp_num_threads);
           sigma = std::sqrt(mean_var[1]);
         }
