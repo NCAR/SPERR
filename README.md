@@ -45,5 +45,5 @@ If SPERR benefits your work, please kindly cite [this publication](https://ieeex
 (Author's copy is available [here](https://vast.ucar.edu/pdfs/SPERR_IPDPS.pdf).)
 
 ## Presentations
-- SC23 Tutorial on lossy scientific data compression: Nov 13 2023, Denver CO. ([slides](https://vast.ucar.edu/pdfs/Li_SC23_Slides.pdf))
-- 37th IEEE International Parallel and Distributed Processing Symposium (IPDPS): May 18 2023, St. Petersburg, FL. ([slides](https://vast.ucar.edu/pdfs/Li_IPDPS23_Slides.pdf))
+- SC'23 Tutorial on lossy scientific data compression: Nov 13 2023, Denver CO. ([slides](https://vast.ucar.edu/pdfs/Li_SC23_Slides.pdf))
+- IPDPS'23 Lossy Scientific Data Compression With SPERR: May 18 2023, St. Petersburg, FL. ([slides](https://vast.ucar.edu/pdfs/Li_IPDPS23_Slides.pdf))
