@@ -224,8 +224,12 @@ int main(int argc, char* argv[])
         double rmse, linfy, print_psnr, min, max, sigma;
         if (ftype == 32) {
           const float* inputf = reinterpret_cast<const float*>(input.data());
-          std::tie(rmse, linfy, print_psnr, min, max) =
-              sperr::calc_stats(inputf, outputf.data(), total_vals);
+          auto stats = sperr::calc_stats(inputf, outputf.data(), total_vals);
+          rmse = stats[0];
+          linfy = stats[1];
+          print_psnr = stats[2];
+          min = stats[3];
+          max = stats[4];
           auto mean_var = sperr::calc_mean_var(inputf, total_vals);
           sigma = std::sqrt(mean_var[1]);
         }
