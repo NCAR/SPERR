@@ -325,7 +325,7 @@ auto sperr::SPECK_FLT::m_midtread_quantize() -> RTNType
           auto bits64 = uint64_t{0};
           for (size_t j = 0; j < 64; j++) {
             auto ll = std::llrint(vals_d[i + j] * inv);
-            bits64 += uint64_t{ll >= 0} << j;
+            bits64 |= uint64_t{ll >= 0} << j;
             vec[i + j] = std::abs(ll);
           }
           signs.wlong(i, bits64);
