@@ -45,10 +45,23 @@ class CDF97 {
   void idwt1d();
   void idwt3d();
 
+
   //
   // Multi-resolution reconstruction
   //
+
+  // The return vector will always have one element, which is the native resolution of the volume.
+  // If multi-resolution is supported, then it contains the coarsened resolutions too.
   auto available_resolutions() const -> std::vector<dims_type>;
+
+  // If multi-resolution is supported (determined by `available_resolutions()`), then it returns
+  //    all the coarsened volumes, which are placed in the same order of resolutions returned by
+  //    `available_resolutions()`. The native resolution reconstruction should still be retrieved
+  //    by the `view_data()` or `release_data()` functions.
+  //    If multi-resolution is not supported, then it simply returns an empty vector, with the
+  //    decompression still performed, and the native resolution reconstruction ready. 
+  [[nodiscard]] auto idwt2d_multi_res() -> std::vector<vecd_type>;
+  // [[nodiscard]] auto idwt3d_multi_res() -> std::vector<vecd_type>;
 
  private:
   using itd_type = vecd_type::iterator;

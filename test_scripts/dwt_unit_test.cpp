@@ -5,7 +5,6 @@
 
 namespace {
 
-#if 0
 TEST(dwt1d, big_image_even)
 {
   const char* input = "../test_data/128x128.float";
@@ -319,7 +318,6 @@ TEST(dwt3d, big_even_cube)
     EXPECT_EQ(in_buf[i], float(result[i]));
   }
 }
-#endif
 
 TEST(dwt2d, lod)
 {

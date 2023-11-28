@@ -89,6 +89,23 @@ void sperr::CDF97::idwt2d()
   m_idwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, xy);
 }
 
+auto sperr::CDF97::idwt2d_multi_res() -> std::vector<vecd_type>
+{
+  const size_t xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  auto ret = std::vector<vecd_type>();
+
+  if (xy > 0) {
+    ret.resize(xy);
+    //for (size_t lev = xy; lev > 0; lev--) {
+    //  auto [x, xd] = sperr::calc_approx_detail_len(len_xy[0], lev - 1);
+    //  auto [y, yd] = sperr::calc_approx_detail_len(len_xy[1], lev - 1);
+    //  m_idwt2d_one_level(plane, {x, y});
+    //}
+  }
+  else
+    return ret;
+}
+
 void sperr::CDF97::dwt3d()
 {
   auto dyadic = sperr::can_use_dyadic(m_dims);
@@ -277,7 +294,6 @@ void sperr::CDF97::m_idwt3d_dyadic(size_t num_xforms)
 //
 // Private Methods
 //
-
 void sperr::CDF97::m_dwt1d(itd_type array, size_t array_len, size_t num_of_lev)
 {
   for (size_t lev = 0; lev < num_of_lev; lev++) {
