@@ -108,8 +108,8 @@ TEST(SPECK3D_FLT, IntegerLen)
   stats = sperr::calc_stats(inputd.data(), outputd.data(), total_vals);
   std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
 #endif
-  EXPECT_EQ(encoder.integer_len(), 2);
-  EXPECT_EQ(decoder.integer_len(), 2);
+  EXPECT_EQ(encoder.integer_len(), 1);
+  EXPECT_EQ(decoder.integer_len(), 1);
 
   // Test a new PSNR target.
   psnr = 190.0;

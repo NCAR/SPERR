@@ -327,10 +327,10 @@ TEST(dwt2d, lod)
   auto cdf = sperr::CDF97();
   cdf.take_data(std::move(buf), dims);
   auto lod = cdf.available_resolutions();
-  EXPECT_EQ(lod.size(), 5);
-  EXPECT_EQ(lod[0], (sperr::dims_type{4, 4, 1}));
-  EXPECT_EQ(lod[2], (sperr::dims_type{16, 16, 1}));
-  EXPECT_EQ(lod[4], dims);
+  EXPECT_EQ(lod.size(), 4);
+  EXPECT_EQ(lod[0], (sperr::dims_type{8, 8, 1}));
+  EXPECT_EQ(lod[2], (sperr::dims_type{32, 32, 1}));
+  EXPECT_EQ(lod[3], dims);
 
   // 2D is simpler, because it's always dyadic!
   dims = sperr::dims_type{80, 200, 1};
@@ -351,30 +351,31 @@ TEST(dwt3d, lod)
   auto cdf = sperr::CDF97();
   cdf.take_data(std::move(buf), dims);
   auto lod = cdf.available_resolutions();
-  EXPECT_EQ(lod.size(), 5);
-  EXPECT_EQ(lod[0], (sperr::dims_type{4, 4, 4}));
-  EXPECT_EQ(lod[2], (sperr::dims_type{16, 16, 16}));
-  EXPECT_EQ(lod[4], dims);
+  EXPECT_EQ(lod.size(), 4);
+  EXPECT_EQ(lod[0], (sperr::dims_type{8, 8, 8}));
+  EXPECT_EQ(lod[2], (sperr::dims_type{32, 32, 32}));
+  EXPECT_EQ(lod[3], dims);
 
   // XY has 5 levels, and Z has 6 levels, the overall is 5 levels.
-  dims = {128, 128, 256};
+  dims = {144, 144, 288};
   buf.assign(dims[0] * dims[1] * dims[2], 3.14);
   cdf.take_data(std::move(buf), dims);
   lod = cdf.available_resolutions();
   EXPECT_EQ(lod.size(), 6);
-  EXPECT_EQ(lod[0], (sperr::dims_type{4, 4, 8}));
-  EXPECT_EQ(lod[2], (sperr::dims_type{16, 16, 32}));
-  EXPECT_EQ(lod[4], (sperr::dims_type{64, 64, 128}));
+  EXPECT_EQ(lod[0], (sperr::dims_type{5, 5, 9}));
+  EXPECT_EQ(lod[2], (sperr::dims_type{18, 18, 36}));
+  EXPECT_EQ(lod[4], (sperr::dims_type{72, 72, 144}));
   EXPECT_EQ(lod[5], dims);
 
   // Another test
-  dims = {256, 256, 160};
+  dims = {300, 300, 160};
   buf.assign(dims[0] * dims[1] * dims[2], 3.14);
   cdf.take_data(std::move(buf), dims);
   lod = cdf.available_resolutions();
   EXPECT_EQ(lod.size(), 6);
-  EXPECT_EQ(lod[0], (sperr::dims_type{8, 8, 5}));
-  EXPECT_EQ(lod[2], (sperr::dims_type{32, 32, 20}));
+  EXPECT_EQ(lod[0], (sperr::dims_type{10, 10, 5}));
+  EXPECT_EQ(lod[2], (sperr::dims_type{38, 38, 20}));
+  EXPECT_EQ(lod[4], (sperr::dims_type{150, 150, 80}));
   EXPECT_EQ(lod[5], dims);
 
   // Dyadic will not be used, so only 1 level

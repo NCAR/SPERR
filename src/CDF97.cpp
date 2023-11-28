@@ -102,8 +102,8 @@ auto sperr::CDF97::idwt2d_multi_res() -> std::vector<vecd_type>
     //  m_idwt2d_one_level(plane, {x, y});
     //}
   }
-  else
-    return ret;
+
+  return ret;
 }
 
 void sperr::CDF97::dwt3d()

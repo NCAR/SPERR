@@ -191,8 +191,8 @@ TEST(sperr3d_target_psnr, big)
   EXPECT_EQ(output_dims, dims);
   const auto& output = decoder.view_decoded_data();
   auto stats = sperr::calc_stats(inputd.data(), output.data(), total_len, 4);
-  EXPECT_GT(stats[2], 92.1366);
-  EXPECT_LT(stats[2], 92.1367);
+  EXPECT_GT(stats[2], 92.9321);
+  EXPECT_LT(stats[2], 92.9322);
 
   // Test a new psnr
   psnr = 130.0;
@@ -204,8 +204,8 @@ TEST(sperr3d_target_psnr, big)
   decoder.decompress(stream.data());
   const auto& output2 = decoder.view_decoded_data();
   stats = sperr::calc_stats(inputd.data(), output2.data(), total_len, 4);
-  EXPECT_GT(stats[2], 134.3939);
-  EXPECT_LT(stats[2], 134.3940);
+  EXPECT_GT(stats[2], 134.6098);
+  EXPECT_LT(stats[2], 134.6099);
 }
 
 TEST(sperr3d_target_psnr, small_data_range)
@@ -235,8 +235,8 @@ TEST(sperr3d_target_psnr, small_data_range)
   EXPECT_EQ(output_dims, dims);
   const auto& output = decoder.view_decoded_data();
   auto stats = sperr::calc_stats(inputd.data(), output.data(), total_len, 4);
-  EXPECT_GT(stats[2], 89.0560);
-  EXPECT_LT(stats[2], 89.0561);
+  EXPECT_GT(stats[2], 89.1123);
+  EXPECT_LT(stats[2], 89.1124);
 
   // Test a new psnr
   psnr = 125.0;
@@ -248,8 +248,8 @@ TEST(sperr3d_target_psnr, small_data_range)
   decoder.decompress(stream.data());
   const auto& output2 = decoder.view_decoded_data();
   stats = sperr::calc_stats(inputd.data(), output2.data(), total_len, 4);
-  EXPECT_GT(stats[2], 126.0384);
-  EXPECT_LT(stats[2], 126.0385);
+  EXPECT_GT(stats[2], 126.8866);
+  EXPECT_LT(stats[2], 126.8867);
 }
 
 //
@@ -282,9 +282,9 @@ TEST(sperr3d_bit_rate, big)
   EXPECT_EQ(output_dims, dims);
   const auto& output = decoder.view_decoded_data();
   auto stats = sperr::calc_stats(inputd.data(), output.data(), total_len, 4);
-  EXPECT_GT(stats[2], 53.7622);
-  EXPECT_LT(stats[2], 89.7623);
   EXPECT_LT(stats[1], 9.6434);
+  EXPECT_GT(stats[2], 53.73996);
+  EXPECT_LT(stats[2], 53.73997);
 
   // Test a new bitrate
   bpp = 1.0;
@@ -295,9 +295,9 @@ TEST(sperr3d_bit_rate, big)
   decoder.decompress(stream.data());
   const auto& output2 = decoder.view_decoded_data();
   stats = sperr::calc_stats(inputd.data(), output2.data(), total_len, 4);
-  EXPECT_GT(stats[2], 47.1467);
-  EXPECT_LT(stats[2], 47.1468);
   EXPECT_LT(stats[1], 22.3381);
+  EXPECT_GT(stats[2], 47.1664);
+  EXPECT_LT(stats[2], 47.1665);
 }
 
 }  // anonymous namespace

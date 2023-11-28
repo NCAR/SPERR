@@ -61,10 +61,11 @@ enum class RTNType {
 // Given a certain length, how many transforms to be performed?
 auto num_of_xforms(size_t len) -> size_t;
 
-// Given a 3D dimension, tell if it can use dyadic decomposition.
+// Given a 3D dimension, tell if it can use dyadic decomposition, or wavelet-packet only.
 //    I.e., will the dimension result in the same levels of wavelet decomposition in 3 directions.
 //    If dyadic decomposition can be used, it returns the number of decomposition levels.
 //    Otherwise, it returns an empty optional.
+//    For 1D or 2D dimensions, it always returns an empty optional.
 auto can_use_dyadic(dims_type) -> std::optional<size_t>;
 
 // How many partition operation could we perform given a length?

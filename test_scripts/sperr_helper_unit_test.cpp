@@ -8,18 +8,31 @@ namespace {
 TEST(sperr_helper, num_of_xforms)
 {
   EXPECT_EQ(sperr::num_of_xforms(1), 0);
-  EXPECT_EQ(sperr::num_of_xforms(7), 0);
-  EXPECT_EQ(sperr::num_of_xforms(8), 1);
+  EXPECT_EQ(sperr::num_of_xforms(8), 0);
   EXPECT_EQ(sperr::num_of_xforms(9), 1);
-  EXPECT_EQ(sperr::num_of_xforms(15), 1);
-  EXPECT_EQ(sperr::num_of_xforms(16), 2);
-  EXPECT_EQ(sperr::num_of_xforms(17), 2);
-  EXPECT_EQ(sperr::num_of_xforms(31), 2);
-  EXPECT_EQ(sperr::num_of_xforms(32), 3);
-  EXPECT_EQ(sperr::num_of_xforms(63), 3);
-  EXPECT_EQ(sperr::num_of_xforms(64), 4);
-  EXPECT_EQ(sperr::num_of_xforms(127), 4);
-  EXPECT_EQ(sperr::num_of_xforms(128), 5);
+  EXPECT_EQ(sperr::num_of_xforms(17), 1);
+  EXPECT_EQ(sperr::num_of_xforms(18), 2);
+  EXPECT_EQ(sperr::num_of_xforms(35), 2);
+  EXPECT_EQ(sperr::num_of_xforms(36), 3);
+  EXPECT_EQ(sperr::num_of_xforms(71), 3);
+  EXPECT_EQ(sperr::num_of_xforms(72), 4);
+  EXPECT_EQ(sperr::num_of_xforms(143), 4);
+  EXPECT_EQ(sperr::num_of_xforms(144), 5);
+  EXPECT_EQ(sperr::num_of_xforms(287), 5);
+  EXPECT_EQ(sperr::num_of_xforms(288), 6);
+}
+
+TEST(sperr_helper, dyadic)
+{
+  EXPECT_EQ(sperr::can_use_dyadic({64, 1, 1}), std::nullopt);  // 1D
+  EXPECT_EQ(sperr::can_use_dyadic({64, 64, 1}), std::nullopt);  // 2D
+  EXPECT_EQ(sperr::can_use_dyadic({64, 64, 64}), 3);
+  EXPECT_EQ(sperr::can_use_dyadic({128, 128, 128}), 4);
+  EXPECT_EQ(sperr::can_use_dyadic({256, 256, 256}), 5);
+  EXPECT_EQ(sperr::can_use_dyadic({288, 288, 288}), 6);
+  EXPECT_EQ(sperr::can_use_dyadic({256, 256, 300}), 5);
+  EXPECT_EQ(sperr::can_use_dyadic({300, 300, 256}), 5);
+  EXPECT_EQ(sperr::can_use_dyadic({256, 300, 256}), 5);
 }
 
 TEST(sperr_helper, approx_detail_len)
