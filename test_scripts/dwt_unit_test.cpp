@@ -217,6 +217,48 @@ TEST(dwt2d, big_image_odd)
   }
 }
 
+TEST(dwt2d, image_multi_res)
+{
+  const char* input = "../test_data/ball.100x100.float";
+  size_t dim_x = 100, dim_y = 100;
+  const size_t total_vals = dim_x * dim_y;
+
+  // Let read in binaries as 4-byte floats
+  auto in_buf = sperr::read_whole_file<float>(input);
+  if (in_buf.size() != total_vals)
+    std::cerr << "Input read error!" << std::endl;
+
+  // Make a copy and use a conditioner
+  auto in_copy = sperr::vecd_type(total_vals);
+  std::copy(in_buf.begin(), in_buf.end(), in_copy.begin());
+  auto condi = sperr::Conditioner();
+  auto meta = condi.condition(in_copy, {dim_x, dim_y, 1});
+
+  // Use a sperr::CDF97 to perform DWT and multi-res IDWT.
+  sperr::CDF97 cdf;
+  cdf.take_data(std::move(in_copy), {dim_x, dim_y, 1});
+  cdf.dwt2d();
+  auto hierarchy = cdf.idwt2d_multi_res();
+  auto resolutions = cdf.available_resolutions();
+
+  // Claim that with single precision, the result is identical to the input
+  auto result = cdf.release_data();
+  EXPECT_EQ(result.size(), total_vals);
+
+  // Apply the conditioner
+  auto rtn = condi.inverse_condition(result, {dim_x, dim_y, 1}, meta);
+  for (size_t i = 0; i < total_vals; i++)
+    ASSERT_EQ(in_buf[i], float(result[i])) << " i = " << i;
+
+  // Examine the coarsened levels.
+  EXPECT_EQ(hierarchy.size() + 1, resolutions.size());
+  for (size_t i = 0; i < hierarchy.size(); i++) {
+    const auto& slice = hierarchy[i];
+    auto dims = resolutions[i];
+    EXPECT_EQ(slice.size(), dims[0] * dims[1] * dims[2]) << "i = " << i;;
+  }
+}
+
 TEST(dwt3d, small_even_cube)
 {
   const char* input = "../test_data/wmag16.float";
@@ -247,7 +289,7 @@ TEST(dwt3d, small_even_cube)
   // Apply the conditioner
   auto rtn = condi.inverse_condition(result, {dim_x, dim_y, dim_z}, meta);
   for (size_t i = 0; i < total_vals; i++) {
-    EXPECT_EQ(in_buf[i], float(result[i]));
+    ASSERT_EQ(in_buf[i], float(result[i])) << "i = " << i;
   }
 }
 
@@ -281,7 +323,7 @@ TEST(dwt3d, big_odd_cube)
   // Apply the conditioner
   auto rtn = condi.inverse_condition(result, {dim_x, dim_y, dim_z}, meta);
   for (size_t i = 0; i < total_vals; i++) {
-    EXPECT_EQ(in_buf[i], float(result[i]));
+    ASSERT_EQ(in_buf[i], float(result[i])) << "i = " << i;
   }
 }
 
@@ -315,7 +357,7 @@ TEST(dwt3d, big_even_cube)
   // Apply the conditioner
   auto rtn = condi.inverse_condition(result, {dim_x, dim_y, dim_z}, meta);
   for (size_t i = 0; i < total_vals; i++) {
-    EXPECT_EQ(in_buf[i], float(result[i]));
+    ASSERT_EQ(in_buf[i], float(result[i])) << "i = " << i;
   }
 }
 

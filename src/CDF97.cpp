@@ -95,12 +95,14 @@ auto sperr::CDF97::idwt2d_multi_res() -> std::vector<vecd_type>
   auto ret = std::vector<vecd_type>();
 
   if (xy > 0) {
-    ret.resize(xy);
-    //for (size_t lev = xy; lev > 0; lev--) {
-    //  auto [x, xd] = sperr::calc_approx_detail_len(len_xy[0], lev - 1);
-    //  auto [y, yd] = sperr::calc_approx_detail_len(len_xy[1], lev - 1);
-    //  m_idwt2d_one_level(plane, {x, y});
-    //}
+    ret.reserve(xy);
+    for (size_t lev = xy; lev > 0; lev--) {
+      auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev);
+      auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev);
+      auto slice = m_sub_slice({x, y});
+      ret.emplace_back(std::move(slice));
+      m_idwt2d_one_level(m_data_buf.begin(), {x + xd, y + yd});
+    }
   }
 
   return ret;
@@ -627,6 +629,39 @@ void sperr::CDF97::m_scatter_odd(citd_type begin, citd_type end, itd_type dest) 
     *(dest + i * 2 + 1) = *begin;
     ++begin;
   }
+}
+
+auto sperr::CDF97::m_sub_slice(std::array<size_t, 2> subdims) const -> vecd_type
+{
+  assert(subdims[0] <= m_dims[0] && subdims[1] <= m_dims[1]);
+
+  auto ret = vecd_type(subdims[0] * subdims[1]);
+  auto dst = ret.begin();
+  for (size_t y = 0; y < subdims[1]; y++) {
+    auto beg = m_data_buf.begin() + y * m_dims[0];
+    std::copy(beg, beg + subdims[0], dst);
+    dst += subdims[0];
+  }
+
+  return ret;
+}
+
+auto sperr::CDF97::m_sub_volume(dims_type subdims) const -> vecd_type
+{
+  assert(subdims[0] <= m_dims[0] && subdims[1] <= m_dims[1] && subdims[2] <= m_dims[2]);
+
+  const auto slice_len = m_dims[0] * m_dims[1];
+  auto ret = vecd_type(slice_len * subdims[2]);
+  auto dst = ret.begin();
+  for (size_t z = 0; z < subdims[2]; z++) {
+    for (size_t y = 0; y < subdims[1]; y++) {
+      auto beg = m_data_buf.begin() + z * slice_len + y * m_dims[0];
+      std::copy(beg, beg + subdims[0], dst);
+      dst += subdims[0];
+    }
+  }
+
+  return ret;
 }
 
 //

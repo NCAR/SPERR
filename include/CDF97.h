@@ -1,12 +1,12 @@
 //
-// Four member functions and their implementation are from QccPack: link
-//   http://qccpack.sourceforge.net/index.shtml
-// Thanks to James Fowler for his excellent work!
-// These four functions are:
-//   void QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length);
-//   void QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length);
-//   void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length);
-//   void QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length);
+// Four member functions and their implementation are from QccPack:
+//    http://qccpack.sourceforge.net/index.shtml
+//    Thanks to James Fowler for his excellent work!
+//    These four functions are:
+//    void QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length);
+//    void QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length);
+//    void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length);
+//    void QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length);
 //
 
 #ifndef CDF97_H
@@ -114,6 +114,11 @@ class CDF97 {
   void m_idwt3d_wavelet_packet();
   void m_dwt3d_dyadic(size_t num_xforms);
   void m_idwt3d_dyadic(size_t num_xforms);
+
+  // Extract a sub-slice/sub-volume starting with the same origin of the full slice/volume.
+  // It is UB if `subdims` exceeds the full dimension (`m_dims`).
+  auto m_sub_slice(std::array<size_t, 2> subdims) const -> vecd_type;
+  auto m_sub_volume(dims_type subdims) const -> vecd_type;
 
   //
   // Methods from QccPack, so keep their original names, interface, and the use of raw pointers.
