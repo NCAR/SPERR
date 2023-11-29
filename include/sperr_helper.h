@@ -68,6 +68,11 @@ auto num_of_xforms(size_t len) -> size_t;
 //    For 1D or 2D dimensions, it always returns an empty optional.
 auto can_use_dyadic(dims_type) -> std::optional<size_t>;
 
+// Given the native resolution, it decides if and how many coarsened resolutions are available.
+//    The return vector will always have one element, which is the native resolution (input).
+//    If multi-resolution is supported, then it contains the coarsened resolutions too.
+auto available_resolutions(dims_type) -> std::vector<dims_type>;
+
 // How many partition operation could we perform given a length?
 // Length 0 and 1 can do 0 partitions; len=2 can do 1; len=3 can do 2, len=4 can
 // do 2, etc.

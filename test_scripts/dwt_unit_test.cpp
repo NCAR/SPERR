@@ -239,7 +239,6 @@ TEST(dwt2d, image_multi_res)
   cdf.take_data(std::move(in_copy), {dim_x, dim_y, 1});
   cdf.dwt2d();
   auto hierarchy = cdf.idwt2d_multi_res();
-  auto resolutions = cdf.available_resolutions();
 
   // Claim that with single precision, the result is identical to the input
   auto result = cdf.release_data();
@@ -251,6 +250,7 @@ TEST(dwt2d, image_multi_res)
     ASSERT_EQ(in_buf[i], float(result[i])) << " i = " << i;
 
   // Examine the coarsened levels.
+  auto resolutions = sperr::available_resolutions({dim_x, dim_y, 1});
   EXPECT_EQ(hierarchy.size() + 1, resolutions.size());
   for (size_t i = 0; i < hierarchy.size(); i++) {
     const auto& slice = hierarchy[i];
@@ -359,74 +359,6 @@ TEST(dwt3d, big_even_cube)
   for (size_t i = 0; i < total_vals; i++) {
     ASSERT_EQ(in_buf[i], float(result[i])) << "i = " << i;
   }
-}
-
-TEST(dwt2d, lod)
-{
-  // Very basic case
-  auto dims = sperr::dims_type{64, 64, 1};
-  auto buf = std::vector<double>(dims[0] * dims[1], 3.14);
-  auto cdf = sperr::CDF97();
-  cdf.take_data(std::move(buf), dims);
-  auto lod = cdf.available_resolutions();
-  EXPECT_EQ(lod.size(), 4);
-  EXPECT_EQ(lod[0], (sperr::dims_type{8, 8, 1}));
-  EXPECT_EQ(lod[2], (sperr::dims_type{32, 32, 1}));
-  EXPECT_EQ(lod[3], dims);
-
-  // 2D is simpler, because it's always dyadic!
-  dims = sperr::dims_type{80, 200, 1};
-  buf = std::vector<double>(dims[0] * dims[1], 3.14);
-  cdf.take_data(std::move(buf), dims);
-  lod = cdf.available_resolutions();
-  EXPECT_EQ(lod.size(), 5);
-  EXPECT_EQ(lod[0], (sperr::dims_type{5, 13, 1}));
-  EXPECT_EQ(lod[2], (sperr::dims_type{20, 50, 1}));
-  EXPECT_EQ(lod[4], dims);
-}
-
-TEST(dwt3d, lod)
-{
-  // Very basic case
-  auto dims = sperr::dims_type{64, 64, 64};
-  auto buf = std::vector<double>(dims[0] * dims[1] * dims[2], 3.14);
-  auto cdf = sperr::CDF97();
-  cdf.take_data(std::move(buf), dims);
-  auto lod = cdf.available_resolutions();
-  EXPECT_EQ(lod.size(), 4);
-  EXPECT_EQ(lod[0], (sperr::dims_type{8, 8, 8}));
-  EXPECT_EQ(lod[2], (sperr::dims_type{32, 32, 32}));
-  EXPECT_EQ(lod[3], dims);
-
-  // XY has 5 levels, and Z has 6 levels, the overall is 5 levels.
-  dims = {144, 144, 288};
-  buf.assign(dims[0] * dims[1] * dims[2], 3.14);
-  cdf.take_data(std::move(buf), dims);
-  lod = cdf.available_resolutions();
-  EXPECT_EQ(lod.size(), 6);
-  EXPECT_EQ(lod[0], (sperr::dims_type{5, 5, 9}));
-  EXPECT_EQ(lod[2], (sperr::dims_type{18, 18, 36}));
-  EXPECT_EQ(lod[4], (sperr::dims_type{72, 72, 144}));
-  EXPECT_EQ(lod[5], dims);
-
-  // Another test
-  dims = {300, 300, 160};
-  buf.assign(dims[0] * dims[1] * dims[2], 3.14);
-  cdf.take_data(std::move(buf), dims);
-  lod = cdf.available_resolutions();
-  EXPECT_EQ(lod.size(), 6);
-  EXPECT_EQ(lod[0], (sperr::dims_type{10, 10, 5}));
-  EXPECT_EQ(lod[2], (sperr::dims_type{38, 38, 20}));
-  EXPECT_EQ(lod[4], (sperr::dims_type{150, 150, 80}));
-  EXPECT_EQ(lod[5], dims);
-
-  // Dyadic will not be used, so only 1 level
-  dims = {128, 128, 60};
-  buf.assign(dims[0] * dims[1] * dims[2], 3.14);
-  cdf.take_data(std::move(buf), dims);
-  lod = cdf.available_resolutions();
-  EXPECT_EQ(lod.size(), 1);
-  EXPECT_EQ(lod[0], dims);
 }
 
 }  // namespace

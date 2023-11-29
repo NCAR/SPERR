@@ -35,6 +35,60 @@ TEST(sperr_helper, dyadic)
   EXPECT_EQ(sperr::can_use_dyadic({256, 300, 256}), 5);
 }
 
+TEST(sperr_helper, lod_2d)
+{
+  // Very basic case
+  auto dims = sperr::dims_type{64, 64, 1};
+  auto lod = sperr::available_resolutions(dims);
+  EXPECT_EQ(lod.size(), 4);
+  EXPECT_EQ(lod[0], (sperr::dims_type{8, 8, 1}));
+  EXPECT_EQ(lod[2], (sperr::dims_type{32, 32, 1}));
+  EXPECT_EQ(lod[3], dims);
+
+  // 2D is simpler, because it's always dyadic!
+  dims = {80, 200, 1};
+  lod = sperr::available_resolutions(dims);
+  EXPECT_EQ(lod.size(), 5);
+  EXPECT_EQ(lod[0], (sperr::dims_type{5, 13, 1}));
+  EXPECT_EQ(lod[2], (sperr::dims_type{20, 50, 1}));
+  EXPECT_EQ(lod[4], dims);
+}
+
+TEST(sperr_helper, lod_3d)
+{
+  // Very basic case
+  auto dims = sperr::dims_type{64, 64, 64};
+  auto lod = sperr::available_resolutions(dims);
+  EXPECT_EQ(lod.size(), 4);
+  EXPECT_EQ(lod[0], (sperr::dims_type{8, 8, 8}));
+  EXPECT_EQ(lod[2], (sperr::dims_type{32, 32, 32}));
+  EXPECT_EQ(lod[3], dims);
+
+  // XY has 5 levels, and Z has 6 levels, the overall is 5 levels.
+  dims = {144, 144, 288};
+  lod = sperr::available_resolutions(dims);
+  EXPECT_EQ(lod.size(), 6);
+  EXPECT_EQ(lod[0], (sperr::dims_type{5, 5, 9}));
+  EXPECT_EQ(lod[2], (sperr::dims_type{18, 18, 36}));
+  EXPECT_EQ(lod[4], (sperr::dims_type{72, 72, 144}));
+  EXPECT_EQ(lod[5], dims);
+
+  // Another test
+  dims = {300, 300, 160};
+  lod = sperr::available_resolutions(dims);
+  EXPECT_EQ(lod.size(), 6);
+  EXPECT_EQ(lod[0], (sperr::dims_type{10, 10, 5}));
+  EXPECT_EQ(lod[2], (sperr::dims_type{38, 38, 20}));
+  EXPECT_EQ(lod[4], (sperr::dims_type{150, 150, 80}));
+  EXPECT_EQ(lod[5], dims);
+
+  // Dyadic will not be used, so only 1 level
+  dims = {128, 128, 60};
+  lod = sperr::available_resolutions(dims);
+  EXPECT_EQ(lod.size(), 1);
+  EXPECT_EQ(lod[0], dims);
+}
+
 TEST(sperr_helper, approx_detail_len)
 {
   auto len = sperr::calc_approx_detail_len(7, 0);

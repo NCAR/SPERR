@@ -41,6 +41,39 @@ auto sperr::can_use_dyadic(dims_type dims) -> std::optional<size_t>
     return {};
 }
 
+auto sperr::available_resolutions(dims_type full_dims) -> std::vector<dims_type>
+{
+  auto resolutions = std::vector<dims_type>();
+
+  if (full_dims[2] > 1) {  // 3D.
+    const auto dyadic = sperr::can_use_dyadic(full_dims);
+    if (dyadic) {
+      resolutions.reserve(*dyadic + 1);
+      for (size_t lev = *dyadic; lev > 0; lev--) {
+        auto [x, xd] = sperr::calc_approx_detail_len(full_dims[0], lev);
+        auto [y, yd] = sperr::calc_approx_detail_len(full_dims[1], lev);
+        auto [z, zd] = sperr::calc_approx_detail_len(full_dims[2], lev);
+        resolutions.push_back({x, y, z});
+      }
+    }
+  }
+  else {  // 2D. Assume that there's no 1D use case that requires multi-resolution.
+    size_t xy = sperr::num_of_xforms(std::min(full_dims[0], full_dims[1]));
+    resolutions.reserve(xy + 1);
+    for (size_t lev = xy; lev > 0; lev--) {
+      auto [x, xd] = sperr::calc_approx_detail_len(full_dims[0], lev);
+      auto [y, yd] = sperr::calc_approx_detail_len(full_dims[1], lev);
+      resolutions.push_back({x, y, 1});
+    }
+  }
+
+  // In every case, the last available resolution is the native resolution, even for a
+  // wavelet-packet decomposed 3D volume, which doesn't have any coarsened resolutions.
+  resolutions.push_back(full_dims);
+
+  return resolutions;
+}
+
 auto sperr::num_of_partitions(size_t len) -> size_t
 {
   size_t num_of_parts = 0;  // Num. of partitions we can do

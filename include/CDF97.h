@@ -1,12 +1,10 @@
 //
-// Four member functions and their implementation are from QccPack:
+// Four member functions are heavily based on QccPack:
 //    http://qccpack.sourceforge.net/index.shtml
-//    Thanks to James Fowler for his excellent work!
-//    These four functions are:
-//    void QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length);
-//    void QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length);
-//    void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length);
-//    void QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length);
+//  - void QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length);
+//  - void QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length);
+//  - void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length);
+//  - void QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length);
 //
 
 #ifndef CDF97_H
@@ -50,14 +48,10 @@ class CDF97 {
   // Multi-resolution reconstruction
   //
 
-  // The return vector will always have one element, which is the native resolution of the volume.
-  // If multi-resolution is supported, then it contains the coarsened resolutions too.
-  auto available_resolutions() const -> std::vector<dims_type>;
-
-  // If multi-resolution is supported (determined by `available_resolutions()`), then it returns
-  //    all the coarsened volumes, which are placed in the same order of resolutions returned by
-  //    `available_resolutions()`. The native resolution reconstruction should still be retrieved
-  //    by the `view_data()` or `release_data()` functions.
+  // If multi-resolution is supported (determined by `sperr::available_resolutions()`), then
+  //    it returns all the coarsened volumes, which are placed in the same order of resolutions
+  //    returned by `sperr::available_resolutions()`. The native resolution reconstruction should
+  //    still be retrieved by the `view_data()` or `release_data()` functions.
   //    If multi-resolution is not supported, then it simply returns an empty vector, with the
   //    decompression still performed, and the native resolution reconstruction ready. 
   [[nodiscard]] auto idwt2d_multi_res() -> std::vector<vecd_type>;

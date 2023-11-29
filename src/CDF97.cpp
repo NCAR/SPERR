@@ -126,39 +126,6 @@ void sperr::CDF97::idwt3d()
     m_idwt3d_wavelet_packet();
 }
 
-auto sperr::CDF97::available_resolutions() const -> std::vector<dims_type>
-{
-  auto resolutions = std::vector<dims_type>();
-
-  if (m_dims[2] > 1) {  // 3D. Assume that there's no 1D use case that requires multi-resolution.
-    const auto dyadic = sperr::can_use_dyadic(m_dims);
-    if (dyadic) {
-      resolutions.reserve(*dyadic + 1);
-      for (size_t lev = *dyadic; lev > 0; lev--) {
-        auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev);
-        auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev);
-        auto [z, zd] = sperr::calc_approx_detail_len(m_dims[2], lev);
-        resolutions.push_back({x, y, z});
-      }
-    }
-  }
-  else {  // 2D
-    size_t xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-    resolutions.reserve(xy + 1);
-    for (size_t lev = xy; lev > 0; lev--) {
-      auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev);
-      auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev);
-      resolutions.push_back({x, y, 1});
-    }
-  }
-
-  // In every case, the last available resolution is the native resolution, even for a
-  // wavelet-packet decomposed 3D volume, which doesn't have any coarsened resolutions.
-  resolutions.push_back(m_dims);
-
-  return resolutions;
-}
-
 void sperr::CDF97::m_dwt3d_wavelet_packet()
 {
   /*
