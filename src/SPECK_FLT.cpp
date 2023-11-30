@@ -123,14 +123,19 @@ void sperr::SPECK_FLT::append_encoded_bitstream(vec8_type& buf) const
   }
 }
 
+auto sperr::SPECK_FLT::view_decoded_data() const -> const vecd_type&
+{
+  return m_vals_d;
+}
+
 auto sperr::SPECK_FLT::release_decoded_data() -> vecd_type&&
 {
   return std::move(m_vals_d);
 }
 
-auto sperr::SPECK_FLT::view_decoded_data() const -> const vecd_type&
+auto sperr::SPECK_FLT::release_hierarchy() -> std::vector<vecd_type>&&
 {
-  return m_vals_d;
+  return std::move(m_hierarchy);
 }
 
 void sperr::SPECK_FLT::set_psnr(double psnr)
@@ -436,7 +441,7 @@ FIXED_RATE_HIGH_PREC_LABEL:
     rtn = m_cdf.take_data(std::move(m_vals_d), m_dims);
     if (rtn != RTNType::Good)
       return rtn;
-    m_inverse_wavelet_xform();
+    m_inverse_wavelet_xform(false);
     m_vals_d = m_cdf.release_data();
     auto LOS = std::vector<Outlier>();
     LOS.reserve(0.04 * total_vals);  // Reserve space to hold about 4% of total values.
@@ -513,9 +518,10 @@ FIXED_RATE_HIGH_PREC_LABEL:
   return RTNType::Good;
 }
 
-auto sperr::SPECK_FLT::decompress() -> RTNType
+auto sperr::SPECK_FLT::decompress(bool multi_res) -> RTNType
 {
   m_vals_d.clear();
+  m_hierarchy.clear();
   std::visit([](auto&& vec) { vec.clear(); }, m_vals_ui);
   m_sign_array.resize(0);
 
@@ -541,7 +547,7 @@ auto sperr::SPECK_FLT::decompress() -> RTNType
   auto rtn = m_cdf.take_data(std::move(m_vals_d), m_dims);
   if (rtn != RTNType::Good)
     return rtn;
-  m_inverse_wavelet_xform();
+  m_inverse_wavelet_xform(multi_res);
   m_vals_d = m_cdf.release_data();
 
   // Side step: outlier correction, if needed
@@ -560,6 +566,19 @@ auto sperr::SPECK_FLT::decompress() -> RTNType
   rtn = m_conditioner.inverse_condition(m_vals_d, m_dims, m_condi_bitstream);
   if (rtn != RTNType::Good)
     return rtn;
+
+  if (multi_res) {
+    auto resolutions = sperr::available_resolutions(m_dims);
+    if (m_hierarchy.size() + 1 != resolutions.size())
+      return RTNType::Error;
+    for (size_t h = 0; h < m_hierarchy.size(); h++) {
+      auto res = resolutions[h];
+      if (m_hierarchy[h].size() != res[0] * res[1] * res[2])
+        return RTNType::Error;
+      else
+        m_conditioner.inverse_condition(m_hierarchy[h], res, m_condi_bitstream);
+    }
+  }
 
   return RTNType::Good;
 }
