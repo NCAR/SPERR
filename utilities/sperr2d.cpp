@@ -67,20 +67,20 @@ int main(int argc, char* argv[])
       ->group("Output settings");
 
   auto decomp_f32 = std::string();
-  app.add_option("--o_decomp_f", decomp_f32, "Output decompressed slice in f32 precision.")
+  app.add_option("--decomp_f", decomp_f32, "Output decompressed slice in f32 precision.")
       ->group("Output settings");
 
   auto decomp_f64 = std::string();
-  app.add_option("--o_decomp_d", decomp_f64, "Output decompressed slice in f64 precision.")
+  app.add_option("--decomp_d", decomp_f64, "Output decompressed slice in f64 precision.")
       ->group("Output settings");
 
   auto decomp_lowres_f32 = std::string();
-  app.add_option("--o_decomp_lowres_f", decomp_lowres_f32,
+  app.add_option("--decomp_lowres_f", decomp_lowres_f32,
                  "Output lower resolutions of the decompressed slice in f32 precision.")
       ->group("Output settings");
 
   auto decomp_lowres_f64 = std::string();
-  app.add_option("--o_decomp_lowres_d", decomp_lowres_f64,
+  app.add_option("--decomp_lowres_d", decomp_lowres_f64,
                  "Output lower resolutions of the decompressed slice in f64 precision.")
       ->group("Output settings");
 
