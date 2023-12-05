@@ -62,25 +62,25 @@ int main(int argc, char* argv[])
   //
   // Output settings
   //
-  auto o_bitstream = std::string();
-  app.add_option("--o_bitstream", o_bitstream, "Output compressed bitstream.")
+  auto bitstream = std::string();
+  app.add_option("--bitstream", bitstream, "Output compressed bitstream.")
       ->group("Output settings");
 
-  auto o_decomp_f32 = std::string();
-  app.add_option("--o_decomp_f", o_decomp_f32, "Output decompressed slice in f32 precision.")
+  auto decomp_f32 = std::string();
+  app.add_option("--o_decomp_f", decomp_f32, "Output decompressed slice in f32 precision.")
       ->group("Output settings");
 
-  auto o_decomp_f64 = std::string();
-  app.add_option("--o_decomp_d", o_decomp_f64, "Output decompressed slice in f64 precision.")
+  auto decomp_f64 = std::string();
+  app.add_option("--o_decomp_d", decomp_f64, "Output decompressed slice in f64 precision.")
       ->group("Output settings");
 
-  auto o_decomp_lowres_f32 = std::string();
-  app.add_option("--o_decomp_lowres_f", o_decomp_lowres_f32,
+  auto decomp_lowres_f32 = std::string();
+  app.add_option("--o_decomp_lowres_f", decomp_lowres_f32,
                  "Output lower resolutions of the decompressed slice in f32 precision.")
       ->group("Output settings");
 
-  auto o_decomp_lowres_f64 = std::string();
-  app.add_option("--o_decomp_lowres_d", o_decomp_lowres_f64,
+  auto decomp_lowres_f64 = std::string();
+  app.add_option("--o_decomp_lowres_d", decomp_lowres_f64,
                  "Output lower resolutions of the decompressed slice in f64 precision.")
       ->group("Output settings");
 
@@ -133,8 +133,8 @@ int main(int argc, char* argv[])
     std::cout << "Compression quality (--psnr, --pwe) must be positive!" << std::endl;
     return __LINE__;
   }
-  if (dflag && o_decomp_f32.empty() && o_decomp_f64.empty() && o_decomp_lowres_f32.empty() &&
-      o_decomp_lowres_f64.empty()) {
+  if (dflag && decomp_f32.empty() && decomp_f64.empty() && decomp_lowres_f32.empty() &&
+      decomp_lowres_f64.empty()) {
     std::cout << "SPERR needs an output destination when decoding!" << std::endl;
     return __LINE__;
   }
@@ -195,20 +195,21 @@ int main(int argc, char* argv[])
     stream[1] = sperr::pack_8_booleans(b8);
     std::memcpy(stream.data() + 2, dim2d.data(), sizeof(dim2d));
     encoder->append_encoded_bitstream(stream);
-    if (!o_bitstream.empty()) {
-      rtn = sperr::write_n_bytes(o_bitstream, stream.size(), stream.data());
+    if (!bitstream.empty()) {
+      rtn = sperr::write_n_bytes(bitstream, stream.size(), stream.data());
       if (rtn != sperr::RTNType::Good) {
-        std::cout << "Writing compressed bitstream failed: " << o_bitstream << std::endl;
+        std::cout << "Writing compressed bitstream failed: " << bitstream << std::endl;
         return __LINE__;
       }
+      bitstream.clear();
     }
     encoder.reset();  // Free up some more memory.
 
     //
     // Need to do a decompression in the following cases.
     //
-    const auto multi_res = (!o_decomp_lowres_f32.empty()) || (!o_decomp_lowres_f64.empty());
-    if (print_stats || !o_decomp_f64.empty() || !o_decomp_f32.empty() || multi_res) {
+    const auto multi_res = (!decomp_lowres_f32.empty()) || (!decomp_lowres_f64.empty());
+    if (print_stats || !decomp_f64.empty() || !decomp_f32.empty() || multi_res) {
       auto decoder = std::make_unique<sperr::SPECK2D_FLT>();
       decoder->set_dims(dims);
       // !! Remember the header thing !!
@@ -225,8 +226,8 @@ int main(int argc, char* argv[])
       decoder.reset();
 
       // If specified, output the low-res decompressed slices in double precision.
-      if (!o_decomp_lowres_f64.empty()) {
-        auto filenames = create_filenames(o_decomp_lowres_f64, dims);
+      if (!decomp_lowres_f64.empty()) {
+        auto filenames = create_filenames(decomp_lowres_f64, dims);
         assert(hierarchy.size() == filenames.size());
         for (size_t i = 0; i < filenames.size(); i++) {
           const auto& level = hierarchy[i];
@@ -236,12 +237,12 @@ int main(int argc, char* argv[])
             return __LINE__;
           }
         }
-        o_decomp_lowres_f64.clear();
+        decomp_lowres_f64.clear();
       }
 
       // If specified, output the low-res decompressed slices in single precision.
-      if (!o_decomp_lowres_f32.empty()) {
-        auto filenames = create_filenames(o_decomp_lowres_f32, dims);
+      if (!decomp_lowres_f32.empty()) {
+        auto filenames = create_filenames(decomp_lowres_f32, dims);
         assert(hierarchy.size() == filenames.size());
         auto buf = std::vector<float>(hierarchy.back().size());
         for (size_t i = 0; i < filenames.size(); i++) {
@@ -253,7 +254,7 @@ int main(int argc, char* argv[])
             return __LINE__;
           }
         }
-        o_decomp_lowres_f32.clear();
+        decomp_lowres_f32.clear();
       }
 
       // Free up the hierarchy.
@@ -261,25 +262,25 @@ int main(int argc, char* argv[])
       hierarchy.shrink_to_fit();
 
       // If specified, output the decompressed slice in double precision.
-      if (!o_decomp_f64.empty()) {
-        rtn = sperr::write_n_bytes(o_decomp_f64, outputd.size() * sizeof(double), outputd.data());
+      if (!decomp_f64.empty()) {
+        rtn = sperr::write_n_bytes(decomp_f64, outputd.size() * sizeof(double), outputd.data());
         if (rtn != sperr::RTNType::Good) {
-          std::cout << "Writing decompressed data failed: " << o_decomp_f64 << std::endl;
+          std::cout << "Writing decompressed data failed: " << decomp_f64 << std::endl;
           return __LINE__;
         }
-        o_decomp_f64.clear();
+        decomp_f64.clear();
       }
 
       // If specified, output the decompressed slice in single precision.
       auto outputf = sperr::vecf_type(total_vals);
       std::copy(outputd.cbegin(), outputd.cend(), outputf.begin());
-      if (!o_decomp_f32.empty()) {
-        rtn = sperr::write_n_bytes(o_decomp_f32, outputf.size() * sizeof(float), outputf.data());
+      if (!decomp_f32.empty()) {
+        rtn = sperr::write_n_bytes(decomp_f32, outputf.size() * sizeof(float), outputf.data());
         if (rtn != sperr::RTNType::Good) {
-          std::cout << "Writing decompressed data failed: " << o_decomp_f32 << std::endl;
+          std::cout << "Writing decompressed data failed: " << decomp_f32 << std::endl;
           return __LINE__;
         }
-        o_decomp_f32.clear();
+        decomp_f32.clear();
       }
 
       // Calculate statistics.
@@ -313,9 +314,6 @@ int main(int argc, char* argv[])
                     std::log2(sigma / rmse) - print_bpp);
         print_stats = false;
       }
-
-      assert(o_decomp_f32.empty() && o_decomp_f64.empty() && !print_stats &&
-             o_decomp_lowres_f32.empty() && o_decomp_lowres_f64.empty());
     }
   }
   //
@@ -341,7 +339,7 @@ int main(int argc, char* argv[])
     auto decoder = std::make_unique<sperr::SPECK2D_FLT>();
     decoder->set_dims(dims);
     decoder->use_bitstream(input.data() + header_len, input.size() - header_len);
-    const auto multi_res = (!o_decomp_lowres_f32.empty()) || (!o_decomp_lowres_f64.empty());
+    const auto multi_res = (!decomp_lowres_f32.empty()) || (!decomp_lowres_f64.empty());
     auto rtn = decoder->decompress(multi_res);
     if (rtn != sperr::RTNType::Good) {
       std::cout << "Decompression failed!" << std::endl;
@@ -354,8 +352,8 @@ int main(int argc, char* argv[])
     decoder.reset();
 
     // If specified, output the low-res decompressed slices in double precision.
-    if (!o_decomp_lowres_f64.empty()) {
-      auto filenames = create_filenames(o_decomp_lowres_f64, dims);
+    if (!decomp_lowres_f64.empty()) {
+      auto filenames = create_filenames(decomp_lowres_f64, dims);
       assert(hierarchy.size() == filenames.size());
       for (size_t i = 0; i < filenames.size(); i++) {
         const auto& level = hierarchy[i];
@@ -365,12 +363,12 @@ int main(int argc, char* argv[])
           return __LINE__;
         }
       }
-      o_decomp_lowres_f64.clear();
+      decomp_lowres_f64.clear();
     }
 
     // If specified, output the low-res decompressed slices in single precision.
-    if (!o_decomp_lowres_f32.empty()) {
-      auto filenames = create_filenames(o_decomp_lowres_f32, dims);
+    if (!decomp_lowres_f32.empty()) {
+      auto filenames = create_filenames(decomp_lowres_f32, dims);
       assert(hierarchy.size() == filenames.size());
       auto buf = std::vector<float>(hierarchy.back().size());
       for (size_t i = 0; i < filenames.size(); i++) {
@@ -382,7 +380,7 @@ int main(int argc, char* argv[])
           return __LINE__;
         }
       }
-      o_decomp_lowres_f32.clear();
+      decomp_lowres_f32.clear();
     }
 
     // Free up the hierarchy.
@@ -390,29 +388,26 @@ int main(int argc, char* argv[])
     hierarchy.shrink_to_fit();
 
     // If specified, output the decompressed slice in double precision.
-    if (!o_decomp_f64.empty()) {
-      rtn = sperr::write_n_bytes(o_decomp_f64, outputd.size() * sizeof(double), outputd.data());
+    if (!decomp_f64.empty()) {
+      rtn = sperr::write_n_bytes(decomp_f64, outputd.size() * sizeof(double), outputd.data());
       if (rtn != sperr::RTNType::Good) {
-        std::cout << "Writing decompressed data failed: " << o_decomp_f64 << std::endl;
+        std::cout << "Writing decompressed data failed: " << decomp_f64 << std::endl;
         return __LINE__;
       }
-      o_decomp_f64.clear();
+      decomp_f64.clear();
     }
 
     // If specified, output the decompressed slice in single precision.
-    if (!o_decomp_f32.empty()) {
+    if (!decomp_f32.empty()) {
       auto outputf = sperr::vecf_type(outputd.size());
       std::copy(outputd.cbegin(), outputd.cend(), outputf.begin());
-      rtn = sperr::write_n_bytes(o_decomp_f32, outputf.size() * sizeof(float), outputf.data());
+      rtn = sperr::write_n_bytes(decomp_f32, outputf.size() * sizeof(float), outputf.data());
       if (rtn != sperr::RTNType::Good) {
-        std::cout << "Writing decompressed data failed: " << o_decomp_f32 << std::endl;
+        std::cout << "Writing decompressed data failed: " << decomp_f32 << std::endl;
         return __LINE__;
       }
-      o_decomp_f32.clear();
+      decomp_f32.clear();
     }
-
-    assert(o_decomp_f32.empty() && o_decomp_f64.empty() && o_decomp_lowres_f32.empty() &&
-           o_decomp_lowres_f64.empty());
   }
 
   return 0;
