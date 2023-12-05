@@ -9,6 +9,20 @@
 #include <cstring>
 #include <iostream>
 
+// This functions takes in a filename, and a full resolution. It then creates a list of
+// filenames, each has the coarsened resolution appended.
+auto create_filenames(std::string name, sperr::dims_type dims) -> std::vector<std::string>
+{
+  auto filenames = std::vector<std::string>();
+  auto resolutions = sperr::available_resolutions(dims);
+  resolutions.pop_back();  // remove the native resolution
+  filenames.reserve(resolutions.size());
+  for (auto res : resolutions)
+    filenames.push_back(name + "." + std::to_string(res[0]) + "x" + std::to_string(res[1]));
+
+  return filenames;
+}
+
 int main(int argc, char* argv[])
 {
   // Parse command line options
@@ -60,6 +74,16 @@ int main(int argc, char* argv[])
   app.add_option("--o_decomp_d", o_decomp_f64, "Output decompressed slice in f64 precision.")
       ->group("Output settings");
 
+  auto o_decomp_lowres_f32 = std::string();
+  app.add_option("--o_decomp_lowres_f", o_decomp_lowres_f32,
+                 "Output lower resolutions of the decompressed slice in f32 precision.")
+      ->group("Output settings");
+
+  auto o_decomp_lowres_f64 = std::string();
+  app.add_option("--o_decomp_lowres_d", o_decomp_lowres_f64,
+                 "Output lower resolutions of the decompressed slice in f64 precision.")
+      ->group("Output settings");
+
   auto print_stats = bool{false};
   app.add_flag("--print_stats", print_stats, "Show statistics measuring the compression quality.")
       ->needs(cptr)
@@ -109,9 +133,9 @@ int main(int argc, char* argv[])
     std::cout << "Compression quality (--psnr, --pwe) must be positive!" << std::endl;
     return __LINE__;
   }
-  if (dflag && o_decomp_f32.empty() && o_decomp_f64.empty()) {
-    std::cout << "Where to output the decompressed file (--o_decomp_f32, --o_decomp_f64) ?"
-              << std::endl;
+  if (dflag && o_decomp_f32.empty() && o_decomp_f64.empty() && o_decomp_lowres_f32.empty() &&
+      o_decomp_lowres_f64.empty()) {
+    std::cout << "SPERR needs an output destination when decoding!" << std::endl;
     return __LINE__;
   }
 
@@ -183,20 +207,60 @@ int main(int argc, char* argv[])
     //
     // Need to do a decompression in the following cases.
     //
-    if (print_stats || !o_decomp_f64.empty() || !o_decomp_f32.empty()) {
+    const auto multi_res = (!o_decomp_lowres_f32.empty()) || (!o_decomp_lowres_f64.empty());
+    if (print_stats || !o_decomp_f64.empty() || !o_decomp_f32.empty() || multi_res) {
       auto decoder = std::make_unique<sperr::SPECK2D_FLT>();
       decoder->set_dims(dims);
       // !! Remember the header thing !!
       decoder->use_bitstream(stream.data() + header_len, stream.size() - header_len);
-      rtn = decoder->decompress();
+      rtn = decoder->decompress(multi_res);
       if (rtn != sperr::RTNType::Good) {
         std::cout << "Decompression failed!" << std::endl;
         return __LINE__;
       }
 
-      // If specified, output the decompressed slice in double precision.
+      // Save the decompressed data, and then deconstruct the decoder to free up some memory!
+      auto hierarchy = decoder->release_hierarchy();
       auto outputd = decoder->release_decoded_data();
-      decoder.reset();  // Free up more memory!
+      decoder.reset();
+
+      // If specified, output the low-res decompressed slices in double precision.
+      if (!o_decomp_lowres_f64.empty()) {
+        auto filenames = create_filenames(o_decomp_lowres_f64, dims);
+        assert(hierarchy.size() == filenames.size());
+        for (size_t i = 0; i < filenames.size(); i++) {
+          const auto& level = hierarchy[i];
+          rtn = sperr::write_n_bytes(filenames[i], level.size() * sizeof(double), level.data());
+          if (rtn != sperr::RTNType::Good) {
+            std::cout << "Writing decompressed hierarchy failed: " << filenames[i] << std::endl;
+            return __LINE__;
+          }
+        }
+        o_decomp_lowres_f64.clear();
+      }
+
+      // If specified, output the low-res decompressed slices in single precision.
+      if (!o_decomp_lowres_f32.empty()) {
+        auto filenames = create_filenames(o_decomp_lowres_f32, dims);
+        assert(hierarchy.size() == filenames.size());
+        auto buf = std::vector<float>(hierarchy.back().size());
+        for (size_t i = 0; i < filenames.size(); i++) {
+          const auto& level = hierarchy[i];
+          std::copy(level.begin(), level.end(), buf.begin());
+          rtn = sperr::write_n_bytes(filenames[i], level.size() * sizeof(float), buf.data());
+          if (rtn != sperr::RTNType::Good) {
+            std::cout << "Writing decompressed hierarchy failed: " << filenames[i] << std::endl;
+            return __LINE__;
+          }
+        }
+        o_decomp_lowres_f32.clear();
+      }
+
+      // Free up the hierarchy.
+      hierarchy.clear();
+      hierarchy.shrink_to_fit();
+
+      // If specified, output the decompressed slice in double precision.
       if (!o_decomp_f64.empty()) {
         rtn = sperr::write_n_bytes(o_decomp_f64, outputd.size() * sizeof(double), outputd.data());
         if (rtn != sperr::RTNType::Good) {
@@ -250,7 +314,8 @@ int main(int argc, char* argv[])
         print_stats = false;
       }
 
-      assert(o_decomp_f32.empty() && o_decomp_f64.empty() && !print_stats);
+      assert(o_decomp_f32.empty() && o_decomp_f64.empty() && !print_stats &&
+             o_decomp_lowres_f32.empty() && o_decomp_lowres_f64.empty());
     }
   }
   //
@@ -258,21 +323,73 @@ int main(int argc, char* argv[])
   //
   else {
     assert(dflag);
-    // First, retrieve the slice dimension from the header.
-    std::memcpy(dim2d.data(), input.data(), sizeof(dim2d));
+
+    if (input[0] != (SPERR_VERSION_MAJOR)) {
+      std::cout << "This bitstream is produced by a compressor of a different version!"
+                << std::endl;
+      return __LINE__;
+    }
+    auto booleans = sperr::unpack_8_booleans(input[1]);
+    if (booleans[1]) {
+      std::cout << "This bitstream appears to represent a 3D volume!" << std::endl;
+      return __LINE__;
+    }
+
+    // Retrieve the slice dimension from the header.
+    std::memcpy(dim2d.data(), input.data() + 2, sizeof(dim2d));
     const auto dims = sperr::dims_type{dim2d[0], dim2d[1], 1ul};
     auto decoder = std::make_unique<sperr::SPECK2D_FLT>();
     decoder->set_dims(dims);
     decoder->use_bitstream(input.data() + header_len, input.size() - header_len);
-    auto rtn = decoder->decompress();
+    const auto multi_res = (!o_decomp_lowres_f32.empty()) || (!o_decomp_lowres_f64.empty());
+    auto rtn = decoder->decompress(multi_res);
     if (rtn != sperr::RTNType::Good) {
       std::cout << "Decompression failed!" << std::endl;
       return __LINE__;
     }
 
-    // If specified, output the decompressed slice in double precision.
+    // Save the decompressed data, and then deconstruct the decoder to free up some memory!
+    auto hierarchy = decoder->release_hierarchy();
     auto outputd = decoder->release_decoded_data();
-    decoder.reset();  // Free up some memory!
+    decoder.reset();
+
+    // If specified, output the low-res decompressed slices in double precision.
+    if (!o_decomp_lowres_f64.empty()) {
+      auto filenames = create_filenames(o_decomp_lowres_f64, dims);
+      assert(hierarchy.size() == filenames.size());
+      for (size_t i = 0; i < filenames.size(); i++) {
+        const auto& level = hierarchy[i];
+        rtn = sperr::write_n_bytes(filenames[i], level.size() * sizeof(double), level.data());
+        if (rtn != sperr::RTNType::Good) {
+          std::cout << "Writing decompressed hierarchy failed: " << filenames[i] << std::endl;
+          return __LINE__;
+        }
+      }
+      o_decomp_lowres_f64.clear();
+    }
+
+    // If specified, output the low-res decompressed slices in single precision.
+    if (!o_decomp_lowres_f32.empty()) {
+      auto filenames = create_filenames(o_decomp_lowres_f32, dims);
+      assert(hierarchy.size() == filenames.size());
+      auto buf = std::vector<float>(hierarchy.back().size());
+      for (size_t i = 0; i < filenames.size(); i++) {
+        const auto& level = hierarchy[i];
+        std::copy(level.begin(), level.end(), buf.begin());
+        rtn = sperr::write_n_bytes(filenames[i], level.size() * sizeof(float), buf.data());
+        if (rtn != sperr::RTNType::Good) {
+          std::cout << "Writing decompressed hierarchy failed: " << filenames[i] << std::endl;
+          return __LINE__;
+        }
+      }
+      o_decomp_lowres_f32.clear();
+    }
+
+    // Free up the hierarchy.
+    hierarchy.clear();
+    hierarchy.shrink_to_fit();
+
+    // If specified, output the decompressed slice in double precision.
     if (!o_decomp_f64.empty()) {
       rtn = sperr::write_n_bytes(o_decomp_f64, outputd.size() * sizeof(double), outputd.data());
       if (rtn != sperr::RTNType::Good) {
@@ -294,7 +411,8 @@ int main(int argc, char* argv[])
       o_decomp_f32.clear();
     }
 
-    assert(o_decomp_f32.empty() && o_decomp_f64.empty());
+    assert(o_decomp_f32.empty() && o_decomp_f64.empty() && o_decomp_lowres_f32.empty() &&
+           o_decomp_lowres_f64.empty());
   }
 
   return 0;
