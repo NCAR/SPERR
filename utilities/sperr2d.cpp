@@ -23,6 +23,73 @@ auto create_filenames(std::string name, sperr::dims_type dims) -> std::vector<st
   return filenames;
 }
 
+// This function is used to output coarsened levels of the resolution hierarchy.
+auto output_hierarchy(const std::vector<std::vector<double>>& hierarchy,
+                      sperr::dims_type dims,
+                      const std::string& lowres_f64,
+                      const std::string& lowres_f32) -> int
+{
+  // If specified, output the low-res decompressed slices in double precision.
+  if (!lowres_f64.empty()) {
+    auto filenames = create_filenames(lowres_f64, dims);
+    assert(hierarchy.size() == filenames.size());
+    for (size_t i = 0; i < filenames.size(); i++) {
+      const auto& level = hierarchy[i];
+      auto rtn = sperr::write_n_bytes(filenames[i], level.size() * sizeof(double), level.data());
+      if (rtn != sperr::RTNType::Good) {
+        std::cout << "Writing decompressed hierarchy failed: " << filenames[i] << std::endl;
+        return __LINE__;
+      }
+    }
+  }
+
+  // If specified, output the low-res decompressed slices in single precision.
+  if (!lowres_f32.empty()) {
+    auto filenames = create_filenames(lowres_f32, dims);
+    assert(hierarchy.size() == filenames.size());
+    auto buf = std::vector<float>(hierarchy.back().size());
+    for (size_t i = 0; i < filenames.size(); i++) {
+      const auto& level = hierarchy[i];
+      std::copy(level.begin(), level.end(), buf.begin());
+      auto rtn = sperr::write_n_bytes(filenames[i], level.size() * sizeof(float), buf.data());
+      if (rtn != sperr::RTNType::Good) {
+        std::cout << "Writing decompressed hierarchy failed: " << filenames[i] << std::endl;
+        return __LINE__;
+      }
+    }
+  }
+
+  return 0;
+}
+
+// This function is used to output the decompressed slice at its native resolution.
+auto output_buffer(const sperr::vecd_type& buf,
+                   const std::string& name_f64,
+                   const std::string& name_f32) -> int
+{
+  // If specified, output the decompressed slice in double precision.
+  if (!name_f64.empty()) {
+    auto rtn = sperr::write_n_bytes(name_f64, buf.size() * sizeof(double), buf.data());
+    if (rtn != sperr::RTNType::Good) {
+      std::cout << "Writing decompressed data failed: " << name_f64 << std::endl;
+      return __LINE__;
+    }
+  }
+
+  // If specified, output the decompressed slice in single precision.
+  if (!name_f32.empty()) {
+    auto outputf = sperr::vecf_type(buf.size());
+    std::copy(buf.cbegin(), buf.cend(), outputf.begin());
+    auto rtn = sperr::write_n_bytes(name_f32, outputf.size() * sizeof(float), outputf.data());
+    if (rtn != sperr::RTNType::Good) {
+      std::cout << "Writing decompressed data failed: " << name_f32 << std::endl;
+      return __LINE__;
+    }
+  }
+
+  return 0;
+}
+
 int main(int argc, char* argv[])
 {
   // Parse command line options
@@ -195,15 +262,16 @@ int main(int argc, char* argv[])
     stream[1] = sperr::pack_8_booleans(b8);
     std::memcpy(stream.data() + 2, dim2d.data(), sizeof(dim2d));
     encoder->append_encoded_bitstream(stream);
+    encoder.reset();  // Free up some more memory.
+
+    // Output the compressed bitstream (maybe).
     if (!bitstream.empty()) {
       rtn = sperr::write_n_bytes(bitstream, stream.size(), stream.data());
       if (rtn != sperr::RTNType::Good) {
         std::cout << "Writing compressed bitstream failed: " << bitstream << std::endl;
         return __LINE__;
       }
-      bitstream.clear();
     }
-    encoder.reset();  // Free up some more memory.
 
     //
     // Need to do a decompression in the following cases.
@@ -225,63 +293,19 @@ int main(int argc, char* argv[])
       auto outputd = decoder->release_decoded_data();
       decoder.reset();
 
-      // If specified, output the low-res decompressed slices in double precision.
-      if (!decomp_lowres_f64.empty()) {
-        auto filenames = create_filenames(decomp_lowres_f64, dims);
-        assert(hierarchy.size() == filenames.size());
-        for (size_t i = 0; i < filenames.size(); i++) {
-          const auto& level = hierarchy[i];
-          rtn = sperr::write_n_bytes(filenames[i], level.size() * sizeof(double), level.data());
-          if (rtn != sperr::RTNType::Good) {
-            std::cout << "Writing decompressed hierarchy failed: " << filenames[i] << std::endl;
-            return __LINE__;
-          }
-        }
-        decomp_lowres_f64.clear();
-      }
-
-      // If specified, output the low-res decompressed slices in single precision.
-      if (!decomp_lowres_f32.empty()) {
-        auto filenames = create_filenames(decomp_lowres_f32, dims);
-        assert(hierarchy.size() == filenames.size());
-        auto buf = std::vector<float>(hierarchy.back().size());
-        for (size_t i = 0; i < filenames.size(); i++) {
-          const auto& level = hierarchy[i];
-          std::copy(level.begin(), level.end(), buf.begin());
-          rtn = sperr::write_n_bytes(filenames[i], level.size() * sizeof(float), buf.data());
-          if (rtn != sperr::RTNType::Good) {
-            std::cout << "Writing decompressed hierarchy failed: " << filenames[i] << std::endl;
-            return __LINE__;
-          }
-        }
-        decomp_lowres_f32.clear();
-      }
+      // Output the hierarchy (maybe).
+      auto ret = output_hierarchy(hierarchy, dims, decomp_lowres_f64, decomp_lowres_f32);
+      if (ret)
+        return ret;
 
       // Free up the hierarchy.
       hierarchy.clear();
       hierarchy.shrink_to_fit();
 
-      // If specified, output the decompressed slice in double precision.
-      if (!decomp_f64.empty()) {
-        rtn = sperr::write_n_bytes(decomp_f64, outputd.size() * sizeof(double), outputd.data());
-        if (rtn != sperr::RTNType::Good) {
-          std::cout << "Writing decompressed data failed: " << decomp_f64 << std::endl;
-          return __LINE__;
-        }
-        decomp_f64.clear();
-      }
-
-      // If specified, output the decompressed slice in single precision.
-      auto outputf = sperr::vecf_type(total_vals);
-      std::copy(outputd.cbegin(), outputd.cend(), outputf.begin());
-      if (!decomp_f32.empty()) {
-        rtn = sperr::write_n_bytes(decomp_f32, outputf.size() * sizeof(float), outputf.data());
-        if (rtn != sperr::RTNType::Good) {
-          std::cout << "Writing decompressed data failed: " << decomp_f32 << std::endl;
-          return __LINE__;
-        }
-        decomp_f32.clear();
-      }
+      // Output the decompressed slice (maybe).
+      ret = output_buffer(outputd, decomp_f64, decomp_f32);
+      if (ret)
+        return ret;
 
       // Calculate statistics.
       if (print_stats) {
@@ -289,6 +313,8 @@ int main(int argc, char* argv[])
         double rmse, linfy, print_psnr, min, max, sigma;
         if (ftype == 32) {
           const float* inputf = reinterpret_cast<const float*>(input.data());
+          auto outputf = sperr::vecf_type(total_vals);
+          std::copy(outputd.cbegin(), outputd.cend(), outputf.begin());
           auto stats = sperr::calc_stats(inputf, outputf.data(), total_vals);
           rmse = stats[0];
           linfy = stats[1];
@@ -312,7 +338,6 @@ int main(int argc, char* argv[])
         std::printf("Input range = (%.2e, %.2e), L-Infty = %.2e\n", min, max, linfy);
         std::printf("Bitrate = %.2f, PSNR = %.2fdB, Accuracy Gain = %.2f\n", print_bpp, print_psnr,
                     std::log2(sigma / rmse) - print_bpp);
-        print_stats = false;
       }
     }
   }
@@ -351,63 +376,19 @@ int main(int argc, char* argv[])
     auto outputd = decoder->release_decoded_data();
     decoder.reset();
 
-    // If specified, output the low-res decompressed slices in double precision.
-    if (!decomp_lowres_f64.empty()) {
-      auto filenames = create_filenames(decomp_lowres_f64, dims);
-      assert(hierarchy.size() == filenames.size());
-      for (size_t i = 0; i < filenames.size(); i++) {
-        const auto& level = hierarchy[i];
-        rtn = sperr::write_n_bytes(filenames[i], level.size() * sizeof(double), level.data());
-        if (rtn != sperr::RTNType::Good) {
-          std::cout << "Writing decompressed hierarchy failed: " << filenames[i] << std::endl;
-          return __LINE__;
-        }
-      }
-      decomp_lowres_f64.clear();
-    }
-
-    // If specified, output the low-res decompressed slices in single precision.
-    if (!decomp_lowres_f32.empty()) {
-      auto filenames = create_filenames(decomp_lowres_f32, dims);
-      assert(hierarchy.size() == filenames.size());
-      auto buf = std::vector<float>(hierarchy.back().size());
-      for (size_t i = 0; i < filenames.size(); i++) {
-        const auto& level = hierarchy[i];
-        std::copy(level.begin(), level.end(), buf.begin());
-        rtn = sperr::write_n_bytes(filenames[i], level.size() * sizeof(float), buf.data());
-        if (rtn != sperr::RTNType::Good) {
-          std::cout << "Writing decompressed hierarchy failed: " << filenames[i] << std::endl;
-          return __LINE__;
-        }
-      }
-      decomp_lowres_f32.clear();
-    }
+    // Output the hierarchy (maybe).
+    auto ret = output_hierarchy(hierarchy, dims, decomp_lowres_f64, decomp_lowres_f32);
+    if (ret)
+      return ret;
 
     // Free up the hierarchy.
     hierarchy.clear();
     hierarchy.shrink_to_fit();
 
-    // If specified, output the decompressed slice in double precision.
-    if (!decomp_f64.empty()) {
-      rtn = sperr::write_n_bytes(decomp_f64, outputd.size() * sizeof(double), outputd.data());
-      if (rtn != sperr::RTNType::Good) {
-        std::cout << "Writing decompressed data failed: " << decomp_f64 << std::endl;
-        return __LINE__;
-      }
-      decomp_f64.clear();
-    }
-
-    // If specified, output the decompressed slice in single precision.
-    if (!decomp_f32.empty()) {
-      auto outputf = sperr::vecf_type(outputd.size());
-      std::copy(outputd.cbegin(), outputd.cend(), outputf.begin());
-      rtn = sperr::write_n_bytes(decomp_f32, outputf.size() * sizeof(float), outputf.data());
-      if (rtn != sperr::RTNType::Good) {
-        std::cout << "Writing decompressed data failed: " << decomp_f32 << std::endl;
-        return __LINE__;
-      }
-      decomp_f32.clear();
-    }
+    // Output the decompressed slice (maybe).
+    ret = output_buffer(outputd, decomp_f64, decomp_f32);
+    if (ret)
+      return ret;
   }
 
   return 0;

@@ -10,6 +10,34 @@
 #include <cstring>
 #include <iostream>
 
+// This function is used to output the decompressed volume at its native resolution.
+auto output_buffer(const sperr::vecd_type& buf,
+                   const std::string& name_f64,
+                   const std::string& name_f32) -> int
+{
+  // If specified, output the decompressed slice in double precision.
+  if (!name_f64.empty()) {
+    auto rtn = sperr::write_n_bytes(name_f64, buf.size() * sizeof(double), buf.data());
+    if (rtn != sperr::RTNType::Good) {
+      std::cout << "Writing decompressed data failed: " << name_f64 << std::endl;
+      return __LINE__;
+    }
+  }
+
+  // If specified, output the decompressed slice in single precision.
+  if (!name_f32.empty()) {
+    auto outputf = sperr::vecf_type(buf.size());
+    std::copy(buf.cbegin(), buf.cend(), outputf.begin());
+    auto rtn = sperr::write_n_bytes(name_f32, outputf.size() * sizeof(float), outputf.data());
+    if (rtn != sperr::RTNType::Good) {
+      std::cout << "Writing decompressed data failed: " << name_f32 << std::endl;
+      return __LINE__;
+    }
+  }
+
+  return 0;
+}
+
 int main(int argc, char* argv[])
 {
   // Parse command line options
@@ -56,16 +84,16 @@ int main(int argc, char* argv[])
   //
   // Output settings
   //
-  auto o_bitstream = std::string();
-  app.add_option("--o_bitstream", o_bitstream, "Output compressed bitstream.")
+  auto bitstream = std::string();
+  app.add_option("--bitstream", bitstream, "Output compressed bitstream.")
       ->group("Output settings");
 
-  auto o_decomp_f32 = std::string();
-  app.add_option("--o_decomp_f32", o_decomp_f32, "Output decompressed volume in f32 precision.")
+  auto decomp_f32 = std::string();
+  app.add_option("--decomp_f32", decomp_f32, "Output decompressed volume in f32 precision.")
       ->group("Output settings");
 
-  auto o_decomp_f64 = std::string();
-  app.add_option("--o_decomp_f64", o_decomp_f64, "Output decompressed volume in f64 precision.")
+  auto decomp_f64 = std::string();
+  app.add_option("--decomp_f64", decomp_f64, "Output decompressed volume in f64 precision.")
       ->group("Output settings");
 
   auto print_stats = bool{false};
@@ -123,9 +151,8 @@ int main(int argc, char* argv[])
     std::cout << "Compression quality (--psnr, --pwe) must be positive!" << std::endl;
     return __LINE__;
   }
-  if (dflag && o_decomp_f32.empty() && o_decomp_f64.empty()) {
-    std::cout << "Where to output the decompressed file (--o_decomp_f32, --o_decomp_f64) ?"
-              << std::endl;
+  if (dflag && decomp_f32.empty() && decomp_f64.empty()) {
+    std::cout << "SPERR needs an output destination when decoding!" << std::endl;
     return __LINE__;
   }
 
@@ -169,17 +196,19 @@ int main(int argc, char* argv[])
     }
 
     auto stream = encoder->get_encoded_bitstream();
-    if (!o_bitstream.empty()) {
-      rtn = sperr::write_n_bytes(o_bitstream, stream.size(), stream.data());
+    encoder.reset();  // Free up some more memory.
+
+    // Output the compressed bitstream (maybe).
+    if (!bitstream.empty()) {
+      rtn = sperr::write_n_bytes(bitstream, stream.size(), stream.data());
       if (rtn != sperr::RTNType::Good) {
-        std::cout << "Writing compressed bitstream failed: " << o_bitstream << std::endl;
+        std::cout << "Writing compressed bitstream failed: " << bitstream << std::endl;
         return __LINE__;
       }
     }
-    encoder.reset();  // Free up some more memory.
 
     // Need to do a decompression in the following cases.
-    if (print_stats || !o_decomp_f64.empty() || !o_decomp_f32.empty()) {
+    if (print_stats || !decomp_f64.empty() || !decomp_f32.empty()) {
       auto decoder = std::make_unique<sperr::SPERR3D_OMP_D>();
       decoder->set_num_threads(omp_num_threads);
       decoder->setup_decomp(stream.data(), stream.size());
@@ -189,29 +218,13 @@ int main(int argc, char* argv[])
         return __LINE__;
       }
 
-      // Output the decompressed volume in double precision.
       auto outputd = decoder->release_decoded_data();
       decoder.reset();  // Free up more memory!
-      if (!o_decomp_f64.empty()) {
-        rtn = sperr::write_n_bytes(o_decomp_f64, outputd.size() * sizeof(double), outputd.data());
-        if (rtn != sperr::RTNType::Good) {
-          std::cout << "Writing decompressed data failed: " << o_decomp_f64 << std::endl;
-          return __LINE__;
-        }
-        o_decomp_f64.clear();
-      }
 
-      // Output the decompressed volume in single precision.
-      auto outputf = sperr::vecf_type(total_vals);
-      std::copy(outputd.cbegin(), outputd.cend(), outputf.begin());
-      if (!o_decomp_f32.empty()) {
-        rtn = sperr::write_n_bytes(o_decomp_f32, outputf.size() * sizeof(float), outputf.data());
-        if (rtn != sperr::RTNType::Good) {
-          std::cout << "Writing decompressed data failed: " << o_decomp_f32 << std::endl;
-          return __LINE__;
-        }
-        o_decomp_f32.clear();
-      }
+      // Output the decompressed volume (maybe).
+      auto ret = output_buffer(outputd, decomp_f64, decomp_f32);
+      if (ret)
+        return ret;
 
       // Calculate statistics.
       if (print_stats) {
@@ -219,6 +232,8 @@ int main(int argc, char* argv[])
         double rmse, linfy, print_psnr, min, max, sigma;
         if (ftype == 32) {
           const float* inputf = reinterpret_cast<const float*>(input.data());
+          auto outputf = sperr::vecf_type(total_vals);
+          std::copy(outputd.cbegin(), outputd.cend(), outputf.begin());
           auto stats = sperr::calc_stats(inputf, outputf.data(), total_vals, omp_num_threads);
           rmse = stats[0];
           linfy = stats[1];
@@ -242,10 +257,7 @@ int main(int argc, char* argv[])
         std::printf("Input range = (%.2e, %.2e), L-Infty = %.2e\n", min, max, linfy);
         std::printf("Bitrate = %.2f, PSNR = %.2fdB, Accuracy Gain = %.2f\n", print_bpp, print_psnr,
                     std::log2(sigma / rmse) - print_bpp);
-        print_stats = false;
       }
-
-      assert(o_decomp_f32.empty() && o_decomp_f64.empty() && !print_stats);
     }
   }
   //
@@ -262,31 +274,13 @@ int main(int argc, char* argv[])
       return __LINE__;
     }
 
-    // Output the decompressed volume in double precision.
     auto outputd = decoder->release_decoded_data();
     decoder.reset();  // Free up memory!
-    if (!o_decomp_f64.empty()) {
-      rtn = sperr::write_n_bytes(o_decomp_f64, outputd.size() * sizeof(double), outputd.data());
-      if (rtn != sperr::RTNType::Good) {
-        std::cout << "Writing decompressed data failed: " << o_decomp_f64 << std::endl;
-        return __LINE__;
-      }
-      o_decomp_f64.clear();
-    }
 
-    // Output the decompressed volume in single precision.
-    if (!o_decomp_f32.empty()) {
-      auto outputf = sperr::vecf_type(outputd.size());
-      std::copy(outputd.cbegin(), outputd.cend(), outputf.begin());
-      rtn = sperr::write_n_bytes(o_decomp_f32, outputf.size() * sizeof(float), outputf.data());
-      if (rtn != sperr::RTNType::Good) {
-        std::cout << "Writing decompressed data failed: " << o_decomp_f32 << std::endl;
-        return __LINE__;
-      }
-      o_decomp_f32.clear();
-    }
-
-    assert(o_decomp_f32.empty() && o_decomp_f64.empty());
+    // Output the decompressed volume (maybe).
+    auto ret = output_buffer(outputd, decomp_f64, decomp_f32);
+    if (ret)
+      return ret;
   }
 
   return 0;
