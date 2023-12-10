@@ -255,7 +255,8 @@ TEST(dwt2d, image_multi_res)
   for (size_t i = 0; i < hierarchy.size(); i++) {
     const auto& slice = hierarchy[i];
     auto dims = resolutions[i];
-    EXPECT_EQ(slice.size(), dims[0] * dims[1] * dims[2]) << "i = " << i;;
+    EXPECT_EQ(slice.size(), dims[0] * dims[1] * dims[2]) << "i = " << i;
+    ;
   }
 }
 

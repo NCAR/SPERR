@@ -24,7 +24,7 @@ TEST(sperr_helper, num_of_xforms)
 
 TEST(sperr_helper, dyadic)
 {
-  EXPECT_EQ(sperr::can_use_dyadic({64, 1, 1}), std::nullopt);  // 1D
+  EXPECT_EQ(sperr::can_use_dyadic({64, 1, 1}), std::nullopt);   // 1D
   EXPECT_EQ(sperr::can_use_dyadic({64, 64, 1}), std::nullopt);  // 2D
   EXPECT_EQ(sperr::can_use_dyadic({64, 64, 64}), 3);
   EXPECT_EQ(sperr::can_use_dyadic({128, 128, 128}), 4);
@@ -87,6 +87,45 @@ TEST(sperr_helper, lod_3d)
   lod = sperr::available_resolutions(dims);
   EXPECT_EQ(lod.size(), 1);
   EXPECT_EQ(lod[0], dims);
+}
+
+TEST(sperr_helper, lod_3d_multi_chunk)
+{
+  using sperr::dims_type;
+
+  // If chunk dim is not divisible, there's only one available resolution.
+  auto vdim = dims_type{90, 90, 90};
+  auto cdim = dims_type{60, 60, 60};
+  auto res = sperr::available_resolutions_multi_chunk(vdim, cdim);
+  EXPECT_EQ(res.size(), 1);
+  EXPECT_EQ(res.front(), vdim);
+
+  // If the chunk itself doesn't support multi-resolution, then the whole volume doesn't too.
+  vdim = {40, 40, 80};
+  cdim = {20, 20, 40};
+  res = sperr::available_resolutions_multi_chunk(vdim, cdim);
+  EXPECT_EQ(res.size(), 1);
+  EXPECT_EQ(res.front(), vdim);
+
+  // An obvious case.
+  vdim = {128, 128, 128};
+  cdim = {64, 64, 64};
+  res = sperr::available_resolutions_multi_chunk(vdim, cdim);
+  EXPECT_EQ(res.size(), 4);
+  EXPECT_EQ(res[0], (dims_type{16, 16, 16}));
+  EXPECT_EQ(res[1], (dims_type{32, 32, 32}));
+  EXPECT_EQ(res[2], (dims_type{64, 64, 64}));
+  EXPECT_EQ(res[3], vdim);
+
+  // A case with odd numbers.
+  vdim = {156, 147, 177};
+  cdim = {39, 49, 59};  // Should result in (4, 3, 3) small chunks.
+  res = sperr::available_resolutions_multi_chunk(vdim, cdim);
+  EXPECT_EQ(res.size(), 4);
+  EXPECT_EQ(res[0], (dims_type{20, 21, 24}));
+  EXPECT_EQ(res[1], (dims_type{40, 39, 45}));
+  EXPECT_EQ(res[2], (dims_type{80, 75, 90}));
+  EXPECT_EQ(res[3], vdim);
 }
 
 TEST(sperr_helper, approx_detail_len)
@@ -214,44 +253,28 @@ TEST(sperr_helper, domain_decomposition)
 
   auto chunks = sperr::chunk_volume(vol, subd);
   EXPECT_EQ(chunks.size(), 8);
-  auto chunk = cdef{0, 1, 0, 2, 0, 4};
-  EXPECT_EQ(chunks[0], chunk);
-  chunk = cdef{1, 1, 0, 2, 0, 4};
-  EXPECT_EQ(chunks[1], chunk);
-  chunk = cdef{2, 1, 0, 2, 0, 4};
-  EXPECT_EQ(chunks[2], chunk);
-  chunk = cdef{3, 1, 0, 2, 0, 4};
-  EXPECT_EQ(chunks[3], chunk);
+  EXPECT_EQ(chunks[0], (cdef{0, 1, 0, 2, 0, 4}));
+  EXPECT_EQ(chunks[1], (cdef{1, 1, 0, 2, 0, 4}));
+  EXPECT_EQ(chunks[2], (cdef{2, 1, 0, 2, 0, 4}));
+  EXPECT_EQ(chunks[3], (cdef{3, 1, 0, 2, 0, 4}));
 
-  chunk = cdef{0, 1, 2, 2, 0, 4};
-  EXPECT_EQ(chunks[4], chunk);
-  chunk = cdef{1, 1, 2, 2, 0, 4};
-  EXPECT_EQ(chunks[5], chunk);
-  chunk = cdef{2, 1, 2, 2, 0, 4};
-  EXPECT_EQ(chunks[6], chunk);
-  chunk = cdef{3, 1, 2, 2, 0, 4};
-  EXPECT_EQ(chunks[7], chunk);
+  EXPECT_EQ(chunks[4], (cdef{0, 1, 2, 2, 0, 4}));
+  EXPECT_EQ(chunks[5], (cdef{1, 1, 2, 2, 0, 4}));
+  EXPECT_EQ(chunks[6], (cdef{2, 1, 2, 2, 0, 4}));
+  EXPECT_EQ(chunks[7], (cdef{3, 1, 2, 2, 0, 4}));
 
   vol = dims_type{4, 4, 1};  // will essentially require a decomposition on a 2D plane.
   chunks = sperr::chunk_volume(vol, subd);
   EXPECT_EQ(chunks.size(), 8);
-  chunk = cdef{0, 1, 0, 2, 0, 1};
-  EXPECT_EQ(chunks[0], chunk);
-  chunk = cdef{1, 1, 0, 2, 0, 1};
-  EXPECT_EQ(chunks[1], chunk);
-  chunk = cdef{2, 1, 0, 2, 0, 1};
-  EXPECT_EQ(chunks[2], chunk);
-  chunk = cdef{3, 1, 0, 2, 0, 1};
-  EXPECT_EQ(chunks[3], chunk);
+  EXPECT_EQ(chunks[0], (cdef{0, 1, 0, 2, 0, 1}));
+  EXPECT_EQ(chunks[1], (cdef{1, 1, 0, 2, 0, 1}));
+  EXPECT_EQ(chunks[2], (cdef{2, 1, 0, 2, 0, 1}));
+  EXPECT_EQ(chunks[3], (cdef{3, 1, 0, 2, 0, 1}));
 
-  chunk = cdef{0, 1, 2, 2, 0, 1};
-  EXPECT_EQ(chunks[4], chunk);
-  chunk = cdef{1, 1, 2, 2, 0, 1};
-  EXPECT_EQ(chunks[5], chunk);
-  chunk = cdef{2, 1, 2, 2, 0, 1};
-  EXPECT_EQ(chunks[6], chunk);
-  chunk = cdef{3, 1, 2, 2, 0, 1};
-  EXPECT_EQ(chunks[7], chunk);
+  EXPECT_EQ(chunks[4], (cdef{0, 1, 2, 2, 0, 1}));
+  EXPECT_EQ(chunks[5], (cdef{1, 1, 2, 2, 0, 1}));
+  EXPECT_EQ(chunks[6], (cdef{2, 1, 2, 2, 0, 1}));
+  EXPECT_EQ(chunks[7], (cdef{3, 1, 2, 2, 0, 1}));
 }
 
 TEST(sperr_helper, read_sections)
@@ -280,9 +303,9 @@ TEST(sperr_helper, read_sections)
   buf.assign(10, 1);
   sperr::read_sections("test.tmp", secs, buf);
   EXPECT_EQ(buf.size(), 71);
-  for (size_t i = 0; i < 10; i++) // First 10 elements should remain the same.
+  for (size_t i = 0; i < 10; i++)  // First 10 elements should remain the same.
     EXPECT_EQ(buf[i], 1);
-  for (size_t i = 0; i < 56; i++) // Next 56 elements should start from 200.
+  for (size_t i = 0; i < 56; i++)  // Next 56 elements should start from 200.
     EXPECT_EQ(buf[i + 10], i + 200);
   for (size_t i = 0; i < 5; i++)  // Next 5 elements should start from 30.
     EXPECT_EQ(buf[i + 66], i + 30);

@@ -242,7 +242,7 @@ TEST(sperr3d_target_psnr, small_data_range)
   psnr = 125.0;
   encoder.set_psnr(psnr);
   encoder.compress(input.data(), input.size());
-  stream  = encoder.get_encoded_bitstream();
+  stream = encoder.get_encoded_bitstream();
 
   decoder.setup_decomp(stream.data(), stream.size());
   decoder.decompress(stream.data());
@@ -290,7 +290,7 @@ TEST(sperr3d_bit_rate, big)
   bpp = 1.0;
   encoder.set_bitrate(bpp);
   encoder.compress(input.data(), input.size());
-  stream  = encoder.get_encoded_bitstream();
+  stream = encoder.get_encoded_bitstream();
   decoder.setup_decomp(stream.data(), stream.size());
   decoder.decompress(stream.data());
   const auto& output2 = decoder.view_decoded_data();

@@ -44,7 +44,7 @@ TEST(SPECK3D_FLT, ConstantField)
   encoder.take_data(std::move(tmp));
   rtn = encoder.compress();
   ASSERT_EQ(rtn, sperr::RTNType::Good);
-  bitstream.clear(); 
+  bitstream.clear();
   encoder.append_encoded_bitstream(bitstream);
   EXPECT_EQ(bitstream.size(), 17);  // Constant storage to record a constant field.
 
@@ -68,7 +68,7 @@ TEST(SPECK3D_FLT, IntegerLen)
   auto inputd = sperr::vecd_type(total_vals);
   std::copy(inputf.cbegin(), inputf.cend(), inputd.begin());
   double psnr = 40.0;
-  
+
   // Encode
   auto encoder = sperr::SPECK3D_FLT();
   encoder.set_dims(dims);
@@ -157,7 +157,7 @@ TEST(SPECK3D_FLT, OutlierCorrection)
   auto inputd = sperr::vecd_type(total_vals);
   std::copy(inputf.cbegin(), inputf.cend(), inputd.begin());
   double tol = 1.0e-5;
-  
+
   // Encode
   auto encoder = sperr::SPECK3D_FLT();
   encoder.set_dims(dims);
@@ -209,7 +209,7 @@ TEST(SPECK3D_FLT, OutlierCorrection)
     EXPECT_NEAR(inputd[i], outputd[i], tol);
 
   //
-  // Test a big tolerance which essentially produces all zero integer arrays. 
+  // Test a big tolerance which essentially produces all zero integer arrays.
   // The compression should still carry on, and tolerance being honored.
   //
   tol = 1e-2;

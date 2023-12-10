@@ -74,6 +74,35 @@ auto sperr::available_resolutions(dims_type full_dims) -> std::vector<dims_type>
   return resolutions;
 }
 
+auto sperr::available_resolutions_multi_chunk(dims_type vdim, dims_type cdim)
+    -> std::vector<dims_type>
+{
+  auto resolutions = std::vector<dims_type>();
+
+  // Test if the volume dimension is divisible by the chunk dimension.
+  bool divisible = true;
+  for (size_t i = 0; i < 3; i++)
+    if (vdim[i] % cdim[i] != 0)
+      divisible = false;
+
+  if (divisible) {
+    auto nx = vdim[0] / cdim[0];
+    auto ny = vdim[1] / cdim[1];
+    auto nz = vdim[2] / cdim[2];
+
+    resolutions = sperr::available_resolutions(cdim);
+    for (size_t i = 0; i < resolutions.size(); i++) {
+      resolutions[i][0] *= nx;
+      resolutions[i][1] *= ny;
+      resolutions[i][2] *= nz;
+    }
+  }
+  else
+    resolutions.push_back(vdim);
+
+  return resolutions;
+}
+
 auto sperr::num_of_partitions(size_t len) -> size_t
 {
   size_t num_of_parts = 0;  // Num. of partitions we can do

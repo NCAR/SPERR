@@ -19,7 +19,7 @@ class outlier_tester {
  public:
   // Constructor
   outlier_tester(size_t l, double t) : length(l), tolerance(t){};
-  
+
   // A method to generate `N` outliers
   // The resulting outliers will be stored in `LOS`, and returned.
   auto gen_outliers(size_t N) -> const std::vector<sperr::Outlier>&
@@ -38,8 +38,7 @@ class outlier_tester {
 
       // Make sure there ain't duplicate locations
       auto loc = loc_d(gen);
-      while (
-          std::any_of(LOS.begin(), LOS.end(), [loc](auto out) { return out.pos == loc; })) {
+      while (std::any_of(LOS.begin(), LOS.end(), [loc](auto out) { return out.pos == loc; })) {
         loc = loc_d(gen);
       }
       LOS.emplace_back(loc, val);
