@@ -88,7 +88,7 @@ class SPECK_FLT {
   vecd_type m_vals_orig;                // encoding only (PWE mode)
   CompMode m_mode = CompMode::Unknown;  // encoding only
 
-  std::vector<vecd_type>  m_hierarchy;  // multi-res decoding
+  std::vector<vecd_type>  m_hierarchy;  // multi-resolution decoding
 
   // Instantiate `m_vals_ui` based on the chosen integer length.
   void m_instantiate_int_vec();
