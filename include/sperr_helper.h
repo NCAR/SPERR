@@ -72,16 +72,18 @@ auto can_use_dyadic(dims_type) -> std::optional<size_t>;
 //    coarsened resolutions are available.
 //    The return vector will always have one element, which is the native resolution (input).
 //    If multi-resolution is supported, then it contains the coarsened resolutions too.
-//    Note: this function assumes a single chunk.
-auto available_resolutions(dims_type) -> std::vector<dims_type>;
+//    Note 1: this function assumes a single chunk.
+//    Note 2: it's UB if `dim` is a 1D array.
+auto available_resolutions(dims_type dim) -> std::vector<dims_type>;
 
 // Given the native resolution and preferred chunk size of a 3D volume, it decides if and how many
 //    coarsened resolutions are available.
 //    The return vector will always have one element, which is the native resolution (input).
 //    If multi-resolution is supported, then it contains the coarsened resolutions too.
-//    Note: for the multi-chunk volume to support multi-resolution,
-//    1) the volume dimension has to be perfectly divisible by the chunk dimension, and
-//    2) the chunk dimension has to support multi-resolution.
+//    Note1 : for the multi-chunk volume to support multi-resolution,
+//            1) the volume dimension has to be perfectly divisible by the chunk dimension, and
+//            2) the chunk dimension has to support multi-resolution.
+//    Note 2: it's UB if `vol` is a 1D array or 2D slice.
 auto available_resolutions_multi_chunk(dims_type vol, dims_type chunk) -> std::vector<dims_type>;
 
 // How many partition operation could we perform given a length?
@@ -101,7 +103,7 @@ auto calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<size_t, 2
 // start writing/reading the char array.
 //
 // Note 1: unpack_booleans() takes a raw pointer because it accesses memory
-// provided by others, and others most likely provide it by raw pointers.
+//         provided by others, and others most likely provide it by raw pointers.
 // Note 2: these two methods only work on little endian machines.
 // Note 3: the caller should have already allocated enough space for `dest`.
 auto pack_booleans(vec8_type& dst, const std::vector<bool>& src, size_t dest_offset = 0) -> RTNType;
@@ -111,8 +113,8 @@ auto unpack_booleans(std::vector<bool>& dest,
                      size_t src_offset = 0) -> RTNType;
 
 // Pack and unpack exactly 8 booleans to/from a single byte
-// Note: memory for the 8 booleans should already be allocated!
-// Note: these two methods only work on little endian machines.
+// Note 1: memory for the 8 booleans should already be allocated!
+// Note 2: these two methods only work on little endian machines.
 auto pack_8_booleans(std::array<bool, 8>) -> uint8_t;
 auto unpack_8_booleans(uint8_t) -> std::array<bool, 8>;
 
@@ -134,15 +136,15 @@ auto extract_sections(const void* buf,
                       vec8_type& dst) -> RTNType;
 
 // Calculate a suite of statistics.
-// Note that arr1 is considered as the ground truth array, so it's the range of
-//   arr1 that is used internally for psnr calculations.
-// If `omp_nthreads` is zero, then it will use the maximum number of threads.
-// The return array contains statistics in the following order:
-// ret[0] : RMSE
-// ret[1] : L-Infinity
-// ret[2] : PSNR
-// ret[3] : min of arr1
-// ret[4] : max of arr1
+//    Note that arr1 is considered as the ground truth array, so it's the range of
+//    arr1 that is used internally for psnr calculations.
+//    If `omp_nthreads` is zero, then it will use the maximum number of threads.
+//    The return array contains statistics in the following order:
+//    ret[0] : RMSE
+//    ret[1] : L-Infinity
+//    ret[2] : PSNR
+//    ret[3] : min of arr1
+//    ret[4] : max of arr1
 template <typename T>
 auto calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_nthreads = 0)
     -> std::array<T, 5>;
