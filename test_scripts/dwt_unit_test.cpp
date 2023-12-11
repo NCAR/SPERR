@@ -256,7 +256,6 @@ TEST(dwt2d, image_multi_res)
     const auto& slice = hierarchy[i];
     auto dims = resolutions[i];
     EXPECT_EQ(slice.size(), dims[0] * dims[1] * dims[2]) << "i = " << i;
-    ;
   }
 }
 
@@ -398,10 +397,9 @@ TEST(dwt3d, multi_res)
   auto resolutions = sperr::available_resolutions(dims);
   EXPECT_EQ(hierarchy.size() + 1, resolutions.size());
   for (size_t i = 0; i < hierarchy.size(); i++) {
-    const auto& slice = hierarchy[i];
+    const auto& vol = hierarchy[i];
     auto res = resolutions[i];
-    EXPECT_EQ(slice.size(), res[0] * res[1] * res[2]) << "i = " << i;
-    ;
+    EXPECT_EQ(vol.size(), res[0] * res[1] * res[2]) << "i = " << i;
   }
 }
 
