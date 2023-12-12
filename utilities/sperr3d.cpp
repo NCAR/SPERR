@@ -253,7 +253,7 @@ int main(int argc, char* argv[])
       rtn = encoder->compress(reinterpret_cast<const double*>(input.data()), total_vals);
     if (rtn != sperr::RTNType::Good) {
       std::cout << "Compression failed!" << std::endl;
-      return __LINE__;
+      return __LINE__ % 256;
     }
 
     // If not calculating stats, we can free up some memory now!
@@ -270,7 +270,7 @@ int main(int argc, char* argv[])
       rtn = sperr::write_n_bytes(bitstream, stream.size(), stream.data());
       if (rtn != sperr::RTNType::Good) {
         std::cout << "Writing compressed bitstream failed: " << bitstream << std::endl;
-        return __LINE__;
+        return __LINE__ % 256;
       }
     }
 
@@ -285,7 +285,7 @@ int main(int argc, char* argv[])
       rtn = decoder->decompress(stream.data(), multi_res);
       if (rtn != sperr::RTNType::Good) {
         std::cout << "Decompression failed!" << std::endl;
-        return __LINE__;
+        return __LINE__ % 256;
       }
 
       // Save the decompressed data, and then deconstruct the decoder to free up some memory!
@@ -296,14 +296,14 @@ int main(int argc, char* argv[])
       // Output the hierarchy (maybe), and then destroy it.
       auto ret = output_hierarchy(hierarchy, dims, chunks, decomp_lowres_f64, decomp_lowres_f32);
       if (ret)
-        return __LINE__;
+        return __LINE__ % 256;
       hierarchy.clear();
       hierarchy.shrink_to_fit();
 
       // Output the decompressed volume (maybe).
       ret = output_buffer(outputd, decomp_f64, decomp_f32);
       if (ret)
-        return __LINE__;
+        return __LINE__ % 256;
 
       // Calculate statistics.
       if (print_stats) {
@@ -351,24 +351,26 @@ int main(int argc, char* argv[])
     auto rtn = decoder->decompress(input.data(), multi_res);
     if (rtn != sperr::RTNType::Good) {
       std::cout << "Decompression failed!" << std::endl;
-      return __LINE__;
+      return __LINE__ % 256;
     }
 
     auto hierarchy = decoder->release_hierarchy();
     auto outputd = decoder->release_decoded_data();
+    auto vdims = decoder->get_dims();
+    auto cdims = decoder->get_chunk_dims();
     decoder.reset();  // Free up memory!
 
     // Output the hierarchy (maybe), and then destroy it.
-    auto ret = output_hierarchy(hierarchy, dims, chunks, decomp_lowres_f64, decomp_lowres_f32);
+    auto ret = output_hierarchy(hierarchy, vdims, cdims, decomp_lowres_f64, decomp_lowres_f32);
     if (ret)
-      return __LINE__;
+      return __LINE__ % 256;
     hierarchy.clear();
     hierarchy.shrink_to_fit();
 
     // Output the decompressed volume (maybe).
     ret = output_buffer(outputd, decomp_f64, decomp_f32);
     if (ret)
-      return __LINE__;
+      return __LINE__ % 256;
   }
 
   return 0;

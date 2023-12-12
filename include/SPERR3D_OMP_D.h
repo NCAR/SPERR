@@ -28,6 +28,7 @@ class SPERR3D_OMP_D {
   auto release_hierarchy() -> std::vector<vecd_type>&&;
 
   auto get_dims() const -> sperr::dims_type;
+  auto get_chunk_dims() const -> sperr::dims_type;
 
  private:
   sperr::dims_type m_dims = {0, 0, 0};        // Dimension of the entire volume

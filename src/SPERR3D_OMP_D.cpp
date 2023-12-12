@@ -136,7 +136,6 @@ auto sperr::SPERR3D_OMP_D::decompress(const void* p, bool multi_res) -> RTNType
 
 auto sperr::SPERR3D_OMP_D::release_decoded_data() -> sperr::vecd_type&&
 {
-  m_dims = {0, 0, 0};
   return std::move(m_vol_buf);
 }
 
@@ -153,6 +152,11 @@ auto sperr::SPERR3D_OMP_D::view_decoded_data() const -> const sperr::vecd_type&
 auto sperr::SPERR3D_OMP_D::get_dims() const -> std::array<size_t, 3>
 {
   return m_dims;
+}
+
+auto sperr::SPERR3D_OMP_D::get_chunk_dims() const -> std::array<size_t, 3>
+{
+  return m_chunk_dims;
 }
 
 void sperr::SPERR3D_OMP_D::m_scatter_chunk(vecd_type& big_vol,

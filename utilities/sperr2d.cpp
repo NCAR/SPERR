@@ -269,7 +269,7 @@ int main(int argc, char* argv[])
       rtn = sperr::write_n_bytes(bitstream, stream.size(), stream.data());
       if (rtn != sperr::RTNType::Good) {
         std::cout << "Writing compressed bitstream failed: " << bitstream << std::endl;
-        return __LINE__;
+        return __LINE__ % 256;
       }
     }
 
@@ -285,7 +285,7 @@ int main(int argc, char* argv[])
       rtn = decoder->decompress(multi_res);
       if (rtn != sperr::RTNType::Good) {
         std::cout << "Decompression failed!" << std::endl;
-        return __LINE__;
+        return __LINE__ % 256;
       }
 
       // Save the decompressed data, and then deconstruct the decoder to free up some memory!
@@ -296,14 +296,14 @@ int main(int argc, char* argv[])
       // Output the hierarchy (maybe), and then destroy it.
       auto ret = output_hierarchy(hierarchy, dims, decomp_lowres_f64, decomp_lowres_f32);
       if (ret)
-        return __LINE__;
+        return __LINE__ % 256;
       hierarchy.clear();
       hierarchy.shrink_to_fit();
 
       // Output the decompressed slice (maybe).
       ret = output_buffer(outputd, decomp_f64, decomp_f32);
       if (ret)
-        return __LINE__;
+        return __LINE__ % 256;
 
       // Calculate statistics.
       if (print_stats) {
@@ -348,12 +348,12 @@ int main(int argc, char* argv[])
     if (input[0] != (SPERR_VERSION_MAJOR)) {
       std::cout << "This bitstream is produced by a compressor of a different version!"
                 << std::endl;
-      return __LINE__;
+      return __LINE__ % 256;
     }
     auto booleans = sperr::unpack_8_booleans(input[1]);
     if (booleans[1]) {
       std::cout << "This bitstream appears to represent a 3D volume!" << std::endl;
-      return __LINE__;
+      return __LINE__ % 256;
     }
 
     // Retrieve the slice dimension from the header.
@@ -366,7 +366,7 @@ int main(int argc, char* argv[])
     auto rtn = decoder->decompress(multi_res);
     if (rtn != sperr::RTNType::Good) {
       std::cout << "Decompression failed!" << std::endl;
-      return __LINE__;
+      return __LINE__ % 256;
     }
 
     // Save the decompressed data, and then deconstruct the decoder to free up some memory!
@@ -377,7 +377,7 @@ int main(int argc, char* argv[])
     // Output the hierarchy (maybe).
     auto ret = output_hierarchy(hierarchy, dims, decomp_lowres_f64, decomp_lowres_f32);
     if (ret)
-      return __LINE__;
+      return __LINE__ % 256;
 
     // Free up the hierarchy.
     hierarchy.clear();
@@ -386,7 +386,7 @@ int main(int argc, char* argv[])
     // Output the decompressed slice (maybe).
     ret = output_buffer(outputd, decomp_f64, decomp_f32);
     if (ret)
-      return __LINE__;
+      return __LINE__ % 256;
   }
 
   return 0;
