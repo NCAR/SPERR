@@ -12,9 +12,9 @@
 #include <iterator>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
 
 #ifndef USE_VANILLA_CONFIG
 #include "SperrConfig.h"

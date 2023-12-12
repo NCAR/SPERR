@@ -43,7 +43,6 @@ class CDF97 {
   void idwt1d();
   void idwt3d();
 
-
   //
   // Multi-resolution reconstruction
   //
@@ -53,7 +52,7 @@ class CDF97 {
   //    returned by `sperr::available_resolutions()`. The native resolution reconstruction should
   //    still be retrieved by the `view_data()` or `release_data()` functions.
   //    If multi-resolution is not supported, then it simply returns an empty vector, with the
-  //    decompression still performed, and the native resolution reconstruction ready. 
+  //    decompression still performed, and the native resolution reconstruction ready.
   [[nodiscard]] auto idwt2d_multi_res() -> std::vector<vecd_type>;
   void idwt3d_multi_res(std::vector<vecd_type>&);
 
