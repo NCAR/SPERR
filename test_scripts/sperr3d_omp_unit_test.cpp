@@ -30,7 +30,7 @@ TEST(sperr3d_constant, one_chunk)
 
   // Use a decoder
   auto decoder = sperr::SPERR3D_OMP_D();
-  rtn = decoder.setup_decomp(stream1.data(), stream1.size());
+  rtn = decoder.use_bitstream(stream1.data(), stream1.size());
   EXPECT_EQ(rtn, RTNType::Good);
   decoder.decompress(stream1.data());
   auto& output = decoder.view_decoded_data();
@@ -43,7 +43,7 @@ TEST(sperr3d_constant, one_chunk)
   encoder.compress(input.data(), input.size());
   auto stream2 = encoder.get_encoded_bitstream();
 
-  decoder.setup_decomp(stream2.data(), stream2.size());
+  decoder.use_bitstream(stream2.data(), stream2.size());
   decoder.decompress(stream2.data());
   auto& output2 = decoder.view_decoded_data();
   EXPECT_EQ(inputd, output2);
@@ -70,7 +70,7 @@ TEST(sperr3d_constant, omp_chunks)
   // Use a decoder
   auto decoder = sperr::SPERR3D_OMP_D();
   decoder.set_num_threads(4);
-  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.use_bitstream(stream.data(), stream.size());
   decoder.decompress(stream.data());
   auto& output = decoder.view_decoded_data();
   auto output_dims = decoder.get_dims();
@@ -100,7 +100,7 @@ TEST(sperr3d_target_pwe, small_data_range)
   // Use a decoder
   auto decoder = sperr::SPERR3D_OMP_D();
   decoder.set_num_threads(4);
-  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.use_bitstream(stream.data(), stream.size());
   decoder.decompress(stream.data());
   auto output_dims = decoder.get_dims();
   EXPECT_EQ(output_dims, dims);
@@ -114,7 +114,7 @@ TEST(sperr3d_target_pwe, small_data_range)
   encoder.compress(input.data(), input.size());
   stream = encoder.get_encoded_bitstream();
 
-  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.use_bitstream(stream.data(), stream.size());
   decoder.decompress(stream.data());
   const auto& output2 = decoder.view_decoded_data();
   for (size_t i = 0; i < input.size(); i++)
@@ -140,7 +140,7 @@ TEST(sperr3d_target_pwe, big)
   // Use a decoder
   auto decoder = sperr::SPERR3D_OMP_D();
   decoder.set_num_threads(3);
-  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.use_bitstream(stream.data(), stream.size());
   decoder.decompress(stream.data());
   auto output_dims = decoder.get_dims();
   EXPECT_EQ(output_dims, dims);
@@ -154,7 +154,7 @@ TEST(sperr3d_target_pwe, big)
   encoder.compress(input.data(), input.size());
   stream = encoder.get_encoded_bitstream();
 
-  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.use_bitstream(stream.data(), stream.size());
   decoder.decompress(stream.data());
   const auto& output2 = decoder.view_decoded_data();
   for (size_t i = 0; i < input.size(); i++)
@@ -185,7 +185,7 @@ TEST(sperr3d_target_psnr, big)
   // Use a decoder
   auto decoder = sperr::SPERR3D_OMP_D();
   decoder.set_num_threads(3);
-  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.use_bitstream(stream.data(), stream.size());
   decoder.decompress(stream.data());
   auto output_dims = decoder.get_dims();
   EXPECT_EQ(output_dims, dims);
@@ -200,7 +200,7 @@ TEST(sperr3d_target_psnr, big)
   encoder.compress(input.data(), input.size());
   stream = encoder.get_encoded_bitstream();
 
-  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.use_bitstream(stream.data(), stream.size());
   decoder.decompress(stream.data());
   const auto& output2 = decoder.view_decoded_data();
   stats = sperr::calc_stats(inputd.data(), output2.data(), total_len, 4);
@@ -229,7 +229,7 @@ TEST(sperr3d_target_psnr, small_data_range)
   // Use a decoder
   auto decoder = sperr::SPERR3D_OMP_D();
   decoder.set_num_threads(0);
-  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.use_bitstream(stream.data(), stream.size());
   decoder.decompress(stream.data());
   auto output_dims = decoder.get_dims();
   EXPECT_EQ(output_dims, dims);
@@ -244,7 +244,7 @@ TEST(sperr3d_target_psnr, small_data_range)
   encoder.compress(input.data(), input.size());
   stream = encoder.get_encoded_bitstream();
 
-  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.use_bitstream(stream.data(), stream.size());
   decoder.decompress(stream.data());
   const auto& output2 = decoder.view_decoded_data();
   stats = sperr::calc_stats(inputd.data(), output2.data(), total_len, 4);
@@ -276,7 +276,7 @@ TEST(sperr3d_bit_rate, big)
   // Use a decoder
   auto decoder = sperr::SPERR3D_OMP_D();
   decoder.set_num_threads(0);
-  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.use_bitstream(stream.data(), stream.size());
   decoder.decompress(stream.data());
   auto output_dims = decoder.get_dims();
   EXPECT_EQ(output_dims, dims);
@@ -291,7 +291,7 @@ TEST(sperr3d_bit_rate, big)
   encoder.set_bitrate(bpp);
   encoder.compress(input.data(), input.size());
   stream = encoder.get_encoded_bitstream();
-  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.use_bitstream(stream.data(), stream.size());
   decoder.decompress(stream.data());
   const auto& output2 = decoder.view_decoded_data();
   stats = sperr::calc_stats(inputd.data(), output2.data(), total_len, 4);
@@ -324,7 +324,7 @@ TEST(sperr3d_multi_res, canonical)
   // Use a decoder, test the native resolution results.
   auto decoder = sperr::SPERR3D_OMP_D();
   decoder.set_num_threads(0);
-  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.use_bitstream(stream.data(), stream.size());
   decoder.decompress(stream.data(), true);
   auto output_dims = decoder.get_dims();
   EXPECT_EQ(output_dims, dims);

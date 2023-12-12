@@ -293,19 +293,17 @@ int main(int argc, char* argv[])
       auto outputd = decoder->release_decoded_data();
       decoder.reset();
 
-      // Output the hierarchy (maybe).
+      // Output the hierarchy (maybe), and then destroy it.
       auto ret = output_hierarchy(hierarchy, dims, decomp_lowres_f64, decomp_lowres_f32);
       if (ret)
-        return ret;
-
-      // Free up the hierarchy.
+        return __LINE__;
       hierarchy.clear();
       hierarchy.shrink_to_fit();
 
       // Output the decompressed slice (maybe).
       ret = output_buffer(outputd, decomp_f64, decomp_f32);
       if (ret)
-        return ret;
+        return __LINE__;
 
       // Calculate statistics.
       if (print_stats) {
@@ -379,7 +377,7 @@ int main(int argc, char* argv[])
     // Output the hierarchy (maybe).
     auto ret = output_hierarchy(hierarchy, dims, decomp_lowres_f64, decomp_lowres_f32);
     if (ret)
-      return ret;
+      return __LINE__;
 
     // Free up the hierarchy.
     hierarchy.clear();
@@ -388,7 +386,7 @@ int main(int argc, char* argv[])
     // Output the decompressed slice (maybe).
     ret = output_buffer(outputd, decomp_f64, decomp_f32);
     if (ret)
-      return ret;
+      return __LINE__;
   }
 
   return 0;

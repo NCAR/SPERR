@@ -18,7 +18,7 @@ class SPERR3D_OMP_D {
   void set_num_threads(size_t);
 
   // Parse the header of this stream, and stores the pointer.
-  auto setup_decomp(const void*, size_t) -> RTNType;
+  auto use_bitstream(const void*, size_t) -> RTNType;
 
   // The pointer passed in here MUST be the same as the one passed to `use_bitstream()`.
   auto decompress(const void* bitstream, bool multi_res = false) -> RTNType;

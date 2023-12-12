@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
   if (!orig32_file.empty() || !orig64_file.empty()) {
     auto decoder = std::make_unique<sperr::SPERR3D_OMP_D>();
     decoder->set_num_threads(omp_num_threads);
-    decoder->setup_decomp(stream_trunc.data(), stream_trunc.size());
+    decoder->use_bitstream(stream_trunc.data(), stream_trunc.size());
     auto rtn = decoder->decompress(stream_trunc.data());
     if (rtn != sperr::RTNType::Good) {
       std::cout << "Decompression failed!" << std::endl;

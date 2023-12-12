@@ -231,7 +231,7 @@ int C_API::sperr_decomp_3d(const void* src,
   // Use a decompressor to decompress this bitstream
   auto decoder = std::make_unique<sperr::SPERR3D_OMP_D>();
   decoder->set_num_threads(nthreads);
-  decoder->setup_decomp(src, src_len);
+  decoder->use_bitstream(src, src_len);
   auto rtn = decoder->decompress(src);
   if (rtn != sperr::RTNType::Good)
     return -1;
