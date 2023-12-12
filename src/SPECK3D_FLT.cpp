@@ -54,5 +54,5 @@ void sperr::SPECK3D_FLT::m_inverse_wavelet_xform(bool multi_res)
   if (!multi_res)
     m_cdf.idwt3d();
   else
-    m_hierarchy = m_cdf.idwt3d_multi_res();
+    m_cdf.idwt3d_multi_res(m_hierarchy);
 }

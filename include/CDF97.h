@@ -55,7 +55,7 @@ class CDF97 {
   //    If multi-resolution is not supported, then it simply returns an empty vector, with the
   //    decompression still performed, and the native resolution reconstruction ready. 
   [[nodiscard]] auto idwt2d_multi_res() -> std::vector<vecd_type>;
-  [[nodiscard]] auto idwt3d_multi_res() -> std::vector<vecd_type>;
+  void idwt3d_multi_res(std::vector<vecd_type>&);
 
  private:
   using itd_type = vecd_type::iterator;
@@ -111,8 +111,9 @@ class CDF97 {
 
   // Extract a sub-slice/sub-volume starting with the same origin of the full slice/volume.
   // It is UB if `subdims` exceeds the full dimension (`m_dims`).
+  // It is UB if `dst` does not point to a big enough space.
   auto m_sub_slice(std::array<size_t, 2> subdims) const -> vecd_type;
-  auto m_sub_volume(dims_type subdims) const -> vecd_type;
+  void m_sub_volume(dims_type subdims, itd_type dst) const;
 
   //
   // Methods from QccPack, so keep their original names, interface, and the use of raw pointers.

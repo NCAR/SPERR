@@ -138,6 +138,11 @@ auto sperr::SPECK_FLT::release_hierarchy() -> std::vector<vecd_type>&&
   return std::move(m_hierarchy);
 }
 
+auto sperr::SPECK_FLT::view_hierarchy() const -> const std::vector<vecd_type>&
+{
+  return m_hierarchy;
+}
+
 void sperr::SPECK_FLT::set_psnr(double psnr)
 {
   assert(psnr > 0.0);

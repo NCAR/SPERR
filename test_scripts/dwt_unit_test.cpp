@@ -382,7 +382,8 @@ TEST(dwt3d, multi_res)
   sperr::CDF97 cdf;
   cdf.take_data(std::move(in_copy), dims);
   cdf.dwt3d();
-  auto hierarchy = cdf.idwt3d_multi_res();
+  auto hierarchy = std::vector<sperr::vecd_type>();
+  cdf.idwt3d_multi_res(hierarchy);
 
   // Claim that with single precision, the result is identical to the input
   auto result = cdf.release_data();

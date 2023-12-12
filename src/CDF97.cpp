@@ -126,26 +126,24 @@ void sperr::CDF97::idwt3d()
     m_idwt3d_wavelet_packet();
 }
 
-auto sperr::CDF97::idwt3d_multi_res() -> std::vector<vecd_type>
+void sperr::CDF97::idwt3d_multi_res(std::vector<vecd_type>& h)
 {
-  auto ret = std::vector<vecd_type>();
   auto dyadic = sperr::can_use_dyadic(m_dims);
 
   if (dyadic) {
-    ret.reserve(*dyadic);
+    h.resize(*dyadic);
     for (size_t lev = *dyadic; lev > 0; lev--) {
       auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev);
       auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev);
       auto [z, zd] = sperr::calc_approx_detail_len(m_dims[2], lev);
-      auto vol = m_sub_volume({x, y, z});
-      ret.emplace_back(std::move(vol));
+      auto& buf = h[*dyadic - lev];
+      buf.resize(x * y * z);
+      m_sub_volume({x, y, z}, buf.begin());
       m_idwt3d_one_level(m_data_buf.begin(), {x + xd, y + yd, z + zd});
     }
   }
   else
     m_idwt3d_wavelet_packet();
-
-  return ret;
 }
 
 void sperr::CDF97::m_dwt3d_wavelet_packet()
@@ -635,12 +633,10 @@ auto sperr::CDF97::m_sub_slice(std::array<size_t, 2> subdims) const -> vecd_type
   return ret;
 }
 
-auto sperr::CDF97::m_sub_volume(dims_type subdims) const -> vecd_type
+void sperr::CDF97::m_sub_volume(dims_type subdims, itd_type dst) const
 {
   assert(subdims[0] <= m_dims[0] && subdims[1] <= m_dims[1] && subdims[2] <= m_dims[2]);
 
-  auto ret = vecd_type(subdims[0] * subdims[1] * subdims[2]);
-  auto dst = ret.begin();
   const auto slice_len = m_dims[0] * m_dims[1];
   for (size_t z = 0; z < subdims[2]; z++) {
     for (size_t y = 0; y < subdims[1]; y++) {
@@ -649,8 +645,6 @@ auto sperr::CDF97::m_sub_volume(dims_type subdims) const -> vecd_type
       dst += subdims[0];
     }
   }
-
-  return ret;
 }
 
 //

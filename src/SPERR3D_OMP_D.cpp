@@ -116,7 +116,7 @@ auto sperr::SPERR3D_OMP_D::decompress(const void* p, bool multi_res) -> RTNType
 
     // Also assemble the full hierarchy.
     if (multi_res) {
-      auto low_res = decompressor->release_hierarchy();
+      const auto& low_res = decompressor->view_hierarchy();
       assert(low_res.size() == m_hierarchy.size());
       for (size_t h = 0; h < low_res.size(); h++) {
         auto small_dim = chunk_res[h];
