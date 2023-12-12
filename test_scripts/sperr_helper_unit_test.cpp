@@ -96,21 +96,21 @@ TEST(sperr_helper, lod_3d_multi_chunk)
   // If chunk dim is not divisible, there's only one available resolution.
   auto vdim = dims_type{90, 90, 90};
   auto cdim = dims_type{60, 60, 60};
-  auto res = sperr::available_resolutions_multi_chunk(vdim, cdim);
+  auto res = sperr::available_resolutions(vdim, cdim);
   EXPECT_EQ(res.size(), 1);
   EXPECT_EQ(res.front(), vdim);
 
   // If the chunk itself doesn't support multi-resolution, then the whole volume doesn't too.
   vdim = {40, 40, 80};
   cdim = {20, 20, 40};
-  res = sperr::available_resolutions_multi_chunk(vdim, cdim);
+  res = sperr::available_resolutions(vdim, cdim);
   EXPECT_EQ(res.size(), 1);
   EXPECT_EQ(res.front(), vdim);
 
   // An obvious case.
   vdim = {128, 128, 128};
   cdim = {64, 64, 64};
-  res = sperr::available_resolutions_multi_chunk(vdim, cdim);
+  res = sperr::available_resolutions(vdim, cdim);
   EXPECT_EQ(res.size(), 4);
   EXPECT_EQ(res[0], (dims_type{16, 16, 16}));
   EXPECT_EQ(res[1], (dims_type{32, 32, 32}));
@@ -120,7 +120,7 @@ TEST(sperr_helper, lod_3d_multi_chunk)
   // A case with odd numbers.
   vdim = {156, 147, 177};
   cdim = {39, 49, 59};  // Should result in (4, 3, 3) small chunks.
-  res = sperr::available_resolutions_multi_chunk(vdim, cdim);
+  res = sperr::available_resolutions(vdim, cdim);
   EXPECT_EQ(res.size(), 4);
   EXPECT_EQ(res[0], (dims_type{20, 21, 24}));
   EXPECT_EQ(res[1], (dims_type{40, 39, 45}));

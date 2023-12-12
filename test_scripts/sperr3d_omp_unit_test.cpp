@@ -300,4 +300,48 @@ TEST(sperr3d_bit_rate, big)
   EXPECT_LT(stats[2], 47.1665);
 }
 
+//
+// Test multi-resolution
+//
+TEST(sperr3d_bit_rate, multi_resolution)
+{
+  auto input = sperr::read_whole_file<float>("../test_data/wmag128.float");
+  const auto dims = sperr::dims_type{128, 128, 128};
+  const auto chunks = sperr::dims_type{64, 64, 64};
+  const auto total_len = dims[0] * dims[1] * dims[2];
+  auto inputd = sperr::vecd_type(total_len);
+  std::copy(input.begin(), input.end(), inputd.begin());
+
+  // Use an encoder
+  double bpp = 2.0;
+  auto encoder = sperr::SPERR3D_OMP_C();
+  encoder.set_dims_and_chunks(dims, chunks);
+  encoder.set_bitrate(bpp);
+  encoder.set_num_threads(4);
+  encoder.compress(inputd.data(), inputd.size());
+  auto stream = encoder.get_encoded_bitstream();
+
+  // Use a decoder, test the native resolution results.
+  auto decoder = sperr::SPERR3D_OMP_D();
+  decoder.set_num_threads(0);
+  decoder.setup_decomp(stream.data(), stream.size());
+  decoder.decompress(stream.data(), true);
+  auto output_dims = decoder.get_dims();
+  EXPECT_EQ(output_dims, dims);
+  const auto& output = decoder.view_decoded_data();
+  auto stats = sperr::calc_stats(inputd.data(), output.data(), total_len, 4);
+  EXPECT_LT(stats[1], 9.6434);
+  EXPECT_GT(stats[2], 53.73996);
+  EXPECT_LT(stats[2], 53.73997);
+
+  // Also test the lower-resolution reconstructions.
+  auto hierarchy = decoder.release_hierarchy();
+  auto resolutions = sperr::available_resolutions(dims, chunks);
+  EXPECT_EQ(hierarchy.size() + 1, resolutions.size());
+  for (size_t i = 0; i < hierarchy.size(); i++) {
+    auto res = resolutions[i];
+    EXPECT_EQ(hierarchy[i].size(), res[0] * res[1] * res[2]);
+  }
+}
+
 }  // anonymous namespace

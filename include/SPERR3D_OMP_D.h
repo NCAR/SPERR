@@ -21,10 +21,11 @@ class SPERR3D_OMP_D {
   auto setup_decomp(const void*, size_t) -> RTNType;
 
   // The pointer passed in here MUST be the same as the one passed to `use_bitstream()`.
-  auto decompress(const void*) -> RTNType;
+  auto decompress(const void* bitstream, bool multi_res = false) -> RTNType;
 
-  auto release_decoded_data() -> sperr::vecd_type&&;
   auto view_decoded_data() const -> const sperr::vecd_type&;
+  auto release_decoded_data() -> sperr::vecd_type&&;
+  auto release_hierarchy() -> std::vector<vecd_type>&&;
 
   auto get_dims() const -> sperr::dims_type;
 
@@ -48,7 +49,8 @@ class SPERR3D_OMP_D {
 #endif
 
   sperr::vecd_type m_vol_buf;
-  std::vector<size_t> m_offsets;  // Address offset to locate each bitstream chunk.
+  std::vector<vecd_type> m_hierarchy;  // multi-resolution decoding
+  std::vector<size_t> m_offsets;       // Address offset to locate each bitstream chunk.
   const uint8_t* m_bitstream_ptr = nullptr;
 
   // Header size would be the magic number + num_chunks * 4

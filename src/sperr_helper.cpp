@@ -74,8 +74,7 @@ auto sperr::available_resolutions(dims_type full_dims) -> std::vector<dims_type>
   return resolutions;
 }
 
-auto sperr::available_resolutions_multi_chunk(dims_type vdim, dims_type cdim)
-    -> std::vector<dims_type>
+auto sperr::available_resolutions(dims_type vdim, dims_type cdim) -> std::vector<dims_type>
 {
   auto resolutions = std::vector<dims_type>();
 
