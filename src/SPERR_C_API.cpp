@@ -145,7 +145,7 @@ void C_API::sperr_parse_header(const void* src,
 
   auto dims = std::array<uint32_t, 3>{1, 1, 1};
   if (is_3d)
-    std::memcpy(dims.data(), srcp + 2, sizeof(dims));
+    std::memcpy(dims.data(), srcp + 2, sizeof(uint32_t) * 3);
   else
     std::memcpy(dims.data(), srcp + 2, sizeof(uint32_t) * 2);
   *dimx = dims[0];
