@@ -303,7 +303,7 @@ TEST(sperr3d_bit_rate, big)
 //
 // Test multi-resolution
 //
-TEST(sperr3d_bit_rate, multi_resolution)
+TEST(sperr3d_multi_res, canonical)
 {
   auto input = sperr::read_whole_file<float>("../test_data/wmag128.float");
   const auto dims = sperr::dims_type{128, 128, 128};
