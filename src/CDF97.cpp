@@ -66,31 +66,31 @@ auto sperr::CDF97::get_dims() const -> std::array<size_t, 3>
 
 void sperr::CDF97::dwt1d()
 {
-  size_t num_xforms = sperr::num_of_xforms(m_dims[0]);
+  auto num_xforms = sperr::num_of_xforms(m_dims[0]);
   m_dwt1d(m_data_buf.begin(), m_data_buf.size(), num_xforms);
 }
 
 void sperr::CDF97::idwt1d()
 {
-  size_t num_xforms = sperr::num_of_xforms(m_dims[0]);
+  auto num_xforms = sperr::num_of_xforms(m_dims[0]);
   m_idwt1d(m_data_buf.begin(), m_data_buf.size(), num_xforms);
 }
 
 void sperr::CDF97::dwt2d()
 {
-  size_t xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  auto xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
   m_dwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, xy);
 }
 
 void sperr::CDF97::idwt2d()
 {
-  size_t xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  auto xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
   m_idwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, xy);
 }
 
 auto sperr::CDF97::idwt2d_multi_res() -> std::vector<vecd_type>
 {
-  const size_t xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  const auto xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
   auto ret = std::vector<vecd_type>();
 
   if (xy > 0) {
@@ -347,7 +347,7 @@ void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_x
   // Note: here we call low-level functions (Qcc*()) instead of
   // m_dwt1d_one_level() because we want to have only one even/odd test at the outer loop.
 
-  const size_t max_len = std::max(len_xy[0], len_xy[1]);
+  const auto max_len = std::max(len_xy[0], len_xy[1]);
   const auto beg = m_qcc_buf.begin();
   const auto beg2 = beg + max_len;
 
@@ -402,7 +402,7 @@ void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_x
 
 void sperr::CDF97::m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_xy)
 {
-  const size_t max_len = std::max(len_xy[0], len_xy[1]);
+  const auto max_len = std::max(len_xy[0], len_xy[1]);
   const auto beg = m_qcc_buf.begin();  // First half of the buffer
   const auto beg2 = beg + max_len;     // Second half of the buffer
 
@@ -452,7 +452,7 @@ void sperr::CDF97::m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_
 void sperr::CDF97::m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz)
 {
   // First, do one level of transform on all XY planes.
-  const size_t plane_size_xy = m_dims[0] * m_dims[1];
+  const auto plane_size_xy = m_dims[0] * m_dims[1];
   for (size_t z = 0; z < len_xyz[2]; z++) {
     const size_t offset = plane_size_xy * z;
     m_dwt2d_one_level(vol + offset, {len_xyz[0], len_xyz[1]});
@@ -505,7 +505,7 @@ void sperr::CDF97::m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz
 
 void sperr::CDF97::m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz)
 {
-  const size_t plane_size_xy = m_dims[0] * m_dims[1];
+  const auto plane_size_xy = m_dims[0] * m_dims[1];
   const auto beg = m_qcc_buf.begin();  // First half of the buffer
   const auto beg2 = beg + len_xyz[2];  // Second half of the buffer
 
