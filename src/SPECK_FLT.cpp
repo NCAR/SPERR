@@ -573,8 +573,8 @@ auto sperr::SPECK_FLT::decompress(bool multi_res) -> RTNType
     return rtn;
 
   if (multi_res) {
-    auto resolutions = sperr::available_resolutions(m_dims);
-    if (m_hierarchy.size() + 1 != resolutions.size())
+    auto resolutions = sperr::coarsened_resolutions(m_dims);
+    if (m_hierarchy.size() != resolutions.size())
       return RTNType::Error;
     for (size_t h = 0; h < m_hierarchy.size(); h++) {
       auto res = resolutions[h];

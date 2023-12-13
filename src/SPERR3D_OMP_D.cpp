@@ -68,15 +68,15 @@ auto sperr::SPERR3D_OMP_D::decompress(const void* p, bool multi_res) -> RTNType
   m_vol_buf.resize(total_vals);
 
   // A few variables to support multi-resolution decoding.
-  const auto vol_res = sperr::available_resolutions(m_dims, m_chunk_dims);
-  const auto chunk_res = sperr::available_resolutions(m_chunk_dims);
+  const auto vol_res = sperr::coarsened_resolutions(m_dims, m_chunk_dims);
+  const auto chunk_res = sperr::coarsened_resolutions(m_chunk_dims);
   assert(chunk_res.size() == vol_res.size());
 
   // At each hierarchical level, find out where each chunk belongs to.
   auto hierarchy_chunks = std::vector<std::vector<std::array<size_t, 6>>>();
   if (multi_res) {
-    m_hierarchy.resize(vol_res.size() - 1);
-    hierarchy_chunks.resize(vol_res.size() - 1);
+    m_hierarchy.resize(vol_res.size());
+    hierarchy_chunks.resize(vol_res.size());
     for (size_t h = 0; h < m_hierarchy.size(); h++) {
       auto& res = vol_res[h];
       m_hierarchy[h].resize(res[0] * res[1] * res[2]);

@@ -16,8 +16,7 @@ auto create_filenames(std::string name, sperr::dims_type vdims, sperr::dims_type
     -> std::vector<std::string>
 {
   auto filenames = std::vector<std::string>();
-  auto resolutions = sperr::available_resolutions(vdims, cdims);
-  resolutions.pop_back();  // remove the native resolution
+  auto resolutions = sperr::coarsened_resolutions(vdims, cdims);
   filenames.reserve(resolutions.size());
   for (auto res : resolutions)
     filenames.push_back(name + "." + std::to_string(res[0]) + "x" + std::to_string(res[1]) + "x" +

@@ -39,93 +39,83 @@ TEST(sperr_helper, lod_2d)
 {
   // Very basic case
   auto dims = sperr::dims_type{64, 64, 1};
-  auto lod = sperr::available_resolutions(dims);
-  EXPECT_EQ(lod.size(), 4);
+  auto lod = sperr::coarsened_resolutions(dims);
+  EXPECT_EQ(lod.size(), 3);
   EXPECT_EQ(lod[0], (sperr::dims_type{8, 8, 1}));
   EXPECT_EQ(lod[2], (sperr::dims_type{32, 32, 1}));
-  EXPECT_EQ(lod[3], dims);
 
   // 2D is simpler, because it's always dyadic!
   dims = {80, 200, 1};
-  lod = sperr::available_resolutions(dims);
-  EXPECT_EQ(lod.size(), 5);
+  lod = sperr::coarsened_resolutions(dims);
+  EXPECT_EQ(lod.size(), 4);
   EXPECT_EQ(lod[0], (sperr::dims_type{5, 13, 1}));
   EXPECT_EQ(lod[2], (sperr::dims_type{20, 50, 1}));
-  EXPECT_EQ(lod[4], dims);
 }
 
 TEST(sperr_helper, lod_3d)
 {
   // Very basic case
   auto dims = sperr::dims_type{64, 64, 64};
-  auto lod = sperr::available_resolutions(dims);
-  EXPECT_EQ(lod.size(), 4);
+  auto lod = sperr::coarsened_resolutions(dims);
+  EXPECT_EQ(lod.size(), 3);
   EXPECT_EQ(lod[0], (sperr::dims_type{8, 8, 8}));
   EXPECT_EQ(lod[2], (sperr::dims_type{32, 32, 32}));
-  EXPECT_EQ(lod[3], dims);
 
   // XY has 5 levels, and Z has 6 levels, the overall is 5 levels.
   dims = {144, 144, 288};
-  lod = sperr::available_resolutions(dims);
-  EXPECT_EQ(lod.size(), 6);
+  lod = sperr::coarsened_resolutions(dims);
+  EXPECT_EQ(lod.size(), 5);
   EXPECT_EQ(lod[0], (sperr::dims_type{5, 5, 9}));
   EXPECT_EQ(lod[2], (sperr::dims_type{18, 18, 36}));
   EXPECT_EQ(lod[4], (sperr::dims_type{72, 72, 144}));
-  EXPECT_EQ(lod[5], dims);
 
   // Another test
   dims = {300, 300, 160};
-  lod = sperr::available_resolutions(dims);
-  EXPECT_EQ(lod.size(), 6);
+  lod = sperr::coarsened_resolutions(dims);
+  EXPECT_EQ(lod.size(), 5);
   EXPECT_EQ(lod[0], (sperr::dims_type{10, 10, 5}));
   EXPECT_EQ(lod[2], (sperr::dims_type{38, 38, 20}));
   EXPECT_EQ(lod[4], (sperr::dims_type{150, 150, 80}));
-  EXPECT_EQ(lod[5], dims);
 
-  // Dyadic will not be used, so only 1 level
+  // Dyadic will not be used, so no coarsened levels.
   dims = {128, 128, 60};
-  lod = sperr::available_resolutions(dims);
-  EXPECT_EQ(lod.size(), 1);
-  EXPECT_EQ(lod[0], dims);
+  lod = sperr::coarsened_resolutions(dims);
+  EXPECT_EQ(lod.size(), 0);
 }
 
 TEST(sperr_helper, lod_3d_multi_chunk)
 {
   using sperr::dims_type;
 
-  // If chunk dim is not divisible, there's only one available resolution.
+  // If chunk dim is not divisible, there's no available resolution.
   auto vdim = dims_type{90, 90, 90};
   auto cdim = dims_type{60, 60, 60};
-  auto res = sperr::available_resolutions(vdim, cdim);
-  EXPECT_EQ(res.size(), 1);
-  EXPECT_EQ(res.front(), vdim);
+  auto res = sperr::coarsened_resolutions(vdim, cdim);
+  EXPECT_EQ(res.size(), 0);
 
   // If the chunk itself doesn't support multi-resolution, then the whole volume doesn't too.
   vdim = {40, 40, 80};
   cdim = {20, 20, 40};
-  res = sperr::available_resolutions(vdim, cdim);
-  EXPECT_EQ(res.size(), 1);
-  EXPECT_EQ(res.front(), vdim);
+  res = sperr::coarsened_resolutions(vdim, cdim);
+  EXPECT_EQ(res.size(), 0);
 
   // An obvious case.
   vdim = {128, 128, 128};
   cdim = {64, 64, 64};
-  res = sperr::available_resolutions(vdim, cdim);
-  EXPECT_EQ(res.size(), 4);
+  res = sperr::coarsened_resolutions(vdim, cdim);
+  EXPECT_EQ(res.size(), 3);
   EXPECT_EQ(res[0], (dims_type{16, 16, 16}));
   EXPECT_EQ(res[1], (dims_type{32, 32, 32}));
   EXPECT_EQ(res[2], (dims_type{64, 64, 64}));
-  EXPECT_EQ(res[3], vdim);
 
   // A case with odd numbers.
   vdim = {156, 147, 177};
   cdim = {39, 49, 59};  // Should result in (4, 3, 3) small chunks.
-  res = sperr::available_resolutions(vdim, cdim);
-  EXPECT_EQ(res.size(), 4);
+  res = sperr::coarsened_resolutions(vdim, cdim);
+  EXPECT_EQ(res.size(), 3);
   EXPECT_EQ(res[0], (dims_type{20, 21, 24}));
   EXPECT_EQ(res[1], (dims_type{40, 39, 45}));
   EXPECT_EQ(res[2], (dims_type{80, 75, 90}));
-  EXPECT_EQ(res[3], vdim);
 }
 
 TEST(sperr_helper, approx_detail_len)

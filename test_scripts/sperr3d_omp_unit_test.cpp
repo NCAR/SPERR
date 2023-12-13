@@ -336,8 +336,8 @@ TEST(sperr3d_multi_res, canonical)
 
   // Also test the lower-resolution reconstructions.
   auto hierarchy = decoder.release_hierarchy();
-  auto resolutions = sperr::available_resolutions(dims, chunks);
-  EXPECT_EQ(hierarchy.size() + 1, resolutions.size());
+  auto resolutions = sperr::coarsened_resolutions(dims, chunks);
+  EXPECT_EQ(hierarchy.size(), resolutions.size());
   for (size_t i = 0; i < hierarchy.size(); i++) {
     auto res = resolutions[i];
     EXPECT_EQ(hierarchy[i].size(), res[0] * res[1] * res[2]);

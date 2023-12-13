@@ -70,21 +70,21 @@ auto can_use_dyadic(dims_type) -> std::optional<size_t>;
 
 // Given the native resolution of either a 3D volume or 2D slice, it decides if and how many
 //    coarsened resolutions are available.
-//    The return vector will always have one element, which is the native resolution (input).
-//    If multi-resolution is supported, then it contains the coarsened resolutions too.
+//    If multi-resolution is not supported, then it returns an empty vector.
+//    If multi-resolution is supported, then it returns the coarsened resolutions.
 //    Note 1: this function assumes a single chunk.
 //    Note 2: it's UB if `dim` is a 1D array.
-auto available_resolutions(dims_type dim) -> std::vector<dims_type>;
+auto coarsened_resolutions(dims_type dim) -> std::vector<dims_type>;
 
 // Given the native resolution and preferred chunk size of a 3D volume, it decides if and how many
 //    coarsened resolutions are available.
-//    The return vector will always have one element, which is the native resolution (input).
-//    If multi-resolution is supported, then it contains the coarsened resolutions too.
+//    If multi-resolution is not supported, then it returns an empty vector.
+//    If multi-resolution is supported, then it returns the coarsened resolutions.
 //    Note1 : for the multi-chunk volume to support multi-resolution,
 //            1) the volume dimension has to be perfectly divisible by the chunk dimension, and
 //            2) the chunk dimension has to support multi-resolution.
 //    Note 2: it's UB if `vol` is a 1D array or 2D slice.
-auto available_resolutions(dims_type vol, dims_type chunk) -> std::vector<dims_type>;
+auto coarsened_resolutions(dims_type vol, dims_type chunk) -> std::vector<dims_type>;
 
 // How many partition operation could we perform given a length?
 // Length 0 and 1 can do 0 partitions; len=2 can do 1; len=3 can do 2, len=4 can

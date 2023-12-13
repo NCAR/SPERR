@@ -41,7 +41,7 @@ auto sperr::can_use_dyadic(dims_type dims) -> std::optional<size_t>
     return {};
 }
 
-auto sperr::available_resolutions(dims_type full_dims) -> std::vector<dims_type>
+auto sperr::coarsened_resolutions(dims_type full_dims) -> std::vector<dims_type>
 {
   auto resolutions = std::vector<dims_type>();
 
@@ -67,14 +67,10 @@ auto sperr::available_resolutions(dims_type full_dims) -> std::vector<dims_type>
     }
   }
 
-  // In every case, the last available resolution is the native resolution, even for a
-  // wavelet-packet decomposed 3D volume, which doesn't have any coarsened resolutions.
-  resolutions.push_back(full_dims);
-
   return resolutions;
 }
 
-auto sperr::available_resolutions(dims_type vdim, dims_type cdim) -> std::vector<dims_type>
+auto sperr::coarsened_resolutions(dims_type vdim, dims_type cdim) -> std::vector<dims_type>
 {
   auto resolutions = std::vector<dims_type>();
 
@@ -89,15 +85,13 @@ auto sperr::available_resolutions(dims_type vdim, dims_type cdim) -> std::vector
     auto ny = vdim[1] / cdim[1];
     auto nz = vdim[2] / cdim[2];
 
-    resolutions = sperr::available_resolutions(cdim);
+    resolutions = sperr::coarsened_resolutions(cdim);
     for (size_t i = 0; i < resolutions.size(); i++) {
       resolutions[i][0] *= nx;
       resolutions[i][1] *= ny;
       resolutions[i][2] *= nz;
     }
   }
-  else
-    resolutions.push_back(vdim);
 
   return resolutions;
 }

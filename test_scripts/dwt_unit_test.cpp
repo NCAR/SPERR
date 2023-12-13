@@ -250,8 +250,8 @@ TEST(dwt2d, image_multi_res)
     ASSERT_EQ(in_buf[i], float(result[i])) << " i = " << i;
 
   // Examine the coarsened levels.
-  auto resolutions = sperr::available_resolutions({dim_x, dim_y, 1});
-  EXPECT_EQ(hierarchy.size() + 1, resolutions.size());
+  auto resolutions = sperr::coarsened_resolutions({dim_x, dim_y, 1});
+  EXPECT_EQ(hierarchy.size(), resolutions.size());
   for (size_t i = 0; i < hierarchy.size(); i++) {
     const auto& slice = hierarchy[i];
     auto dims = resolutions[i];
@@ -395,8 +395,8 @@ TEST(dwt3d, multi_res)
     ASSERT_EQ(in_buf[i], float(result[i])) << " i = " << i;
 
   // Examine the coarsened levels.
-  auto resolutions = sperr::available_resolutions(dims);
-  EXPECT_EQ(hierarchy.size() + 1, resolutions.size());
+  auto resolutions = sperr::coarsened_resolutions(dims);
+  EXPECT_EQ(hierarchy.size(), resolutions.size());
   for (size_t i = 0; i < hierarchy.size(); i++) {
     const auto& vol = hierarchy[i];
     auto res = resolutions[i];
