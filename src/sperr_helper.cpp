@@ -48,7 +48,7 @@ auto sperr::coarsened_resolutions(dims_type full_dims) -> std::vector<dims_type>
   if (full_dims[2] > 1) {  // 3D.
     const auto dyadic = sperr::can_use_dyadic(full_dims);
     if (dyadic) {
-      resolutions.reserve(*dyadic + 1);
+      resolutions.reserve(*dyadic);
       for (size_t lev = *dyadic; lev > 0; lev--) {
         auto [x, xd] = sperr::calc_approx_detail_len(full_dims[0], lev);
         auto [y, yd] = sperr::calc_approx_detail_len(full_dims[1], lev);
@@ -59,7 +59,7 @@ auto sperr::coarsened_resolutions(dims_type full_dims) -> std::vector<dims_type>
   }
   else {  // 2D. Assume that there's no 1D use case that requires multi-resolution.
     size_t xy = sperr::num_of_xforms(std::min(full_dims[0], full_dims[1]));
-    resolutions.reserve(xy + 1);
+    resolutions.reserve(xy);
     for (size_t lev = xy; lev > 0; lev--) {
       auto [x, xd] = sperr::calc_approx_detail_len(full_dims[0], lev);
       auto [y, yd] = sperr::calc_approx_detail_len(full_dims[1], lev);

@@ -98,8 +98,7 @@ auto sperr::CDF97::idwt2d_multi_res() -> std::vector<vecd_type>
     for (size_t lev = xy; lev > 0; lev--) {
       auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev);
       auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev);
-      auto slice = m_sub_slice({x, y});
-      ret.emplace_back(std::move(slice));
+      ret.emplace_back(m_sub_slice({x, y}));
       m_idwt2d_one_level(m_data_buf.begin(), {x + xd, y + yd});
     }
   }

@@ -78,7 +78,7 @@ auto sperr::SPERR3D_OMP_D::decompress(const void* p, bool multi_res) -> RTNType
     m_hierarchy.resize(vol_res.size());
     hierarchy_chunks.resize(vol_res.size());
     for (size_t h = 0; h < m_hierarchy.size(); h++) {
-      auto& res = vol_res[h];
+      const auto& res = vol_res[h];
       m_hierarchy[h].resize(res[0] * res[1] * res[2]);
       hierarchy_chunks[h] = sperr::chunk_volume(res, chunk_res[h]);
     }
@@ -99,7 +99,7 @@ auto sperr::SPERR3D_OMP_D::decompress(const void* p, bool multi_res) -> RTNType
 #endif
 
 #pragma omp parallel for num_threads(m_num_threads)
-  for (size_t i = 0; i < num_chunks; i++) {
+  for (size_t chunkI = 0; chunkI < num_chunks; chunkI++) {
 #ifdef USE_OMP
     auto& decompressor = m_decompressors[omp_get_thread_num()];
 #else
@@ -107,24 +107,24 @@ auto sperr::SPERR3D_OMP_D::decompress(const void* p, bool multi_res) -> RTNType
 #endif
 
     // Setup decompressor parameters, and decompress!
-    decompressor->set_dims({chunks[i][1], chunks[i][3], chunks[i][5]});
-    chunk_rtn[i * 2] =
-        decompressor->use_bitstream(m_bitstream_ptr + m_offsets[i * 2], m_offsets[i * 2 + 1]);
-    chunk_rtn[i * 2 + 1] = decompressor->decompress(multi_res);
+    decompressor->set_dims({chunks[chunkI][1], chunks[chunkI][3], chunks[chunkI][5]});
+    chunk_rtn[chunkI * 2] = decompressor->use_bitstream(m_bitstream_ptr + m_offsets[chunkI * 2],
+                                                        m_offsets[chunkI * 2 + 1]);
+    chunk_rtn[chunkI * 2 + 1] = decompressor->decompress(multi_res);
     const auto& small_vol = decompressor->view_decoded_data();
-    m_scatter_chunk(m_vol_buf, m_dims, small_vol, chunks[i]);
+    m_scatter_chunk(m_vol_buf, m_dims, small_vol, chunks[chunkI]);
 
     // Also assemble the full hierarchy.
     if (multi_res) {
       const auto& low_res = decompressor->view_hierarchy();
       assert(low_res.size() == m_hierarchy.size());
       for (size_t h = 0; h < low_res.size(); h++) {
-        auto small_dim = chunk_res[h];
+        const auto& small_dim = chunk_res[h];
         assert(low_res[h].size() == small_dim[0] * small_dim[1] * small_dim[2]);
-        m_scatter_chunk(m_hierarchy[h], vol_res[h], low_res[h], hierarchy_chunks[h][i]);
+        m_scatter_chunk(m_hierarchy[h], vol_res[h], low_res[h], hierarchy_chunks[h][chunkI]);
       }
     }
-  }
+  }  // End of OMP parallel section.
 
   auto fail = std::find_if_not(chunk_rtn.begin(), chunk_rtn.end(),
                                [](auto r) { return r == RTNType::Good; });

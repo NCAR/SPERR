@@ -446,7 +446,7 @@ FIXED_RATE_HIGH_PREC_LABEL:
     rtn = m_cdf.take_data(std::move(m_vals_d), m_dims);
     if (rtn != RTNType::Good)
       return rtn;
-    m_inverse_wavelet_xform(false);
+    m_inverse_wavelet_xform(false); // No multi-resolution needed!
     m_vals_d = m_cdf.release_data();
     auto LOS = std::vector<Outlier>();
     LOS.reserve(0.04 * total_vals);  // Reserve space to hold about 4% of total values.
@@ -526,7 +526,7 @@ FIXED_RATE_HIGH_PREC_LABEL:
 auto sperr::SPECK_FLT::decompress(bool multi_res) -> RTNType
 {
   m_vals_d.clear();
-  m_hierarchy.clear();
+  // m_hierarchy.clear(); // Intentionally not clearing, reusing already-allocated memory.
   std::visit([](auto&& vec) { vec.clear(); }, m_vals_ui);
   m_sign_array.resize(0);
 
@@ -577,7 +577,7 @@ auto sperr::SPECK_FLT::decompress(bool multi_res) -> RTNType
     if (m_hierarchy.size() != resolutions.size())
       return RTNType::Error;
     for (size_t h = 0; h < m_hierarchy.size(); h++) {
-      auto res = resolutions[h];
+      const auto& res = resolutions[h];
       if (m_hierarchy[h].size() != res[0] * res[1] * res[2])
         return RTNType::Error;
       else

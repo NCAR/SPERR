@@ -105,8 +105,14 @@ void sperr::Bitstream::wseek(size_t offset)
 
 void sperr::Bitstream::wbit(bool bit)
 {
-  m_buffer += uint64_t{bit} << m_bits;
-  if (++m_bits == 64) {
+  m_buffer |= uint64_t{bit} << m_bits;
+
+#if __has_cpp_attribute(unlikely)
+  if (++m_bits == 64) [[unlikely]]
+#else
+  if (++m_bits == 64)
+#endif
+  {
     if (m_itr == m_buf.end()) {  // allocate memory if necessary.
       const auto dist = m_buf.size();
       m_buf.resize(std::max(size_t{1}, dist) * 2 - dist / 2);  // use a growth factor of 1.5
