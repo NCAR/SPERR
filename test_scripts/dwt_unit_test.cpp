@@ -219,8 +219,8 @@ TEST(dwt2d, big_image_odd)
 
 TEST(dwt2d, image_multi_res)
 {
-  const char* input = "../test_data/ball.100x100.float";
-  size_t dim_x = 100, dim_y = 100;
+  const char* input = "../test_data/127x127.float";
+  size_t dim_x = 127, dim_y = 127;
   const size_t total_vals = dim_x * dim_y;
 
   // Let's read in binaries as 4-byte floats.
