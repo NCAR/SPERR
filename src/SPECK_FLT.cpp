@@ -446,7 +446,7 @@ FIXED_RATE_HIGH_PREC_LABEL:
     rtn = m_cdf.take_data(std::move(m_vals_d), m_dims);
     if (rtn != RTNType::Good)
       return rtn;
-    m_inverse_wavelet_xform(false); // No multi-resolution needed!
+    m_inverse_wavelet_xform(false);  // No multi-resolution needed!
     m_vals_d = m_cdf.release_data();
     auto LOS = std::vector<Outlier>();
     LOS.reserve(0.04 * total_vals);  // Reserve space to hold about 4% of total values.
