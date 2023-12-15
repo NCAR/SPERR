@@ -33,10 +33,10 @@ class SPECK3D_INT_ENC final : public SPECK3D_INT<T> {
   using SPECK3D_INT<T>::m_partition_S_XYZ;
   using SPECK3D_INT<T>::m_code_S;
 
-  void m_process_S(size_t idx1, size_t idx2, size_t& counter, bool output) final override;
-  void m_process_P(size_t idx, size_t morton, size_t& counter, bool output) final override;
-  void m_process_P_lite(size_t idx) final override;
-  void m_additional_initialization() final override;
+  void m_process_S(size_t idx1, size_t idx2, size_t& counter, bool output) final;
+  void m_process_P(size_t idx, size_t morton, size_t& counter, bool output) final;
+  void m_process_P_lite(size_t idx) final;
+  void m_additional_initialization() final;
 
   // Data structures and functions for morton data layout.
   vecui_type m_morton_buf;

@@ -34,9 +34,9 @@ class SPECK2D_INT : public SPECK_INT<T> {
   using SPECK_INT<T>::m_coeff_buf;
   using SPECK_INT<T>::m_bit_buffer;
 
-  void m_sorting_pass() final override;
-  void m_clean_LIS() final override;
-  void m_initialize_lists() final override;
+  void m_sorting_pass() final;
+  void m_clean_LIS() final;
+  void m_initialize_lists() final;
 
   void m_code_S(size_t idx1, size_t idx2);
   void m_code_I();

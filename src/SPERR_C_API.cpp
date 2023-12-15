@@ -19,7 +19,7 @@ int C_API::sperr_comp_2d(const void* src,
                          size_t* dst_len)
 {
   // Examine if `dst` is pointing to a NULL pointer
-  if (*dst != NULL)
+  if (*dst != nullptr)
     return 1;
   if (quality <= 0.0)
     return 2;
@@ -103,7 +103,7 @@ int C_API::sperr_decomp_2d(const void* src,
                            void** dst)
 {
   // Examine if `dst` is pointing to a NULL pointer
-  if (*dst != NULL)
+  if (*dst != nullptr)
     return 1;
 
   // Use a decoder, similar steps as in `utilities/sperr2d.cpp`.
@@ -168,7 +168,7 @@ int C_API::sperr_comp_3d(const void* src,
                          size_t* dst_len)
 {
   // Examine if `dst` is pointing to a NULL pointer
-  if (*dst != NULL)
+  if (*dst != nullptr)
     return 1;
   if (quality <= 0.0)
     return 2;
@@ -225,7 +225,7 @@ int C_API::sperr_decomp_3d(const void* src,
                            void** dst)
 {
   // Examine if `dst` is pointing to a NULL pointer.
-  if (*dst != NULL)
+  if (*dst != nullptr)
     return 1;
 
   // Use a decompressor to decompress this bitstream
@@ -263,7 +263,7 @@ int C_API::sperr_trunc_3d(const void* src,
                           void** dst,
                           size_t* dst_len)
 {
-  if (*dst != NULL)
+  if (*dst != nullptr)
     return 1;
 
   auto tools = sperr::SPERR3D_Stream_Tools();

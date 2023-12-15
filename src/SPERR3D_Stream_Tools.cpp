@@ -114,7 +114,7 @@ auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, unsigne
   auto arr20 = std::array<uint8_t, 20>();
   std::copy(vec20.cbegin(), vec20.cend(), arr20.begin());
   const auto header_len = this->get_header_len(arr20);
-  const auto header_buf = sperr::read_n_bytes(filename, header_len);
+  auto header_buf = sperr::read_n_bytes(filename, header_len);
   if (header_buf.empty())
     return header_buf;
 

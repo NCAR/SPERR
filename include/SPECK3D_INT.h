@@ -55,9 +55,9 @@ class SPECK3D_INT : public SPECK_INT<T> {
   using SPECK_INT<T>::m_coeff_buf;
   using SPECK_INT<T>::m_bit_buffer;
 
-  void m_initialize_lists() final override;
-  void m_sorting_pass() final override;
-  void m_clean_LIS() final override;
+  void m_initialize_lists() final;
+  void m_sorting_pass() final;
+  void m_clean_LIS() final;
 
   virtual void m_process_S(size_t idx1, size_t idx2, size_t& counter, bool) = 0;
   virtual void m_process_P(size_t i, size_t m, size_t& c, bool) = 0;  // Called by `m_code_S()`.

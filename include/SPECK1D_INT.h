@@ -58,8 +58,8 @@ class SPECK1D_INT : public SPECK_INT<T> {
   //    consideration, functions such as m_process_S() and m_process_P() have different signatures
   //    during decoding/encoding, so they're implemented in their respective subclasses.
   //
-  void m_clean_LIS() final override;
-  void m_initialize_lists() final override;
+  void m_clean_LIS() final;
+  void m_initialize_lists() final;
 
   auto m_partition_set(Set1D) const -> std::array<Set1D, 2>;
 
