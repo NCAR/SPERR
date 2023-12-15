@@ -14,12 +14,86 @@
 auto sperr::num_of_xforms(size_t len) -> size_t
 {
   assert(len > 0);
-  // I decide 8 is the minimal length to do one level of xform.
-  const auto f = std::log2(double(len) / 8.0);
+  // I decide 9 is the minimal length to do one level of xform.
+  const auto f = std::log2(static_cast<double>(len) / 9.0);
   const auto num = f < 0.0 ? size_t{0} : static_cast<size_t>(f) + 1;
   // I also decide that no matter what the input size is,
   // six (6) is the maxinum number of transforms to do.
   return std::min(num, size_t{6});
+}
+
+auto sperr::can_use_dyadic(dims_type dims) -> std::optional<size_t>
+{
+  // In case of 2D or 1D `dims`, return empty right away.
+  if (dims[2] < 2 || dims[1] < 2)
+    return {};
+
+  auto xy = sperr::num_of_xforms(std::min(dims[0], dims[1]));
+  auto z = sperr::num_of_xforms(dims[2]);
+
+  // Note: if some dimensions can do 5 levels of transforms and some can do 6, we use
+  //       dyanic scheme and do 5 levels on all of them. I.e., the benefit of dyanic
+  //       transforms exceeds one extra level of transform.
+  //
+  if ((xy == z) || (xy >= 5 && z >= 5))
+    return std::min(xy, z);
+  else
+    return {};
+}
+
+auto sperr::coarsened_resolutions(dims_type full_dims) -> std::vector<dims_type>
+{
+  auto resolutions = std::vector<dims_type>();
+
+  if (full_dims[2] > 1) {  // 3D.
+    const auto dyadic = sperr::can_use_dyadic(full_dims);
+    if (dyadic) {
+      resolutions.reserve(*dyadic);
+      for (size_t lev = *dyadic; lev > 0; lev--) {
+        auto [x, xd] = sperr::calc_approx_detail_len(full_dims[0], lev);
+        auto [y, yd] = sperr::calc_approx_detail_len(full_dims[1], lev);
+        auto [z, zd] = sperr::calc_approx_detail_len(full_dims[2], lev);
+        resolutions.push_back({x, y, z});
+      }
+    }
+  }
+  else {  // 2D. Assume that there's no 1D use case that requires multi-resolution.
+    size_t xy = sperr::num_of_xforms(std::min(full_dims[0], full_dims[1]));
+    resolutions.reserve(xy);
+    for (size_t lev = xy; lev > 0; lev--) {
+      auto [x, xd] = sperr::calc_approx_detail_len(full_dims[0], lev);
+      auto [y, yd] = sperr::calc_approx_detail_len(full_dims[1], lev);
+      resolutions.push_back({x, y, 1});
+    }
+  }
+
+  return resolutions;
+}
+
+auto sperr::coarsened_resolutions(dims_type vdim, dims_type cdim) -> std::vector<dims_type>
+{
+  auto resolutions = std::vector<dims_type>();
+
+  // Test if the volume dimension is divisible by the chunk dimension.
+  bool divisible = true;
+  for (size_t i = 0; i < 3; i++)
+    if (vdim[i] % cdim[i] != 0)
+      divisible = false;
+
+  if (divisible) {
+    auto nx = vdim[0] / cdim[0];
+    auto ny = vdim[1] / cdim[1];
+    auto nz = vdim[2] / cdim[2];
+
+    resolutions = sperr::coarsened_resolutions(cdim);
+    for (size_t i = 0; i < resolutions.size(); i++) {
+      resolutions[i][0] *= nx;
+      resolutions[i][1] *= ny;
+      resolutions[i][2] *= nz;
+    }
+  }
+
+  return resolutions;
 }
 
 auto sperr::num_of_partitions(size_t len) -> size_t

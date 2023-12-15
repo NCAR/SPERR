@@ -40,8 +40,10 @@ class SPECK_FLT {
   // Output
   //
   void append_encoded_bitstream(vec8_type& buf) const;
-  auto release_decoded_data() -> vecd_type&&;
   auto view_decoded_data() const -> const vecd_type&;
+  auto view_hierarchy() const -> const std::vector<vecd_type>&;
+  auto release_decoded_data() -> vecd_type&&;
+  auto release_hierarchy() -> std::vector<vecd_type>&&;
 
   //
   // General configuration and info.
@@ -56,7 +58,7 @@ class SPECK_FLT {
   // Actions
   //
   auto compress() -> RTNType;
-  auto decompress() -> RTNType;
+  auto decompress(bool multi_res = false) -> RTNType;
 
  protected:
   UINTType m_uint_flag = UINTType::UINT64;
@@ -87,6 +89,8 @@ class SPECK_FLT {
   vecd_type m_vals_orig;                // encoding only (PWE mode)
   CompMode m_mode = CompMode::Unknown;  // encoding only
 
+  std::vector<vecd_type> m_hierarchy;  // multi-resolution decoding
+
   // Instantiate `m_vals_ui` based on the chosen integer length.
   void m_instantiate_int_vec();
 
@@ -97,7 +101,7 @@ class SPECK_FLT {
 
   // Both wavelet transforms operate on `m_vals_d`.
   virtual void m_wavelet_xform() = 0;
-  virtual void m_inverse_wavelet_xform() = 0;
+  virtual void m_inverse_wavelet_xform(bool multi_res) = 0;
 
   // This base class provides two midtread quantization implementations.
   //    Quantization reads from `m_vals_d`, and writes to `m_vals_ui` and `m_sign_array`.

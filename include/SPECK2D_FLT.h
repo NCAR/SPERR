@@ -11,7 +11,7 @@ class SPECK2D_FLT : public SPECK_FLT {
   void m_instantiate_decoder() override;
 
   void m_wavelet_xform() override;
-  void m_inverse_wavelet_xform() override;
+  void m_inverse_wavelet_xform(bool) override;
 };
 
 };  // namespace sperr

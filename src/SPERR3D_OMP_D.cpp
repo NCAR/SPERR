@@ -20,7 +20,7 @@ void sperr::SPERR3D_OMP_D::set_num_threads(size_t n)
 #endif
 }
 
-auto sperr::SPERR3D_OMP_D::setup_decomp(const void* p, size_t total_len) -> RTNType
+auto sperr::SPERR3D_OMP_D::use_bitstream(const void* p, size_t total_len) -> RTNType
 {
   // This method gathers information from the header.
   //    It does NOT, however, read the actual bitstream. The actual bitstream
@@ -48,7 +48,7 @@ auto sperr::SPERR3D_OMP_D::setup_decomp(const void* p, size_t total_len) -> RTNT
   return RTNType::Good;
 }
 
-auto sperr::SPERR3D_OMP_D::decompress(const void* p) -> RTNType
+auto sperr::SPERR3D_OMP_D::decompress(const void* p, bool multi_res) -> RTNType
 {
   if (p == nullptr || m_bitstream_ptr == nullptr)
     return RTNType::Error;
@@ -67,6 +67,23 @@ auto sperr::SPERR3D_OMP_D::decompress(const void* p) -> RTNType
   // Allocate a buffer to store the entire volume
   m_vol_buf.resize(total_vals);
 
+  // A few variables to support multi-resolution decoding.
+  const auto vol_res = sperr::coarsened_resolutions(m_dims, m_chunk_dims);
+  const auto chunk_res = sperr::coarsened_resolutions(m_chunk_dims);
+  assert(chunk_res.size() == vol_res.size());
+
+  // At each hierarchical level, find out where each chunk belongs to.
+  auto hierarchy_chunks = std::vector<std::vector<std::array<size_t, 6>>>();
+  if (multi_res) {
+    m_hierarchy.resize(vol_res.size());
+    hierarchy_chunks.resize(vol_res.size());
+    for (size_t h = 0; h < m_hierarchy.size(); h++) {
+      const auto& res = vol_res[h];
+      m_hierarchy[h].resize(res[0] * res[1] * res[2]);
+      hierarchy_chunks[h] = sperr::chunk_volume(res, chunk_res[h]);
+    }
+  }
+
   // Create number of decompressor instances equal to the number of threads
   auto chunk_rtn = std::vector<RTNType>(num_chunks * 2, RTNType::Good);
 
@@ -82,7 +99,7 @@ auto sperr::SPERR3D_OMP_D::decompress(const void* p) -> RTNType
 #endif
 
 #pragma omp parallel for num_threads(m_num_threads)
-  for (size_t i = 0; i < num_chunks; i++) {
+  for (size_t chunkI = 0; chunkI < num_chunks; chunkI++) {
 #ifdef USE_OMP
     auto& decompressor = m_decompressors[omp_get_thread_num()];
 #else
@@ -90,13 +107,24 @@ auto sperr::SPERR3D_OMP_D::decompress(const void* p) -> RTNType
 #endif
 
     // Setup decompressor parameters, and decompress!
-    decompressor->set_dims({chunks[i][1], chunks[i][3], chunks[i][5]});
-    chunk_rtn[i * 2] =
-        decompressor->use_bitstream(m_bitstream_ptr + m_offsets[i * 2], m_offsets[i * 2 + 1]);
-    chunk_rtn[i * 2 + 1] = decompressor->decompress();
+    decompressor->set_dims({chunks[chunkI][1], chunks[chunkI][3], chunks[chunkI][5]});
+    chunk_rtn[chunkI * 2] = decompressor->use_bitstream(m_bitstream_ptr + m_offsets[chunkI * 2],
+                                                        m_offsets[chunkI * 2 + 1]);
+    chunk_rtn[chunkI * 2 + 1] = decompressor->decompress(multi_res);
     const auto& small_vol = decompressor->view_decoded_data();
-    m_scatter_chunk(m_vol_buf, m_dims, small_vol, chunks[i]);
-  }
+    m_scatter_chunk(m_vol_buf, m_dims, small_vol, chunks[chunkI]);
+
+    // Also assemble the full hierarchy.
+    if (multi_res) {
+      const auto& low_res = decompressor->view_hierarchy();
+      assert(low_res.size() == m_hierarchy.size());
+      for (size_t h = 0; h < low_res.size(); h++) {
+        const auto& small_dim = chunk_res[h];
+        assert(low_res[h].size() == small_dim[0] * small_dim[1] * small_dim[2]);
+        m_scatter_chunk(m_hierarchy[h], vol_res[h], low_res[h], hierarchy_chunks[h][chunkI]);
+      }
+    }
+  }  // End of OMP parallel section.
 
   auto fail = std::find_if_not(chunk_rtn.begin(), chunk_rtn.end(),
                                [](auto r) { return r == RTNType::Good; });
@@ -108,8 +136,12 @@ auto sperr::SPERR3D_OMP_D::decompress(const void* p) -> RTNType
 
 auto sperr::SPERR3D_OMP_D::release_decoded_data() -> sperr::vecd_type&&
 {
-  m_dims = {0, 0, 0};
   return std::move(m_vol_buf);
+}
+
+auto sperr::SPERR3D_OMP_D::release_hierarchy() -> std::vector<vecd_type>&&
+{
+  return std::move(m_hierarchy);
 }
 
 auto sperr::SPERR3D_OMP_D::view_decoded_data() const -> const sperr::vecd_type&
@@ -120,6 +152,11 @@ auto sperr::SPERR3D_OMP_D::view_decoded_data() const -> const sperr::vecd_type&
 auto sperr::SPERR3D_OMP_D::get_dims() const -> std::array<size_t, 3>
 {
   return m_dims;
+}
+
+auto sperr::SPERR3D_OMP_D::get_chunk_dims() const -> std::array<size_t, 3>
+{
+  return m_chunk_dims;
 }
 
 void sperr::SPERR3D_OMP_D::m_scatter_chunk(vecd_type& big_vol,

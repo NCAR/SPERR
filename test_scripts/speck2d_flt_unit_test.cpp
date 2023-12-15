@@ -44,7 +44,7 @@ TEST(SPECK2D_FLT, ConstantField)
   encoder.take_data(std::move(tmp));
   rtn = encoder.compress();
   ASSERT_EQ(rtn, sperr::RTNType::Good);
-  bitstream.clear(); 
+  bitstream.clear();
   encoder.append_encoded_bitstream(bitstream);
   EXPECT_EQ(bitstream.size(), 17);  // Constant storage to record a constant field.
 
@@ -68,7 +68,7 @@ TEST(SPECK2D_FLT, IntegerLen)
   auto inputd = sperr::vecd_type(total_vals);
   std::copy(inputf.cbegin(), inputf.cend(), inputd.begin());
   double psnr = 40.0;
-  
+
   // Encode
   auto encoder = sperr::SPECK2D_FLT();
   encoder.set_dims(dims);
@@ -157,7 +157,7 @@ TEST(SPECK2D_FLT, OutlierCorrection)
   auto inputd = sperr::vecd_type(total_vals);
   std::copy(inputf.cbegin(), inputf.cend(), inputd.begin());
   double tol = 1.0e-5;
-  
+
   // Encode
   auto encoder = sperr::SPECK2D_FLT();
   encoder.set_dims(dims);
@@ -209,7 +209,7 @@ TEST(SPECK2D_FLT, OutlierCorrection)
     EXPECT_NEAR(inputd[i], outputd[i], tol);
 
   //
-  // Test a big tolerance which essentially produces all zero integer arrays. 
+  // Test a big tolerance which essentially produces all zero integer arrays.
   // The compression should still carry on, and tolerance being honored.
   //
   tol = 1e-2;
@@ -245,7 +245,7 @@ TEST(SPECK2D_FLT, TargetPSNR)
   const auto total_vals = inputf.size();
   auto inputd = sperr::vecd_type(total_vals);
   std::copy(inputf.cbegin(), inputf.cend(), inputd.begin());
-  
+
   // Encode
   auto psnr = 40.0;
   auto encoder = sperr::SPECK2D_FLT();
@@ -279,7 +279,7 @@ TEST(SPECK2D_FLT, TargetPSNR)
   encoder.copy_data(inputd.data(), total_vals);
   rtn = encoder.compress();
   ASSERT_EQ(rtn, sperr::RTNType::Good);
-  bitstream.clear(); 
+  bitstream.clear();
   encoder.append_encoded_bitstream(bitstream);
 
   decoder.set_dims(dims);
@@ -292,7 +292,7 @@ TEST(SPECK2D_FLT, TargetPSNR)
 #ifdef PRINT
   std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
 #endif
-  EXPECT_GT(stats[2], psnr - 0.16); // An example of not exactly reaching the target PSNR.
+  EXPECT_GT(stats[2], psnr - 0.16);  // An example of not exactly reaching the target PSNR.
 
   // Test a higher PSNR
   //
@@ -302,7 +302,7 @@ TEST(SPECK2D_FLT, TargetPSNR)
   encoder.copy_data(inputd.data(), total_vals);
   rtn = encoder.compress();
   ASSERT_EQ(rtn, sperr::RTNType::Good);
-  bitstream.clear(); 
+  bitstream.clear();
   encoder.append_encoded_bitstream(bitstream);
 
   decoder.set_dims(dims);
@@ -315,7 +315,7 @@ TEST(SPECK2D_FLT, TargetPSNR)
 #ifdef PRINT
   std::printf("bpp = %.2f, PSNR = %.2f\n", 8.0 * bitstream.size() / total_vals, stats[2]);
 #endif
-  EXPECT_GT(stats[2], psnr - 0.16); // Another example of not exactly reaching the target PSNR.
+  EXPECT_GT(stats[2], psnr - 0.16);  // Another example of not exactly reaching the target PSNR.
 }
 
 TEST(SPECK2D_FLT, TargetBPP)

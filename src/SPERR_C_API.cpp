@@ -145,7 +145,7 @@ void C_API::sperr_parse_header(const void* src,
 
   auto dims = std::array<uint32_t, 3>{1, 1, 1};
   if (is_3d)
-    std::memcpy(dims.data(), srcp + 2, sizeof(dims));
+    std::memcpy(dims.data(), srcp + 2, sizeof(uint32_t) * 3);
   else
     std::memcpy(dims.data(), srcp + 2, sizeof(uint32_t) * 2);
   *dimx = dims[0];
@@ -231,7 +231,7 @@ int C_API::sperr_decomp_3d(const void* src,
   // Use a decompressor to decompress this bitstream
   auto decoder = std::make_unique<sperr::SPERR3D_OMP_D>();
   decoder->set_num_threads(nthreads);
-  decoder->setup_decomp(src, src_len);
+  decoder->use_bitstream(src, src_len);
   auto rtn = decoder->decompress(src);
   if (rtn != sperr::RTNType::Good)
     return -1;

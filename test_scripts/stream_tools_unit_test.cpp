@@ -1,5 +1,5 @@
-#include "SPERR3D_Stream_Tools.h"
 #include "SPERR3D_OMP_C.h"
+#include "SPERR3D_Stream_Tools.h"
 
 #include "gtest/gtest.h"
 
@@ -87,7 +87,7 @@ TEST(stream_tools, regular_1chunk)
   // Header should (mostly) remain the same.
   EXPECT_EQ(part[0], stream[0]);
   EXPECT_EQ(part[1], stream[1] + 128);
-  for (size_t i = 2; i < header.header_len - 4; i++) // Exclude the last 4 bytes (chunk len).
+  for (size_t i = 2; i < header.header_len - 4; i++)  // Exclude the last 4 bytes (chunk len).
     EXPECT_EQ(part[i], stream[i]);
 
   // The remaining bytes of each chunk should also remain the same.
@@ -183,4 +183,4 @@ TEST(stream_tools, min_chunk_len)
   EXPECT_EQ(trunc, part);
 }
 
-} // anonymous namespace
+}  // anonymous namespace

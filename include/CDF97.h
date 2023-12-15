@@ -1,12 +1,10 @@
 //
-// Four member functions and their implementation are from QccPack: link
-//   http://qccpack.sourceforge.net/index.shtml
-// Thanks to James Fowler for his excellent work!
-// These four functions are:
-//   void QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length);
-//   void QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length);
-//   void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length);
-//   void QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length);
+// Four member functions are heavily based on QccPack:
+//    http://qccpack.sourceforge.net/index.shtml
+//  - void QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length);
+//  - void QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length);
+//  - void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length);
+//  - void QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length);
 //
 
 #ifndef CDF97_H
@@ -35,13 +33,28 @@ class CDF97 {
   auto release_data() -> vecd_type&&;
   auto get_dims() const -> std::array<size_t, 3>;  // In 2D case, the 3rd value equals 1.
 
+  //
   // Action items
+  //
   void dwt1d();
   void dwt2d();
   void dwt3d();
   void idwt2d();
   void idwt1d();
   void idwt3d();
+
+  //
+  // Multi-resolution reconstruction
+  //
+
+  // If multi-resolution is supported (determined by `sperr::available_resolutions()`), then
+  //    it returns all the coarsened volumes, which are placed in the same order of resolutions
+  //    returned by `sperr::available_resolutions()`. The native resolution reconstruction should
+  //    still be retrieved by the `view_data()` or `release_data()` functions.
+  //    If multi-resolution is not supported, then it simply returns an empty vector, with the
+  //    decompression still performed, and the native resolution reconstruction ready.
+  [[nodiscard]] auto idwt2d_multi_res() -> std::vector<vecd_type>;
+  void idwt3d_multi_res(std::vector<vecd_type>&);
 
  private:
   using itd_type = vecd_type::iterator;
@@ -92,8 +105,14 @@ class CDF97 {
   // They should be invoked by the `dwt3d()` and `idwt3d()` public methods, not users, though.
   void m_dwt3d_wavelet_packet();
   void m_idwt3d_wavelet_packet();
-  void m_dwt3d_dyadic();
-  void m_idwt3d_dyadic();
+  void m_dwt3d_dyadic(size_t num_xforms);
+  void m_idwt3d_dyadic(size_t num_xforms);
+
+  // Extract a sub-slice/sub-volume starting with the same origin of the full slice/volume.
+  // It is UB if `subdims` exceeds the full dimension (`m_dims`).
+  // It is UB if `dst` does not point to a big enough space.
+  auto m_sub_slice(std::array<size_t, 2> subdims) const -> vecd_type;
+  void m_sub_volume(dims_type subdims, itd_type dst) const;
 
   //
   // Methods from QccPack, so keep their original names, interface, and the use of raw pointers.

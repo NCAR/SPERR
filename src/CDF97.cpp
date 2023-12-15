@@ -56,7 +56,6 @@ auto sperr::CDF97::view_data() const -> const vecd_type&
 
 auto sperr::CDF97::release_data() -> vecd_type&&
 {
-  m_dims = {0, 0, 0};
   return std::move(m_data_buf);
 }
 
@@ -67,50 +66,80 @@ auto sperr::CDF97::get_dims() const -> std::array<size_t, 3>
 
 void sperr::CDF97::dwt1d()
 {
-  size_t num_xforms = sperr::num_of_xforms(m_dims[0]);
+  auto num_xforms = sperr::num_of_xforms(m_dims[0]);
   m_dwt1d(m_data_buf.begin(), m_data_buf.size(), num_xforms);
 }
 
 void sperr::CDF97::idwt1d()
 {
-  size_t num_xforms = sperr::num_of_xforms(m_dims[0]);
+  auto num_xforms = sperr::num_of_xforms(m_dims[0]);
   m_idwt1d(m_data_buf.begin(), m_data_buf.size(), num_xforms);
 }
 
 void sperr::CDF97::dwt2d()
 {
-  size_t num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  m_dwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, num_xforms_xy);
+  auto xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  m_dwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, xy);
 }
 
 void sperr::CDF97::idwt2d()
 {
-  size_t num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  m_idwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, num_xforms_xy);
+  auto xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  m_idwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, xy);
+}
+
+auto sperr::CDF97::idwt2d_multi_res() -> std::vector<vecd_type>
+{
+  const auto xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  auto ret = std::vector<vecd_type>();
+
+  if (xy > 0) {
+    ret.reserve(xy);
+    for (size_t lev = xy; lev > 0; lev--) {
+      auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev);
+      auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev);
+      ret.emplace_back(m_sub_slice({x, y}));
+      m_idwt2d_one_level(m_data_buf.begin(), {x + xd, y + yd});
+    }
+  }
+
+  return ret;
 }
 
 void sperr::CDF97::dwt3d()
 {
-  auto num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  auto num_xforms_z = sperr::num_of_xforms(m_dims[2]);
-
-  // Note: if some dimensions can do 5 levels of transforms and some can do 6, we use
-  //       dyanic scheme and do 5 levels on all of them. I.e., the benefit of dyanic
-  //       transforms exceeds one extra level of transform.
-  //
-  if ((num_xforms_xy == num_xforms_z) || (num_xforms_xy >= 5 && num_xforms_xy >= 5))
-    m_dwt3d_dyadic();
+  auto dyadic = sperr::can_use_dyadic(m_dims);
+  if (dyadic)
+    m_dwt3d_dyadic(*dyadic);
   else
     m_dwt3d_wavelet_packet();
 }
 
 void sperr::CDF97::idwt3d()
 {
-  auto num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  auto num_xforms_z = sperr::num_of_xforms(m_dims[2]);
+  auto dyadic = sperr::can_use_dyadic(m_dims);
+  if (dyadic)
+    m_idwt3d_dyadic(*dyadic);
+  else
+    m_idwt3d_wavelet_packet();
+}
 
-  if ((num_xforms_xy == num_xforms_z) || (num_xforms_xy >= 5 && num_xforms_xy >= 5))
-    m_idwt3d_dyadic();
+void sperr::CDF97::idwt3d_multi_res(std::vector<vecd_type>& h)
+{
+  auto dyadic = sperr::can_use_dyadic(m_dims);
+
+  if (dyadic) {
+    h.resize(*dyadic);
+    for (size_t lev = *dyadic; lev > 0; lev--) {
+      auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev);
+      auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev);
+      auto [z, zd] = sperr::calc_approx_detail_len(m_dims[2], lev);
+      auto& buf = h[*dyadic - lev];
+      buf.resize(x * y * z);
+      m_sub_volume({x, y, z}, buf.begin());
+      m_idwt3d_one_level(m_data_buf.begin(), {x + xd, y + yd, z + zd});
+    }
+  }
   else
     m_idwt3d_wavelet_packet();
 }
@@ -179,7 +208,6 @@ void sperr::CDF97::m_idwt3d_wavelet_packet()
   // First, inverse transform each plane
   //
   auto num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-
   for (size_t i = 0; i < m_dims[2]; i++) {
     const size_t offset = plane_size_xy * i;
     m_idwt2d(m_data_buf.begin() + offset, {m_dims[0], m_dims[1]}, num_xforms_xy);
@@ -207,7 +235,6 @@ void sperr::CDF97::m_idwt3d_wavelet_packet()
   // Process one XZ slice at a time
   //
   const auto num_xforms_z = sperr::num_of_xforms(m_dims[2]);
-
   for (size_t y = 0; y < m_dims[1]; y++) {
     const auto y_offset = y * m_dims[0];
 
@@ -231,65 +258,60 @@ void sperr::CDF97::m_idwt3d_wavelet_packet()
   }
 }
 
-void sperr::CDF97::m_dwt3d_dyadic()
+void sperr::CDF97::m_dwt3d_dyadic(size_t num_xforms)
 {
-  const auto num_xforms = sperr::num_of_xforms(*std::min_element(m_dims.cbegin(), m_dims.cend()));
-
   for (size_t lev = 0; lev < num_xforms; lev++) {
-    auto app_x = sperr::calc_approx_detail_len(m_dims[0], lev);
-    auto app_y = sperr::calc_approx_detail_len(m_dims[1], lev);
-    auto app_z = sperr::calc_approx_detail_len(m_dims[2], lev);
-    m_dwt3d_one_level(m_data_buf.begin(), {app_x[0], app_y[0], app_z[0]});
+    auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev);
+    auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev);
+    auto [z, zd] = sperr::calc_approx_detail_len(m_dims[2], lev);
+    m_dwt3d_one_level(m_data_buf.begin(), {x, y, z});
   }
 }
 
-void sperr::CDF97::m_idwt3d_dyadic()
+void sperr::CDF97::m_idwt3d_dyadic(size_t num_xforms)
 {
-  const auto num_xforms = sperr::num_of_xforms(*std::min_element(m_dims.cbegin(), m_dims.cend()));
-
   for (size_t lev = num_xforms; lev > 0; lev--) {
-    auto app_x = sperr::calc_approx_detail_len(m_dims[0], lev - 1);
-    auto app_y = sperr::calc_approx_detail_len(m_dims[1], lev - 1);
-    auto app_z = sperr::calc_approx_detail_len(m_dims[2], lev - 1);
-    m_idwt3d_one_level(m_data_buf.begin(), {app_x[0], app_y[0], app_z[0]});
+    auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev - 1);
+    auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev - 1);
+    auto [z, zd] = sperr::calc_approx_detail_len(m_dims[2], lev - 1);
+    m_idwt3d_one_level(m_data_buf.begin(), {x, y, z});
   }
 }
 
 //
 // Private Methods
 //
-
 void sperr::CDF97::m_dwt1d(itd_type array, size_t array_len, size_t num_of_lev)
 {
   for (size_t lev = 0; lev < num_of_lev; lev++) {
-    auto [apx, nnm] = sperr::calc_approx_detail_len(array_len, lev);
-    m_dwt1d_one_level(array, apx);
+    auto [x, xd] = sperr::calc_approx_detail_len(array_len, lev);
+    m_dwt1d_one_level(array, x);
   }
 }
 
 void sperr::CDF97::m_idwt1d(itd_type array, size_t array_len, size_t num_of_lev)
 {
   for (size_t lev = num_of_lev; lev > 0; lev--) {
-    auto [apx, nnm] = sperr::calc_approx_detail_len(array_len, lev - 1);
-    m_idwt1d_one_level(array, apx);
+    auto [x, xd] = sperr::calc_approx_detail_len(array_len, lev - 1);
+    m_idwt1d_one_level(array, x);
   }
 }
 
 void sperr::CDF97::m_dwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t num_of_lev)
 {
   for (size_t lev = 0; lev < num_of_lev; lev++) {
-    auto approx_x = sperr::calc_approx_detail_len(len_xy[0], lev);
-    auto approx_y = sperr::calc_approx_detail_len(len_xy[1], lev);
-    m_dwt2d_one_level(plane, {approx_x[0], approx_y[0]});
+    auto [x, xd] = sperr::calc_approx_detail_len(len_xy[0], lev);
+    auto [y, yd] = sperr::calc_approx_detail_len(len_xy[1], lev);
+    m_dwt2d_one_level(plane, {x, y});
   }
 }
 
 void sperr::CDF97::m_idwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t num_of_lev)
 {
   for (size_t lev = num_of_lev; lev > 0; lev--) {
-    auto approx_x = sperr::calc_approx_detail_len(len_xy[0], lev - 1);
-    auto approx_y = sperr::calc_approx_detail_len(len_xy[1], lev - 1);
-    m_idwt2d_one_level(plane, {approx_x[0], approx_y[0]});
+    auto [x, xd] = sperr::calc_approx_detail_len(len_xy[0], lev - 1);
+    auto [y, yd] = sperr::calc_approx_detail_len(len_xy[1], lev - 1);
+    m_idwt2d_one_level(plane, {x, y});
   }
 }
 
@@ -324,7 +346,7 @@ void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_x
   // Note: here we call low-level functions (Qcc*()) instead of
   // m_dwt1d_one_level() because we want to have only one even/odd test at the outer loop.
 
-  const size_t max_len = std::max(len_xy[0], len_xy[1]);
+  const auto max_len = std::max(len_xy[0], len_xy[1]);
   const auto beg = m_qcc_buf.begin();
   const auto beg2 = beg + max_len;
 
@@ -379,7 +401,7 @@ void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_x
 
 void sperr::CDF97::m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_xy)
 {
-  const size_t max_len = std::max(len_xy[0], len_xy[1]);
+  const auto max_len = std::max(len_xy[0], len_xy[1]);
   const auto beg = m_qcc_buf.begin();  // First half of the buffer
   const auto beg2 = beg + max_len;     // Second half of the buffer
 
@@ -429,7 +451,7 @@ void sperr::CDF97::m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_
 void sperr::CDF97::m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz)
 {
   // First, do one level of transform on all XY planes.
-  const size_t plane_size_xy = m_dims[0] * m_dims[1];
+  const auto plane_size_xy = m_dims[0] * m_dims[1];
   for (size_t z = 0; z < len_xyz[2]; z++) {
     const size_t offset = plane_size_xy * z;
     m_dwt2d_one_level(vol + offset, {len_xyz[0], len_xyz[1]});
@@ -482,7 +504,7 @@ void sperr::CDF97::m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz
 
 void sperr::CDF97::m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz)
 {
-  const size_t plane_size_xy = m_dims[0] * m_dims[1];
+  const auto plane_size_xy = m_dims[0] * m_dims[1];
   const auto beg = m_qcc_buf.begin();  // First half of the buffer
   const auto beg2 = beg + len_xyz[2];  // Second half of the buffer
 
@@ -591,6 +613,35 @@ void sperr::CDF97::m_scatter_odd(citd_type begin, citd_type end, itd_type dest) 
   for (size_t i = 0; i < high_count; i++) {
     *(dest + i * 2 + 1) = *begin;
     ++begin;
+  }
+}
+
+auto sperr::CDF97::m_sub_slice(std::array<size_t, 2> subdims) const -> vecd_type
+{
+  assert(subdims[0] <= m_dims[0] && subdims[1] <= m_dims[1]);
+
+  auto ret = vecd_type(subdims[0] * subdims[1]);
+  auto dst = ret.begin();
+  for (size_t y = 0; y < subdims[1]; y++) {
+    auto beg = m_data_buf.begin() + y * m_dims[0];
+    std::copy(beg, beg + subdims[0], dst);
+    dst += subdims[0];
+  }
+
+  return ret;
+}
+
+void sperr::CDF97::m_sub_volume(dims_type subdims, itd_type dst) const
+{
+  assert(subdims[0] <= m_dims[0] && subdims[1] <= m_dims[1] && subdims[2] <= m_dims[2]);
+
+  const auto slice_len = m_dims[0] * m_dims[1];
+  for (size_t z = 0; z < subdims[2]; z++) {
+    for (size_t y = 0; y < subdims[1]; y++) {
+      auto beg = m_data_buf.begin() + z * slice_len + y * m_dims[0];
+      std::copy(beg, beg + subdims[0], dst);
+      dst += subdims[0];
+    }
   }
 }
 
