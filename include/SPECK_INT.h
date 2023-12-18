@@ -48,21 +48,29 @@ class SPECK_INT {
   // Retrieve the number of bytes of a SPECK bitstream (including header) from its header.
   auto get_stream_full_len(const void*) const -> uint64_t;
 
+  //
   // Actions
+  //
   void encode();
   void decode();
 
+  //
   // Input
+  //
+  // Requires: `signs` are stored in odd indices, i.e., the sign of the i-th coeff is at
+  //           index i * 2 + 1. Even indices can be anything. 
   auto use_coeffs(vecui_type coeffs, Bitmask signs) -> RTNType;
   void use_bitstream(const void* p, size_t len);
 
+  //
   // Output
+  //
   auto encoded_bitstream_len() const -> size_t;
   void append_encoded_bitstream(vec8_type& buf) const;
   auto release_coeffs() -> vecui_type&&;
-  auto release_signs() -> Bitmask&&;
+  auto release_signs() -> Bitmask&&;  // Signs are kept in odd indices.
   auto view_coeffs() const -> const vecui_type&;
-  auto view_signs() const -> const Bitmask&;
+  auto view_signs() const -> const Bitmask&;  // Signs are kept in odd indices.
 
  protected:
   // Core SPECK procedures
@@ -74,16 +82,17 @@ class SPECK_INT {
 
   // Data members
   dims_type m_dims = {0, 0, 0};
-  uint_type m_threshold = 0;
-  Bitmask m_LSP_mask, m_LIP_mask, m_sign_array;
+  Bitmask m_LSP_mask;
+  Bitmask m_fused_mask;  // Even indices mark "insignificant points" and odd ones mark "signs".
   vecui_type m_coeff_buf;
   Bitstream m_bit_buffer;
   std::vector<uint64_t> m_LSP_new;
 
   uint64_t m_total_bits = 0;  // The number of bits of a complete SPECK stream.
   uint64_t m_avail_bits = 0;  // Decoding only. `m_avail_bits` <= `m_total_bits`
-  uint8_t m_num_bitplanes = 0;
   size_t m_budget = std::numeric_limits<size_t>::max();
+  uint_type m_threshold = 0;
+  uint8_t m_num_bitplanes = 0;
 };
 
 };  // namespace sperr

@@ -106,16 +106,30 @@ void sperr::SPECK_INT<T>::use_bitstream(const void* p, size_t len)
 template <typename T>
 void sperr::SPECK_INT<T>::encode()
 {
+  m_initialize_lists();
+
   m_bit_buffer.reserve(m_coeff_buf.size());  // A good starting point
   m_bit_buffer.rewind();
   m_total_bits = 0;
-  m_initialize_lists();
 
   // Mark every coefficient as insignificant
   m_LSP_mask.resize(m_coeff_buf.size());
   m_LSP_mask.reset();
   m_LSP_new.clear();
   m_LSP_new.reserve(m_coeff_buf.size() / 16);
+
+  // Also mark every EVEN index as 0's, indicating that the LIP is empty.
+  //    Note that this variable should have already been allocated and now contains
+  //    the sign information of every coefficient on ODD indices.
+  assert(m_fused_mask.size() == m_coeff_buf.size() * 2);
+  auto keep_odd = uint64_t{0};
+  for (size_t i = 1; i < 64; i += 2)
+    keep_odd |= uint64_t{1} << i;
+  for (size_t i = 0; i < m_fused_mask.size(); i += 64) {
+    auto val = m_fused_mask.rlong(i);
+    val &= keep_odd;
+    m_fused_mask.wlong(i, val);
+  }
 
   // Treat it as a special case when all coeffs (m_coeff_buf) are zero.
   //    In such a case, we mark `m_num_bitplanes` as zero.
@@ -160,11 +174,13 @@ void sperr::SPECK_INT<T>::decode()
   m_initialize_lists();
   m_bit_buffer.rewind();
 
-  // initialize coefficients to be zero, and sign array to be all positive
   const auto coeff_len = m_dims[0] * m_dims[1] * m_dims[2];
   m_coeff_buf.assign(coeff_len, uint_type{0});
-  m_sign_array.resize(coeff_len);
-  m_sign_array.reset_true();
+
+  // The fused mask is initialized to have no insignificant points (even indices).
+  // The values on odd indices are not important.
+  m_fused_mask.resize(coeff_len * 2);
+  m_fused_mask.reset();
 
   // Mark every coefficient as insignificant.
   m_LSP_mask.resize(coeff_len);
@@ -220,10 +236,10 @@ void sperr::SPECK_INT<T>::decode()
 template <typename T>
 auto sperr::SPECK_INT<T>::use_coeffs(vecui_type coeffs, Bitmask signs) -> RTNType
 {
-  if (coeffs.size() != signs.size())
+  if (coeffs.size() * 2 != signs.size())
     return RTNType::Error;
   m_coeff_buf = std::move(coeffs);
-  m_sign_array = std::move(signs);
+  m_fused_mask = std::move(signs);
   return RTNType::Good;
 }
 
@@ -236,7 +252,7 @@ auto sperr::SPECK_INT<T>::release_coeffs() -> vecui_type&&
 template <typename T>
 auto sperr::SPECK_INT<T>::release_signs() -> Bitmask&&
 {
-  return std::move(m_sign_array);
+  return std::move(m_fused_mask);
 }
 
 template <typename T>
@@ -248,7 +264,7 @@ auto sperr::SPECK_INT<T>::view_coeffs() const -> const vecui_type&
 template <typename T>
 auto sperr::SPECK_INT<T>::view_signs() const -> const Bitmask&
 {
-  return m_sign_array;
+  return m_fused_mask;
 }
 
 template <typename T>

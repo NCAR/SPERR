@@ -9,24 +9,31 @@ template <typename T>
 void sperr::SPECK1D_INT_DEC<T>::m_sorting_pass()
 {
   // Since we have a separate representation of LIP, let's process that list first
+  // Note that the LIP information is stored on even indices of the fused mask.
   //
-  const auto bits_x64 = m_LIP_mask.size() - m_LIP_mask.size() % 64;
+  auto keep_even = uint64_t{0};
+  for (size_t i = 0; i < 32; i++)
+    keep_even |= uint64_t{1} << (i * 2);
+
+  // Number of bits that's aligned to 64.
+  const auto bits_x64 = m_fused_mask.size() - m_fused_mask.size() % 64;
 
   for (size_t i = 0; i < bits_x64; i += 64) {
-    const auto value = m_LIP_mask.rlong(i);
+    auto value = m_fused_mask.rlong(i);
+    value &= keep_even;
     if (value != 0) {
-      for (size_t j = 0; j < 64; j++) {
+      for (size_t j = 0; j < 64; j += 2) {
         if ((value >> j) & uint64_t{1}) {
           size_t dummy = 0;
-          m_process_P(i + j, dummy, true);
+          m_process_P((i + j) / 2, dummy, true);
         }
       }
     }
   }
-  for (auto i = bits_x64; i < m_LIP_mask.size(); i++) {
-    if (m_LIP_mask.rbit(i)) {
+  for (auto i = bits_x64; i < m_fused_mask.size(); i += 2) {
+    if (m_fused_mask.rbit(i)) {
       size_t dummy = 0;
-      m_process_P(i, dummy, true);
+      m_process_P(i / 2, dummy, true);
     }
   }
 
@@ -68,10 +75,10 @@ void sperr::SPECK1D_INT_DEC<T>::m_process_P(size_t idx, size_t& counter, bool re
 
   if (is_sig) {
     counter++;  // Let's increment the counter first!
-    m_sign_array.wbit(idx, m_bit_buffer.rbit());
+    m_fused_mask.wbit(idx * 2 + 1, m_bit_buffer.rbit());
 
     m_LSP_new.push_back(idx);
-    m_LIP_mask.wfalse(idx);
+    m_fused_mask.wfalse(idx * 2);
   }
 }
 
@@ -86,7 +93,7 @@ void sperr::SPECK1D_INT_DEC<T>::m_code_S(size_t idx1, size_t idx2)
   const auto& set0 = subsets[0];
   assert(set0.get_length() != 0);
   if (set0.get_length() == 1) {
-    m_LIP_mask.wtrue(set0.get_start());
+    m_fused_mask.wtrue(set0.get_start() * 2);
     m_process_P(set0.get_start(), sig_counter, read);
   }
   else {
@@ -101,7 +108,7 @@ void sperr::SPECK1D_INT_DEC<T>::m_code_S(size_t idx1, size_t idx2)
   const auto& set1 = subsets[1];
   assert(set1.get_length() != 0);
   if (set1.get_length() == 1) {
-    m_LIP_mask.wtrue(set1.get_start());
+    m_fused_mask.wtrue(set1.get_start() * 2);
     m_process_P(set1.get_start(), sig_counter, read);
   }
   else {

@@ -5,23 +5,24 @@ add_library( SPERR
              Conditioner.cpp
              CDF97.cpp
              SPECK_INT.cpp
-             SPECK3D_INT.cpp
-             SPECK2D_INT.cpp
+#            SPECK3D_INT.cpp
+#            SPECK2D_INT.cpp
              SPECK1D_INT.cpp
-             SPECK3D_INT_ENC.cpp
-             SPECK2D_INT_ENC.cpp
+#            SPECK3D_INT_ENC.cpp
+#            SPECK2D_INT_ENC.cpp
              SPECK1D_INT_ENC.cpp
-             SPECK3D_INT_DEC.cpp
-             SPECK2D_INT_DEC.cpp
+#            SPECK3D_INT_DEC.cpp
+#            SPECK2D_INT_DEC.cpp
              SPECK1D_INT_DEC.cpp
-             SPECK_FLT.cpp
-             SPECK3D_FLT.cpp
-             SPECK2D_FLT.cpp
-             SPERR3D_OMP_C.cpp
-             SPERR3D_OMP_D.cpp
-             SPERR3D_Stream_Tools.cpp
-             Outlier_Coder.cpp
-             SPERR_C_API.cpp )
+#            SPECK_FLT.cpp
+#            SPECK3D_FLT.cpp
+#            SPECK2D_FLT.cpp
+#            SPERR3D_OMP_C.cpp
+#            SPERR3D_OMP_D.cpp
+#            SPERR3D_Stream_Tools.cpp
+#            Outlier_Coder.cpp
+#            SPERR_C_API.cpp )
+)
              
 target_include_directories( SPERR PUBLIC ${CMAKE_SOURCE_DIR}/include )
 
