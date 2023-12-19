@@ -76,9 +76,9 @@ void sperr::SPECK1D_INT_DEC<T>::m_process_P(size_t idx, size_t& counter, bool re
   if (is_sig) {
     counter++;  // Let's increment the counter first!
     m_fused_mask.wbit(idx * 2 + 1, m_bit_buffer.rbit());
+    m_fused_mask.wfalse(idx * 2);
 
     m_LSP_new.push_back(idx);
-    m_fused_mask.wfalse(idx * 2);
   }
 }
 

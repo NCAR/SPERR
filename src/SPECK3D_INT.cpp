@@ -30,8 +30,6 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   if (m_LIS.size() < num_of_sizes)
     m_LIS.resize(num_of_sizes);
   std::for_each(m_LIS.begin(), m_LIS.end(), [](auto& list) { list.clear(); });
-  m_LIP_mask.resize(total_vals);
-  m_LIP_mask.reset();
 
   // Starting from a set representing the whole volume, identify the smaller
   //    subsets and put them in the LIS accordingly.
@@ -100,21 +98,28 @@ template <typename T>
 void sperr::SPECK3D_INT<T>::m_sorting_pass()
 {
   // Since we have a separate representation of LIP, let's process that list first!
+  // Note that the LIP information is stored on even indices.
   //
-  const auto bits_x64 = m_LIP_mask.size() - m_LIP_mask.size() % 64;
+  auto keep_even = uint64_t{0};
+  for (size_t i = 0; i < 32; i++)
+    keep_even |= uint64_t{1} << (i * 2);
+
+  // Number of bits that's aligned to 64.
+  const auto bits_x64 = m_fused_mask.size() - m_fused_mask.size() % 64;
 
   for (size_t i = 0; i < bits_x64; i += 64) {
-    const auto value = m_LIP_mask.rlong(i);
+    auto value = m_fused_mask.rlong(i);
+    value &= keep_even;
     if (value != 0) {
-      for (size_t j = 0; j < 64; j++) {
+      for (size_t j = 0; j < 64; j += 2) {
         if ((value >> j) & uint64_t{1})
-          m_process_P_lite(i + j);
+          m_process_P_lite((i + j) / 2);
       }
     }
   }
-  for (auto i = bits_x64; i < m_LIP_mask.size(); i++) {
-    if (m_LIP_mask.rbit(i))
-      m_process_P_lite(i);
+  for (auto i = bits_x64; i < m_fused_mask.size(); i += 2) {
+    if (m_fused_mask.rbit(i))
+      m_process_P_lite(i / 2);
   }
 
   // Then we process regular sets in LIS.
@@ -145,7 +150,7 @@ void sperr::SPECK3D_INT<T>::m_code_S(size_t idx1, size_t idx2)
     bool need_decide = (sig_counter != 0 || it + 1 != set_end);
     if (it->num_elem() == 1) {
       auto idx = it->start_z * m_dims[0] * m_dims[1] + it->start_y * m_dims[0] + it->start_x;
-      m_LIP_mask.wtrue(idx);
+      m_fused_mask.wtrue(idx * 2);
       m_process_P(idx, it->get_morton(), sig_counter, need_decide);
     }
     else {

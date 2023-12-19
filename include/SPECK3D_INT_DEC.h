@@ -14,10 +14,9 @@ class SPECK3D_INT_DEC final : public SPECK3D_INT<T> {
   //
   // Bring members from parent classes to this derived class.
   //
-  using SPECK_INT<T>::m_LIP_mask;
+  using SPECK_INT<T>::m_fused_mask;
   using SPECK_INT<T>::m_LSP_new;
   using SPECK_INT<T>::m_bit_buffer;
-  using SPECK_INT<T>::m_sign_array;
   using SPECK3D_INT<T>::m_LIS;
   using SPECK3D_INT<T>::m_code_S;
 

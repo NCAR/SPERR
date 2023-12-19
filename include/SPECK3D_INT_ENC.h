@@ -22,13 +22,12 @@ class SPECK3D_INT_ENC final : public SPECK3D_INT<T> {
   //
   // Bring members from parent classes to this derived class.
   //
-  using SPECK_INT<T>::m_LIP_mask;
+  using SPECK_INT<T>::m_fused_mask;
   using SPECK_INT<T>::m_dims;
   using SPECK_INT<T>::m_LSP_new;
   using SPECK_INT<T>::m_threshold;
   using SPECK_INT<T>::m_coeff_buf;
   using SPECK_INT<T>::m_bit_buffer;
-  using SPECK_INT<T>::m_sign_array;
   using SPECK3D_INT<T>::m_LIS;
   using SPECK3D_INT<T>::m_partition_S_XYZ;
   using SPECK3D_INT<T>::m_code_S;

@@ -5,13 +5,13 @@ add_library( SPERR
              Conditioner.cpp
              CDF97.cpp
              SPECK_INT.cpp
-#            SPECK3D_INT.cpp
+             SPECK3D_INT.cpp
 #            SPECK2D_INT.cpp
              SPECK1D_INT.cpp
-#            SPECK3D_INT_ENC.cpp
+             SPECK3D_INT_ENC.cpp
 #            SPECK2D_INT_ENC.cpp
              SPECK1D_INT_ENC.cpp
-#            SPECK3D_INT_DEC.cpp
+             SPECK3D_INT_DEC.cpp
 #            SPECK2D_INT_DEC.cpp
              SPECK1D_INT_DEC.cpp
 #            SPECK_FLT.cpp

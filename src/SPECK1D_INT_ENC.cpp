@@ -108,11 +108,11 @@ void sperr::SPECK1D_INT_ENC<T>::m_process_P(size_t idx, SigType sig, size_t& cou
   if (is_sig) {
     counter++;  // Let's increment the counter first!
     m_bit_buffer.wbit(m_fused_mask.rbit(idx * 2 + 1));
+    m_fused_mask.wfalse(idx * 2);
 
     assert(m_coeff_buf[idx] >= m_threshold);
     m_coeff_buf[idx] -= m_threshold;
     m_LSP_new.push_back(idx);
-    m_fused_mask.wfalse(idx * 2);
   }
 }
 
