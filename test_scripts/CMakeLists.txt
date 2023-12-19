@@ -10,8 +10,8 @@ target_link_libraries( dwt PUBLIC SPERR gtest_main )
 add_executable(        speck_int speck_int_unit_test.cpp )
 target_link_libraries( speck_int PUBLIC SPERR gtest_main )
 
-# add_executable(        outlier_coder outlier_coder_unit_test.cpp )
-# target_link_libraries( outlier_coder PUBLIC SPERR gtest_main )
+add_executable(        outlier_coder outlier_coder_unit_test.cpp )
+target_link_libraries( outlier_coder PUBLIC SPERR gtest_main )
 
 # add_executable(        speck2d_flt speck2d_flt_unit_test.cpp )
 # target_link_libraries( speck2d_flt PUBLIC SPERR gtest_main )

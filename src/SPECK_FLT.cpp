@@ -323,28 +323,30 @@ auto sperr::SPECK_FLT::m_midtread_quantize() -> RTNType
 
   const auto total_vals = m_vals_d.size();
   std::visit([total_vals](auto&& vec) { vec.resize(total_vals); }, m_vals_ui);
-  m_sign_array.resize(total_vals);
+  m_sign_array.resize(total_vals * 2);  // Signs are stored in odd indices.
 
   std::visit(
       [&vals_d = m_vals_d, &signs = m_sign_array, q = m_q](auto&& vec) {
         auto inv = 1.0 / q;
-        auto bits_x64 = vals_d.size() - vals_d.size() % 64;
 
-        // Process 64 values at a time.
-        for (size_t i = 0; i < bits_x64; i += 64) {
-          auto bits64 = uint64_t{0};
-          for (size_t j = 0; j < 64; j++) {
+        // Number of bits that aligns with 32.
+        auto bits_x32 = vals_d.size() - vals_d.size() % 32;
+
+        // Store 32 signs (in odd indices of a long) at a time.
+        for (size_t i = 0; i < bits_x32; i += 32) {
+          auto bits32 = uint64_t{0};
+          for (size_t j = 0; j < 32; j++) {
             auto ll = std::llrint(vals_d[i + j] * inv);
-            bits64 |= uint64_t{ll >= 0} << j;
+            bits32 |= uint64_t{ll >= 0} << (j * 2 + 1);
             vec[i + j] = std::abs(ll);
           }
-          signs.wlong(i, bits64);
+          signs.wlong(i * 2, bits32);
         }
 
         // Process the remaining bits.
-        for (size_t i = bits_x64; i < vals_d.size(); i++) {
+        for (size_t i = bits_x32; i < vals_d.size(); i++) {
           auto ll = std::llrint(vals_d[i] * inv);
-          signs.wbit(i, (ll >= 0));
+          signs.wbit(i * 2 + 1, (ll >= 0));
           vec[i] = std::abs(ll);
         }
       },
@@ -355,28 +357,30 @@ auto sperr::SPECK_FLT::m_midtread_quantize() -> RTNType
 
 void sperr::SPECK_FLT::m_midtread_inv_quantize()
 {
-  assert(m_sign_array.size() == std::visit([](auto&& vec) { return vec.size(); }, m_vals_ui));
+  assert(m_sign_array.size() == std::visit([](auto&& vec) { return vec.size() * 2; }, m_vals_ui));
   assert(m_q > 0.0);
 
   const auto tmpd = std::array<double, 2>{-1.0, 1.0};
-  m_vals_d.resize(m_sign_array.size());
+  m_vals_d.resize(m_sign_array.size() / 2);
 
   std::visit(
       [&vals_d = m_vals_d, &signs = m_sign_array, q = m_q, tmpd](auto&& vec) {
-        auto bits_x64 = vals_d.size() - vals_d.size() % 64;
 
-        // Process 64 values at a time.
-        for (size_t i = 0; i < bits_x64; i += 64) {
-          const auto bits64 = signs.rlong(i);
-          for (size_t j = 0; j < 64; j++) {
-            auto bit = (bits64 >> j) & uint64_t{1};
+        // Number of bits that aligns with 32.
+        auto bits_x32 = vals_d.size() - vals_d.size() % 32;
+
+        // Retrieve 32 signs (in odd indices of a long) at a time.
+        for (size_t i = 0; i < bits_x32; i += 32) {
+          const auto bits32 = signs.rlong(i * 2);
+          for (size_t j = 0; j < 32; j++) {
+            auto bit = (bits32 >> (j * 2 + 1)) & uint64_t{1};
             vals_d[i + j] = q * static_cast<double>(vec[i + j]) * tmpd[bit];
           }
         }
 
         // Process the remaining bits.
-        for (size_t i = bits_x64; i < vals_d.size(); i++)
-          vals_d[i] = q * static_cast<double>(vec[i]) * tmpd[signs.rbit(i)];
+        for (size_t i = bits_x32; i < vals_d.size(); i++)
+          vals_d[i] = q * static_cast<double>(vec[i]) * tmpd[signs.rbit(i * 2 + 1)];
       },
       m_vals_ui);
 }

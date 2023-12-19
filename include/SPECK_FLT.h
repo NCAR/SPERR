@@ -62,6 +62,13 @@ class SPECK_FLT {
 
  protected:
   UINTType m_uint_flag = UINTType::UINT64;
+
+  bool m_has_outlier = false;           // encoding (PWE mode) and decoding
+  CompMode m_mode = CompMode::Unknown;  // encoding only
+  double m_q = 0.0;                     // encoding and decoding
+  double m_quality = 0.0;               // encoding only, represent either PSNR, PWE, or BPP.
+  vecd_type m_vals_orig;                // encoding only (PWE mode)
+
   dims_type m_dims = {0, 0, 0};
   vecd_type m_vals_d;
   Bitmask m_sign_array;
@@ -83,14 +90,11 @@ class SPECK_FLT {
                std::vector<uint64_t>>
       m_vals_ui;
 
-  double m_q = 0.0;                     // encoding and decoding
-  bool m_has_outlier = false;           // encoding (PWE mode) and decoding
-  double m_quality = 0.0;               // encoding only, represent either PSNR, PWE, or BPP.
-  vecd_type m_vals_orig;                // encoding only (PWE mode)
-  CompMode m_mode = CompMode::Unknown;  // encoding only
-
   std::vector<vecd_type> m_hierarchy;  // multi-resolution decoding
 
+  //
+  // Class methods
+  //
   // Instantiate `m_vals_ui` based on the chosen integer length.
   void m_instantiate_int_vec();
 

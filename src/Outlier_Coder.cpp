@@ -188,15 +188,14 @@ void sperr::Outlier_Coder::m_instantiate_uvec_coders(UINTType type)
 void sperr::Outlier_Coder::m_quantize()
 {
   std::visit([len = m_total_len](auto&& vec) { vec.assign(len, 0); }, m_vals_ui);
-  m_sign_array.resize(m_total_len);
-  m_sign_array.reset_true();
+  m_sign_array.resize(m_total_len * 2); // Signs are stored in odd indices.
 
   std::visit(
       [&los = m_LOS, &signs = m_sign_array, tol = m_tol](auto&& vec) {
         auto inv = 1.0 / tol;
         for (auto out : los) {
           auto ll = std::llrint(out.err * inv);
-          signs.wbit(out.pos, ll >= 0);
+          signs.wbit(out.pos * 2 + 1, ll >= 0);
           vec[out.pos] = std::abs(ll);
         }
       },
@@ -227,7 +226,7 @@ void sperr::Outlier_Coder::m_inverse_quantize()
   const auto tmp = std::array<double, 2>{-1.0, 1.0};
   std::transform(m_LOS.cbegin(), m_LOS.cend(), m_LOS.begin(),
                  [q = m_tol, &signs = m_sign_array, tmp](auto los) {
-                   auto b = signs.rbit(los.pos);
+                   auto b = signs.rbit(los.pos * 2 + 1);
                    los.err *= (q * tmp[b]);
                    return los;
                  });

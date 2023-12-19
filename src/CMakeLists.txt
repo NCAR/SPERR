@@ -14,13 +14,13 @@ add_library( SPERR
              SPECK3D_INT_DEC.cpp
 #            SPECK2D_INT_DEC.cpp
              SPECK1D_INT_DEC.cpp
-#            SPECK_FLT.cpp
+             SPECK_FLT.cpp
 #            SPECK3D_FLT.cpp
 #            SPECK2D_FLT.cpp
 #            SPERR3D_OMP_C.cpp
 #            SPERR3D_OMP_D.cpp
 #            SPERR3D_Stream_Tools.cpp
-#            Outlier_Coder.cpp
+             Outlier_Coder.cpp
 #            SPERR_C_API.cpp )
 )
              
