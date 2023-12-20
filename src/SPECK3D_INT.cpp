@@ -25,8 +25,6 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   size_t num_of_sizes = std::accumulate(num_of_parts.cbegin(), num_of_parts.cend(), 1ul);
 
   // Initialize LIS
-  const auto total_vals = m_dims[0] * m_dims[1] * m_dims[2];
-  assert(total_vals > 0);
   if (m_LIS.size() < num_of_sizes)
     m_LIS.resize(num_of_sizes);
   std::for_each(m_LIS.begin(), m_LIS.end(), [](auto& list) { list.clear(); });

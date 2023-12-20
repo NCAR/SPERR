@@ -73,8 +73,8 @@ class SPECK_INT {
   void m_refinement_pass_decode();
 
   // Data members
-  uint_type m_threshold = 0;
   uint8_t m_num_bitplanes = 0;
+  uint_type m_threshold = 0;
   uint64_t m_total_bits = 0;  // The number of bits of a complete SPECK stream.
   uint64_t m_avail_bits = 0;  // Decoding only. `m_avail_bits` <= `m_total_bits`
   size_t m_budget = std::numeric_limits<size_t>::max();
