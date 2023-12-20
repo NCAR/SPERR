@@ -61,8 +61,8 @@ class Bitmask {
 #endif
 
  private:
-  std::vector<uint64_t> m_buf;
   size_t m_num_bits = 0;
+  std::vector<uint64_t> m_buf;
 };
 
 };  // namespace sperr
