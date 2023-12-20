@@ -51,8 +51,8 @@ class SPECK2D_INT : public SPECK_INT<T> {
   //
   // SPECK2D_INT specific data members
   //
-  std::vector<std::vector<Set2D>> m_LIS;
   Set2D m_I;
+  std::vector<std::vector<Set2D>> m_LIS;
 };
 
 };  // namespace sperr

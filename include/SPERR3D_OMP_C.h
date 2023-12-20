@@ -32,12 +32,11 @@ class SPERR3D_OMP_C {
   auto get_encoded_bitstream() const -> vec8_type;
 
  private:
+  bool m_orig_is_float = true;  // The original input precision is saved in header.
+  CompMode m_mode = CompMode::Unknown;
+  double m_quality = 0.0;
   dims_type m_dims = {0, 0, 0};        // Dimension of the entire volume
   dims_type m_chunk_dims = {0, 0, 0};  // Preferred dimensions for a chunk
-  bool m_orig_is_float = true;         // The original input precision is saved in header.
-  double m_quality = 0.0;
-  CompMode m_mode = CompMode::Unknown;
-
   std::vector<vec8_type> m_encoded_streams;
 
 #ifdef USE_OMP

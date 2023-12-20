@@ -106,16 +106,19 @@ void sperr::SPECK_INT<T>::use_bitstream(const void* p, size_t len)
 template <typename T>
 void sperr::SPECK_INT<T>::encode()
 {
-  m_bit_buffer.reserve(m_coeff_buf.size());  // A good starting point
+  m_initialize_lists();
+  const auto coeff_len = m_dims[0] * m_dims[1] * m_dims[2];
+  m_bit_buffer.reserve(coeff_len);  // A good starting point
   m_bit_buffer.rewind();
   m_total_bits = 0;
-  m_initialize_lists();
 
   // Mark every coefficient as insignificant
-  m_LSP_mask.resize(m_coeff_buf.size());
+  m_LSP_mask.resize(coeff_len);
   m_LSP_mask.reset();
   m_LSP_new.clear();
-  m_LSP_new.reserve(m_coeff_buf.size() / 16);
+  m_LSP_new.reserve(coeff_len / 16);
+  m_LIP_mask.resize(coeff_len);
+  m_LIP_mask.reset();
 
   // Treat it as a special case when all coeffs (m_coeff_buf) are zero.
   //    In such a case, we mark `m_num_bitplanes` as zero.
@@ -170,7 +173,9 @@ void sperr::SPECK_INT<T>::decode()
   m_LSP_mask.resize(coeff_len);
   m_LSP_mask.reset();
   m_LSP_new.clear();
-  m_LSP_new.reserve(m_coeff_buf.size() / 16);
+  m_LSP_new.reserve(coeff_len / 16);
+  m_LIP_mask.resize(coeff_len);
+  m_LIP_mask.reset();
 
   // Handle the special case of all coeffs (m_coeff_buf) are zero by return now!
   // This case is indicated by both `m_num_bitplanes` and `m_total_bits` equal zero.

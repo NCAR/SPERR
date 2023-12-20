@@ -181,11 +181,6 @@ void sperr::SPECK2D_INT<T>::m_initialize_lists()
   for (auto& list : m_LIS)
     list.clear();
 
-  auto total_vals = m_dims[0] * m_dims[1];
-  assert(total_vals > 0);
-  m_LIP_mask.resize(total_vals);
-  m_LIP_mask.reset();
-
   // Prepare the root (S), which is the smallest set after multiple levels of transforms.
   // Note that `num_of_xforms` isn't the same as `num_of_parts`.
   //

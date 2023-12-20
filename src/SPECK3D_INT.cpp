@@ -30,8 +30,6 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   if (m_LIS.size() < num_of_sizes)
     m_LIS.resize(num_of_sizes);
   std::for_each(m_LIS.begin(), m_LIS.end(), [](auto& list) { list.clear(); });
-  m_LIP_mask.resize(total_vals);
-  m_LIP_mask.reset();
 
   // Starting from a set representing the whole volume, identify the smaller
   //    subsets and put them in the LIS accordingly.

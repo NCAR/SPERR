@@ -69,11 +69,11 @@ class Bitstream {
   auto get_bitstream(size_t num_bits) const -> std::vector<std::byte>;
 
  private:
-  std::vector<uint64_t> m_buf;
-  std::vector<uint64_t>::iterator m_itr;  // Iterator to the next word to be read/written.
-
   uint64_t m_buffer = 0;  // incoming/outgoing bits
   size_t m_bits = 0;      // number of buffered bits
+
+  std::vector<uint64_t>::iterator m_itr;  // Iterator to the next word to be read/written.
+  std::vector<uint64_t> m_buf;
 };
 
 };  // namespace sperr
