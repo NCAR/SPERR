@@ -15,11 +15,11 @@ add_library( SPERR
 #            SPECK2D_INT_DEC.cpp
              SPECK1D_INT_DEC.cpp
              SPECK_FLT.cpp
-#            SPECK3D_FLT.cpp
+             SPECK3D_FLT.cpp
 #            SPECK2D_FLT.cpp
-#            SPERR3D_OMP_C.cpp
-#            SPERR3D_OMP_D.cpp
-#            SPERR3D_Stream_Tools.cpp
+             SPERR3D_OMP_C.cpp
+             SPERR3D_OMP_D.cpp
+             SPERR3D_Stream_Tools.cpp
              Outlier_Coder.cpp
 #            SPERR_C_API.cpp )
 )
@@ -72,6 +72,7 @@ include/SPERR3D_OMP_C.h;\
 include/SPERR3D_Stream_Tools.h;\
 include/SPERR3D_OMP_D.h;\
 include/Outlier_Coder.h;\
-include/SPERR_C_API.h;")
+include/SPERR_C_API.h;"
+)
 set_target_properties( SPERR PROPERTIES PUBLIC_HEADER "${public_h_list}" )
 
