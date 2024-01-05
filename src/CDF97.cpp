@@ -124,6 +124,39 @@ void sperr::CDF97::idwt3d()
     m_idwt3d_wavelet_packet();
 }
 
+void sperr::CDF97::dwt3d_ptsym(size_t nlevels)
+{
+  assert(nlevels <= 5);
+
+  auto [NX, NY, NZ] = m_dims;
+  while (nlevels) {
+    m_dwt3d_ptsym_one_level({NX, NY, NZ});
+    NX = NX / 2 + 1;
+    NY = NY / 2 + 1;
+    NZ = NZ / 2 + 1;
+    nlevels--;
+  }
+}
+
+void sperr::CDF97::idwt3d_ptsym(size_t nlevels)
+{
+  assert(nlevels <= 5);
+
+  size_t NX[6] = {m_dims[0], 0, 0, 0, 0, 0};
+  size_t NY[6] = {m_dims[1], 0, 0, 0, 0, 0};
+  size_t NZ[6] = {m_dims[2], 0, 0, 0, 0, 0};
+  for (size_t i = 1; i < 6; i++) {
+    NX[i] = NX[i - 1] / 2 + 1;
+    NY[i] = NY[i - 1] / 2 + 1;
+    NZ[i] = NZ[i - 1] / 2 + 1;
+  }
+
+  while (nlevels) {
+    nlevels--;
+    m_idwt3d_ptsym_one_level({NX[nlevels], NY[nlevels], NZ[nlevels]});
+  }
+}
+
 void sperr::CDF97::idwt3d_multi_res(std::vector<vecd_type>& h)
 {
   auto dyadic = sperr::can_use_dyadic(m_dims);
@@ -502,6 +535,124 @@ void sperr::CDF97::m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz
   }
 }
 
+void sperr::CDF97::m_dwt3d_ptsym_one_level(dims_type len_xyz)
+{
+  // First, do one level of transform on all rows (along the X axis).
+  bool odd_case = len_xyz[0] % 2;
+  for (size_t z = 0; z < m_dims[2]; z++) {
+    for (size_t y = 0; y < m_dims[1]; y++) {
+      auto* p = m_data_buf.data() + z * m_dims[0] * m_dims[1] + y * m_dims[0];
+      if (odd_case)
+        m_PL_analysis_odd(p, len_xyz[0]);
+      else
+        m_PL_analysis_even(p, len_xyz[0]);
+    }
+  }
+
+  // Second, do one level of transform on all columns (along the Y axis).
+  odd_case = len_xyz[1] % 2;
+  for (size_t z = 0; z < m_dims[2]; z++) {
+    for (size_t x = 0; x < m_dims[0]; x++) {
+      // Extract all values in a column into the first half of `m_qcc_buf`.
+      auto it = m_qcc_buf.begin();
+      for (size_t y = 0; y < len_xyz[1]; y++)
+        *it++ = m_data_buf[z * m_dims[0] * m_dims[1] + y * m_dims[0] + x];
+
+      // Perform the transform.
+      if (odd_case)
+        m_PL_analysis_odd(m_qcc_buf.data(), len_xyz[1]);
+      else
+        m_PL_analysis_even(m_qcc_buf.data(), len_xyz[1]);
+
+      // Put every value back to the column.
+      it = m_qcc_buf.begin();
+      for (size_t y = 0; y < len_xyz[1]; y++)
+        m_data_buf[z * m_dims[0] * m_dims[1] + y * m_dims[0] + x] = *it++;
+    }
+  }
+
+  // Third, do one level of transform along the Z axis.
+  odd_case = len_xyz[2] % 2;
+  for (size_t y = 0; y < m_dims[1]; y++) {
+    for (size_t x = 0; x < m_dims[0]; x++) {
+      // Extract all values along Z to the first half of `m_qcc_buf`.
+      auto it = m_qcc_buf.begin();
+      for (size_t z = 0; z < len_xyz[2]; z++)
+        *it++ = m_data_buf[z * m_dims[0] * m_dims[1] + y * m_dims[0] + x];
+
+      // Perform the transform.
+      if (odd_case)
+        m_PL_analysis_odd(m_qcc_buf.data(), len_xyz[2]);
+      else
+        m_PL_analysis_even(m_qcc_buf.data(), len_xyz[2]);
+
+      // Put every value back.
+      it = m_qcc_buf.begin();
+      for (size_t z = 0; z < len_xyz[2]; z++)
+        m_data_buf[z * m_dims[0] * m_dims[1] + y * m_dims[0] + x] = *it++;
+    }
+  }
+}
+
+void sperr::CDF97::m_idwt3d_ptsym_one_level(dims_type len_xyz)
+{
+  // First, do one level of inverse transform along the Z axis.
+  bool odd_case = len_xyz[2] % 2;
+  for (size_t y = 0; y < m_dims[1]; y++) {
+    for (size_t x = 0; x < m_dims[0]; x++) {
+      // Extract all values along Z.
+      auto it = m_qcc_buf.begin();
+      for (size_t z = 0; z < len_xyz[2]; z++)
+        *it++ = m_data_buf[z * m_dims[0] * m_dims[1] + y * m_dims[0] + x];
+
+      // Perform inverse transform.
+      if (odd_case)
+        m_PL_synthesis_odd(m_qcc_buf.data(), len_xyz[2]);
+      else
+        m_PL_synthesis_even(m_qcc_buf.data(), len_xyz[2]);
+
+      // Put back every value.
+      it = m_qcc_buf.begin();
+      for (size_t z = 0; z < len_xyz[2]; z++)
+        m_data_buf[z * m_dims[0] * m_dims[1] + y * m_dims[0] + x] = *it++;
+    }
+  }
+
+  // Second, inverse transform on all columns (along the Y axis).
+  odd_case = len_xyz[1] % 2;
+  for (size_t z = 0; z < m_dims[2]; z++) {
+    for (size_t x = 0; x < m_dims[0]; x++) {
+      // Extract all values in the column.
+      auto it = m_qcc_buf.begin();
+      for (size_t y = 0; y < len_xyz[1]; y++)
+        *it++ = m_data_buf[z * m_dims[0] * m_dims[1] + y * m_dims[0] + x];
+
+      // Perform inverse transform.
+      if (odd_case)
+        m_PL_synthesis_odd(m_qcc_buf.data(), len_xyz[1]);
+      else
+        m_PL_synthesis_even(m_qcc_buf.data(), len_xyz[1]);
+
+      // Put every value back to the column.
+      it = m_qcc_buf.begin();
+      for (size_t y = 0; y < len_xyz[1]; y++)
+        m_data_buf[z * m_dims[0] * m_dims[1] + y * m_dims[0] + x] = *it++;
+    }
+  }
+
+  // Finally, inverse transform on all rows (along the X axis).
+  odd_case = len_xyz[0] % 2;
+  for (size_t z = 0; z < m_dims[2]; z++) {
+    for (size_t y = 0; y < m_dims[1]; y++) {
+      auto* p = m_data_buf.data() + z * m_dims[0] * m_dims[1] + y * m_dims[0];
+      if (odd_case)
+        m_PL_synthesis_odd(p, len_xyz[0]);
+      else
+        m_PL_synthesis_even(p, len_xyz[0]);
+    }
+  }
+}
+
 void sperr::CDF97::m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz)
 {
   const auto plane_size_xy = m_dims[0] * m_dims[1];
@@ -752,4 +903,164 @@ void sperr::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t si
 
   for (size_t i = 1; i < signal_length - 1; i += 2)
     signal[i] *= (-INV_EPSILON);
+}
+
+void sperr::CDF97::m_PL_analysis_odd(double* x, size_t n)
+{
+  // first predict step
+  for (size_t i = 1; i < n - 1; i += 2)
+    x[i] += a * (x[i - 1] + x[i + 1]);
+
+  // first update step
+  x[0] /= e;
+  for (size_t i = 2; i < n - 2; i += 2)
+    x[i] += b * (x[i - 1] + x[i + 1]);
+  x[n - 1] /= e;
+
+  // second predict step
+  for (size_t i = 1; i < n - 1; i += 2)
+    x[i] += c * (x[i - 1] + x[i + 1]);
+
+  // second update step
+  for (size_t i = 2; i < n - 2; i += 2)
+    x[i] += d * (x[i - 1] + x[i + 1]);
+
+  // scaling step
+  const double arr2[2] = {e, 1.0 / e};
+  for (size_t i = 0; i < n; i++)
+    x[i] *= arr2[i & size_t{1}];
+
+  // Re-organize coeffs, so all scaling coeffs are placed together followed by all wavelet coeffs.
+  // Use the 2nd half of the `m_qcc_buf` as the temporary space.
+  auto half = m_qcc_buf.begin() + n;
+  auto it = half;
+  for (size_t i = 0; i < n; i += 2)  // scaling coeffs
+    *it++ = x[i];
+  for (size_t i = 1; i < n - 1; i += 2)  // wavelet coeffs
+    *it++ = x[i];
+  assert(it - half == n);
+  std::copy(half, it, x);
+}
+
+void sperr::CDF97::m_PL_analysis_even(double* x, size_t n)
+{
+  // first predict step
+  for (size_t i = 1; i < n - 1; i += 2)
+    x[i] += a * (x[i - 1] + x[i + 1]);
+  x[n - 1] *= -2.0 * c / e;
+
+  // first update step
+  x[0] /= e;
+  for (size_t i = 2; i < n; i += 2)
+    x[i] += b * (x[i - 1] + x[i + 1]);
+
+  // second predict step
+  for (size_t i = 1; i < n - 1; i += 2)
+    x[i] += c * (x[i - 1] + x[i + 1]);
+
+  // second update step
+  for (size_t i = 2; i < n - 2; i += 2)
+    x[i] += d * (x[i - 1] + x[i + 1]);
+  x[n - 2] += d * x[n - 3];
+
+  // scaling step
+  const double arr2[2] = {e, 1.0 / e};
+  for (size_t i = 0; i < n - 1; i++)
+    x[i] *= arr2[i & size_t{1}];
+  x[n - 1] *= -e / c;
+
+  // final update step
+  x[n - 1] -= x[n - 2];
+
+  // Re-organize coeffs, so all scaling coeffs are placed together followed by all wavelet coeffs.
+  // Use the 2nd half of the `m_qcc_buf` as the temporary space.
+  auto half = m_qcc_buf.begin() + n;
+  auto it = half;
+  for (size_t i = 0; i < n - 1; i += 2)  // scaling coeffs
+    *it++ = x[i];
+  *it++ = x[n - 1];                      // One extra scaling coeff
+  for (size_t i = 1; i < n - 2; i += 2)  // wavelet coeffs
+    *it++ = x[i];
+  assert(it - half == n);
+  std::copy(half, it, x);
+}
+
+void sperr::CDF97::m_PL_synthesis_odd(double* x, size_t n)
+{
+  // Re-organize coeffs, so scaling and wavelet coeffs are interleaved.
+  // Use the 2nd half of the `m_qcc_buf` as the temporary space.
+  auto half = m_qcc_buf.begin() + n;
+  double* it = x;
+  for (size_t i = 0; i < n; i += 2)
+    *(half + i) = *it++;
+  for (size_t i = 1; i < n - 1; i += 2)
+    *(half + i) = *it++;
+  assert(it - x == n);
+  std::copy(half, half + n, x);
+
+  // undo scaling step
+  const double arr2[2] = {1.0 / e, e};
+  for (size_t i = 0; i < n; i++)
+    x[i] *= arr2[i & size_t{1}];
+
+  // undo second update step
+  for (size_t i = 2; i < n - 2; i += 2)
+    x[i] -= d * (x[i - 1] + x[i + 1]);
+
+  // undo second predict step
+  for (size_t i = 1; i < n - 1; i += 2)
+    x[i] -= c * (x[i - 1] + x[i + 1]);
+
+  // undo first update step
+  x[0] *= e;
+  for (size_t i = 2; i < n - 2; i += 2)
+    x[i] -= b * (x[i - 1] + x[i + 1]);
+  x[n - 1] *= e;
+
+  // undo first predict step
+  for (size_t i = 1; i < n - 1; i += 2)
+    x[i] -= a * (x[i - 1] + x[i + 1]);
+}
+
+void sperr::CDF97::m_PL_synthesis_even(double* x, size_t n)
+{
+  // Re-organize coeffs, so scaling and wavelet coeffs are interleaved.
+  // Use the 2nd half of the `m_qcc_buf` as the temporary space.
+  auto half = m_qcc_buf.begin() + n;
+  double* it = x;
+  for (size_t i = 0; i < n - 1; i += 2)  // scaling coeffs
+    *(half + i) = *it++;
+  *(half + n - 1) = *it++;               // One extra scaling coeff
+  for (size_t i = 1; i < n - 2; i += 2)  // wavelet coeffs
+    *(half + i) = *it++;
+  assert(it - x == n);
+  std::copy(half, half + n, x);
+
+  // undo final update step
+  x[n - 1] += x[n - 2];
+
+  // undo scaling step
+  const double arr2[2] = {1.0 / e, e};
+  for (size_t i = 0; i < n - 1; i++)
+    x[i] *= arr2[i & size_t{1}];
+  x[n - 1] *= -c / e;
+
+  // undo second update step
+  for (size_t i = 2; i < n - 2; i += 2)
+    x[i] -= d * (x[i - 1] + x[i + 1]);
+  x[n - 2] -= d * x[n - 3];
+
+  // undo second predict step
+  for (size_t i = 1; i < n - 1; i += 2)
+    x[i] -= c * (x[i - 1] + x[i + 1]);
+
+  // undo first update step
+  x[0] *= e;
+  for (size_t i = 2; i < n; i += 2)
+    x[i] -= b * (x[i - 1] + x[i + 1]);
+
+  // undo first predict step
+  for (size_t i = 1; i < n - 1; i += 2)
+    x[i] -= a * (x[i - 1] + x[i + 1]);
+  x[n - 1] *= -e / (2.0 * c);
 }

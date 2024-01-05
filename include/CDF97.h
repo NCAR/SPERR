@@ -43,6 +43,10 @@ class CDF97 {
   void idwt1d();
   void idwt3d();
 
+  // Dyadic transform along 3 dimensions.
+  void dwt3d_ptsym(size_t nlevels);
+  void idwt3d_ptsym(size_t nlevels);
+
   //
   // Multi-resolution reconstruction
   //
@@ -77,6 +81,9 @@ class CDF97 {
   // specifically on its top left (len_xyz) subset.
   void m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz);
   void m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz);
+
+  void m_dwt3d_ptsym_one_level(dims_type);
+  void m_idwt3d_ptsym_one_level(dims_type);
 
   // Perform one level of 2D dwt/idwt on a given plane (m_dims),
   // specifically on its top left (len_xy) subset.
@@ -122,6 +129,13 @@ class CDF97 {
   void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length);
   void QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length);
 
+  // CDF97 transforms with point-symmetric boundary handling.
+  // These transforms also group coefficients by scaling and wavelet ones.
+  void m_PL_analysis_odd(double* signal, size_t len);
+  void m_PL_analysis_even(double* signal, size_t len);
+  void m_PL_synthesis_odd(double* signal, size_t len);
+  void m_PL_synthesis_even(double* signal, size_t len);
+
   //
   // Private data members
   //
@@ -159,6 +173,12 @@ class CDF97 {
   const double DELTA = s0 / t0;
   const double EPSILON = std::sqrt(2.0) * t0;
   const double INV_EPSILON = 1.0 / EPSILON;
+
+  const double a = ALPHA;
+  const double b = BETA;
+  const double c = GAMMA;
+  const double d = DELTA;
+  const double e = t0;
 
   // QccPack coefficients
   //
