@@ -44,8 +44,8 @@ class CDF97 {
   void idwt3d();
 
   // Dyadic transform along 3 dimensions.
-  void dwt3d_ptsym(size_t nlevels);
-  void idwt3d_ptsym(size_t nlevels);
+  void dwt3d_ptsym(size_t nlevels = 0);
+  void idwt3d_ptsym(size_t nlevels = 0);
 
   //
   // Multi-resolution reconstruction

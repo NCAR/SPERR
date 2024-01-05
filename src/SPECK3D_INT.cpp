@@ -160,9 +160,22 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(Set3D set, uint16_t lev) const
   //    shorter than `int` are implicitly promoted to be `int` to perform calculations, so just
   //    keep them as `int` here because they'll involve in calculations later.
   //
-  const auto split_x = std::array<int, 2>{set.length_x - set.length_x / 2, set.length_x / 2};
-  const auto split_y = std::array<int, 2>{set.length_y - set.length_y / 2, set.length_y / 2};
-  const auto split_z = std::array<int, 2>{set.length_z - set.length_z / 2, set.length_z / 2};
+  auto split_x = std::array<int, 2>{set.length_x - set.length_x / 2, set.length_x / 2};
+  auto split_y = std::array<int, 2>{set.length_y - set.length_y / 2, set.length_y / 2};
+  auto split_z = std::array<int, 2>{set.length_z - set.length_z / 2, set.length_z / 2};
+
+  // Partition scheme for point-symmetric extension.
+  //    In addition to above (almost) equal bi-section, they are also partitioned according to
+  //    the resulting wavelet bands.
+  //
+  if (set.length_x >= 9 && set.length_y >= 9 && set.length_z >= 9) {
+    split_x[0] = set.length_x / 2 + 1;
+    split_x[1] = set.length_x - split_x[0];
+    split_y[0] = set.length_y / 2 + 1;
+    split_y[1] = set.length_y - split_y[0];
+    split_z[0] = set.length_z / 2 + 1;
+    split_z[1] = set.length_z - split_z[0];
+  }
 
   const auto tmp = std::array<uint8_t, 2>{0, 1};
   lev += tmp[split_x[1] != 0];

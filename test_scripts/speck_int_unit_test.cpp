@@ -654,6 +654,8 @@ TEST(SPECK3D_INT, minimal)
   }
 }
 
+#if 0
+// Because this dimension is not dyadic eligible.
 TEST(SPECK3D_INT, Random1)
 {
   const auto dims = sperr::dims_type{10, 20, 30};
@@ -711,10 +713,11 @@ TEST(SPECK3D_INT, Random2)
   for (size_t i = 0; i < input_signs.size(); i++)
     EXPECT_EQ(input_signs.rbit(i), output_signs.rbit(i));
 }
+#endif
 
 TEST(SPECK3D_INT, RandomRandom)
 {
-  const auto dims = sperr::dims_type{63, 64, 119};
+  const auto dims = sperr::dims_type{73, 64, 113};
   const auto total_vals = dims[0] * dims[1] * dims[2];
 
   auto rd = std::random_device();

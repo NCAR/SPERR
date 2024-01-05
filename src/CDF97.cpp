@@ -126,7 +126,11 @@ void sperr::CDF97::idwt3d()
 
 void sperr::CDF97::dwt3d_ptsym(size_t nlevels)
 {
-  assert(nlevels <= 5);
+  if (nlevels == 0) {
+    auto dyadic = sperr::can_use_dyadic(m_dims);
+    assert(dyadic);
+    nlevels = *dyadic;
+  }
 
   auto [NX, NY, NZ] = m_dims;
   while (nlevels) {
@@ -140,7 +144,11 @@ void sperr::CDF97::dwt3d_ptsym(size_t nlevels)
 
 void sperr::CDF97::idwt3d_ptsym(size_t nlevels)
 {
-  assert(nlevels <= 5);
+  if (nlevels == 0) {
+    auto dyadic = sperr::can_use_dyadic(m_dims);
+    assert(dyadic);
+    nlevels = *dyadic;
+  }
 
   size_t NX[6] = {m_dims[0], 0, 0, 0, 0, 0};
   size_t NY[6] = {m_dims[1], 0, 0, 0, 0, 0};

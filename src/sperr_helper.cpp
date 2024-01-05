@@ -14,12 +14,31 @@
 auto sperr::num_of_xforms(size_t len) -> size_t
 {
   assert(len > 0);
-  // I decide 9 is the minimal length to do one level of xform.
-  const auto f = std::log2(static_cast<double>(len) / 9.0);
-  const auto num = f < 0.0 ? size_t{0} : static_cast<size_t>(f) + 1;
-  // I also decide that no matter what the input size is,
-  // six (6) is the maxinum number of transforms to do.
-  return std::min(num, size_t{6});
+
+  // const auto f = std::log2(static_cast<double>(len) / 9.0);
+  // const auto num = f < 0.0 ? size_t{0} : static_cast<size_t>(f) + 1;
+  // return std::min(num, size_t{6});
+
+  size_t num = 0;
+  while (len >= 9) {
+    ++num;
+    len = len / 2 + 1;  // Scaling coeff length after point-symmetric extension.
+  }
+  return std::min(num, 6ul);
+}
+
+auto sperr::num_of_partitions(size_t len) -> size_t
+{
+  size_t num_of_parts = 0;  // Num. of partitions we can do
+  while (len > 1) {
+    num_of_parts++;
+    if (len >= 9)
+      len = len / 2 + 1;
+    else
+      len -= len / 2;
+  }
+
+  return num_of_parts;
 }
 
 auto sperr::can_use_dyadic(dims_type dims) -> std::optional<size_t>
@@ -94,17 +113,6 @@ auto sperr::coarsened_resolutions(dims_type vdim, dims_type cdim) -> std::vector
   }
 
   return resolutions;
-}
-
-auto sperr::num_of_partitions(size_t len) -> size_t
-{
-  size_t num_of_parts = 0;  // Num. of partitions we can do
-  while (len > 1) {
-    num_of_parts++;
-    len -= len / 2;
-  }
-
-  return num_of_parts;
 }
 
 auto sperr::calc_approx_detail_len(size_t orig_len, size_t lev) -> std::array<size_t, 2>
