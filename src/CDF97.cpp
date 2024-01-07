@@ -142,6 +142,20 @@ void sperr::CDF97::dwt3d_ptsym(size_t nlevels)
   }
 }
 
+void sperr::CDF97::dwt2d_ptsym(size_t nlevels)
+{
+  if (nlevels == 0)
+    nlevels = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+
+  auto [NX, NY, NZ] = m_dims;
+  while (nlevels) {
+    m_dwt2d_ptsym_one_level({NX, NY});
+    NX = NX / 2 + 1;
+    NY = NY / 2 + 1;
+    nlevels--;
+  }
+}
+
 void sperr::CDF97::idwt3d_ptsym(size_t nlevels)
 {
   if (nlevels == 0) {
@@ -162,6 +176,24 @@ void sperr::CDF97::idwt3d_ptsym(size_t nlevels)
   while (nlevels) {
     nlevels--;
     m_idwt3d_ptsym_one_level({NX[nlevels], NY[nlevels], NZ[nlevels]});
+  }
+}
+
+void sperr::CDF97::idwt2d_ptsym(size_t nlevels)
+{
+  if (nlevels == 0)
+    nlevels = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+
+  size_t NX[6] = {m_dims[0], 0, 0, 0, 0, 0};
+  size_t NY[6] = {m_dims[1], 0, 0, 0, 0, 0};
+  for (size_t i = 1; i < 6; i++) {
+    NX[i] = NX[i - 1] / 2 + 1;
+    NY[i] = NY[i - 1] / 2 + 1;
+  }
+
+  while (nlevels) {
+    nlevels--;
+    m_idwt2d_ptsym_one_level({NX[nlevels], NY[nlevels]});
   }
 }
 
@@ -602,6 +634,39 @@ void sperr::CDF97::m_dwt3d_ptsym_one_level(dims_type len_xyz)
   }
 }
 
+void sperr::CDF97::m_dwt2d_ptsym_one_level(std::array<size_t, 2> len_xy)
+{
+  // First, do one level of transform on all rows (along the X axis).
+  bool odd_case = len_xy[0] % 2;
+  for (size_t y = 0; y < m_dims[1]; y++) {
+    auto* p = m_data_buf.data() + y * m_dims[0];
+    if (odd_case)
+      m_PL_analysis_odd(p, len_xy[0]);
+    else
+      m_PL_analysis_even(p, len_xy[0]);
+  }
+
+  // Second, do one level of transform on all columns (along the Y axis).
+  odd_case = len_xy[1] % 2;
+  for (size_t x = 0; x < m_dims[0]; x++) {
+    // Extract all values in a column into the first half of `m_qcc_buf`.
+    auto it = m_qcc_buf.begin();
+    for (size_t y = 0; y < len_xy[1]; y++)
+      *it++ = m_data_buf[y * m_dims[0] + x];
+
+    // Perform the transform.
+    if (odd_case)
+      m_PL_analysis_odd(m_qcc_buf.data(), len_xy[1]);
+    else
+      m_PL_analysis_even(m_qcc_buf.data(), len_xy[1]);
+
+    // Put every value back to the column.
+    it = m_qcc_buf.begin();
+    for (size_t y = 0; y < len_xy[1]; y++)
+      m_data_buf[y * m_dims[0] + x] = *it++;
+  }
+}
+
 void sperr::CDF97::m_idwt3d_ptsym_one_level(dims_type len_xyz)
 {
   // First, do one level of inverse transform along the Z axis.
@@ -658,6 +723,39 @@ void sperr::CDF97::m_idwt3d_ptsym_one_level(dims_type len_xyz)
       else
         m_PL_synthesis_even(p, len_xyz[0]);
     }
+  }
+}
+
+void sperr::CDF97::m_idwt2d_ptsym_one_level(std::array<size_t, 2> len_xy)
+{
+  // First, inverse transform on all columns (along the Y axis).
+  bool odd_case = len_xy[1] % 2;
+  for (size_t x = 0; x < m_dims[0]; x++) {
+    // Extract all values in the column.
+    auto it = m_qcc_buf.begin();
+    for (size_t y = 0; y < len_xy[1]; y++)
+      *it++ = m_data_buf[y * m_dims[0] + x];
+
+    // Perform inverse transform.
+    if (odd_case)
+      m_PL_synthesis_odd(m_qcc_buf.data(), len_xy[1]);
+    else
+      m_PL_synthesis_even(m_qcc_buf.data(), len_xy[1]);
+
+    // Put every value back to the column.
+    it = m_qcc_buf.begin();
+    for (size_t y = 0; y < len_xy[1]; y++)
+      m_data_buf[y * m_dims[0] + x] = *it++;
+  }
+
+  // Second, inverse transform on all rows (along the X axis).
+  odd_case = len_xy[0] % 2;
+  for (size_t y = 0; y < m_dims[1]; y++) {
+    auto* p = m_data_buf.data() + y * m_dims[0];
+    if (odd_case)
+      m_PL_synthesis_odd(p, len_xy[0]);
+    else
+      m_PL_synthesis_even(p, len_xy[0]);
   }
 }
 

@@ -43,9 +43,11 @@ class CDF97 {
   void idwt1d();
   void idwt3d();
 
-  // Dyadic transform along 3 dimensions.
+  // Dyadic transform along multi dimensions using point-symmetric extension.
   void dwt3d_ptsym(size_t nlevels = 0);
   void idwt3d_ptsym(size_t nlevels = 0);
+  void dwt2d_ptsym(size_t nlevels = 0);
+  void idwt2d_ptsym(size_t nlevels = 0);
 
   //
   // Multi-resolution reconstruction
@@ -84,6 +86,9 @@ class CDF97 {
 
   void m_dwt3d_ptsym_one_level(dims_type);
   void m_idwt3d_ptsym_one_level(dims_type);
+
+  void m_dwt2d_ptsym_one_level(std::array<size_t, 2>);
+  void m_idwt2d_ptsym_one_level(std::array<size_t, 2>);
 
   // Perform one level of 2D dwt/idwt on a given plane (m_dims),
   // specifically on its top left (len_xy) subset.
