@@ -65,7 +65,7 @@ class SPECK3D_INT : public SPECK_INT<T> {
   virtual void m_additional_initialization() = 0;
 
   void m_code_S(size_t idx1, size_t idx2);
-  auto m_partition_S_XYZ(Set3D, uint16_t) const -> std::tuple<std::array<Set3D, 8>, uint16_t>;
+  auto m_partition_S_XYZ(Set3D, uint16_t, bool = false) const -> std::tuple<std::array<Set3D, 8>, uint16_t>;
   auto m_partition_S_XY(Set3D, uint16_t) const -> std::tuple<std::array<Set3D, 4>, uint16_t>;
   auto m_partition_S_Z(Set3D, uint16_t) const -> std::tuple<std::array<Set3D, 2>, uint16_t>;
 

@@ -46,13 +46,17 @@ void sperr::SPECK3D_FLT::m_instantiate_decoder()
 
 void sperr::SPECK3D_FLT::m_wavelet_xform()
 {
-  m_cdf.dwt3d();
+  //m_cdf.dwt3d();
+  m_cdf.dwt3d_ptsym(6);
+  // const auto& coeffs = m_cdf.view_data();
+  // sperr::write_n_bytes("ptsym.coeff", 8 * coeffs.size(), coeffs.data());
 }
 
 void sperr::SPECK3D_FLT::m_inverse_wavelet_xform(bool multi_res)
 {
-  if (!multi_res)
-    m_cdf.idwt3d();
-  else
-    m_cdf.idwt3d_multi_res(m_hierarchy);
+  //if (!multi_res)
+  //  m_cdf.idwt3d();
+  //else
+  //  m_cdf.idwt3d_multi_res(m_hierarchy);
+  m_cdf.idwt3d_ptsym(6);
 }

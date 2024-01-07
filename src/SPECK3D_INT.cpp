@@ -40,9 +40,10 @@ void sperr::SPECK3D_INT<T>::m_initialize_lists()
   auto curr_lev = uint16_t{0};
 
   const auto dyadic = sperr::can_use_dyadic(m_dims);
+  assert(dyadic);
   if (dyadic) {
     for (size_t i = 0; i < *dyadic; i++) {
-      auto [subsets, next_lev] = m_partition_S_XYZ(big, curr_lev);
+      auto [subsets, next_lev] = m_partition_S_XYZ(big, curr_lev, true);
       big = subsets[0];
       for (auto it = std::next(subsets.cbegin()); it != subsets.cend(); ++it)
         m_LIS[next_lev].emplace_back(*it);
@@ -153,7 +154,7 @@ void sperr::SPECK3D_INT<T>::m_code_S(size_t idx1, size_t idx2)
 }
 
 template <typename T>
-auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(Set3D set, uint16_t lev) const
+auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(Set3D set, uint16_t lev, bool special) const
     -> std::tuple<std::array<Set3D, 8>, uint16_t>
 {
   // Integer promotion rules (https://en.cppreference.com/w/c/language/conversion) say that types
@@ -168,7 +169,8 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XYZ(Set3D set, uint16_t lev) const
   //    In addition to above (almost) equal bi-section, they are also partitioned according to
   //    the resulting wavelet bands.
   //
-  if (set.length_x >= 9 && set.length_y >= 9 && set.length_z >= 9) {
+  if (special) {
+    assert(set.length_x >= 9 && set.length_y >= 9 && set.length_z >= 9);
     split_x[0] = set.length_x / 2 + 1;
     split_x[1] = set.length_x - split_x[0];
     split_y[0] = set.length_y / 2 + 1;

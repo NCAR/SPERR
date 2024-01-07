@@ -332,8 +332,9 @@ int main(int argc, char* argv[])
           auto mean_var = sperr::calc_mean_var(inputd, total_vals, omp_num_threads);
           sigma = std::sqrt(mean_var[1]);
         }
-        std::printf("Input range = (%.2e, %.2e), L-Infty = %.2e\n", min, max, linfy);
-        std::printf("Bitrate = %.2f, PSNR = %.2fdB, Accuracy Gain = %.2f\n", print_bpp, print_psnr,
+        //std::printf("Input range = (%.2e, %.2e), L-Infty = %.2e\n", min, max, linfy);
+        //std::printf("Bitrate = %.2f, PSNR = %.2fdB, Accuracy Gain = %.2f\n", print_bpp, print_psnr,
+        std::printf("%f\n",
                     std::log2(sigma / rmse) - print_bpp);
       }
     }
