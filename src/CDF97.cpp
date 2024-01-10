@@ -88,24 +88,6 @@ void sperr::CDF97::idwt2d()
   m_idwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, xy);
 }
 
-auto sperr::CDF97::idwt2d_multi_res() -> std::vector<vecd_type>
-{
-  const auto xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  auto ret = std::vector<vecd_type>();
-
-  if (xy > 0) {
-    ret.reserve(xy);
-    for (size_t lev = xy; lev > 0; lev--) {
-      auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev);
-      auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev);
-      ret.emplace_back(m_sub_slice({x, y}));
-      m_idwt2d_one_level(m_data_buf.begin(), {x + xd, y + yd});
-    }
-  }
-
-  return ret;
-}
-
 void sperr::CDF97::dwt3d()
 {
   auto dyadic = sperr::can_use_dyadic(m_dims);
@@ -129,7 +111,8 @@ void sperr::CDF97::dwt3d_ptsym(size_t nlevels)
   if (nlevels == 0) {
     auto dyadic = sperr::can_use_dyadic(m_dims);
     assert(dyadic);
-    nlevels = *dyadic;
+
+    nlevels = std::min(*dyadic, 3ul);
   }
 
   auto [NX, NY, NZ] = m_dims;
@@ -142,26 +125,13 @@ void sperr::CDF97::dwt3d_ptsym(size_t nlevels)
   }
 }
 
-void sperr::CDF97::dwt2d_ptsym(size_t nlevels)
-{
-  if (nlevels == 0)
-    nlevels = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-
-  auto [NX, NY, NZ] = m_dims;
-  while (nlevels) {
-    m_dwt2d_ptsym_one_level({NX, NY});
-    NX = NX / 2 + 1;
-    NY = NY / 2 + 1;
-    nlevels--;
-  }
-}
-
 void sperr::CDF97::idwt3d_ptsym(size_t nlevels)
 {
   if (nlevels == 0) {
     auto dyadic = sperr::can_use_dyadic(m_dims);
     assert(dyadic);
-    nlevels = *dyadic;
+
+    nlevels = std::min(*dyadic, 3ul);
   }
 
   size_t NX[6] = {m_dims[0], 0, 0, 0, 0, 0};
@@ -176,6 +146,20 @@ void sperr::CDF97::idwt3d_ptsym(size_t nlevels)
   while (nlevels) {
     nlevels--;
     m_idwt3d_ptsym_one_level({NX[nlevels], NY[nlevels], NZ[nlevels]});
+  }
+}
+
+void sperr::CDF97::dwt2d_ptsym(size_t nlevels)
+{
+  if (nlevels == 0)
+    nlevels = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+
+  auto [NX, NY, NZ] = m_dims;
+  while (nlevels) {
+    m_dwt2d_ptsym_one_level({NX, NY});
+    NX = NX / 2 + 1;
+    NY = NY / 2 + 1;
+    nlevels--;
   }
 }
 
@@ -195,6 +179,24 @@ void sperr::CDF97::idwt2d_ptsym(size_t nlevels)
     nlevels--;
     m_idwt2d_ptsym_one_level({NX[nlevels], NY[nlevels]});
   }
+}
+
+auto sperr::CDF97::idwt2d_multi_res() -> std::vector<vecd_type>
+{
+  const auto xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  auto ret = std::vector<vecd_type>();
+
+  if (xy > 0) {
+    ret.reserve(xy);
+    for (size_t lev = xy; lev > 0; lev--) {
+      auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev);
+      auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev);
+      ret.emplace_back(m_sub_slice({x, y}));
+      m_idwt2d_one_level(m_data_buf.begin(), {x + xd, y + yd});
+    }
+  }
+
+  return ret;
 }
 
 void sperr::CDF97::idwt3d_multi_res(std::vector<vecd_type>& h)

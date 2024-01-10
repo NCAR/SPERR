@@ -12,3 +12,6 @@ target_link_libraries( sperr2d PUBLIC SPERR PUBLIC CLI11::CLI11 )
 
 add_executable( read_3d_val read_3d_val.cpp )
 target_link_libraries( read_3d_val PUBLIC SPERR )
+
+add_executable( vol_as_slices vol_as_slices.cpp )
+target_link_libraries( vol_as_slices PUBLIC SPERR )

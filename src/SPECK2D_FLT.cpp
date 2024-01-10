@@ -46,13 +46,14 @@ void sperr::SPECK2D_FLT::m_instantiate_decoder()
 
 void sperr::SPECK2D_FLT::m_wavelet_xform()
 {
-  m_cdf.dwt2d();
+  m_cdf.dwt2d_ptsym();
 }
 
 void sperr::SPECK2D_FLT::m_inverse_wavelet_xform(bool multi_res)
 {
-  if (!multi_res)
-    m_cdf.idwt2d();
-  else
-    m_hierarchy = m_cdf.idwt2d_multi_res();
+  //if (!multi_res)
+  //  m_cdf.idwt2d();
+  //else
+  //  m_hierarchy = m_cdf.idwt2d_multi_res();
+  m_cdf.idwt2d_ptsym();
 }
