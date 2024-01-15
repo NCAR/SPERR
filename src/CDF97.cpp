@@ -5,6 +5,8 @@
 #include <numeric>  // std::accumulate()
 #include <type_traits>
 
+#include <omp.h>
+
 template <typename T>
 auto sperr::CDF97::copy_data(const T* data, size_t len, dims_type dims) -> RTNType
 {
@@ -106,18 +108,17 @@ void sperr::CDF97::idwt3d()
     m_idwt3d_wavelet_packet();
 }
 
-void sperr::CDF97::dwt3d_ptsym(size_t nlevels)
+void sperr::CDF97::dwt3d_ptsym()
 {
-  if (nlevels == 0) {
-    auto dyadic = sperr::can_use_dyadic(m_dims);
-    assert(dyadic);
-
-    nlevels = std::min(*dyadic, 3ul);
-  }
+  auto dyadic = sperr::can_use_dyadic(m_dims);
+  assert(dyadic);
+  auto nlevels = std::min(*dyadic, 5ul);
 
   auto [NX, NY, NZ] = m_dims;
   while (nlevels) {
     m_dwt3d_ptsym_one_level({NX, NY, NZ});
+    if (omp_get_thread_num() == 0)
+      std::printf("forward: (%lu, %lu, %lu)\n", NX, NY, NZ);
     NX = NX / 2 + 1;
     NY = NY / 2 + 1;
     NZ = NZ / 2 + 1;
@@ -125,14 +126,11 @@ void sperr::CDF97::dwt3d_ptsym(size_t nlevels)
   }
 }
 
-void sperr::CDF97::idwt3d_ptsym(size_t nlevels)
+void sperr::CDF97::idwt3d_ptsym()
 {
-  if (nlevels == 0) {
-    auto dyadic = sperr::can_use_dyadic(m_dims);
-    assert(dyadic);
-
-    nlevels = std::min(*dyadic, 3ul);
-  }
+  auto dyadic = sperr::can_use_dyadic(m_dims);
+  assert(dyadic);
+  auto nlevels = std::min(*dyadic, 5ul);
 
   size_t NX[6] = {m_dims[0], 0, 0, 0, 0, 0};
   size_t NY[6] = {m_dims[1], 0, 0, 0, 0, 0};
@@ -146,13 +144,14 @@ void sperr::CDF97::idwt3d_ptsym(size_t nlevels)
   while (nlevels) {
     nlevels--;
     m_idwt3d_ptsym_one_level({NX[nlevels], NY[nlevels], NZ[nlevels]});
+    if (omp_get_thread_num() == 0)
+      std::printf("inverse: (%lu, %lu, %lu)\n", NX[nlevels], NY[nlevels], NZ[nlevels]);
   }
 }
 
-void sperr::CDF97::dwt2d_ptsym(size_t nlevels)
+void sperr::CDF97::dwt2d_ptsym()
 {
-  if (nlevels == 0)
-    nlevels = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  auto nlevels = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
 
   auto [NX, NY, NZ] = m_dims;
   while (nlevels) {
@@ -163,10 +162,9 @@ void sperr::CDF97::dwt2d_ptsym(size_t nlevels)
   }
 }
 
-void sperr::CDF97::idwt2d_ptsym(size_t nlevels)
+void sperr::CDF97::idwt2d_ptsym()
 {
-  if (nlevels == 0)
-    nlevels = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  auto nlevels = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
 
   size_t NX[6] = {m_dims[0], 0, 0, 0, 0, 0};
   size_t NY[6] = {m_dims[1], 0, 0, 0, 0, 0};

@@ -15,3 +15,6 @@ target_link_libraries( read_3d_val PUBLIC SPERR )
 
 add_executable( vol_as_slices vol_as_slices.cpp )
 target_link_libraries( vol_as_slices PUBLIC SPERR )
+
+add_executable( slice_rmse slice_rmse.cpp )
+target_link_libraries( slice_rmse PUBLIC SPERR )
