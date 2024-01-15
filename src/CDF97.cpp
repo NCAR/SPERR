@@ -108,44 +108,44 @@ void sperr::CDF97::idwt3d()
     m_idwt3d_wavelet_packet();
 }
 
-void sperr::CDF97::dwt3d_ptsym()
+//
+// Point Symmetric schemes!
+//
+void sperr::CDF97::dwt1d_ptsym()
 {
-  auto dyadic = sperr::can_use_dyadic(m_dims);
-  assert(dyadic);
-  auto nlevels = std::min(*dyadic, 5ul);
+  auto NX = m_dims[0];
+  auto nlevels = sperr::num_of_xforms(NX);
+  nlevels = std::min(nlevels, 3ul);
 
-  auto [NX, NY, NZ] = m_dims;
   while (nlevels) {
-    m_dwt3d_ptsym_one_level({NX, NY, NZ});
-    if (omp_get_thread_num() == 0)
-      std::printf("forward: (%lu, %lu, %lu)\n", NX, NY, NZ);
+    if (NX % 2)
+      m_PL_analysis_odd(m_data_buf.data(), NX);
+    else
+      m_PL_analysis_even(m_data_buf.data(), NX);
+
+    std::printf("forward: (%lu)\n", NX);
+
     NX = NX / 2 + 1;
-    NY = NY / 2 + 1;
-    NZ = NZ / 2 + 1;
     nlevels--;
   }
 }
 
-void sperr::CDF97::idwt3d_ptsym()
+void sperr::CDF97::idwt1d_ptsym()
 {
-  auto dyadic = sperr::can_use_dyadic(m_dims);
-  assert(dyadic);
-  auto nlevels = std::min(*dyadic, 5ul);
-
   size_t NX[6] = {m_dims[0], 0, 0, 0, 0, 0};
-  size_t NY[6] = {m_dims[1], 0, 0, 0, 0, 0};
-  size_t NZ[6] = {m_dims[2], 0, 0, 0, 0, 0};
-  for (size_t i = 1; i < 6; i++) {
+  for (size_t i = 1; i < 6; i++)
     NX[i] = NX[i - 1] / 2 + 1;
-    NY[i] = NY[i - 1] / 2 + 1;
-    NZ[i] = NZ[i - 1] / 2 + 1;
-  }
 
+  auto nlevels = sperr::num_of_xforms(NX[0]);
+  nlevels = std::min(nlevels, 3ul);
   while (nlevels) {
     nlevels--;
-    m_idwt3d_ptsym_one_level({NX[nlevels], NY[nlevels], NZ[nlevels]});
-    if (omp_get_thread_num() == 0)
-      std::printf("inverse: (%lu, %lu, %lu)\n", NX[nlevels], NY[nlevels], NZ[nlevels]);
+    if (NX[nlevels] % 2)
+      m_PL_synthesis_odd(m_data_buf.data(), NX[nlevels]);
+    else
+      m_PL_synthesis_even(m_data_buf.data(), NX[nlevels]);
+
+    std::printf("inverse: (%lu)\n", NX[nlevels]);
   }
 }
 
@@ -178,6 +178,50 @@ void sperr::CDF97::idwt2d_ptsym()
     m_idwt2d_ptsym_one_level({NX[nlevels], NY[nlevels]});
   }
 }
+
+void sperr::CDF97::dwt3d_ptsym()
+{
+  auto dyadic = sperr::can_use_dyadic(m_dims);
+  assert(dyadic);
+  auto nlevels = std::min(*dyadic, 5ul);
+
+  auto [NX, NY, NZ] = m_dims;
+  while (nlevels) {
+    m_dwt3d_ptsym_one_level({NX, NY, NZ});
+    // if (omp_get_thread_num() == 0)
+    //   std::printf("forward: (%lu, %lu, %lu)\n", NX, NY, NZ);
+    NX = NX / 2 + 1;
+    NY = NY / 2 + 1;
+    NZ = NZ / 2 + 1;
+    nlevels--;
+  }
+}
+
+void sperr::CDF97::idwt3d_ptsym()
+{
+  auto dyadic = sperr::can_use_dyadic(m_dims);
+  assert(dyadic);
+  auto nlevels = std::min(*dyadic, 5ul);
+
+  size_t NX[6] = {m_dims[0], 0, 0, 0, 0, 0};
+  size_t NY[6] = {m_dims[1], 0, 0, 0, 0, 0};
+  size_t NZ[6] = {m_dims[2], 0, 0, 0, 0, 0};
+  for (size_t i = 1; i < 6; i++) {
+    NX[i] = NX[i - 1] / 2 + 1;
+    NY[i] = NY[i - 1] / 2 + 1;
+    NZ[i] = NZ[i - 1] / 2 + 1;
+  }
+
+  while (nlevels) {
+    nlevels--;
+    m_idwt3d_ptsym_one_level({NX[nlevels], NY[nlevels], NZ[nlevels]});
+    // if (omp_get_thread_num() == 0)
+    //   std::printf("inverse: (%lu, %lu, %lu)\n", NX[nlevels], NY[nlevels], NZ[nlevels]);
+  }
+}
+//
+// Finish Point Symmetric schemes!
+//
 
 auto sperr::CDF97::idwt2d_multi_res() -> std::vector<vecd_type>
 {

@@ -26,8 +26,8 @@ TEST(dwt1d, big_image_even)
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
   cdf.take_data(std::move(in_copy), {dim_x, 1, 1});
-  cdf.dwt1d();
-  cdf.idwt1d();
+  cdf.dwt1d_ptsym();
+  cdf.idwt1d_ptsym();
 
   // Claim that with single precision, the result is identical to the input
   auto result = cdf.release_data();
@@ -62,8 +62,8 @@ TEST(dwt1d, big_image_odd)
   // Use a sperr::CDF97 to perform DWT and IDWT.
   sperr::CDF97 cdf;
   cdf.take_data(std::move(in_copy), {dim_x, 1, 1});
-  cdf.dwt1d();
-  cdf.idwt1d();
+  cdf.dwt1d_ptsym();
+  cdf.idwt1d_ptsym();
 
   // Claim that with single precision, the result is identical to the input
   auto result = cdf.release_data();

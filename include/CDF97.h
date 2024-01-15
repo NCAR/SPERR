@@ -44,10 +44,12 @@ class CDF97 {
   void idwt3d();
 
   // Dyadic transform along multi dimensions using point-symmetric extension.
-  void dwt3d_ptsym();
-  void idwt3d_ptsym();
+  void dwt1d_ptsym();
+  void idwt1d_ptsym();
   void dwt2d_ptsym();
   void idwt2d_ptsym();
+  void dwt3d_ptsym();
+  void idwt3d_ptsym();
 
   //
   // Multi-resolution reconstruction
