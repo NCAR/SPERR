@@ -110,7 +110,7 @@ if( BUILD_CLI_UTILITIES )
   FetchContent_Declare( cli11
     GIT_REPOSITORY https://github.com/CLIUtils/CLI11
     GIT_TAG        291c58789c031208f08f4f261a858b5b7083e8e2 # v2.3.2
-    PATCH_COMMAND patch CMakeLists.txt < ${CMAKE_SOURCE_DIR}/cli11.patch
+    PATCH_COMMAND patch -N CMakeLists.txt < ${CMAKE_SOURCE_DIR}/cli11.patch || true
   )
   FetchContent_MakeAvailable(cli11)
 
