@@ -6,17 +6,18 @@ add_library( SPERR
              CDF97.cpp
              SPECK_INT.cpp
              SPECK3D_INT.cpp
-             SPECK2D_INT.cpp
-             SPECK1D_INT.cpp
              SPECK3D_INT_ENC.cpp
-             SPECK2D_INT_ENC.cpp
-             SPECK1D_INT_ENC.cpp
              SPECK3D_INT_DEC.cpp
+             SPECK2D_INT.cpp
+             SPECK2D_INT_ENC.cpp
              SPECK2D_INT_DEC.cpp
+             SPECK1D_INT.cpp
+             SPECK1D_INT_ENC.cpp
              SPECK1D_INT_DEC.cpp
              SPECK_FLT.cpp
              SPECK3D_FLT.cpp
              SPECK2D_FLT.cpp
+             SPECK1D_FLT.cpp
              SPERR3D_OMP_C.cpp
              SPERR3D_OMP_D.cpp
              SPERR3D_Stream_Tools.cpp
@@ -56,17 +57,18 @@ include/Conditioner.h;\
 include/CDF97.h;\
 include/SPECK_INT.h;\
 include/SPECK3D_INT.h;\
-include/SPECK2D_INT.h;\
-include/SPECK1D_INT.h;\
 include/SPECK3D_INT_ENC.h;\
-include/SPECK2D_INT_ENC.h;\
-include/SPECK1D_INT_ENC.h;\
 include/SPECK3D_INT_DEC.h;\
+include/SPECK2D_INT.h;\
+include/SPECK2D_INT_ENC.h;\
 include/SPECK2D_INT_DEC.h;\
+include/SPECK1D_INT.h;\
+include/SPECK1D_INT_ENC.h;\
 include/SPECK1D_INT_DEC.h;\
 include/SPECK_FLT.h;\
 include/SPECK3D_FLT.h;\
 include/SPECK2D_FLT.h;\
+include/SPECK1D_FLT.h;\
 include/SPERR3D_OMP_C.h;\
 include/SPERR3D_Stream_Tools.h;\
 include/SPERR3D_OMP_D.h;\
