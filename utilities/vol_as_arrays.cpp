@@ -1,9 +1,7 @@
-#include "SPECK2D_FLT.h"
+#include "SPECK1D_FLT.h"
 
 #include <iostream>
 #include <cassert>
-
-#define FLOAT float
 
 int main(int argc, char* argv[])
 {
@@ -17,29 +15,29 @@ int main(int argc, char* argv[])
   assert(in.size() == total_val);
   auto out = in;
 
-  auto encoder = sperr::SPECK2D_FLT();
-  auto decoder = sperr::SPECK2D_FLT();
+  auto encoder = sperr::SPECK1D_FLT();
+  auto decoder = sperr::SPECK1D_FLT();
   auto stream = sperr::vec8_type();
 
-  // Test each XY slice
-  for (size_t z = 0; z < NZ; z++) {
-    auto* p = out.data() + z * NX * NY;
-    encoder.set_dims({NX, NY, 1});
-    encoder.copy_data(p, NX * NY);
+  // Test each array along X
+  for (size_t i = 0; i < NY * NZ; i++) {
+    auto* p = out.data() + i * NX;
+    encoder.set_dims({NX, 1, 1});
+    encoder.copy_data(p, NX);
     encoder.set_bitrate(bpp);
     encoder.compress();
     stream.clear();
     encoder.append_encoded_bitstream(stream);
 
-    decoder.set_dims({NX, NY, 1});
+    decoder.set_dims({NX, 1, 1});
     decoder.use_bitstream(stream.data(), stream.size());
     decoder.decompress();
     const auto& output = decoder.view_decoded_data();
     std::copy(output.begin(), output.end(), p);
   }
 
- // Write the compressed file to disk.
- sperr::write_n_bytes("wmag.decomp", out.size() * sizeof(FLOAT), out.data());
+  // Write the compressed file to disk.
+  sperr::write_n_bytes("wmag.decomp", out.size() * 4, out.data());
 
   auto [rmse, linfy, psnr, min, max] = sperr::calc_stats(in.data(), out.data(), total_val);
   auto mean_var = sperr::calc_mean_var(in.data(), total_val);

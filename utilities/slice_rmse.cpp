@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#define FLOAT float
+
 int main(int argc, char* argv[])
 {
   const char* file1 = argv[1];
@@ -10,11 +12,13 @@ int main(int argc, char* argv[])
   const size_t NY = std::atol(argv[4]);
   const size_t NZ = std::atol(argv[5]);
   const auto total_vals = NX * NY * NZ;
-  const char D = argv[6][0];
+  char D = 'x';
+  if (argc == 7)
+    D = argv[6][0];
 
   // Read in both files
-  auto in1 = sperr::read_whole_file<double>(file1);
-  auto in2 = sperr::read_whole_file<double>(file2);
+  auto in1 = sperr::read_whole_file<FLOAT>(file1);
+  auto in2 = sperr::read_whole_file<FLOAT>(file2);
   if (in1.size() != total_vals || in2.size() != total_vals) {
     std::printf("Input file length wrong!\n");
     return (1);

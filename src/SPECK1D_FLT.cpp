@@ -46,11 +46,11 @@ void sperr::SPECK1D_FLT::m_instantiate_decoder()
 
 void sperr::SPECK1D_FLT::m_wavelet_xform()
 {
-  m_cdf.dwt1d();
+  m_cdf.dwt1d_ptsym();
 }
 
 void sperr::SPECK1D_FLT::m_inverse_wavelet_xform(bool multi_res)
 {
   // Unfortunately, there's no multi-resolution support for 1D arrays...
-  m_cdf.idwt1d();
+  m_cdf.idwt1d_ptsym();
 }

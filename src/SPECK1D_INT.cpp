@@ -46,6 +46,7 @@ auto sperr::SPECK1D_INT<T>::m_partition_set(Set1D set) const -> std::array<Set1D
   set1.set_start(start);
   set1.set_length(length - length / 2);
   set1.set_level(level + 1);
+
   // Prepare the 2nd set
   auto& set2 = subsets[1];
   set2.set_start(start + length - length / 2);

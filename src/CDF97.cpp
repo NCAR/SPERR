@@ -115,7 +115,7 @@ void sperr::CDF97::dwt1d_ptsym()
 {
   auto NX = m_dims[0];
   auto nlevels = sperr::num_of_xforms(NX);
-  nlevels = std::min(nlevels, 3ul);
+  nlevels = std::min(nlevels, 4ul); // <-- how many levels of wavelet transforms ?
 
   while (nlevels) {
     if (NX % 2)
@@ -123,7 +123,7 @@ void sperr::CDF97::dwt1d_ptsym()
     else
       m_PL_analysis_even(m_data_buf.data(), NX);
 
-    std::printf("forward: (%lu)\n", NX);
+    // std::printf("forward: (%lu)\n", NX);
 
     NX = NX / 2 + 1;
     nlevels--;
@@ -137,7 +137,7 @@ void sperr::CDF97::idwt1d_ptsym()
     NX[i] = NX[i - 1] / 2 + 1;
 
   auto nlevels = sperr::num_of_xforms(NX[0]);
-  nlevels = std::min(nlevels, 3ul);
+  nlevels = std::min(nlevels, 4ul); // <-- how many levels of wavelet transforms ?
   while (nlevels) {
     nlevels--;
     if (NX[nlevels] % 2)
@@ -145,13 +145,15 @@ void sperr::CDF97::idwt1d_ptsym()
     else
       m_PL_synthesis_even(m_data_buf.data(), NX[nlevels]);
 
-    std::printf("inverse: (%lu)\n", NX[nlevels]);
+    // std::printf("inverse: (%lu)\n", NX[nlevels]);
   }
 }
 
 void sperr::CDF97::dwt2d_ptsym()
 {
   auto nlevels = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  nlevels = std::min(nlevels, 4ul); // <-- how many levels of wavelet transforms ?
+  // std::printf("forward: %lu levels\n", nlevels);
 
   auto [NX, NY, NZ] = m_dims;
   while (nlevels) {
@@ -165,6 +167,8 @@ void sperr::CDF97::dwt2d_ptsym()
 void sperr::CDF97::idwt2d_ptsym()
 {
   auto nlevels = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  nlevels = std::min(nlevels, 4ul); // <-- how many levels of wavelet transforms ?
+  //  std::printf("inverse: %lu levels\n", nlevels);
 
   size_t NX[6] = {m_dims[0], 0, 0, 0, 0, 0};
   size_t NY[6] = {m_dims[1], 0, 0, 0, 0, 0};
@@ -183,13 +187,13 @@ void sperr::CDF97::dwt3d_ptsym()
 {
   auto dyadic = sperr::can_use_dyadic(m_dims);
   assert(dyadic);
-  auto nlevels = std::min(*dyadic, 5ul);
+  auto nlevels = std::min(*dyadic, 4ul); // <-- how many levels of wavelet transforms ?
 
   auto [NX, NY, NZ] = m_dims;
   while (nlevels) {
     m_dwt3d_ptsym_one_level({NX, NY, NZ});
     // if (omp_get_thread_num() == 0)
-    //   std::printf("forward: (%lu, %lu, %lu)\n", NX, NY, NZ);
+    std::printf("forward: (%lu, %lu, %lu)\n", NX, NY, NZ);
     NX = NX / 2 + 1;
     NY = NY / 2 + 1;
     NZ = NZ / 2 + 1;
@@ -201,7 +205,7 @@ void sperr::CDF97::idwt3d_ptsym()
 {
   auto dyadic = sperr::can_use_dyadic(m_dims);
   assert(dyadic);
-  auto nlevels = std::min(*dyadic, 5ul);
+  auto nlevels = std::min(*dyadic, 4ul); // <-- how many levels of wavelet transforms ?
 
   size_t NX[6] = {m_dims[0], 0, 0, 0, 0, 0};
   size_t NY[6] = {m_dims[1], 0, 0, 0, 0, 0};
@@ -216,7 +220,7 @@ void sperr::CDF97::idwt3d_ptsym()
     nlevels--;
     m_idwt3d_ptsym_one_level({NX[nlevels], NY[nlevels], NZ[nlevels]});
     // if (omp_get_thread_num() == 0)
-    //   std::printf("inverse: (%lu, %lu, %lu)\n", NX[nlevels], NY[nlevels], NZ[nlevels]);
+    std::printf("inverse: (%lu, %lu, %lu)\n", NX[nlevels], NY[nlevels], NZ[nlevels]);
   }
 }
 //
