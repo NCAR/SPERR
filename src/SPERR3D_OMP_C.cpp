@@ -49,6 +49,15 @@ void sperr::SPERR3D_OMP_C::set_bitrate(double bpp)
   m_quality = bpp;
 }
 
+#ifdef EXPERIMENTING
+void sperr::SPERR3D_OMP_C::set_direct_q(double q)
+{
+  assert(q > 0.0);
+  m_mode = CompMode::DirectQ;
+  m_quality = q;
+}
+#endif
+
 template <typename T>
 auto sperr::SPERR3D_OMP_C::compress(const T* buf, size_t buf_len) -> RTNType
 {
@@ -105,6 +114,11 @@ auto sperr::SPERR3D_OMP_C::compress(const T* buf, size_t buf_len) -> RTNType
       case CompMode::Rate:
         compressor->set_bitrate(m_quality);
         break;
+#ifdef EXPERIMENTING
+      case CompMode::DirectQ:
+        compressor->set_direct_q(m_quality);
+        break;
+#endif
       default:;  // So the compiler doesn't complain about missing cases.
     }
     chunk_rtn[i] = compressor->compress();

@@ -173,6 +173,18 @@ void sperr::SPECK_FLT::set_bitrate(double bpp)
   m_has_outlier = false;
 }
 
+#ifdef EXPERIMENTING
+void sperr::SPECK_FLT::set_direct_q(double q)
+{
+  assert(q > 0.0);
+  m_quality = q;
+  m_mode = CompMode::DirectQ;
+
+  m_q = 0.0;  // The real m_q needs to be calculated later.
+  m_has_outlier = false;
+}
+#endif
+
 void sperr::SPECK_FLT::set_dims(dims_type dims)
 {
   m_dims = dims;
@@ -286,6 +298,10 @@ auto sperr::SPECK_FLT::m_estimate_q(double param, bool high_prec) const -> doubl
       else {
         return param / 0x1.fffffffffffffp52;
       }
+#ifdef EXPERIMENTING
+    case CompMode::DirectQ:
+      return m_quality;
+#endif
     default:
       return 0.0;
   }

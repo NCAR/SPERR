@@ -191,6 +191,15 @@ int main(int argc, char* argv[])
                       ->excludes(psnr_ptr)
                       ->group("Compression settings");
 
+#ifdef EXPERIMENTING
+  auto direct_q = 0.0;
+  auto* dq_ptr = app.add_option("--dq", direct_q, "Directly provide the quantization step size q.")
+                     ->excludes(bpp_ptr)
+                     ->excludes(pwe_ptr)
+                     ->excludes(psnr_ptr)
+                     ->group("Compression settings");
+#endif
+
   CLI11_PARSE(app, argc, argv);
 
   //
@@ -208,10 +217,12 @@ int main(int argc, char* argv[])
     std::cout << "What's the floating-type precision (--ftype) ?" << std::endl;
     return __LINE__;
   }
+#ifndef EXPERIMENTING
   if (cflag && pwe == 0.0 && psnr == 0.0 && bpp == 0.0) {
     std::cout << "What's the compression quality (--psnr, --pwe, --bpp) ?" << std::endl;
     return __LINE__;
   }
+#endif
   if (cflag && (pwe < 0.0 || psnr < 0.0)) {
     std::cout << "Compression quality (--psnr, --pwe) must be positive!" << std::endl;
     return __LINE__;
@@ -240,6 +251,10 @@ int main(int argc, char* argv[])
       encoder->set_tolerance(pwe);
     else if (psnr != 0.0)
       encoder->set_psnr(psnr);
+#ifdef EXPERIMENTING
+    else if (direct_q != 0)
+      encoder->set_direct_q(direct_q);
+#endif
     else {
       assert(bpp != 0.0);
       encoder->set_bitrate(bpp);

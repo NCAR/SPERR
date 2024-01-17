@@ -23,6 +23,9 @@ class SPERR3D_OMP_C {
   void set_psnr(double);
   void set_tolerance(double);
   void set_bitrate(double);
+#ifdef EXPERIMENTING
+  void set_direct_q(double);
+#endif
 
   // Apply compression on a volume pointed to by `buf`.
   template <typename T>

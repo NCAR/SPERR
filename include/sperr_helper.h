@@ -41,7 +41,15 @@ enum class SigType : unsigned char { Insig, Sig, NewlySig, Dunno, Garbage };
 
 enum class UINTType : unsigned char { UINT8, UINT16, UINT32, UINT64 };
 
-enum class CompMode : unsigned char { PSNR, PWE, Rate, Unknown };
+enum class CompMode : unsigned char {
+  PSNR,
+  PWE,
+  Rate,
+#ifdef EXPERIMENTING
+  DirectQ,
+#endif
+  Unknown
+};
 
 enum class RTNType {
   Good = 0,

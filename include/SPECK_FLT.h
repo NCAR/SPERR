@@ -54,6 +54,10 @@ class SPECK_FLT {
   void set_dims(dims_type);
   auto integer_len() const -> size_t;
 
+#ifdef EXPERIMENTING
+  void set_direct_q(double q);
+#endif
+
   //
   // Actions
   //
