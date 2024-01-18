@@ -15,10 +15,14 @@ auto sperr::num_of_xforms(size_t len) -> size_t
 {
   assert(len > 0);
   // I decide 9 is the minimal length to do one level of xform.
-  const auto f = std::log2(static_cast<double>(len) / 9.0);
-  const auto num = f < 0.0 ? size_t{0} : static_cast<size_t>(f) + 1;
   // I also decide that no matter what the input size is,
   // six (6) is the maxinum number of transforms to do.
+  //
+  size_t num = 0;
+  while (len >= 9) {
+    ++num;
+    len -= len / 2;
+  }
   return std::min(num, size_t{6});
 }
 

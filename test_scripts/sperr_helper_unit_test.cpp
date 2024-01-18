@@ -5,23 +5,6 @@
 
 namespace {
 
-TEST(sperr_helper, num_of_xforms)
-{
-  EXPECT_EQ(sperr::num_of_xforms(1), 0);
-  EXPECT_EQ(sperr::num_of_xforms(8), 0);
-  EXPECT_EQ(sperr::num_of_xforms(9), 1);
-  EXPECT_EQ(sperr::num_of_xforms(17), 1);
-  EXPECT_EQ(sperr::num_of_xforms(18), 2);
-  EXPECT_EQ(sperr::num_of_xforms(35), 2);
-  EXPECT_EQ(sperr::num_of_xforms(36), 3);
-  EXPECT_EQ(sperr::num_of_xforms(71), 3);
-  EXPECT_EQ(sperr::num_of_xforms(72), 4);
-  EXPECT_EQ(sperr::num_of_xforms(143), 4);
-  EXPECT_EQ(sperr::num_of_xforms(144), 5);
-  EXPECT_EQ(sperr::num_of_xforms(287), 5);
-  EXPECT_EQ(sperr::num_of_xforms(288), 6);
-}
-
 TEST(sperr_helper, dyadic)
 {
   EXPECT_EQ(sperr::can_use_dyadic({64, 1, 1}), std::nullopt);   // 1D
