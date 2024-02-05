@@ -20,6 +20,22 @@ This combination gives SPERR flexibility to compress targetting different qualit
 2) peak signal-to-noise ratio (PSNR), and 3) point-wise error (PWE).
 The name of SPERR stands for **SP**eck with **ERR**or bounding.
 
+## Quick Build
+SPERR requires 1) a working C++ compiler and 2) CMake tools to build. On a Unix-like system,
+the build steps are the following:
+
+```bash
+git clone https://github.com/NCAR/SPERR.git # clone the repo
+mkdir SPERR/build                           # create the build directory
+cd SPERR/build                              # enter the build directory
+cmake ..                                    # Linux: use cmake to configure the project (with OpenMP)
+cmake -DUSE_OMP=OFF ..                      # Mac: use cmake to configure the project (OpenMP disabled)
+make -j 8                                   # build the project
+ctest .                                     # run unit tests, which should have 100% tests passed
+```
+
+After a successful build, the executables (CLI tools) are kept in the `./bin` directory.
+
 ## Documentation
 
 SPERR documentation is hosted on Github [Wiki](https://github.com/NCAR/SPERR/wiki) pages. To get started, one might want to

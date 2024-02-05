@@ -109,8 +109,7 @@ if( BUILD_CLI_UTILITIES )
   set( CLI11_SINGLE_FILE OFF CACHE INTERNAL "Don't use single file CLI11")
   FetchContent_Declare( cli11
     GIT_REPOSITORY https://github.com/CLIUtils/CLI11
-    GIT_TAG        291c58789c031208f08f4f261a858b5b7083e8e2 # v2.3.2
-    PATCH_COMMAND patch -N CMakeLists.txt < ${CMAKE_SOURCE_DIR}/cli11.patch || true
+    GIT_TAG        88e9bb17418ee730817d5942894d99a4bdd78fb3 # v2.4.0
   )
   FetchContent_MakeAvailable(cli11)
 
