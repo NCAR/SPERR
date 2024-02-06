@@ -189,6 +189,10 @@ int main(int argc, char* argv[])
   //
   // A little extra sanity check.
   //
+  if (input_file.empty()) {
+    std::cout << "What's the input file?" << std::endl;
+    return __LINE__;
+  }
   if (!cflag && !dflag) {
     std::cout << "Is this compressing (-c) or decompressing (-d) ?" << std::endl;
     return __LINE__;
@@ -229,7 +233,7 @@ int main(int argc, char* argv[])
     if ((ftype == 32 && (total_vals * 4 != input.size())) ||
         (ftype == 64 && (total_vals * 8 != input.size()))) {
       std::cout << "Input file size wrong!" << std::endl;
-      return __LINE__;
+      return __LINE__ % 256;
     }
     auto encoder = std::make_unique<sperr::SPECK2D_FLT>();
     encoder->set_dims(dims);
@@ -260,7 +264,7 @@ int main(int argc, char* argv[])
     auto rtn = encoder->compress();
     if (rtn != sperr::RTNType::Good) {
       std::cout << "Compression failed!" << std::endl;
-      return __LINE__;
+      return __LINE__ % 256;
     }
 
     // Assemble the output bitstream.

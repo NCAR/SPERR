@@ -206,6 +206,10 @@ int main(int argc, char* argv[])
   //
   // A little extra sanity check.
   //
+  if (input_file.empty()) {
+    std::cout << "What's the input file?" << std::endl;
+    return __LINE__;
+  }
   if (!cflag && !dflag) {
     std::cout << "Is this compressing (-c) or decompressing (-d) ?" << std::endl;
     return __LINE__;
