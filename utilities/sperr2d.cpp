@@ -130,6 +130,7 @@ int main(int argc, char* argv[])
   //
   auto bitstream = std::string();
   app.add_option("--bitstream", bitstream, "Output compressed bitstream.")
+      ->needs(cptr)
       ->group("Output settings");
 
   auto decomp_f32 = std::string();
