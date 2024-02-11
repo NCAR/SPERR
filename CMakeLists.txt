@@ -109,7 +109,7 @@ if( BUILD_CLI_UTILITIES )
   set( CLI11_SINGLE_FILE OFF CACHE INTERNAL "Don't use single file CLI11")
   FetchContent_Declare( cli11
     GIT_REPOSITORY https://github.com/CLIUtils/CLI11
-    GIT_TAG        88e9bb17418ee730817d5942894d99a4bdd78fb3 # v2.4.0
+    GIT_TAG        f4d0731cebb123ff0ace712c099dffbcd2c58e5a # v2.4.1
   )
   FetchContent_MakeAvailable(cli11)
 
