@@ -245,11 +245,12 @@ int main(int argc, char* argv[])
     assert(!name.empty());
     auto filenames = create_filenames(name, dims, chunks);
     if (filenames.empty()) {
-      std::printf(" Warning: the combo of volume dimension (%lu, %lu, %lu) and chunk dimension"
-                  " (%lu, %lu, %lu)\n cannot support multi-resolution decoding. "
-                  " Try to use chunk dimensions that\n are similar in length and"
-                  " can divide the volume dimension.\n",
-                  dims[0], dims[1], dims[2], chunks[0], chunks[1], chunks[2]);
+      std::printf(
+          " Warning: the combo of volume dimension (%lu, %lu, %lu) and chunk dimension"
+          " (%lu, %lu, %lu)\n cannot support multi-resolution decoding. "
+          " Try to use chunk dimensions that\n are similar in length and"
+          " can divide the volume dimension.\n",
+          dims[0], dims[1], dims[2], chunks[0], chunks[1], chunks[2]);
       return __LINE__ % 256;
     }
   }
