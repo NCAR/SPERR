@@ -32,9 +32,11 @@ cmake ..                                    # Linux: use cmake to configure the 
 cmake -DUSE_OMP=OFF ..                      # Mac: use cmake to configure the project (OpenMP disabled)
 make -j 8                                   # build the project
 ctest .                                     # run unit tests, which should have 100% tests passed
+make install                                # install the library and CLI tools to a designated directory.
 ```
 
-After a successful build, the executables (CLI tools) are kept in the `./bin` directory.
+## Plugin for HDF5
+SPERR is available as a *dynamically loaded plugin* for HDF5. This plugin is available at this [repo](https://github.com/NCAR/H5Z-SPERR).
 
 ## Documentation
 
