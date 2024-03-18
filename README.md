@@ -35,6 +35,8 @@ ctest .                                     # run unit tests, which should have 
 make install                                # install the library and CLI tools to a designated directory.
 ```
 
+## Plugin for HDF5
+SPERR is available as a *dynamically loaded plugin* for HDF5. This plugin is available at this [repo](https://github.com/NCAR/H5Z-SPERR).
 
 ## Documentation
 
