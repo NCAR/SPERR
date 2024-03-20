@@ -285,12 +285,12 @@ TEST(Bitmask, RandomReadWrite)
   const size_t N = 192;
   auto m1 = Mask(N);
   EXPECT_EQ(m1.size(), N);
-  m1.wint(0, 928798ul);
-  m1.wint(64, 9845932ul);
-  m1.wint(128, 77719821ul);
-  EXPECT_EQ(m1.rint(1), 928798ul);
-  EXPECT_EQ(m1.rint(65), 9845932ul);
-  EXPECT_EQ(m1.rint(129), 77719821ul);
+  m1.wlong(0, 928798ul);
+  m1.wlong(64, 9845932ul);
+  m1.wlong(128, 77719821ul);
+  EXPECT_EQ(m1.rlong(1), 928798ul);
+  EXPECT_EQ(m1.rlong(65), 9845932ul);
+  EXPECT_EQ(m1.rlong(129), 77719821ul);
 
   auto vec = std::vector<bool>();
   for (size_t i = 0; i < N; i++)
@@ -321,7 +321,7 @@ TEST(Bitmask, RandomReadWrite)
 TEST(Bitmask, BufferTransfer)
 {
   auto src = Mask(60);
-  src.wint(0, 78344ul);
+  src.wlong(0, 78344ul);
   auto buf = src.view_buffer();
 
   auto dst = Mask(60);
@@ -331,7 +331,7 @@ TEST(Bitmask, BufferTransfer)
     EXPECT_EQ(src.rbit(i), dst.rbit(i));
 
   src.resize(120);
-  src.wint(100, 19837ul);
+  src.wlong(100, 19837ul);
   buf = src.view_buffer();
 
   dst.resize(120);
@@ -350,7 +350,7 @@ TEST(Bitmask, BufferTransfer)
     EXPECT_EQ(src.rbit(i), dst.rbit(i));
 
   src.resize(150);
-  src.wint(130, 19837ul);
+  src.wlong(130, 19837ul);
   buf = src.view_buffer();
 
   dst.resize(150);
@@ -397,15 +397,15 @@ TEST(Bitmask, spaceship)
   src.resize(90);
   EXPECT_EQ(src, dst);
 
-  dst.wint(64, std::numeric_limits<uint64_t>::max());
+  dst.wlong(64, std::numeric_limits<uint64_t>::max());
   EXPECT_NE(src, dst);
 
   for (size_t i = 64; i < 90; i++) {
     src.wbit(i, i % 3 == 0);
     dst.wbit(i, i % 3 == 0);
   }
-  EXPECT_EQ(src.rint(63), dst.rint(63));
-  EXPECT_NE(src.rint(64), dst.rint(64));
+  EXPECT_EQ(src.rlong(63), dst.rlong(63));
+  EXPECT_NE(src.rlong(64), dst.rlong(64));
   EXPECT_EQ(src, dst);
 }
 #endif

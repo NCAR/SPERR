@@ -6,11 +6,10 @@
  *   and writes, e.g., reading and writing 64 bits at a tiem.
  *   For heavy use of streaming reads and writes, please use the Bitstream class instead.
  *
- * Methods rint(idx) and wint(idx, value) are used for bulk reads and writes of
- *   64 bits. The idx parameter is the position of bits, specifying where the integer is
- *   read or written. As a result, rint(0) and rint(63) will return the same integer,
- *   and wint(64, val) and wint(127, val) will write val to the same location, assuming
- *   that 64-bit unsigned long is used as the underlying integer type.
+ * Methods rlong(idx) and wlong(idx, value) are used for bulk reads and writes of
+ *   64 bits. The idx parameter is the position of bits, specifying where the long integer is
+ *   read or written. As a result, rlong(0) and rlong(63) will return the same integer,
+ *   and wlong(64, val) and wlong(127, val) will write val to the same location.
  *
  * Bitmask does not automatically adjust its size. The size of a Bitmask is initialized
  *   at construction time, and is only changed by users calling the resize() method.
@@ -36,7 +35,7 @@ class Bitmask {
 
   // Functions for read
   //
-  auto rint(size_t idx) const -> uint64_t;  // `idx` of the bit, not the int.
+  auto rlong(size_t idx) const -> uint64_t;  // `idx` of the bit, not the long.
   auto rbit(size_t idx) const -> bool;
 
   // Functions to perform bulk tests.
@@ -46,7 +45,7 @@ class Bitmask {
   // Functions for write
   //
   void wbit(size_t idx, bool bit);
-  void wint(size_t idx, uint64_t value);  // `idx` of the bit, not the int.
+  void wlong(size_t idx, uint64_t value);  // `idx` of the bit, not the long.
   void wtrue(size_t idx);                  // This is faster than `wbit(idx, true)`.
   void wfalse(size_t idx);                 // This is faster than `wbit(idx, false)`.
   void reset();                            // Set the current bitmask to be all 0's.

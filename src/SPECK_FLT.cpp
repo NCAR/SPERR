@@ -354,7 +354,7 @@ auto sperr::SPECK_FLT::m_midtread_quantize() -> RTNType
             bits64 |= uint64_t{ll >= 0} << j;
             vec[i + j] = std::abs(ll);
           }
-          signs.wint(i, bits64);
+          signs.wlong(i, bits64);
         }
 
         // Process the remaining bits.
@@ -383,7 +383,7 @@ void sperr::SPECK_FLT::m_midtread_inv_quantize()
 
         // Process 64 values at a time.
         for (size_t i = 0; i < bits_x64; i += 64) {
-          const auto bits64 = signs.rint(i);
+          const auto bits64 = signs.rlong(i);
           for (size_t j = 0; j < 64; j++) {
             auto bit = (bits64 >> j) & uint64_t{1};
             vals_d[i + j] = q * static_cast<double>(vec[i + j]) * tmpd[bit];
