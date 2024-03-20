@@ -54,7 +54,7 @@ void sperr::SPECK_INT<T>::set_budget(size_t bud)
 }
 
 template <typename T>
-auto sperr::SPECK_INT<T>::get_speck_bits(const void* buf) const -> uint64_t
+auto sperr::SPECK_INT<T>::get_speck_num_bits(const void* buf) const -> uint64_t
 {
   // Given the header definition, directly retrieve the value stored in bytes 1--9.
   const auto* const ptr = static_cast<const uint8_t*>(buf);
@@ -66,7 +66,7 @@ auto sperr::SPECK_INT<T>::get_speck_bits(const void* buf) const -> uint64_t
 template <typename T>
 auto sperr::SPECK_INT<T>::get_stream_full_len(const void* buf) const -> uint64_t
 {
-  auto num_bits = get_speck_bits(buf);
+  auto num_bits = get_speck_num_bits(buf);
   while (num_bits % 8 != 0)
     ++num_bits;
   return (header_size + num_bits / 8);
