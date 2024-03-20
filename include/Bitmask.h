@@ -37,16 +37,19 @@ class Bitmask {
   //
   auto rlong(size_t idx) const -> uint64_t;  // `idx` of the bit, not the long.
   auto rbit(size_t idx) const -> bool;
-  auto count_true() const -> size_t;  // How many 1's in this mask?
+
+  // Functions to perform bulk tests.
+  auto has_true(size_t start, size_t len) const -> bool;  // Is there any true in this range?
+  auto count_true() const -> size_t;                      // How many 1's in this mask?
 
   // Functions for write
   //
-  void wlong(size_t idx, uint64_t value);  // `idx` of the bit, not the long.
   void wbit(size_t idx, bool bit);
-  void wtrue(size_t idx);   // This is faster than `wbit(idx, true)`.
-  void wfalse(size_t idx);  // This is faster than `wbit(idx, false)`.
-  void reset();             // Set the current bitmask to be all 0's.
-  void reset_true();        // Set the current bitmask to be all 1's.
+  void wlong(size_t idx, uint64_t value);  // `idx` of the bit, not the long.
+  void wtrue(size_t idx);                  // This is faster than `wbit(idx, true)`.
+  void wfalse(size_t idx);                 // This is faster than `wbit(idx, false)`.
+  void reset();                            // Set the current bitmask to be all 0's.
+  void reset_true();                       // Set the current bitmask to be all 1's.
 
   // Functions for direct access of the underlying data buffer
   // Note: `use_bitstream()` reads the number of values (uint64_t type) that provide

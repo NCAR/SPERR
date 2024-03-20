@@ -360,6 +360,59 @@ TEST(Bitmask, BufferTransfer)
     EXPECT_EQ(src.rbit(i), dst.rbit(i));
 }
 
+TEST(Bitmask, has_true_1_word)
+{
+  auto mask = Mask(128);
+  EXPECT_EQ(mask.has_true(0, 128), false);
+
+  mask.wtrue(10);
+  EXPECT_EQ(mask.has_true(0, 10), false);
+  EXPECT_EQ(mask.has_true(0, 11), true);
+  EXPECT_EQ(mask.has_true(0, 64), true);
+  EXPECT_EQ(mask.has_true(8, 11), true);
+  EXPECT_EQ(mask.has_true(8, 20), true);
+  EXPECT_EQ(mask.has_true(8, 48), true);
+  EXPECT_EQ(mask.has_true(8, 64), true);
+  EXPECT_EQ(mask.has_true(10, 1), true);
+  EXPECT_EQ(mask.has_true(10, 9), true);
+  EXPECT_EQ(mask.has_true(11, 1), false);
+  EXPECT_EQ(mask.has_true(11, 9), false);
+}
+
+TEST(Bitmask, has_true_full_words)
+{
+  auto mask = Mask(512);
+
+  mask.wtrue(100);
+  EXPECT_EQ(mask.has_true(0, 64), false);
+  EXPECT_EQ(mask.has_true(0, 128), true);
+  EXPECT_EQ(mask.has_true(6, 250), true);
+  EXPECT_EQ(mask.has_true(100, 156), true);
+  EXPECT_EQ(mask.has_true(101, 155), false);
+
+  mask.wtrue(255);
+  EXPECT_EQ(mask.has_true(128, 64), false);
+  EXPECT_EQ(mask.has_true(128, 128), true);
+  EXPECT_EQ(mask.has_true(128, 256), true);
+  EXPECT_EQ(mask.has_true(256, 128), false);
+}
+
+TEST(Bitmask, has_true_remaining)
+{
+  auto mask = Mask(512);
+
+  mask.wtrue(256);
+  EXPECT_EQ(mask.has_true(0, 256), false);
+  EXPECT_EQ(mask.has_true(1, 256), true);
+  EXPECT_EQ(mask.has_true(0, 260), true);
+
+  mask.wfalse(256);
+  mask.wtrue(260);
+  EXPECT_EQ(mask.has_true(0, 260), false);
+  EXPECT_EQ(mask.has_true(1, 260), true);
+}
+
+
 #if defined __cpp_lib_three_way_comparison && defined __cpp_impl_three_way_comparison
 TEST(Bitmask, spaceship)
 {

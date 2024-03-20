@@ -1,6 +1,7 @@
 #include "Bitmask.h"
 
 #include <algorithm>
+#include <cassert>
 #include <limits>
 
 sperr::Bitmask::Bitmask(size_t nbits)
@@ -38,6 +39,43 @@ auto sperr::Bitmask::rbit(size_t idx) const -> bool
   auto word = m_buf[idx / 64];
   word &= uint64_t{1} << (idx % 64);
   return (word != 0);
+}
+
+auto sperr::Bitmask::has_true(size_t start, size_t len) const -> bool
+{
+  auto long_idx = start / 64;
+  auto processed_bits = size_t{0};
+
+  // Collect the remaining bits from the start long.
+  auto word = m_buf[long_idx];
+  auto answer = uint64_t{0};
+  for (auto i = start % 64; i < 64 && processed_bits < len; i++) {
+    answer |= word & (uint64_t{1} << i);
+    processed_bits++;
+  }
+  if (answer != 0)
+    return true;
+
+  // Examine the subsequent full longs.
+  while (processed_bits + 64 <= len) {
+    if (m_buf[++long_idx] != 0)
+      return true;
+    processed_bits += 64;
+  }
+
+  // Examine the remaining bits
+  if (processed_bits < len) {
+    auto nbits = len - processed_bits;
+    assert(nbits < 64);
+    word = m_buf[++long_idx];
+    answer = 0;
+    for (size_t i = 0; i < nbits; i++)
+      answer |= word & (uint64_t{1} << i);
+    if (answer != 0)
+      return true;
+  }
+
+  return false;
 }
 
 auto sperr::Bitmask::count_true() const -> size_t
