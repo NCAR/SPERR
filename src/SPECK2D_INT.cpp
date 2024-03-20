@@ -11,7 +11,7 @@ void sperr::SPECK2D_INT<T>::m_sorting_pass()
   const auto bits_x64 = m_LIP_mask.size() - m_LIP_mask.size() % 64;
 
   for (size_t i = 0; i < bits_x64; i += 64) {
-    const auto value = m_LIP_mask.rlong(i);
+    const auto value = m_LIP_mask.rint(i);
     if (value != 0) {
       for (size_t j = 0; j < 64; j++) {
         if ((value >> j) & uint64_t{1}) {
