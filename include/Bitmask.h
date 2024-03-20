@@ -64,7 +64,6 @@ class Bitmask {
 #endif
 
  private:
-  size_t m_width = 64;
   size_t m_num_bits = 0;
   std::vector<uint64_t> m_buf;
 };

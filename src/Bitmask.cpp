@@ -7,8 +7,8 @@
 sperr::Bitmask::Bitmask(size_t nbits)
 {
   if (nbits > 0) {
-    auto num_longs = nbits / m_width;
-    if (nbits % m_width != 0)
+    auto num_longs = nbits / 64;
+    if (nbits % 64 != 0)
       num_longs++;
     m_buf.assign(num_longs, 0);
     m_num_bits = nbits;
@@ -22,8 +22,8 @@ auto sperr::Bitmask::size() const -> size_t
 
 void sperr::Bitmask::resize(size_t nbits)
 {
-  auto num_longs = nbits / m_width;
-  if (nbits % m_width != 0)
+  auto num_longs = nbits / 64;
+  if (nbits % 64 != 0)
     num_longs++;
   m_buf.resize(num_longs, 0);
   m_num_bits = nbits;
@@ -31,25 +31,25 @@ void sperr::Bitmask::resize(size_t nbits)
 
 auto sperr::Bitmask::rlong(size_t idx) const -> uint64_t
 {
-  return m_buf[idx / m_width];
+  return m_buf[idx / 64];
 }
 
 auto sperr::Bitmask::rbit(size_t idx) const -> bool
 {
-  auto word = m_buf[idx / m_width];
-  word &= uint64_t{1} << (idx % m_width);
+  auto word = m_buf[idx / 64];
+  word &= uint64_t{1} << (idx % 64);
   return (word != 0);
 }
 
 auto sperr::Bitmask::has_true(size_t start, size_t len) const -> bool
 {
-  auto long_idx = start / m_width;
+  auto long_idx = start / 64;
   auto processed_bits = size_t{0};
 
   // Collect the remaining bits from the start long.
   auto word = m_buf[long_idx];
   auto answer = uint64_t{0};
-  for (auto i = start % m_width; i < m_width && processed_bits < len; i++) {
+  for (auto i = start % 64; i < 64 && processed_bits < len; i++) {
     answer |= word & (uint64_t{1} << i);
     processed_bits++;
   }
@@ -57,16 +57,16 @@ auto sperr::Bitmask::has_true(size_t start, size_t len) const -> bool
     return true;
 
   // Examine the subsequent full longs.
-  while (processed_bits + m_width <= len) {
+  while (processed_bits + 64 <= len) {
     if (m_buf[++long_idx] != 0)
       return true;
-    processed_bits += m_width;
+    processed_bits += 64;
   }
 
   // Examine the remaining bits
   if (processed_bits < len) {
     auto nbits = len - processed_bits;
-    assert(nbits < m_width);
+    assert(nbits < 64);
     word = m_buf[++long_idx];
     answer = 0;
     for (size_t i = 0; i < nbits; i++)
@@ -88,13 +88,13 @@ auto sperr::Bitmask::count_true() const -> size_t
   for (size_t i = 0; i < m_buf.size() - 1; i++) {
     const auto val = m_buf[i];
     if (val != 0) {
-      for (size_t j = 0; j < m_width; j++)
+      for (size_t j = 0; j < 64; j++)
         counter += ((val >> j) & uint64_t{1});
     }
   }
   const auto val = m_buf.back();
   if (val != 0) {
-    for (size_t j = 0; j < m_num_bits - (m_buf.size() - 1) * m_width; j++)
+    for (size_t j = 0; j < m_num_bits - (m_buf.size() - 1) * 64; j++)
       counter += ((val >> j) & uint64_t{1});
   }
 
@@ -103,13 +103,13 @@ auto sperr::Bitmask::count_true() const -> size_t
 
 void sperr::Bitmask::wlong(size_t idx, uint64_t value)
 {
-  m_buf[idx / m_width] = value;
+  m_buf[idx / 64] = value;
 }
 
 void sperr::Bitmask::wbit(size_t idx, bool bit)
 {
-  const auto wstart = idx / m_width;
-  const auto mask = uint64_t{1} << (idx % m_width);
+  const auto wstart = idx / 64;
+  const auto mask = uint64_t{1} << (idx % 64);
 
   auto word = m_buf[wstart];
   if (bit)
@@ -121,8 +121,8 @@ void sperr::Bitmask::wbit(size_t idx, bool bit)
 
 void sperr::Bitmask::wtrue(size_t idx)
 {
-  const auto wstart = idx / m_width;
-  const auto mask = uint64_t{1} << (idx % m_width);
+  const auto wstart = idx / 64;
+  const auto mask = uint64_t{1} << (idx % 64);
 
   auto word = m_buf[wstart];
   word |= mask;
@@ -131,8 +131,8 @@ void sperr::Bitmask::wtrue(size_t idx)
 
 void sperr::Bitmask::wfalse(size_t idx)
 {
-  const auto wstart = idx / m_width;
-  const auto mask = uint64_t{1} << (idx % m_width);
+  const auto wstart = idx / 64;
+  const auto mask = uint64_t{1} << (idx % 64);
 
   auto word = m_buf[wstart];
   word &= ~mask;
@@ -167,7 +167,7 @@ auto sperr::Bitmask::operator<=>(const Bitmask& rhs) const noexcept
   if (cmp != 0)
     return cmp;
 
-  if (m_num_bits % m_width == 0)
+  if (m_num_bits % 64 == 0)
     return m_buf <=> rhs.m_buf;
   else {
     // Compare each fully used long.
@@ -179,7 +179,7 @@ auto sperr::Bitmask::operator<=>(const Bitmask& rhs) const noexcept
     // Compare the last partially used long.
     auto mylast = m_buf.back();
     auto rhslast = rhs.m_buf.back();
-    for (size_t i = m_num_bits % m_width; i < m_width; i++) {
+    for (size_t i = m_num_bits % 64; i < 64; i++) {
       auto mask = uint64_t{1} << i;
       mylast &= ~mask;
       rhslast &= ~mask;
