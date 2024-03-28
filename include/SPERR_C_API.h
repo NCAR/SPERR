@@ -155,6 +155,47 @@ int sperr_trunc_3d(
     void** dst,       /* Output: buffer for the truncated bitstream, allocated by this function */
     size_t* dst_len); /* Output: length of `dst` in byte */
 
+/*
+ * Experimental API: a single function call for compression and decompression respectively,
+ *    no matter the dimensionality of the input data.
+ *    Note 1: this pair of functions need to be used together; there's no interoperability
+ *            between bitstreams produced by this pair of function and specific 3D/2D functions.
+ *    Note 2: this experimental function might change. For greater API stability, please use
+ *            specific 3D/2D compression and decompression functions.
+ *
+ * Compression mode meanings:
+ *   mode == 1 --> fixed bit-per-pixel (BPP)
+ *   mode == 2 --> fixed peak signal-to-noise ratio (PSNR)
+ *   mode == 3 --> fixed point-wise error (PWE)
+ *
+ * Return value meanings:
+ *  zero: success
+ *  non-zero: error
+ */
+int sperr_compress(
+    const void* src,      /* Input: buffer that contains a 2D slice or a 3D volume */
+    int is_float,         /* Input: input buffer type: 1 == float, 0 == double */
+    size_t num_vals,      /* Input: number of values in the input buffer */
+    int num_dims,         /* Input: logical num. of dimensions of the input data. Usually 2 or 3. */
+    const size_t* dims,   /* Input: length of each logical dimension of the input data. */
+    const size_t* chunks, /* Input: length of preferred chunk dims in 3D; ignored in 2D. */
+    int mode,             /* Input: compression mode */
+    double quality,       /* Input: compression quality */
+    size_t num_threads,   /* Input: num. of OpenMP threads in 3D; ignored in 2D. */
+    void** dst,           /* Output: buffer for the output bitstream, allocated by this function. */
+    size_t* dst_len);     /* Output: length of `dst` in byte */
+
+int sperr_decompress(
+    const void* src,    /* Input: compressed bitstream */
+    size_t src_len,     /* Input: length of the input bitstream in byte */
+    int output_float,   /* Input: output data type: 1 == float, 0 == double */
+    size_t num_threads, /* Input: num. of OpenMP threads in 3D; ignored in 2D. */
+    size_t* out_dims,   /* Output: length of each logical dimension of the decompressed data.
+                           It must be memory *already* allocated by the caller with at least 3
+                           elements to fit the lengh of each dimension in 3D cases.
+                           In 2D cases, the last dimension length will be set to be 1. */
+    void** dst);        /* Output: buffer for the decompressed data, allocated by this function */
+
 #ifdef __cplusplus
 } /* end of extern "C" */
 } /* end of namespace C_API */
