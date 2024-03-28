@@ -65,7 +65,7 @@ int sperr_comp_2d(
  * Decompress a 2D SPERR-compressed buffer that is produced by sperr_comp_2d().
  *  Note that this bitstream shoult NOT contain a header. I.e., a bitstream produced by
  *  sperr_comp_2d() with `out_inc_header = 0`, or with `out_inc_header = 1` and has its
- *  first 10 bytes stipped.
+ *  first 10 bytes stripped.
  *
  * Return value meanings:
  *  0: success

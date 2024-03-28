@@ -50,7 +50,8 @@ int C_API::sperr_comp_2d(const void* src,
     return -1;
 
   auto stream = sperr::vec8_type();
-  if (out_inc_header) {  // Assemble a header that's the same as the header in SPERR3D_OMP_C().
+  if (out_inc_header) {
+    // Assemble a header that's the same as the header in SPERR3D_OMP_C().
     // The header would contain the following information
     //  -- a version number                     (1 byte)
     //  -- 8 booleans                           (1 byte)
@@ -58,7 +59,7 @@ int C_API::sperr_comp_2d(const void* src,
     //
 
     // Version number
-    stream.resize(10);
+    stream.resize(10);  // 10 bytes in total
     stream[0] = static_cast<uint8_t>(SPERR_VERSION_MAJOR);
 
     // 8 booleans:
@@ -277,4 +278,66 @@ int C_API::sperr_trunc_3d(const void* src,
     *dst_len = trunc.size();
     return 0;
   }
+}
+
+int C_API::sperr_compress(const void* src,
+                          int is_float,
+                          size_t num_vals,
+                          int num_dims,
+                          const size_t* dims,
+                          const size_t* chunks,
+                          int mode,
+                          double quality,
+                          size_t num_threads,
+                          void** dst,
+                          size_t* dst_len)
+{
+  int ret = 0;
+
+  switch (num_dims) {
+    case 2:
+      // Sanity check
+      if (dims[0] * dims[1] != num_vals)
+        return -1;
+      ret = sperr_comp_2d(src, is_float, dims[0], dims[1], mode, quality, 1, dst, dst_len);
+      break;
+    case 3:
+      // Sanity check
+      if (dims[0] * dims[1] * dims[2] != num_vals)
+        return -1;
+      ret = sperr_comp_3d(src, is_float, dims[0], dims[1], dims[2], chunks[0], chunks[1], chunks[2],
+                          mode, quality, num_threads, dst, dst_len);
+      break;
+    default:
+      ret = -2;
+  }
+
+  return ret;
+}
+
+int C_API::sperr_decompress(const void* src,
+                            size_t src_len,
+                            int output_float,
+                            size_t num_threads,
+                            size_t* out_dims,
+                            void** dst)
+{
+  int is_float = 0;
+  sperr_parse_header(src, out_dims, out_dims + 1, out_dims + 2, &is_float);
+
+  int ret = 0;
+  if (out_dims[2] > 1) {
+    // 3D case
+    ret = sperr_decomp_3d(src, src_len, output_float, num_threads, out_dims, out_dims + 1,
+                          out_dims + 2, dst);
+  }
+  else if (out_dims[2] == 1) {
+    // 2D case
+    const auto* ptr = static_cast<const unsigned char*>(src);
+    ret = sperr_decomp_2d(ptr + 10, src_len - 10, output_float, out_dims[0], out_dims[1], dst);
+  }
+  else
+    ret = -1;
+
+  return ret;
 }
