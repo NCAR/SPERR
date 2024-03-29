@@ -107,7 +107,7 @@ int main(int argc, char** argv)
     fwrite(outbuf, sizeof(double), out_dimx * out_dimy, f);
   fclose(f);
 
-  /* Test the "catch all" function calls. */
+  /* Test the "catch all" functions. */
   size_t dims[3] = {dimx, dimy, 1};
   size_t stream2_len = 0;
   void* stream2 = NULL;

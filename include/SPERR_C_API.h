@@ -156,12 +156,10 @@ int sperr_trunc_3d(
     size_t* dst_len); /* Output: length of `dst` in byte */
 
 /*
- * Experimental API: a single function call for compression and decompression respectively,
- *    no matter the dimensionality of the input data.
- *    Note 1: this pair of functions need to be used together; there's no interoperability
- *            between bitstreams produced by this pair of function and specific 3D/2D functions.
- *    Note 2: this experimental function might change. For greater API stability, please use
- *            specific 3D/2D compression and decompression functions.
+ * Experimental API: a single pair of functions that compresses and decompresses,
+ *    regardless of the dimensionality of the input data.
+ *    Note: these functions are experimental in nature, and their behaviors/signatures might change.
+ *    For greater API stability, please use specific 3D/2D compression and decompression functions.
  *
  * Compression mode meanings:
  *   mode == 1 --> fixed bit-per-pixel (BPP)

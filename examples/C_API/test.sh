@@ -97,7 +97,7 @@ rm -f $CSTREAM $CPPSTREAM $CDECOMP $CPPDECOMP
 FILE=./test_data/density_128x128x256.d64
 Q=2.6
 ./3d.out $FILE 128 128 256 1 $Q -d
-./bin/sperr3d -c --ftype 64 --dims 128 128 256 --bitstream $CPPSTREAM --decomp_d $CPPDECOMP --bpp $Q $FILE
+./bin/sperr3d -c --ftype 64 --dims 128 128 256 --chunks 128 128 128 --bitstream $CPPSTREAM --decomp_d $CPPDECOMP --bpp $Q $FILE
 
 if diff $CSTREAM $CPPSTREAM; then
   echo "--> C and C++ utilities produce the same bitstream on 3D test data $FILE"
@@ -120,7 +120,7 @@ rm -f $CSTREAM $CPPSTREAM $CDECOMP $CPPDECOMP
 FILE=./test_data/density_128x128x256.d64
 Q=102.5
 ./3d.out $FILE 128 128 256 2 $Q -d
-./bin/sperr3d -c --ftype 64 --dims 128 128 256 --bitstream $CPPSTREAM --decomp_d $CPPDECOMP --psnr $Q $FILE
+./bin/sperr3d -c --ftype 64 --dims 128 128 256 --chunks 128 128 128 --bitstream $CPPSTREAM --decomp_d $CPPDECOMP --psnr $Q $FILE
 
 if diff $CSTREAM $CPPSTREAM; then
   echo "--> C and C++ utilities produce the same bitstream on 3D test data $FILE"
@@ -143,7 +143,7 @@ rm -f $CSTREAM $CPPSTREAM $CDECOMP $CPPDECOMP
 FILE=./test_data/density_128x128x256.d64
 Q=4e-5
 ./3d.out $FILE 128 128 256 3 $Q -d
-./bin/sperr3d -c --ftype 64 --dims 128 128 256 --bitstream $CPPSTREAM --decomp_d $CPPDECOMP --pwe $Q $FILE
+./bin/sperr3d -c --ftype 64 --dims 128 128 256 --chunks 128 128 128 --bitstream $CPPSTREAM --decomp_d $CPPDECOMP --pwe $Q $FILE
 
 if diff $CSTREAM $CPPSTREAM; then
   echo "--> C and C++ utilities produce the same bitstream on 3D test data $FILE"
