@@ -41,25 +41,40 @@ auto sperr::Bitmask::rbit(size_t idx) const -> bool
   return (word != 0);
 }
 
-auto sperr::Bitmask::has_true(size_t start, size_t len) const -> bool
+template <bool Position>
+auto sperr::Bitmask::has_true(size_t start, size_t len) const -> int64_t
 {
   auto long_idx = start / 64;
-  auto processed_bits = size_t{0};
+  auto processed_bits = int64_t{0};
 
   // Collect the remaining bits from the start long.
   auto word = m_buf[long_idx];
   auto answer = uint64_t{0};
   for (auto i = start % 64; i < 64 && processed_bits < len; i++) {
     answer |= word & (uint64_t{1} << i);
+    if constexpr (Position) {
+      if (answer != 0)
+        return processed_bits;
+    }
     processed_bits++;
   }
-  if (answer != 0)
-    return true;
+  if constexpr (!Position) {
+    if (answer != 0)
+      return 1;
+  }
 
   // Examine the subsequent full longs.
   while (processed_bits + 64 <= len) {
-    if (m_buf[++long_idx] != 0)
-      return true;
+    word = m_buf[++long_idx];
+    if (word) {
+      if constexpr (Position) {
+        for (int64_t i = 0; i < 64; i++)
+          if (word & (uint64_t{1} << i))
+            return processed_bits + i;
+      }
+      else
+        return 1;
+    }
     processed_bits += 64;
   }
 
@@ -69,14 +84,23 @@ auto sperr::Bitmask::has_true(size_t start, size_t len) const -> bool
     assert(nbits < 64);
     word = m_buf[++long_idx];
     answer = 0;
-    for (size_t i = 0; i < nbits; i++)
+    for (size_t i = 0; i < nbits; i++) {
       answer |= word & (uint64_t{1} << i);
-    if (answer != 0)
-      return true;
+      if constexpr (Position) {
+        if (answer != 0)
+          return processed_bits + i;
+      }
+    }
+    if constexpr (!Position) {
+      if (answer != 0)
+        return 1;
+    }
   }
 
-  return false;
+  return -1;
 }
+template auto sperr::Bitmask::has_true<true>(size_t, size_t) const -> int64_t;
+template auto sperr::Bitmask::has_true<false>(size_t, size_t) const -> int64_t;
 
 auto sperr::Bitmask::count_true() const -> size_t
 {
