@@ -84,7 +84,7 @@ auto sperr::Bitmask::has_true(size_t start, size_t len) const -> int64_t
     assert(nbits < 64);
     word = m_buf[++long_idx];
     answer = 0;
-    for (size_t i = 0; i < nbits; i++) {
+    for (int64_t i = 0; i < nbits; i++) {
       answer |= word & (uint64_t{1} << i);
       if constexpr (Position) {
         if (answer != 0)

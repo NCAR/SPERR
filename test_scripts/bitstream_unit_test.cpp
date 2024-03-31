@@ -378,7 +378,7 @@ TEST(Bitmask, has_true)
         auto ans2 = -1l;
         for (size_t i = start; i < start + len; i++)
           if (mask.rbit(i)) {
-            ans2 = 1l;
+            ans2 = 1;
             break;
           }
         EXPECT_EQ(ans1, ans2);
