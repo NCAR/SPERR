@@ -25,14 +25,15 @@ SPERR requires 1) a working C++ compiler and 2) CMake tools to build. On a Unix-
 the build steps are the following:
 
 ```bash
-git clone https://github.com/NCAR/SPERR.git # clone the repo
-mkdir SPERR/build                           # create the build directory
-cd SPERR/build                              # enter the build directory
-cmake ..                                    # Linux: use cmake to configure the project (with OpenMP)
-cmake -DUSE_OMP=OFF ..                      # Mac: use cmake to configure the project (OpenMP disabled)
-make -j 8                                   # build the project
-ctest .                                     # run unit tests, which should have 100% tests passed
-make install                                # install the library and CLI tools to a designated directory.
+git clone https://github.com/NCAR/SPERR.git     # clone the repo
+mkdir SPERR/build                               # create the build directory
+cd SPERR/build                                  # enter the build directory
+cmake ..                                        # Linux: use cmake to configure the project (with OpenMP)
+cmake -DUSE_OMP=OFF ..                          # Mac: use cmake to configure the project (OpenMP disabled)
+cmake -DCMAKE_INSTALL_PREFIX=/my/install/dir .. # Optional: specify a directory to install SPERR. The default is /usr/local .
+make -j 8                                       # build the project
+ctest .                                         # run unit tests, which should have 100% tests passed
+make install                                    # install the library and CLI tools to a specified directory.
 ```
 
 ## Plugin for HDF5
