@@ -157,7 +157,7 @@ class CDF97 {
   const double BETA = h[3] / r1;
   const double GAMMA = r1 / s0;
   const double DELTA = s0 / t0;
-  const double EPSILON = std::sqrt(2.0) * t0;
+  const double EPSILON = t0; // std::sqrt(2.0) * t0;
   const double INV_EPSILON = 1.0 / EPSILON;
 
   // QccPack coefficients

@@ -67,24 +67,40 @@ auto sperr::CDF97::get_dims() const -> std::array<size_t, 3>
 void sperr::CDF97::dwt1d()
 {
   auto num_xforms = sperr::num_of_xforms(m_dims[0]);
+  num_xforms = std::min(num_xforms, 4ul);
+  // std::printf("forward: %lu level\n", num_xforms);
   m_dwt1d(m_data_buf.begin(), m_data_buf.size(), num_xforms);
+
+  auto* f = std::fopen("wavemag", "a");
+  std::fwrite(m_data_buf.data(), sizeof(double), m_data_buf.size(), f);
+  std::fclose(f);
 }
 
 void sperr::CDF97::idwt1d()
 {
   auto num_xforms = sperr::num_of_xforms(m_dims[0]);
+  num_xforms = std::min(num_xforms, 4ul);
+  // std::printf("inverse: %lu level\n", num_xforms);
   m_idwt1d(m_data_buf.begin(), m_data_buf.size(), num_xforms);
 }
 
 void sperr::CDF97::dwt2d()
 {
   auto xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  xy = std::min(xy, 4ul);
+  //std::printf("forward: %lu level\n", xy);
   m_dwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, xy);
+
+  auto* f = std::fopen("wavemag", "a");
+  std::fwrite(m_data_buf.data(), sizeof(double), m_data_buf.size(), f);
+  std::fclose(f);
 }
 
 void sperr::CDF97::idwt2d()
 {
   auto xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
+  xy = std::min(xy, 4ul);
+  //std::printf("inverse: %lu level\n", xy);
   m_idwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, xy);
 }
 
@@ -109,8 +125,14 @@ auto sperr::CDF97::idwt2d_multi_res() -> std::vector<vecd_type>
 void sperr::CDF97::dwt3d()
 {
   auto dyadic = sperr::can_use_dyadic(m_dims);
-  if (dyadic)
-    m_dwt3d_dyadic(*dyadic);
+  if (dyadic) {
+    auto nlev = std::min(*dyadic, 4ul);
+    m_dwt3d_dyadic(nlev);
+
+    auto* f = std::fopen("wavemag", "a");
+    std::fwrite(m_data_buf.data(), sizeof(double), m_data_buf.size(), f);
+    std::fclose(f);
+  }
   else
     m_dwt3d_wavelet_packet();
 }
@@ -118,8 +140,10 @@ void sperr::CDF97::dwt3d()
 void sperr::CDF97::idwt3d()
 {
   auto dyadic = sperr::can_use_dyadic(m_dims);
-  if (dyadic)
-    m_idwt3d_dyadic(*dyadic);
+  if (dyadic) {
+    auto nlev = std::min(*dyadic, 4ul);
+    m_idwt3d_dyadic(nlev);
+  }
   else
     m_idwt3d_wavelet_packet();
 }
@@ -260,6 +284,7 @@ void sperr::CDF97::m_idwt3d_wavelet_packet()
 
 void sperr::CDF97::m_dwt3d_dyadic(size_t num_xforms)
 {
+  std::printf("forward: %lu levels\n", num_xforms);
   for (size_t lev = 0; lev < num_xforms; lev++) {
     auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev);
     auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev);
@@ -270,6 +295,7 @@ void sperr::CDF97::m_dwt3d_dyadic(size_t num_xforms)
 
 void sperr::CDF97::m_idwt3d_dyadic(size_t num_xforms)
 {
+  std::printf("inverse: %lu levels\n", num_xforms);
   for (size_t lev = num_xforms; lev > 0; lev--) {
     auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev - 1);
     auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev - 1);
