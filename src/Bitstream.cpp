@@ -116,7 +116,7 @@ void sperr::Bitstream::wbit(bool bit)
 #endif
   {
     if (m_itr == m_buf.end()) {  // allocate memory if necessary.
-      size_t dist = m_buf.size();
+      auto dist = m_buf.size();
       m_buf.resize(std::max(size_t{1}, dist) * 2 - dist / 2);  // use a growth factor of 1.5
       m_itr = m_buf.begin() + dist;
     }
@@ -131,7 +131,7 @@ void sperr::Bitstream::flush()
 {
   if (m_bits) {  // only really flush when there are remaining bits.
     if (m_itr == m_buf.end()) {
-      size_t dist = m_buf.size();
+      auto dist = m_buf.size();
       m_buf.resize(std::max(size_t{1}, dist) * 2 - dist / 2);  // use a growth factor of 1.5
       m_itr = m_buf.begin() + dist;
     }
@@ -166,8 +166,7 @@ auto sperr::Bitstream::get_bitstream(size_t num_bits) const -> std::vector<std::
 {
   assert(num_bits <= m_buf.size() * 64);
 
-  size_t div = num_bits / 8;
-  auto num_bytes = div;
+  auto num_bytes = num_bits / 8;
   if (num_bits - num_bytes * 8 != 0)
     num_bytes++;
 
