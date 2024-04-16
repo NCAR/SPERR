@@ -167,9 +167,8 @@ auto sperr::Bitstream::get_bitstream(size_t num_bits) const -> std::vector<std::
   assert(num_bits <= m_buf.size() * 64);
 
   size_t div = num_bits / 8;
-  size_t rem = num_bits - div * 8;
   auto num_bytes = div;
-  if (rem != 0)
+  if (num_bits - num_bytes * 8 != 0)
     num_bytes++;
 
   auto tmp = std::vector<std::byte>(num_bytes);
