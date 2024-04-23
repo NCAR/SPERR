@@ -37,10 +37,12 @@ make install                                    # install the library and CLI to
 ```
 
 ## Plugin for HDF5
-SPERR is available as a *dynamically loaded plugin* for HDF5. This plugin is available at this [repo](https://github.com/NCAR/H5Z-SPERR).
+SPERR is available as a *dynamically loaded plugin* for HDF5 with a registered ID of `32028`.
+This plugin is available at this [repo](https://github.com/NCAR/H5Z-SPERR).
 
-## Fortran Wrapper
-A Fortran wrapper for SPERR has also been created by @ofmla at this [repo](https://github.com/ofmla/fortran-sperr).
+## Wrapper for Fortran
+A Fortran wrapper for SPERR has also been created by [ofmla](https://github.com/ofmla) 
+at this [repo](https://github.com/ofmla/fortran-sperr).
 
 ## Documentation
 
