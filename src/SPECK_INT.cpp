@@ -5,6 +5,10 @@
 #include <cstring>
 #include <numeric>
 
+#if defined __cpp_lib_bitops
+#include <bit>
+#endif
+
 //
 // Free-standing helper function
 //
@@ -311,7 +315,18 @@ void sperr::SPECK_INT<T>::m_refinement_pass_encode()
   const auto bits_x64 = m_LSP_mask.size() - m_LSP_mask.size() % 64;
 
   for (size_t i = 0; i < bits_x64; i += 64) {  // Evaluate 64 bits at a time.
-    const auto value = m_LSP_mask.rlong(i);
+    auto value = m_LSP_mask.rlong(i);
+
+#if defined __cpp_lib_bitops
+    while (value) {
+      auto j = std::countr_zero(value);
+      const bool o1 = m_coeff_buf[i + j] >= m_threshold;
+      m_coeff_buf[i + j] -= tmp1[o1];
+      m_bit_buffer.wbit(o1);
+
+      value &= value - 1;
+    }
+#else
     if (value != 0) {
       for (size_t j = 0; j < 64; j++) {
         if ((value >> j) & uint64_t{1}) {
@@ -321,6 +336,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_encode()
         }
       }
     }
+#endif
   }
   for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {  // Evaluate the remaining bits.
     if (m_LSP_mask.rbit(i)) {
@@ -357,7 +373,21 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
   if (m_threshold >= uint_type{2}) {                                 // <-- Point 1
     const auto half_t = m_threshold / uint_type{2};
     for (size_t i = 0; i < bits_x64; i += 64) {  // <-- Point 2
-      const auto value = m_LSP_mask.rlong(i);
+      auto value = m_LSP_mask.rlong(i);
+
+#if defined __cpp_lib_bitops
+      while (value) {
+        auto j = std::countr_zero(value);
+        if (m_bit_buffer.rbit())
+          m_coeff_buf[i + j] += half_t;
+        else
+          m_coeff_buf[i + j] -= half_t;
+        if (++read_pos == m_avail_bits)              // <-- Point 3
+          goto INITIALIZE_NEWLY_FOUND_POINTS_LABEL;  // <-- Point 4
+
+        value &= value - 1;
+      }
+#else
       if (value != 0) {
         for (size_t j = 0; j < 64; j++) {
           if ((value >> j) & uint64_t{1}) {
@@ -370,6 +400,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
           }
         }
       }
+#endif
     }
     for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {  // <-- Point 2
       if (m_LSP_mask.rbit(i)) {
@@ -384,7 +415,19 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
   }       // Finish the case where `m_threshold >= 2`.
   else {  // Start the case where `m_threshold == 1`.
     for (size_t i = 0; i < bits_x64; i += 64) {
-      const auto value = m_LSP_mask.rlong(i);
+      auto value = m_LSP_mask.rlong(i);
+
+#if defined __cpp_lib_bitops
+      while (value) {
+        auto j = std::countr_zero(value);
+        if (m_bit_buffer.rbit())
+          ++(m_coeff_buf[i + j]);
+        if (++read_pos == m_avail_bits)
+          goto INITIALIZE_NEWLY_FOUND_POINTS_LABEL;
+
+        value &= value - 1;
+      }
+#else
       for (size_t j = 0; j < 64; j++) {
         if ((value >> j) & uint64_t{1}) {
           if (m_bit_buffer.rbit())
@@ -393,6 +436,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
             goto INITIALIZE_NEWLY_FOUND_POINTS_LABEL;
         }
       }
+#endif
     }
     for (auto i = bits_x64; i < m_LSP_mask.size(); i++) {
       if (m_LSP_mask.rbit(i)) {

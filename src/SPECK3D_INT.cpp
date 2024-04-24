@@ -5,6 +5,10 @@
 #include <cstring>
 #include <numeric>
 
+#if defined __cpp_lib_bitops
+#include <bit>
+#endif
+
 template <typename T>
 void sperr::SPECK3D_INT<T>::m_clean_LIS()
 {
@@ -100,13 +104,23 @@ void sperr::SPECK3D_INT<T>::m_sorting_pass()
   const auto bits_x64 = m_LIP_mask.size() - m_LIP_mask.size() % 64;
 
   for (size_t i = 0; i < bits_x64; i += 64) {
-    const auto value = m_LIP_mask.rlong(i);
+    auto value = m_LIP_mask.rlong(i);
+
+#if defined __cpp_lib_bitops
+    while (value) {
+      auto j = std::countr_zero(value);
+      m_process_P_lite(i + j);
+
+      value &= value - 1;
+    }
+#else
     if (value != 0) {
       for (size_t j = 0; j < 64; j++) {
         if ((value >> j) & uint64_t{1})
           m_process_P_lite(i + j);
       }
     }
+#endif
   }
   for (auto i = bits_x64; i < m_LIP_mask.size(); i++) {
     if (m_LIP_mask.rbit(i))
