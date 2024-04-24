@@ -8,6 +8,10 @@
 #include <cstring>
 #include <numeric>
 
+#if defined __cpp_lib_bitops
+#include <bit>
+#endif
+
 template <typename T>
 void sperr::SPECK_FLT::copy_data(const T* p, size_t len)
 {
