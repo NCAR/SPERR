@@ -362,7 +362,7 @@ TEST(Bitmask, BufferTransfer)
 
 TEST(Bitmask, has_true)
 {
-  const size_t mask_size = 130;
+  const size_t mask_size = 210;
 
   // Loop over all positions
   for (size_t idx = 0; idx < mask_size; idx++) {
@@ -390,7 +390,7 @@ TEST(Bitmask, has_true)
 
 TEST(Bitmask, has_true_position)
 {
-  const size_t mask_size = 130;
+  const size_t mask_size = 210;
 
   // Loop over all positions
   for (size_t idx = 0; idx < mask_size; idx++) {
@@ -421,7 +421,7 @@ END_LABEL:
   {}
 }
 
-#if defined __cpp_lib_three_way_comparison && defined __cpp_impl_three_way_comparison
+#if __cplusplus >= 201907L && defined __cpp_lib_three_way_comparison
 TEST(Bitmask, spaceship)
 {
   auto src = Mask(60);

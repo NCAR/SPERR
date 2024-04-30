@@ -5,7 +5,7 @@
 #include <cstring>
 #include <numeric>
 
-#if defined __cpp_lib_bitops
+#if __cplusplus >= 201907L
 #include <bit>
 #endif
 
@@ -317,13 +317,12 @@ void sperr::SPECK_INT<T>::m_refinement_pass_encode()
   for (size_t i = 0; i < bits_x64; i += 64) {  // Evaluate 64 bits at a time.
     auto value = m_LSP_mask.rlong(i);
 
-#if defined __cpp_lib_bitops
+#if __cplusplus >= 201907L
     while (value) {
       auto j = std::countr_zero(value);
       const bool o1 = m_coeff_buf[i + j] >= m_threshold;
       m_coeff_buf[i + j] -= tmp1[o1];
       m_bit_buffer.wbit(o1);
-
       value &= value - 1;
     }
 #else
@@ -375,7 +374,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
     for (size_t i = 0; i < bits_x64; i += 64) {  // <-- Point 2
       auto value = m_LSP_mask.rlong(i);
 
-#if defined __cpp_lib_bitops
+#if __cplusplus >= 201907L
       while (value) {
         auto j = std::countr_zero(value);
         if (m_bit_buffer.rbit())
@@ -384,7 +383,6 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
           m_coeff_buf[i + j] -= half_t;
         if (++read_pos == m_avail_bits)              // <-- Point 3
           goto INITIALIZE_NEWLY_FOUND_POINTS_LABEL;  // <-- Point 4
-
         value &= value - 1;
       }
 #else
@@ -417,14 +415,13 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
     for (size_t i = 0; i < bits_x64; i += 64) {
       auto value = m_LSP_mask.rlong(i);
 
-#if defined __cpp_lib_bitops
+#if __cplusplus >= 201907L
       while (value) {
         auto j = std::countr_zero(value);
         if (m_bit_buffer.rbit())
           ++(m_coeff_buf[i + j]);
         if (++read_pos == m_avail_bits)
           goto INITIALIZE_NEWLY_FOUND_POINTS_LABEL;
-
         value &= value - 1;
       }
 #else

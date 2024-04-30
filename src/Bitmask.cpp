@@ -4,6 +4,10 @@
 #include <cassert>
 #include <limits>
 
+#if __cplusplus >= 201907L
+#include <bit>
+#endif
+
 sperr::Bitmask::Bitmask(size_t nbits)
 {
   if (nbits > 0) {
@@ -48,11 +52,13 @@ auto sperr::Bitmask::has_true(size_t start, size_t len) const -> int64_t
 {
   auto long_idx = start / 64;
   auto processed_bits = int64_t{0};
-
-  // Collect the remaining bits from the start long.
   auto word = m_buf[long_idx];
   auto answer = uint64_t{0};
-  for (auto i = start - long_idx * 64; i < 64 && processed_bits < len; i++) {
+
+  // Collect the remaining bits from the start long.
+  auto begin_idx = start - long_idx * 64;
+  auto nbits = std::min(size_t{64}, begin_idx + len);
+  for (auto i = begin_idx; i < nbits; i++) {
     answer |= word & (uint64_t{1} << i);
     if constexpr (Position) {
       if (answer != 0)
@@ -70,9 +76,14 @@ auto sperr::Bitmask::has_true(size_t start, size_t len) const -> int64_t
     word = m_buf[++long_idx];
     if (word) {
       if constexpr (Position) {
+#if __cplusplus >= 201907L
+        int64_t i = std::countr_zero(word);
+        return processed_bits + i;
+#else
         for (int64_t i = 0; i < 64; i++)
           if (word & (uint64_t{1} << i))
             return processed_bits + i;
+#endif
       }
       else
         return 1;
@@ -82,7 +93,7 @@ auto sperr::Bitmask::has_true(size_t start, size_t len) const -> int64_t
 
   // Examine the remaining bits
   if (processed_bits < len) {
-    auto nbits = len - processed_bits;
+    nbits = len - processed_bits;
     assert(nbits < 64);
     word = m_buf[++long_idx];
     answer = 0;
@@ -112,11 +123,15 @@ auto sperr::Bitmask::count_true() const -> size_t
 
   // Note that unused bits in the last long are not guaranteed to be all 0's.
   for (size_t i = 0; i < m_buf.size() - 1; i++) {
-    const auto val = m_buf[i];
+    auto val = m_buf[i];
+#if __cplusplus >= 201907L
+    counter += std::popcount(val);
+#else
     if (val != 0) {
       for (size_t j = 0; j < 64; j++)
         counter += ((val >> j) & uint64_t{1});
     }
+#endif
   }
   const auto val = m_buf.back();
   if (val != 0) {
@@ -186,7 +201,7 @@ void sperr::Bitmask::use_bitstream(const void* p)
   std::copy(pu64, pu64 + m_buf.size(), m_buf.begin());
 }
 
-#if defined __cpp_lib_three_way_comparison && defined __cpp_impl_three_way_comparison
+#if __cplusplus >= 201907L && defined __cpp_lib_three_way_comparison
 auto sperr::Bitmask::operator<=>(const Bitmask& rhs) const noexcept
 {
   auto cmp = m_num_bits <=> rhs.m_num_bits;
