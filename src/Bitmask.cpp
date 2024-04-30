@@ -124,10 +124,14 @@ auto sperr::Bitmask::count_true() const -> size_t
   // Note that unused bits in the last long are not guaranteed to be all 0's.
   for (size_t i = 0; i < m_buf.size() - 1; i++) {
     const auto val = m_buf[i];
+#if __cplusplus >= 201907L
+    counter += std::popcount(val);
+#else
     if (val != 0) {
       for (size_t j = 0; j < 64; j++)
         counter += ((val >> j) & uint64_t{1});
     }
+#endif
   }
   const auto val = m_buf.back();
   if (val != 0) {
