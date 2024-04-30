@@ -93,7 +93,7 @@ auto sperr::Bitmask::has_true(size_t start, size_t len) const -> int64_t
 
   // Examine the remaining bits
   if (processed_bits < len) {
-    auto nbits = len - processed_bits;
+    nbits = len - processed_bits;
     assert(nbits < 64);
     word = m_buf[++long_idx];
     answer = 0;
@@ -123,7 +123,7 @@ auto sperr::Bitmask::count_true() const -> size_t
 
   // Note that unused bits in the last long are not guaranteed to be all 0's.
   for (size_t i = 0; i < m_buf.size() - 1; i++) {
-    const auto val = m_buf[i];
+    auto val = m_buf[i];
 #if __cplusplus >= 201907L
     counter += std::popcount(val);
 #else
