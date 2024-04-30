@@ -63,7 +63,7 @@ class Bitmask {
   auto view_buffer() const -> const std::vector<uint64_t>&;
   void use_bitstream(const void* p);
 
-#if defined __cpp_lib_three_way_comparison && defined __cpp_impl_three_way_comparison
+#if __cplusplus >= 201907L
   auto operator<=>(const Bitmask& rhs) const noexcept;
   auto operator==(const Bitmask& rhs) const noexcept -> bool;
 #endif

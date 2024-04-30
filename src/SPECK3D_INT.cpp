@@ -5,7 +5,7 @@
 #include <cstring>
 #include <numeric>
 
-#if defined __cpp_lib_bitops
+#if __cplusplus >= 201907L
 #include <bit>
 #endif
 
@@ -106,11 +106,10 @@ void sperr::SPECK3D_INT<T>::m_sorting_pass()
   for (size_t i = 0; i < bits_x64; i += 64) {
     auto value = m_LIP_mask.rlong(i);
 
-#if defined __cpp_lib_bitops
+#if __cplusplus >= 201907L
     while (value) {
       auto j = std::countr_zero(value);
       m_process_P_lite(i + j);
-
       value &= value - 1;
     }
 #else
