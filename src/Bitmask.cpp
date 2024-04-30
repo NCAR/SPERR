@@ -84,7 +84,7 @@ auto sperr::Bitmask::has_true(size_t start, size_t len) const -> int64_t
           if (word & (uint64_t{1} << i))
             return processed_bits + i;
 #endif
-   }
+      }
       else
         return 1;
     }
