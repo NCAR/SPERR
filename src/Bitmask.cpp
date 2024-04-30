@@ -201,7 +201,7 @@ void sperr::Bitmask::use_bitstream(const void* p)
   std::copy(pu64, pu64 + m_buf.size(), m_buf.begin());
 }
 
-#if __cplusplus >= 201907L
+#if __cplusplus >= 201907L && defined __cpp_lib_three_way_comparison
 auto sperr::Bitmask::operator<=>(const Bitmask& rhs) const noexcept
 {
   auto cmp = m_num_bits <=> rhs.m_num_bits;

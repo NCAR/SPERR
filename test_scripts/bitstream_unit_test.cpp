@@ -421,7 +421,7 @@ END_LABEL:
   {}
 }
 
-#if __cplusplus >= 201907L
+#if __cplusplus >= 201907L && defined __cpp_lib_three_way_comparison
 TEST(Bitmask, spaceship)
 {
   auto src = Mask(60);
