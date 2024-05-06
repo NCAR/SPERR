@@ -32,7 +32,7 @@ endif()
 option( BUILD_SHARED_LIBS "Build shared SPERR library" ON )
 option( BUILD_UNIT_TESTS "Build unit tests using GoogleTest" ON )
 option( BUILD_CLI_UTILITIES "Build a set of command line utilities" ON )
-option( USE_OMP "Use OpenMP parallelization on 3D volumes" ON )
+option( USE_OMP "Use OpenMP parallelization on 3D volumes" OFF )
 option( SPERR_PREFER_RPATH "Set RPATH; this can fight with package managers so turn off when building for them" ON )
 mark_as_advanced(FORCE SPERR_PREFER_RPATH)
 
@@ -109,7 +109,7 @@ if( BUILD_CLI_UTILITIES )
   set( CLI11_SINGLE_FILE OFF CACHE INTERNAL "Don't use single file CLI11")
   FetchContent_Declare( cli11
     GIT_REPOSITORY https://github.com/CLIUtils/CLI11
-    GIT_TAG        f4d0731cebb123ff0ace712c099dffbcd2c58e5a # v2.4.1
+    GIT_TAG        6c7b07a878ad834957b98d0f9ce1dbe0cb204fc9 # v2.4.2
   )
   FetchContent_MakeAvailable(cli11)
 
