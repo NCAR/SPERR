@@ -140,27 +140,73 @@ void sperr::SPECK3D_INT<T>::m_sorting_pass()
 template <typename T>
 void sperr::SPECK3D_INT<T>::m_code_S(size_t idx1, size_t idx2)
 {
-  auto [subsets, next_lev] = m_partition_S_XYZ(m_LIS[idx1][idx2], uint16_t(idx1));
+  auto set = m_LIS[idx1][idx2];
 
-  // Since some subsets could be empty, let's put empty sets at the end.
-  const auto set_end =
-      std::remove_if(subsets.begin(), subsets.end(), [](auto& s) { return s.num_elem() == 0; });
+  if (set.length_x == 2 && set.length_y == 2 && set.length_z == 2) {  // tail ellison case
+    size_t sig_counter = 0;
+    bool need_decide = true;
 
-  // Counter for the number of discovered significant sets.
-  //    If no significant subset is found yet, and we're already looking at the last subset,
-  //    then we know that this last subset IS significant.
-  size_t sig_counter = 0;
-  for (auto it = subsets.begin(); it != set_end; ++it) {
-    bool need_decide = (sig_counter != 0 || it + 1 != set_end);
-    if (it->num_elem() == 1) {
-      auto idx = it->start_z * m_dims[0] * m_dims[1] + it->start_y * m_dims[0] + it->start_x;
-      m_LIP_mask.wtrue(idx);
-      m_process_P(idx, it->get_morton(), sig_counter, need_decide);
-    }
-    else {
-      m_LIS[next_lev].emplace_back(*it);
-      const auto newidx2 = m_LIS[next_lev].size() - 1;
-      m_process_S(next_lev, newidx2, sig_counter, need_decide);
+    // Element (0, 0, 0)
+    const auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
+    auto mort = set.get_morton();
+    m_LIP_mask.wtrue(id);
+    m_process_P(id, mort, sig_counter, need_decide);
+
+    // Element (1, 0, 0)
+    auto id2 = id + 1;
+    m_LIP_mask.wtrue(id2);
+    m_process_P(id2, ++mort, sig_counter, need_decide);
+
+    // Element (0, 1, 0)
+    id2 = id + m_dims[0];
+    m_LIP_mask.wtrue(id2);
+    m_process_P(id2, ++mort, sig_counter, need_decide);
+
+    // Element (1, 1, 0)
+    m_LIP_mask.wtrue(++id2);
+    m_process_P(id2, ++mort, sig_counter, need_decide);
+
+    // Element (0, 0, 1)
+    id2 = id + m_dims[0] * m_dims[1];
+    m_LIP_mask.wtrue(id2);
+    m_process_P(id2, ++mort, sig_counter, need_decide);
+
+    // Element (1, 0, 1)
+    m_LIP_mask.wtrue(++id2);
+    m_process_P(id2, ++mort, sig_counter, need_decide);
+
+    // Element (0, 1, 1)
+    id2 = id + m_dims[0] * (m_dims[1] + 1);
+    m_LIP_mask.wtrue(id2);
+    m_process_P(id2, ++mort, sig_counter, need_decide);
+
+    // Element (1, 1, 1)
+    need_decide = sig_counter != 0;
+    m_LIP_mask.wtrue(++id2);
+    m_process_P(id2, ++mort, sig_counter, need_decide);
+  }
+  else {  // normal recursion case
+          // Get its 8 subsets, and move the empty ones to the end.
+    auto [subsets, next_lev] = m_partition_S_XYZ(set, uint16_t(idx1));
+    const auto set_end =
+        std::remove_if(subsets.begin(), subsets.end(), [](auto& s) { return s.num_elem() == 0; });
+
+    // Counter for the number of discovered significant sets.
+    //    If no significant subset is found yet, and we're already looking at the last subset,
+    //    then we know that this last subset IS significant.
+    size_t sig_counter = 0;
+    for (auto it = subsets.begin(); it != set_end; ++it) {
+      bool need_decide = (sig_counter != 0 || it + 1 != set_end);
+      if (it->num_elem() == 1) {
+        auto idx = it->start_z * m_dims[0] * m_dims[1] + it->start_y * m_dims[0] + it->start_x;
+        m_LIP_mask.wtrue(idx);
+        m_process_P(idx, it->get_morton(), sig_counter, need_decide);
+      }
+      else {
+        m_LIS[next_lev].emplace_back(*it);
+        const auto newidx2 = m_LIS[next_lev].size() - 1;
+        m_process_S(next_lev, newidx2, sig_counter, need_decide);
+      }
     }
   }
 }
