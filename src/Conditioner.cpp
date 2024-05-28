@@ -63,9 +63,8 @@ auto sperr::Conditioner::condition(vecd_type& buf, dims_type dims) -> condi_type
   return header;
 }
 
-auto sperr::Conditioner::inverse_condition(vecd_type& buf,
-                                           dims_type dims,
-                                           condi_type header) -> RTNType
+auto sperr::Conditioner::inverse_condition(vecd_type& buf, dims_type dims, condi_type header)
+    -> RTNType
 {
   // unpack meta bit fields
   auto meta = sperr::unpack_8_booleans(header[0]);

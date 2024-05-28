@@ -410,7 +410,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
           goto INITIALIZE_NEWLY_FOUND_POINTS_LABEL;  // <-- Point 4
       }
     }
-  }  // Finish the case where `m_threshold >= 2`.
+  }       // Finish the case where `m_threshold >= 2`.
   else {  // Start the case where `m_threshold == 1`.
     for (size_t i = 0; i < bits_x64; i += 64) {
       auto value = m_LSP_mask.rlong(i);
