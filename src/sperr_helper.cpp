@@ -90,10 +90,10 @@ auto sperr::coarsened_resolutions(dims_type vdim, dims_type cdim) -> std::vector
     auto nz = vdim[2] / cdim[2];
 
     resolutions = sperr::coarsened_resolutions(cdim);
-    for (size_t i = 0; i < resolutions.size(); i++) {
-      resolutions[i][0] *= nx;
-      resolutions[i][1] *= ny;
-      resolutions[i][2] *= nz;
+    for (auto & resolution : resolutions) {
+      resolution[0] *= nx;
+      resolution[1] *= ny;
+      resolution[2] *= nz;
     }
   }
 

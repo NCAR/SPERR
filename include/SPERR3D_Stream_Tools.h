@@ -36,7 +36,7 @@ class SPERR3D_Stream_Tools {
 
   // Function that reads in portions of a file only to facilitate progressive access.
   // (This function does not read the whole file.)
-  auto progressive_read(std::string filename, unsigned pct) const -> vec8_type;
+  auto progressive_read(const std::string& filename, unsigned pct) const -> vec8_type;
 
   // Function that truncates a bitstream in the memory to facilitate progressive access.
   //    Note on `stream_len`: it does not need to be the full length of the original bitstream,

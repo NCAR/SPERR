@@ -104,7 +104,7 @@ auto sperr::SPERR3D_Stream_Tools::get_stream_header(const void* p) const -> SPER
   return header;
 }
 
-auto sperr::SPERR3D_Stream_Tools::progressive_read(std::string filename, unsigned pct) const
+auto sperr::SPERR3D_Stream_Tools::progressive_read(const std::string& filename, unsigned pct) const
     -> vec8_type
 {
   // Read the header of this bitstream.
