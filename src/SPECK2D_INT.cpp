@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cassert>
 
-#if __cplusplus >= 201907L
+#if __cplusplus >= 202002L
 #include <bit>
 #endif
 
@@ -17,7 +17,7 @@ void sperr::SPECK2D_INT<T>::m_sorting_pass()
   for (size_t i = 0; i < bits_x64; i += 64) {
     auto value = m_LIP_mask.rlong(i);
 
-#if __cplusplus >= 201907L
+#if __cplusplus >= 202002L
     while (value) {
       size_t j = std::countr_zero(value);
       m_process_P(i + j, j, true);

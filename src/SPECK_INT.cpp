@@ -5,7 +5,7 @@
 #include <cstring>
 #include <numeric>
 
-#if __cplusplus >= 201907L
+#if __cplusplus >= 202002L
 #include <bit>
 #endif
 
@@ -317,7 +317,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_encode()
   for (size_t i = 0; i < bits_x64; i += 64) {  // Evaluate 64 bits at a time.
     auto value = m_LSP_mask.rlong(i);
 
-#if __cplusplus >= 201907L
+#if __cplusplus >= 202002L
     while (value) {
       auto j = std::countr_zero(value);
       const bool o1 = m_coeff_buf[i + j] >= m_threshold;
@@ -374,7 +374,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
     for (size_t i = 0; i < bits_x64; i += 64) {  // <-- Point 2
       auto value = m_LSP_mask.rlong(i);
 
-#if __cplusplus >= 201907L
+#if __cplusplus >= 202002L
       while (value) {
         auto j = std::countr_zero(value);
         if (m_bit_buffer.rbit())
@@ -415,7 +415,7 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
     for (size_t i = 0; i < bits_x64; i += 64) {
       auto value = m_LSP_mask.rlong(i);
 
-#if __cplusplus >= 201907L
+#if __cplusplus >= 202002L
       while (value) {
         auto j = std::countr_zero(value);
         if (m_bit_buffer.rbit())

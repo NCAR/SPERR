@@ -4,7 +4,7 @@
 #include <cassert>
 #include <limits>
 
-#if __cplusplus >= 201907L
+#if __cplusplus >= 202002L
 #include <bit>
 #endif
 
@@ -76,7 +76,7 @@ auto sperr::Bitmask::has_true(size_t start, size_t len) const -> int64_t
     word = m_buf[++long_idx];
     if (word) {
       if constexpr (Position) {
-#if __cplusplus >= 201907L
+#if __cplusplus >= 202002L
         int64_t i = std::countr_zero(word);
         return processed_bits + i;
 #else
@@ -124,7 +124,7 @@ auto sperr::Bitmask::count_true() const -> size_t
   // Note that unused bits in the last long are not guaranteed to be all 0's.
   for (size_t i = 0; i < m_buf.size() - 1; i++) {
     auto val = m_buf[i];
-#if __cplusplus >= 201907L
+#if __cplusplus >= 202002L
     counter += std::popcount(val);
 #else
     if (val != 0) {
@@ -201,7 +201,7 @@ void sperr::Bitmask::use_bitstream(const void* p)
   std::copy(pu64, pu64 + m_buf.size(), m_buf.begin());
 }
 
-#if __cplusplus >= 201907L && defined __cpp_lib_three_way_comparison
+#if __cplusplus >= 202002L && defined __cpp_lib_three_way_comparison
 auto sperr::Bitmask::operator<=>(const Bitmask& rhs) const noexcept
 {
   auto cmp = m_num_bits <=> rhs.m_num_bits;
