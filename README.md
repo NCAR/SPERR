@@ -25,8 +25,8 @@ the build steps are the following:
 git clone https://github.com/NCAR/SPERR.git     # clone the repo
 mkdir SPERR/build                               # create the build directory
 cd SPERR/build                                  # enter the build directory
-cmake ..                                        # Linux: use cmake to configure the project (with OpenMP)
-cmake -DUSE_OMP=OFF ..                          # Mac: use cmake to configure the project (OpenMP disabled)
+cmake ..                                        # use cmake to configure the project
+cmake -DUSE_OMP=ON ..                           # Optional: enable OpenMP on 3D volumes
 cmake -DCMAKE_INSTALL_PREFIX=/my/install/dir .. # Optional: specify a directory to install SPERR. The default is /usr/local .
 make -j 8                                       # build the project
 ctest .                                         # run unit tests, which should have 100% tests passed
