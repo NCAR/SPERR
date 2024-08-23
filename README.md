@@ -26,8 +26,9 @@ git clone https://github.com/NCAR/SPERR.git     # clone the repo
 mkdir SPERR/build                               # create the build directory
 cd SPERR/build                                  # enter the build directory
 cmake ..                                        # use cmake to configure the project
-cmake -DUSE_OMP=ON ..                           # Optional: enable OpenMP on 3D volumes
+cmake -DUSE_OMP=ON ..                           # Optional: enable OpenMP on 3D volumes.
 cmake -DCMAKE_INSTALL_PREFIX=/my/install/dir .. # Optional: specify a directory to install SPERR. The default is /usr/local .
+cmake -DCMAKE_CXX_STANDARD=17 ..                # Optional: use C++17 rather than C++20. The code is slightly faster with C++20.
 make -j 8                                       # build the project
 ctest .                                         # run unit tests, which should have 100% tests passed
 make install                                    # install the library and CLI tools to a specified directory.

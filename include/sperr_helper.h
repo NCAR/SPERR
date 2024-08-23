@@ -37,7 +37,7 @@ using dims_type = std::array<size_t, 3>;
 //
 // Helper classes
 //
-enum class SigType : unsigned char { Insig, Sig, NewlySig, Dunno, Garbage };
+enum class SigType : unsigned char { Insig, Sig, Dunno, Garbage };
 
 enum class UINTType : unsigned char { UINT8, UINT16, UINT32, UINT64 };
 

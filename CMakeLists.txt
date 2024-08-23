@@ -4,12 +4,11 @@ cmake_minimum_required(VERSION 3.14)
 
 project(SPERR VERSION 0.8.1 LANGUAGES CXX DESCRIPTION "Lossy Scientific Compression with SPERR")
 
-#
-# specify the C++ standard
-# CMake will try to add a -std=c++20 flag if the compiler supports, but if it doesn't,
-# CMake will `decay` to a previous supported flag, e.g. -std=c++11.
-#
-set(CMAKE_CXX_STANDARD 20)
+if(NOT CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD "20" CACHE STRING "Choose the C++ Standard to use." FORCE)
+    set_property(CACHE CMAKE_CXX_STANDARD PROPERTY STRINGS "20" "17")
+endif()
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo")

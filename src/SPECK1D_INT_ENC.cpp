@@ -62,9 +62,6 @@ void sperr::SPECK1D_INT_ENC<T>::m_process_S(size_t idx1,
                                             size_t& counter,
                                             bool output)
 {
-  // Significance type cannot be NewlySig!
-  assert(sig != SigType::NewlySig);
-
   auto& set = m_LIS[idx1][idx2];
 
   // Strategy to decide the significance of this set;
@@ -101,7 +98,6 @@ template <typename T>
 void sperr::SPECK1D_INT_ENC<T>::m_process_P(size_t idx, SigType sig, size_t& counter, bool output)
 {
   // Decide the significance of this pixel
-  assert(sig != SigType::NewlySig);
   bool is_sig = false;
   if (sig == SigType::Dunno)
     is_sig = (m_coeff_buf[idx] >= m_threshold);
