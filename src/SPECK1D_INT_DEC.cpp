@@ -26,12 +26,13 @@ void sperr::SPECK1D_INT_DEC<T>::m_sorting_pass()
       value &= value - 1;
     }
 #else
-    if (value != 0) {
-      for (size_t j = 0; j < 64; j++) {
-        if ((value >> j) & uint64_t{1}) {
-          size_t dummy = 0;
-          m_process_P(i + j, dummy, true);
-        }
+    for (size_t j = 0; j < 64; j++) {
+      if (value == 0)
+        break;
+      if ((value >> j) & uint64_t{1}) {
+        size_t dummy = 0;
+        m_process_P(i + j, dummy, true);
+        value &= value - 1;
       }
     }
 #endif

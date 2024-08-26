@@ -326,13 +326,14 @@ void sperr::SPECK_INT<T>::m_refinement_pass_encode()
       value &= value - 1;
     }
 #else
-    if (value != 0) {
-      for (size_t j = 0; j < 64; j++) {
-        if ((value >> j) & uint64_t{1}) {
-          const bool o1 = m_coeff_buf[i + j] >= m_threshold;
-          m_coeff_buf[i + j] -= tmp1[o1];
-          m_bit_buffer.wbit(o1);
-        }
+    for (size_t j = 0; j < 64; j++) {
+      if (value == 0)
+        break;
+      if ((value >> j) & uint64_t{1}) {
+        const bool o1 = m_coeff_buf[i + j] >= m_threshold;
+        m_coeff_buf[i + j] -= tmp1[o1];
+        m_bit_buffer.wbit(o1);
+        value &= value - 1;
       }
     }
 #endif
@@ -386,16 +387,17 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
         value &= value - 1;
       }
 #else
-      if (value != 0) {
-        for (size_t j = 0; j < 64; j++) {
-          if ((value >> j) & uint64_t{1}) {
-            if (m_bit_buffer.rbit())
-              m_coeff_buf[i + j] += half_t;
-            else
-              m_coeff_buf[i + j] -= half_t;
-            if (++read_pos == m_avail_bits)              // <-- Point 3
-              goto INITIALIZE_NEWLY_FOUND_POINTS_LABEL;  // <-- Point 4
-          }
+      for (size_t j = 0; j < 64; j++) {
+        if (value == 0)
+          break;
+        if ((value >> j) & uint64_t{1}) {
+          if (m_bit_buffer.rbit())
+            m_coeff_buf[i + j] += half_t;
+          else
+            m_coeff_buf[i + j] -= half_t;
+          if (++read_pos == m_avail_bits)              // <-- Point 3
+            goto INITIALIZE_NEWLY_FOUND_POINTS_LABEL;  // <-- Point 4
+          value &= value - 1;
         }
       }
 #endif
@@ -426,11 +428,14 @@ void sperr::SPECK_INT<T>::m_refinement_pass_decode()
       }
 #else
       for (size_t j = 0; j < 64; j++) {
+        if (value == 0)
+          break;
         if ((value >> j) & uint64_t{1}) {
           if (m_bit_buffer.rbit())
             ++(m_coeff_buf[i + j]);
           if (++read_pos == m_avail_bits)
             goto INITIALIZE_NEWLY_FOUND_POINTS_LABEL;
+          value &= value - 1;
         }
       }
 #endif
