@@ -12,9 +12,8 @@
 
 // This functions takes in a filename, and a full resolution. It then creates a list of
 // filenames, each has the coarsened resolution appended.
-auto create_filenames(std::string name,
-                      sperr::dims_type vdims,
-                      sperr::dims_type cdims) -> std::vector<std::string>
+auto create_filenames(std::string name, sperr::dims_type vdims, sperr::dims_type cdims)
+    -> std::vector<std::string>
 {
   auto filenames = std::vector<std::string>();
   auto resolutions = sperr::coarsened_resolutions(vdims, cdims);
@@ -255,13 +254,6 @@ int main(int argc, char* argv[])
       return __LINE__ % 256;
     }
   }
-  // Print a warning message if there's no output specified
-  if (cflag && bitstream.empty())
-    std::cout << "Warning: no output file provided. Consider using --bitstream option."
-              << std::endl;
-  if (dflag && decomp_f64.empty() && decomp_f32.empty() && decomp_lowres_f64.empty() &&
-      decomp_lowres_f32.empty())
-    std::cout << "Warning: no output file provided." << std::endl;
 
   //
   // Really starting the real work!

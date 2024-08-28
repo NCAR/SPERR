@@ -220,13 +220,6 @@ int main(int argc, char* argv[])
     std::cout << "SPERR needs an output destination when decoding!" << std::endl;
     return __LINE__;
   }
-  // Print a warning message if there's no output specified
-  if (cflag && bitstream.empty())
-    std::cout << "Warning: no output file provided. Consider using --bitstream option."
-              << std::endl;
-  if (dflag && decomp_f64.empty() && decomp_f32.empty() && decomp_lowres_f64.empty() &&
-      decomp_lowres_f32.empty())
-    std::cout << "Warning: no output file provided." << std::endl;
 
   //
   // Really starting the real work!
