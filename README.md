@@ -69,6 +69,8 @@ If SPERR benefits your work, please kindly cite [this publication](https://ieeex
 (Author's copy is available [here](https://vast.ucar.edu/pdfs/SPERR_IPDPS.pdf).)
 
 ## Presentations
-- FZ Workshop Hands-on: Feb 15 2024, Sarasota, FL. ([handout and examples](https://vast.ucar.edu/pdfs/Li_FZ2024.pdf))
-- SC'23 Tutorial on lossy scientific data compression: Nov 13 2023, Denver CO. ([slides](https://vast.ucar.edu/pdfs/Li_SC23_Slides.pdf))
-- IPDPS'23 Lossy Scientific Data Compression With SPERR: May 18 2023, St. Petersburg, FL. ([slides](https://vast.ucar.edu/pdfs/Li_IPDPS23_Slides.pdf))
+- SC'24 Tutorial: Nov 18 2024, Atlanta, GA. ([slides](./handout/SC24-Tutorial-SPERR.pdf) 
+  by [lindstro](https://github.com/lindstro))
+- FZ Workshop: Feb 15 2024, Sarasota, FL. ([handout and examples](https://vast.ucar.edu/pdfs/Li_FZ2024.pdf))
+- SC'23 Tutorial: Nov 13 2023, Denver CO. ([slides](https://vast.ucar.edu/pdfs/Li_SC23_Slides.pdf))
+- IPDPS'23: May 18 2023, St. Petersburg, FL. ([slides](https://vast.ucar.edu/pdfs/Li_IPDPS23_Slides.pdf))
