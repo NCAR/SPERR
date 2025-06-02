@@ -7,6 +7,10 @@
 #include <cstring>
 #include <numeric>
 
+#ifdef __AVX2__
+#include <immintrin.h>
+#endif
+
 #ifdef USE_OMP
 #include <omp.h>
 #endif
@@ -619,3 +623,92 @@ auto sperr::calc_mean_var(const T* arr, size_t len, size_t omp_nthreads) -> std:
 }
 template auto sperr::calc_mean_var(const float*, size_t, size_t) -> std::array<float, 2>;
 template auto sperr::calc_mean_var(const double*, size_t, size_t) -> std::array<double, 2>;
+
+template <typename T>
+auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
+{
+#ifdef __AVX2__
+  if constexpr (sizeof(T) == 4) { // uint32_t
+    const size_t simd_width = 8;
+    int32_t thld_i;
+    std::memcpy(&thld_i, &thld, 4);
+    __m256i thld_vec = _mm256_set1_epi32(thld_i);
+    
+    size_t i = 0;
+    for (; i + simd_width <= len; i += simd_width) {
+      __m256i data_vec = _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(buf + i));
+      data_vec = _mm256_min_epu32(data_vec, thld_vec);
+      data_vec = _mm256_cmpeq_epi32(data_vec, thld_vec);
+      int all_zeros = _mm256_testz_si256(data_vec, data_vec);
+
+      if (!all_zeros)
+        return true;
+    }
+    
+    for (; i < len; ++i) {
+      if (buf[i] >= thld)
+        return true;
+    }
+
+    return false;
+  }
+  else if constexpr (sizeof(T) == 2) { // uint16_t
+    const size_t simd_width = 16;
+    int16_t thld_i;
+    std::memcpy(&thld_i, &thld, 2);
+    __m256i thld_vec = _mm256_set1_epi16(thld_i);
+    
+    size_t i = 0;
+    for (; i + simd_width <= len; i += simd_width) {
+      __m256i data_vec = _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(buf + i));
+      data_vec = _mm256_min_epu16(data_vec, thld_vec);
+      data_vec = _mm256_cmpeq_epi16(data_vec, thld_vec);
+      int all_zeros = _mm256_testz_si256(data_vec, data_vec);
+
+      if (!all_zeros)
+        return true;
+    }
+    
+    for (; i < len; ++i) {
+      if (buf[i] >= thld)
+        return true;
+    }
+
+    return false;
+  }
+  else if constexpr (sizeof(T) == 1) { // uint8_t
+    const size_t simd_width = 32;
+    int32_t thld_i;
+    std::memcpy(&thld_i, &thld, 1);
+    __m256i thld_vec = _mm256_set1_epi8(thld_i);
+    
+    size_t i = 0;
+    for (; i + simd_width <= len; i += simd_width) {
+      __m256i data_vec = _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(buf + i));
+      data_vec = _mm256_min_epu8(data_vec, thld_vec);
+      data_vec = _mm256_cmpeq_epi8(data_vec, thld_vec);
+      int all_zeros = _mm256_testz_si256(data_vec, data_vec);
+
+      if (!all_zeros)
+        return true;
+    }
+    
+    for (; i < len; ++i) {
+      if (buf[i] >= thld)
+        return true;
+    }
+
+    return false;
+  }
+  else {
+    // AVX2 doesn't have a very good support for 64 bit unsigned ints, just use std.
+    return std::any_of(buf, buf + len, [thld](auto v) { return v >= thld; });
+  }
+#else
+  return std::any_of(buf, buf + len, [thld](auto v) { return v >= thld; });
+#endif
+}
+template auto sperr::any_ge(const uint8_t*, size_t, uint8_t) -> bool;
+template auto sperr::any_ge(const uint16_t*, size_t, uint16_t) -> bool;
+template auto sperr::any_ge(const uint32_t*, size_t, uint32_t) -> bool;
+template auto sperr::any_ge(const uint64_t*, size_t, uint64_t) -> bool;
