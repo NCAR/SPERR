@@ -628,12 +628,12 @@ template <typename T>
 auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
 {
 #ifdef __AVX2__
-  if constexpr (sizeof(T) == 4) { // uint32_t
+  if constexpr (sizeof(T) == 4) {  // uint32_t
     const size_t simd_width = 8;
     int32_t thld_i;
     std::memcpy(&thld_i, &thld, 4);
     __m256i thld_vec = _mm256_set1_epi32(thld_i);
-    
+
     size_t i = 0;
     for (; i + simd_width <= len; i += simd_width) {
       __m256i data_vec = _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(buf + i));
@@ -644,7 +644,7 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
       if (!all_zeros)
         return true;
     }
-    
+
     for (; i < len; ++i) {
       if (buf[i] >= thld)
         return true;
@@ -652,12 +652,12 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
 
     return false;
   }
-  else if constexpr (sizeof(T) == 2) { // uint16_t
+  else if constexpr (sizeof(T) == 2) {  // uint16_t
     const size_t simd_width = 16;
     int16_t thld_i;
     std::memcpy(&thld_i, &thld, 2);
     __m256i thld_vec = _mm256_set1_epi16(thld_i);
-    
+
     size_t i = 0;
     for (; i + simd_width <= len; i += simd_width) {
       __m256i data_vec = _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(buf + i));
@@ -668,7 +668,7 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
       if (!all_zeros)
         return true;
     }
-    
+
     for (; i < len; ++i) {
       if (buf[i] >= thld)
         return true;
@@ -676,12 +676,12 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
 
     return false;
   }
-  else if constexpr (sizeof(T) == 1) { // uint8_t
+  else if constexpr (sizeof(T) == 1) {  // uint8_t
     const size_t simd_width = 32;
     int32_t thld_i;
     std::memcpy(&thld_i, &thld, 1);
     __m256i thld_vec = _mm256_set1_epi8(thld_i);
-    
+
     size_t i = 0;
     for (; i + simd_width <= len; i += simd_width) {
       __m256i data_vec = _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(buf + i));
@@ -692,7 +692,7 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
       if (!all_zeros)
         return true;
     }
-    
+
     for (; i < len; ++i) {
       if (buf[i] >= thld)
         return true;
