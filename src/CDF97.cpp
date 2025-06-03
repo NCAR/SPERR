@@ -137,7 +137,7 @@ void sperr::CDF97::idwt3d_multi_res(std::vector<vecd_type>& h)
       auto& buf = h[*dyadic - lev];
       buf.resize(x * y * z);
       m_sub_volume({x, y, z}, buf.begin());
-      m_idwt3d_one_level(m_data_buf.begin(), {x + xd, y + yd, z + zd});
+      m_idwt3d_one_level({x + xd, y + yd, z + zd});
     }
   }
   else
@@ -264,7 +264,7 @@ void sperr::CDF97::m_dwt3d_dyadic(size_t num_xforms)
     auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev);
     auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev);
     auto [z, zd] = sperr::calc_approx_detail_len(m_dims[2], lev);
-    m_dwt3d_one_level(m_data_buf.begin(), {x, y, z});
+    m_dwt3d_one_level({x, y, z});
   }
 }
 
@@ -274,7 +274,7 @@ void sperr::CDF97::m_idwt3d_dyadic(size_t num_xforms)
     auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev - 1);
     auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev - 1);
     auto [z, zd] = sperr::calc_approx_detail_len(m_dims[2], lev - 1);
-    m_idwt3d_one_level(m_data_buf.begin(), {x, y, z});
+    m_idwt3d_one_level({x, y, z});
   }
 }
 
@@ -448,13 +448,13 @@ void sperr::CDF97::m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_
   }
 }
 
-void sperr::CDF97::m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz)
+void sperr::CDF97::m_dwt3d_one_level(std::array<size_t, 3> len_xyz)
 {
   // First, do one level of transform on all XY planes.
   const auto plane_size_xy = m_dims[0] * m_dims[1];
   for (size_t z = 0; z < len_xyz[2]; z++) {
     const size_t offset = plane_size_xy * z;
-    m_dwt2d_one_level(vol + offset, {len_xyz[0], len_xyz[1]});
+    m_dwt2d_one_level(m_data_buf.begin() + offset, {len_xyz[0], len_xyz[1]});
   }
 
   const auto beg = m_qcc_buf.begin();  // First half of the buffer
@@ -502,7 +502,7 @@ void sperr::CDF97::m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz
   }
 }
 
-void sperr::CDF97::m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz)
+void sperr::CDF97::m_idwt3d_one_level(std::array<size_t, 3> len_xyz)
 {
   const auto plane_size_xy = m_dims[0] * m_dims[1];
   const auto beg = m_qcc_buf.begin();  // First half of the buffer
@@ -552,7 +552,7 @@ void sperr::CDF97::m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xy
   // Second, do one level of inverse transform on all XY planes.
   for (size_t z = 0; z < len_xyz[2]; z++) {
     const size_t offset = plane_size_xy * z;
-    m_idwt2d_one_level(vol + offset, {len_xyz[0], len_xyz[1]});
+    m_idwt2d_one_level(m_data_buf.begin() + offset, {len_xyz[0], len_xyz[1]});
   }
 }
 

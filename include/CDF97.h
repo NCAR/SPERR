@@ -75,8 +75,8 @@ class CDF97 {
 
   // Perform one level of interleaved 3D dwt/idwt on a given volume (m_dims),
   // specifically on its top left (len_xyz) subset.
-  void m_dwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz);
-  void m_idwt3d_one_level(itd_type vol, std::array<size_t, 3> len_xyz);
+  void m_dwt3d_one_level(std::array<size_t, 3> len_xyz);
+  void m_idwt3d_one_level(std::array<size_t, 3> len_xyz);
 
   // Perform one level of 2D dwt/idwt on a given plane (m_dims),
   // specifically on its top left (len_xy) subset.
