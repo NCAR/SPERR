@@ -130,10 +130,8 @@ class CDF97 {
 
   // Temporary buffers that are big enough for any (1D column * 2) or any 2D
   // slice. Note: `m_qcc_buf` should be used by m_***_one_level() functions and
-  // should not be used by higher-level functions. `m_slice_buf` is only used by
-  // wavelet-packet transforms.
-  vecd_type m_qcc_buf;
-  vecd_type m_slice_buf;
+  // should not be used by higher-level functions.
+  vecd_type m_qcc_buf, m_slice_buf, m_8columns;
 
   //
   // Note on the coefficients and constants:
