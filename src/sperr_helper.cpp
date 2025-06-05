@@ -272,8 +272,8 @@ auto sperr::read_n_bytes(std::string filename, size_t n_bytes) -> vec8_type
 {
   auto buf = vec8_type();
 
-  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename.data(), "rb"),
-                                                        &std::fclose);
+  auto closer = [](std::FILE* f) { std::fclose(f); };  // bypass a compiler warning
+  std::unique_ptr<std::FILE, decltype(closer)> fp(std::fopen(filename.data(), "rb"), closer);
 
   if (!fp)
     return buf;
@@ -298,8 +298,8 @@ auto sperr::read_whole_file(std::string filename) -> vec_type<T>
 {
   auto buf = vec_type<T>();
 
-  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename.data(), "rb"),
-                                                        &std::fclose);
+  auto closer = [](std::FILE* f) { std::fclose(f); };  // bypass a compiler warning
+  std::unique_ptr<std::FILE, decltype(closer)> fp(std::fopen(filename.data(), "rb"), closer);
   if (!fp)
     return buf;
 
@@ -326,8 +326,8 @@ template auto sperr::read_whole_file(std::string) -> vec8_type;
 
 auto sperr::write_n_bytes(std::string filename, size_t n_bytes, const void* buffer) -> RTNType
 {
-  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename.data(), "wb"),
-                                                        &std::fclose);
+  auto closer = [](std::FILE* f) { std::fclose(f); };  // bypass a compiler warning
+  std::unique_ptr<std::FILE, decltype(closer)> fp(std::fopen(filename.data(), "wb"), closer);
   if (!fp)
     return RTNType::IOError;
 
@@ -347,8 +347,8 @@ auto sperr::read_sections(std::string filename,
     far = std::max(far, sections[i * 2] + sections[i * 2 + 1]);
 
   // Prepare to read the file.
-  std::unique_ptr<std::FILE, decltype(&std::fclose)> fp(std::fopen(filename.data(), "rb"),
-                                                        &std::fclose);
+  auto closer = [](std::FILE* f) { std::fclose(f); };  // bypass a compiler warning
+  std::unique_ptr<std::FILE, decltype(closer)> fp(std::fopen(filename.data(), "rb"), closer);
   if (!fp)
     return RTNType::IOError;
 
