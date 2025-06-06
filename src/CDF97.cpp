@@ -568,6 +568,74 @@ void sperr::CDF97::m_idwt3d_one_level(std::array<size_t, 3> len_xyz)
   }
 }
 
+#ifdef __AVX2__
+void sperr::CDF97::m256_gather(const double* src, size_t len, double* dst) const
+{
+  const double* src_end = src + len;
+  double* dst_evens = dst;
+  double* dst_odds = dst + len - len / 2;
+  
+  // Process 8 elements at a time
+  for (; src + 8 <= src_end; src += 8) {
+    __m256d v0 = _mm256_loadu_pd(src);      // 0, 1, 2, 3
+    __m256d v1 = _mm256_loadu_pd(src + 4);  // 4, 5, 6, 7
+
+    __m256d evens = _mm256_unpacklo_pd(v0, v1); // 0, 4, 2, 6
+    __m256d odds  = _mm256_unpackhi_pd(v0, v1); // 1, 5, 3, 7
+
+    evens = _mm256_permute4x64_pd(evens, 0b11011000); // 0, 2, 4, 6
+    odds  = _mm256_permute4x64_pd(odds, 0b11011000);  // 1, 3, 5, 7
+    
+    _mm256_storeu_pd(dst_evens, evens);
+    _mm256_storeu_pd(dst_odds, odds);
+    
+    dst_evens += 4;
+    dst_odds += 4;
+  }
+
+  for (; src < src_end - 1; src += 2) {
+    *(dst_evens++) = *src;
+    *(dst_odds++) = *(src + 1);
+  }
+
+  if (src < src_end)
+    *dst_evens = *src;
+}
+
+void sperr::CDF97::m256_scatter(const double* begin, size_t len, double* dst) const
+{
+  const double* even_end = begin + len - len / 2;
+  const double* odd_beg = even_end;
+  const double* dst_end = dst + len;
+
+  // Process 8 elements at a time
+  for (; begin + 4 < even_end; begin += 4) {
+    __m256d v0 = _mm256_loadu_pd(begin);   // 0, 1, 2, 3
+    __m256d v1 = _mm256_loadu_pd(odd_beg); // 4, 5, 6, 7
+
+    __m256d evens = _mm256_unpacklo_pd(v0, v1); // 0, 4, 2, 6
+    __m256d odds  = _mm256_unpackhi_pd(v0, v1); // 1, 5, 3, 7
+
+    __m256d result1 = _mm256_permute2f128_pd(evens, odds, 0x20);  // 0, 4, 1, 5
+    __m256d result2 = _mm256_permute2f128_pd(evens, odds, 0x31);  // 2, 6, 3, 7
+
+    _mm256_storeu_pd(dst, result1);
+    _mm256_storeu_pd(dst + 4, result2);
+
+    dst += 8;
+    odd_beg += 4;
+  }
+
+  for (; dst < dst_end - 1; dst += 2) {
+    *dst = *(begin++);
+    *(dst + 1) = *(odd_beg++);
+  }
+
+  if (dst < dst_end)
+    *dst = *begin;
+}
+#endif
+
 void sperr::CDF97::m_gather_even(citd_type begin, size_t len, itd_type dest) const
 {
   assert(len % 2 == 0);  // This function specifically for even length input

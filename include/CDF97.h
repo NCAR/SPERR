@@ -14,6 +14,10 @@
 
 #include <cmath>
 
+#ifdef __AVX2__
+#include <immintrin.h>
+#endif
+
 namespace sperr {
 
 class CDF97 {
@@ -94,12 +98,18 @@ class CDF97 {
   // Note 2: two versions for even and odd length input.
   void m_gather_even(citd_type begin, size_t len, itd_type dest) const;
   void m_gather_odd(citd_type begin, size_t len, itd_type dest) const;
+#ifdef __AVX2__
+  void m256_gather(const double* src, size_t len, double* dst) const;
+#endif
 
   // Interleave low and high pass elements to be at even and odd positions of the dest array.
   // Note 1: sufficient memory space should be allocated by the caller.
   // Note 2: two versions for even and odd length input.
   void m_scatter_even(citd_type begin, size_t len, itd_type dest) const;
   void m_scatter_odd(citd_type begin, size_t len, itd_type dest) const;
+#ifdef __AVX2__
+  void m256_scatter(const double* src, size_t len, double* dst) const;
+#endif
 
   // Two flavors of 3D transforms.
   // They should be invoked by the `dwt3d()` and `idwt3d()` public methods, not users, though.
