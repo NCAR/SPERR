@@ -72,25 +72,25 @@ auto sperr::CDF97::get_dims() const -> std::array<size_t, 3>
 void sperr::CDF97::dwt1d()
 {
   auto num_xforms = sperr::num_of_xforms(m_dims[0]);
-  m_dwt1d(m_data_buf.begin(), m_data_buf.size(), num_xforms);
+  m_dwt1d(m_data_buf.data(), m_data_buf.size(), num_xforms);
 }
 
 void sperr::CDF97::idwt1d()
 {
   auto num_xforms = sperr::num_of_xforms(m_dims[0]);
-  m_idwt1d(m_data_buf.begin(), m_data_buf.size(), num_xforms);
+  m_idwt1d(m_data_buf.data(), m_data_buf.size(), num_xforms);
 }
 
 void sperr::CDF97::dwt2d()
 {
   auto xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  m_dwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, xy);
+  m_dwt2d(m_data_buf.data(), {m_dims[0], m_dims[1]}, xy);
 }
 
 void sperr::CDF97::idwt2d()
 {
   auto xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
-  m_idwt2d(m_data_buf.begin(), {m_dims[0], m_dims[1]}, xy);
+  m_idwt2d(m_data_buf.data(), {m_dims[0], m_dims[1]}, xy);
 }
 
 auto sperr::CDF97::idwt2d_multi_res() -> std::vector<vecd_type>
@@ -104,7 +104,7 @@ auto sperr::CDF97::idwt2d_multi_res() -> std::vector<vecd_type>
       auto [x, xd] = sperr::calc_approx_detail_len(m_dims[0], lev);
       auto [y, yd] = sperr::calc_approx_detail_len(m_dims[1], lev);
       ret.emplace_back(m_sub_slice({x, y}));
-      m_idwt2d_one_level(m_data_buf.begin(), {x + xd, y + yd});
+      m_idwt2d_one_level(m_data_buf.data(), {x + xd, y + yd});
     }
   }
 
@@ -141,7 +141,7 @@ void sperr::CDF97::idwt3d_multi_res(std::vector<vecd_type>& h)
       auto [z, zd] = sperr::calc_approx_detail_len(m_dims[2], lev);
       auto& buf = h[*dyadic - lev];
       buf.resize(x * y * z);
-      m_sub_volume({x, y, z}, buf.begin());
+      m_sub_volume({x, y, z}, buf.data());
       m_idwt3d_one_level({x + xd, y + yd, z + zd});
     }
   }
@@ -186,7 +186,7 @@ void sperr::CDF97::m_dwt3d_wavelet_packet()
 
     // DWT1D on every z_column
     for (size_t x = 0; x < m_dims[0]; x++)
-      m_dwt1d(m_slice_buf.begin() + x * m_dims[2], m_dims[2], num_xforms_z);
+      m_dwt1d(m_slice_buf.data() + x * m_dims[2], m_dims[2], num_xforms_z);
 
     // Put back values of the z_columns to the cube
     for (size_t z = 0; z < m_dims[2]; z++) {
@@ -202,7 +202,7 @@ void sperr::CDF97::m_dwt3d_wavelet_packet()
 
   for (size_t z = 0; z < m_dims[2]; z++) {
     const size_t offset = plane_size_xy * z;
-    m_dwt2d(m_data_buf.begin() + offset, {m_dims[0], m_dims[1]}, num_xforms_xy);
+    m_dwt2d(m_data_buf.data() + offset, {m_dims[0], m_dims[1]}, num_xforms_xy);
   }
 }
 
@@ -215,7 +215,7 @@ void sperr::CDF97::m_idwt3d_wavelet_packet()
   auto num_xforms_xy = sperr::num_of_xforms(std::min(m_dims[0], m_dims[1]));
   for (size_t i = 0; i < m_dims[2]; i++) {
     const size_t offset = plane_size_xy * i;
-    m_idwt2d(m_data_buf.begin() + offset, {m_dims[0], m_dims[1]}, num_xforms_xy);
+    m_idwt2d(m_data_buf.data() + offset, {m_dims[0], m_dims[1]}, num_xforms_xy);
   }
 
   /*
@@ -252,7 +252,7 @@ void sperr::CDF97::m_idwt3d_wavelet_packet()
 
     // IDWT1D on every z_column
     for (size_t x = 0; x < m_dims[0]; x++)
-      m_idwt1d(m_slice_buf.begin() + x * m_dims[2], m_dims[2], num_xforms_z);
+      m_idwt1d(m_slice_buf.data() + x * m_dims[2], m_dims[2], num_xforms_z);
 
     // Put back values from the z_columns to the cube
     for (size_t z = 0; z < m_dims[2]; z++) {
@@ -286,7 +286,7 @@ void sperr::CDF97::m_idwt3d_dyadic(size_t num_xforms)
 //
 // Private Methods
 //
-void sperr::CDF97::m_dwt1d(itd_type array, size_t array_len, size_t num_of_lev)
+void sperr::CDF97::m_dwt1d(double* array, size_t array_len, size_t num_of_lev)
 {
   for (size_t lev = 0; lev < num_of_lev; lev++) {
     auto [x, xd] = sperr::calc_approx_detail_len(array_len, lev);
@@ -294,7 +294,7 @@ void sperr::CDF97::m_dwt1d(itd_type array, size_t array_len, size_t num_of_lev)
   }
 }
 
-void sperr::CDF97::m_idwt1d(itd_type array, size_t array_len, size_t num_of_lev)
+void sperr::CDF97::m_idwt1d(double* array, size_t array_len, size_t num_of_lev)
 {
   for (size_t lev = num_of_lev; lev > 0; lev--) {
     auto [x, xd] = sperr::calc_approx_detail_len(array_len, lev - 1);
@@ -302,7 +302,7 @@ void sperr::CDF97::m_idwt1d(itd_type array, size_t array_len, size_t num_of_lev)
   }
 }
 
-void sperr::CDF97::m_dwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t num_of_lev)
+void sperr::CDF97::m_dwt2d(double* plane, std::array<size_t, 2> len_xy, size_t num_of_lev)
 {
   for (size_t lev = 0; lev < num_of_lev; lev++) {
     auto [x, xd] = sperr::calc_approx_detail_len(len_xy[0], lev);
@@ -311,7 +311,7 @@ void sperr::CDF97::m_dwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t 
   }
 }
 
-void sperr::CDF97::m_idwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t num_of_lev)
+void sperr::CDF97::m_idwt2d(double* plane, std::array<size_t, 2> len_xy, size_t num_of_lev)
 {
   for (size_t lev = num_of_lev; lev > 0; lev--) {
     auto [x, xd] = sperr::calc_approx_detail_len(len_xy[0], lev - 1);
@@ -320,39 +320,39 @@ void sperr::CDF97::m_idwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t
   }
 }
 
-void sperr::CDF97::m_dwt1d_one_level(itd_type array, size_t array_len)
+void sperr::CDF97::m_dwt1d_one_level(double* array, size_t array_len)
 {
   std::copy(array, array + array_len, m_qcc_buf.begin());
   if (array_len % 2 == 0) {
     this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf.data(), array_len);
-    m_gather(m_qcc_buf.cbegin(), array_len, array);
+    m_gather(m_qcc_buf.data(), array_len, array);
   }
   else {
     this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf.data(), array_len);
-    m_gather(m_qcc_buf.cbegin(), array_len, array);
+    m_gather(m_qcc_buf.data(), array_len, array);
   }
 }
 
-void sperr::CDF97::m_idwt1d_one_level(itd_type array, size_t array_len)
+void sperr::CDF97::m_idwt1d_one_level(double* array, size_t array_len)
 {
   if (array_len % 2 == 0) {
-    m_scatter(array, array_len, m_qcc_buf.begin());
+    m_scatter(array, array_len, m_qcc_buf.data());
     this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf.data(), array_len);
   }
   else {
-    m_scatter(array, array_len, m_qcc_buf.begin());
+    m_scatter(array, array_len, m_qcc_buf.data());
     this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf.data(), array_len);
   }
   std::copy(m_qcc_buf.cbegin(), m_qcc_buf.cbegin() + array_len, array);
 }
 
-void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_xy)
+void sperr::CDF97::m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy)
 {
   // Note: here we call low-level functions (Qcc*()) instead of
   // m_dwt1d_one_level() because we want to have only one even/odd test at the outer loop.
 
   const auto max_len = std::max(len_xy[0], len_xy[1]);
-  const auto beg = m_qcc_buf.begin();
+  const auto beg = m_qcc_buf.data();
   const auto beg2 = beg + max_len;
 
   // First, perform DWT along X for every row
@@ -404,11 +404,11 @@ void sperr::CDF97::m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_x
   }
 }
 
-void sperr::CDF97::m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_xy)
+void sperr::CDF97::m_idwt2d_one_level(double* plane, std::array<size_t, 2> len_xy)
 {
   const auto max_len = std::max(len_xy[0], len_xy[1]);
-  const auto beg = m_qcc_buf.begin();  // First half of the buffer
-  const auto beg2 = beg + max_len;     // Second half of the buffer
+  const auto beg = m_qcc_buf.data();  // First half of the buffer
+  const auto beg2 = beg + max_len;    // Second half of the buffer
 
   // First, perform IDWT along Y for every column
   if (len_xy[1] % 2 == 0) {
@@ -460,7 +460,7 @@ void sperr::CDF97::m_dwt3d_one_level(std::array<size_t, 3> len_xyz)
   const auto col_len = len_xyz[2];
   for (size_t z = 0; z < col_len; z++) {
     const size_t offset = plane_size_xy * z;
-    m_dwt2d_one_level(m_data_buf.begin() + offset, {len_xyz[0], len_xyz[1]});
+    m_dwt2d_one_level(m_data_buf.data() + offset, {len_xyz[0], len_xyz[1]});
   }
 
   // Second, do one level of transform on all Z columns.  Strategy:
@@ -488,8 +488,8 @@ void sperr::CDF97::m_dwt3d_one_level(std::array<size_t, 3> len_xyz)
           this->QccWAVCDF97AnalysisSymmetricEvenEven(m_8columns.data() + i * col_len, col_len);
 
         for (size_t i = 0; i < stride; i++) {
-          auto itr = m_8columns.begin() + i * col_len;
-          m_gather(itr, col_len, m_slice_buf.begin() + i * col_len);
+          auto itr = m_8columns.data() + i * col_len;
+          m_gather(itr, col_len, m_slice_buf.data() + i * col_len);
         }
       }
       else {
@@ -497,8 +497,8 @@ void sperr::CDF97::m_dwt3d_one_level(std::array<size_t, 3> len_xyz)
           this->QccWAVCDF97AnalysisSymmetricOddEven(m_8columns.data() + i * col_len, col_len);
 
         for (size_t i = 0; i < stride; i++) {
-          auto itr = m_8columns.begin() + i * col_len;
-          m_gather(itr, col_len, m_slice_buf.begin() + i * col_len);
+          auto itr = m_8columns.data() + i * col_len;
+          m_gather(itr, col_len, m_slice_buf.data() + i * col_len);
         }
       }
 
@@ -537,8 +537,8 @@ void sperr::CDF97::m_idwt3d_one_level(std::array<size_t, 3> len_xyz)
 
       if (col_len % 2 == 0) {
         for (size_t i = 0; i < stride; i++) {
-          auto itr = m_8columns.begin() + i * col_len;
-          m_scatter(itr, col_len, m_slice_buf.begin() + i * col_len);
+          auto itr = m_8columns.data() + i * col_len;
+          m_scatter(itr, col_len, m_slice_buf.data() + i * col_len);
         }
 
         for (size_t i = 0; i < stride; i++)
@@ -546,8 +546,8 @@ void sperr::CDF97::m_idwt3d_one_level(std::array<size_t, 3> len_xyz)
       }
       else {
         for (size_t i = 0; i < stride; i++) {
-          auto itr = m_8columns.begin() + i * col_len;
-          m_scatter(itr, col_len, m_slice_buf.begin() + i * col_len);
+          auto itr = m_8columns.data() + i * col_len;
+          m_scatter(itr, col_len, m_slice_buf.data() + i * col_len);
         }
 
         for (size_t i = 0; i < stride; i++)
@@ -564,7 +564,7 @@ void sperr::CDF97::m_idwt3d_one_level(std::array<size_t, 3> len_xyz)
   // Second, do one level of inverse transform on all XY planes.
   for (size_t z = 0; z < len_xyz[2]; z++) {
     const size_t offset = plane_size_xy * z;
-    m_idwt2d_one_level(m_data_buf.begin() + offset, {len_xyz[0], len_xyz[1]});
+    m_idwt2d_one_level(m_data_buf.data() + offset, {len_xyz[0], len_xyz[1]});
   }
 }
 
@@ -636,7 +636,7 @@ void sperr::CDF97::m256_scatter(const double* begin, size_t len, double* dst) co
 }
 #endif
 
-void sperr::CDF97::m_gather(citd_type begin, size_t len, itd_type dest) const
+void sperr::CDF97::m_gather(const double* begin, size_t len, double* dest) const
 {
   size_t low_count = len - len / 2, high_count = len / 2;
   for (size_t i = 0; i < low_count; i++) {
@@ -649,7 +649,7 @@ void sperr::CDF97::m_gather(citd_type begin, size_t len, itd_type dest) const
   }
 }
 
-void sperr::CDF97::m_scatter(citd_type begin, size_t len, itd_type dest) const
+void sperr::CDF97::m_scatter(const double* begin, size_t len, double* dest) const
 {
   size_t low_count = len - len / 2, high_count = len / 2;
   for (size_t i = 0; i < low_count; i++) {
@@ -677,7 +677,7 @@ auto sperr::CDF97::m_sub_slice(std::array<size_t, 2> subdims) const -> vecd_type
   return ret;
 }
 
-void sperr::CDF97::m_sub_volume(dims_type subdims, itd_type dst) const
+void sperr::CDF97::m_sub_volume(dims_type subdims, double* dst) const
 {
   assert(subdims[0] <= m_dims[0] && subdims[1] <= m_dims[1] && subdims[2] <= m_dims[2]);
 

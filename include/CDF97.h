@@ -61,21 +61,18 @@ class CDF97 {
   void idwt3d_multi_res(std::vector<vecd_type>&);
 
  private:
-  using itd_type = vecd_type::iterator;
-  using citd_type = vecd_type::const_iterator;
-
   //
   // Private methods helping DWT.
   //
 
   // Multiple levels of 1D DWT/IDWT on a given array of length array_len.
-  void m_dwt1d(itd_type array, size_t array_len, size_t num_of_xforms);
-  void m_idwt1d(itd_type array, size_t array_len, size_t num_of_xforms);
+  void m_dwt1d(double* array, size_t array_len, size_t num_of_xforms);
+  void m_idwt1d(double* array, size_t array_len, size_t num_of_xforms);
 
   // Multiple levels of 2D DWT/IDWT on a given plane by repeatedly invoking
   // m_dwt2d_one_level(). The plane has a dimension (len_xy[0], len_xy[1]).
-  void m_dwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t num_of_xforms);
-  void m_idwt2d(itd_type plane, std::array<size_t, 2> len_xy, size_t num_of_xforms);
+  void m_dwt2d(double* plane, std::array<size_t, 2> len_xy, size_t num_of_xforms);
+  void m_idwt2d(double* plane, std::array<size_t, 2> len_xy, size_t num_of_xforms);
 
   // Perform one level of interleaved 3D dwt/idwt on a given volume (m_dims),
   // specifically on its top left (len_xyz) subset.
@@ -84,18 +81,18 @@ class CDF97 {
 
   // Perform one level of 2D dwt/idwt on a given plane (m_dims),
   // specifically on its top left (len_xy) subset.
-  void m_dwt2d_one_level(itd_type plane, std::array<size_t, 2> len_xy);
-  void m_idwt2d_one_level(itd_type plane, std::array<size_t, 2> len_xy);
+  void m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy);
+  void m_idwt2d_one_level(double* plane, std::array<size_t, 2> len_xy);
 
   // Perform one level of 1D dwt/idwt on a given array (array_len).
   // A buffer space (tmp_buf) should be passed in for
   // this method to work on with length at least 2*array_len.
-  void m_dwt1d_one_level(itd_type array, size_t array_len);
-  void m_idwt1d_one_level(itd_type array, size_t array_len);
+  void m_dwt1d_one_level(double* array, size_t array_len);
+  void m_idwt1d_one_level(double* array, size_t array_len);
 
   // Separate even and odd indexed elements to be at the front and back of the dest array.
   // Note 1: sufficient memory space should be allocated by the caller.
-  void m_gather(citd_type begin, size_t len, itd_type dest) const;
+  void m_gather(const double* begin, size_t len, double* dest) const;
 #ifdef __AVX2__
   void m256_gather(const double* src, size_t len, double* dst) const;
 #endif
@@ -103,7 +100,7 @@ class CDF97 {
   // Interleave low and high pass elements to be at even and odd positions of the dest array.
   // Note 1: sufficient memory space should be allocated by the caller.
   // Note 2: two versions for even and odd length input.
-  void m_scatter(citd_type begin, size_t len, itd_type dest) const;
+  void m_scatter(const double* begin, size_t len, double* dest) const;
 #ifdef __AVX2__
   void m256_scatter(const double* src, size_t len, double* dst) const;
 #endif
@@ -119,7 +116,7 @@ class CDF97 {
   // It is UB if `subdims` exceeds the full dimension (`m_dims`).
   // It is UB if `dst` does not point to a big enough space.
   auto m_sub_slice(std::array<size_t, 2> subdims) const -> vecd_type;
-  void m_sub_volume(dims_type subdims, itd_type dst) const;
+  void m_sub_volume(dims_type subdims, double* dst) const;
 
   //
   // Methods from QccPack, so keep their original names, interface, and the use of raw pointers.
