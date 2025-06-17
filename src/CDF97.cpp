@@ -347,50 +347,22 @@ void sperr::CDF97::m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy
 
 void sperr::CDF97::m_idwt2d_one_level(double* plane, std::array<size_t, 2> len_xy)
 {
-  const auto max_len = std::max(len_xy[0], len_xy[1]);
-  const auto beg = m_qcc_buf.data();  // First half of the buffer
-  const auto beg2 = beg + max_len;    // Second half of the buffer
-
   // First, perform IDWT along Y for every column
-  if (len_xy[1] % 2 == 0) {
-    for (size_t x = 0; x < len_xy[0]; x++) {
-      for (size_t y = 0; y < len_xy[1]; y++)
-        m_qcc_buf[y] = *(plane + y * m_dims[0] + x);
-      m_scatter(beg, len_xy[1], beg2);
-      this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf.data() + max_len, len_xy[1]);
-      for (size_t y = 0; y < len_xy[1]; y++)
-        *(plane + y * m_dims[0] + x) = *(beg2 + y);
-    }
-  }
-  else  // Odd length
-  {
-    for (size_t x = 0; x < len_xy[0]; x++) {
-      for (size_t y = 0; y < len_xy[1]; y++)
-        m_qcc_buf[y] = *(plane + y * m_dims[0] + x);
-      m_scatter(beg, len_xy[1], beg2);
-      this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf.data() + max_len, len_xy[1]);
-      for (size_t y = 0; y < len_xy[1]; y++)
-        *(plane + y * m_dims[0] + x) = *(beg2 + y);
-    }
+  for (size_t x = 0; x < len_xy[0]; x++) {
+    for (size_t y = 0; y < len_xy[1]; y++)
+      m_qcc_buf[y] = plane[y * m_dims[0] + x];
+    this->QccWAVCDF97SynthesisSymmetric(m_qcc_buf.data(), len_xy[1]);
+    m_scatter(m_qcc_buf.data(), len_xy[1], m_8columns.data());  // `m_8columns` as a tmp buffer
+    for (size_t y = 0; y < len_xy[1]; y++)
+      plane[y * m_dims[0] + x] = m_8columns[y];
   }
 
   // Second, perform IDWT along X for every row
-  if (len_xy[0] % 2 == 0) {
-    for (size_t i = 0; i < len_xy[1]; i++) {
-      auto pos = plane + i * m_dims[0];
-      m_scatter(pos, len_xy[0], beg);
-      this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf.data(), len_xy[0]);
-      std::copy(beg, beg + len_xy[0], pos);
-    }
-  }
-  else  // Odd length
-  {
-    for (size_t i = 0; i < len_xy[1]; i++) {
-      auto pos = plane + i * m_dims[0];
-      m_scatter(pos, len_xy[0], beg);
-      this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf.data(), len_xy[0]);
-      std::copy(beg, beg + len_xy[0], pos);
-    }
+  for (size_t i = 0; i < len_xy[1]; i++) {
+    auto* pos = plane + i * m_dims[0];
+    this->QccWAVCDF97SynthesisSymmetric(pos, len_xy[0]);
+    m_scatter(pos, len_xy[0], m_qcc_buf.data());
+    std::copy(m_qcc_buf.data(), m_qcc_buf.data() + len_xy[0], pos);
   }
 }
 
