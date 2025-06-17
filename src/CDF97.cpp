@@ -289,8 +289,10 @@ void sperr::CDF97::m_idwt3d_dyadic(size_t num_xforms)
 void sperr::CDF97::m_dwt1d(double* array, size_t array_len, size_t num_of_lev)
 {
   for (size_t lev = 0; lev < num_of_lev; lev++) {
-    auto [x, xd] = sperr::calc_approx_detail_len(array_len, lev);
-    m_dwt1d_one_level(array, x);
+    m_gather(array, array_len, m_qcc_buf.data());
+    this->QccWAVCDF97AnalysisSymmetric(m_qcc_buf.data(), array_len);
+    std::copy(m_qcc_buf.begin(), m_qcc_buf.begin() + array_len, array);
+    array_len -= array_len / 2;
   }
 }
 
@@ -298,7 +300,9 @@ void sperr::CDF97::m_idwt1d(double* array, size_t array_len, size_t num_of_lev)
 {
   for (size_t lev = num_of_lev; lev > 0; lev--) {
     auto [x, xd] = sperr::calc_approx_detail_len(array_len, lev - 1);
-    m_idwt1d_one_level(array, x);
+    this->QccWAVCDF97SynthesisSymmetric(array, x);
+    m_scatter(array, x, m_qcc_buf.data());
+    std::copy(m_qcc_buf.begin(), m_qcc_buf.begin() + x, array);
   }
 }
 
@@ -320,37 +324,8 @@ void sperr::CDF97::m_idwt2d(double* plane, std::array<size_t, 2> len_xy, size_t 
   }
 }
 
-void sperr::CDF97::m_dwt1d_one_level(double* array, size_t array_len)
-{
-  std::copy(array, array + array_len, m_qcc_buf.begin());
-  if (array_len % 2 == 0) {
-    this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf.data(), array_len);
-    m_gather(m_qcc_buf.data(), array_len, array);
-  }
-  else {
-    this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf.data(), array_len);
-    m_gather(m_qcc_buf.data(), array_len, array);
-  }
-}
-
-void sperr::CDF97::m_idwt1d_one_level(double* array, size_t array_len)
-{
-  if (array_len % 2 == 0) {
-    m_scatter(array, array_len, m_qcc_buf.data());
-    this->QccWAVCDF97SynthesisSymmetricEvenEven(m_qcc_buf.data(), array_len);
-  }
-  else {
-    m_scatter(array, array_len, m_qcc_buf.data());
-    this->QccWAVCDF97SynthesisSymmetricOddEven(m_qcc_buf.data(), array_len);
-  }
-  std::copy(m_qcc_buf.cbegin(), m_qcc_buf.cbegin() + array_len, array);
-}
-
 void sperr::CDF97::m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy)
 {
-  // Note: here we call low-level functions (Qcc*()) instead of
-  // m_dwt1d_one_level() because we want to have only one even/odd test at the outer loop.
-
   const auto max_len = std::max(len_xy[0], len_xy[1]);
   const auto beg = m_qcc_buf.data();
   const auto beg2 = beg + max_len;

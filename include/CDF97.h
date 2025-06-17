@@ -84,12 +84,6 @@ class CDF97 {
   void m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy);
   void m_idwt2d_one_level(double* plane, std::array<size_t, 2> len_xy);
 
-  // Perform one level of 1D dwt/idwt on a given array (array_len).
-  // A buffer space (tmp_buf) should be passed in for
-  // this method to work on with length at least 2*array_len.
-  void m_dwt1d_one_level(double* array, size_t array_len);
-  void m_idwt1d_one_level(double* array, size_t array_len);
-
   // Separate even and odd indexed elements to be at the front and back of the dest array.
   // Note 1: sufficient memory space should be allocated by the caller.
   void m_gather(const double* begin, size_t len, double* dest) const;
