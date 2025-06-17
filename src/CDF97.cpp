@@ -326,56 +326,22 @@ void sperr::CDF97::m_idwt2d(double* plane, std::array<size_t, 2> len_xy, size_t 
 
 void sperr::CDF97::m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy)
 {
-  const auto max_len = std::max(len_xy[0], len_xy[1]);
-  const auto beg = m_qcc_buf.data();
-  const auto beg2 = beg + max_len;
-
   // First, perform DWT along X for every row
-  if (len_xy[0] % 2 == 0) {
-    for (size_t i = 0; i < len_xy[1]; i++) {
-      auto pos = plane + i * m_dims[0];
-      std::copy(pos, pos + len_xy[0], beg);
-      this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf.data(), len_xy[0]);
-      m_gather(beg, len_xy[0], pos);
-    }
-  }
-  else  // Odd length
-  {
-    for (size_t i = 0; i < len_xy[1]; i++) {
-      auto pos = plane + i * m_dims[0];
-      std::copy(pos, pos + len_xy[0], beg);
-      this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf.data(), len_xy[0]);
-      m_gather(beg, len_xy[0], pos);
-    }
+  for (size_t i = 0; i < len_xy[1]; i++) {
+    auto* pos = plane + i * m_dims[0];
+    m_gather(pos, len_xy[0], m_qcc_buf.data());
+    this->QccWAVCDF97AnalysisSymmetric(m_qcc_buf.data(), len_xy[0]);
+    std::copy(m_qcc_buf.begin(), m_qcc_buf.begin() + len_xy[0], pos);
   }
 
   // Second, perform DWT along Y for every column
-  // Note, I've tested that up to 1024^2 planes it is actually slightly slower
-  // to transpose the plane and then perform the transforms. This was consistent
-  // on both a MacBook and a RaspberryPi 3. Note2, I've tested transpose again
-  // on an X86 linux machine using gcc, clang, and pgi. Again the difference is
-  // either indistinguishable, or the current implementation has a slight edge.
-
-  if (len_xy[1] % 2 == 0) {
-    for (size_t x = 0; x < len_xy[0]; x++) {
-      for (size_t y = 0; y < len_xy[1]; y++)
-        m_qcc_buf[y] = *(plane + y * m_dims[0] + x);
-      this->QccWAVCDF97AnalysisSymmetricEvenEven(m_qcc_buf.data(), len_xy[1]);
-      m_gather(beg, len_xy[1], beg2);
-      for (size_t y = 0; y < len_xy[1]; y++)
-        *(plane + y * m_dims[0] + x) = *(beg2 + y);
-    }
-  }
-  else  // Odd length
-  {
-    for (size_t x = 0; x < len_xy[0]; x++) {
-      for (size_t y = 0; y < len_xy[1]; y++)
-        m_qcc_buf[y] = *(plane + y * m_dims[0] + x);
-      this->QccWAVCDF97AnalysisSymmetricOddEven(m_qcc_buf.data(), len_xy[1]);
-      m_gather(beg, len_xy[1], beg2);
-      for (size_t y = 0; y < len_xy[1]; y++)
-        *(plane + y * m_dims[0] + x) = *(beg2 + y);
-    }
+  for (size_t x = 0; x < len_xy[0]; x++) {
+    for (size_t y = 0; y < len_xy[1]; y++)
+      m_8columns[y] = plane[y * m_dims[0] + x];
+    m_gather(m_8columns.data(), len_xy[1], m_qcc_buf.data());
+    this->QccWAVCDF97AnalysisSymmetric(m_qcc_buf.data(), len_xy[1]);
+    for (size_t y = 0; y < len_xy[1]; y++)
+      plane[y * m_dims[0] + x] = m_qcc_buf[y];
   }
 }
 
