@@ -632,14 +632,14 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
     const size_t simd_width = 8;
     int32_t thld_i;
     std::memcpy(&thld_i, &thld, 4);
-    __m256i thld_vec = _mm256_set1_epi32(thld_i);
+    auto thld_vec = _mm256_set1_epi32(thld_i);
 
     size_t i = 0;
     for (; i + simd_width <= len; i += simd_width) {
-      __m256i data_vec = _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(buf + i));
-      data_vec = _mm256_min_epu32(data_vec, thld_vec);
-      data_vec = _mm256_cmpeq_epi32(data_vec, thld_vec);
-      int all_zeros = _mm256_testz_si256(data_vec, data_vec);
+      auto data_vec = _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(buf + i));
+      auto min_vec = _mm256_min_epu32(data_vec, thld_vec);
+      auto cmp_vec = _mm256_cmpeq_epi32(min_vec, thld_vec);
+      int all_zeros = _mm256_testz_si256(cmp_vec, cmp_vec);
 
       if (!all_zeros)
         return true;
@@ -651,14 +651,14 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
     const size_t simd_width = 16;
     int16_t thld_i;
     std::memcpy(&thld_i, &thld, 2);
-    __m256i thld_vec = _mm256_set1_epi16(thld_i);
+    auto thld_vec = _mm256_set1_epi16(thld_i);
 
     size_t i = 0;
     for (; i + simd_width <= len; i += simd_width) {
-      __m256i data_vec = _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(buf + i));
-      data_vec = _mm256_min_epu16(data_vec, thld_vec);
-      data_vec = _mm256_cmpeq_epi16(data_vec, thld_vec);
-      int all_zeros = _mm256_testz_si256(data_vec, data_vec);
+      auto data_vec = _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(buf + i));
+      auto min_vec = _mm256_min_epu16(data_vec, thld_vec);
+      auto cmp_vec = _mm256_cmpeq_epi16(min_vec, thld_vec);
+      int all_zeros = _mm256_testz_si256(cmp_vec, cmp_vec);
 
       if (!all_zeros)
         return true;
@@ -670,14 +670,14 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
     const size_t simd_width = 32;
     int32_t thld_i;
     std::memcpy(&thld_i, &thld, 1);
-    __m256i thld_vec = _mm256_set1_epi8(thld_i);
+    auto thld_vec = _mm256_set1_epi8(thld_i);
 
     size_t i = 0;
     for (; i + simd_width <= len; i += simd_width) {
-      __m256i data_vec = _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(buf + i));
-      data_vec = _mm256_min_epu8(data_vec, thld_vec);
-      data_vec = _mm256_cmpeq_epi8(data_vec, thld_vec);
-      int all_zeros = _mm256_testz_si256(data_vec, data_vec);
+      auto data_vec = _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(buf + i));
+      auto min_vec = _mm256_min_epu8(data_vec, thld_vec);
+      auto cmp_vec = _mm256_cmpeq_epi8(min_vec, thld_vec);
+      int all_zeros = _mm256_testz_si256(cmp_vec, cmp_vec);
 
       if (!all_zeros)
         return true;

@@ -14,14 +14,15 @@
 
 #include <cmath>
 
-#ifdef __AVX2__
-#include <immintrin.h>
-#endif
-
 namespace sperr {
 
 class CDF97 {
  public:
+  //
+  // Destructor
+  //
+  ~CDF97();
+
   //
   // Input
   //
@@ -85,12 +86,10 @@ class CDF97 {
   void m_idwt2d_one_level(double* plane, std::array<size_t, 2> len_xy);
 
   // Separate even and odd indexed elements to be at the front and back of the dest array.
-  // Note 1: sufficient memory space should be allocated by the caller.
-  void m_gather(const double* begin, size_t len, double* dest) const;
-
   // Interleave low and high pass elements to be at even and odd positions of the dest array.
-  // Note 1: sufficient memory space should be allocated by the caller.
-  void m_scatter(const double* begin, size_t len, double* dest) const;
+  // Note: sufficient memory space should be allocated by the caller.
+  void m_gather(const double*  begin, size_t len, double*  dest) const;
+  void m_scatter(const double*  begin, size_t len, double*  dest) const;
 
   // Two flavors of 3D transforms.
   // They should be invoked by the `dwt3d()` and `idwt3d()` public methods, not users, though.
@@ -117,8 +116,11 @@ class CDF97 {
   vecd_type m_data_buf;          // Holds the entire input data.
   dims_type m_dims = {0, 0, 0};  // Dimension of the data volume
 
-  // Temporary buffers that are big enough for any (1D column * 2) or any 2D slice.
-  vecd_type m_qcc_buf, m_slice_buf;
+  // Temporary buffers that are big enough for any 1D column or any 2D slice.
+  // Use raw pointer for `m_qcc_ptr` because we want aligned allocation!
+  vecd_type m_slice_buf;
+  double* m_qcc_ptr = nullptr;
+  size_t m_qcc_bytes = 0;   // num. of bytes
 
   //
   // Note on the coefficients and constants:

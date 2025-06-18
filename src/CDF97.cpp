@@ -5,6 +5,17 @@
 #include <numeric>  // std::accumulate()
 #include <type_traits>
 
+#ifdef __AVX2__
+#include <immintrin.h>
+#endif
+
+// Destructor
+sperr::CDF97::~CDF97()
+{
+  if (m_qcc_ptr)
+    std::free(m_qcc_ptr);
+}
+
 template <typename T>
 auto sperr::CDF97::copy_data(const T* data, size_t len, dims_type dims) -> RTNType
 {
@@ -18,8 +29,14 @@ auto sperr::CDF97::copy_data(const T* data, size_t len, dims_type dims) -> RTNTy
   m_dims = dims;
 
   auto max_col = std::max(std::max(dims[0], dims[1]), dims[2]);
-  if (max_col * 2 > m_qcc_buf.size())
-    m_qcc_buf.resize(max_col * 2);
+  if (max_col * sizeof(double) > m_qcc_bytes) {
+    if (m_qcc_ptr)
+      std::free(m_qcc_ptr);
+    size_t alignment = 32;  // 256 bits
+    size_t alloc_chunks = (max_col * 8 + 31) / alignment;
+    m_qcc_bytes = alignment * alloc_chunks;
+    m_qcc_ptr = static_cast<double*>(std::aligned_alloc(alignment, m_qcc_bytes));
+  }
 
   auto max_slice = std::max(std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2]);
   if (max_slice > m_slice_buf.size())
@@ -40,8 +57,14 @@ auto sperr::CDF97::take_data(vecd_type&& buf, dims_type dims) -> RTNType
   m_dims = dims;
 
   auto max_col = std::max(std::max(dims[0], dims[1]), dims[2]);
-  if (max_col * 2 > m_qcc_buf.size())
-    m_qcc_buf.resize(max_col * 2);
+  if (max_col * sizeof(double) > m_qcc_bytes) {
+    if (m_qcc_ptr)
+      std::free(m_qcc_ptr);
+    size_t alignment = 32;  // 256 bits
+    size_t alloc_chunks = (max_col * 8 + 31) / alignment;
+    m_qcc_bytes = alignment * alloc_chunks;
+    m_qcc_ptr = static_cast<double*>(std::aligned_alloc(alignment, m_qcc_bytes));
+  }
 
   auto max_slice = std::max(std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2]);
   if (max_slice > m_slice_buf.size())
@@ -285,9 +308,9 @@ void sperr::CDF97::m_idwt3d_dyadic(size_t num_xforms)
 void sperr::CDF97::m_dwt1d(double* array, size_t array_len, size_t num_of_lev)
 {
   for (size_t lev = 0; lev < num_of_lev; lev++) {
-    m_gather(array, array_len, m_qcc_buf.data());
-    this->QccWAVCDF97AnalysisSymmetric(m_qcc_buf.data(), array_len);
-    std::copy(m_qcc_buf.begin(), m_qcc_buf.begin() + array_len, array);
+    m_gather(array, array_len, m_qcc_ptr);
+    this->QccWAVCDF97AnalysisSymmetric(m_qcc_ptr, array_len);
+    std::copy(m_qcc_ptr, m_qcc_ptr + array_len, array);
     array_len -= array_len / 2;
   }
 }
@@ -297,8 +320,8 @@ void sperr::CDF97::m_idwt1d(double* array, size_t array_len, size_t num_of_lev)
   for (size_t lev = num_of_lev; lev > 0; lev--) {
     auto [x, xd] = sperr::calc_approx_detail_len(array_len, lev - 1);
     this->QccWAVCDF97SynthesisSymmetric(array, x);
-    m_scatter(array, x, m_qcc_buf.data());
-    std::copy(m_qcc_buf.begin(), m_qcc_buf.begin() + x, array);
+    m_scatter(array, x, m_qcc_ptr);
+    std::copy(m_qcc_ptr, m_qcc_ptr + x, array);
   }
 }
 
@@ -325,19 +348,19 @@ void sperr::CDF97::m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy
   // First, perform DWT along X for every row
   for (size_t i = 0; i < len_xy[1]; i++) {
     auto* pos = plane + i * m_dims[0];
-    m_gather(pos, len_xy[0], m_qcc_buf.data());
-    this->QccWAVCDF97AnalysisSymmetric(m_qcc_buf.data(), len_xy[0]);
-    std::copy(m_qcc_buf.begin(), m_qcc_buf.begin() + len_xy[0], pos);
+    m_gather(pos, len_xy[0], m_qcc_ptr);
+    this->QccWAVCDF97AnalysisSymmetric(m_qcc_ptr, len_xy[0]);
+    std::copy(m_qcc_ptr, m_qcc_ptr + len_xy[0], pos);
   }
 
   // Second, perform DWT along Y for every column
   for (size_t x = 0; x < len_xy[0]; x++) {
     for (size_t y = 0; y < len_xy[1]; y++)
       m_slice_buf[y] = plane[y * m_dims[0] + x];
-    m_gather(m_slice_buf.data(), len_xy[1], m_qcc_buf.data());
-    this->QccWAVCDF97AnalysisSymmetric(m_qcc_buf.data(), len_xy[1]);
+    m_gather(m_slice_buf.data(), len_xy[1], m_qcc_ptr);
+    this->QccWAVCDF97AnalysisSymmetric(m_qcc_ptr, len_xy[1]);
     for (size_t y = 0; y < len_xy[1]; y++)
-      plane[y * m_dims[0] + x] = m_qcc_buf[y];
+      plane[y * m_dims[0] + x] = m_qcc_ptr[y];
   }
 }
 
@@ -346,19 +369,19 @@ void sperr::CDF97::m_idwt2d_one_level(double* plane, std::array<size_t, 2> len_x
   // First, perform IDWT along Y for every column
   for (size_t x = 0; x < len_xy[0]; x++) {
     for (size_t y = 0; y < len_xy[1]; y++)
-      m_qcc_buf[y] = plane[y * m_dims[0] + x];
-    this->QccWAVCDF97SynthesisSymmetric(m_qcc_buf.data(), len_xy[1]);
-    m_scatter(m_qcc_buf.data(), len_xy[1], m_slice_buf.data());
+      m_slice_buf[y] = plane[y * m_dims[0] + x];
+    this->QccWAVCDF97SynthesisSymmetric(m_slice_buf.data(), len_xy[1]);
+    m_scatter(m_slice_buf.data(), len_xy[1], m_qcc_ptr);
     for (size_t y = 0; y < len_xy[1]; y++)
-      plane[y * m_dims[0] + x] = m_slice_buf[y];
+      plane[y * m_dims[0] + x] = m_qcc_ptr[y];
   }
 
   // Second, perform IDWT along X for every row
   for (size_t i = 0; i < len_xy[1]; i++) {
     auto* pos = plane + i * m_dims[0];
     this->QccWAVCDF97SynthesisSymmetric(pos, len_xy[0]);
-    m_scatter(pos, len_xy[0], m_qcc_buf.data());
-    std::copy(m_qcc_buf.data(), m_qcc_buf.data() + len_xy[0], pos);
+    m_scatter(pos, len_xy[0], m_qcc_ptr);
+    std::copy(m_qcc_ptr, m_qcc_ptr + len_xy[0], pos);
   }
 }
 
@@ -393,9 +416,9 @@ void sperr::CDF97::m_dwt3d_one_level(std::array<size_t, 3> len_xyz)
 
       for (size_t i = 0; i < stride; i++) {
         auto* itr = m_slice_buf.data() + i * col_len;
-        m_gather(itr, col_len, m_qcc_buf.data());
-        this->QccWAVCDF97AnalysisSymmetric(m_qcc_buf.data(), col_len);
-        std::copy(m_qcc_buf.data(), m_qcc_buf.data() + col_len, itr);
+        m_gather(itr, col_len, m_qcc_ptr);
+        this->QccWAVCDF97AnalysisSymmetric(m_qcc_ptr, col_len);
+        std::copy(m_qcc_ptr, m_qcc_ptr + col_len, itr);
       }
 
       for (size_t z = 0; z < col_len; z++) {
@@ -433,8 +456,8 @@ void sperr::CDF97::m_idwt3d_one_level(std::array<size_t, 3> len_xyz)
       for (size_t i = 0; i < stride; i++) {
         auto* itr = m_slice_buf.data() + i * col_len;
         this->QccWAVCDF97SynthesisSymmetric(itr, col_len);
-        m_scatter(itr, col_len, m_qcc_buf.data());
-        std::copy(m_qcc_buf.data(), m_qcc_buf.data() + col_len, itr);
+        m_scatter(itr, col_len, m_qcc_ptr);
+        std::copy(m_qcc_ptr, m_qcc_ptr + col_len, itr);
       }
 
       for (size_t z = 0; z < col_len; z++) {
@@ -469,7 +492,7 @@ void sperr::CDF97::m_gather(const double* src, size_t len, double* dst) const
     __m256d result1 = _mm256_permute4x64_pd(evens, 0b11011000); // 0, 2, 4, 6
     __m256d result2 = _mm256_permute4x64_pd(odds, 0b11011000);  // 1, 3, 5, 7
     
-    _mm256_storeu_pd(dst_evens, result1);
+    _mm256_store_pd(dst_evens, result1);
     _mm256_storeu_pd(dst_odds, result2);
     
     dst_evens += 4;
@@ -514,8 +537,8 @@ void sperr::CDF97::m_scatter(const double* begin, size_t len, double* dst) const
     __m256d result1 = _mm256_permute2f128_pd(evens, odds, 0x20);  // 0, 4, 1, 5
     __m256d result2 = _mm256_permute2f128_pd(evens, odds, 0x31);  // 2, 6, 3, 7
 
-    _mm256_storeu_pd(dst, result1);
-    _mm256_storeu_pd(dst + 4, result2);
+    _mm256_store_pd(dst, result1);
+    _mm256_store_pd(dst + 4, result2);
 
     dst += 8;
     odd_beg += 4;
@@ -540,34 +563,6 @@ void sperr::CDF97::m_scatter(const double* begin, size_t len, double* dst) const
   }
 #endif
 }
-
-#if 0
-void sperr::CDF97::m_gather(const double* begin, size_t len, double* dst) const
-{
-  size_t low_count = len - len / 2, high_count = len / 2;
-  for (size_t i = 0; i < low_count; i++) {
-    *dst = *(begin + i * 2);
-    ++dst;
-  }
-  for (size_t i = 0; i < high_count; i++) {
-    *dst = *(begin + i * 2 + 1);
-    ++dst;
-  }
-}
-
-void sperr::CDF97::m_scatter(const double* begin, size_t len, double* dst) const
-{
-  size_t low_count = len - len / 2, high_count = len / 2;
-  for (size_t i = 0; i < low_count; i++) {
-    *(dst + i * 2) = *begin;
-    ++begin;
-  }
-  for (size_t i = 0; i < high_count; i++) {
-    *(dst + i * 2 + 1) = *begin;
-    ++begin;
-  }
-}
-#endif
 
 auto sperr::CDF97::m_sub_slice(std::array<size_t, 2> subdims) const -> vecd_type
 {
