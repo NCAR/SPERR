@@ -87,17 +87,10 @@ class CDF97 {
   // Separate even and odd indexed elements to be at the front and back of the dest array.
   // Note 1: sufficient memory space should be allocated by the caller.
   void m_gather(const double* begin, size_t len, double* dest) const;
-#ifdef __AVX2__
-  void m256_gather(const double* src, size_t len, double* dst) const;
-#endif
 
   // Interleave low and high pass elements to be at even and odd positions of the dest array.
   // Note 1: sufficient memory space should be allocated by the caller.
-  // Note 2: two versions for even and odd length input.
   void m_scatter(const double* begin, size_t len, double* dest) const;
-#ifdef __AVX2__
-  void m256_scatter(const double* src, size_t len, double* dst) const;
-#endif
 
   // Two flavors of 3D transforms.
   // They should be invoked by the `dwt3d()` and `idwt3d()` public methods, not users, though.
@@ -113,13 +106,8 @@ class CDF97 {
   void m_sub_volume(dims_type subdims, double* dst) const;
 
   //
-  // Methods from QccPack, so keep their original names, interface, and the use of raw pointers.
+  // Methods from QccPack with slight changes to combine the even and odd length cases. 
   //
-  void QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length);
-  void QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length);
-  void QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length);
-  void QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length);
-
   void QccWAVCDF97AnalysisSymmetric(double* signal, size_t signal_length);
   void QccWAVCDF97SynthesisSymmetric(double* signal, size_t signal_length);
 

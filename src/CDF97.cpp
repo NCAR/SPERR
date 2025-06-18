@@ -451,9 +451,9 @@ void sperr::CDF97::m_idwt3d_one_level(std::array<size_t, 3> len_xyz)
   }
 }
 
-#ifdef __AVX2__
-void sperr::CDF97::m256_gather(const double* src, size_t len, double* dst) const
+void sperr::CDF97::m_gather(const double* src, size_t len, double* dst) const
 {
+#ifdef __AVX2__
   const double* src_end = src + len;
   double* dst_evens = dst;
   double* dst_odds = dst + len - len / 2;
@@ -483,10 +483,22 @@ void sperr::CDF97::m256_gather(const double* src, size_t len, double* dst) const
 
   if (src < src_end)
     *dst_evens = *src;
+#else
+  size_t low_count = len - len / 2, high_count = len / 2;
+  for (size_t i = 0; i < low_count; i++) {
+    *dst = *(src + i * 2);
+    ++dst;
+  }
+  for (size_t i = 0; i < high_count; i++) {
+    *dst = *(src + i * 2 + 1);
+    ++dst;
+  }
+#endif
 }
 
-void sperr::CDF97::m256_scatter(const double* begin, size_t len, double* dst) const
+void sperr::CDF97::m_scatter(const double* begin, size_t len, double* dst) const
 {
+#ifdef __AVX2__
   const double* even_end = begin + len - len / 2;
   const double* odd_beg = even_end;
   const double* dst_end = dst + len;
@@ -516,34 +528,46 @@ void sperr::CDF97::m256_scatter(const double* begin, size_t len, double* dst) co
 
   if (dst < dst_end)
     *dst = *begin;
+#else
+  size_t low_count = len - len / 2, high_count = len / 2;
+  for (size_t i = 0; i < low_count; i++) {
+    *(dst + i * 2) = *begin;
+    ++begin;
+  }
+  for (size_t i = 0; i < high_count; i++) {
+    *(dst + i * 2 + 1) = *begin;
+    ++begin;
+  }
+#endif
+}
+
+#if 0
+void sperr::CDF97::m_gather(const double* begin, size_t len, double* dst) const
+{
+  size_t low_count = len - len / 2, high_count = len / 2;
+  for (size_t i = 0; i < low_count; i++) {
+    *dst = *(begin + i * 2);
+    ++dst;
+  }
+  for (size_t i = 0; i < high_count; i++) {
+    *dst = *(begin + i * 2 + 1);
+    ++dst;
+  }
+}
+
+void sperr::CDF97::m_scatter(const double* begin, size_t len, double* dst) const
+{
+  size_t low_count = len - len / 2, high_count = len / 2;
+  for (size_t i = 0; i < low_count; i++) {
+    *(dst + i * 2) = *begin;
+    ++begin;
+  }
+  for (size_t i = 0; i < high_count; i++) {
+    *(dst + i * 2 + 1) = *begin;
+    ++begin;
+  }
 }
 #endif
-
-void sperr::CDF97::m_gather(const double* begin, size_t len, double* dest) const
-{
-  size_t low_count = len - len / 2, high_count = len / 2;
-  for (size_t i = 0; i < low_count; i++) {
-    *dest = *(begin + i * 2);
-    ++dest;
-  }
-  for (size_t i = 0; i < high_count; i++) {
-    *dest = *(begin + i * 2 + 1);
-    ++dest;
-  }
-}
-
-void sperr::CDF97::m_scatter(const double* begin, size_t len, double* dest) const
-{
-  size_t low_count = len - len / 2, high_count = len / 2;
-  for (size_t i = 0; i < low_count; i++) {
-    *(dest + i * 2) = *begin;
-    ++begin;
-  }
-  for (size_t i = 0; i < high_count; i++) {
-    *(dest + i * 2 + 1) = *begin;
-    ++begin;
-  }
-}
 
 auto sperr::CDF97::m_sub_slice(std::array<size_t, 2> subdims) const -> vecd_type
 {
@@ -577,112 +601,6 @@ void sperr::CDF97::m_sub_volume(dims_type subdims, double* dst) const
 //
 // Methods from QccPack
 //
-void sperr::CDF97::QccWAVCDF97AnalysisSymmetricEvenEven(double* signal, size_t signal_length)
-{
-  for (size_t i = 1; i < signal_length - 2; i += 2)
-    signal[i] += ALPHA * (signal[i - 1] + signal[i + 1]);
-
-  signal[signal_length - 1] += 2.0 * ALPHA * signal[signal_length - 2];
-
-  signal[0] += 2.0 * BETA * signal[1];
-
-  for (size_t i = 2; i < signal_length; i += 2)
-    signal[i] += BETA * (signal[i + 1] + signal[i - 1]);
-
-  for (size_t i = 1; i < signal_length - 2; i += 2)
-    signal[i] += GAMMA * (signal[i - 1] + signal[i + 1]);
-
-  signal[signal_length - 1] += 2.0 * GAMMA * signal[signal_length - 2];
-
-  signal[0] = EPSILON * (signal[0] + 2.0 * DELTA * signal[1]);
-
-  for (size_t i = 2; i < signal_length; i += 2)
-    signal[i] = EPSILON * (signal[i] + DELTA * (signal[i + 1] + signal[i - 1]));
-
-  for (size_t i = 1; i < signal_length; i += 2)
-    signal[i] *= -INV_EPSILON;
-}
-
-void sperr::CDF97::QccWAVCDF97SynthesisSymmetricEvenEven(double* signal, size_t signal_length)
-{
-  for (size_t i = 1; i < signal_length; i += 2)
-    signal[i] *= (-EPSILON);
-
-  signal[0] = signal[0] * INV_EPSILON - 2.0 * DELTA * signal[1];
-
-  for (size_t i = 2; i < signal_length; i += 2)
-    signal[i] = signal[i] * INV_EPSILON - DELTA * (signal[i + 1] + signal[i - 1]);
-
-  for (size_t i = 1; i < signal_length - 2; i += 2)
-    signal[i] -= GAMMA * (signal[i - 1] + signal[i + 1]);
-
-  signal[signal_length - 1] -= 2.0 * GAMMA * signal[signal_length - 2];
-
-  signal[0] -= 2.0 * BETA * signal[1];
-
-  for (size_t i = 2; i < signal_length; i += 2)
-    signal[i] -= BETA * (signal[i + 1] + signal[i - 1]);
-
-  for (size_t i = 1; i < signal_length - 2; i += 2)
-    signal[i] -= ALPHA * (signal[i - 1] + signal[i + 1]);
-
-  signal[signal_length - 1] -= 2.0 * ALPHA * signal[signal_length - 2];
-}
-
-void sperr::CDF97::QccWAVCDF97SynthesisSymmetricOddEven(double* signal, size_t signal_length)
-{
-  for (size_t i = 1; i < signal_length - 1; i += 2)
-    signal[i] *= (-EPSILON);
-
-  signal[0] = signal[0] * INV_EPSILON - 2.0 * DELTA * signal[1];
-
-  for (size_t i = 2; i < signal_length - 2; i += 2)
-    signal[i] = signal[i] * INV_EPSILON - DELTA * (signal[i + 1] + signal[i - 1]);
-
-  signal[signal_length - 1] =
-      signal[signal_length - 1] * INV_EPSILON - 2.0 * DELTA * signal[signal_length - 2];
-
-  for (size_t i = 1; i < signal_length - 1; i += 2)
-    signal[i] -= GAMMA * (signal[i - 1] + signal[i + 1]);
-
-  signal[0] -= 2.0 * BETA * signal[1];
-
-  for (size_t i = 2; i < signal_length - 2; i += 2)
-    signal[i] -= BETA * (signal[i + 1] + signal[i - 1]);
-
-  signal[signal_length - 1] -= 2.0 * BETA * signal[signal_length - 2];
-
-  for (size_t i = 1; i < signal_length - 1; i += 2)
-    signal[i] -= ALPHA * (signal[i - 1] + signal[i + 1]);
-}
-
-void sperr::CDF97::QccWAVCDF97AnalysisSymmetricOddEven(double* signal, size_t signal_length)
-{
-  for (size_t i = 1; i < signal_length - 1; i += 2)
-    signal[i] += ALPHA * (signal[i - 1] + signal[i + 1]);
-
-  signal[0] += 2.0 * BETA * signal[1];
-
-  for (size_t i = 2; i < signal_length - 2; i += 2)
-    signal[i] += BETA * (signal[i + 1] + signal[i - 1]);
-
-  signal[signal_length - 1] += 2.0 * BETA * signal[signal_length - 2];
-
-  for (size_t i = 1; i < signal_length - 1; i += 2)
-    signal[i] += GAMMA * (signal[i - 1] + signal[i + 1]);
-
-  signal[0] = EPSILON * (signal[0] + 2.0 * DELTA * signal[1]);
-
-  for (size_t i = 2; i < signal_length - 2; i += 2)
-    signal[i] = EPSILON * (signal[i] + DELTA * (signal[i + 1] + signal[i - 1]));
-
-  signal[signal_length - 1] =
-      EPSILON * (signal[signal_length - 1] + 2.0 * DELTA * signal[signal_length - 2]);
-
-  for (size_t i = 1; i < signal_length - 1; i += 2)
-    signal[i] *= (-INV_EPSILON);
-}
-
 void sperr::CDF97::QccWAVCDF97AnalysisSymmetric(double* signal, size_t len)
 {
   size_t  even_len = len - len / 2;
