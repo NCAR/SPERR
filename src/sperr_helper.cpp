@@ -645,12 +645,7 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
         return true;
     }
 
-    for (; i < len; ++i) {
-      if (buf[i] >= thld)
-        return true;
-    }
-
-    return false;
+    return std::any_of(buf + i, buf + len, [thld](auto v) { return v >= thld; });
   }
   else if constexpr (sizeof(T) == 2) {  // uint16_t
     const size_t simd_width = 16;
@@ -669,12 +664,7 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
         return true;
     }
 
-    for (; i < len; ++i) {
-      if (buf[i] >= thld)
-        return true;
-    }
-
-    return false;
+    return std::any_of(buf + i, buf + len, [thld](auto v) { return v >= thld; });
   }
   else if constexpr (sizeof(T) == 1) {  // uint8_t
     const size_t simd_width = 32;
@@ -693,12 +683,7 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
         return true;
     }
 
-    for (; i < len; ++i) {
-      if (buf[i] >= thld)
-        return true;
-    }
-
-    return false;
+    return std::any_of(buf + i, buf + len, [thld](auto v) { return v >= thld; });
   }
   else {
     // AVX2 doesn't have a very good support for 64 bit unsigned ints, just use std.
