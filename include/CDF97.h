@@ -129,10 +129,8 @@ class CDF97 {
   vecd_type m_data_buf;          // Holds the entire input data.
   dims_type m_dims = {0, 0, 0};  // Dimension of the data volume
 
-  // Temporary buffers that are big enough for any (1D column * 2) or any 2D
-  // slice. Note: `m_qcc_buf` should be used by m_***_one_level() functions and
-  // should not be used by higher-level functions.
-  vecd_type m_qcc_buf, m_slice_buf, m_8columns;
+  // Temporary buffers that are big enough for any (1D column * 2) or any 2D slice.
+  vecd_type m_qcc_buf, m_slice_buf;
 
   //
   // Note on the coefficients and constants:

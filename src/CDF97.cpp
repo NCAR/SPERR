@@ -20,8 +20,6 @@ auto sperr::CDF97::copy_data(const T* data, size_t len, dims_type dims) -> RTNTy
   auto max_col = std::max(std::max(dims[0], dims[1]), dims[2]);
   if (max_col * 2 > m_qcc_buf.size())
     m_qcc_buf.resize(max_col * 2);
-  if (max_col * 8 > m_8columns.size())
-    m_8columns.resize(max_col * 8);
 
   auto max_slice = std::max(std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2]);
   if (max_slice > m_slice_buf.size())
@@ -44,8 +42,6 @@ auto sperr::CDF97::take_data(vecd_type&& buf, dims_type dims) -> RTNType
   auto max_col = std::max(std::max(dims[0], dims[1]), dims[2]);
   if (max_col * 2 > m_qcc_buf.size())
     m_qcc_buf.resize(max_col * 2);
-  if (max_col * 8 > m_8columns.size())
-    m_8columns.resize(max_col * 8);
 
   auto max_slice = std::max(std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2]);
   if (max_slice > m_slice_buf.size())
@@ -337,8 +333,8 @@ void sperr::CDF97::m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy
   // Second, perform DWT along Y for every column
   for (size_t x = 0; x < len_xy[0]; x++) {
     for (size_t y = 0; y < len_xy[1]; y++)
-      m_8columns[y] = plane[y * m_dims[0] + x];
-    m_gather(m_8columns.data(), len_xy[1], m_qcc_buf.data());
+      m_slice_buf[y] = plane[y * m_dims[0] + x];
+    m_gather(m_slice_buf.data(), len_xy[1], m_qcc_buf.data());
     this->QccWAVCDF97AnalysisSymmetric(m_qcc_buf.data(), len_xy[1]);
     for (size_t y = 0; y < len_xy[1]; y++)
       plane[y * m_dims[0] + x] = m_qcc_buf[y];
@@ -352,9 +348,9 @@ void sperr::CDF97::m_idwt2d_one_level(double* plane, std::array<size_t, 2> len_x
     for (size_t y = 0; y < len_xy[1]; y++)
       m_qcc_buf[y] = plane[y * m_dims[0] + x];
     this->QccWAVCDF97SynthesisSymmetric(m_qcc_buf.data(), len_xy[1]);
-    m_scatter(m_qcc_buf.data(), len_xy[1], m_8columns.data());  // `m_8columns` as a tmp buffer
+    m_scatter(m_qcc_buf.data(), len_xy[1], m_slice_buf.data());
     for (size_t y = 0; y < len_xy[1]; y++)
-      plane[y * m_dims[0] + x] = m_8columns[y];
+      plane[y * m_dims[0] + x] = m_slice_buf[y];
   }
 
   // Second, perform IDWT along X for every row
@@ -377,10 +373,9 @@ void sperr::CDF97::m_dwt3d_one_level(std::array<size_t, 3> len_xyz)
   }
 
   // Second, do one level of transform on all Z columns.  Strategy:
-  // 1) extract eight Z columns to buffer space `m_8columns`
-  // 2) use appropriate even/odd Qcc*** function to transform it
-  // 3) gather coefficients from `m_8columns` to `m_slice_buf`
-  // 4) put the Z columns back to their locations in the volume.
+  // 1) extract eight Z columns to buffer space `m_slice_buf`
+  // 2) transform these eight columns
+  // 3) put the Z columns back to their locations in the volume.
   //
   // Note: the reason to process eight columns at a time is that a cache line
   // is usually 64 bytes, or 8 doubles. That means when you pay the cost to retrieve
@@ -393,26 +388,14 @@ void sperr::CDF97::m_dwt3d_one_level(std::array<size_t, 3> len_xyz)
 
       for (size_t z = 0; z < col_len; z++) {
         for (size_t i = 0; i < stride; i++)
-          m_8columns[z + i * col_len] = m_data_buf[z * plane_size_xy + xy_offset + i];
+          m_slice_buf[z + i * col_len] = m_data_buf[z * plane_size_xy + xy_offset + i];
       }
 
-      if (col_len % 2 == 0) {
-        for (size_t i = 0; i < stride; i++)
-          this->QccWAVCDF97AnalysisSymmetricEvenEven(m_8columns.data() + i * col_len, col_len);
-
-        for (size_t i = 0; i < stride; i++) {
-          auto itr = m_8columns.data() + i * col_len;
-          m_gather(itr, col_len, m_slice_buf.data() + i * col_len);
-        }
-      }
-      else {
-        for (size_t i = 0; i < stride; i++)
-          this->QccWAVCDF97AnalysisSymmetricOddEven(m_8columns.data() + i * col_len, col_len);
-
-        for (size_t i = 0; i < stride; i++) {
-          auto itr = m_8columns.data() + i * col_len;
-          m_gather(itr, col_len, m_slice_buf.data() + i * col_len);
-        }
+      for (size_t i = 0; i < stride; i++) {
+        auto* itr = m_slice_buf.data() + i * col_len;
+        m_gather(itr, col_len, m_qcc_buf.data());
+        this->QccWAVCDF97AnalysisSymmetric(m_qcc_buf.data(), col_len);
+        std::copy(m_qcc_buf.data(), m_qcc_buf.data() + col_len, itr);
       }
 
       for (size_t z = 0; z < col_len; z++) {
@@ -429,10 +412,9 @@ void sperr::CDF97::m_idwt3d_one_level(std::array<size_t, 3> len_xyz)
   const auto col_len = len_xyz[2];
 
   // First, do one level of inverse transform on all Z columns.  Strategy:
-  // 1) extract eight Z columns to buffer space `m_8columns`
-  // 2) scatter coefficients from `m_8columns` to `m_slice_buf`
-  // 3) use appropriate even/odd Qcc*** function to transform it
-  // 4) put the Z columns back to their appropriate locations in the volume.
+  // 1) extract eight Z columns to buffer space `m_slice_buf`
+  // 2) transform these eight columns
+  // 3) put the Z columns back to their appropriate locations in the volume.
   //
   // Note: the reason to process eight columns at a time is that a cache line
   // is usually 64 bytes, or 8 doubles. That means when you pay the cost to retrieve
@@ -445,26 +427,14 @@ void sperr::CDF97::m_idwt3d_one_level(std::array<size_t, 3> len_xyz)
 
       for (size_t z = 0; z < col_len; z++) {
         for (size_t i = 0; i < stride; i++)
-          m_8columns[z + i * col_len] = m_data_buf[z * plane_size_xy + xy_offset + i];
+          m_slice_buf[z + i * col_len] = m_data_buf[z * plane_size_xy + xy_offset + i];
       }
 
-      if (col_len % 2 == 0) {
-        for (size_t i = 0; i < stride; i++) {
-          auto itr = m_8columns.data() + i * col_len;
-          m_scatter(itr, col_len, m_slice_buf.data() + i * col_len);
-        }
-
-        for (size_t i = 0; i < stride; i++)
-          this->QccWAVCDF97SynthesisSymmetricEvenEven(m_slice_buf.data() + i * col_len, col_len);
-      }
-      else {
-        for (size_t i = 0; i < stride; i++) {
-          auto itr = m_8columns.data() + i * col_len;
-          m_scatter(itr, col_len, m_slice_buf.data() + i * col_len);
-        }
-
-        for (size_t i = 0; i < stride; i++)
-          this->QccWAVCDF97SynthesisSymmetricOddEven(m_slice_buf.data() + i * col_len, col_len);
+      for (size_t i = 0; i < stride; i++) {
+        auto* itr = m_slice_buf.data() + i * col_len;
+        this->QccWAVCDF97SynthesisSymmetric(itr, col_len);
+        m_scatter(itr, col_len, m_qcc_buf.data());
+        std::copy(m_qcc_buf.data(), m_qcc_buf.data() + col_len, itr);
       }
 
       for (size_t z = 0; z < col_len; z++) {
