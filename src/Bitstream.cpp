@@ -4,6 +4,10 @@
 #include <cstring>
 #include <iterator>  // std::distance()
 
+#ifdef __SSE2__
+#include <immintrin.h>
+#endif
+
 // Constructor
 sperr::Bitstream::Bitstream(size_t nbits)
 {
@@ -109,18 +113,21 @@ void sperr::Bitstream::wbit(bool bit)
 {
   m_buffer |= uint64_t{bit} << m_bits;
 
-#if __has_cpp_attribute(unlikely)
-  if (++m_bits == 64) [[unlikely]]
-#else
-  if (++m_bits == 64)
-#endif
-  {
+  if (++m_bits == 64) {
     if (m_itr == m_buf.end()) {  // allocate memory if necessary.
       auto dist = m_buf.size();
       m_buf.resize(std::max(size_t{1}, dist) * 2 - dist / 2);  // use a growth factor of 1.5
       m_itr = m_buf.begin() + dist;
     }
+#ifdef __SSE2__
+    auto dist = m_itr - m_buf.begin();
+    long long int* ptr = reinterpret_cast<long long int*>(&m_buf[dist]);
+    long long int val = 0;
+    std::memcpy(&val, &m_buffer, sizeof(m_buffer));
+    _mm_stream_si64(ptr, val);
+#else
     *m_itr = m_buffer;
+#endif
     ++m_itr;
     m_buffer = 0;
     m_bits = 0;
@@ -129,10 +136,13 @@ void sperr::Bitstream::wbit(bool bit)
 
 void sperr::Bitstream::flush()
 {
+#ifdef __SSE2__
+  _mm_sfence();
+#endif
   if (m_bits) {  // only really flush when there are remaining bits.
     if (m_itr == m_buf.end()) {
       auto dist = m_buf.size();
-      m_buf.resize(std::max(size_t{1}, dist) * 2 - dist / 2);  // use a growth factor of 1.5
+      m_buf.resize(m_buf.size() + 1);
       m_itr = m_buf.begin() + dist;
     }
     *m_itr = m_buffer;
