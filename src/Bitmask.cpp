@@ -150,13 +150,14 @@ void sperr::Bitmask::wlong(size_t idx, uint64_t value)
 void sperr::Bitmask::wbit(size_t idx, bool bit)
 {
   const auto wstart = idx / 64;
-  const auto mask = uint64_t{1} << (idx - wstart * 64);
-
   auto word = m_buf[wstart];
-  if (bit)
-    word |= mask;
-  else
-    word &= ~mask;
+
+  auto mask1 = uint64_t{1} << (idx - wstart * 64);
+  word &= ~mask1;
+
+  auto mask2 = uint64_t{bit} << (idx - wstart * 64);
+  word |= mask2;
+
   m_buf[wstart] = word;
 }
 
