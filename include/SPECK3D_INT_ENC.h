@@ -38,7 +38,6 @@ class SPECK3D_INT_ENC final : public SPECK3D_INT<T> {
 
   // Data structures and functions for morton data layout.
   vecui_type m_morton_buf;
-  Bitmask m_morton_sign_array;
   void m_deposit_set(Set3D);
 };
 

@@ -14,7 +14,6 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
     case 1: {
       auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
       m_morton_buf[set.get_morton()] = m_coeff_buf[id];
-      m_morton_sign_array.wbit(set.get_morton(), m_sign_array.rbit(id));
       return;
     }
     case 2: {
@@ -24,7 +23,6 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
       auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
       auto morton_id = set.get_morton();
       m_morton_buf[morton_id] = m_coeff_buf[id];
-      m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id));
 
       // Deposit the 2nd element.
       if (set.length_x == 2)
@@ -34,7 +32,6 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
       else
         id += m_dims[0] * m_dims[1];
       m_morton_buf[++morton_id] = m_coeff_buf[id];
-      m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id));
 
       return;
     }
@@ -45,62 +42,50 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
       if (set.length_x == 2 && set.length_y == 2) {
         // Element (0, 0, 0)
         m_morton_buf[morton_id] = m_coeff_buf[id];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id));
 
         // Element (1, 0, 0)
         m_morton_buf[++morton_id] = m_coeff_buf[id + 1];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id + 1));
 
         // Element (0, 1, 0)
         auto id2 = id + m_dims[0];
         m_morton_buf[++morton_id] = m_coeff_buf[id2];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id2));
 
         // Element (1, 1, 0)
         m_morton_buf[++morton_id] = m_coeff_buf[++id2];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id2));
 
         return;
       }
       else if (set.length_x == 2 && set.length_z == 2) {
         // Element (0, 0, 0)
         m_morton_buf[morton_id] = m_coeff_buf[id];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id));
 
         // Element (1, 0, 0)
         m_morton_buf[++morton_id] = m_coeff_buf[id + 1];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id + 1));
 
         // Element (0, 0, 1)
         auto id2 = id + m_dims[0] * m_dims[1];
         m_morton_buf[++morton_id] = m_coeff_buf[id2];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id2));
 
         // Element (1, 0, 1)
         m_morton_buf[++morton_id] = m_coeff_buf[++id2];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id2));
 
         return;
       }
       else if (set.length_y == 2 && set.length_z == 2) {
         // Element (0, 0, 0)
         m_morton_buf[morton_id] = m_coeff_buf[id];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id));
 
         // Element (0, 1, 0)
         auto id2 = id + m_dims[0];
         m_morton_buf[++morton_id] = m_coeff_buf[id2];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id2));
 
         // Element (0, 0, 1)
         id2 = id + m_dims[0] * m_dims[1];
         m_morton_buf[++morton_id] = m_coeff_buf[id2];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id2));
 
         // Element (0, 1, 1)
         id2 += m_dims[0];
         m_morton_buf[++morton_id] = m_coeff_buf[id2];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id2));
 
         return;
       }
@@ -113,38 +98,30 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
         const auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
         auto morton_id = set.get_morton();
         m_morton_buf[morton_id] = m_coeff_buf[id];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id));
 
         // Element (1, 0, 0)
         m_morton_buf[++morton_id] = m_coeff_buf[id + 1];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id + 1));
 
         // Element (0, 1, 0)
         auto id2 = id + m_dims[0];
         m_morton_buf[++morton_id] = m_coeff_buf[id2];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id2));
 
         // Element (1, 1, 0)
         m_morton_buf[++morton_id] = m_coeff_buf[++id2];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id2));
 
         // Element (0, 0, 1)
         id2 = id + m_dims[0] * m_dims[1];
         m_morton_buf[++morton_id] = m_coeff_buf[id2];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id2));
 
         // Element (1, 0, 1)
         m_morton_buf[++morton_id] = m_coeff_buf[++id2];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id2));
 
         // Element (0, 1, 1)
         id2 = id + m_dims[0] * (m_dims[1] + 1);
         m_morton_buf[++morton_id] = m_coeff_buf[id2];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id2));
 
         // Element (1, 1, 1)
         m_morton_buf[++morton_id] = m_coeff_buf[++id2];
-        m_morton_sign_array.wbit(morton_id, m_sign_array.rbit(id2));
 
         return;
       }
@@ -167,7 +144,6 @@ void sperr::SPECK3D_INT_ENC<T>::m_additional_initialization()
   // For the encoder, this function re-organizes the coefficients in a morton order.
   //
   m_morton_buf.resize(m_dims[0] * m_dims[1] * m_dims[2]);
-  m_morton_sign_array.resize(m_dims[0] * m_dims[1] * m_dims[2]);
 
   // The same traversing order as in `SPECK3D_INT::m_sorting_pass()`
   size_t morton_offset = 0;
@@ -218,7 +194,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_process_P(size_t idx, size_t morton, size_t& c
     assert(m_coeff_buf[idx] >= m_threshold);
     m_coeff_buf[idx] -= m_threshold;
 
-    m_bit_buffer.wbit(m_morton_sign_array.rbit(morton));
+    m_bit_buffer.wbit(m_sign_array.rbit(idx));
     m_LSP_new.push_back(idx);
     m_LIP_mask.wfalse(idx);
   }
