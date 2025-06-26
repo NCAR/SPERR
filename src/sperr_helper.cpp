@@ -630,9 +630,7 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
 #ifdef __AVX2__
   if constexpr (sizeof(T) == 4) {  // uint32_t
     const size_t simd_width = 8;
-    int32_t thld_i;
-    std::memcpy(&thld_i, &thld, 4);
-    auto thld_vec = _mm256_set1_epi32(thld_i);
+    auto thld_vec = _mm256_set1_epi32(thld);
 
     size_t i = 0;
     for (; i + simd_width <= len; i += simd_width) {
@@ -649,9 +647,7 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
   }
   else if constexpr (sizeof(T) == 2) {  // uint16_t
     const size_t simd_width = 16;
-    int16_t thld_i;
-    std::memcpy(&thld_i, &thld, 2);
-    auto thld_vec = _mm256_set1_epi16(thld_i);
+    auto thld_vec = _mm256_set1_epi16(thld);
 
     size_t i = 0;
     for (; i + simd_width <= len; i += simd_width) {
@@ -668,9 +664,7 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
   }
   else if constexpr (sizeof(T) == 1) {  // uint8_t
     const size_t simd_width = 32;
-    int32_t thld_i;
-    std::memcpy(&thld_i, &thld, 1);
-    auto thld_vec = _mm256_set1_epi8(thld_i);
+    auto thld_vec = _mm256_set1_epi8(thld);
 
     size_t i = 0;
     for (; i + simd_width <= len; i += simd_width) {
