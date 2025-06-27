@@ -31,14 +31,10 @@ auto sperr::Bitstream::capacity() const -> size_t
 void sperr::Bitstream::reserve(size_t nbits)
 {
   if (nbits > m_buf.size() * 64) {
-    // Number of longs that's absolutely needed.
-    auto num_longs = nbits / 64;
-    if (num_longs * 64 < nbits)
-      num_longs++;
-
 #ifdef __SSE2__
         _mm_sfence();
 #endif
+    auto num_longs = (nbits + 63) / 64;
     const auto dist = std::distance(m_buf.begin(), m_itr);
     m_buf.resize(num_longs);         // trigger a memroy allocation.
     m_buf.resize(m_buf.capacity());  // be able to make use of all available capacity.
@@ -62,7 +58,7 @@ auto sperr::Bitstream::rtell() const -> size_t
 void sperr::Bitstream::rseek(size_t offset)
 {
   size_t div = offset / 64;
-  size_t rem = offset - div * 64;
+  size_t rem = offset & 63;
   m_itr = m_buf.begin() + div;
   if (rem) {
     m_buffer = *m_itr >> rem;
@@ -99,7 +95,7 @@ auto sperr::Bitstream::wtell() const -> size_t
 void sperr::Bitstream::wseek(size_t offset)
 {
   size_t div = offset / 64;
-  size_t rem = offset - div * 64;
+  size_t rem = offset & 63;
   m_itr = m_buf.begin() + div;
   if (rem) {
     m_buffer = *m_itr;
