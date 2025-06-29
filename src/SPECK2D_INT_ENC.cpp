@@ -64,10 +64,20 @@ auto sperr::SPECK2D_INT_ENC<T>::m_decide_S_significance(const Set2D& set) const 
 {
   assert(!set.is_empty());
 
-  for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
-    auto first = m_coeff_buf.data() + y * m_dims[0] + set.start_x;
-    if (sperr::any_ge(first, set.length_x, m_threshold))
-      return true;
+  // Only use SIMD implementation with 16 or more elements.
+  if (set.length_x < 16) {
+    for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
+      auto first = m_coeff_buf.data() + y * m_dims[0] + set.start_x;
+      if (std::any_of(first, first + set.length_x, [thld = m_threshold](auto v) { return v >= thld; }))
+        return true;
+    }
+  }
+  else {
+    for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
+      auto first = m_coeff_buf.data() + y * m_dims[0] + set.start_x;
+      if (sperr::any_ge(first, set.length_x, m_threshold))
+        return true;
+    }
   }
   return false;
 }
@@ -85,11 +95,22 @@ auto sperr::SPECK2D_INT_ENC<T>::m_decide_I_significance() const -> bool
     return true;
 
   // Second, test the rectangle that's directly to the right of the missing top-left corner.
+  // Only use SIMD implementation with 16 or more elements.
   //
-  for (auto y = 0; y < m_I.start_y; y++) {
-    first = m_coeff_buf.data() + y * m_dims[0] + m_I.start_x;
-    if (sperr::any_ge(first, m_dims[0] - m_I.start_x, m_threshold))
-      return true;
+  auto len = m_dims[0] - m_I.start_x;
+  if (len < 16) {
+    for (auto y = 0; y < m_I.start_y; y++) {
+      first = m_coeff_buf.data() + y * m_dims[0] + m_I.start_x;
+      if (std::any_of(first, first + len, [thld = m_threshold](auto v) { return v >= thld; }))
+        return true;
+    }
+  }
+  else {
+    for (auto y = 0; y < m_I.start_y; y++) {
+      first = m_coeff_buf.data() + y * m_dims[0] + m_I.start_x;
+      if (sperr::any_ge(first, len, m_threshold))
+        return true;
+    }
   }
   return false;
 }
