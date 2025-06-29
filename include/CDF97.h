@@ -119,7 +119,7 @@ class CDF97 {
   // Temporary buffers that are big enough for any 1D column or any 2D slice.
   vecd_type m_slice_buf;
   double* m_aligned_buf = nullptr;
-  size_t m_qcc_bytes = 0;   // num. of bytes
+  size_t m_aligned_buf_bytes = 0; // num. of bytes
 
   //
   // Note on the coefficients and constants:

@@ -29,13 +29,13 @@ auto sperr::CDF97::copy_data(const T* data, size_t len, dims_type dims) -> RTNTy
   m_dims = dims;
 
   auto max_col = std::max(std::max(dims[0], dims[1]), dims[2]);
-  if (max_col * sizeof(double) > m_qcc_bytes) {
+  if (max_col * sizeof(double) > m_aligned_buf_bytes) {
     if (m_aligned_buf)
       std::free(m_aligned_buf);
     size_t alignment = 32;  // 256 bits
     size_t alloc_chunks = (max_col * 8 + 31) / alignment;
-    m_qcc_bytes = alignment * alloc_chunks;
-    m_aligned_buf = static_cast<double*>(std::aligned_alloc(alignment, m_qcc_bytes));
+    m_aligned_buf_bytes = alignment * alloc_chunks;
+    m_aligned_buf = static_cast<double*>(std::aligned_alloc(alignment, m_aligned_buf_bytes));
   }
 
   auto max_slice = std::max(std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2]);
@@ -57,13 +57,13 @@ auto sperr::CDF97::take_data(vecd_type&& buf, dims_type dims) -> RTNType
   m_dims = dims;
 
   auto max_col = std::max(std::max(dims[0], dims[1]), dims[2]);
-  if (max_col * sizeof(double) > m_qcc_bytes) {
+  if (max_col * sizeof(double) > m_aligned_buf_bytes) {
     if (m_aligned_buf)
       std::free(m_aligned_buf);
     size_t alignment = 32;  // 256 bits
     size_t alloc_chunks = (max_col * 8 + 31) / alignment;
-    m_qcc_bytes = alignment * alloc_chunks;
-    m_aligned_buf = static_cast<double*>(std::aligned_alloc(alignment, m_qcc_bytes));
+    m_aligned_buf_bytes = alignment * alloc_chunks;
+    m_aligned_buf = static_cast<double*>(std::aligned_alloc(alignment, m_aligned_buf_bytes));
   }
 
   auto max_slice = std::max(std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2]);
