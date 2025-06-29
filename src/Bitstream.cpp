@@ -32,7 +32,7 @@ void sperr::Bitstream::reserve(size_t nbits)
 {
   if (nbits > m_buf.size() * 64) {
 #ifdef __SSE2__
-        _mm_sfence();
+    _mm_sfence();
 #endif
     auto num_longs = (nbits + 63) / 64;
     const auto dist = std::distance(m_buf.begin(), m_itr);
@@ -120,7 +120,7 @@ void sperr::Bitstream::wbit(bool bit)
   {
     if (m_itr == m_buf.end()) {  // allocate memory if necessary.
 #ifdef __SSE2__
-        _mm_sfence();
+      _mm_sfence();
 #endif
       auto dist = m_buf.size();
       m_buf.resize(std::max(size_t{1}, dist) * 2);
@@ -129,9 +129,7 @@ void sperr::Bitstream::wbit(bool bit)
 #ifdef __SSE2__
     auto dist = m_itr - m_buf.begin();
     long long int* ptr = reinterpret_cast<long long int*>(&m_buf[dist]);
-    long long int val = 0;
-    std::memcpy(&val, &m_buffer, sizeof(m_buffer));
-    _mm_stream_si64(ptr, val);
+    _mm_stream_si64(ptr, m_buffer);
 #else
     *m_itr = m_buffer;
 #endif
@@ -183,10 +181,7 @@ auto sperr::Bitstream::get_bitstream(size_t num_bits) const -> std::vector<std::
 {
   assert(num_bits <= m_buf.size() * 64);
 
-  auto num_bytes = num_bits / 8;
-  if (num_bits - num_bytes * 8 != 0)
-    num_bytes++;
-
+  auto num_bytes = (num_bits + 7) / 8;
   auto tmp = std::vector<std::byte>(num_bytes);
   this->write_bitstream(tmp.data(), num_bits);
 
