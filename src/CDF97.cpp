@@ -12,8 +12,8 @@
 // Destructor
 sperr::CDF97::~CDF97()
 {
-  if (m_qcc_ptr)
-    std::free(m_qcc_ptr);
+  if (m_aligned_buf)
+    std::free(m_aligned_buf);
 }
 
 template <typename T>
@@ -30,12 +30,12 @@ auto sperr::CDF97::copy_data(const T* data, size_t len, dims_type dims) -> RTNTy
 
   auto max_col = std::max(std::max(dims[0], dims[1]), dims[2]);
   if (max_col * sizeof(double) > m_qcc_bytes) {
-    if (m_qcc_ptr)
-      std::free(m_qcc_ptr);
+    if (m_aligned_buf)
+      std::free(m_aligned_buf);
     size_t alignment = 32;  // 256 bits
     size_t alloc_chunks = (max_col * 8 + 31) / alignment;
     m_qcc_bytes = alignment * alloc_chunks;
-    m_qcc_ptr = static_cast<double*>(std::aligned_alloc(alignment, m_qcc_bytes));
+    m_aligned_buf = static_cast<double*>(std::aligned_alloc(alignment, m_qcc_bytes));
   }
 
   auto max_slice = std::max(std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2]);
@@ -58,12 +58,12 @@ auto sperr::CDF97::take_data(vecd_type&& buf, dims_type dims) -> RTNType
 
   auto max_col = std::max(std::max(dims[0], dims[1]), dims[2]);
   if (max_col * sizeof(double) > m_qcc_bytes) {
-    if (m_qcc_ptr)
-      std::free(m_qcc_ptr);
+    if (m_aligned_buf)
+      std::free(m_aligned_buf);
     size_t alignment = 32;  // 256 bits
     size_t alloc_chunks = (max_col * 8 + 31) / alignment;
     m_qcc_bytes = alignment * alloc_chunks;
-    m_qcc_ptr = static_cast<double*>(std::aligned_alloc(alignment, m_qcc_bytes));
+    m_aligned_buf = static_cast<double*>(std::aligned_alloc(alignment, m_qcc_bytes));
   }
 
   auto max_slice = std::max(std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2]);
@@ -308,9 +308,9 @@ void sperr::CDF97::m_idwt3d_dyadic(size_t num_xforms)
 void sperr::CDF97::m_dwt1d(double* array, size_t array_len, size_t num_of_lev)
 {
   for (size_t lev = 0; lev < num_of_lev; lev++) {
-    m_gather(array, array_len, m_qcc_ptr);
-    this->QccWAVCDF97AnalysisSymmetric(m_qcc_ptr, array_len);
-    std::copy(m_qcc_ptr, m_qcc_ptr + array_len, array);
+    m_gather(array, array_len, m_aligned_buf);
+    this->QccWAVCDF97AnalysisSymmetric(m_aligned_buf, array_len);
+    std::copy(m_aligned_buf, m_aligned_buf + array_len, array);
     array_len -= array_len / 2;
   }
 }
@@ -320,8 +320,8 @@ void sperr::CDF97::m_idwt1d(double* array, size_t array_len, size_t num_of_lev)
   for (size_t lev = num_of_lev; lev > 0; lev--) {
     auto [x, xd] = sperr::calc_approx_detail_len(array_len, lev - 1);
     this->QccWAVCDF97SynthesisSymmetric(array, x);
-    m_scatter(array, x, m_qcc_ptr);
-    std::copy(m_qcc_ptr, m_qcc_ptr + x, array);
+    m_scatter(array, x, m_aligned_buf);
+    std::copy(m_aligned_buf, m_aligned_buf + x, array);
   }
 }
 
@@ -348,19 +348,19 @@ void sperr::CDF97::m_dwt2d_one_level(double* plane, std::array<size_t, 2> len_xy
   // First, perform DWT along X for every row
   for (size_t i = 0; i < len_xy[1]; i++) {
     auto* pos = plane + i * m_dims[0];
-    m_gather(pos, len_xy[0], m_qcc_ptr);
-    this->QccWAVCDF97AnalysisSymmetric(m_qcc_ptr, len_xy[0]);
-    std::copy(m_qcc_ptr, m_qcc_ptr + len_xy[0], pos);
+    m_gather(pos, len_xy[0], m_aligned_buf);
+    this->QccWAVCDF97AnalysisSymmetric(m_aligned_buf, len_xy[0]);
+    std::copy(m_aligned_buf, m_aligned_buf + len_xy[0], pos);
   }
 
   // Second, perform DWT along Y for every column
   for (size_t x = 0; x < len_xy[0]; x++) {
     for (size_t y = 0; y < len_xy[1]; y++)
       m_slice_buf[y] = plane[y * m_dims[0] + x];
-    m_gather(m_slice_buf.data(), len_xy[1], m_qcc_ptr);
-    this->QccWAVCDF97AnalysisSymmetric(m_qcc_ptr, len_xy[1]);
+    m_gather(m_slice_buf.data(), len_xy[1], m_aligned_buf);
+    this->QccWAVCDF97AnalysisSymmetric(m_aligned_buf, len_xy[1]);
     for (size_t y = 0; y < len_xy[1]; y++)
-      plane[y * m_dims[0] + x] = m_qcc_ptr[y];
+      plane[y * m_dims[0] + x] = m_aligned_buf[y];
   }
 }
 
@@ -371,17 +371,17 @@ void sperr::CDF97::m_idwt2d_one_level(double* plane, std::array<size_t, 2> len_x
     for (size_t y = 0; y < len_xy[1]; y++)
       m_slice_buf[y] = plane[y * m_dims[0] + x];
     this->QccWAVCDF97SynthesisSymmetric(m_slice_buf.data(), len_xy[1]);
-    m_scatter(m_slice_buf.data(), len_xy[1], m_qcc_ptr);
+    m_scatter(m_slice_buf.data(), len_xy[1], m_aligned_buf);
     for (size_t y = 0; y < len_xy[1]; y++)
-      plane[y * m_dims[0] + x] = m_qcc_ptr[y];
+      plane[y * m_dims[0] + x] = m_aligned_buf[y];
   }
 
   // Second, perform IDWT along X for every row
   for (size_t i = 0; i < len_xy[1]; i++) {
     auto* pos = plane + i * m_dims[0];
     this->QccWAVCDF97SynthesisSymmetric(pos, len_xy[0]);
-    m_scatter(pos, len_xy[0], m_qcc_ptr);
-    std::copy(m_qcc_ptr, m_qcc_ptr + len_xy[0], pos);
+    m_scatter(pos, len_xy[0], m_aligned_buf);
+    std::copy(m_aligned_buf, m_aligned_buf + len_xy[0], pos);
   }
 }
 
@@ -416,9 +416,9 @@ void sperr::CDF97::m_dwt3d_one_level(std::array<size_t, 3> len_xyz)
 
       for (size_t i = 0; i < stride; i++) {
         auto* itr = m_slice_buf.data() + i * col_len;
-        m_gather(itr, col_len, m_qcc_ptr);
-        this->QccWAVCDF97AnalysisSymmetric(m_qcc_ptr, col_len);
-        std::copy(m_qcc_ptr, m_qcc_ptr + col_len, itr);
+        m_gather(itr, col_len, m_aligned_buf);
+        this->QccWAVCDF97AnalysisSymmetric(m_aligned_buf, col_len);
+        std::copy(m_aligned_buf, m_aligned_buf + col_len, itr);
       }
 
       for (size_t z = 0; z < col_len; z++) {
@@ -456,8 +456,8 @@ void sperr::CDF97::m_idwt3d_one_level(std::array<size_t, 3> len_xyz)
       for (size_t i = 0; i < stride; i++) {
         auto* itr = m_slice_buf.data() + i * col_len;
         this->QccWAVCDF97SynthesisSymmetric(itr, col_len);
-        m_scatter(itr, col_len, m_qcc_ptr);
-        std::copy(m_qcc_ptr, m_qcc_ptr + col_len, itr);
+        m_scatter(itr, col_len, m_aligned_buf);
+        std::copy(m_aligned_buf, m_aligned_buf + col_len, itr);
       }
 
       for (size_t z = 0; z < col_len; z++) {

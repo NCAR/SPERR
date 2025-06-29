@@ -117,9 +117,8 @@ class CDF97 {
   dims_type m_dims = {0, 0, 0};  // Dimension of the data volume
 
   // Temporary buffers that are big enough for any 1D column or any 2D slice.
-  // Use raw pointer for `m_qcc_ptr` because we want aligned allocation!
   vecd_type m_slice_buf;
-  double* m_qcc_ptr = nullptr;
+  double* m_aligned_buf = nullptr;
   size_t m_qcc_bytes = 0;   // num. of bytes
 
   //

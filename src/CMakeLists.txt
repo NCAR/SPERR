@@ -31,6 +31,19 @@ if(USE_OMP)
   target_link_libraries(    SPERR PUBLIC OpenMP::OpenMP_CXX )
 endif()
 
+if(ENABLE_AVX2)
+  message(STATUS "AVX2 compilation enabled.")
+  if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(SPERR PRIVATE -mavx2 -mfma)
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    target_compile_options(SPERR PRIVATE /arch:AVX2)
+  else()
+    message(WARNING "Compiler '${CMAKE_CXX_COMPILER_ID}' not explicitly supported for AVX2 flags. Please add them manually if needed.")
+  endif()
+else()
+  message(STATUS "AVX2 compilation disabled.")
+endif()
+
 
 #
 # LTO

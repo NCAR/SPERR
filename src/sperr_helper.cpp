@@ -628,7 +628,29 @@ template <typename T>
 auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
 {
 #ifdef __AVX2__
-  if constexpr (sizeof(T) == 4) {  // uint32_t
+  if constexpr (sizeof(T) == 8) {  // uint64_t
+    // We use a trick here: for unsigned integers, A_unsigned > B_unsigned is equivalent to
+    // (A_unsigned XOR sign_bit)_signed > (B_unsigned XOR sign_bit)_signed.
+    //
+    const size_t simd_width = 4;
+    auto sign_flip_mask = _mm256_set1_epi64x(0x8000000000000000ULL);
+    auto thld_vec = _mm256_set1_epi64x(thld);
+    auto thld_flipped = _mm256_xor_si256(thld_vec, sign_flip_mask);
+
+    size_t i = 0;
+    for (; i + simd_width <= len; i+= simd_width) {
+      auto data_vec = _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(buf + i));
+      auto data_flipped = _mm256_xor_si256(data_vec, sign_flip_mask);
+      auto cmp_mask = _mm256_cmpgt_epi64(thld_flipped, data_flipped); // threshold > data
+      int all_true = _mm256_movemask_epi8(cmp_mask);
+
+      if (all_true != 0xFFFFFFFF)
+        return true;
+    }
+
+    return std::any_of(buf + i, buf + len, [thld](auto v) { return v >= thld; });
+  }
+  else if constexpr (sizeof(T) == 4) {  // uint32_t
     const size_t simd_width = 8;
     auto thld_vec = _mm256_set1_epi32(thld);
 
@@ -662,7 +684,7 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
 
     return std::any_of(buf + i, buf + len, [thld](auto v) { return v >= thld; });
   }
-  else if constexpr (sizeof(T) == 1) {  // uint8_t
+  else {  // uint8_t
     const size_t simd_width = 32;
     auto thld_vec = _mm256_set1_epi8(thld);
 
@@ -678,10 +700,6 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
     }
 
     return std::any_of(buf + i, buf + len, [thld](auto v) { return v >= thld; });
-  }
-  else {
-    // AVX2 doesn't have a very good support for 64 bit unsigned ints, just use std.
-    return std::any_of(buf, buf + len, [thld](auto v) { return v >= thld; });
   }
 #else
   return std::any_of(buf, buf + len, [thld](auto v) { return v >= thld; });
