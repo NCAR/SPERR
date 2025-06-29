@@ -634,8 +634,7 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
     //
     const size_t simd_width = 4;
     auto sign_flip_mask = _mm256_set1_epi64x(0x8000000000000000ULL);
-    auto thld_vec = _mm256_set1_epi64x(thld);
-    auto thld_flipped = _mm256_xor_si256(thld_vec, sign_flip_mask);
+    auto thld_flipped = _mm256_set1_epi64x(thld ^ 0x8000000000000000ULL);
 
     size_t i = 0;
     for (; i + simd_width <= len; i+= simd_width) {
