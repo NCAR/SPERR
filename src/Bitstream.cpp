@@ -112,12 +112,7 @@ void sperr::Bitstream::wbit(bool bit)
 {
   m_buffer |= uint64_t{bit} << m_bits;
 
-#if __has_cpp_attribute(unlikely)
-  if (++m_bits == 64) [[unlikely]]
-#else
-  if (++m_bits == 64)
-#endif
-  {
+  if (++m_bits == 64) {
     if (m_itr == m_buf.end()) {  // allocate memory if necessary.
 #ifdef __SSE2__
       _mm_sfence();
