@@ -38,7 +38,7 @@ auto sperr::Bitmask::rbit(size_t idx) const -> bool
   auto rem = idx & 63;  // idx % 64
   auto word = m_buf[div];
   word &= uint64_t{1} << rem;
-  return (word != 0);
+  return word;
 }
 
 template <bool Position>
