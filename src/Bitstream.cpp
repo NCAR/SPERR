@@ -57,7 +57,7 @@ auto sperr::Bitstream::rtell() const -> size_t
 
 void sperr::Bitstream::rseek(size_t offset)
 {
-  size_t div = offset / 64;
+  size_t div = offset >> 6;
   size_t rem = offset & 63;
   m_itr = m_buf.begin() + div;
   if (rem) {
@@ -94,7 +94,7 @@ auto sperr::Bitstream::wtell() const -> size_t
 
 void sperr::Bitstream::wseek(size_t offset)
 {
-  size_t div = offset / 64;
+  size_t div = offset >> 6;
   size_t rem = offset & 63;
   m_itr = m_buf.begin() + div;
   if (rem) {

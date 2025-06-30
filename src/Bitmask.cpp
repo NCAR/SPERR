@@ -44,7 +44,7 @@ auto sperr::Bitmask::rbit(size_t idx) const -> bool
 template <bool Position>
 auto sperr::Bitmask::has_true(size_t start, size_t len) const -> int64_t
 {
-  auto long_idx = start / 64;
+  auto long_idx = start >> 6;
   auto processed_bits = int64_t{0};
   auto word = m_buf[long_idx];
   auto answer = uint64_t{0};
@@ -157,7 +157,7 @@ void sperr::Bitmask::wbit(size_t idx, bool bit)
 
 void sperr::Bitmask::wtrue(size_t idx)
 {
-  const auto wstart = idx / 64;
+  const auto wstart = idx >> 6;
   const auto mask = uint64_t{1} << (idx & 63);
 
   auto word = m_buf[wstart];
@@ -167,7 +167,7 @@ void sperr::Bitmask::wtrue(size_t idx)
 
 void sperr::Bitmask::wfalse(size_t idx)
 {
-  const auto wstart = idx / 64;
+  const auto wstart = idx >> 6;
   const auto mask = uint64_t{1} << (idx & 63);
 
   auto word = m_buf[wstart];
