@@ -637,10 +637,10 @@ auto sperr::any_ge(const T* buf, size_t len, T thld) -> bool
     auto thld_flipped = _mm256_set1_epi64x(thld ^ 0x8000000000000000ULL);
 
     size_t i = 0;
-    for (; i + simd_width <= len; i+= simd_width) {
+    for (; i + simd_width <= len; i += simd_width) {
       auto data_vec = _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(buf + i));
       auto data_flipped = _mm256_xor_si256(data_vec, sign_flip_mask);
-      auto cmp_mask = _mm256_cmpgt_epi64(thld_flipped, data_flipped); // threshold > data
+      auto cmp_mask = _mm256_cmpgt_epi64(thld_flipped, data_flipped);  // threshold > data
       int all_true = _mm256_movemask_epi8(cmp_mask);
 
       if (all_true != 0xFFFFFFFF)

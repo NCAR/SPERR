@@ -42,7 +42,6 @@ auto sperr::CDF97::copy_data(const T* data, size_t len, dims_type dims) -> RTNTy
   if (max_slice > m_slice_buf.size())
     m_slice_buf.resize(max_slice);
 
-
   return RTNType::Good;
 }
 template auto sperr::CDF97::copy_data(const float*, size_t, dims_type) -> RTNType;
@@ -480,21 +479,21 @@ void sperr::CDF97::m_gather(const double* src, size_t len, double* dst) const
   const double* src_end = src + len;
   double* dst_evens = dst;
   double* dst_odds = dst + len - len / 2;
-  
+
   // Process 8 elements at a time
   for (; src + 8 <= src_end; src += 8) {
     __m256d v0 = _mm256_loadu_pd(src);      // 0, 1, 2, 3
     __m256d v1 = _mm256_loadu_pd(src + 4);  // 4, 5, 6, 7
 
-    __m256d evens = _mm256_unpacklo_pd(v0, v1); // 0, 4, 2, 6
-    __m256d odds  = _mm256_unpackhi_pd(v0, v1); // 1, 5, 3, 7
+    __m256d evens = _mm256_unpacklo_pd(v0, v1);  // 0, 4, 2, 6
+    __m256d odds = _mm256_unpackhi_pd(v0, v1);   // 1, 5, 3, 7
 
-    __m256d result1 = _mm256_permute4x64_pd(evens, 0b11011000); // 0, 2, 4, 6
-    __m256d result2 = _mm256_permute4x64_pd(odds, 0b11011000);  // 1, 3, 5, 7
-    
+    __m256d result1 = _mm256_permute4x64_pd(evens, 0b11011000);  // 0, 2, 4, 6
+    __m256d result2 = _mm256_permute4x64_pd(odds, 0b11011000);   // 1, 3, 5, 7
+
     _mm256_store_pd(dst_evens, result1);
     _mm256_storeu_pd(dst_odds, result2);
-    
+
     dst_evens += 4;
     dst_odds += 4;
   }
@@ -528,11 +527,11 @@ void sperr::CDF97::m_scatter(const double* begin, size_t len, double* dst) const
 
   // Process 8 elements at a time
   for (; begin + 4 < even_end; begin += 4) {
-    __m256d v0 = _mm256_loadu_pd(begin);   // 0, 1, 2, 3
-    __m256d v1 = _mm256_loadu_pd(odd_beg); // 4, 5, 6, 7
+    __m256d v0 = _mm256_loadu_pd(begin);    // 0, 1, 2, 3
+    __m256d v1 = _mm256_loadu_pd(odd_beg);  // 4, 5, 6, 7
 
-    __m256d evens = _mm256_unpacklo_pd(v0, v1); // 0, 4, 2, 6
-    __m256d odds  = _mm256_unpackhi_pd(v0, v1); // 1, 5, 3, 7
+    __m256d evens = _mm256_unpacklo_pd(v0, v1);  // 0, 4, 2, 6
+    __m256d odds = _mm256_unpackhi_pd(v0, v1);   // 1, 5, 3, 7
 
     __m256d result1 = _mm256_permute2f128_pd(evens, odds, 0x20);  // 0, 4, 1, 5
     __m256d result2 = _mm256_permute2f128_pd(evens, odds, 0x31);  // 2, 6, 3, 7
@@ -598,10 +597,10 @@ void sperr::CDF97::m_sub_volume(dims_type subdims, double* dst) const
 //
 void sperr::CDF97::QccWAVCDF97AnalysisSymmetric(double* signal, size_t len)
 {
-  size_t  even_len = len - len / 2;
-  size_t  odd_len  = len / 2;
-  double* even     = signal;
-  double* odd      = signal + even_len;
+  size_t even_len = len - len / 2;
+  size_t odd_len = len / 2;
+  double* even = signal;
+  double* odd = signal + even_len;
 
   // Process all the odd elements
   for (size_t i = 0; i < odd_len - 1; i++)
@@ -623,7 +622,8 @@ void sperr::CDF97::QccWAVCDF97AnalysisSymmetric(double* signal, size_t len)
   even[0] = EPSILON * (even[0] + 2.0 * DELTA * odd[0]);
   for (size_t i = 1; i < even_len - 1; i++)
     even[i] = EPSILON * (even[i] + DELTA * (odd[i - 1] + odd[i]));
-  even[even_len - 1] = EPSILON * (even[even_len - 1] + DELTA * (odd[even_len - 2] + odd[odd_len - 1]));
+  even[even_len - 1] =
+      EPSILON * (even[even_len - 1] + DELTA * (odd[even_len - 2] + odd[odd_len - 1]));
 
   // Process odd elements
   for (size_t i = 0; i < odd_len; i++)
@@ -632,10 +632,10 @@ void sperr::CDF97::QccWAVCDF97AnalysisSymmetric(double* signal, size_t len)
 
 void sperr::CDF97::QccWAVCDF97SynthesisSymmetric(double* signal, size_t len)
 {
-  size_t  even_len = len - len / 2;
-  size_t  odd_len  = len / 2;
-  double* even     = signal;
-  double* odd      = signal + even_len;
+  size_t even_len = len - len / 2;
+  size_t odd_len = len / 2;
+  double* even = signal;
+  double* odd = signal + even_len;
 
   // Process odd elements
   for (size_t i = 0; i < odd_len; i++)
@@ -645,7 +645,8 @@ void sperr::CDF97::QccWAVCDF97SynthesisSymmetric(double* signal, size_t len)
   even[0] = even[0] * INV_EPSILON - 2.0 * DELTA * odd[0];
   for (size_t i = 1; i < even_len - 1; i++)
     even[i] = even[i] * INV_EPSILON - DELTA * (odd[i - 1] + odd[i]);
-  even[even_len - 1] = even[even_len - 1] * INV_EPSILON - DELTA * (odd[even_len - 2] + odd[odd_len - 1]);
+  even[even_len - 1] =
+      even[even_len - 1] * INV_EPSILON - DELTA * (odd[even_len - 2] + odd[odd_len - 1]);
 
   // Process odd elements
   for (size_t i = 0; i < odd_len - 1; i++)

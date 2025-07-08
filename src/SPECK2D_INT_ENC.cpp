@@ -68,7 +68,8 @@ auto sperr::SPECK2D_INT_ENC<T>::m_decide_S_significance(const Set2D& set) const 
   if (set.length_x < 16) {
     for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
       auto first = m_coeff_buf.data() + y * m_dims[0] + set.start_x;
-      if (std::any_of(first, first + set.length_x, [thld = m_threshold](auto v) { return v >= thld; }))
+      if (std::any_of(first, first + set.length_x,
+                      [thld = m_threshold](auto v) { return v >= thld; }))
         return true;
     }
   }

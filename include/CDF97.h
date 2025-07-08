@@ -88,8 +88,8 @@ class CDF97 {
   // Separate even and odd indexed elements to be at the front and back of the dest array.
   // Interleave low and high pass elements to be at even and odd positions of the dest array.
   // Note: sufficient memory space should be allocated by the caller.
-  void m_gather(const double*  begin, size_t len, double*  dest) const;
-  void m_scatter(const double*  begin, size_t len, double*  dest) const;
+  void m_gather(const double* begin, size_t len, double* dest) const;
+  void m_scatter(const double* begin, size_t len, double* dest) const;
 
   // Two flavors of 3D transforms.
   // They should be invoked by the `dwt3d()` and `idwt3d()` public methods, not users, though.
@@ -105,7 +105,7 @@ class CDF97 {
   void m_sub_volume(dims_type subdims, double* dst) const;
 
   //
-  // Methods from QccPack with slight changes to combine the even and odd length cases. 
+  // Methods from QccPack with slight changes to combine the even and odd length cases.
   //
   void QccWAVCDF97AnalysisSymmetric(double* signal, size_t signal_length);
   void QccWAVCDF97SynthesisSymmetric(double* signal, size_t signal_length);
@@ -119,7 +119,7 @@ class CDF97 {
   // Temporary buffers that are big enough for any 1D column or any 2D slice.
   vecd_type m_slice_buf;
   double* m_aligned_buf = nullptr;
-  size_t m_aligned_buf_bytes = 0; // num. of bytes
+  size_t m_aligned_buf_bytes = 0;  // num. of bytes
 
   //
   // Note on the coefficients and constants:
