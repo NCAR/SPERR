@@ -71,7 +71,6 @@ enum class RTNType {
 auto aligned_malloc(size_t alignment, size_t size) -> void*;
 void aligned_free(void* p);
 
-
 // Given a certain length, how many transforms to be performed?
 auto num_of_xforms(size_t len) -> size_t;
 

@@ -33,7 +33,6 @@ void sperr::aligned_free(void* p)
 #endif
 }
 
-
 auto sperr::num_of_xforms(size_t len) -> size_t
 {
   assert(len > 0);
