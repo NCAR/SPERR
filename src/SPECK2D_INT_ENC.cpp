@@ -100,14 +100,14 @@ auto sperr::SPECK2D_INT_ENC<T>::m_decide_I_significance() const -> bool
   //
   auto len = m_dims[0] - m_I.start_x;
   if (len < 16) {
-    for (auto y = 0; y < m_I.start_y; y++) {
+    for (auto y = 0u; y < m_I.start_y; y++) {
       first = m_coeff_buf.data() + y * m_dims[0] + m_I.start_x;
       if (std::any_of(first, first + len, [thld = m_threshold](auto v) { return v >= thld; }))
         return true;
     }
   }
   else {
-    for (auto y = 0; y < m_I.start_y; y++) {
+    for (auto y = 0u; y < m_I.start_y; y++) {
       first = m_coeff_buf.data() + y * m_dims[0] + m_I.start_x;
       if (sperr::any_ge(first, len, m_threshold))
         return true;
