@@ -33,8 +33,11 @@ endif()
 
 if(ENABLE_AVX2)
   message(STATUS "AVX2 compilation enabled.")
-  target_compile_options(SPERR PRIVATE -mavx2 -mfma)
-  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  target_compile_options(SPERR PRIVATE
+                        "$<$<CXX_COMPILER_ID:MSVC>:/arch:AVX2>"
+                        "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-mavx2;-mfma>")
+
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|MSVC")
     message(WARNING "Compiler '${CMAKE_CXX_COMPILER_ID}' might not explicitly support AVX2 flags. Please add them manually if needed.")
   endif()
 else()

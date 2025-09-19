@@ -13,7 +13,7 @@
 sperr::CDF97::~CDF97()
 {
   if (m_aligned_buf)
-    std::free(m_aligned_buf);
+    sperr::aligned_free(m_aligned_buf);
 }
 
 template <typename T>
@@ -31,11 +31,11 @@ auto sperr::CDF97::copy_data(const T* data, size_t len, dims_type dims) -> RTNTy
   auto max_col = std::max(std::max(dims[0], dims[1]), dims[2]);
   if (max_col * sizeof(double) > m_aligned_buf_bytes) {
     if (m_aligned_buf)
-      std::free(m_aligned_buf);
+      sperr::aligned_free(m_aligned_buf);
     size_t alignment = 32;  // 256 bits
     size_t alloc_chunks = (max_col * 8 + 31) / alignment;
     m_aligned_buf_bytes = alignment * alloc_chunks;
-    m_aligned_buf = static_cast<double*>(std::aligned_alloc(alignment, m_aligned_buf_bytes));
+    m_aligned_buf = static_cast<double*>(sperr::aligned_malloc(alignment, m_aligned_buf_bytes));
   }
 
   auto max_slice = std::max(std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2]);
@@ -58,11 +58,11 @@ auto sperr::CDF97::take_data(vecd_type&& buf, dims_type dims) -> RTNType
   auto max_col = std::max(std::max(dims[0], dims[1]), dims[2]);
   if (max_col * sizeof(double) > m_aligned_buf_bytes) {
     if (m_aligned_buf)
-      std::free(m_aligned_buf);
+      sperr::aligned_free(m_aligned_buf);
     size_t alignment = 32;  // 256 bits
     size_t alloc_chunks = (max_col * 8 + 31) / alignment;
     m_aligned_buf_bytes = alignment * alloc_chunks;
-    m_aligned_buf = static_cast<double*>(std::aligned_alloc(alignment, m_aligned_buf_bytes));
+    m_aligned_buf = static_cast<double*>(sperr::aligned_malloc(alignment, m_aligned_buf_bytes));
   }
 
   auto max_slice = std::max(std::max(dims[0] * dims[1], dims[0] * dims[2]), dims[1] * dims[2]);
@@ -406,7 +406,7 @@ void sperr::CDF97::m_dwt3d_one_level(std::array<size_t, 3> len_xyz)
   for (size_t y = 0; y < len_xyz[1]; y++) {
     for (size_t x = 0; x < len_xyz[0]; x += 8) {
       const size_t xy_offset = y * m_dims[0] + x;
-      const auto stride = std::min(8ul, len_xyz[0] - x);
+      const size_t stride = std::min(size_t{8}, len_xyz[0] - x);
 
       for (size_t z = 0; z < col_len; z++) {
         for (size_t i = 0; i < stride; i++)
@@ -445,7 +445,7 @@ void sperr::CDF97::m_idwt3d_one_level(std::array<size_t, 3> len_xyz)
   for (size_t y = 0; y < len_xyz[1]; y++) {
     for (size_t x = 0; x < len_xyz[0]; x += 8) {
       const size_t xy_offset = y * m_dims[0] + x;
-      const auto stride = std::min(8ul, len_xyz[0] - x);
+      const size_t stride = std::min(size_t{8}, len_xyz[0] - x);
 
       for (size_t z = 0; z < col_len; z++) {
         for (size_t i = 0; i < stride; i++)
