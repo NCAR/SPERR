@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h> /* memcmp() */
 
 /*
  * Given a file name, this function reads in its content and allocates a buffer `dst` to store it.
@@ -45,9 +46,7 @@ int main(int argc, char** argv)
     is_float = 0;
 
   /* Hard code the preferred chunk size in this example. */
-  const size_t chunk_x = 256;
-  const size_t chunk_y = 256;
-  const size_t chunk_z = 256;
+  const size_t chunks[3] = {128, 128, 128};
 
   /* Read in a file and put its content in `inbuf` */
   void* inbuf = NULL; /* Will be free'd later */
@@ -70,8 +69,8 @@ int main(int argc, char** argv)
   /* Compress `inbuf` and put the compressed bitstream in `bitstream` */
   void* bitstream = NULL; /* Will be free'd later */
   size_t stream_len = 0;
-  int rtn = sperr_comp_3d(inbuf, is_float, dimx, dimy, dimz, chunk_x, chunk_y, chunk_z, mode,
-                          quality, nthreads, &bitstream, &stream_len);
+  int rtn = sperr_comp_3d(inbuf, is_float, dimx, dimy, dimz, chunks[0], chunks[1], chunks[2],
+                          mode, quality, nthreads, &bitstream, &stream_len);
   if (rtn != 0) {
     printf("Compression error with code %d\n", rtn);
     return rtn;
@@ -114,8 +113,36 @@ int main(int argc, char** argv)
   fclose(f);
   f = NULL;
 
+  /* Test the "catch all" functions. */
+  size_t dims[3] = {dimx, dimy, dimz};
+  size_t stream2_len = 0;
+  void* stream2 = NULL;
+  rtn = sperr_compress(inbuf, is_float, dimx * dimy * dimz, 3, dims, chunks, mode, quality, 0,
+                       &stream2, &stream2_len);
+  if (rtn != 0) {
+    printf("Catch-all compression failed with error %d\n", rtn);
+    return 1;
+  }
+  if (stream2_len != stream_len || memcmp(bitstream, stream2, stream2_len)) {
+    printf("Catch-all compression not consistent!\n");
+    return 1;
+  }
+
+  void* outbuf2 = NULL;
+  rtn = sperr_decompress(stream2, stream2_len, is_float, 0, dims, &outbuf2);
+  if (rtn != 0) {
+    printf("Catch-all decompression failed with error %d\n", rtn);
+    return 1;
+  }
+  if (memcmp(outbuf, outbuf2, dimx * dimy * dimz * (is_float ? sizeof(float) : sizeof(double)))) {
+    printf("Catch-all decompression not consistent!\n");
+    return 1;
+  }
+
   /* Clean up */
   free(outbuf);
+  free(outbuf2);
+  free(stream2);
   free(bitstream);
   free(inbuf);
 }
