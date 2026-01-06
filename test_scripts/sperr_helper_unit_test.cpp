@@ -293,4 +293,39 @@ TEST(sperr_helper, read_sections)
   EXPECT_EQ(buf, buf2);
 }
 
+#ifdef __AVX2__
+TEST(sperr_helper, any_ge_pow2)
+{
+  std::vector<uint8_t> vec8(100, 0);
+  EXPECT_FALSE(sperr::any_ge_pow2(vec8.data(), vec8.size(), (uint8_t)1));
+  vec8[50] = 1;
+  EXPECT_TRUE(sperr::any_ge_pow2(vec8.data(), vec8.size(), (uint8_t)1));
+  vec8[50] = 0;
+
+  // Power of 2 threshold
+  EXPECT_FALSE(sperr::any_ge_pow2(vec8.data(), vec8.size(), (uint8_t)4));
+  vec8[99] = 3;
+  EXPECT_FALSE(sperr::any_ge_pow2(vec8.data(), vec8.size(), (uint8_t)4));
+  vec8[99] = 4;
+  EXPECT_TRUE(sperr::any_ge_pow2(vec8.data(), vec8.size(), (uint8_t)4));
+  vec8[99] = 5;
+  EXPECT_TRUE(sperr::any_ge_pow2(vec8.data(), vec8.size(), (uint8_t)4));
+
+  // Larger types
+  std::vector<uint64_t> vec64(50, 0);
+  uint64_t thld = 64;
+  EXPECT_FALSE(sperr::any_ge_pow2(vec64.data(), vec64.size(), thld));
+  vec64[25] = 100;
+  EXPECT_TRUE(sperr::any_ge_pow2(vec64.data(), vec64.size(), thld));
+
+  thld = 1024; // Power of 2
+  vec64.assign(50, 0);
+  EXPECT_FALSE(sperr::any_ge_pow2(vec64.data(), vec64.size(), thld));
+  vec64[0] = 1023;
+  EXPECT_FALSE(sperr::any_ge_pow2(vec64.data(), vec64.size(), thld));
+  vec64[0] = 1024;
+  EXPECT_TRUE(sperr::any_ge_pow2(vec64.data(), vec64.size(), thld));
+}
+#endif
+
 }  // namespace
