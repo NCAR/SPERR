@@ -1,6 +1,12 @@
 add_executable(        sperr_helper sperr_helper_unit_test.cpp )
 target_link_libraries( sperr_helper PUBLIC SPERR GTest::gtest_main )
 
+if(ENABLE_AVX2)
+  target_compile_options(sperr_helper PRIVATE
+                        "$<$<CXX_COMPILER_ID:MSVC>:/arch:AVX2>"
+                        "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-mavx2;-mfma>")
+endif()
+
 add_executable(        bitstream bitstream_unit_test.cpp )
 target_link_libraries( bitstream PUBLIC SPERR GTest::gtest_main )
 

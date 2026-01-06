@@ -66,15 +66,13 @@ auto sperr::SPECK2D_INT_ENC<T>::m_decide_S_significance(const Set2D& set) const 
 
   for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
     auto first = m_coeff_buf.data() + y * m_dims[0] + set.start_x;
-    bool sig = false;
 #ifdef __AVX2__
-    sig = sperr::any_ge_pow2(first, set.length_x, m_threshold);
-#else
-    sig = std::any_of(first, first + set.length_x,
-                      [thld = m_threshold](auto v) { return v >= thld; });
-#endif
-    if (sig)
+    if (sperr::any_ge_pow2(first, set.length_x, m_threshold))
       return true;
+#else
+    if (std::any_of(first, first + set.length_x, [th = m_threshold](auto v) { return v >= th; }))
+      return true;
+#endif
   }
   return false;
 }
@@ -101,14 +99,13 @@ auto sperr::SPECK2D_INT_ENC<T>::m_decide_I_significance() const -> bool
   len = m_dims[0] - m_I.start_x;
   for (auto y = 0u; y < m_I.start_y; y++) {
     first = m_coeff_buf.data() + y * m_dims[0] + m_I.start_x;
-    bool sig = false;
 #ifdef __AVX2__
-    sig = sperr::any_ge_pow2(first, len, m_threshold);
-#else
-    sig = std::any_of(first, first + len, [thld = m_threshold](auto v) { return v >= thld; });
-#endif
-    if (sig)
+    if (sperr::any_ge_pow2(first, len, m_threshold))
       return true;
+#else
+    if (std::any_of(first, first + len, [thld = m_threshold](auto v) { return v >= thld; }))
+      return true;
+#endif
   }
   return false;
 }
