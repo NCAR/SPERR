@@ -330,6 +330,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_XY(Set3D set, uint16_t lev) const
     -> std::tuple<std::array<Set3D, 4>, uint16_t>
 {
   // This partition scheme is only used during initialization; no need to calculate morton offset.
+  // The correct morton offset will be calculated during initialization.
 
   const auto split_x = std::array<int, 2>{set.length_x - set.length_x / 2, set.length_x / 2};
   const auto split_y = std::array<int, 2>{set.length_y - set.length_y / 2, set.length_y / 2};
@@ -392,6 +393,7 @@ auto sperr::SPECK3D_INT<T>::m_partition_S_Z(Set3D set, uint16_t lev) const
     -> std::tuple<std::array<Set3D, 2>, uint16_t>
 {
   // This partition scheme is only used during initialization; no need to calculate morton offset.
+  // The correct morton offset will be calculated during initialization.
 
   const auto split_z = std::array<int, 2>{set.length_z - set.length_z / 2, set.length_z / 2};
   if (split_z[1] != 0)
