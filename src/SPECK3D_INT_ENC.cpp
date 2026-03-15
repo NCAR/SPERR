@@ -170,7 +170,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_process_S(size_t idx1, size_t idx2, size_t& co
 
   // If need to output, it means the current set has unknown significance.
   if (output) {
-    auto first = m_morton_buf.data() + set.get_morton();
+    auto first = m_morton_buf.begin() + set.get_morton();
     is_sig = std::any_of(first, first + set.num_elem(),
                          [thld = m_morton_threshold](auto v) { return v >= thld; });
     m_bit_buffer.wbit(is_sig);
