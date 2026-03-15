@@ -144,6 +144,7 @@ void sperr::SPECK_INT<T>::encode()
 
   // Marching over bitplanes.
   for (uint8_t bitplane = 0; bitplane < m_num_bitplanes; bitplane++) {
+    m_bitplane_init();
     m_sorting_pass();
     if (m_bit_buffer.wtell() >= m_budget)  // Happens only when fixed-rate compression.
       break;

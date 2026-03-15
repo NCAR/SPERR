@@ -35,10 +35,19 @@ class SPECK3D_INT_ENC final : public SPECK3D_INT<T> {
   void m_process_P(size_t idx, size_t morton, size_t& counter, bool output) final;
   void m_process_P_lite(size_t idx) final;
   void m_additional_initialization() final;
+  void m_bitplane_init() final;
 
   // Data structures and functions for morton data layout.
-  vecui_type m_morton_buf;
+  // `m_morton_buf` stores the MSB bit position of each coefficient (via m_msb_position()),
+  // rather than the full coefficient value. This shrinks the buffer from sizeof(T) to 1 byte
+  // per element, reducing cache pressure in the significance-testing hot path (m_process_S).
+  std::vector<int8_t> m_morton_buf;
+  // `m_morton_threshold` is the MSB position of `m_threshold`, updated each bitplane via
+  // m_bitplane_init(). Significance tests compare m_morton_buf entries against this value.
+  int8_t m_morton_threshold = -1;
   void m_deposit_set(Set3D);
+  // Returns the bit position of the most significant bit (0-based), or -1 for zero.
+  auto m_msb_position(uint_type v) const -> int8_t;
 };
 
 };  // namespace sperr
