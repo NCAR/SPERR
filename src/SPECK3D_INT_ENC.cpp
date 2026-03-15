@@ -17,7 +17,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
       return;
     case 1: {
       auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
-      m_morton_buf[set.get_morton()] = m_msb_position(m_coeff_buf[id]);
+      m_morton_buf[set.morton_idx] = m_msb_position(m_coeff_buf[id]);
       return;
     }
     case 2: {
@@ -25,7 +25,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
       //
       // Deposit the 1st element.
       auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
-      auto morton_id = set.get_morton();
+      auto morton_id = set.morton_idx;
       m_morton_buf[morton_id] = m_msb_position(m_coeff_buf[id]);
 
       // Deposit the 2nd element.
@@ -41,7 +41,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
     }
     case 4: {
       const auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
-      auto morton_id = set.get_morton();
+      auto morton_id = set.morton_idx;
 
       if (set.length_x == 2 && set.length_y == 2) {
         // Element (0, 0, 0)
@@ -100,7 +100,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_deposit_set(Set3D set)
       if (set.length_x == 2 && set.length_y == 2) {
         // Element (0, 0, 0)
         const auto id = set.start_z * m_dims[0] * m_dims[1] + set.start_y * m_dims[0] + set.start_x;
-        auto morton_id = set.get_morton();
+        auto morton_id = set.morton_idx;
         m_morton_buf[morton_id] = m_msb_position(m_coeff_buf[id]);
 
         // Element (1, 0, 0)
@@ -155,7 +155,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_additional_initialization()
     auto idx1 = m_LIS.size() - tmp;
     for (size_t idx2 = 0; idx2 < m_LIS[idx1].size(); idx2++) {
       auto& set = m_LIS[idx1][idx2];
-      set.set_morton(morton_offset);
+      set.morton_idx = morton_offset;
       m_deposit_set(set);
       morton_offset += set.num_elem();
     }
@@ -170,7 +170,7 @@ void sperr::SPECK3D_INT_ENC<T>::m_process_S(size_t idx1, size_t idx2, size_t& co
 
   // If need to output, it means the current set has unknown significance.
   if (output) {
-    auto first = m_morton_buf.begin() + set.get_morton();
+    auto first = m_morton_buf.begin() + set.morton_idx;
     is_sig = std::any_of(first, first + set.num_elem(),
                          [thld = m_morton_threshold](auto v) { return v >= thld; });
     m_bit_buffer.wbit(is_sig);
