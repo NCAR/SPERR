@@ -641,35 +641,3 @@ auto sperr::calc_mean_var(const T* arr, size_t len, size_t omp_nthreads) -> std:
 }
 template auto sperr::calc_mean_var(const float*, size_t, size_t) -> std::array<float, 2>;
 template auto sperr::calc_mean_var(const double*, size_t, size_t) -> std::array<double, 2>;
-
-#ifdef __AVX2__
-template <typename T>
-auto sperr::any_ge_pow2(const T* buf, size_t len, T thld) -> bool
-{
-  assert((thld > 0) && (thld & (thld - 1)) == 0);
-
-  const size_t simd_width = 32 / sizeof(T);
-  T mask_val = ~(thld - 1);
-  __m256i mask_vec;
-  if constexpr (sizeof(T) == 8)
-    mask_vec = _mm256_set1_epi64x(mask_val);
-  else if constexpr (sizeof(T) == 4)
-    mask_vec = _mm256_set1_epi32(mask_val);
-  else if constexpr (sizeof(T) == 2)
-    mask_vec = _mm256_set1_epi16(mask_val);
-  else
-    mask_vec = _mm256_set1_epi8(mask_val);
-
-  size_t i = 0;
-  for (; i + simd_width <= len; i += simd_width) {
-    auto data_vec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(buf + i));
-    if (!_mm256_testz_si256(data_vec, mask_vec))
-      return true;
-  }
-  return std::any_of(buf + i, buf + len, [thld](auto v) { return v >= thld; });
-}
-template auto sperr::any_ge_pow2(const uint8_t*, size_t, uint8_t) -> bool;
-template auto sperr::any_ge_pow2(const uint16_t*, size_t, uint16_t) -> bool;
-template auto sperr::any_ge_pow2(const uint32_t*, size_t, uint32_t) -> bool;
-template auto sperr::any_ge_pow2(const uint64_t*, size_t, uint64_t) -> bool;
-#endif
