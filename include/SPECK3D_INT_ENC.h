@@ -36,6 +36,7 @@ class SPECK3D_INT_ENC final : public SPECK3D_INT<T> {
   void m_process_P_lite(size_t idx) final;
   void m_additional_initialization() final;
   void m_bitplane_init() final;
+  void m_refinement_extra() final;
 
   // Data structures and functions for morton data layout.
   // `m_morton_buf` stores the MSB bit position of each coefficient (via m_msb_position()),

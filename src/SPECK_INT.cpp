@@ -346,8 +346,11 @@ void sperr::SPECK_INT<T>::m_refinement_pass_encode()
     }
   }
 
-  // Second, mark newly found significant pixels in `m_LSP_mask`.
+  // Second, deal with newly found significant pixels in `m_LSP_mask`.
+  // For 1D and 2D cases, it simply means marking those locations.
+  // For 3D cases, `m_refinement_extra()` actually refines `m_coeff_buf` values.
   //
+  m_refinement_extra();
   for (auto idx : m_LSP_new)
     m_LSP_mask.wtrue(idx);
   m_LSP_new.clear();

@@ -70,6 +70,7 @@ class SPECK_INT {
   virtual void m_sorting_pass() = 0;
   virtual void m_initialize_lists() = 0;
   virtual void m_bitplane_init() {}
+  virtual void m_refinement_extra() {}
   void m_refinement_pass_encode();
   void m_refinement_pass_decode();
 

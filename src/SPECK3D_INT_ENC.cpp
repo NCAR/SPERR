@@ -196,9 +196,6 @@ void sperr::SPECK3D_INT_ENC<T>::m_process_P(size_t idx, size_t morton, size_t& c
 
   if (is_sig) {
     counter++;  // Let's increment the counter first!
-    assert(m_coeff_buf[idx] >= m_threshold);
-    m_coeff_buf[idx] -= m_threshold;
-
     m_bit_buffer.wbit(m_sign_array.rbit(idx));
     m_LSP_new.push_back(idx);
     m_LIP_mask.wfalse(idx);
@@ -212,9 +209,6 @@ void sperr::SPECK3D_INT_ENC<T>::m_process_P_lite(size_t idx)
   m_bit_buffer.wbit(is_sig);
 
   if (is_sig) {
-    assert(m_coeff_buf[idx] >= m_threshold);
-    m_coeff_buf[idx] -= m_threshold;
-
     m_bit_buffer.wbit(m_sign_array.rbit(idx));
     m_LSP_new.push_back(idx);
     m_LIP_mask.wfalse(idx);
@@ -240,6 +234,15 @@ template <typename T>
 void sperr::SPECK3D_INT_ENC<T>::m_bitplane_init()
 {
   m_morton_threshold = m_msb_position(m_threshold);
+}
+
+template <typename T>
+void sperr::SPECK3D_INT_ENC<T>::m_refinement_extra()
+{
+  for (auto idx : m_LSP_new) {
+    assert(m_coeff_buf[idx] >= m_threshold);
+    m_coeff_buf[idx] -= m_threshold;
+  }
 }
 
 template class sperr::SPECK3D_INT_ENC<uint64_t>;
