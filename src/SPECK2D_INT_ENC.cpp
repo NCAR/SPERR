@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <numeric>
 
 template <typename T>
 void sperr::SPECK2D_INT_ENC<T>::m_process_S(size_t idx1,
@@ -31,13 +32,12 @@ void sperr::SPECK2D_INT_ENC<T>::m_process_P(size_t idx, size_t& counter, bool ne
   bool is_sig = true;
 
   if (need_decide) {
-    is_sig = (m_coeff_buf[idx] >= m_threshold);
+    is_sig = (m_msb_buf[idx] >= m_msb_threshold);
     m_bit_buffer.wbit(is_sig);
   }
 
   if (is_sig) {
     counter++;
-    m_coeff_buf[idx] -= m_threshold;
     m_bit_buffer.wbit(m_sign_array.rbit(idx));
     m_LSP_new.push_back(idx);
     m_LIP_mask.wfalse(idx);
@@ -65,8 +65,9 @@ auto sperr::SPECK2D_INT_ENC<T>::m_decide_S_significance(const Set2D& set) const 
   assert(!set.is_empty());
 
   for (auto y = set.start_y; y < (set.start_y + set.length_y); y++) {
-    auto first = m_coeff_buf.data() + y * m_dims[0] + set.start_x;
-    if (std::any_of(first, first + set.length_x, [th = m_threshold](auto v) { return v >= th; }))
+    auto first = m_msb_buf.cbegin() + y * m_dims[0] + set.start_x;
+    if (std::any_of(first, first + set.length_x,
+                    [thld = m_msb_threshold](auto v) { return v >= thld; }))
       return true;
   }
   return false;
@@ -79,20 +80,46 @@ auto sperr::SPECK2D_INT_ENC<T>::m_decide_I_significance() const -> bool
   // It's stored in a contiguous chunk of memory till the buffer end.
   //
   assert(m_I.length_x == m_dims[0]);
-  auto first = m_coeff_buf.data() + size_t{m_I.start_y} * size_t{m_I.length_x};
-  auto len = m_coeff_buf.size() - size_t{m_I.start_y} * size_t{m_I.length_x};
-  if (std::any_of(first, first + len, [thld = m_threshold](auto v) { return v >= thld; }))
+  auto first = m_msb_buf.cbegin() + size_t{m_I.start_y} * size_t{m_I.length_x};
+  auto len = m_msb_buf.size() - size_t{m_I.start_y} * size_t{m_I.length_x};
+  if (std::any_of(first, first + len,
+                  [thld = m_msb_threshold](auto v) { return v >= thld; }))
     return true;
 
   // Second, test the rectangle that's directly to the right of the missing top-left corner.
   //
   len = m_dims[0] - m_I.start_x;
   for (auto y = 0u; y < m_I.start_y; y++) {
-    first = m_coeff_buf.data() + y * m_dims[0] + m_I.start_x;
-    if (std::any_of(first, first + len, [thld = m_threshold](auto v) { return v >= thld; }))
+    first = m_msb_buf.cbegin() + y * m_dims[0] + m_I.start_x;
+    if (std::any_of(first, first + len,
+                    [thld = m_msb_threshold](auto v) { return v >= thld; }))
       return true;
   }
   return false;
+}
+
+template <typename T>
+void sperr::SPECK2D_INT_ENC<T>::m_additional_initialization()
+{
+  const auto len = m_dims[0] * m_dims[1] * m_dims[2];
+  m_msb_buf.resize(len);
+  std::transform(m_coeff_buf.cbegin(), m_coeff_buf.cend(), m_msb_buf.begin(),
+                 [](auto v) { return sperr::msb_position(v); });
+}
+
+template <typename T>
+void sperr::SPECK2D_INT_ENC<T>::m_bitplane_init()
+{
+  m_msb_threshold = sperr::msb_position(m_threshold);
+}
+
+template <typename T>
+void sperr::SPECK2D_INT_ENC<T>::m_refinement_extra()
+{
+  for (auto idx : m_LSP_new) {
+    assert(m_coeff_buf[idx] >= m_threshold);
+    m_coeff_buf[idx] -= m_threshold;
+  }
 }
 
 template class sperr::SPECK2D_INT_ENC<uint8_t>;
