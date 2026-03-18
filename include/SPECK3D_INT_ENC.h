@@ -47,8 +47,6 @@ class SPECK3D_INT_ENC final : public SPECK3D_INT<T> {
   // m_bitplane_init(). Significance tests compare m_morton_buf entries against this value.
   int8_t m_morton_threshold = -1;
   void m_deposit_set(Set3D);
-  // Returns the bit position of the most significant bit (0-based), or -1 for zero.
-  auto m_msb_position(uint_type v) const -> int8_t;
 };
 
 };  // namespace sperr
