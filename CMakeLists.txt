@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 3.14)
 
-project(SPERR VERSION 0.8.4 LANGUAGES CXX DESCRIPTION "Lossy Scientific Compression with SPERR")
+project(SPERR VERSION 0.8.5 LANGUAGES CXX DESCRIPTION "Lossy Scientific Compression with SPERR")
 
 if(NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD "20" CACHE STRING "Choose the C++ Standard to use." FORCE)
@@ -109,7 +109,7 @@ if( BUILD_CLI_UTILITIES )
   set( CLI11_SINGLE_FILE OFF CACHE INTERNAL "Don't use single file CLI11")
   FetchContent_Declare( cli11
     GIT_REPOSITORY https://github.com/CLIUtils/CLI11
-    GIT_TAG        6c7b07a878ad834957b98d0f9ce1dbe0cb204fc9 # v2.4.2
+    GIT_TAG        37bb6edc5317e99af72ef48405e65d9ca5218861 # v2.6.2
   )
   FetchContent_MakeAvailable(cli11)
 

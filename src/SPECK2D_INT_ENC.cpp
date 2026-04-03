@@ -82,8 +82,7 @@ auto sperr::SPECK2D_INT_ENC<T>::m_decide_I_significance() const -> bool
   assert(m_I.length_x == m_dims[0]);
   auto first = m_msb_buf.cbegin() + size_t{m_I.start_y} * size_t{m_I.length_x};
   auto len = m_msb_buf.size() - size_t{m_I.start_y} * size_t{m_I.length_x};
-  if (std::any_of(first, first + len,
-                  [thld = m_msb_threshold](auto v) { return v >= thld; }))
+  if (std::any_of(first, first + len, [thld = m_msb_threshold](auto v) { return v >= thld; }))
     return true;
 
   // Second, test the rectangle that's directly to the right of the missing top-left corner.
@@ -91,8 +90,7 @@ auto sperr::SPECK2D_INT_ENC<T>::m_decide_I_significance() const -> bool
   len = m_dims[0] - m_I.start_x;
   for (auto y = 0u; y < m_I.start_y; y++) {
     first = m_msb_buf.cbegin() + y * m_dims[0] + m_I.start_x;
-    if (std::any_of(first, first + len,
-                    [thld = m_msb_threshold](auto v) { return v >= thld; }))
+    if (std::any_of(first, first + len, [thld = m_msb_threshold](auto v) { return v >= thld; }))
       return true;
   }
   return false;
