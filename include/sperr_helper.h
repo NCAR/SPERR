@@ -166,6 +166,10 @@ auto calc_stats(const T* arr1, const T* arr2, size_t arr_len, size_t omp_nthread
 template <typename T>
 auto kahan_summation(const T*, size_t) -> T;
 
+// Returns the bit position of the most significant bit (0-based), or -1 for zero.
+template <typename T>
+auto msb_position(T v) -> int8_t;
+
 // Given a whole volume size and a desired chunk size, this helper function
 // returns a list of chunks specified by 6 integers:
 // chunk[0], [2], [4]: starting index of this chunk in X, Y, and Z;

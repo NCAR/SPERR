@@ -7,6 +7,10 @@
 #include <cstring>
 #include <numeric>
 
+#if __cplusplus >= 202002L
+#include <bit>
+#endif
+
 #ifdef __AVX2__
 #include <immintrin.h>
 #endif
@@ -641,3 +645,22 @@ auto sperr::calc_mean_var(const T* arr, size_t len, size_t omp_nthreads) -> std:
 }
 template auto sperr::calc_mean_var(const float*, size_t, size_t) -> std::array<float, 2>;
 template auto sperr::calc_mean_var(const double*, size_t, size_t) -> std::array<double, 2>;
+
+template <typename T>
+auto sperr::msb_position(T v) -> int8_t
+{
+#if __cplusplus >= 202002L
+  return static_cast<int8_t>(sizeof(T) * 8 - 1 - std::countl_zero(v));
+#else
+  int8_t pos = -1;
+  while (v) {
+    v >>= 1;
+    pos++;
+  }
+  return pos;
+#endif
+}
+template auto sperr::msb_position(uint8_t) -> int8_t;
+template auto sperr::msb_position(uint16_t) -> int8_t;
+template auto sperr::msb_position(uint32_t) -> int8_t;
+template auto sperr::msb_position(uint64_t) -> int8_t;
