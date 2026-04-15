@@ -11,10 +11,6 @@
 #include <bit>
 #endif
 
-#ifdef __AVX2__
-#include <immintrin.h>
-#endif
-
 #ifdef USE_OMP
 #include <omp.h>
 #endif
