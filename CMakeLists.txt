@@ -32,8 +32,20 @@ option( BUILD_SHARED_LIBS "Build shared SPERR library" ON )
 option( BUILD_UNIT_TESTS "Build unit tests using GoogleTest" ON )
 option( BUILD_CLI_UTILITIES "Build a set of command line utilities" ON )
 option( USE_OMP "Use OpenMP parallelization on 3D volumes" OFF )
-option( ENABLE_AVX2 "Enable AVX2 instruction set compilation" ON )
 option( SPERR_PREFER_RPATH "Set RPATH; this can fight with package managers so turn off when building for them" ON )
+
+#
+# AVX2 auto-detection: default ON for x86, OFF otherwise.
+#
+if(NOT DEFINED ENABLE_AVX2)
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i[3-9]86")
+    option( ENABLE_AVX2 "Enable AVX2 instruction set compilation" ON )
+  else()
+    option( ENABLE_AVX2 "Enable AVX2 instruction set compilation" OFF )
+  endif()
+else()
+  option( ENABLE_AVX2 "Enable AVX2 instruction set compilation" ${ENABLE_AVX2} )
+endif()
 mark_as_advanced(FORCE SPERR_PREFER_RPATH)
 
 if(USE_OMP)
