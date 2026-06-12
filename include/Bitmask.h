@@ -70,6 +70,6 @@ class Bitmask {
   std::vector<uint64_t> m_buf;
 };
 
-};  // namespace sperr
+}  // namespace sperr
 
 #endif

@@ -69,6 +69,6 @@ class SPECK1D_INT : public SPECK_INT<T> {
   std::vector<std::vector<Set1D>> m_LIS;
 };
 
-};  // namespace sperr
+}  // namespace sperr
 
 #endif

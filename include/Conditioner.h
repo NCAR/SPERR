@@ -39,6 +39,6 @@ class Conditioner {
   void m_adjust_strides(size_t len);
 };
 
-};  // namespace sperr
+}  // namespace sperr
 
 #endif

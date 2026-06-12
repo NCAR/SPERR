@@ -29,6 +29,6 @@ class SPECK2D_INT_DEC final : public SPECK2D_INT<T> {
   void m_process_I(bool need_decide) final;
 };
 
-};  // namespace sperr
+}  // namespace sperr
 
 #endif

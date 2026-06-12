@@ -298,8 +298,8 @@ auto sperr::read_n_bytes(std::string filename, size_t n_bytes) -> vec8_type
 
   // POSIX systems require the size of a file to be specified, so
   // one can fseek to the end of the file.
-  auto sk = std::fseek(fp.get(), 0, SEEK_END);
-  assert(sk == 0);
+  if (std::fseek(fp.get(), 0, SEEK_END) != 0)
+    return buf;
   if (std::ftell(fp.get()) < n_bytes)
     return buf;
 
@@ -323,8 +323,8 @@ auto sperr::read_whole_file(std::string filename) -> vec_type<T>
 
   // POSIX systems require the size of a file to be specified, so
   // one can fseek to the end of the file.
-  auto sk = std::fseek(fp.get(), 0, SEEK_END);
-  assert(sk == 0);
+  if (std::fseek(fp.get(), 0, SEEK_END) != 0)
+    return buf;
   const size_t file_size = std::ftell(fp.get());
   if (file_size % sizeof(T) != 0)
     return buf;

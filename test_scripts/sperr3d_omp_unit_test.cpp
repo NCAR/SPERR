@@ -86,7 +86,6 @@ TEST(sperr3d_target_pwe, small_data_range)
   auto input = sperr::read_whole_file<float>("../test_data/vorticity.128_128_41");
   const auto dims = sperr::dims_type{128, 128, 41};
   const auto chunks = sperr::dims_type{64, 64, 41};
-  const auto total_len = dims[0] * dims[1] * dims[2];
 
   // Use an encoder
   double tol = 1.5e-7;
@@ -126,7 +125,6 @@ TEST(sperr3d_target_pwe, big)
   auto input = sperr::read_whole_file<float>("../test_data/wmag128.float");
   const auto dims = sperr::dims_type{128, 128, 128};
   const auto chunks = sperr::dims_type{64, 70, 80};
-  const auto total_len = dims[0] * dims[1] * dims[2];
 
   // Use an encoder
   double tol = 1.5e-2;

@@ -156,6 +156,6 @@ class CDF97 {
   //
 };
 
-};  // namespace sperr
+}  // namespace sperr
 
 #endif

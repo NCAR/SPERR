@@ -35,6 +35,7 @@ TEST(dwt1d, big_image_even)
 
   // Apply the conditioner
   auto rtn = condi.inverse_condition(result, {dim_x, 1, 1}, meta);
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
 
   for (size_t i = 0; i < total_vals; i++) {
     EXPECT_EQ(fptr[i], float(result[i]));
@@ -71,6 +72,7 @@ TEST(dwt1d, big_image_odd)
 
   // Apply the conditioner again
   auto rtn = condi.inverse_condition(result, {dim_x, 1, 1}, meta);
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
 
   for (size_t i = 0; i < total_vals; i++) {
     EXPECT_EQ(fptr[i], float(result[i]));
@@ -106,6 +108,7 @@ TEST(dwt2d, small_image_even)
 
   // Apply the conditioner again
   auto rtn = condi.inverse_condition(result, {dim_x, dim_y, 1}, meta);
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
 
   for (size_t i = 0; i < total_vals; i++) {
     EXPECT_EQ(in_buf[i], float(result[i]));
@@ -141,6 +144,7 @@ TEST(dwt2d, small_image_odd)
 
   // Apply the conditioner
   auto rtn = condi.inverse_condition(result, {dim_x, dim_y, 1}, meta);
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
 
   for (size_t i = 0; i < total_vals; i++) {
     EXPECT_EQ(in_buf[i], float(result[i]));
@@ -176,6 +180,7 @@ TEST(dwt2d, big_image_even)
 
   // Apply the conditioner
   auto rtn = condi.inverse_condition(result, {dim_x, dim_y, 1}, meta);
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
 
   for (size_t i = 0; i < total_vals; i++) {
     EXPECT_EQ(in_buf[i], float(result[i]));
@@ -211,6 +216,7 @@ TEST(dwt2d, big_image_odd)
 
   // Apply the conditioner
   auto rtn = condi.inverse_condition(result, {dim_x, dim_y, 1}, meta);
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
 
   for (size_t i = 0; i < total_vals; i++) {
     EXPECT_EQ(in_buf[i], float(result[i]));
@@ -246,6 +252,7 @@ TEST(dwt2d, image_multi_res)
 
   // Apply the conditioner
   auto rtn = condi.inverse_condition(result, {dim_x, dim_y, 1}, meta);
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
   for (size_t i = 0; i < total_vals; i++)
     ASSERT_EQ(in_buf[i], float(result[i])) << " i = " << i;
 
@@ -288,6 +295,7 @@ TEST(dwt3d, small_even_cube)
 
   // Apply the conditioner
   auto rtn = condi.inverse_condition(result, {dim_x, dim_y, dim_z}, meta);
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
   for (size_t i = 0; i < total_vals; i++) {
     ASSERT_EQ(in_buf[i], float(result[i])) << "i = " << i;
   }
@@ -322,6 +330,7 @@ TEST(dwt3d, big_odd_cube)
 
   // Apply the conditioner
   auto rtn = condi.inverse_condition(result, {dim_x, dim_y, dim_z}, meta);
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
   for (size_t i = 0; i < total_vals; i++) {
     ASSERT_EQ(in_buf[i], float(result[i])) << "i = " << i;
   }
@@ -356,6 +365,7 @@ TEST(dwt3d, big_even_cube)
 
   // Apply the conditioner
   auto rtn = condi.inverse_condition(result, {dim_x, dim_y, dim_z}, meta);
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
   for (size_t i = 0; i < total_vals; i++) {
     ASSERT_EQ(in_buf[i], float(result[i])) << "i = " << i;
   }
@@ -391,6 +401,7 @@ TEST(dwt3d, multi_res)
 
   // Apply the conditioner
   auto rtn = condi.inverse_condition(result, dims, meta);
+  ASSERT_EQ(rtn, sperr::RTNType::Good);
   for (size_t i = 0; i < total_vals; i++)
     ASSERT_EQ(in_buf[i], float(result[i])) << " i = " << i;
 

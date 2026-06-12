@@ -289,7 +289,7 @@ TEST(sperr_helper, read_sections)
   auto full_input = sperr::read_whole_file<uint8_t>("test.tmp");
   auto buf2 = sperr::vec8_type();
   auto rtn2 = sperr::extract_sections(full_input.data(), full_input.size(), secs, buf2);
-  EXPECT_EQ(rtn, sperr::RTNType::Good);
+  EXPECT_EQ(rtn2, sperr::RTNType::Good);
   EXPECT_EQ(buf, buf2);
 }
 

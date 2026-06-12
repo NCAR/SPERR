@@ -26,6 +26,6 @@ class SPECK3D_INT_DEC final : public SPECK3D_INT<T> {
   void m_process_P_lite(size_t idx) final;
 };
 
-};  // namespace sperr
+}  // namespace sperr
 
 #endif

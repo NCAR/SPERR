@@ -42,6 +42,6 @@ class SPECK2D_INT_ENC final : public SPECK2D_INT<T> {
   int8_t m_msb_threshold = -1;
 };
 
-};  // namespace sperr
+}  // namespace sperr
 
 #endif

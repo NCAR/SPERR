@@ -119,7 +119,7 @@ auto sperr::SPERR3D_OMP_D::decompress(const void* p, bool multi_res) -> RTNType
       const auto& low_res = decompressor->view_hierarchy();
       assert(low_res.size() == m_hierarchy.size());
       for (size_t h = 0; h < low_res.size(); h++) {
-        const auto& small_dim = chunk_res[h];
+        [[maybe_unused]] const auto& small_dim = chunk_res[h];
         assert(low_res[h].size() == small_dim[0] * small_dim[1] * small_dim[2]);
         m_scatter_chunk(m_hierarchy[h], vol_res[h], low_res[h], hierarchy_chunks[h][chunkI]);
       }
