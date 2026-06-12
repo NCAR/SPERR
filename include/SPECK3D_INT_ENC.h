@@ -49,6 +49,6 @@ class SPECK3D_INT_ENC final : public SPECK3D_INT<T> {
   void m_deposit_set(Set3D);
 };
 
-};  // namespace sperr
+}  // namespace sperr
 
 #endif

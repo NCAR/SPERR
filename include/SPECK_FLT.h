@@ -122,6 +122,6 @@ class SPECK_FLT {
   auto m_estimate_q(double param, bool high_prec) const -> double;
 };
 
-};  // namespace sperr
+}  // namespace sperr
 
 #endif

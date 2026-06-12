@@ -56,6 +56,6 @@ class SPECK2D_INT : public SPECK_INT<T> {
   std::vector<std::vector<Set2D>> m_LIS;
 };
 
-};  // namespace sperr
+}  // namespace sperr
 
 #endif

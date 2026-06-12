@@ -28,6 +28,6 @@ class SPECK1D_INT_DEC final : public SPECK1D_INT<T> {
   void m_code_S(size_t idx1, size_t idx2);
 };
 
-};  // namespace sperr
+}  // namespace sperr
 
 #endif

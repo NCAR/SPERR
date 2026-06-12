@@ -36,6 +36,6 @@ class SPECK1D_INT_ENC final : public SPECK1D_INT<T> {
   auto m_decide_significance(const Set1D&) const -> std::optional<size_t>;
 };
 
-};  // namespace sperr
+}  // namespace sperr
 
 #endif

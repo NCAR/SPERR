@@ -188,6 +188,6 @@ auto chunk_volume(dims_type vol_dim, dims_type chunk_dim) -> std::vector<std::ar
 template <typename T>
 auto calc_mean_var(const T*, size_t len, size_t omp_nthreads = 0) -> std::array<T, 2>;
 
-};  // namespace sperr
+}  // namespace sperr
 
 #endif

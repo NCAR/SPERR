@@ -72,6 +72,6 @@ class bit_buffer {
 
 };  // end of class bvec
 
-};  // end of namespace speck
+}  // end of namespace speck
 
 #endif

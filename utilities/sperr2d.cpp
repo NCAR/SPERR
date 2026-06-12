@@ -108,9 +108,9 @@ int main(int argc, char* argv[])
   auto* cptr =
       app.add_flag("-c", cflag, "Perform a compression task.")->group("Execution settings");
   auto dflag = bool{false};
-  auto* dptr = app.add_flag("-d", dflag, "Perform a decompression task.")
-                   ->excludes(cptr)
-                   ->group("Execution settings");
+  app.add_flag("-d", dflag, "Perform a decompression task.")
+      ->excludes(cptr)
+      ->group("Execution settings");
 
   //
   // Input properties
@@ -169,11 +169,12 @@ int main(int argc, char* argv[])
                        ->group("Compression settings");
 
   auto bpp = 0.0;
-  auto* bpp_ptr = app.add_option("--bpp", bpp, "Target bit-per-pixel (bpp) to achieve.")
-                      ->check(CLI::Range(0.0, 64.0))
-                      ->excludes(pwe_ptr)
-                      ->excludes(psnr_ptr)
-                      ->group("Compression settings");
+  [[maybe_unused]] auto* bpp_ptr =
+      app.add_option("--bpp", bpp, "Target bit-per-pixel (bpp) to achieve.")
+          ->check(CLI::Range(0.0, 64.0))
+          ->excludes(pwe_ptr)
+          ->excludes(psnr_ptr)
+          ->group("Compression settings");
 
 #ifdef EXPERIMENTING
   auto direct_q = 0.0;

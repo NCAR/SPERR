@@ -88,6 +88,6 @@ class SPECK_INT {
   Bitstream m_bit_buffer;
 };
 
-};  // namespace sperr
+}  // namespace sperr
 
 #endif
