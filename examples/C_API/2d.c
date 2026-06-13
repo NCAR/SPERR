@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h> /* memcmp() */
 
 /*
  * Given a file name, this function reads in its content and allocates a buffer `dst` to store it.
@@ -106,8 +107,36 @@ int main(int argc, char** argv)
     fwrite(outbuf, sizeof(double), out_dimx * out_dimy, f);
   fclose(f);
 
+  /* Test the "catch all" functions. */
+  size_t dims[3] = {dimx, dimy, 1};
+  size_t stream2_len = 0;
+  void* stream2 = NULL;
+  rtn = sperr_compress(inbuf, is_float, dimx * dimy, 2, dims, dims, mode, quality, 1,
+                       &stream2, &stream2_len);
+  if (rtn != 0) {
+    printf("Catch-all compression failed with error %d\n", rtn);
+    return 1;
+  }
+  if (stream2_len != stream_len || memcmp(bitstream, stream2, stream_len)) {
+    printf("Catch-all compression not consistent!\n");
+    return 1;
+  }
+
+  void* outbuf2 = NULL;
+  rtn = sperr_decompress(stream2, stream2_len, is_float, 1, dims, &outbuf2);
+  if (rtn != 0) {
+    printf("Catch-all decompression failed with error %d\n", rtn);
+    return 1;
+  }
+  if (memcmp(outbuf, outbuf2, dimx * dimy * (is_float ? sizeof(float) : sizeof(double)))) {
+    printf("Catch-all decompression not consistent!\n");
+    return 1;
+  }
+
   /* Clean up */
   free(outbuf);
+  free(outbuf2);
   free(bitstream);
+  free(stream2);
   free(inbuf);
 }
