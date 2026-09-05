@@ -86,7 +86,7 @@ auto sperr::Outlier_Coder::encode() -> RTNType
   assert(FE_TONEAREST == std::fegetround());
   assert(FLT_ROUNDS == 1);
   std::feclearexcept(FE_INVALID);
-  auto maxint = std::llrint(std::abs(maxerr.err));
+  auto maxint = std::llrint(std::abs(maxerr.err) / m_tol);
   if (std::fetestexcept(FE_INVALID))
     return RTNType::FE_Invalid;
 
