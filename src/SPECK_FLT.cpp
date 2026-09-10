@@ -320,9 +320,17 @@ auto sperr::SPECK_FLT::m_midtread_quantize() -> RTNType
   // Find the biggest floating point value, then get its quantized integer.
   auto maxd = *std::max_element(m_vals_d.cbegin(), m_vals_d.cend(),
                                 [](auto a, auto b) { return std::abs(a) < std::abs(b); });
-  std::feclearexcept(FE_INVALID);
+
+  maxd = std::abs(maxd);
+
+  // Rounding overflow detection.
+  // It looks like this manual comparison is the most reliable (than the exception detection below).
   assert(m_q > 0.0);
-  auto maxll = std::llrint(std::abs(maxd) / m_q);
+  if ((maxd / m_q) >= 0x1p63)
+    return RTNType::FE_Invalid;
+
+  std::feclearexcept(FE_INVALID);
+  auto maxll = std::llrint(maxd / m_q);
   if (std::fetestexcept(FE_INVALID))
     return RTNType::FE_Invalid;
 

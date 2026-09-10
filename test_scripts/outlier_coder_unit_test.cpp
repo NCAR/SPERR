@@ -14,7 +14,8 @@ class outlier_tester {
   const size_t length = 0;
   const double tolerance = 0.0;
 
-  std::vector<sperr::Outlier> LOS, recovered;
+  std::vector<sperr::Outlier> LOS;
+  std::vector<sperr::Outlier> recovered;
 
  public:
   // Constructor
@@ -22,11 +23,13 @@ class outlier_tester {
 
   // A method to generate `N` outliers
   // The resulting outliers will be stored in `LOS`, and returned.
-  auto gen_outliers(size_t N) -> const std::vector<sperr::Outlier>&
+  // Outlier magnitudes are drawn from a normal distribution with a standard deviation of
+  // `sigma_mult` times the tolerance, so tests can control how big `|err| / tolerance` gets.
+  auto gen_outliers(size_t N, double sigma_mult = 1.0) -> const std::vector<sperr::Outlier>&
   {
     std::random_device rd{};
     std::mt19937 gen{rd()};
-    std::normal_distribution<double> val_d{0.0, tolerance};
+    std::normal_distribution<double> val_d{0.0, tolerance * sigma_mult};
     std::uniform_int_distribution<size_t> loc_d{0, length - 1};
 
     LOS.clear();
@@ -107,6 +110,21 @@ TEST(sperr, large_num_outliers)
   const double tolerance = 1e-7;
   outlier_tester tester(900'000, tolerance);
   const auto& orig = tester.gen_outliers(3900);
+  const auto& recovered = tester.test_outliers();
+  EXPECT_EQ(orig.size(), recovered.size());
+  for (size_t i = 0; i < orig.size(); i++) {
+    EXPECT_EQ(orig[i].pos, recovered[i].pos);
+    EXPECT_NEAR(orig[i].err, recovered[i].err, tolerance);
+  }
+}
+
+TEST(sperr, huge_magnitude_outliers)
+{
+  // Outliers hundreds of times bigger than the tolerance require more than 8 bits to quantize;
+  // make sure the coder picks a wide enough integer type instead of truncating them.
+  const double tolerance = 2e-17;
+  outlier_tester tester(100'000, tolerance);
+  const auto& orig = tester.gen_outliers(500, 800.0);
   const auto& recovered = tester.test_outliers();
   EXPECT_EQ(orig.size(), recovered.size());
   for (size_t i = 0; i < orig.size(); i++) {

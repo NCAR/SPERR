@@ -124,9 +124,13 @@ auto sperr::SPERR3D_OMP_C::compress(const T* buf, size_t buf_len) -> RTNType
     chunk_rtn[i] = compressor->compress();
 
     // Save bitstream for each chunk in `m_encoded_stream`.
+    //    A failed compression leaves the compressor without an instantiated encoder, so querying
+    //    its bitstream would dereference a null pointer. Failures are reported right below.
     m_encoded_streams[i].clear();
-    m_encoded_streams[i].reserve(128);
-    compressor->append_encoded_bitstream(m_encoded_streams[i]);
+    if (chunk_rtn[i] == RTNType::Good) {
+      m_encoded_streams[i].reserve(128);
+      compressor->append_encoded_bitstream(m_encoded_streams[i]);
+    }
   }
 
   auto fail = std::find_if_not(chunk_rtn.begin(), chunk_rtn.end(),
