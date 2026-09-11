@@ -8,6 +8,8 @@
 #include <cstring>
 #include <numeric>
 
+#include <iostream>
+
 template <typename T>
 void sperr::SPECK_FLT::copy_data(const T* p, size_t len)
 {
@@ -320,9 +322,17 @@ auto sperr::SPECK_FLT::m_midtread_quantize() -> RTNType
   // Find the biggest floating point value, then get its quantized integer.
   auto maxd = *std::max_element(m_vals_d.cbegin(), m_vals_d.cend(),
                                 [](auto a, auto b) { return std::abs(a) < std::abs(b); });
-  std::feclearexcept(FE_INVALID);
+
+  maxd = std::abs(maxd);
+
+  // Rounding overflow detection.
+  // It looks like this manual comparison is the most reliable (than the exception detection below).
   assert(m_q > 0.0);
-  auto maxll = std::llrint(std::abs(maxd) / m_q);
+  if ((maxd / m_q) >= 0x1p63)
+    return RTNType::FE_Invalid;
+
+  std::feclearexcept(FE_INVALID);
+  auto maxll = std::llrint(maxd / m_q);
   if (std::fetestexcept(FE_INVALID))
     return RTNType::FE_Invalid;
 
@@ -475,6 +485,7 @@ FIXED_RATE_HIGH_PREC_LABEL:
     if (LOS.empty())
       m_has_outlier = false;
     else {
+      std::cout << "Outlier percentage: " << double(LOS.size()) * 100. / double(total_vals) << std::endl;
       m_has_outlier = true;
       m_out_coder.set_length(total_vals);
       m_out_coder.set_tolerance(m_quality);
