@@ -8,6 +8,8 @@
 #include <cstring>
 #include <numeric>
 
+#include <iostream>
+
 template <typename T>
 void sperr::SPECK_FLT::copy_data(const T* p, size_t len)
 {
@@ -483,6 +485,7 @@ FIXED_RATE_HIGH_PREC_LABEL:
     if (LOS.empty())
       m_has_outlier = false;
     else {
+      std::cout << "Outlier percentage: " << double(LOS.size()) * 100. / double(total_vals) << std::endl;
       m_has_outlier = true;
       m_out_coder.set_length(total_vals);
       m_out_coder.set_tolerance(m_quality);
